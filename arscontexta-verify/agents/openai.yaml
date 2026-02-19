@@ -1,0 +1,4 @@
+interface:
+  display_name: "Ars Verify"
+  short_description: "Validate schema, links, and cycle readiness"
+  default_prompt: "Use $arscontexta-verify to run final checks before completing this cycle."

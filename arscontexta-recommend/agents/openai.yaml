@@ -1,0 +1,4 @@
+interface:
+  display_name: "Ars Recommend"
+  short_description: "Recommend Ars Contexta architecture choices"
+  default_prompt: "Use $arscontexta-recommend to propose the best vault architecture for my use case."

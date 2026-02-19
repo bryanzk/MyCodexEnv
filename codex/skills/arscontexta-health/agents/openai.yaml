@@ -1,0 +1,4 @@
+interface:
+  display_name: "Ars Health"
+  short_description: "Audit vault health and maintenance risks"
+  default_prompt: "Use $arscontexta-health to report inbox pressure, link sparsity, and queue risks."

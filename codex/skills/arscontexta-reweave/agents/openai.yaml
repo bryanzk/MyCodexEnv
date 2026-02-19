@@ -1,0 +1,4 @@
+interface:
+  display_name: "Ars Reweave"
+  short_description: "Update historical notes with new context"
+  default_prompt: "Use $arscontexta-reweave to revise older notes affected by new findings."

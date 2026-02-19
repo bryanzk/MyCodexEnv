@@ -1,0 +1,4 @@
+interface:
+  display_name: "Ars Pipeline"
+  short_description: "Run end-to-end Ars processing pipeline"
+  default_prompt: "Use $arscontexta-pipeline to run this source through seed-to-verify phases."

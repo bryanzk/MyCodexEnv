@@ -1,0 +1,4 @@
+interface:
+  display_name: "Ars Stats"
+  short_description: "Summarize vault metrics and trends"
+  default_prompt: "Use $arscontexta-stats to report current vault metrics and trend deltas."

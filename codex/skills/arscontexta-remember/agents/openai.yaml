@@ -1,0 +1,4 @@
+interface:
+  display_name: "Ars Remember"
+  short_description: "Capture lessons and prevent repeated errors"
+  default_prompt: "Use $arscontexta-remember to record process learnings from this session."

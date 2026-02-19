@@ -1,0 +1,4 @@
+interface:
+  display_name: "Ars Architect"
+  short_description: "Evolve existing Ars workspace structure safely"
+  default_prompt: "Use $arscontexta-architect to design staged improvements for this existing vault."

@@ -1,0 +1,4 @@
+interface:
+  display_name: "ATDD Guide"
+  short_description: "ATDD workflow with DSL and drivers"
+  default_prompt: "Guide implementation with acceptance-first workflow, DSL, protocol drivers, and production-like validation."

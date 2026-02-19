@@ -1,0 +1,4 @@
+interface:
+  display_name: "Thread Topic Guard"
+  short_description: "会话主题锚定与语义偏离检测，先答后提醒，轻量保持线程聚焦"
+  default_prompt: "使用 $thread-topic-guard 在回答用户问题时保持线程主题聚焦，并在明显偏离时追加一句轻提醒。"

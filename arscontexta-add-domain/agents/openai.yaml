@@ -1,0 +1,4 @@
+interface:
+  display_name: "Ars Add Domain"
+  short_description: "Add a new domain into current Ars workspace"
+  default_prompt: "Use $arscontexta-add-domain to add a new domain without breaking current navigation."

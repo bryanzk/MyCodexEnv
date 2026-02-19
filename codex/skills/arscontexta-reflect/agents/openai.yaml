@@ -1,0 +1,4 @@
+interface:
+  display_name: "Ars Reflect"
+  short_description: "Improve links and MOC navigation quality"
+  default_prompt: "Use $arscontexta-reflect to strengthen cross-note links and MOCs."

@@ -1,0 +1,4 @@
+interface:
+  display_name: "Ars Refactor"
+  short_description: "Restructure vault artifacts with safe migration"
+  default_prompt: "Use $arscontexta-refactor to simplify this vault structure without losing meaning."

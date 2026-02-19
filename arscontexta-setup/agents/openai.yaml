@@ -1,0 +1,4 @@
+interface:
+  display_name: "Ars Setup"
+  short_description: "Initialize Ars Contexta workspace structure"
+  default_prompt: "Use $arscontexta-setup to scaffold a new knowledge workspace in this directory."

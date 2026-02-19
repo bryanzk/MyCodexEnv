@@ -1,0 +1,4 @@
+interface:
+  display_name: "Ars Router"
+  short_description: "Route natural-language intent to one Ars skill"
+  default_prompt: "Use $arscontexta-router to choose the best Ars sub-skill for this request."

@@ -1,0 +1,4 @@
+interface:
+  display_name: "Ars Reduce"
+  short_description: "Reduce source materials into atomic notes"
+  default_prompt: "Use $arscontexta-reduce to convert this source into durable linked notes."

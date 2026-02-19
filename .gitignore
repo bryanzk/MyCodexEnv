@@ -1,0 +1,16 @@
+# macOS
+.DS_Store
+
+# Secrets / local auth
+**/auth.json
+*.pem
+*.key
+.env
+.env.*
+
+# Python
+__pycache__/
+*.pyc
+
+# Temp
+tmp/

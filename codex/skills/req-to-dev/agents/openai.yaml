@@ -1,0 +1,4 @@
+interface:
+  display_name: "Req-to-Dev"
+  short_description: "Turn req docs into executable plan + docs"
+  default_prompt: "Use $req-to-dev to turn these requirement docs into a repo-ready plan, safety net, and task checklist."

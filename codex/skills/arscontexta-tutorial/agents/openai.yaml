@@ -1,0 +1,4 @@
+interface:
+  display_name: "Ars Tutorial"
+  short_description: "Guide hands-on onboarding for Ars workflow"
+  default_prompt: "Use $arscontexta-tutorial to walk me through the Ars workflow step by step."

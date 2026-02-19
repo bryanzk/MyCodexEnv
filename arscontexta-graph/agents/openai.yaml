@@ -1,0 +1,4 @@
+interface:
+  display_name: "Ars Graph"
+  short_description: "Analyze graph structure and weak links"
+  default_prompt: "Use $arscontexta-graph to analyze this vault graph and rank structural risks."
