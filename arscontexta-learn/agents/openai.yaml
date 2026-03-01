@@ -1,4 +1,0 @@
-interface:
-  display_name: "Ars Learn"
-  short_description: "Integrate new external knowledge into vault"
-  default_prompt: "Use $arscontexta-learn to absorb this source into my existing vault model."

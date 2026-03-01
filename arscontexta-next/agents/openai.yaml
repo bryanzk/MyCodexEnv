@@ -1,4 +1,0 @@
-interface:
-  display_name: "Ars Next"
-  short_description: "Choose the next highest-value workflow action"
-  default_prompt: "Use $arscontexta-next to select the single best next action for this vault."

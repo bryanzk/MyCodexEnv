@@ -1,4 +1,0 @@
-interface:
-  display_name: "Ars Seed"
-  short_description: "Queue new sources with duplicate checks"
-  default_prompt: "Use $arscontexta-seed to create queued processing seeds from these sources."

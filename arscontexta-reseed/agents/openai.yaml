@@ -1,4 +1,0 @@
-interface:
-  display_name: "Ars Reseed"
-  short_description: "Re-derive vault architecture after drift"
-  default_prompt: "Use $arscontexta-reseed to plan a safe re-derivation for this drifted workspace."

@@ -1,4 +1,0 @@
-interface:
-  display_name: "Ars Help"
-  short_description: "State-aware guidance for Ars workflows"
-  default_prompt: "Use $arscontexta-help to tell me the most useful next command based on current vault state."

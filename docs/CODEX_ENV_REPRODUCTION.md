@@ -11,6 +11,10 @@
 - `codex/skills/*` -> `~/.codex/skills/*`
 - `~/.codex/superpowers` pinned by `locks/superpowers.lock`
 
+## Skills Source of Truth
+- Repository source of truth is `codex/skills/*`.
+- Bootstrap/sync scripts only read `codex/skills/*` when populating `~/.codex/skills/*`.
+
 ## Security Rules
 - Never commit `~/.codex/auth.json`
 - Never commit API keys or tokens

@@ -1,4 +1,0 @@
-interface:
-  display_name: "Ars Ask"
-  short_description: "Answer vault questions with evidence traces"
-  default_prompt: "Use $arscontexta-ask to answer this vault question with file-backed evidence."

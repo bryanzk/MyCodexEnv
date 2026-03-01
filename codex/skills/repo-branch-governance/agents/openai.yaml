@@ -1,0 +1,4 @@
+interface:
+  display_name: "Repo Branch Governance"
+  short_description: "Audit, sync, merge, and clean Git branches safely"
+  default_prompt: "Assess branch state, sync with main, merge eligible branches, and clean merged branches with verification."

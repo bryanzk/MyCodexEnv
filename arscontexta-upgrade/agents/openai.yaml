@@ -1,4 +1,0 @@
-interface:
-  display_name: "Ars Upgrade"
-  short_description: "Apply Ars upgrades with compatibility checks"
-  default_prompt: "Use $arscontexta-upgrade to upgrade this vault and report compatibility risks."

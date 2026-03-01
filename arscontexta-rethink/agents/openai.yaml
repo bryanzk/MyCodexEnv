@@ -1,4 +1,0 @@
-interface:
-  display_name: "Ars Rethink"
-  short_description: "Challenge assumptions and update decisions"
-  default_prompt: "Use $arscontexta-rethink to stress-test these assumptions and recommend updates."
