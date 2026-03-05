@@ -1,7 +1,9 @@
 #!/usr/bin/env python3
 import subprocess
+import json
 import sys
 import tempfile
+from datetime import datetime
 from pathlib import Path
 
 
@@ -120,6 +122,92 @@ def test_verify_after_full_sync():
     print("[PASS] full sync + verify")
 
 
+def run_capture_script(capture_args):
+    cmd = [
+        sys.executable,
+        str(ROOT / "scripts" / "capture_text.py"),
+        "--json",
+    ] + capture_args
+    code, out, err = run(cmd)
+    if code != 0:
+        raise RuntimeError(f"capture script failed: {out or err}")
+    try:
+        payload = json.loads(out)
+    except json.JSONDecodeError as exc:
+        raise RuntimeError(f"capture output is not JSON: {out}") from exc
+    return payload
+
+
+def test_capture_text_auto_classifies_input_types():
+    with tempfile.TemporaryDirectory() as tmp:
+        out_dir = Path(tmp) / "text_records"
+
+        command_record = run_capture_script(
+            [
+                "--out-dir",
+                str(out_dir),
+                "git status --short",
+            ]
+        )
+        today = datetime.now().strftime("%Y-%m-%d")
+        require(
+            command_record["category"] == "command",
+            f"expected command category, got {command_record['category']}",
+        )
+        require(
+            (out_dir / command_record["path"]).exists(),
+            "command record markdown file should exist",
+        )
+        require(
+            (out_dir / "entries" / today / "command").exists(),
+            "command category directory should exist",
+        )
+        require((out_dir / "ledger.jsonl").exists(), "ledger file should exist")
+
+        prompt_record = run_capture_script(
+            [
+                "--out-dir",
+                str(out_dir),
+                "请帮我写一段用于复盘的 prompt。",
+            ]
+        )
+        require(
+            prompt_record["category"] == "prompt",
+            f"expected prompt category, got {prompt_record['category']}",
+        )
+
+        dialogue_record = run_capture_script(
+            [
+                "--out-dir",
+                str(out_dir),
+                "我们今天下午复查下任务进度吧。",
+            ]
+        )
+        require(
+            dialogue_record["category"] == "dialogue",
+            f"expected dialogue category, got {dialogue_record['category']}",
+        )
+
+        forced_dialogue = run_capture_script(
+            [
+                "--out-dir",
+                str(out_dir),
+                "--category",
+                "dialogue",
+                "git add .",
+            ]
+        )
+        require(
+            forced_dialogue["category"] == "dialogue",
+            f"expected forced dialogue category, got {forced_dialogue['category']}",
+        )
+
+        ledger = (out_dir / "ledger.jsonl").read_text(encoding="utf-8").strip().splitlines()
+        require(len(ledger) == 4, f"expected 4 ledger entries, got {len(ledger)}")
+
+    print("[PASS] capture_text auto classification and persistence")
+
+
 def main():
     require(BOOTSTRAP.exists(), f"missing bootstrap: {BOOTSTRAP}")
     require(SYNC.exists(), f"missing sync script: {SYNC}")
@@ -129,6 +217,7 @@ def main():
     test_sync_requires_entrypoint_file()
     test_sync_renders_template_and_copies_skills()
     test_verify_after_full_sync()
+    test_capture_text_auto_classifies_input_types()
     print("[PASS] all tests")
 
 

@@ -14,3 +14,6 @@ __pycache__/
 
 # Temp
 tmp/
+
+# Local text capture records
+text_records/

@@ -17,4 +17,14 @@ cd MyCodexEnv
 - superpowers 固定版本见 `locks/superpowers.lock`
 - skills 单一来源：`codex/skills/*`（同步到 `~/.codex/skills/*`）
 
+## 常用文本记录
+
+如果你需要记录命令、提示、对话等文本，可直接使用：
+
+```bash
+python scripts/capture_text.py "要记录的文本"
+```
+
+分类规则与输出目录见 `docs/USAGE_TEXT_RECORDING.md`。
+
 详细说明见：`docs/CODEX_ENV_REPRODUCTION.md`
