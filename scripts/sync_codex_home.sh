@@ -95,6 +95,11 @@ rm -f "${rendered_tmp}"
 mkdir -p "${CODEX_HOME}/skills"
 rsync -a --delete "${REPO_ROOT}/codex/skills/" "${CODEX_HOME}/skills/"
 
+if [[ -d "${REPO_ROOT}/codex/workflow" ]]; then
+  mkdir -p "${CODEX_HOME}/workflow"
+  rsync -a --delete "${REPO_ROOT}/codex/workflow/" "${CODEX_HOME}/workflow/"
+fi
+
 if [[ -f "${REPO_ROOT}/codex/AGENTS.md" ]]; then
   cp "${REPO_ROOT}/codex/AGENTS.md" "${CODEX_HOME}/AGENTS.md"
 fi

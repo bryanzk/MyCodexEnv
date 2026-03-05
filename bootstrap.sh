@@ -6,15 +6,17 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 EIGENPHI_BACKEND_ROOT=""
 CODEX_HOME="${HOME}/.codex"
+CLAUDE_HOME="${HOME}/.claude"
 NON_INTERACTIVE="false"
 
 usage() {
   cat <<USAGE
-Usage: ./bootstrap.sh --eigenphi-backend-root <path> [--codex-home <path>] [--non-interactive]
+Usage: ./bootstrap.sh --eigenphi-backend-root <path> [--codex-home <path>] [--claude-home <path>] [--non-interactive]
 
 Options:
   --eigenphi-backend-root   本地 eigenphi backend 源码根目录（必填）
   --codex-home              Codex home 目录（默认: ~/.codex）
+  --claude-home             Claude home 目录（默认: ~/.claude）
   --non-interactive         非交互模式（缺少 Homebrew 时直接失败）
 USAGE
 }
@@ -27,6 +29,10 @@ while [[ $# -gt 0 ]]; do
       ;;
     --codex-home)
       CODEX_HOME="${2:-}"
+      shift 2
+      ;;
+    --claude-home)
+      CLAUDE_HOME="${2:-}"
       shift 2
       ;;
     --non-interactive)
@@ -61,27 +67,33 @@ if [[ "$(uname -m)" != "arm64" ]]; then
   exit 1
 fi
 
-echo "[1/4] Installing prerequisites..."
+echo "[1/5] Installing prerequisites..."
 "${SCRIPT_DIR}/scripts/install_prereqs.sh" $( [[ "${NON_INTERACTIVE}" == "true" ]] && echo "--non-interactive" )
 
-echo "[2/4] Syncing Codex home content..."
+echo "[2/5] Syncing Codex home content..."
 "${SCRIPT_DIR}/scripts/sync_codex_home.sh" \
   --repo-root "${SCRIPT_DIR}" \
   --codex-home "${CODEX_HOME}" \
   --eigenphi-backend-root "${EIGENPHI_BACKEND_ROOT}"
 
+echo "[3/5] Syncing Claude workflow content..."
+"${SCRIPT_DIR}/scripts/sync_claude_home.sh" \
+  --repo-root "${SCRIPT_DIR}" \
+  --claude-home "${CLAUDE_HOME}"
+
 SUPERPOWERS_BIN="${CODEX_HOME}/superpowers/.codex/superpowers-codex"
 if [[ -x "${SUPERPOWERS_BIN}" ]]; then
-  echo "[3/4] Running superpowers bootstrap..."
+  echo "[4/5] Running superpowers bootstrap..."
   "${SUPERPOWERS_BIN}" bootstrap >/dev/null
 else
   echo "[WARN] superpowers bootstrap binary not found at ${SUPERPOWERS_BIN}" >&2
 fi
 
-echo "[4/4] Verifying environment..."
+echo "[5/5] Verifying environment..."
 "${SCRIPT_DIR}/scripts/verify_codex_env.sh" \
   --repo-root "${SCRIPT_DIR}" \
-  --codex-home "${CODEX_HOME}"
+  --codex-home "${CODEX_HOME}" \
+  --claude-home "${CLAUDE_HOME}"
 
 echo "Bootstrap finished."
 if codex login status >/dev/null 2>&1; then

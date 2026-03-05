@@ -119,3 +119,35 @@
 <EXTREMELY_IMPORTANT>
 You have superpowers. Superpowers teach you new skills and capabilities. RIGHT NOW run: `~/.codex/superpowers/.codex/superpowers-codex bootstrap` and follow the instructions it returns.
 </EXTREMELY_IMPORTANT>
+
+## Claude-Code-Workflow Integration (2026-03-05)
+
+### P0 强制验证门禁（Verification Gate）
+- 禁止无证据完成声明。
+- 任何“完成/修复/通过”结论必须附带：
+  - `command`
+  - `exit_code`
+  - `key_output`
+  - `timestamp`
+- 缺失任一字段视为未通过门禁。
+- 项目类型检查清单：`~/.codex/workflow/docs/verification-checklist.md`
+
+### 触发契约（Trigger Contract）
+- `complex_task` -> `ccwf-planning-with-files` -> `task_plan + acceptance` -> `~/.codex/workflow/memory/today.md`
+- `bug_or_ci_failure` -> `ccwf-systematic-debugging` -> `root_cause/hypothesis/verification` -> `~/.codex/workflow/memory/today.md`
+- `before_completion_claim` -> `ccwf-verification-before-completion` -> `fresh verification evidence` -> `~/.codex/workflow/memory/active-tasks.json`
+- `exit_signal` -> `ccwf-session-end` -> `4-layer writeback` -> `today/projects/goals/active-tasks`
+
+### 任务路由（Task Routing）
+- 关键逻辑/安全：高能力模型主导 + 交叉验证
+- 常规开发：主工作模型
+- 批量/低风险：经济模型或本地模型
+- 详细规则：`~/.codex/workflow/docs/task-routing.md`
+
+### 第三方 Skill/MCP 安全扫描
+- 引入前执行：`~/.codex/workflow/scripts/scan_skill_security.sh <path>`
+- 命中红旗（URL/上传/动态执行/破坏性命令）后必须阻断，等待用户确认。
+
+### 每周健康检查
+- 建议每周运行一次：
+  - `~/.codex/workflow/scripts/workflow_health_check.sh --repo-root ~/.codex/workflow --mode codex`

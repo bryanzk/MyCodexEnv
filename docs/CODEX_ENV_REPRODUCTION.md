@@ -1,4 +1,4 @@
-# Codex Environment Reproduction (Git Clone + One Command)
+# Codex + Claude Environment Reproduction (Git Clone + One Command)
 
 ## Scope
 - Target OS: macOS ARM (Apple Silicon)
@@ -9,11 +9,15 @@
 - `codex/config.template.toml` -> `~/.codex/config.toml`
 - `codex/AGENTS.md` -> `~/.codex/AGENTS.md`
 - `codex/skills/*` -> `~/.codex/skills/*`
+- `codex/workflow/*` -> `~/.codex/workflow/*`
+- `claude/workflow/*` -> `~/.claude/workflow/*`
+- `claude/CLAUDE_INTEGRATION_BLOCK.md` -> 注入 `~/.claude/CLAUDE.md`（不覆盖既有内容）
 - `~/.codex/superpowers` pinned by `locks/superpowers.lock`
 
 ## Skills Source of Truth
 - Repository source of truth is `codex/skills/*`.
 - Bootstrap/sync scripts only read `codex/skills/*` when populating `~/.codex/skills/*`.
+- Claude workflow source of truth is `claude/workflow/*`.
 
 ## Security Rules
 - Never commit `~/.codex/auth.json`
@@ -29,7 +33,7 @@ cd MyCodexEnv
 
 ## Verification
 ```bash
-./scripts/verify_codex_env.sh --repo-root "$(pwd)" --codex-home "$HOME/.codex"
+./scripts/verify_codex_env.sh --repo-root "$(pwd)" --codex-home "$HOME/.codex" --claude-home "$HOME/.claude"
 ```
 
 Verification evidence is appended to `TEST_VERIFICATION.md`.
@@ -37,6 +41,7 @@ Verification evidence is appended to `TEST_VERIFICATION.md`.
 ## Idempotency
 - Running `bootstrap.sh` multiple times is supported.
 - Existing `~/.codex/config.toml` is backed up before overwrite.
+- Existing `~/.claude/CLAUDE.md` is backed up before integration block update.
 
 ## Troubleshooting
 1. `Homebrew not found`

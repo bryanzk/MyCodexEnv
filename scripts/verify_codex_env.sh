@@ -1,12 +1,13 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# 对复现后的环境做一致性校验，并记录测试证据。
+# 对复现后的双环境做一致性校验，并记录测试证据。
 REPO_ROOT=""
 CODEX_HOME="${HOME}/.codex"
+CLAUDE_HOME="${HOME}/.claude"
 
 usage() {
-  echo "Usage: verify_codex_env.sh --repo-root <path> [--codex-home <path>]"
+  echo "Usage: verify_codex_env.sh --repo-root <path> [--codex-home <path>] [--claude-home <path>]"
 }
 
 while [[ $# -gt 0 ]]; do
@@ -17,6 +18,10 @@ while [[ $# -gt 0 ]]; do
       ;;
     --codex-home)
       CODEX_HOME="${2:-}"
+      shift 2
+      ;;
+    --claude-home)
+      CLAUDE_HOME="${2:-}"
       shift 2
       ;;
     -h|--help)
@@ -65,13 +70,31 @@ results+=("$(check arch_arm64 '[[ "$(uname -m)" == "arm64" ]]')")
 results+=("$(check cmd_codex 'command -v codex')")
 results+=("$(check cmd_go 'command -v go')")
 results+=("$(check cmd_node 'command -v node && command -v npx')")
+
 results+=("$(check codex_home_exists '[[ -d "'"${CODEX_HOME}"'" ]]')")
-results+=("$(check config_exists '[[ -f "'"${CODEX_HOME}"'"/config.toml ]]')")
-results+=("$(check agents_exists '[[ -f "'"${CODEX_HOME}"'"/AGENTS.md ]]')")
-results+=("$(check config_has_mcp 'rg -n "\[mcp_servers\.\"eigenphi-blockchain\"\]" "'"${CODEX_HOME}"'"/config.toml')")
-results+=("$(check config_placeholder_resolved '! rg -n "\$\{EIGENPHI_BACKEND_ROOT\}" "'"${CODEX_HOME}"'"/config.toml')")
-results+=("$(check superpowers_git '[[ -d "'"${CODEX_HOME}"'"/superpowers/.git ]]')")
-results+=("$(check superpowers_commit '[[ "$(git -C "'"${CODEX_HOME}"'"/superpowers rev-parse --short HEAD)" == "'"${expected_commit}"'"* ]]')")
+results+=("$(check codex_config_exists '[[ -f "'"${CODEX_HOME}"'"/config.toml ]]')")
+results+=("$(check codex_agents_exists '[[ -f "'"${CODEX_HOME}"'"/AGENTS.md ]]')")
+results+=("$(check codex_config_has_mcp 'rg -n "\[mcp_servers\.\"eigenphi-blockchain\"\]" "'"${CODEX_HOME}"'"/config.toml')")
+results+=("$(check codex_config_placeholder_resolved '! rg -n "\$\{EIGENPHI_BACKEND_ROOT\}" "'"${CODEX_HOME}"'"/config.toml')")
+results+=("$(check codex_superpowers_git '[[ -d "'"${CODEX_HOME}"'"/superpowers/.git ]]')")
+results+=("$(check codex_superpowers_commit '[[ "$(git -C "'"${CODEX_HOME}"'"/superpowers rev-parse --short HEAD)" == "'"${expected_commit}"'"* ]]')")
+results+=("$(check codex_workflow_exists '[[ -d "'"${CODEX_HOME}"'"/workflow ]]')")
+results+=("$(check codex_workflow_rules '[[ -f "'"${CODEX_HOME}"'"/workflow/rules/behaviors.md ]]')")
+results+=("$(check codex_workflow_memory '[[ -f "'"${CODEX_HOME}"'"/workflow/memory/active-tasks.json ]]')")
+results+=("$(check codex_agents_has_gate 'rg -n "P0 强制验证门禁|Verification Gate" "'"${CODEX_HOME}"'"/AGENTS.md')")
+results+=("$(check codex_security_scan_script '[[ -x "'"${CODEX_HOME}"'"/workflow/scripts/scan_skill_security.sh ]]')")
+
+for skill in ccwf-session-end ccwf-verification-before-completion ccwf-systematic-debugging ccwf-planning-with-files ccwf-experience-evolution; do
+  results+=("$(check "codex_skill_${skill}" '[[ -f "'"${CODEX_HOME}"'"/skills/'"${skill}"'/SKILL.md ]]')")
+done
+
+results+=("$(check claude_home_exists '[[ -d "'"${CLAUDE_HOME}"'" ]]')")
+results+=("$(check claude_main_exists '[[ -f "'"${CLAUDE_HOME}"'"/CLAUDE.md ]]')")
+results+=("$(check claude_workflow_exists '[[ -d "'"${CLAUDE_HOME}"'"/workflow ]]')")
+results+=("$(check claude_workflow_rules '[[ -f "'"${CLAUDE_HOME}"'"/workflow/rules/behaviors.md ]]')")
+results+=("$(check claude_workflow_memory '[[ -f "'"${CLAUDE_HOME}"'"/workflow/memory/active-tasks.json ]]')")
+results+=("$(check claude_integration_block 'rg -n "ccwf:integration:start|ccwf:integration:end" "'"${CLAUDE_HOME}"'"/CLAUDE.md')")
+results+=("$(check claude_security_scan_script '[[ -x "'"${CLAUDE_HOME}"'"/workflow/scripts/scan_skill_security.sh ]]')")
 
 repo_skills_count="$(find "${REPO_ROOT}/codex/skills" -mindepth 1 -maxdepth 1 -type d | wc -l | tr -d ' ')"
 codex_skills_count="$(find "${CODEX_HOME}/skills" -mindepth 1 -maxdepth 1 -type d | wc -l | tr -d ' ')"
@@ -105,8 +128,9 @@ done
 report_file="${REPO_ROOT}/TEST_VERIFICATION.md"
 {
   echo ""
-  echo "## Codex Env Verification ($(date '+%Y-%m-%d %H:%M:%S'))"
+  echo "## Dual Env Verification ($(date '+%Y-%m-%d %H:%M:%S'))"
   echo "- codex_home: ${CODEX_HOME}"
+  echo "- claude_home: ${CLAUDE_HOME}"
   echo "- codex_version: ${codex_version}"
   echo "- repo_skills_count: ${repo_skills_count}"
   echo "- codex_skills_count: ${codex_skills_count}"
@@ -123,7 +147,6 @@ report_file="${REPO_ROOT}/TEST_VERIFICATION.md"
       echo "- [ ] ${name}"
     fi
   done
-  echo ""
 } >> "${report_file}"
 
 if [[ ${failed} -gt 0 ]]; then

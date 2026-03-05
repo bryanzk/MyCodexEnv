@@ -10,6 +10,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent
 BOOTSTRAP = ROOT / "bootstrap.sh"
 SYNC = ROOT / "scripts" / "sync_codex_home.sh"
+SYNC_CLAUDE = ROOT / "scripts" / "sync_claude_home.sh"
 VERIFY = ROOT / "scripts" / "verify_codex_env.sh"
 
 
@@ -88,6 +89,7 @@ def test_sync_renders_template_and_copies_skills():
         require("${EIGENPHI_BACKEND_ROOT}" not in rendered, "template placeholder should be replaced")
         require(str(backend / "cmd" / "mcp-server" / "main.go") in rendered, "rendered MCP path mismatch")
         require((codex_home / "AGENTS.md").exists(), "AGENTS.md should be copied")
+        require((codex_home / "workflow" / "rules" / "behaviors.md").exists(), "codex workflow rules should be copied")
 
         expected_skills = count_top_dirs(ROOT / "codex" / "skills")
         actual_skills = count_top_dirs(codex_home / "skills")
@@ -96,10 +98,40 @@ def test_sync_renders_template_and_copies_skills():
     print("[PASS] sync render + skills copy")
 
 
+def test_sync_claude_injects_integration_block():
+    with tempfile.TemporaryDirectory() as tmp:
+        tmp_path = Path(tmp)
+        claude_home = tmp_path / ".claude"
+        claude_home.mkdir(parents=True, exist_ok=True)
+        # 模拟用户已有自定义内容，验证不会被覆盖丢失。
+        (claude_home / "CLAUDE.md").write_text("# Existing Profile\n\ncustom=true\n", encoding="utf-8")
+
+        code, out, err = run(
+            [
+                str(SYNC_CLAUDE),
+                "--repo-root",
+                str(ROOT),
+                "--claude-home",
+                str(claude_home),
+            ]
+        )
+        require(code == 0, f"sync_claude failed: {err or out}")
+
+        main_file = claude_home / "CLAUDE.md"
+        content = main_file.read_text(encoding="utf-8")
+        require("custom=true" in content, "existing CLAUDE.md content should be preserved")
+        require("ccwf:integration:start" in content, "integration block start marker missing")
+        require((claude_home / "workflow" / "rules" / "behaviors.md").exists(), "workflow rules should be synced")
+        require((claude_home / "workflow" / "scripts" / "scan_skill_security.sh").exists(), "security scan script should be synced")
+
+    print("[PASS] sync claude workflow + integration block")
+
+
 def test_verify_after_full_sync():
     with tempfile.TemporaryDirectory() as tmp:
         tmp_path = Path(tmp)
         codex_home = tmp_path / ".codex"
+        claude_home = tmp_path / ".claude"
         backend = make_fake_eigenphi(tmp_path)
 
         code, out, err = run(
@@ -115,7 +147,28 @@ def test_verify_after_full_sync():
         )
         require(code == 0, f"full sync failed: {err or out}")
 
-        code, out, err = run([str(VERIFY), "--repo-root", str(ROOT), "--codex-home", str(codex_home)])
+        code, out, err = run(
+            [
+                str(SYNC_CLAUDE),
+                "--repo-root",
+                str(ROOT),
+                "--claude-home",
+                str(claude_home),
+            ]
+        )
+        require(code == 0, f"claude sync failed: {err or out}")
+
+        code, out, err = run(
+            [
+                str(VERIFY),
+                "--repo-root",
+                str(ROOT),
+                "--codex-home",
+                str(codex_home),
+                "--claude-home",
+                str(claude_home),
+            ]
+        )
         require(code == 0, f"verify failed: {err or out}")
         require("Verification passed." in out, "verify success message missing")
 
@@ -211,11 +264,13 @@ def test_capture_text_auto_classifies_input_types():
 def main():
     require(BOOTSTRAP.exists(), f"missing bootstrap: {BOOTSTRAP}")
     require(SYNC.exists(), f"missing sync script: {SYNC}")
+    require(SYNC_CLAUDE.exists(), f"missing sync script: {SYNC_CLAUDE}")
     require(VERIFY.exists(), f"missing verify script: {VERIFY}")
 
     test_bootstrap_requires_argument()
     test_sync_requires_entrypoint_file()
     test_sync_renders_template_and_copies_skills()
+    test_sync_claude_injects_integration_block()
     test_verify_after_full_sync()
     test_capture_text_auto_classifies_input_types()
     print("[PASS] all tests")
