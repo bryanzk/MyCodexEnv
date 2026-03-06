@@ -5,6 +5,7 @@ import sys
 import tempfile
 from datetime import datetime
 from pathlib import Path
+import os
 
 
 ROOT = Path(__file__).resolve().parent
@@ -12,6 +13,7 @@ BOOTSTRAP = ROOT / "bootstrap.sh"
 SYNC = ROOT / "scripts" / "sync_codex_home.sh"
 SYNC_CLAUDE = ROOT / "scripts" / "sync_claude_home.sh"
 VERIFY = ROOT / "scripts" / "verify_codex_env.sh"
+MANAGE_AGENTS = ROOT / "scripts" / "manage_agents.py"
 
 
 def run(cmd):
@@ -35,6 +37,21 @@ def make_fake_eigenphi(root: Path) -> Path:
     entry.mkdir(parents=True, exist_ok=True)
     (entry / "main.go").write_text("package main\nfunc main() {}\n", encoding="utf-8")
     return backend
+
+
+def write(path: Path, content: str) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(content, encoding="utf-8")
+
+
+def make_git_repo(path: Path) -> Path:
+    path.mkdir(parents=True, exist_ok=True)
+    (path / ".git").mkdir(parents=True, exist_ok=True)
+    return path
+
+
+def run_manage_agents(*args):
+    return run([sys.executable, str(MANAGE_AGENTS), *args])
 
 
 def test_bootstrap_requires_argument():
@@ -96,6 +113,37 @@ def test_sync_renders_template_and_copies_skills():
         require(actual_skills == expected_skills, f"skills count mismatch: {actual_skills} != {expected_skills}")
 
     print("[PASS] sync render + skills copy")
+
+
+def test_sync_agents_only_copies_and_backs_up_agents():
+    with tempfile.TemporaryDirectory() as tmp:
+        tmp_path = Path(tmp)
+        codex_home = tmp_path / ".codex"
+        codex_home.mkdir(parents=True, exist_ok=True)
+        original_agents = codex_home / "AGENTS.md"
+        original_agents.write_text("# old agents\n", encoding="utf-8")
+
+        code, out, err = run(
+            [
+                str(SYNC),
+                "--repo-root",
+                str(ROOT),
+                "--codex-home",
+                str(codex_home),
+                "--sync-agents-only",
+            ]
+        )
+        require(code == 0, f"sync agents only failed: {err or out}")
+        require((codex_home / "AGENTS.md").exists(), "AGENTS.md should be copied in sync-agents-only mode")
+        require(
+            (codex_home / "AGENTS.md").read_text(encoding="utf-8")
+            == (ROOT / "codex" / "AGENTS.md").read_text(encoding="utf-8"),
+            "sync-agents-only should copy repo codex/AGENTS.md",
+        )
+        backups = list(codex_home.glob("AGENTS.md.backup.*"))
+        require(backups, "sync-agents-only should back up existing AGENTS.md")
+
+    print("[PASS] sync agents only")
 
 
 def test_sync_claude_injects_integration_block():
@@ -261,18 +309,224 @@ def test_capture_text_auto_classifies_input_types():
     print("[PASS] capture_text auto classification and persistence")
 
 
+def test_manage_agents_scan_backup_generate_restore():
+    with tempfile.TemporaryDirectory() as tmp:
+        tmp_path = Path(tmp)
+        workspace_root = tmp_path / "workspace"
+        workspace_root.mkdir(parents=True, exist_ok=True)
+        backup_root = workspace_root / ".agents-backups"
+        control_root = tmp_path / "control"
+        codex_source = control_root / "codex" / "AGENTS.md"
+        codex_runtime = tmp_path / ".codex" / "AGENTS.md"
+        codex_runtime.parent.mkdir(parents=True, exist_ok=True)
+        write(
+            codex_source,
+            "# Codex Global\n\n## Purpose\n- 通用规则。\n\n## Verification Gate\n- `command`\n- `exit_code`\n- `key_output`\n- `timestamp`\n\n## Layering\n- Codex level\n\n## Repo AGENTS Expectations\n- repo-specific\n",
+        )
+        codex_runtime.write_text("# old runtime\n", encoding="utf-8")
+
+        repo_python = make_git_repo(workspace_root / "repo-python")
+        write(repo_python / "README.md", "# Repo Python\n\nA Python service.\n")
+        write(repo_python / "pyproject.toml", "[project]\nname = 'repo-python'\n")
+        (repo_python / "src").mkdir(parents=True, exist_ok=True)
+        (repo_python / "tests").mkdir(parents=True, exist_ok=True)
+
+        repo_node = make_git_repo(workspace_root / "repo-node")
+        write(repo_node / "README.md", "# Repo Node\n\nA web app.\n")
+        write(
+            repo_node / "package.json",
+            json.dumps(
+                {
+                    "name": "repo-node",
+                    "scripts": {"dev": "next dev", "build": "next build", "test": "vitest run"},
+                }
+            ),
+        )
+        local_agents = repo_node / "services" / "api" / "AGENTS.md"
+        write(local_agents, "# Local API Rules\n")
+
+        os.symlink(repo_node, workspace_root / "repo-node-alias")
+
+        code, out, err = run_manage_agents(
+            "scan",
+            "--workspace-root",
+            str(workspace_root),
+            "--backup-root",
+            str(backup_root),
+            "--codex-source",
+            str(codex_source),
+            "--codex-runtime",
+            str(codex_runtime),
+        )
+        require(code == 0, f"scan failed: {err or out}")
+        scan_payload = json.loads(out)
+        require(len(scan_payload["repos"]) == 2, f"expected 2 deduped repos, got {len(scan_payload['repos'])}")
+        require(
+            any(repo["path"].endswith("repo-node") and repo["local_agents"] for repo in scan_payload["repos"]),
+            "repo-node local AGENTS should be discovered",
+        )
+
+        backup_id = "test-backup"
+        code, out, err = run_manage_agents(
+            "backup",
+            "--workspace-root",
+            str(workspace_root),
+            "--backup-root",
+            str(backup_root),
+            "--codex-source",
+            str(codex_source),
+            "--codex-runtime",
+            str(codex_runtime),
+            "--backup-id",
+            backup_id,
+        )
+        require(code == 0, f"backup failed: {err or out}")
+        backup_payload = json.loads(out)
+        require(backup_payload["backup_id"] == backup_id, "backup id mismatch")
+        manifest_path = backup_root / backup_id / "manifest.json"
+        require(manifest_path.exists(), "backup manifest should exist")
+        report_path = backup_root / backup_id / "report.md"
+        require(report_path.exists(), "backup report should exist")
+        manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+        require(
+            any(entry["level"] == "codex_runtime" for entry in manifest["entries"]),
+            "manifest should include codex runtime entry",
+        )
+        require(
+            any(entry["original_path"] == str(local_agents) for entry in manifest["entries"]),
+            "manifest should include local AGENTS entry",
+        )
+        require(
+            any(
+                entry["level"] == "repo_root"
+                and entry["original_path"] == str(repo_python / "AGENTS.md")
+                and not entry["existed_before"]
+                and entry["restore_action"] == "delete"
+                for entry in manifest["entries"]
+            ),
+            "missing root AGENTS should be tracked for delete-on-restore",
+        )
+
+        code, out, err = run_manage_agents(
+            "backup",
+            "--workspace-root",
+            str(workspace_root),
+            "--backup-root",
+            str(backup_root),
+            "--codex-source",
+            str(codex_source),
+            "--codex-runtime",
+            str(codex_runtime),
+            "--backup-id",
+            backup_id,
+        )
+        require(code != 0, "backup should fail when backup_id already exists")
+
+        code, out, err = run_manage_agents(
+            "generate",
+            "--workspace-root",
+            str(workspace_root),
+            "--backup-root",
+            str(backup_root),
+            "--codex-source",
+            str(codex_source),
+            "--codex-runtime",
+            str(codex_runtime),
+            "--backup-id",
+            backup_id,
+        )
+        require(code == 0, f"generate failed: {err or out}")
+        require((repo_python / "AGENTS.md").exists(), "repo-python root AGENTS should be generated")
+        require((repo_node / "AGENTS.md").exists(), "repo-node root AGENTS should be generated")
+        require((repo_node / "services" / "api" / "AGENTS.md").read_text(encoding="utf-8") == "# Local API Rules\n", "local AGENTS should remain untouched")
+        require(
+            codex_runtime.read_text(encoding="utf-8") == codex_source.read_text(encoding="utf-8"),
+            "codex runtime should match codex source after generate",
+        )
+        require(list(codex_runtime.parent.glob("AGENTS.md.backup.*")), "generate should back up existing codex runtime AGENTS")
+        report_text = report_path.read_text(encoding="utf-8")
+        require("## Entries" in report_text and "## Generation Actions" in report_text, "report should retain backup entries and generation actions")
+
+        code, out, err = run_manage_agents(
+            "verify",
+            "--workspace-root",
+            str(workspace_root),
+            "--backup-root",
+            str(backup_root),
+            "--codex-source",
+            str(codex_source),
+            "--codex-runtime",
+            str(codex_runtime),
+        )
+        require(code == 0, f"verify failed: {err or out}")
+
+        write(
+            repo_python / "AGENTS.md",
+            (repo_python / "AGENTS.md").read_text(encoding="utf-8").replace("README.md", "MISSING.md"),
+        )
+        write(
+            repo_node / "AGENTS.md",
+            (repo_node / "AGENTS.md").read_text(encoding="utf-8").replace("npm run test", "npm run lint"),
+        )
+        code, out, err = run_manage_agents(
+            "verify",
+            "--workspace-root",
+            str(workspace_root),
+            "--backup-root",
+            str(backup_root),
+            "--codex-source",
+            str(codex_source),
+            "--codex-runtime",
+            str(codex_runtime),
+        )
+        require(code != 0, "verify should fail for invalid generated path or command references")
+        require("MISSING.md" in out and "npm run lint" in out, "verify should explain invalid path and command source")
+
+        code, out, err = run_manage_agents(
+            "generate",
+            "--workspace-root",
+            str(workspace_root),
+            "--backup-root",
+            str(backup_root),
+            "--codex-source",
+            str(codex_source),
+            "--codex-runtime",
+            str(codex_runtime),
+            "--backup-id",
+            backup_id,
+        )
+        require(code == 0, f"regenerate failed: {err or out}")
+
+        code, out, err = run_manage_agents(
+            "restore",
+            "--backup-root",
+            str(backup_root),
+            "--backup-id",
+            backup_id,
+        )
+        require(code == 0, f"restore failed: {err or out}")
+        require(not (repo_python / "AGENTS.md").exists(), "repo-python AGENTS should be removed on restore")
+        require(not (repo_node / "AGENTS.md").exists(), "repo-node AGENTS should be removed on restore")
+        require(codex_runtime.read_text(encoding="utf-8") == "# old runtime\n", "codex runtime should be restored")
+
+    print("[PASS] manage_agents scan/backup/generate/restore")
+
+
 def main():
     require(BOOTSTRAP.exists(), f"missing bootstrap: {BOOTSTRAP}")
     require(SYNC.exists(), f"missing sync script: {SYNC}")
     require(SYNC_CLAUDE.exists(), f"missing sync script: {SYNC_CLAUDE}")
     require(VERIFY.exists(), f"missing verify script: {VERIFY}")
+    require(MANAGE_AGENTS.exists(), f"missing manage_agents script: {MANAGE_AGENTS}")
 
     test_bootstrap_requires_argument()
     test_sync_requires_entrypoint_file()
     test_sync_renders_template_and_copies_skills()
+    test_sync_agents_only_copies_and_backs_up_agents()
     test_sync_claude_injects_integration_block()
     test_verify_after_full_sync()
     test_capture_text_auto_classifies_input_types()
+    test_manage_agents_scan_backup_generate_restore()
     print("[PASS] all tests")
 
 

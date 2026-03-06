@@ -73,6 +73,7 @@ results+=("$(check cmd_node 'command -v node && command -v npx')")
 
 results+=("$(check codex_home_exists '[[ -d "'"${CODEX_HOME}"'" ]]')")
 results+=("$(check codex_config_exists '[[ -f "'"${CODEX_HOME}"'"/config.toml ]]')")
+results+=("$(check codex_agents_source_exists '[[ -f "'"${REPO_ROOT}"'"/codex/AGENTS.md ]]')")
 results+=("$(check codex_agents_exists '[[ -f "'"${CODEX_HOME}"'"/AGENTS.md ]]')")
 results+=("$(check codex_config_has_mcp 'rg -n "\[mcp_servers\.\"eigenphi-blockchain\"\]" "'"${CODEX_HOME}"'"/config.toml')")
 results+=("$(check codex_config_placeholder_resolved '! rg -n "\$\{EIGENPHI_BACKEND_ROOT\}" "'"${CODEX_HOME}"'"/config.toml')")
@@ -82,6 +83,9 @@ results+=("$(check codex_workflow_exists '[[ -d "'"${CODEX_HOME}"'"/workflow ]]'
 results+=("$(check codex_workflow_rules '[[ -f "'"${CODEX_HOME}"'"/workflow/rules/behaviors.md ]]')")
 results+=("$(check codex_workflow_memory '[[ -f "'"${CODEX_HOME}"'"/workflow/memory/active-tasks.json ]]')")
 results+=("$(check codex_agents_has_gate 'rg -n "P0 强制验证门禁|Verification Gate" "'"${CODEX_HOME}"'"/AGENTS.md')")
+results+=("$(check codex_agents_has_layering 'rg -n "^## Layering$" "'"${CODEX_HOME}"'"/AGENTS.md')")
+results+=("$(check codex_agents_has_repo_expectations 'rg -n "^## Repo AGENTS Expectations$" "'"${CODEX_HOME}"'"/AGENTS.md')")
+results+=("$(check codex_agents_runtime_matches_source 'cmp -s "'"${REPO_ROOT}"'"/codex/AGENTS.md "'"${CODEX_HOME}"'"/AGENTS.md' )")
 results+=("$(check codex_security_scan_script '[[ -x "'"${CODEX_HOME}"'"/workflow/scripts/scan_skill_security.sh ]]')")
 
 for skill in ccwf-session-end ccwf-verification-before-completion ccwf-systematic-debugging ccwf-planning-with-files ccwf-experience-evolution; do

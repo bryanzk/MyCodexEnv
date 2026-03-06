@@ -19,6 +19,12 @@
 - Bootstrap/sync scripts only read `codex/skills/*` when populating `~/.codex/skills/*`.
 - Claude workflow source of truth is `claude/workflow/*`.
 
+## AGENTS Source of Truth
+- Codex 通用层 `AGENTS.md` 的唯一源码是 `codex/AGENTS.md`。
+- `scripts/sync_codex_home.sh --sync-agents-only` 只同步 `codex/AGENTS.md` 到 `~/.codex/AGENTS.md`，不会改写 config / skills / workflow。
+- 多仓库 repo 级 `AGENTS.md` 的批量管理入口是 `python3 scripts/manage_agents.py`。
+- 批量更新前会将现存多级 `AGENTS.md` 备份到 `/Users/kezheng/Codes/CursorDeveloper/.agents-backups/<backup_id>/`。
+
 ## Security Rules
 - Never commit `~/.codex/auth.json`
 - Never commit API keys or tokens
@@ -38,9 +44,16 @@ cd MyCodexEnv
 
 Verification evidence is appended to `TEST_VERIFICATION.md`.
 
+Repo 级 / 多仓库 `AGENTS.md` 验证：
+
+```bash
+python3 scripts/manage_agents.py verify
+```
+
 ## Idempotency
 - Running `bootstrap.sh` multiple times is supported.
 - Existing `~/.codex/config.toml` is backed up before overwrite.
+- Existing `~/.codex/AGENTS.md` is backed up before `--sync-agents-only` overwrite.
 - Existing `~/.claude/CLAUDE.md` is backed up before integration block update.
 
 ## Troubleshooting

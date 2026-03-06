@@ -16,7 +16,27 @@ cd MyCodexEnv
 - 认证不随仓库迁移；新机器执行 `codex login`
 - superpowers 固定版本见 `locks/superpowers.lock`
 - Codex skills 单一来源：`codex/skills/*`（同步到 `~/.codex/skills/*`）
+- Codex 通用层 `AGENTS.md` 唯一源码：`codex/AGENTS.md`（同步到 `~/.codex/AGENTS.md`）
 - Claude workflow 来源：`claude/workflow/*`（同步到 `~/.claude/workflow/*`，通过注入块挂到 `~/.claude/CLAUDE.md`）
+
+## 多仓库 AGENTS 管理
+
+如果你需要为 `/Users/kezheng/Codes/CursorDeveloper` 下多个 repo 批量扫描、备份、生成、恢复与校验 `AGENTS.md`，使用：
+
+```bash
+python3 scripts/manage_agents.py scan
+python3 scripts/manage_agents.py backup --backup-id "$(date +%Y%m%d%H%M%S)"
+python3 scripts/manage_agents.py generate --backup-id "<backup_id>"
+python3 scripts/manage_agents.py verify
+```
+
+- 统一备份目录：`/Users/kezheng/Codes/CursorDeveloper/.agents-backups/`
+- 运行时 Codex 通用层副本：`~/.codex/AGENTS.md`
+- 若只需同步 Codex 通用层到本机运行时：
+
+```bash
+./scripts/sync_codex_home.sh --repo-root "$(pwd)" --sync-agents-only
+```
 
 ## 常用文本记录
 

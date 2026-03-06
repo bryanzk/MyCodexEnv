@@ -6,10 +6,11 @@ REPO_ROOT=""
 CODEX_HOME="${HOME}/.codex"
 EIGENPHI_BACKEND_ROOT=""
 SKIP_SUPERPOWERS_SYNC="false"
+SYNC_AGENTS_ONLY="false"
 
 usage() {
   cat <<USAGE
-Usage: sync_codex_home.sh --repo-root <path> --eigenphi-backend-root <path> [--codex-home <path>] [--skip-superpowers-sync]
+Usage: sync_codex_home.sh --repo-root <path> [--eigenphi-backend-root <path>] [--codex-home <path>] [--skip-superpowers-sync] [--sync-agents-only]
 USAGE
 }
 
@@ -31,6 +32,10 @@ while [[ $# -gt 0 ]]; do
       SKIP_SUPERPOWERS_SYNC="true"
       shift
       ;;
+    --sync-agents-only)
+      SYNC_AGENTS_ONLY="true"
+      shift
+      ;;
     -h|--help)
       usage
       exit 0
@@ -43,14 +48,39 @@ while [[ $# -gt 0 ]]; do
   esac
 done
 
-if [[ -z "${REPO_ROOT}" || -z "${EIGENPHI_BACKEND_ROOT}" ]]; then
-  echo "--repo-root and --eigenphi-backend-root are required" >&2
+if [[ -z "${REPO_ROOT}" ]]; then
+  echo "--repo-root is required" >&2
   usage
   exit 1
 fi
 
 if [[ ! -d "${REPO_ROOT}" ]]; then
   echo "Repo root does not exist: ${REPO_ROOT}" >&2
+  exit 1
+fi
+
+mkdir -p "${CODEX_HOME}"
+
+if [[ "${SYNC_AGENTS_ONLY}" == "true" ]]; then
+  AGENTS_SOURCE="${REPO_ROOT}/codex/AGENTS.md"
+  AGENTS_TARGET="${CODEX_HOME}/AGENTS.md"
+  if [[ ! -f "${AGENTS_SOURCE}" ]]; then
+    echo "Missing AGENTS source: ${AGENTS_SOURCE}" >&2
+    exit 1
+  fi
+  if [[ -f "${AGENTS_TARGET}" ]]; then
+    backup="${AGENTS_TARGET}.backup.$(date +%Y%m%d%H%M%S)"
+    cp "${AGENTS_TARGET}" "${backup}"
+    echo "Backed up existing AGENTS to ${backup}"
+  fi
+  cp "${AGENTS_SOURCE}" "${AGENTS_TARGET}"
+  echo "Codex AGENTS synchronized: ${AGENTS_TARGET}"
+  exit 0
+fi
+
+if [[ -z "${EIGENPHI_BACKEND_ROOT}" ]]; then
+  echo "--eigenphi-backend-root is required unless --sync-agents-only is used" >&2
+  usage
   exit 1
 fi
 
@@ -63,8 +93,6 @@ if [[ ! -f "${EIGENPHI_BACKEND_ROOT}/cmd/mcp-server/main.go" ]]; then
   echo "Missing MCP server entrypoint: ${EIGENPHI_BACKEND_ROOT}/cmd/mcp-server/main.go" >&2
   exit 1
 fi
-
-mkdir -p "${CODEX_HOME}"
 
 CONFIG_TARGET="${CODEX_HOME}/config.toml"
 if [[ -f "${CONFIG_TARGET}" ]]; then
@@ -101,6 +129,11 @@ if [[ -d "${REPO_ROOT}/codex/workflow" ]]; then
 fi
 
 if [[ -f "${REPO_ROOT}/codex/AGENTS.md" ]]; then
+  if [[ -f "${CODEX_HOME}/AGENTS.md" ]]; then
+    backup="${CODEX_HOME}/AGENTS.md.backup.$(date +%Y%m%d%H%M%S)"
+    cp "${CODEX_HOME}/AGENTS.md" "${backup}"
+    echo "Backed up existing AGENTS to ${backup}"
+  fi
   cp "${REPO_ROOT}/codex/AGENTS.md" "${CODEX_HOME}/AGENTS.md"
 fi
 
