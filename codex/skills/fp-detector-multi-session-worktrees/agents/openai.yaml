@@ -1,0 +1,4 @@
+interface:
+  display_name: "FP Detector Worktrees"
+  short_description: "Manage fp-detector across Codex sessions safely"
+  default_prompt: "Use this skill to manage fp-detector with one branch and one worktree per Codex session, avoid master conflicts, and clean up stale worktrees safely."

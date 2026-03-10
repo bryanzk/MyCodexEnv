@@ -1,0 +1,4 @@
+interface:
+  display_name: "Importing Codex Home"
+  short_description: "Merge global Codex config back into repo safely"
+  default_prompt: "Use $importing-codex-home to merge my current ~/.codex changes back into this repository safely."

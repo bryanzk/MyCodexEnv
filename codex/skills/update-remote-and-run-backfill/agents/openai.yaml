@@ -1,0 +1,7 @@
+interface:
+  display_name: "Remote Backfill Deploy"
+  short_description: "SSH 更新远端代码并执行一次 backfill"
+  default_prompt: "Use $update-remote-and-run-backfill to sync the remote fp-detector checkout and run a verified backfill."
+
+policy:
+  allow_implicit_invocation: true

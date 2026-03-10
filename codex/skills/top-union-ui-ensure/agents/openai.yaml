@@ -1,0 +1,4 @@
+interface:
+  display_name: "Top Union UI Ensure"
+  short_description: "确保本地 Top Union UI 可用并使用统一入口"
+  default_prompt: "Use $top-union-ui-ensure to start or verify the local Top Union UI through the single supported entrypoint."
