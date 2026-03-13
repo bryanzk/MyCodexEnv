@@ -1,0 +1,58 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+SKILL_DIR="$(cd "$(dirname "$0")" && pwd)"
+BROWSE_BIN="$SKILL_DIR/dist/browse"
+
+if ! command -v bun >/dev/null 2>&1; then
+  echo "browse setup failed: bun is required but was not found in PATH" >&2
+  exit 1
+fi
+
+ensure_playwright_browser() {
+  (
+    cd "$SKILL_DIR"
+    bun --eval 'import { chromium } from "playwright"; const browser = await chromium.launch(); await browser.close();'
+  ) >/dev/null 2>&1
+}
+
+NEEDS_BUILD=0
+if [ ! -x "$BROWSE_BIN" ]; then
+  NEEDS_BUILD=1
+elif [ -n "$(find "$SKILL_DIR/src" -type f -newer "$BROWSE_BIN" -print -quit 2>/dev/null)" ]; then
+  NEEDS_BUILD=1
+elif [ "$SKILL_DIR/package.json" -nt "$BROWSE_BIN" ]; then
+  NEEDS_BUILD=1
+elif [ -f "$SKILL_DIR/bun.lock" ] && [ "$SKILL_DIR/bun.lock" -nt "$BROWSE_BIN" ]; then
+  NEEDS_BUILD=1
+fi
+
+if [ "$NEEDS_BUILD" -eq 1 ]; then
+  echo "Building browse binary..."
+  (
+    cd "$SKILL_DIR"
+    bun install
+    bun run build
+  )
+fi
+
+if [ ! -x "$BROWSE_BIN" ]; then
+  echo "browse setup failed: binary missing at $BROWSE_BIN" >&2
+  exit 1
+fi
+
+if ! ensure_playwright_browser; then
+  echo "Installing Playwright Chromium..."
+  (
+    cd "$SKILL_DIR"
+    bunx playwright install chromium
+  )
+fi
+
+if ! ensure_playwright_browser; then
+  echo "browse setup failed: Playwright Chromium could not be launched" >&2
+  exit 1
+fi
+
+echo "browse ready."
+echo "  browse: $BROWSE_BIN"

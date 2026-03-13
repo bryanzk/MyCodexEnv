@@ -1254,3 +1254,95 @@ Note: This match is documentation text, not a leaked secret.
 - [x] claude_security_scan_script
 - [x] skills_count_match
 - [x] codex_version
+
+## Dual Env Verification (2026-03-13 10:54:34)
+- codex_home: /var/folders/mf/lxpn1ltx7t97r1v1k92vly1w0000gn/T/tmpbl4bzadr/.codex
+- claude_home: /var/folders/mf/lxpn1ltx7t97r1v1k92vly1w0000gn/T/tmpbl4bzadr/.claude
+- codex_version: 0.104.0
+- repo_skills_count: 82
+- codex_skills_count: 82
+- expected_superpowers_commit: 06b92f3
+- auth_status: authenticated
+
+### Checks
+- [x] os_darwin
+- [x] arch_arm64
+- [x] cmd_codex
+- [x] cmd_go
+- [x] cmd_node
+- [x] codex_home_exists
+- [x] codex_config_exists
+- [x] codex_agents_source_exists
+- [x] codex_agents_exists
+- [x] codex_config_has_mcp
+- [x] codex_config_placeholder_resolved
+- [x] codex_superpowers_git
+- [x] codex_superpowers_commit
+- [x] codex_workflow_exists
+- [x] codex_workflow_rules
+- [x] codex_workflow_memory
+- [x] codex_agents_has_gate
+- [x] codex_agents_has_layering
+- [x] codex_agents_has_repo_expectations
+- [x] codex_agents_runtime_matches_source
+- [x] codex_security_scan_script
+- [x] codex_skill_ccwf-session-end
+- [x] codex_skill_ccwf-verification-before-completion
+- [x] codex_skill_ccwf-systematic-debugging
+- [x] codex_skill_ccwf-planning-with-files
+- [x] codex_skill_ccwf-experience-evolution
+- [x] claude_home_exists
+- [x] claude_main_exists
+- [x] claude_workflow_exists
+- [x] claude_workflow_rules
+- [x] claude_workflow_memory
+- [x] claude_integration_block
+- [x] claude_security_scan_script
+- [x] skills_count_match
+- [x] codex_version
+
+## Dual Env Verification (2026-03-13 10:55:22)
+- codex_home: /var/folders/mf/lxpn1ltx7t97r1v1k92vly1w0000gn/T/tmpsj0p4udk/.codex
+- claude_home: /var/folders/mf/lxpn1ltx7t97r1v1k92vly1w0000gn/T/tmpsj0p4udk/.claude
+- codex_version: 0.104.0
+- repo_skills_count: 82
+- codex_skills_count: 82
+- expected_superpowers_commit: 06b92f3
+- auth_status: authenticated
+
+### Checks
+- [x] os_darwin
+- [x] arch_arm64
+- [x] cmd_codex
+- [x] cmd_go
+- [x] cmd_node
+- [x] codex_home_exists
+- [x] codex_config_exists
+- [x] codex_agents_source_exists
+- [x] codex_agents_exists
+- [x] codex_config_has_mcp
+- [x] codex_config_placeholder_resolved
+- [x] codex_superpowers_git
+- [x] codex_superpowers_commit
+- [x] codex_workflow_exists
+- [x] codex_workflow_rules
+- [x] codex_workflow_memory
+- [x] codex_agents_has_gate
+- [x] codex_agents_has_layering
+- [x] codex_agents_has_repo_expectations
+- [x] codex_agents_runtime_matches_source
+- [x] codex_security_scan_script
+- [x] codex_skill_ccwf-session-end
+- [x] codex_skill_ccwf-verification-before-completion
+- [x] codex_skill_ccwf-systematic-debugging
+- [x] codex_skill_ccwf-planning-with-files
+- [x] codex_skill_ccwf-experience-evolution
+- [x] claude_home_exists
+- [x] claude_main_exists
+- [x] claude_workflow_exists
+- [x] claude_workflow_rules
+- [x] claude_workflow_memory
+- [x] claude_integration_block
+- [x] claude_security_scan_script
+- [x] skills_count_match
+- [x] codex_version

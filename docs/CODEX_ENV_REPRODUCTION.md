@@ -18,6 +18,8 @@
 - Repository source of truth is `codex/skills/*`.
 - Bootstrap/sync scripts only read `codex/skills/*` when populating `~/.codex/skills/*`.
 - Claude workflow source of truth is `claude/workflow/*`.
+- The repository now includes Codex-adapted imports of the `gstack` skills: `plan-ceo-review`, `plan-eng-review`, `review`, `ship`, `retro`, `browse`, `qa`, and `setup-browser-cookies`.
+- `browse` includes supporting code under `codex/skills/browse/*`; first use requires `./setup` in that directory after sync so Bun can build the local binary and install Playwright Chromium.
 
 ## AGENTS Source of Truth
 - Codex 通用层 `AGENTS.md` 的唯一源码是 `codex/AGENTS.md`。

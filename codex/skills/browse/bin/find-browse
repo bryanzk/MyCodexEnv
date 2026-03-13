@@ -1,0 +1,17 @@
+#!/bin/bash
+set -euo pipefail
+
+# Find the Codex browse binary. Echoes path and exits 0, or exits 1 if not found.
+SELF_DIR="$(cd "$(dirname "$0")/.." && pwd)"
+ROOT="$(git rev-parse --show-toplevel 2>/dev/null || true)"
+
+if test -x "$SELF_DIR/dist/browse"; then
+  echo "$SELF_DIR/dist/browse"
+elif [ -n "$ROOT" ] && test -x "$ROOT/codex/skills/browse/dist/browse"; then
+  echo "$ROOT/codex/skills/browse/dist/browse"
+elif test -x "$HOME/.codex/skills/browse/dist/browse"; then
+  echo "$HOME/.codex/skills/browse/dist/browse"
+else
+  echo "ERROR: browse binary not found. Run: cd codex/skills/browse || cd ~/.codex/skills/browse && ./setup" >&2
+  exit 1
+fi

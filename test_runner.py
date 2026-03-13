@@ -111,6 +111,22 @@ def test_sync_renders_template_and_copies_skills():
         expected_skills = count_top_dirs(ROOT / "codex" / "skills")
         actual_skills = count_top_dirs(codex_home / "skills")
         require(actual_skills == expected_skills, f"skills count mismatch: {actual_skills} != {expected_skills}")
+        require(
+            (codex_home / "skills" / "review" / "checklist.md").exists(),
+            "review checklist should be copied with the skill",
+        )
+        require(
+            (codex_home / "skills" / "qa" / "templates" / "qa-report-template.md").exists(),
+            "qa report template should be copied with the skill",
+        )
+        require(
+            (codex_home / "skills" / "qa" / "references" / "issue-taxonomy.md").exists(),
+            "qa reference docs should be copied with the skill",
+        )
+        require(
+            (codex_home / "skills" / "browse" / "bin" / "find-browse").exists(),
+            "browse helper scripts should be copied with the skill",
+        )
 
     print("[PASS] sync render + skills copy")
 

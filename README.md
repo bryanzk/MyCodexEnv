@@ -19,6 +19,21 @@ cd MyCodexEnv
 - Codex 通用层 `AGENTS.md` 唯一源码：`codex/AGENTS.md`（同步到 `~/.codex/AGENTS.md`）
 - Claude workflow 来源：`claude/workflow/*`（同步到 `~/.claude/workflow/*`，通过注入块挂到 `~/.claude/CLAUDE.md`）
 
+## 新增技能
+
+已合并一组从 `garrytan/gstack` 适配过来的 Codex skills：
+
+- `plan-ceo-review`
+- `plan-eng-review`
+- `review`
+- `ship`
+- `retro`
+- `browse`
+- `qa`
+- `setup-browser-cookies`
+
+其中 `browse` 是带 supporting files 的本地浏览器自动化 skill，首次使用前需在 `codex/skills/browse` 或同步后的 `~/.codex/skills/browse` 下执行一次 `./setup`。源码适配版保留在仓库 `codex/skills/*`，上游来源为 MIT License，许可证副本位于 `codex/skills/browse/LICENSE.gstack`。
+
 ## 多仓库 AGENTS 管理
 
 如果你需要为 `/Users/kezheng/Codes/CursorDeveloper` 下多个 repo 批量扫描、备份、生成、恢复与校验 `AGENTS.md`，使用：
