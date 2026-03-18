@@ -13,5 +13,9 @@ ETH_RPC_URL = "https://ethereum.publicnode.com"
 command = "npx"
 args = ["-y", "@modelcontextprotocol/server-sequential-thinking"]
 
+[mcp_servers."chrome-devtools"]
+command = "${NPM_GLOBAL_BIN}/chrome-devtools-mcp"
+args = ["--no-usage-statistics", "--no-performance-crux"]
+
 [features]
 collaboration_modes = true

@@ -107,12 +107,28 @@ if [[ ! -f "${TEMPLATE_PATH}" ]]; then
   exit 1
 fi
 
-escaped_root="$(printf '%s' "${EIGENPHI_BACKEND_ROOT}" | sed 's/[\/&]/\\&/g')"
-rendered_tmp="$(mktemp)"
-sed "s|\${EIGENPHI_BACKEND_ROOT}|${escaped_root}|g" "${TEMPLATE_PATH}" > "${rendered_tmp}"
+if ! command -v npm >/dev/null 2>&1; then
+  echo "npm is required to resolve NPM_GLOBAL_BIN for codex config rendering." >&2
+  exit 1
+fi
 
-if rg -n '\$\{EIGENPHI_BACKEND_ROOT\}' "${rendered_tmp}" >/dev/null 2>&1; then
-  echo "Template rendering failed: unresolved EIGENPHI_BACKEND_ROOT placeholder" >&2
+npm_global_prefix="$(npm prefix -g)"
+if [[ -z "${npm_global_prefix}" ]]; then
+  echo "Failed to resolve npm global prefix." >&2
+  exit 1
+fi
+
+npm_global_bin="${npm_global_prefix}/bin"
+escaped_root="$(printf '%s' "${EIGENPHI_BACKEND_ROOT}" | sed 's/[\/&]/\\&/g')"
+escaped_npm_global_bin="$(printf '%s' "${npm_global_bin}" | sed 's/[\/&]/\\&/g')"
+rendered_tmp="$(mktemp)"
+sed \
+  -e "s|\${EIGENPHI_BACKEND_ROOT}|${escaped_root}|g" \
+  -e "s|\${NPM_GLOBAL_BIN}|${escaped_npm_global_bin}|g" \
+  "${TEMPLATE_PATH}" > "${rendered_tmp}"
+
+if rg -n '\$\{[A-Z0-9_]+\}' "${rendered_tmp}" >/dev/null 2>&1; then
+  echo "Template rendering failed: unresolved placeholder remains in ${rendered_tmp}" >&2
   rm -f "${rendered_tmp}"
   exit 1
 fi

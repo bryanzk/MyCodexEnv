@@ -15,6 +15,8 @@ cd MyCodexEnv
 - 目标平台：macOS ARM（Apple Silicon）
 - 认证不随仓库迁移；新机器执行 `codex login`
 - superpowers 固定版本见 `locks/superpowers.lock`
+- bootstrap 会安装固定版本 `chrome-devtools-mcp@0.20.0`；默认关闭 usage statistics 与 performance CrUX URL 查询
+- 若本机缺少 Google Chrome，bootstrap 会补装 `google-chrome`
 - Codex skills 单一来源：`codex/skills/*`（同步到 `~/.codex/skills/*`）
 - Codex 通用层 `AGENTS.md` 唯一源码：`codex/AGENTS.md`（同步到 `~/.codex/AGENTS.md`）
 - Claude workflow 来源：`claude/workflow/*`（同步到 `~/.claude/workflow/*`，通过注入块挂到 `~/.claude/CLAUDE.md`）

@@ -104,7 +104,11 @@ def test_sync_renders_template_and_copies_skills():
 
         rendered = (codex_home / "config.toml").read_text(encoding="utf-8")
         require("${EIGENPHI_BACKEND_ROOT}" not in rendered, "template placeholder should be replaced")
+        require("${NPM_GLOBAL_BIN}" not in rendered, "npm global bin placeholder should be replaced")
         require(str(backend / "cmd" / "mcp-server" / "main.go") in rendered, "rendered MCP path mismatch")
+        require('[mcp_servers."chrome-devtools"]' in rendered, "chrome-devtools MCP should be rendered")
+        require("--no-usage-statistics" in rendered, "chrome-devtools MCP should disable usage statistics")
+        require("--no-performance-crux" in rendered, "chrome-devtools MCP should disable CrUX lookups")
         require((codex_home / "AGENTS.md").exists(), "AGENTS.md should be copied")
         require((codex_home / "workflow" / "rules" / "behaviors.md").exists(), "codex workflow rules should be copied")
 

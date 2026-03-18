@@ -3,6 +3,7 @@ set -euo pipefail
 
 # 安装并验证 bootstrap 依赖。
 NON_INTERACTIVE="false"
+CHROME_DEVTOOLS_MCP_VERSION="0.20.0"
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
@@ -53,6 +54,33 @@ ensure_cask() {
   brew install --cask "${cask}"
 }
 
+ensure_google_chrome() {
+  if open -Ra "Google Chrome" >/dev/null 2>&1; then
+    return 0
+  fi
+  echo "Installing cask: google-chrome"
+  brew install --cask google-chrome
+}
+
+ensure_npm_package() {
+  local package="$1"
+  local version="$2"
+  local installed_version=""
+
+  installed_version="$(
+    npm list -g --depth=0 --json "${package}" 2>/dev/null \
+      | jq -r --arg package "${package}" '.dependencies[$package].version // empty' \
+      || true
+  )"
+
+  if [[ "${installed_version}" == "${version}" ]]; then
+    return 0
+  fi
+
+  echo "Installing npm package: ${package}@${version}"
+  npm install -g "${package}@${version}"
+}
+
 ensure_homebrew
 
 # 这里使用 Homebrew 统一安装，保证 fresh 机器可复现。
@@ -64,6 +92,8 @@ ensure_formula pnpm
 ensure_formula uv
 ensure_formula go
 ensure_cask codex
+ensure_google_chrome
+ensure_npm_package chrome-devtools-mcp "${CHROME_DEVTOOLS_MCP_VERSION}"
 
 for cmd in git jq rg node npm npx pnpm uv go codex; do
   if ! command -v "${cmd}" >/dev/null 2>&1; then
@@ -71,6 +101,12 @@ for cmd in git jq rg node npm npx pnpm uv go codex; do
     exit 1
   fi
 done
+
+npm_global_bin="$(npm prefix -g)/bin"
+if [[ ! -x "${npm_global_bin}/chrome-devtools-mcp" ]]; then
+  echo "Required MCP binary not found after installation: ${npm_global_bin}/chrome-devtools-mcp" >&2
+  exit 1
+fi
 
 codex_version_raw="$(codex --version | awk '{print $2}')"
 if [[ "${codex_version_raw}" != 0.104.0* ]]; then

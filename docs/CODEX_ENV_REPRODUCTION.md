@@ -13,6 +13,9 @@
 - `claude/workflow/*` -> `~/.claude/workflow/*`
 - `claude/CLAUDE_INTEGRATION_BLOCK.md` -> 注入 `~/.claude/CLAUDE.md`（不覆盖既有内容）
 - `~/.codex/superpowers` pinned by `locks/superpowers.lock`
+- `scripts/install_prereqs.sh` installs pinned `chrome-devtools-mcp@0.20.0` globally via npm
+- `chrome-devtools-mcp` is rendered into `~/.codex/config.toml` with `--no-usage-statistics` and `--no-performance-crux`
+- If Google Chrome is missing, bootstrap installs `google-chrome`
 
 ## Skills Source of Truth
 - Repository source of truth is `codex/skills/*`.
@@ -31,6 +34,7 @@
 - Never commit `~/.codex/auth.json`
 - Never commit API keys or tokens
 - Authentication is machine-local via `codex login`
+- Third-party MCP defaults must avoid `@latest` dynamic execution in committed config; pin versions and disable unnecessary outbound telemetry by default when possible
 
 ## Quick Start
 ```bash
@@ -67,3 +71,6 @@ python3 scripts/manage_agents.py verify
 
 3. `codex login status` not authenticated
 - Run `codex login`.
+
+4. `chrome-devtools-mcp` not found
+- Run `./scripts/install_prereqs.sh` and verify `command -v chrome-devtools-mcp`.
