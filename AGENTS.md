@@ -21,6 +21,7 @@
 
 ## Common Workflows
 - 先阅读 README 或脚本目录，再执行与本仓库匹配的最小验证命令。
+- 新建任何会话时，必须在会话标识、标题或记录中带上当前 repo 的两个字母缩写，并保持同一 repo 内使用一致。
 
 ## Verification
 - 优先运行 `python3 test_runner.py`。

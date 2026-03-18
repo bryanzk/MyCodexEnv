@@ -5,7 +5,8 @@
   At end of day, key items are archived and this file resets.
 
   Format per session:
-  ### SN (~HH:MM) [Project/Topic] Brief description
+  ### SN (~HH:MM) [repo-abbr] Brief description
+  Where `repo-abbr` is the current repo's two-letter abbreviation.
   - What was done (1-2 sentences)
   - Key decisions/discoveries
   - Next steps

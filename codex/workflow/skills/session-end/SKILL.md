@@ -33,12 +33,14 @@ Review the session for valuable learnings:
 
 Append to `memory/today.md`:
 ```markdown
-### SN (HH:MM~) [project/topic]
+### SN (HH:MM~) [repo-abbr] [project/topic]
 - [1-2 sentences of what was done]
 - [Important decisions/discoveries]
 - [Next steps]
 - [Recorded: yes/no - brief description]
 ```
+
+`repo-abbr` must be the current repo's two-letter abbreviation.
 
 ### 2.5. goals.md + projects.md Status Refresh
 
