@@ -141,7 +141,8 @@ rsync -a --delete "${REPO_ROOT}/codex/skills/" "${CODEX_HOME}/skills/"
 
 if [[ -d "${REPO_ROOT}/codex/workflow" ]]; then
   mkdir -p "${CODEX_HOME}/workflow"
-  rsync -a --delete "${REPO_ROOT}/codex/workflow/" "${CODEX_HOME}/workflow/"
+  # workflow/memory 属于运行态热数据，不从仓库模板回灌。
+  rsync -a --delete --exclude 'memory/' "${REPO_ROOT}/codex/workflow/" "${CODEX_HOME}/workflow/"
 fi
 
 if [[ -f "${REPO_ROOT}/codex/AGENTS.md" ]]; then

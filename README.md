@@ -19,7 +19,8 @@ cd MyCodexEnv
 - 若本机缺少 Google Chrome，bootstrap 会补装 `google-chrome`
 - Codex skills 单一来源：`codex/skills/*`（同步到 `~/.codex/skills/*`）
 - Codex 通用层 `AGENTS.md` 唯一源码：`codex/AGENTS.md`（同步到 `~/.codex/AGENTS.md`）
-- Claude workflow 来源：`claude/workflow/*`（同步到 `~/.claude/workflow/*`，通过注入块挂到 `~/.claude/CLAUDE.md`）
+- Codex / Claude workflow 来源分别为 `codex/workflow/*`、`claude/workflow/*`，但都排除 `workflow/memory/` 这类运行态热数据
+- Claude workflow 同步到 `~/.claude/workflow/*`，通过注入块挂到 `~/.claude/CLAUDE.md`
 
 ## 新增技能
 

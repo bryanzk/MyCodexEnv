@@ -17,3 +17,14 @@ tmp/
 
 # Local text capture records
 text_records/
+
+# Local workflow runtime state
+codex/workflow/memory/
+claude/workflow/memory/
+
+# Local planning / verification artifacts
+progress.md
+findings.md
+task_plan.md
+tasks/todo.md
+TEST_VERIFICATION.md

@@ -57,7 +57,8 @@ fi
 
 mkdir -p "${CLAUDE_HOME}"
 mkdir -p "${CLAUDE_HOME}/workflow"
-rsync -a --delete "${WORKFLOW_SOURCE}/" "${CLAUDE_HOME}/workflow/"
+# workflow/memory 属于运行态热数据，不从仓库模板回灌。
+rsync -a --delete --exclude 'memory/' "${WORKFLOW_SOURCE}/" "${CLAUDE_HOME}/workflow/"
 
 CLAUDE_MAIN="${CLAUDE_HOME}/CLAUDE.md"
 if [[ -f "${CLAUDE_MAIN}" ]]; then

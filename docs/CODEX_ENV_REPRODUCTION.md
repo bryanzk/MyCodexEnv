@@ -9,8 +9,8 @@
 - `codex/config.template.toml` -> `~/.codex/config.toml`
 - `codex/AGENTS.md` -> `~/.codex/AGENTS.md`
 - `codex/skills/*` -> `~/.codex/skills/*`
-- `codex/workflow/*` -> `~/.codex/workflow/*`
-- `claude/workflow/*` -> `~/.claude/workflow/*`
+- `codex/workflow/*` -> `~/.codex/workflow/*`（排除 `workflow/memory/`）
+- `claude/workflow/*` -> `~/.claude/workflow/*`（排除 `workflow/memory/`）
 - `claude/CLAUDE_INTEGRATION_BLOCK.md` -> 注入 `~/.claude/CLAUDE.md`（不覆盖既有内容）
 - `~/.codex/superpowers` pinned by `locks/superpowers.lock`
 - `scripts/install_prereqs.sh` installs pinned `chrome-devtools-mcp@0.20.0` globally via npm
@@ -49,6 +49,7 @@ cd MyCodexEnv
 ```
 
 Verification evidence is appended to `TEST_VERIFICATION.md`.
+`TEST_VERIFICATION.md` 属于本地验证证据，默认不提交到 Git。
 
 Repo 级 / 多仓库 `AGENTS.md` 验证：
 
