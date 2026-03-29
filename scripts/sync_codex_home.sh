@@ -75,6 +75,44 @@ if [[ "${SYNC_AGENTS_ONLY}" == "true" ]]; then
   fi
   cp "${AGENTS_SOURCE}" "${AGENTS_TARGET}"
   echo "Codex AGENTS synchronized: ${AGENTS_TARGET}"
+  if [[ -f "${REPO_ROOT}/codex/hooks.json" ]]; then
+    cp "${REPO_ROOT}/codex/hooks.json" "${CODEX_HOME}/hooks.json"
+    echo "Codex hooks config synchronized: ${CODEX_HOME}/hooks.json"
+  fi
+  if [[ -d "${REPO_ROOT}/codex/hooks" ]]; then
+    mkdir -p "${CODEX_HOME}/hooks"
+    rsync -a --delete "${REPO_ROOT}/codex/hooks/" "${CODEX_HOME}/hooks/"
+    echo "Codex hook scripts synchronized: ${CODEX_HOME}/hooks/"
+  fi
+  if [[ -d "${REPO_ROOT}/codex/zsh" ]]; then
+    mkdir -p "${CODEX_HOME}/zsh"
+    rsync -a --delete "${REPO_ROOT}/codex/zsh/" "${CODEX_HOME}/zsh/"
+    echo "Codex zsh helpers synchronized: ${CODEX_HOME}/zsh/"
+  fi
+  CONFIG_TARGET="${CODEX_HOME}/config.toml"
+  if [[ -f "${CONFIG_TARGET}" ]]; then
+    python3 - "${CONFIG_TARGET}" <<'PY'
+from pathlib import Path
+import re
+import sys
+
+path = Path(sys.argv[1])
+text = path.read_text(encoding="utf-8")
+
+if re.search(r"^codex_hooks\s*=", text, flags=re.MULTILINE):
+    updated = re.sub(r"^codex_hooks\s*=.*$", "codex_hooks = true", text, count=1, flags=re.MULTILINE)
+elif "[features]" in text:
+    updated = text.replace("[features]", "[features]\ncodex_hooks = true", 1)
+else:
+    updated = text.rstrip() + "\n\n[features]\ncodex_hooks = true\n"
+
+if updated != text:
+    path.write_text(updated, encoding="utf-8")
+PY
+    echo "Codex hooks feature enabled in existing config: ${CONFIG_TARGET}"
+  else
+    echo "[WARN] Missing ${CONFIG_TARGET}; hooks will activate after the next full config sync." >&2
+  fi
   exit 0
 fi
 
@@ -152,6 +190,25 @@ if [[ -f "${REPO_ROOT}/codex/AGENTS.md" ]]; then
     echo "Backed up existing AGENTS to ${backup}"
   fi
   cp "${REPO_ROOT}/codex/AGENTS.md" "${CODEX_HOME}/AGENTS.md"
+fi
+
+if [[ -f "${REPO_ROOT}/codex/hooks.json" ]]; then
+  if [[ -f "${CODEX_HOME}/hooks.json" ]]; then
+    backup="${CODEX_HOME}/hooks.json.backup.$(date +%Y%m%d%H%M%S)"
+    cp "${CODEX_HOME}/hooks.json" "${backup}"
+    echo "Backed up existing hooks config to ${backup}"
+  fi
+  cp "${REPO_ROOT}/codex/hooks.json" "${CODEX_HOME}/hooks.json"
+fi
+
+if [[ -d "${REPO_ROOT}/codex/hooks" ]]; then
+  mkdir -p "${CODEX_HOME}/hooks"
+  rsync -a --delete "${REPO_ROOT}/codex/hooks/" "${CODEX_HOME}/hooks/"
+fi
+
+if [[ -d "${REPO_ROOT}/codex/zsh" ]]; then
+  mkdir -p "${CODEX_HOME}/zsh"
+  rsync -a --delete "${REPO_ROOT}/codex/zsh/" "${CODEX_HOME}/zsh/"
 fi
 
 if [[ "${SKIP_SUPERPOWERS_SYNC}" == "true" ]]; then

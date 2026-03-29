@@ -19,3 +19,4 @@ args = ["--no-usage-statistics", "--no-performance-crux"]
 
 [features]
 collaboration_modes = true
+codex_hooks = true

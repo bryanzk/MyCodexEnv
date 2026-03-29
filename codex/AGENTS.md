@@ -84,7 +84,7 @@
 ## Workflow Hooks
 - 开始复杂任务前，先运行 `~/.codex/superpowers/.codex/superpowers-codex bootstrap` 并按需加载相关 skill。
 - 复杂任务优先采用：Karpathy -> Planner -> TDD -> Verification 的顺序。
-- 新建任何会话时，必须在会话标识、标题或记录中带上当前 repo 的两个字母缩写，并保持同一 repo 内使用一致。
+- 所有项目的新建会话统一使用命名格式 `<项目缩写>-<YYYYMMDD>-<概要>`；该规则适用于全部对话与会话记录，且同一 repo 内的 `项目缩写` 必须保持稳定一致。
 - 交付前必须重新运行相关验证，不使用旧结果替代 fresh evidence。
 
 ## Repo AGENTS Expectations
