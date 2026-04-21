@@ -75,3 +75,8 @@ python3 scripts/manage_agents.py verify
 
 4. `chrome-devtools-mcp` not found
 - Run `./scripts/install_prereqs.sh` and verify `command -v chrome-devtools-mcp`.
+
+5. `Error starting chat` / `EPERM: operation not permitted, mkdir '/Users/<user>/Documents/...`
+- 这是 macOS 对 `Documents` / `Desktop` 等受保护目录的 TCC 权限拦截，不是仓库配置本身报错。
+- 先把 Codex Desktop 的新会话目标目录改到 `~/Codes/Codex`、`~/Downloads` 或 `~/.codex/worktrees` 这类非受保护路径。
+- 如果必须落到 `Documents` / `Desktop`，在 macOS `系统设置 -> 隐私与安全性 -> 文件与文件夹` 或 `完全磁盘访问权限` 中给 `Codex` 授权后重试。
