@@ -1,0 +1,705 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>EigenPhi 项目业务与代码地图</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,650;9..144,800&family=JetBrains+Mono:wght@400;500;700&family=Noto+Sans+SC:wght@400;500;700;900&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.min.js"></script>
+  <style>
+    :root {
+      --font-body: 'Noto Sans SC', sans-serif;
+      --font-display: 'Fraunces', 'Noto Sans SC', serif;
+      --font-mono: 'JetBrains Mono', monospace;
+      --bg: #f6f1e8;
+      --surface: #fffaf1;
+      --surface-2: #efe6d6;
+      --ink: #211b14;
+      --muted: #766b5c;
+      --line: rgba(40, 31, 20, .12);
+      --line-strong: rgba(40, 31, 20, .22);
+      --red: #b5402d;
+      --red-dim: rgba(181, 64, 45, .11);
+      --green: #2f7557;
+      --green-dim: rgba(47, 117, 87, .12);
+      --blue: #356c91;
+      --blue-dim: rgba(53, 108, 145, .12);
+      --gold: #a66a12;
+      --gold-dim: rgba(166, 106, 18, .12);
+      --violet: #76569b;
+      --violet-dim: rgba(118, 86, 155, .12);
+      --shadow: 0 18px 50px rgba(59, 38, 16, .12);
+    }
+
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #15130f;
+        --surface: #1f1b15;
+        --surface-2: #29231a;
+        --ink: #f2eadc;
+        --muted: #b8a995;
+        --line: rgba(242, 234, 220, .10);
+        --line-strong: rgba(242, 234, 220, .22);
+        --red: #ff8a72;
+        --red-dim: rgba(255, 138, 114, .13);
+        --green: #7fd6ad;
+        --green-dim: rgba(127, 214, 173, .13);
+        --blue: #8ec7ef;
+        --blue-dim: rgba(142, 199, 239, .13);
+        --gold: #f3c46f;
+        --gold-dim: rgba(243, 196, 111, .13);
+        --violet: #c5a4f0;
+        --violet-dim: rgba(197, 164, 240, .13);
+        --shadow: 0 18px 50px rgba(0, 0, 0, .28);
+      }
+    }
+
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      font-family: var(--font-body);
+      color: var(--ink);
+      background:
+        radial-gradient(circle at 15% 10%, var(--red-dim), transparent 30%),
+        radial-gradient(circle at 82% 18%, var(--blue-dim), transparent 34%),
+        radial-gradient(circle at 50% 90%, var(--green-dim), transparent 34%),
+        linear-gradient(180deg, var(--bg), color-mix(in srgb, var(--bg) 88%, var(--surface-2) 12%));
+      overflow-wrap: break-word;
+    }
+    code {
+      font-family: var(--font-mono);
+      font-size: .9em;
+      background: color-mix(in srgb, var(--surface-2) 78%, transparent);
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      padding: 1px 5px;
+    }
+    .shell {
+      display: grid;
+      grid-template-columns: 240px minmax(0, 1fr);
+      min-height: 100vh;
+    }
+    nav {
+      position: sticky;
+      top: 0;
+      align-self: start;
+      height: 100vh;
+      padding: 28px 18px;
+      border-right: 1px solid var(--line);
+      background: color-mix(in srgb, var(--bg) 82%, var(--surface) 18%);
+      backdrop-filter: blur(10px);
+    }
+    nav h2 {
+      font-family: var(--font-display);
+      margin: 0 0 18px;
+      font-size: 22px;
+    }
+    nav a {
+      display: block;
+      color: var(--muted);
+      text-decoration: none;
+      font-size: 13px;
+      padding: 8px 10px;
+      border-radius: 8px;
+    }
+    nav a:hover { background: var(--surface-2); color: var(--ink); }
+    main { min-width: 0; padding: 38px clamp(20px, 4vw, 56px) 70px; }
+    .hero {
+      background: color-mix(in srgb, var(--surface) 88%, var(--gold-dim) 12%);
+      border: 1px solid var(--line-strong);
+      border-radius: 14px;
+      padding: clamp(24px, 5vw, 48px);
+      box-shadow: var(--shadow);
+      position: relative;
+      overflow: hidden;
+    }
+    .hero::after {
+      content: "";
+      position: absolute;
+      inset: auto -14% -38% auto;
+      width: 420px;
+      height: 420px;
+      background: radial-gradient(circle, var(--blue-dim), transparent 64%);
+      pointer-events: none;
+    }
+    h1 {
+      margin: 0;
+      font-family: var(--font-display);
+      font-size: clamp(34px, 6vw, 68px);
+      line-height: .96;
+      letter-spacing: 0;
+    }
+    .subtitle {
+      margin: 18px 0 0;
+      max-width: 880px;
+      color: var(--muted);
+      font-size: 16px;
+      line-height: 1.8;
+    }
+    .kpis {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 14px;
+      margin-top: 28px;
+    }
+    .kpi {
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      padding: 14px;
+      background: color-mix(in srgb, var(--surface) 84%, transparent);
+      min-width: 0;
+    }
+    .kpi b { display: block; font-family: var(--font-display); font-size: 30px; }
+    .kpi span { color: var(--muted); font-size: 12px; }
+    section { margin-top: 34px; }
+    h2 {
+      font-family: var(--font-display);
+      font-size: 31px;
+      margin: 0 0 16px;
+    }
+    h3 {
+      margin: 0 0 10px;
+      font-size: 18px;
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 16px;
+    }
+    .card {
+      min-width: 0;
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 18px;
+    }
+    .card.accent-red { border-top: 4px solid var(--red); }
+    .card.accent-green { border-top: 4px solid var(--green); }
+    .card.accent-blue { border-top: 4px solid var(--blue); }
+    .card.accent-gold { border-top: 4px solid var(--gold); }
+    .card.accent-violet { border-top: 4px solid var(--violet); }
+    .label {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      font-family: var(--font-mono);
+      font-size: 11px;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: .08em;
+      margin-bottom: 8px;
+    }
+    .dot { width: 8px; height: 8px; border-radius: 999px; background: currentColor; display: inline-block; }
+    .summary {
+      color: var(--muted);
+      font-size: 14px;
+      line-height: 1.7;
+      margin: 0 0 12px;
+    }
+    .chips { display: flex; flex-wrap: wrap; gap: 7px; margin-top: 10px; }
+    .chip {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      border: 1px solid var(--line);
+      background: var(--surface-2);
+      border-radius: 999px;
+      padding: 4px 8px;
+    }
+    .table-wrap {
+      overflow-x: auto;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      background: var(--surface);
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      min-width: 920px;
+    }
+    th, td {
+      text-align: left;
+      vertical-align: top;
+      padding: 12px 14px;
+      border-bottom: 1px solid var(--line);
+      font-size: 13px;
+      line-height: 1.55;
+    }
+    th {
+      position: sticky;
+      top: 0;
+      background: color-mix(in srgb, var(--surface-2) 72%, var(--surface) 28%);
+      font-family: var(--font-mono);
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: .08em;
+      color: var(--muted);
+      z-index: 1;
+    }
+    tr:nth-child(even) td { background: color-mix(in srgb, var(--surface-2) 35%, transparent); }
+    td:first-child, th:first-child {
+      position: sticky;
+      left: 0;
+      background: color-mix(in srgb, var(--surface) 92%, var(--surface-2) 8%);
+      z-index: 2;
+      min-width: 190px;
+    }
+    th:first-child { z-index: 3; }
+    .mermaid-wrap {
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      overflow: hidden;
+      position: relative;
+      min-height: 480px;
+    }
+    .zoom-controls {
+      position: absolute;
+      right: 12px;
+      top: 12px;
+      display: flex;
+      gap: 6px;
+      z-index: 5;
+    }
+    .zoom-controls button {
+      width: 32px;
+      height: 32px;
+      border: 1px solid var(--line);
+      background: var(--surface);
+      color: var(--ink);
+      border-radius: 8px;
+      font-family: var(--font-mono);
+      cursor: pointer;
+    }
+    .mermaid-stage {
+      transform-origin: 0 0;
+      transition: transform .15s ease;
+      cursor: grab;
+      padding: 48px 22px 24px;
+      min-width: 1100px;
+    }
+    .mermaid-stage.dragging { cursor: grabbing; }
+    .legend {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      color: var(--muted);
+      font-size: 12px;
+      margin-top: 12px;
+    }
+    .legend span { display: inline-flex; align-items: center; gap: 6px; }
+    .project {
+      margin-top: 18px;
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      background: var(--surface);
+      overflow: hidden;
+    }
+    .project header {
+      padding: 18px 20px;
+      border-bottom: 1px solid var(--line);
+      background: color-mix(in srgb, var(--surface-2) 52%, transparent);
+    }
+    .project header p { margin: 8px 0 0; color: var(--muted); line-height: 1.65; }
+    .module-list {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px;
+      padding: 16px;
+    }
+    .module {
+      min-width: 0;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      padding: 14px;
+      background: color-mix(in srgb, var(--surface) 82%, var(--surface-2) 18%);
+    }
+    .module p { margin: 6px 0 0; color: var(--muted); font-size: 13px; line-height: 1.55; }
+    .module .files {
+      margin-top: 9px;
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+    }
+    .module .files code { width: fit-content; max-width: 100%; }
+    .note {
+      padding: 14px 16px;
+      border: 1px dashed var(--line-strong);
+      border-radius: 12px;
+      color: var(--muted);
+      background: color-mix(in srgb, var(--gold-dim) 45%, transparent);
+      line-height: 1.7;
+    }
+    @keyframes fadeUp { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
+    .hero, section { animation: fadeUp .45s ease both; }
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { animation: none !important; transition: none !important; }
+    }
+    @media (max-width: 980px) {
+      .shell { display: block; }
+      nav {
+        position: sticky;
+        height: auto;
+        overflow-x: auto;
+        white-space: nowrap;
+        padding: 12px;
+        border-right: 0;
+        border-bottom: 1px solid var(--line);
+        z-index: 10;
+      }
+      nav h2 { display: inline-block; margin: 0 12px 0 0; font-size: 17px; }
+      nav a { display: inline-block; }
+      .grid, .module-list, .kpis { grid-template-columns: 1fr; }
+      main { padding: 22px 14px 48px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="shell">
+    <nav>
+      <h2>业务地图</h2>
+      <a href="#overview">总览</a>
+      <a href="#flow">调用关系</a>
+      <a href="#modules">模块索引</a>
+      <a href="#meval">MEVAL</a>
+      <a href="#mevscan">MEVScan</a>
+      <a href="#cli">eigenphi-cli-arb-mvp</a>
+      <a href="#fp">fp-detector</a>
+      <a href="#btp">blocksec-tenderly-parser</a>
+      <a href="#cts">CallTraceSniffer</a>
+      <a href="#asf">adaptive-strategy-filter</a>
+    </nav>
+
+    <main>
+      <div class="hero" id="overview">
+        <div class="label"><span class="dot"></span> EigenPhi engineering system map</div>
+        <h1>从链上数据到 MEV 决策的 7 个项目</h1>
+        <p class="subtitle">这些项目不是同一层级的“应用”。它们分别覆盖链上数据采集、MEV 识别、误报治理、交易解释、新颖交易筛选和终端操作。下面的地图把业务能力、代码模块和项目之间的调用边界放在同一个视图里。</p>
+        <div class="kpis">
+          <div class="kpi"><b>7</b><span>本次检查项目</span></div>
+          <div class="kpi"><b>3</b><span>主要服务形态：Go / Python / Rust</span></div>
+          <div class="kpi"><b>2</b><span>核心实时入口：MEVScan、adaptive live TXR</span></div>
+          <div class="kpi"><b>4</b><span>主要下游消费：fp、CLI、viewer、报告</span></div>
+        </div>
+      </div>
+
+      <section id="flow">
+        <h2>项目调用关系</h2>
+        <div class="mermaid-wrap" data-zoom>
+          <div class="zoom-controls">
+            <button data-zoom-in title="放大">+</button>
+            <button data-zoom-out title="缩小">-</button>
+            <button data-zoom-reset title="重置">0</button>
+          </div>
+          <div class="mermaid-stage">
+            <pre class="mermaid">
+flowchart LR
+  ETH["Ethereum / BSC 节点<br/>JSON-RPC / WS"]:::source
+  MEVAL["MEVAL / eigenphi-backend-go<br/>区块采集 + MCP 工具"]:::core
+  MEVSCAN["MEVScan<br/>trace -> parse -> analyze -> pnl -> review"]:::core
+  BTP["blocksec-tenderly-parser<br/>BlockSec/Tenderly trace 解析"]:::parser
+  CTS["CallTraceSniffer<br/>交易解释 + IR + 可视化"]:::tool
+  FP["fp-detector<br/>三源融合 + FP 规则/LLM + Top Union"]:::quality
+  ASF["adaptive-strategy-filter<br/>新颖度筛选 + Live TXR Top API"]:::novelty
+  CLI["eigenphi-cli-arb-mvp<br/>安全门控 CLI/TUI"]:::client
+  EXT["EigenPhi API / GCS / tx.eigenphi.io<br/>交易分析 JSON / PnL / EigenTx"]:::external
+  DB["PostgreSQL / local snapshots<br/>live_tx_* / fp latest / Top Union"]:::store
+  OUT["报告 / HTML / SVG / JSONL<br/>review boards / MEV viewer / audit"]:::output
+
+  ETH -->|"debug_traceBlockByNumber / block receipts"| MEVSCAN
+  ETH -->|"区块抓取"| MEVAL
+  MEVAL -->|"COS archive + CKafka stream"| MEVSCAN
+  MEVAL -->|"MCP get_eigenphi_* / token flow"| CTS
+  EXT -->|"tx json / storage / pnl"| FP
+  EXT -->|"tx metrics / token flow"| CTS
+  EXT -->|"analyseTransaction payload"| ASF
+  BTP -->|"POST /v1/parse/tx"| FP
+  BTP -->|"BlockSec shape / raw trace"| CTS
+  MEVSCAN -->|"新旧识别结果 / runtime-data / compare dataset"| FP
+  FP -->|"GET /v1/fp/top-profit-percent / vote"| ASF
+  FP -->|"POST /v1/fp/check / high-profit / Top Union"| CLI
+  ASF -->|"GET /api/top / scan / recommend"| CLI
+  CTS -->|"解释报告 / staged fundflow / MEV block HTML"| OUT
+  FP -->|"Top Union UI / daily reports / decisions"| DB
+  ASF -->|"live_tx_seen/core/novelty/top50"| DB
+  CLI -->|"audit JSONL / mock send / review"| OUT
+
+  classDef source fill:#efe6d6,stroke:#a66a12,color:#211b14;
+  classDef core fill:#e7f1ed,stroke:#2f7557,color:#211b14;
+  classDef parser fill:#f6ded8,stroke:#b5402d,color:#211b14;
+  classDef tool fill:#e4eef5,stroke:#356c91,color:#211b14;
+  classDef quality fill:#eee5f6,stroke:#76569b,color:#211b14;
+  classDef novelty fill:#fff0cf,stroke:#a66a12,color:#211b14;
+  classDef client fill:#f4e8dd,stroke:#b5402d,color:#211b14;
+  classDef external fill:#eeeeee,stroke:#766b5c,color:#211b14;
+  classDef store fill:#e9e0d3,stroke:#766b5c,color:#211b14;
+  classDef output fill:#f9f6ef,stroke:#356c91,color:#211b14;
+            </pre>
+          </div>
+        </div>
+        <div class="legend">
+          <span><i class="dot" style="color:var(--green)"></i>核心链路</span>
+          <span><i class="dot" style="color:var(--violet)"></i>质量治理</span>
+          <span><i class="dot" style="color:var(--gold)"></i>新颖度/机会筛选</span>
+          <span><i class="dot" style="color:var(--blue)"></i>解释与可视化</span>
+        </div>
+      </section>
+
+      <section id="modules">
+        <h2>业务模块索引</h2>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>项目</th>
+                <th>业务功能</th>
+                <th>关键模块</th>
+                <th>主要代码文件</th>
+                <th>对外接口 / 被谁调用</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><code>MEVAL</code></td>
+                <td>区块链数据采集 POC；MCP 工具网关；EigenPhi API/stream 访问层。</td>
+                <td>Fetcher、COS/CKafka、MCP stdio、HTTP/SSE/WSS gateway、EigenPhi client。</td>
+                <td><code>cmd/fetcher/main.go</code><br><code>cmd/mcp-server/main.go</code><br><code>internal/eigenphi/*.go</code><br><code>internal/gateway/*.go</code><br><code>internal/storage/*.go</code></td>
+                <td>MCP 工具被 CallTraceSniffer/CLI 侧消费；CKafka/COS 面向下游 MEV 识别。</td>
+              </tr>
+              <tr>
+                <td><code>MEVScan</code></td>
+                <td>Go 版 MEV 识别引擎：trace、parse、analyze、PNL、review。</td>
+                <td>gRPC 服务链、协议 parser、MEV recognizer、PNL/price、reviewer。</td>
+                <td><code>cmd/tracer/service.go</code><br><code>cmd/parser/service.go</code><br><code>cmd/analyzer/service.go</code><br><code>pkg/domain/transforms/*.go</code><br><code>pkg/parser/protocols/*</code></td>
+                <td>结果/调试数据进入 fp-detector 对比与误报治理；替代旧 <code>pipeline-ts</code>。</td>
+              </tr>
+              <tr>
+                <td><code>eigenphi-cli-arb-mvp</code></td>
+                <td>终端优先的套利 CLI/TUI，强调离线、审计和安全门控。</td>
+                <td>CLI grammar、TUI 状态机、risk gates、adaptive top 接入、fp-detector 接入、MCP stream 分析。</td>
+                <td><code>src/main.rs</code><br><code>src/cli/*.rs</code><br><code>src/tui/*.rs</code><br><code>src/app/adaptive_top.rs</code><br><code>src/app/fp_detector.rs</code><br><code>src/mcp/eigenphi.rs</code></td>
+                <td>调用 adaptive-strategy-filter 的 <code>/api/top*</code>；调用 fp-detector 的 <code>/v1/fp/*</code>；可调用本地 MCP。</td>
+              </tr>
+              <tr>
+                <td><code>fp-detector</code></td>
+                <td>DeFi 高 PnL 误报检测；三源融合；Top Union review / dashboard / report。</td>
+                <td>DetectorService、规则引擎、LLM fallback、BlockSec/EigenPhi clients、Top Union、MEVScan compare。</td>
+                <td><code>src/fp_detector/server/app.py</code><br><code>server/detector_service.py</code><br><code>false_positive.py</code><br><code>server/top_union_dashboard_service.py</code><br><code>server/mevscan_compare_service.py</code></td>
+                <td>读取 EigenPhi API/GCS 和 blocksec-tenderly-parser；对 CLI/ASF 暴露 FP 与 Top1% 接口。</td>
+              </tr>
+              <tr>
+                <td><code>blocksec-tenderly-parser</code></td>
+                <td>把 BlockSec/Tenderly trace 统一解析成稳定 ParseResult。</td>
+                <td>FastAPI/CLI、strategy fallback、Tenderly mapping、Playwright extraction、EigenPhi enrich。</td>
+                <td><code>src/blocksec_tenderly_parser/http_api.py</code><br><code>parser_service.py</code><br><code>tenderly_client.py</code><br><code>playwright_extractor.py</code><br><code>contracts.py</code></td>
+                <td>fp-detector 调用 <code>POST /v1/parse/tx</code>；CallTraceSniffer 也可复用解析结果。</td>
+              </tr>
+              <tr>
+                <td><code>CallTraceSniffer</code></td>
+                <td>交易解释工作台：IR V1、Mermaid DAG、tx metrics、MEV block viewer、语义报告。</td>
+                <td>Flask API、BlockSec adapter、IR builder、Mermaid、Dune/EigenPhi/RPC metrics、MCP token flow。</td>
+                <td><code>src/calltrace/api/routes.py</code><br><code>services/analysis_service.py</code><br><code>services/ir_v1_blocksec.py</code><br><code>services/tx_metrics_service.py</code><br><code>services/mev_block_service.py</code></td>
+                <td>调用 blocksec-tenderly-parser、EigenPhi GCS/API、Dune、RPC、MEVAL MCP；输出 HTML/SVG/Markdown。</td>
+              </tr>
+              <tr>
+                <td><code>adaptive-strategy-filter</code></td>
+                <td>从 EigenPhi JSON/SVG 或实时 TXR 中筛选新颖 Top20/Top50 机会并提供 API/UI。</td>
+                <td>encoding、novelty scoring、candidate gates、evidence pack、Live TXR collector、Top API。</td>
+                <td><code>pipeline/run_daily.py</code><br><code>gates/gates_v1.py</code><br><code>encoding/tx_encoding_v1.py</code><br><code>web/live_txr_app.py</code><br><code>storage/live_txr_*.py</code></td>
+                <td>消费 EigenPhi payload 与 fp-detector Top1%；向 CLI 暴露 <code>/api/top</code> / <code>/api/top/scan</code>。</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section id="meval" class="project">
+        <header>
+          <div class="label"><span class="dot"></span> MEVAL / eigenphi-backend-go</div>
+          <h2>链上采集与 MCP 网关</h2>
+          <p>业务上承担两类能力：一是从链节点抓区块并写入 COS/CKafka；二是把 EigenPhi/链上查询封装成 MCP server 与 HTTP/SSE/WSS gateway，给其他工具调用。</p>
+        </header>
+        <div class="module-list">
+          <div class="module"><h3>区块采集 Fetcher</h3><p>从 Ethereum/BSC 节点获取区块、交易、receipt，准备归档和实时流。</p><div class="files"><code>cmd/fetcher/main.go</code><code>internal/blockchain/client.go</code><code>internal/processor/block_processor.go</code><code>internal/config/config.go</code></div></div>
+          <div class="module"><h3>存储与消息队列</h3><p>把区块 JSON 归档到 COS，并通过 Kafka 发布下游实时事件。</p><div class="files"><code>internal/storage/cos.go</code><code>internal/storage/kafka.go</code><code>configs/config.yaml</code><code>deployments/k8s/deployment.yaml</code></div></div>
+          <div class="module"><h3>MCP 工具服务</h3><p>提供最新区块、交易查询、EigenPhi MEV、token flow graph 等工具。</p><div class="files"><code>cmd/mcp-server/main.go</code><code>internal/eigenphi/client.go</code><code>internal/eigenphi/analysis.go</code><code>internal/eigenphi/block_mev_list.go</code></div></div>
+          <div class="module"><h3>HTTP/SSE/WSS Gateway</h3><p>把 stdio MCP server 变成可远程调用的网关，包含 API key、限流、stream。</p><div class="files"><code>cmd/mcp-http-gateway/main.go</code><code>cmd/mcp-wss-gateway/main.go</code><code>internal/gateway/http_server.go</code><code>internal/gateway/server.go</code></div></div>
+        </div>
+      </section>
+
+      <section id="mevscan" class="project">
+        <header>
+          <div class="label"><span class="dot"></span> MEVScan</div>
+          <h2>MEV 识别与 PNL 计算引擎</h2>
+          <p>业务主线是 6 步 pipeline：tracer 调 Erigon，parser 识别 DeFi action，analyzer 识别 MEV，calculator 计算币本位 PNL，reviewer 做质量审查，distributor 分发结果。</p>
+        </header>
+        <div class="module-list">
+          <div class="module"><h3>微服务入口</h3><p>每个步骤有独立 gRPC 服务入口；orchestrator 可串联全流程。</p><div class="files"><code>cmd/tracer/service.go</code><code>cmd/parser/service.go</code><code>cmd/analyzer/service.go</code><code>cmd/calculator/service.go</code><code>cmd/reviewer/service.go</code><code>cmd/orchestrator/pipeline.go</code></div></div>
+          <div class="module"><h3>领域模型与纯函数变换</h3><p>把每步输入/输出变成可测试的领域变换，支撑 debug JSON 超集原则。</p><div class="files"><code>pkg/domain/events/*.go</code><code>pkg/domain/transforms/parse_actions.go</code><code>pkg/domain/transforms/analyze_mevs.go</code><code>pkg/domain/transforms/calculate_pnl.go</code><code>pkg/domain/transforms/review_mevs.go</code></div></div>
+          <div class="module"><h3>协议解析</h3><p>对 Swap/Liquidity/Lending 等 DeFi action 做协议级解析。</p><div class="files"><code>pkg/parser/parser.go</code><code>pkg/parser/registry.go</code><code>pkg/parser/protocols/uniswap_v2/*</code><code>pkg/parser/protocols/aave_v2/*</code><code>pkg/parser/protocols/curve/*</code></div></div>
+          <div class="module"><h3>MEV 识别与审查</h3><p>套利用图和循环检测；reviewer 叠加地址组、实体误报、余额规则和价格规则。</p><div class="files"><code>pkg/recognizer/arbitrage/graph.go</code><code>pkg/recognizer/arbitrage/cycle.go</code><code>pkg/recognizer/arbitrage/arbitrageur.go</code><code>cmd/reviewer/*_config.go</code><code>cmd/replay-review/main.go</code></div></div>
+          <div class="module"><h3>价格与 PNL</h3><p>价格快照、Chainlink、TWAP、Uniswap V2/V4 等路径用于 USD PNL 和审查。</p><div class="files"><code>pkg/price/fetcher.go</code><code>pkg/price/chainlink.go</code><code>pkg/price/uniswap_v2.go</code><code>pkg/reviewer/pricing.go</code><code>cmd/pricer/service.go</code></div></div>
+          <div class="module"><h3>gRPC 合约</h3><p>服务之间通过 protobuf/generated Go 类型通信。</p><div class="files"><code>pkg/protocol/*.pb.go</code><code>pkg/protocol/*_grpc.pb.go</code><code>pkg/protocol/README.md</code></div></div>
+        </div>
+      </section>
+
+      <section id="cli" class="project">
+        <header>
+          <div class="label"><span class="dot"></span> eigenphi-cli-arb-mvp</div>
+          <h2>安全门控的套利 CLI/TUI</h2>
+          <p>它不是识别引擎，而是把机会发现、推荐、过滤、模拟、审计和人工确认串成终端工作流。MVP 明确禁止自动签名/发送，send 只允许 mock channel。</p>
+        </header>
+        <div class="module-list">
+          <div class="module"><h3>CLI 命令契约</h3><p>Headless 管道：scan、build、send、review、stream、watch、mev filter。</p><div class="files"><code>src/main.rs</code><code>src/cli/arb.rs</code><code>src/cli/stream.rs</code><code>src/cli/watch.rs</code><code>docs/contracts/cli.md</code></div></div>
+          <div class="module"><h3>TUI 状态机</h3><p>ratatui 交互界面，负责导航、看板、stream row、确认门控。</p><div class="files"><code>src/tui/mod.rs</code><code>src/tui/state.rs</code><code>src/tui/stream.rs</code><code>src/tui/tx_svg.rs</code><code>src/tui/theme.rs</code></div></div>
+          <div class="module"><h3>业务应用层</h3><p>把 adaptive top、推荐、venue resolver、fp detector、stage audit 组合成应用流程。</p><div class="files"><code>src/app/adaptive_top.rs</code><code>src/app/recommendation_pipeline.rs</code><code>src/app/recommendation_input.rs</code><code>src/app/fp_detector.rs</code><code>src/app/stage_runner.rs</code></div></div>
+          <div class="module"><h3>安全与审计</h3><p>mode gate、risk engine、append-only audit 保证高风险路径不可隐式发生。</p><div class="files"><code>src/app/gates.rs</code><code>src/domain/risk_engine.rs</code><code>src/audit/writer.rs</code><code>docs/safety-net/en/README.md</code></div></div>
+          <div class="module"><h3>外部集成</h3><p>本地-only URL 安全门，接入 ASF、fp-detector、MCP/EigenPhi web。</p><div class="files"><code>src/mcp/eigenphi.rs</code><code>src/eigenphi_web/*.rs</code><code>src/app/service_host.rs</code><code>src/app/semantic_report.rs</code></div></div>
+        </div>
+      </section>
+
+      <section id="fp" class="project">
+        <header>
+          <div class="label"><span class="dot"></span> fp-detector</div>
+          <h2>误报检测与 Top Union 复核系统</h2>
+          <p>业务核心是把 EigenPhi、EigenPhi Storage、BlockSec parser 三路数据融合，先走规则，再在需要时走 LLM，产出 <code>fp_status=true/false/unknown</code>，并提供高利润/Top Union 复核界面。</p>
+        </header>
+        <div class="module-list">
+          <div class="module"><h3>FastAPI 服务与路由</h3><p>暴露 check、context、writeback、manual rules、Top Union、MEVScan compare 等接口。</p><div class="files"><code>src/fp_detector/server/app.py</code><code>src/fp_detector/server/models.py</code><code>src/fp_detector/server/config.py</code></div></div>
+          <div class="module"><h3>三源融合检测</h3><p>聚合 BlockSec、EigenPhi API、EigenPhi Storage，处理 FULL/REDUCED/MINIMAL degrade。</p><div class="files"><code>src/fp_detector/server/detector_service.py</code><code>server/eigenphi_client.py</code><code>server/storage_client.py</code><code>server/blocksec_client.py</code></div></div>
+          <div class="module"><h3>规则与 LLM</h3><p>构建 profile，执行 false positive rules；规则不终态时可调用 LLM fallback。</p><div class="files"><code>src/fp_detector/false_positive.py</code><code>src/fp_detector/llm/false_positive.py</code><code>src/fp_detector/llm/openai_chat.py</code><code>src/fp_detector/dynamic_rules.py</code></div></div>
+          <div class="module"><h3>Top Union / Dashboard</h3><p>按 Profit/Revenue Top1% union 口径生成复核列表、session、preview、日报。</p><div class="files"><code>server/top_union_dashboard_service.py</code><code>src/fp_detector/top_union_selection.py</code><code>scripts/daily_top_union_fp_report.py</code><code>scripts/export_top_union_dashboard.py</code></div></div>
+          <div class="module"><h3>MEVScan Compare</h3><p>比较新旧 MEVScan / detector 结果，用于定位新增 FP、旧 false gap。</p><div class="files"><code>server/mevscan_compare_service.py</code><code>server/mevscan_compare_detector.py</code><code>scripts/build_top_union_mevscan_compare_dataset.py</code></div></div>
+        </div>
+      </section>
+
+      <section id="btp" class="project">
+        <header>
+          <div class="label"><span class="dot"></span> blocksec-tenderly-parser</div>
+          <h2>BlockSec / Tenderly 解析适配器</h2>
+          <p>它把不同 trace 来源变成统一 <code>ParseResult</code>，解决 fp-detector 和分析工具不想直接处理 Playwright、BlockSec cookie、Tenderly JSON-RPC 差异的问题。</p>
+        </header>
+        <div class="module-list">
+          <div class="module"><h3>HTTP API / CLI</h3><p>命令行和 FastAPI 服务入口，核心接口是 <code>POST /v1/parse/tx</code>。</p><div class="files"><code>src/blocksec_tenderly_parser/http_api.py</code><code>src/blocksec_tenderly_parser/cli.py</code><code>src/blocksec_tenderly_parser/contracts.py</code></div></div>
+          <div class="module"><h3>策略执行与 fallback</h3><p>支持 auto/playwright/api/tenderly 策略，失败时合并 error 与 fallback payload。</p><div class="files"><code>src/blocksec_tenderly_parser/parser_service.py</code><code>src/blocksec_tenderly_parser/api_fallback_client.py</code><code>src/blocksec_tenderly_parser/playwright_extractor.py</code></div></div>
+          <div class="module"><h3>Tenderly 转 BlockSec shape</h3><p>调用 Tenderly gateway 并把 trace 映射到 BlockSec 兼容字段，可选 EigenPhi enrich。</p><div class="files"><code>src/blocksec_tenderly_parser/tenderly_client.py</code><code>src/blocksec_tenderly_parser/trace_contract.py</code><code>src/blocksec_tenderly_parser/trace_normalization_usecase.py</code></div></div>
+          <div class="module"><h3>配置、校验、观测</h3><p>管理 cookie、timeout、allowed hosts、OTel/payload archive。</p><div class="files"><code>src/blocksec_tenderly_parser/settings.py</code><code>src/blocksec_tenderly_parser/validators.py</code><code>src/blocksec_tenderly_parser/observability/*.py</code></div></div>
+        </div>
+      </section>
+
+      <section id="cts" class="project">
+        <header>
+          <div class="label"><span class="dot"></span> CallTraceSniffer</div>
+          <h2>交易解释、IR 与可视化工作台</h2>
+          <p>它把 BlockSec/EigenPhi/Dune/RPC/MCP 串起来，面向分析师输出 IR V1、Mermaid DAG、tx metrics、MEV block viewer、语义树和 Markdown 报告。</p>
+        </header>
+        <div class="module-list">
+          <div class="module"><h3>Flask API</h3><p>注册交易分析、simulation、batch、IR、MEV block、tx metrics 等接口。</p><div class="files"><code>run.py</code><code>src/calltrace/app.py</code><code>src/calltrace/api/routes.py</code><code>src/calltrace/api/validators.py</code></div></div>
+          <div class="module"><h3>交易分析主链路</h3><p>抓 trace、生成 IR、构建 Mermaid DAG，并缓存结果。</p><div class="files"><code>services/analysis_service.py</code><code>services/blocksec_adapter.py</code><code>services/extractor.py</code><code>services/ir_v1_blocksec.py</code><code>services/mermaid_dag.py</code></div></div>
+          <div class="module"><h3>Simulation 与 cookies</h3><p>构造 BlockSec simulation 请求，解析 simulation URL，读取 trace。</p><div class="files"><code>services/blocksec_simulation.py</code><code>local/tenderly/*.py</code><code>scripts/extract/simulate_blocksec.py</code></div></div>
+          <div class="module"><h3>指标聚合</h3><p>把 EigenPhi JSON、Dune builder 数据、RPC blockTxCount 聚合到 tx metrics。</p><div class="files"><code>services/tx_metrics_service.py</code><code>services/dune_service.py</code><code>scripts/tx_metrics_call.py</code></div></div>
+          <div class="module"><h3>MEV block 与 token flow</h3><p>通过 MCP/EigenPhi 拉 block MEV 与 token flow SVG，生成本地 HTML viewer。</p><div class="files"><code>services/mev_block_service.py</code><code>scripts/generate_mev_block_html.py</code><code>scripts/eigenphi_token_flow_graph.py</code><code>token_flow_graphs/*/index.html</code></div></div>
+          <div class="module"><h3>语义报告</h3><p>从 payload 生成 staged fundflow tree、dynamic semantic tree、分析师报告。</p><div class="files"><code>services/staged_fundflow_tree.py</code><code>services/semantic_report.py</code><code>services/tx_hash_semantic_pipeline.py</code><code>scripts/parse/*.py</code></div></div>
+        </div>
+      </section>
+
+      <section id="asf" class="project">
+        <header>
+          <div class="label"><span class="dot"></span> adaptive-strategy-filter</div>
+          <h2>新颖交易筛选与 Live TXR Top API</h2>
+          <p>它把 EigenPhi analyseTransaction JSON/SVG 或实时交易流编码成特征，计算 novelty，筛出 Top20/Top50，并把机会转换为 eigen-cli 可消费的 <code>ArbOpportunity</code> 形状。</p>
+        </header>
+        <div class="module-list">
+          <div class="module"><h3>离线 batch pipeline</h3><p>读取本地 tx_hashes、json、svg，编码交易，筛选 Top20，生成证据包。</p><div class="files"><code>src/adaptive_strategy_filter/pipeline/run_daily.py</code><code>ingest/local_fs.py</code><code>ingest/extractors.py</code><code>evidence/evidence_items_v1.py</code></div></div>
+          <div class="module"><h3>编码与评分</h3><p>构造 TxEncoding，计算 rarity/HHI/scalar score，硬去重和 candidate gates。</p><div class="files"><code>encoding/tx_encoding_v1.py</code><code>encoding/fingerprints.py</code><code>metrics/net_inflow_proxy.py</code><code>gates/gates_v1.py</code><code>history/rolling.py</code></div></div>
+          <div class="module"><h3>本地 Web / Top API</h3><p>展示 Top20 详情，并提供 <code>/api/top</code> 给 CLI Scan Tab。</p><div class="files"><code>web/app.py</code><code>web/views.py</code><code>tests/test_api_top_endpoint.py</code><code>tests/test_top_contract_api.py</code></div></div>
+          <div class="module"><h3>Live TXR 实时流</h3><p>实时收集 tx hash，拉 EigenPhi PNL/analyze，过滤 bot list，维护 DB 当前榜单。</p><div class="files"><code>web/live_txr_app.py</code><code>live_txr/collector.py</code><code>live_txr/pnl.py</code><code>live_txr/tx_analyze.py</code><code>storage/live_txr_writer.py</code><code>storage/live_txr_reader.py</code></div></div>
+          <div class="module"><h3>fp-detector 对接</h3><p>消费 fp-detector Top1% FP 口径，避免把高置信误报继续推荐给下游。</p><div class="files"><code>docs/FP_TOP1P_INTEGRATION.md</code><code>scripts/analyze_high_pnl_false_positive.py</code><code>knowledge/notes/fp-top1p-architecture.md</code></div></div>
+        </div>
+      </section>
+
+      <section>
+        <h2>阅读结论</h2>
+        <div class="grid">
+          <div class="card accent-green">
+            <h3>业务主链路</h3>
+            <p class="summary">MEVAL/MEVScan 处在数据与识别底座；fp-detector 负责质量治理；adaptive-strategy-filter 负责“哪些机会值得看”；eigenphi-cli-arb-mvp 是人工操作面。</p>
+          </div>
+          <div class="card accent-blue">
+            <h3>辅助分析链路</h3>
+            <p class="summary">blocksec-tenderly-parser 和 CallTraceSniffer 更像“解释/诊断层”：前者统一 trace 输入，后者把交易转成 IR、图、报告和 block viewer。</p>
+          </div>
+        </div>
+        <p class="note">本页按当前本地代码静态扫描生成：README/AGENTS 确定业务边界，入口文件和路由确定对外接口，核心 service/parser/transform 文件确定模块实现位置。没有执行各服务，也没有访问外部 API。</p>
+      </section>
+    </main>
+  </div>
+
+  <script>
+    mermaid.initialize({
+      startOnLoad: true,
+      theme: 'base',
+      look: 'classic',
+      themeVariables: {
+        fontFamily: 'JetBrains Mono, monospace',
+        primaryColor: '#fffaf1',
+        primaryTextColor: '#211b14',
+        primaryBorderColor: '#766b5c',
+        lineColor: '#766b5c',
+        secondaryColor: '#efe6d6',
+        tertiaryColor: '#f6f1e8'
+      }
+    });
+
+    function initZoom() {
+      document.querySelectorAll('[data-zoom]').forEach((wrap) => {
+        const stage = wrap.querySelector('.mermaid-stage');
+        const plus = wrap.querySelector('[data-zoom-in]');
+        const minus = wrap.querySelector('[data-zoom-out]');
+        const reset = wrap.querySelector('[data-zoom-reset]');
+        let scale = 1;
+        let x = 0;
+        let y = 0;
+        let dragging = false;
+        let startX = 0;
+        let startY = 0;
+        const render = () => {
+          stage.style.transform = `translate(${x}px, ${y}px) scale(${scale})`;
+        };
+        const zoom = (delta) => {
+          scale = Math.min(2.4, Math.max(0.45, +(scale + delta).toFixed(2)));
+          render();
+        };
+        plus.addEventListener('click', () => zoom(.15));
+        minus.addEventListener('click', () => zoom(-.15));
+        reset.addEventListener('click', () => { scale = 1; x = 0; y = 0; render(); });
+        wrap.addEventListener('wheel', (event) => {
+          if (!event.ctrlKey && !event.metaKey) return;
+          event.preventDefault();
+          zoom(event.deltaY < 0 ? .12 : -.12);
+        }, { passive: false });
+        stage.addEventListener('pointerdown', (event) => {
+          dragging = true;
+          stage.setPointerCapture(event.pointerId);
+          stage.classList.add('dragging');
+          startX = event.clientX - x;
+          startY = event.clientY - y;
+        });
+        stage.addEventListener('pointermove', (event) => {
+          if (!dragging) return;
+          x = event.clientX - startX;
+          y = event.clientY - startY;
+          render();
+        });
+        stage.addEventListener('pointerup', () => {
+          dragging = false;
+          stage.classList.remove('dragging');
+        });
+      });
+    }
+    window.addEventListener('load', () => setTimeout(initZoom, 300));
+  </script>
+</body>
+</html>
