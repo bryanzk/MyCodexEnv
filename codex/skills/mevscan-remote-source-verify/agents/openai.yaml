@@ -1,0 +1,4 @@
+interface:
+  display_name: "MEVScan Remote Source Verify"
+  short_description: "Verify tx-hash MEV status on mevscan-source"
+  default_prompt: "Use $mevscan-remote-source-verify to verify a tx hash on mevscan-source; the skill should auto-resolve the block from public RPC and check whether the transaction appears in MEV reports."

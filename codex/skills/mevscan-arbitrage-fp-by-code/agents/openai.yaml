@@ -1,0 +1,4 @@
+interface:
+  display_name: "MEVScan Arbitrage FP by Code"
+  short_description: "Explain MEVScan arbitrage misses by code"
+  default_prompt: "Use $mevscan-arbitrage-fp-by-code to explain why a transaction was or was not recognized as arbitrage in MEVScan."

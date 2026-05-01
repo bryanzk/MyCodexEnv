@@ -1,0 +1,4 @@
+interface:
+  display_name: "Sandwich FP by Code"
+  short_description: "Explain pipeline-ts sandwich false positives"
+  default_prompt: "Use $sandwich-fp-by-code to explain why a transaction was or was not recognized as a sandwich role in pipeline-ts."

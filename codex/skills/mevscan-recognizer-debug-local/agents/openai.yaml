@@ -1,0 +1,4 @@
+interface:
+  display_name: "MEVScan Recognizer Debug Local"
+  short_description: "Local MEVScan recognizer debug flow"
+  default_prompt: "Use $mevscan-recognizer-debug-local to debug MEVScan recognizer decisions without committing temporary instrumentation."

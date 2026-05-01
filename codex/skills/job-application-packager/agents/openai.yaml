@@ -1,0 +1,4 @@
+interface:
+  display_name: "Job App Packager"
+  short_description: "Build company-specific application packs"
+  default_prompt: "Use $job-application-packager to turn this job page into a company folder with a tailored PDF resume and form-answer document."

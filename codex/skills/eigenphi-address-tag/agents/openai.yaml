@@ -1,0 +1,4 @@
+interface:
+  display_name: "Eigenphi Address Tag"
+  short_description: "Query local tags first, then fall back to scan page tags when needed"
+  default_prompt: "Use $eigenphi-address-tag to query an address tag or label from the local eigenphi-analyse-transaction repo, adding a tx hash when tx-context tags are needed; if nothing is found locally, fall back to the explorer address page tag."

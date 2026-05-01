@@ -1,0 +1,2058 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>MEVScan FP TX Review Board</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #f5f1e8;
+      --bg-deep: #e8dfcf;
+      --panel: rgba(255, 250, 242, 0.86);
+      --panel-strong: rgba(255, 253, 248, 0.94);
+      --ink: #1e1e1a;
+      --muted: #5b584f;
+      --line: rgba(42, 33, 20, 0.12);
+      --accent: #0f6d63;
+      --accent-soft: rgba(15, 109, 99, 0.12);
+      --warn: #9a3412;
+      --warn-soft: rgba(154, 52, 18, 0.12);
+      --gold: #9b7c18;
+      --gold-soft: rgba(155, 124, 24, 0.16);
+      --rose: #7b1e3f;
+      --shadow: 0 30px 90px rgba(60, 42, 22, 0.12);
+      --radius-xl: 28px;
+      --radius-lg: 20px;
+      --radius-md: 14px;
+    }
+
+    * { box-sizing: border-box; }
+
+    html { scroll-behavior: smooth; height: 100%; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      color: var(--ink);
+      background:
+        radial-gradient(circle at 0% 0%, rgba(15, 109, 99, 0.13), transparent 24%),
+        radial-gradient(circle at 100% 0%, rgba(123, 30, 63, 0.12), transparent 28%),
+        linear-gradient(180deg, var(--bg) 0%, var(--bg-deep) 100%);
+      font-family: "Plus Jakarta Sans", sans-serif;
+    }
+
+    body::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      background-image:
+        linear-gradient(rgba(20, 16, 12, 0.028) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(20, 16, 12, 0.028) 1px, transparent 1px);
+      background-size: 48px 48px;
+      opacity: 0.33;
+      mask-image: linear-gradient(180deg, rgba(0,0,0,0.35), rgba(0,0,0,0.08));
+    }
+
+    a { color: inherit; }
+
+    .page {
+      width: min(100%, 1760px);
+      max-width: none;
+      margin: 0 auto;
+      padding: 28px clamp(12px, 1.6vw, 18px) 56px;
+    }
+
+    .dashboard-top {
+      display: grid;
+      gap: 18px;
+      margin-bottom: 18px;
+    }
+
+    .dashboard-top .hero,
+    .dashboard-top .controls,
+    .dashboard-top .summary-grid {
+      margin-bottom: 0;
+    }
+
+    .hero {
+      display: grid;
+      grid-template-columns: 1.35fr 0.65fr;
+      gap: 18px;
+      margin-bottom: 18px;
+    }
+
+    .panel {
+      position: relative;
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: var(--radius-xl);
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(16px);
+      overflow: hidden;
+    }
+
+    .hero-main {
+      padding: 30px 30px 28px;
+    }
+
+    .hero-main::after {
+      content: "";
+      position: absolute;
+      right: -60px;
+      bottom: -60px;
+      width: 240px;
+      height: 240px;
+      border-radius: 999px;
+      background: radial-gradient(circle, rgba(15, 109, 99, 0.22), transparent 66%);
+      pointer-events: none;
+    }
+
+    .eyebrow,
+    .mini-label {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      font: 600 12px/1 "IBM Plex Mono", monospace;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    .eyebrow {
+      color: var(--accent);
+      background: var(--accent-soft);
+      padding: 9px 12px;
+      border-radius: 999px;
+    }
+
+    h1 {
+      margin: 18px 0 12px;
+      max-width: 11ch;
+      font-family: "Fraunces", serif;
+      font-size: clamp(2.8rem, 5vw, 5.3rem);
+      line-height: 0.9;
+      letter-spacing: -0.04em;
+    }
+
+    .hero-copy {
+      max-width: 70ch;
+      margin: 0 0 22px;
+      color: var(--muted);
+      font-size: 1rem;
+      line-height: 1.7;
+    }
+
+    .hero-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      margin-top: 18px;
+    }
+
+    .stat-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px;
+    }
+
+    .stat {
+      padding: 18px;
+      border-radius: var(--radius-lg);
+      background: rgba(255, 255, 255, 0.64);
+      border: 1px solid rgba(42, 33, 20, 0.08);
+    }
+
+    .stat strong {
+      display: block;
+      margin-top: 10px;
+      font: 700 clamp(1.5rem, 2vw, 2rem) / 1 "Fraunces", serif;
+      letter-spacing: -0.03em;
+    }
+
+    .stat span {
+      color: var(--muted);
+      font-size: 0.95rem;
+      line-height: 1.45;
+    }
+
+    .hero-side {
+      display: grid;
+      gap: 12px;
+      padding: 18px;
+    }
+
+    .side-card {
+      padding: 18px 18px 16px;
+      border-radius: var(--radius-lg);
+      background: rgba(255,255,255,0.72);
+      border: 1px solid rgba(42, 33, 20, 0.08);
+    }
+
+    .side-card p {
+      margin: 10px 0 0;
+      color: var(--muted);
+      font-size: 0.93rem;
+      line-height: 1.55;
+    }
+
+    .controls {
+      display: grid;
+      grid-template-columns: 2.45fr 0.85fr;
+      gap: 18px;
+      margin-bottom: 18px;
+    }
+
+    .controls-main,
+    .controls-side {
+      padding: 20px;
+    }
+
+    .controls-row {
+      display: grid;
+      grid-template-columns: minmax(220px, 1.3fr) repeat(5, minmax(140px, 1fr));
+      gap: 12px;
+      align-items: end;
+    }
+
+    .field {
+      display: grid;
+      gap: 8px;
+    }
+
+    .field label {
+      color: var(--muted);
+      font: 600 11px/1 "IBM Plex Mono", monospace;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }
+
+    .field input,
+    .field select {
+      width: 100%;
+      border: 1px solid rgba(42, 33, 20, 0.14);
+      background: rgba(255, 255, 255, 0.86);
+      border-radius: 14px;
+      padding: 13px 14px;
+      color: var(--ink);
+      font: 500 14px/1.2 "Plus Jakarta Sans", sans-serif;
+      outline: none;
+      transition: border-color 140ms ease, box-shadow 140ms ease, transform 140ms ease;
+    }
+
+    .field input:focus,
+    .field select:focus {
+      border-color: rgba(15, 109, 99, 0.58);
+      box-shadow: 0 0 0 4px rgba(15, 109, 99, 0.11);
+      transform: translateY(-1px);
+    }
+
+    .toggle-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 14px;
+    }
+
+    .toggle {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      padding: 11px 13px;
+      border-radius: 999px;
+      background: rgba(255,255,255,0.7);
+      border: 1px solid rgba(42, 33, 20, 0.1);
+      color: var(--muted);
+      font-size: 0.92rem;
+    }
+
+    .toggle input {
+      width: 16px;
+      height: 16px;
+      accent-color: var(--accent);
+    }
+
+    .button,
+    button {
+      appearance: none;
+      border: 0;
+      cursor: pointer;
+      border-radius: 999px;
+      padding: 13px 16px;
+      font: 700 13px/1 "IBM Plex Mono", monospace;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      transition: transform 140ms ease, box-shadow 140ms ease, opacity 140ms ease, background 140ms ease;
+    }
+
+    .button:hover,
+    button:hover { transform: translateY(-1px); }
+
+    .button:active,
+    button:active { transform: translateY(0); }
+
+    .button-primary {
+      color: #f3f8f7;
+      background: linear-gradient(135deg, #0f6d63, #184f63);
+      box-shadow: 0 18px 30px rgba(15, 109, 99, 0.2);
+    }
+
+    .button-secondary {
+      color: var(--ink);
+      background: rgba(255, 255, 255, 0.8);
+      border: 1px solid rgba(42, 33, 20, 0.12);
+    }
+
+    .button-warn {
+      color: #fff8f3;
+      background: linear-gradient(135deg, #9a3412, #7b1e3f);
+      box-shadow: 0 18px 30px rgba(154, 52, 18, 0.18);
+    }
+
+    .controls-side {
+      display: grid;
+      gap: 12px;
+      align-content: start;
+    }
+
+    .stack {
+      display: grid;
+      gap: 10px;
+    }
+
+    .stack .button,
+    .stack button {
+      width: 100%;
+    }
+
+    .status {
+      padding: 12px 14px;
+      border-radius: 14px;
+      border: 1px solid rgba(42, 33, 20, 0.08);
+      background: rgba(255,255,255,0.74);
+      color: var(--muted);
+      font-size: 0.93rem;
+      line-height: 1.55;
+    }
+
+    .summary-grid {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 14px;
+      margin-bottom: 18px;
+    }
+
+    .summary-card {
+      padding: 18px;
+      border-radius: var(--radius-lg);
+      background: var(--panel-strong);
+      border: 1px solid rgba(42, 33, 20, 0.1);
+      box-shadow: var(--shadow);
+    }
+
+    .summary-card strong {
+      display: block;
+      margin-top: 8px;
+      font: 700 1.85rem/1 "Fraunces", serif;
+    }
+
+    .summary-card small {
+      color: var(--muted);
+      font-size: 0.92rem;
+      line-height: 1.5;
+    }
+
+    .board {
+      padding: 18px;
+    }
+
+    .board-head {
+      display: grid;
+      grid-template-columns: auto minmax(320px, 1fr) auto;
+      gap: 12px;
+      align-items: start;
+      margin-bottom: 12px;
+    }
+
+    .board-head-main {
+      min-width: 0;
+    }
+
+    .board-head h2 {
+      margin: 0;
+      font-family: "Fraunces", serif;
+      font-size: 2rem;
+      letter-spacing: -0.03em;
+    }
+
+    .board-head p {
+      margin: 6px 0 0;
+      color: var(--muted);
+      font-size: 0.95rem;
+    }
+
+    .to-rollup {
+      min-width: 0;
+      padding: 10px 12px;
+      border-radius: 18px;
+      border: 1px solid rgba(42, 33, 20, 0.08);
+      background: rgba(255, 255, 255, 0.66);
+    }
+
+    .to-rollup-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 8px;
+    }
+
+    .to-rollup-meta {
+      color: var(--muted);
+      font-size: 0.8rem;
+      line-height: 1.35;
+      text-align: right;
+    }
+
+    .to-rollup-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      min-width: 0;
+    }
+
+    .to-rollup-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      min-width: 0;
+      max-width: 100%;
+      padding: 8px 10px;
+      border-radius: 999px;
+      border: 1px solid rgba(42, 33, 20, 0.1);
+      background: rgba(255, 255, 255, 0.82);
+    }
+
+    .to-rollup-chip strong {
+      max-width: 15ch;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      font: 600 11px/1 "IBM Plex Mono", monospace;
+    }
+
+    .to-rollup-chip span {
+      color: var(--muted);
+      font-size: 0.78rem;
+      line-height: 1;
+      white-space: nowrap;
+    }
+
+    .to-rollup-empty {
+      color: var(--muted);
+      font-size: 0.84rem;
+      line-height: 1.4;
+    }
+
+    .table-wrap {
+      width: 100%;
+      max-width: 100%;
+      overflow-x: auto;
+      overflow-y: auto;
+      scrollbar-gutter: stable both-edges;
+      overscroll-behavior: contain;
+      border-radius: 22px;
+      border: 1px solid rgba(42, 33, 20, 0.1);
+      background: rgba(255,255,255,0.74);
+    }
+
+    table {
+      width: max(100%, 1120px);
+      border-collapse: collapse;
+      min-width: 100%;
+    }
+
+    thead th {
+      position: sticky;
+      top: 0;
+      z-index: 4;
+      padding: 14px 12px;
+      background: rgba(250, 245, 236, 0.96);
+      border-bottom: 1px solid rgba(42, 33, 20, 0.12);
+      color: var(--muted);
+      text-align: left;
+      font: 600 11px/1 "IBM Plex Mono", monospace;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }
+
+    tbody td {
+      padding: 14px 12px;
+      border-bottom: 1px solid rgba(42, 33, 20, 0.08);
+      vertical-align: top;
+      font-size: 0.94rem;
+      line-height: 1.5;
+    }
+
+    tbody tr {
+      transition: background 140ms ease, transform 140ms ease;
+    }
+
+    tbody tr:hover {
+      background: rgba(15, 109, 99, 0.045);
+    }
+
+    tbody tr.selected {
+      background: rgba(15, 109, 99, 0.09);
+    }
+
+    tbody tr.processed {
+      background: rgba(155, 124, 24, 0.08);
+    }
+
+    thead th:nth-child(1),
+    tbody td:nth-child(1) {
+      position: sticky;
+      left: 0;
+      min-width: 46px;
+      width: 46px;
+      z-index: 6;
+    }
+
+    thead th:nth-child(2),
+    tbody td:nth-child(2) {
+      position: sticky;
+      left: 46px;
+      min-width: 124px;
+      width: 124px;
+      z-index: 5;
+    }
+
+    thead th:nth-child(3),
+    tbody td:nth-child(3) {
+      position: sticky;
+      left: 170px;
+      min-width: 146px;
+      width: 146px;
+      z-index: 5;
+      box-shadow: 12px 0 20px rgba(42, 33, 20, 0.06);
+    }
+
+    thead th:nth-child(1),
+    thead th:nth-child(2),
+    thead th:nth-child(3) {
+      background: rgba(250, 245, 236, 0.98);
+    }
+
+    tbody td:nth-child(1),
+    tbody td:nth-child(2),
+    tbody td:nth-child(3) {
+      background: rgba(255, 252, 247, 0.96);
+    }
+
+    tbody tr:hover td:nth-child(1),
+    tbody tr:hover td:nth-child(2),
+    tbody tr:hover td:nth-child(3) {
+      background: rgba(234, 246, 243, 0.98);
+    }
+
+    tbody tr.selected td:nth-child(1),
+    tbody tr.selected td:nth-child(2),
+    tbody tr.selected td:nth-child(3) {
+      background: rgba(221, 241, 237, 0.98);
+    }
+
+    tbody tr.processed td:nth-child(1),
+    tbody tr.processed td:nth-child(2),
+    tbody tr.processed td:nth-child(3) {
+      background: rgba(248, 240, 219, 0.98);
+    }
+
+    tbody tr.selected.processed td:nth-child(1),
+    tbody tr.selected.processed td:nth-child(2),
+    tbody tr.selected.processed td:nth-child(3) {
+      background: linear-gradient(90deg, rgba(241, 236, 211, 0.98), rgba(221, 241, 237, 0.98));
+    }
+
+    .mono {
+      font-family: "IBM Plex Mono", monospace;
+      font-size: 0.86rem;
+      word-break: break-all;
+    }
+
+    .hash-cell {
+      min-width: clamp(200px, 22vw, 250px);
+    }
+
+    .hash-main {
+      display: block;
+      font-family: "IBM Plex Mono", monospace;
+      font-size: 0.85rem;
+      word-break: break-all;
+      margin-bottom: 10px;
+    }
+
+    .quick-links {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .quick-links a {
+      text-decoration: none;
+    }
+
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 7px 10px;
+      border-radius: 999px;
+      border: 1px solid rgba(42, 33, 20, 0.1);
+      background: rgba(255,255,255,0.8);
+      white-space: nowrap;
+      font: 600 11px/1 "IBM Plex Mono", monospace;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .pill.category { background: var(--accent-soft); color: var(--accent); }
+    .pill.low { background: rgba(123, 30, 63, 0.09); color: var(--rose); }
+    .pill.medium { background: var(--gold-soft); color: var(--gold); }
+    .pill.high { background: var(--accent-soft); color: var(--accent); }
+    .pill.processed { background: rgba(155, 124, 24, 0.14); color: #7f6314; }
+
+    .muted { color: var(--muted); }
+
+    .profit {
+      font: 700 1rem/1.2 "IBM Plex Mono", monospace;
+      color: var(--ink);
+    }
+
+    .gap-bad { color: var(--warn); }
+    .gap-mid { color: var(--gold); }
+    .gap-good { color: var(--accent); }
+
+    .row-actions {
+      display: grid;
+      gap: 8px;
+      min-width: clamp(120px, 10vw, 160px);
+    }
+
+    .mini-button {
+      padding: 9px 11px;
+      border-radius: 12px;
+      background: rgba(255,255,255,0.78);
+      border: 1px solid rgba(42, 33, 20, 0.1);
+      color: var(--ink);
+      font: 700 11px/1 "IBM Plex Mono", monospace;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      text-decoration: none;
+      text-align: center;
+    }
+
+    .checkbox {
+      width: 18px;
+      height: 18px;
+      accent-color: var(--accent);
+      cursor: pointer;
+    }
+
+    .note {
+      min-width: clamp(220px, 20vw, 280px);
+      max-width: clamp(260px, 26vw, 340px);
+    }
+
+    .note strong {
+      display: block;
+      margin-bottom: 6px;
+      font-size: 0.88rem;
+    }
+
+    .opinion-input {
+      width: 100%;
+      margin-top: 10px;
+      min-height: 82px;
+      resize: vertical;
+      border: 1px solid rgba(42, 33, 20, 0.12);
+      background: rgba(255,255,255,0.82);
+      border-radius: 12px;
+      padding: 10px 12px;
+      color: var(--ink);
+      font: 500 13px/1.5 "Plus Jakarta Sans", sans-serif;
+    }
+
+    .opinion-input:focus {
+      outline: none;
+      border-color: rgba(15, 109, 99, 0.58);
+      box-shadow: 0 0 0 4px rgba(15, 109, 99, 0.11);
+    }
+
+    .evidence-box {
+      margin-top: 10px;
+      border: 1px solid rgba(42, 33, 20, 0.1);
+      background: rgba(255, 255, 255, 0.7);
+      border-radius: 14px;
+      overflow: hidden;
+    }
+
+    .evidence-box summary {
+      cursor: pointer;
+      list-style: none;
+      padding: 11px 12px;
+      font: 700 11px/1 "IBM Plex Mono", monospace;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: var(--ink);
+      background: rgba(15, 109, 99, 0.06);
+    }
+
+    .evidence-box summary::-webkit-details-marker {
+      display: none;
+    }
+
+    .evidence-inner {
+      display: grid;
+      gap: 10px;
+      padding: 12px;
+    }
+
+    .evidence-block strong {
+      display: block;
+      margin-bottom: 6px;
+      font-size: 0.82rem;
+      color: var(--ink);
+    }
+
+    .evidence-list {
+      margin: 0;
+      padding-left: 16px;
+      color: var(--muted);
+      font-size: 0.88rem;
+      line-height: 1.55;
+    }
+
+    .evidence-list li + li {
+      margin-top: 6px;
+    }
+
+    .empty-state {
+      display: none;
+      padding: 36px 18px;
+      text-align: center;
+      color: var(--muted);
+    }
+
+    .legend {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 14px;
+    }
+
+    .footer {
+      margin-top: 18px;
+      padding: 16px 18px 0;
+      color: var(--muted);
+      font-size: 0.9rem;
+      line-height: 1.6;
+    }
+
+    @media (min-width: 1180px) {
+      body {
+        height: 100vh;
+        overflow: hidden;
+      }
+
+      .page {
+        width: calc(100vw - 20px);
+        max-width: none;
+        height: 100vh;
+        display: grid;
+        grid-template-rows: auto minmax(0, 1fr);
+        gap: 8px;
+        padding: 8px 8px 10px;
+      }
+
+      .dashboard-top {
+        min-height: 0;
+        gap: 8px;
+        margin-bottom: 0;
+        align-content: start;
+      }
+
+      .hero {
+        grid-template-columns: 2.1fr 0.9fr;
+        gap: 8px;
+      }
+
+      .hero-main {
+        display: grid;
+        grid-template-columns: minmax(320px, 1.08fr) minmax(0, 1.12fr);
+        grid-template-rows: auto auto minmax(0, 1fr);
+        column-gap: 10px;
+        row-gap: 4px;
+        align-items: start;
+        padding: 10px 12px;
+      }
+
+      .hero-main::after {
+        right: -40px;
+        bottom: -40px;
+        width: 180px;
+        height: 180px;
+      }
+
+      .hero-side {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 6px;
+        padding: 8px;
+        align-content: stretch;
+      }
+
+      .eyebrow {
+        gap: 6px;
+        padding: 6px 9px;
+        font-size: 10px;
+      }
+
+      h1 {
+        grid-column: 1;
+        margin: 0;
+        max-width: 7.2ch;
+        font-size: clamp(1.45rem, 2.15vw, 2.35rem);
+        line-height: 0.9;
+        text-wrap: balance;
+      }
+
+      .hero-copy {
+        grid-column: 1;
+        margin: 0;
+        max-width: 44ch;
+        font-size: 0.74rem;
+        line-height: 1.28;
+        display: -webkit-box;
+        -webkit-line-clamp: 3;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+      }
+
+      .stat-grid {
+        grid-column: 2;
+        grid-row: 1 / span 3;
+        height: 100%;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 6px;
+        align-content: stretch;
+      }
+
+      .stat {
+        min-height: 0;
+        padding: 8px 10px;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+      }
+
+      .stat strong {
+        margin-top: 3px;
+        font-size: clamp(0.96rem, 1.2vw, 1.18rem);
+      }
+
+      .mini-label {
+        gap: 5px;
+        font-size: 9px;
+      }
+
+      .side-card {
+        min-width: 0;
+        padding: 8px 10px;
+      }
+
+      .stat span,
+      .side-card p {
+        font-size: 0.72rem;
+        line-height: 1.28;
+      }
+
+      .side-card p {
+        margin-top: 4px;
+        display: -webkit-box;
+        -webkit-line-clamp: 3;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+      }
+
+      .controls-main,
+      .controls-side {
+        padding: 10px;
+      }
+
+      .controls {
+        grid-template-columns: 2.95fr 0.95fr;
+        gap: 8px;
+      }
+
+      .controls-row {
+        grid-template-columns: minmax(200px, 1.45fr) repeat(5, minmax(100px, 0.8fr));
+        gap: 6px;
+      }
+
+      .field {
+        gap: 4px;
+      }
+
+      .field label {
+        font-size: 9px;
+      }
+
+      .field input,
+      .field select {
+        padding: 8px 10px;
+        border-radius: 11px;
+        font-size: 12px;
+      }
+
+      .toggle-row {
+        margin-top: 6px;
+        gap: 5px;
+      }
+
+      .toggle {
+        gap: 6px;
+        padding: 6px 8px;
+        font-size: 0.72rem;
+      }
+
+      .toggle input {
+        width: 13px;
+        height: 13px;
+      }
+
+      .button,
+      button {
+        padding: 8px 10px;
+        font-size: 10px;
+      }
+
+      .stack {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 5px;
+      }
+
+      .stack .button:last-child,
+      .stack button:last-child {
+        grid-column: 1 / -1;
+      }
+
+      .status {
+        padding: 7px 9px;
+        font-size: 0.72rem;
+        line-height: 1.28;
+      }
+
+      .summary-grid {
+        gap: 6px;
+      }
+
+      .summary-card {
+        padding: 8px 10px;
+        border-radius: 14px;
+      }
+
+      .summary-card strong {
+        margin-top: 3px;
+        font-size: 0.96rem;
+      }
+
+      .summary-card small {
+        font-size: 0.68rem;
+        line-height: 1.18;
+      }
+
+      .board {
+        display: flex;
+        flex-direction: column;
+        min-height: 0;
+        padding: 14px;
+      }
+
+      .board-head {
+        grid-template-columns: auto minmax(360px, 1fr) auto;
+        gap: 10px;
+        margin-bottom: 8px;
+        align-items: center;
+      }
+
+      .board-head h2 {
+        font-size: 1.55rem;
+      }
+
+      .board-head p,
+      .footer {
+        font-size: 0.78rem;
+      }
+
+      .to-rollup {
+        padding: 8px 10px;
+      }
+
+      .to-rollup-head {
+        margin-bottom: 6px;
+      }
+
+      .to-rollup-meta {
+        font-size: 0.72rem;
+      }
+
+      .to-rollup-list {
+        gap: 6px;
+      }
+
+      .to-rollup-chip {
+        padding: 6px 8px;
+      }
+
+      .to-rollup-chip strong {
+        max-width: 13ch;
+        font-size: 10px;
+      }
+
+      .to-rollup-chip span {
+        font-size: 0.72rem;
+      }
+
+      .table-wrap {
+        flex: 1;
+        min-height: 0;
+      }
+
+      table {
+        width: max(100%, 1320px);
+      }
+
+      .hash-cell {
+        min-width: clamp(260px, 20vw, 340px);
+      }
+
+      .note {
+        min-width: clamp(280px, 24vw, 400px);
+        max-width: clamp(320px, 28vw, 460px);
+      }
+
+      .row-actions {
+        min-width: clamp(140px, 10vw, 190px);
+      }
+
+      thead th {
+        padding: 11px 10px;
+      }
+
+      tbody td {
+        padding: 10px 10px;
+        font-size: 0.88rem;
+        line-height: 1.4;
+      }
+
+      thead th:nth-child(2),
+      tbody td:nth-child(2) {
+        min-width: 110px;
+        width: 110px;
+      }
+
+      thead th:nth-child(3),
+      tbody td:nth-child(3) {
+        left: 156px;
+        min-width: 132px;
+        width: 132px;
+      }
+
+      .hash-main,
+      .mono {
+        font-size: 0.8rem;
+      }
+
+      .quick-links,
+      .row-actions {
+        gap: 6px;
+      }
+
+      .pill,
+      .mini-button {
+        padding: 6px 9px;
+        font-size: 10px;
+      }
+
+      .evidence-box summary {
+        padding: 9px 10px;
+        font-size: 10px;
+      }
+
+      .evidence-inner {
+        gap: 8px;
+        padding: 10px;
+      }
+
+      .evidence-list {
+        font-size: 0.82rem;
+      }
+
+      .footer {
+        margin-top: 8px;
+        padding: 8px 6px 0;
+        line-height: 1.4;
+      }
+    }
+
+    @media (max-width: 1200px) {
+      .hero,
+      .controls {
+        grid-template-columns: 1fr;
+      }
+
+      .board-head {
+        grid-template-columns: 1fr;
+      }
+
+      .controls-row {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
+      .summary-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+    }
+
+    @media (max-width: 760px) {
+      .page { padding: 18px 12px 40px; }
+      .hero-main,
+      .controls-main,
+      .controls-side,
+      .board { padding: 16px; }
+      .controls-row,
+      .summary-grid,
+      .stat-grid {
+        grid-template-columns: 1fr;
+      }
+      .hero-side,
+      .to-rollup-head {
+        grid-template-columns: 1fr;
+      }
+      .to-rollup-head {
+        display: grid;
+      }
+      h1 {
+        max-width: none;
+        font-size: clamp(2.1rem, 10vw, 3.3rem);
+      }
+
+      table {
+        width: max(100%, 980px);
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <div class="dashboard-top">
+      <section class="hero">
+        <div class="panel hero-main">
+          <div class="eyebrow">Review Desk / FP Batch 2026-03-22</div>
+          <h1>FP TX Review Board</h1>
+          <p class="hero-copy">
+            这是一页可离线打开的处理面板。它把 72 笔 FP tx 的关键字段、分类假设、EigenTx / Etherscan 链接、选择导出能力，以及“已处理”本地持久化状态放在同一个界面里，适合逐笔过单和批量分发。
+          </p>
+          <div class="stat-grid" id="heroStats"></div>
+        </div>
+        <div class="panel hero-side">
+          <div class="side-card">
+            <div class="mini-label">Persistent State</div>
+            <p>已处理状态保存在浏览器 `localStorage`。同一台机器、同一浏览器再次打开页面时会自动恢复。</p>
+          </div>
+          <div class="side-card">
+            <div class="mini-label">Export Modes</div>
+            <p>支持导出“当前选中 tx”的 CSV/JSON，也支持导出“已处理记录” JSON，便于同步给别的同事或归档。</p>
+          </div>
+          <div class="side-card">
+            <div class="mini-label">Working Assumption</div>
+            <p>分类是基于 CSV、RPC 元数据和代表样本复盘得到的族群归类，不等于最终业务真相；页面保留了每笔 tx 的原始关键字段，便于继续人工修正。</p>
+          </div>
+        </div>
+      </section>
+
+      <section class="controls">
+        <div class="panel controls-main">
+          <div class="controls-row">
+            <div class="field">
+              <label for="searchInput">搜索</label>
+              <input id="searchInput" type="search" placeholder="搜 tx hash / from / to / selector / category" />
+            </div>
+            <div class="field">
+              <label for="categoryFilter">分类</label>
+              <select id="categoryFilter"></select>
+            </div>
+          <div class="field">
+            <label for="confidenceFilter">置信度</label>
+            <select id="confidenceFilter"></select>
+          </div>
+          <div class="field">
+            <label for="toFilter">To 地址</label>
+            <select id="toFilter"></select>
+          </div>
+          <div class="field">
+            <label for="bucketFilter">Bucket</label>
+            <select id="bucketFilter"></select>
+          </div>
+            <div class="field">
+              <label for="sortMode">排序</label>
+              <select id="sortMode">
+                <option value="profit-desc">Profit ↓</option>
+                <option value="gap-desc">Gap ↓</option>
+                <option value="block-desc">Block ↓</option>
+                <option value="category">Category</option>
+                <option value="tx">Tx Hash</option>
+              </select>
+            </div>
+          </div>
+          <div class="toggle-row">
+            <label class="toggle"><input id="hideProcessedToggle" type="checkbox" /> 隐藏已处理</label>
+            <label class="toggle"><input id="selectedOnlyToggle" type="checkbox" /> 仅显示已选</label>
+            <label class="toggle"><input id="highGapToggle" type="checkbox" /> 仅显示 Gap &gt; 1000</label>
+          </div>
+        </div>
+        <div class="panel controls-side">
+          <div class="stack">
+            <button class="button button-primary" id="selectVisibleBtn">选择当前筛选结果</button>
+            <button class="button button-secondary" id="clearSelectionBtn">清空选择</button>
+            <button class="button button-secondary" id="markSelectedProcessedBtn">将选中标记为已处理</button>
+            <button class="button button-secondary" id="clearProcessedBtn">清空本地处理状态</button>
+            <button class="button button-primary" id="exportSelectedCsvBtn">导出选中 CSV</button>
+            <button class="button button-secondary" id="exportSelectedJsonBtn">导出选中 JSON</button>
+            <button class="button button-secondary" id="exportProcessedJsonBtn">导出处理记录 JSON</button>
+          </div>
+          <div class="status" id="statusBox">准备就绪。</div>
+        </div>
+      </section>
+
+      <section class="summary-grid" id="summaryGrid"></section>
+    </div>
+
+    <section class="panel board">
+      <div class="board-head">
+        <div class="board-head-main">
+          <h2>Transaction Grid</h2>
+          <p id="resultMeta">正在加载…</p>
+        </div>
+        <div class="to-rollup" id="toRollup">正在聚合 To 地址…</div>
+        <div class="legend">
+          <span class="pill category">Category Tag</span>
+          <span class="pill high">High Confidence</span>
+          <span class="pill medium">Medium Confidence</span>
+          <span class="pill low">Low Confidence</span>
+          <span class="pill processed">Processed</span>
+        </div>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th><input id="selectAllVisible" class="checkbox" type="checkbox" aria-label="Select all visible" /></th>
+              <th>Processed</th>
+              <th>Category</th>
+              <th>Tx</th>
+              <th>Block</th>
+              <th>Route</th>
+              <th>Selector</th>
+              <th>Profit</th>
+              <th>Gap</th>
+              <th>Meta</th>
+              <th>Note</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="txTableBody"></tbody>
+        </table>
+        <div class="empty-state" id="emptyState">当前筛选条件下没有匹配的 tx。</div>
+      </div>
+      <div class="footer">
+        本页默认按 `profit` 降序展示。处理状态会自动保存到本地；如果你要跨浏览器或跨机器迁移，请使用“导出处理记录 JSON”。
+      </div>
+    </section>
+  </div>
+
+  <script>
+    const DATA = __DATA_PLACEHOLDER__
+    const STORAGE_KEY = "mevscan-fp-review-board-state-v1";
+    const CATEGORY_ORDER = ["C1", "C2", "C3", "C4", "C5", "C6", "C7"];
+
+    const state = {
+      search: "",
+      category: "all",
+      confidence: "all",
+      to: "all",
+      bucket: "all",
+      sortMode: "profit-desc",
+      hideProcessed: false,
+      selectedOnly: false,
+      highGapOnly: false,
+      selected: new Set(),
+      processed: {},
+    };
+
+    const els = {
+      heroStats: document.getElementById("heroStats"),
+      searchInput: document.getElementById("searchInput"),
+      categoryFilter: document.getElementById("categoryFilter"),
+      confidenceFilter: document.getElementById("confidenceFilter"),
+      toFilter: document.getElementById("toFilter"),
+      bucketFilter: document.getElementById("bucketFilter"),
+      sortMode: document.getElementById("sortMode"),
+      hideProcessedToggle: document.getElementById("hideProcessedToggle"),
+      selectedOnlyToggle: document.getElementById("selectedOnlyToggle"),
+      highGapToggle: document.getElementById("highGapToggle"),
+      selectVisibleBtn: document.getElementById("selectVisibleBtn"),
+      clearSelectionBtn: document.getElementById("clearSelectionBtn"),
+      markSelectedProcessedBtn: document.getElementById("markSelectedProcessedBtn"),
+      clearProcessedBtn: document.getElementById("clearProcessedBtn"),
+      exportSelectedCsvBtn: document.getElementById("exportSelectedCsvBtn"),
+      exportSelectedJsonBtn: document.getElementById("exportSelectedJsonBtn"),
+      exportProcessedJsonBtn: document.getElementById("exportProcessedJsonBtn"),
+      statusBox: document.getElementById("statusBox"),
+      summaryGrid: document.getElementById("summaryGrid"),
+      resultMeta: document.getElementById("resultMeta"),
+      toRollup: document.getElementById("toRollup"),
+      tableBody: document.getElementById("txTableBody"),
+      emptyState: document.getElementById("emptyState"),
+      selectAllVisible: document.getElementById("selectAllVisible"),
+    };
+
+    function fmtNumber(num, digits = 2) {
+      return new Intl.NumberFormat("en-US", {
+        minimumFractionDigits: digits,
+        maximumFractionDigits: digits,
+      }).format(num);
+    }
+
+    function fmtInt(num) {
+      return new Intl.NumberFormat("en-US").format(num);
+    }
+
+    function shortHash(value, left = 8, right = 6) {
+      if (!value) return "n/a";
+      return value.length <= left + right + 2 ? value : `${value.slice(0, left + 2)}…${value.slice(-right)}`;
+    }
+
+    function confidenceRank(value) {
+      return { high: 0, medium: 1, low: 2 }[value] ?? 9;
+    }
+
+    function gapClass(gap) {
+      if (gap > 1000) return "gap-bad";
+      if (gap > 100) return "gap-mid";
+      return "gap-good";
+    }
+
+    function familyKey(item) {
+      return `${String(item.to || "").toLowerCase()}|${String(item.selector || "").toLowerCase()}`;
+    }
+
+    function getLogicAndEvidence(item) {
+      const key = familyKey(item);
+      const repeatedSelectorLogic = "同一 `to + selector` 在这批 72 笔里重复出现，优先按家族而不是按单笔偶然现象归类。";
+
+      if (key === "0x451f4f1ac068461939fdbafa4297394ac5dbc516|0xe6b921f5") {
+        return {
+          logic: [
+            repeatedSelectorLogic,
+            "该地址族与文档里的 `0x38688...` 使用同一个执行器 `0x451f...`，优先继承“外部预注资 / settlement path 误判”的解释框架。",
+            "不把它归为 parser 漏解析，是因为完整链路下这族样本确实能产出 swap、transfer 和 arbitrage 报告。"
+          ],
+          evidence: [
+            "文档证据：`0x38688e8b...` 被明确描述为“普通外部预充 ETH 被当成合法外部注入”，且执行器就是 `0x451f4f1a...`。",
+            "重跑证据：样本 `0x3f5952b1...` 在 `/tmp/full-analyze/20260322/24713506.json` 中有 `transfer_table_len=10`、`action_counts.swap=2`、`mev_type=ARBITRAGE`。",
+            "聚类证据：这批 CSV 中共有 7 笔命中 `to=0x451f...` 且 `selector=0xe6b921f5`。"
+          ]
+        };
+      }
+
+      if (key === "0xe08d97e151473a848c3d9ca3f323cb720472d015|0x8cbf8566") {
+        return {
+          logic: [
+            repeatedSelectorLogic,
+            "这是最强的大簇，优先判成“复杂多池 + flashloan 家族误收”，而不是拆成很多互不相关的小类。",
+            "这类样本的 `profit≈11998` 平台值只是该家族内部的数值模板，不是独立业务类别。"
+          ],
+          evidence: [
+            "聚类证据：72 笔里有 30 笔落在 `to=0xe08d...` + `selector=0x8cbf8566`，是最大家族。",
+            "重跑证据：样本 `0x62d6796a...` 在 `/tmp/full-analyze/20260322/24710445.json` 中有 `transfer_table_len=180`、`swap=8`、`flashloan=2`，且 `mev_type=ARBITRAGE`。",
+            "数值证据：该家族内部有 15 笔 `profit` 四舍五入约等于 `11998`。"
+          ]
+        };
+      }
+
+      if (
+        key === "0x859c9980931fa0a63765fd8ef2e29918af5b038c|0x11a5ffad" ||
+        key === "0xb0f56bb0bf13ee05fef8cd2d8df5ffdfcac7a74f|0xbaae8abf" ||
+        key === "0xc50b2d51fd1e2ac67a9c09eaf63c24ea2465c64b|0xbaae8abf"
+      ) {
+        return {
+          logic: [
+            repeatedSelectorLogic,
+            "把 `0x859c...` 和 `0xb0f56...` 并到同一类，是因为代表样本在完整链路下都落到同一个 Maker 池路径，而不是因为 profit 量级相似。",
+            "因此这更像同一家族的 Maker-heavy 误收，而不是两种独立误报。"
+          ],
+          evidence: [
+            "重跑证据：`0x887e869e...` 在 `/tmp/full-analyze/20260322/24712415.json` 中有 `transfer_table_len=16`、`swap=4`，`arb_path` 命中 Maker 池 `0xf6e72db5...`。",
+            "重跑证据：`0xe3bd9021...` 在 `/tmp/full-analyze/20260322/24711610.json` 中有 `transfer_table_len=22`、`swap=2`，同样产出 Maker-heavy `ARBITRAGE`。",
+            "聚类证据：该类合计覆盖 14 笔，分别来自 `0x859c.../0x11a5ffad` 和 `0xb0f56.../0xbaae8abf` 两个重复族。"
+          ]
+        };
+      }
+
+      if (key === "0x339c0db4a0030c88b4a48aafe56cdba23c8d4338|0x9f0f0981") {
+        return {
+          logic: [
+            repeatedSelectorLogic,
+            "这类优先归到 PNL / quality anomaly，而不是单纯 arbitrage 误收，因为它的 `revenue-profit` 差明显大于主流样本。",
+            "即使 analyzer 会给它打 `ARBITRAGE`，也不代表 downstream 的利润口径是健康的。"
+          ],
+          evidence: [
+            "数值证据：样本 `0xb48beb2a...` 的 `gap=2059.57`，是全表最大。",
+            "重跑证据：`0xb48beb2a...` 在 `/tmp/full-analyze/20260322/24710737.json` 中有 `transfer_table_len=356`、`swap=62`、`flashloan=8`，且 `input_asset/output_asset` 都是 `0x865377...`，输出还更小。",
+            "聚类证据：这组目前有 2 笔，同一 `to=0x339c...` 和 `selector=0x9f0f0981`。"
+          ]
+        };
+      }
+
+      if (key === "0x5cc9400ffb4da168cf271e912f589462c3a00d1f|0xf41b2db6") {
+        return {
+          logic: [
+            repeatedSelectorLogic,
+            "这组暂时不下更硬的业务结论，先保守标为“流动性形态家族”。",
+            "原因是当前对这组的直接证据主要来自训练样本，不是当前批次的完整重跑。"
+          ],
+          evidence: [
+            "训练样本证据：`data/training/other/19834173_actions.json` 中，`0x5cc9400f...` 出现在 `Curve AddLiquidity` 相关动作附近。",
+            "聚类证据：当前 CSV 中共有 3 笔命中 `to=0x5cc9400f...` + `selector=0xf41b2db6`。",
+            "谨慎说明：这组尚未像 C1/C2/C3 那样完成代表样本的完整链路重跑。"
+          ]
+        };
+      }
+
+      if (item.categoryCode === "C6") {
+        return {
+          logic: [
+            repeatedSelectorLogic,
+            "样本数达到重复出现，但不足以支撑更细的业务结论，所以先压成“小型重复家族”。",
+            "这类的目标是避免把明显重复的地址族误写成很多单例。"
+          ],
+          evidence: [
+            "聚类证据：`0x656619...`、`0x00000f911...`、`0x26d774...` 和 selector `0x6a761202` 都至少重复出现 2 次。",
+            "当前没有像 C1-C4 那样的代表样本完整重跑证据，因此置信度保留在 `medium`。"
+          ]
+        };
+      }
+
+      if (item.categoryCode === "C7") {
+        return {
+          logic: [
+            "当前批次里只出现一次，且没有足够重复模式支持它并入现有家族，所以先保留为单例。",
+            "如果后续同地址或同 selector 再出现，再回并到家族类。"
+          ],
+          evidence: [
+            "聚类证据：在这批 72 笔里，它的 `to + selector` 组合只出现 1 次。",
+            "目前没有直接文档映射，也没有代表样本完整重跑证据。"
+          ]
+        };
+      }
+
+      return {
+        logic: [
+          "当前按既有分类备注保守展示。",
+          "如需更强结论，需要补完整代表样本重跑。"
+        ],
+        evidence: [
+          "证据暂以当前分类说明为主。"
+        ]
+      };
+    }
+
+    function enrichRow(item) {
+      const detail = getLogicAndEvidence(item);
+      return {
+        ...item,
+        determinationLogic: detail.logic.join(" | "),
+        evidenceSummary: detail.evidence.join(" | "),
+      };
+    }
+
+    function escapeHtml(value) {
+      return String(value)
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;")
+        .replaceAll("'", "&#39;");
+    }
+
+    function saveProcessedState() {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(state.processed));
+    }
+
+    function loadProcessedState() {
+      try {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        if (!raw) return;
+        const parsed = JSON.parse(raw);
+        if (parsed && typeof parsed === "object") {
+          state.processed = parsed;
+        }
+      } catch (error) {
+        console.warn("Failed to load state:", error);
+      }
+    }
+
+    function setStatus(message) {
+      els.statusBox.textContent = message;
+    }
+
+    function uniqueValues(key) {
+      return [...new Set(DATA.map(item => item[key]))].filter(Boolean);
+    }
+
+    function populateFilters() {
+      const categories = [...new Set(DATA.map(item => `${item.categoryCode} ${item.category}`))];
+      const categoryMap = new Map(DATA.map(item => [`${item.categoryCode} ${item.category}`, item.categoryCode]));
+      const toCounts = DATA.reduce((map, item) => {
+        const key = item.to || "n/a";
+        map.set(key, (map.get(key) || 0) + 1);
+        return map;
+      }, new Map());
+
+      els.categoryFilter.innerHTML = ['<option value="all">全部分类</option>']
+        .concat(categories.sort((a, b) => {
+          const aCode = categoryMap.get(a);
+          const bCode = categoryMap.get(b);
+          return CATEGORY_ORDER.indexOf(aCode) - CATEGORY_ORDER.indexOf(bCode);
+        }).map(label => `<option value="${categoryMap.get(label)}">${escapeHtml(label)}</option>`))
+        .join("");
+
+      els.confidenceFilter.innerHTML = ['all', 'high', 'medium', 'low']
+        .map(value => `<option value="${value}">${value === "all" ? "全部置信度" : value}</option>`)
+        .join("");
+
+      els.toFilter.innerHTML = ['<option value="all">全部 To 地址</option>']
+        .concat(uniqueValues("to").sort().map(value => (
+          `<option value="${escapeHtml(value)}">${escapeHtml(shortHash(value, 6, 4))} · ${fmtInt(toCounts.get(value) || 0)}</option>`
+        )))
+        .join("");
+
+      els.bucketFilter.innerHTML = ['<option value="all">全部 bucket</option>']
+        .concat(uniqueValues("bucket").sort().map(value => `<option value="${escapeHtml(value)}">${escapeHtml(value)}</option>`))
+        .join("");
+    }
+
+    function renderHeroStats() {
+      const processedCount = Object.values(state.processed).filter(record => record && record.processed).length;
+      const selectedCount = state.selected.size;
+      const highGapCount = DATA.filter(item => item.gap > 1000).length;
+      const topProfit = DATA[0]?.profit ?? 0;
+      const cards = [
+        { label: "Total TX", value: fmtInt(DATA.length), sub: "当前内嵌总样本数" },
+        { label: "Processed", value: fmtInt(processedCount), sub: "浏览器本地已标记处理" },
+        { label: "Selected", value: fmtInt(selectedCount), sub: "当前勾选准备导出" },
+        { label: "High Gap", value: fmtInt(highGapCount), sub: "Gap > 1000 的异常样本" },
+        { label: "Top Profit", value: fmtNumber(topProfit, 0), sub: "当前最高 profit" },
+        { label: "Local Save", value: "ON", sub: "自动持久化 processed 状态" },
+      ];
+
+      els.heroStats.innerHTML = cards.map(card => `
+        <div class="stat">
+          <div class="mini-label">${escapeHtml(card.label)}</div>
+          <strong>${escapeHtml(card.value)}</strong>
+          <span>${escapeHtml(card.sub)}</span>
+        </div>
+      `).join("");
+    }
+
+    function renderSummary(filtered) {
+      const byCategory = new Map();
+      for (const item of filtered) {
+        const key = `${item.categoryCode} ${item.category}`;
+        if (!byCategory.has(key)) byCategory.set(key, 0);
+        byCategory.set(key, byCategory.get(key) + 1);
+      }
+
+      const summaryCards = [
+        {
+          title: "Visible Rows",
+          value: fmtInt(filtered.length),
+          body: "当前筛选后还能看到的 tx 数量。",
+        },
+        {
+          title: "Selected Rows",
+          value: fmtInt(filtered.filter(item => state.selected.has(item.txHash)).length),
+          body: "当前筛选结果中已勾选的行数。",
+        },
+        {
+          title: "Visible Profit",
+          value: fmtNumber(filtered.reduce((sum, item) => sum + item.profit, 0), 0),
+          body: "当前可见样本的 profit 总和。",
+        },
+        {
+          title: "Top Category",
+          value: [...byCategory.entries()].sort((a, b) => b[1] - a[1])[0]?.[0] ?? "n/a",
+          body: "当前筛选结果里的最大分类。",
+        },
+      ];
+
+      els.summaryGrid.innerHTML = summaryCards.map(card => `
+        <div class="summary-card">
+          <div class="mini-label">${escapeHtml(card.title)}</div>
+          <strong>${escapeHtml(card.value)}</strong>
+          <small>${escapeHtml(card.body)}</small>
+        </div>
+      `).join("");
+    }
+
+    function renderToRollup(filtered) {
+      const grouped = filtered.reduce((map, item) => {
+        const key = item.to || "n/a";
+        if (!map.has(key)) {
+          map.set(key, { to: key, count: 0, profit: 0 });
+        }
+        const current = map.get(key);
+        current.count += 1;
+        current.profit += item.profit || 0;
+        return map;
+      }, new Map());
+
+      const groups = [...grouped.values()].sort((a, b) => (
+        b.count - a.count ||
+        b.profit - a.profit ||
+        a.to.localeCompare(b.to)
+      ));
+      const visibleGroups = groups.slice(0, 8);
+      const hiddenGroups = Math.max(0, groups.length - visibleGroups.length);
+      const currentToLabel = state.to === "all" ? "全部 To" : shortHash(state.to, 6, 4);
+
+      els.toRollup.innerHTML = `
+        <div class="to-rollup-head">
+          <div class="mini-label">To Address Rollup</div>
+          <div class="to-rollup-meta">${fmtInt(groups.length)} 个地址 · 当前筛选 ${escapeHtml(currentToLabel)}</div>
+        </div>
+        <div class="to-rollup-list">
+          ${visibleGroups.length ? visibleGroups.map(group => `
+            <div class="to-rollup-chip" title="${escapeHtml(group.to)}">
+              <strong>${escapeHtml(shortHash(group.to, 6, 4))}</strong>
+              <span>${fmtInt(group.count)} tx</span>
+            </div>
+          `).join("") : '<div class="to-rollup-empty">当前筛选结果没有可聚合的 To 地址。</div>'}
+          ${hiddenGroups ? `<div class="to-rollup-chip"><strong>+${fmtInt(hiddenGroups)}</strong><span>more</span></div>` : ""}
+        </div>
+      `;
+    }
+
+    function getFilteredData() {
+      const search = state.search.trim().toLowerCase();
+      const filtered = DATA.filter(item => {
+        const processedRecord = state.processed[item.txHash];
+        const processed = Boolean(processedRecord && processedRecord.processed);
+        if (state.hideProcessed && processed) return false;
+        if (state.selectedOnly && !state.selected.has(item.txHash)) return false;
+        if (state.highGapOnly && item.gap <= 1000) return false;
+        if (state.category !== "all" && item.categoryCode !== state.category) return false;
+        if (state.confidence !== "all" && item.confidence !== state.confidence) return false;
+        if (state.to !== "all" && item.to !== state.to) return false;
+        if (state.bucket !== "all" && item.bucket !== state.bucket) return false;
+        if (!search) return true;
+
+        return [
+          item.txHash,
+          item.from,
+          item.to,
+          item.selector,
+          item.category,
+          item.categoryCode,
+          item.bucket,
+          item.analysisSource,
+          item.fallbackReason,
+          ...getLogicAndEvidence(item).logic,
+          ...getLogicAndEvidence(item).evidence,
+        ].join(" ").toLowerCase().includes(search);
+      });
+
+      filtered.sort((a, b) => {
+        switch (state.sortMode) {
+          case "gap-desc":
+            return b.gap - a.gap;
+          case "block-desc":
+            return b.blockNumber - a.blockNumber;
+          case "category": {
+            const byCode = CATEGORY_ORDER.indexOf(a.categoryCode) - CATEGORY_ORDER.indexOf(b.categoryCode);
+            return byCode || b.profit - a.profit;
+          }
+          case "tx":
+            return a.txHash.localeCompare(b.txHash);
+          case "profit-desc":
+          default:
+            return b.profit - a.profit;
+        }
+      });
+
+      return filtered;
+    }
+
+    function renderTable() {
+      const filtered = getFilteredData();
+      renderHeroStats();
+      renderSummary(filtered);
+      renderToRollup(filtered);
+
+      els.resultMeta.textContent = `显示 ${filtered.length} / ${DATA.length} 笔；已选 ${state.selected.size}；已处理 ${Object.values(state.processed).filter(record => record && record.processed).length}。`;
+      els.emptyState.style.display = filtered.length ? "none" : "block";
+      els.selectAllVisible.checked = filtered.length > 0 && filtered.every(item => state.selected.has(item.txHash));
+
+      els.tableBody.innerHTML = filtered.map(item => {
+        const processedRecord = state.processed[item.txHash];
+        const processed = Boolean(processedRecord && processedRecord.processed);
+        const selected = state.selected.has(item.txHash);
+        const opinion = processedRecord?.opinion || "";
+        const detail = getLogicAndEvidence(item);
+        const processedLabel = processed
+          ? `<span class="pill processed">Done ${escapeHtml(processedRecord.processedAt.slice(0, 10))}</span>`
+          : '<span class="pill">Pending</span>';
+
+        return `
+          <tr class="${selected ? "selected" : ""} ${processed ? "processed" : ""}" data-tx="${escapeHtml(item.txHash)}">
+            <td><input class="checkbox row-select" type="checkbox" data-tx="${escapeHtml(item.txHash)}" ${selected ? "checked" : ""} /></td>
+            <td>
+              <label class="toggle" style="padding:8px 10px;">
+                <input class="processed-toggle" type="checkbox" data-tx="${escapeHtml(item.txHash)}" ${processed ? "checked" : ""} />
+                <span>${processed ? "已处理" : "未处理"}</span>
+              </label>
+              <div style="margin-top:8px;">${processedLabel}</div>
+            </td>
+            <td>
+              <div class="pill category">${escapeHtml(item.categoryCode)} ${escapeHtml(item.category)}</div>
+              <div style="margin-top:8px;"><span class="pill ${escapeHtml(item.confidence)}">${escapeHtml(item.confidence)}</span></div>
+            </td>
+            <td class="hash-cell">
+              <span class="hash-main">${escapeHtml(item.txHash)}</span>
+              <div class="quick-links">
+                <a class="pill" href="${escapeHtml(item.eigentxUrl)}" target="_blank" rel="noreferrer">EigenTx</a>
+                <a class="pill" href="${escapeHtml(item.etherscanUrl)}" target="_blank" rel="noreferrer">Etherscan</a>
+                <button class="pill copy-link" data-copy="${escapeHtml(item.txHash)}" type="button">Copy Hash</button>
+              </div>
+            </td>
+            <td>
+              <div class="mono">${fmtInt(item.blockNumber)}</div>
+            </td>
+            <td>
+              <div><strong>From</strong> <span class="mono">${escapeHtml(shortHash(item.from))}</span></div>
+              <div style="margin-top:8px;"><strong>To</strong> <span class="mono">${escapeHtml(shortHash(item.to))}</span></div>
+            </td>
+            <td>
+              <div class="mono">${escapeHtml(item.selector)}</div>
+              <div class="muted" style="margin-top:6px;">bucket: ${escapeHtml(item.bucket)}</div>
+            </td>
+            <td>
+              <div class="profit">${fmtNumber(item.profit, 2)}</div>
+              <div class="muted" style="margin-top:6px;">revenue ${fmtNumber(item.revenue, 2)}</div>
+            </td>
+            <td>
+              <div class="profit ${gapClass(item.gap)}">${fmtNumber(item.gap, 2)}</div>
+            </td>
+            <td>
+              <div class="mono">${escapeHtml(item.analysisSource)}</div>
+              <div class="muted" style="margin-top:6px;">${escapeHtml(item.fallbackReason)}</div>
+            </td>
+            <td class="note">
+              <strong>${escapeHtml(item.categoryCode)} Note</strong>
+              <span class="muted">${escapeHtml(item.categoryNote)}</span>
+              <textarea class="opinion-input" data-tx="${escapeHtml(item.txHash)}" placeholder="处理意见 / 后续动作...">${escapeHtml(opinion)}</textarea>
+              <details class="evidence-box">
+                <summary>判定逻辑与证据</summary>
+                <div class="evidence-inner">
+                  <div class="evidence-block">
+                    <strong>判定逻辑</strong>
+                    <ul class="evidence-list">
+                      ${detail.logic.map(line => `<li>${escapeHtml(line)}</li>`).join("")}
+                    </ul>
+                  </div>
+                  <div class="evidence-block">
+                    <strong>证据</strong>
+                    <ul class="evidence-list">
+                      ${detail.evidence.map(line => `<li>${escapeHtml(line)}</li>`).join("")}
+                    </ul>
+                  </div>
+                </div>
+              </details>
+            </td>
+            <td>
+              <div class="row-actions">
+                <a class="mini-button" href="${escapeHtml(item.eigentxUrl)}" target="_blank" rel="noreferrer">Open EigenTx</a>
+                <a class="mini-button" href="${escapeHtml(item.etherscanUrl)}" target="_blank" rel="noreferrer">Open Etherscan</a>
+                <button class="mini-button export-one" type="button" data-tx="${escapeHtml(item.txHash)}">Export Row</button>
+              </div>
+            </td>
+          </tr>
+        `;
+      }).join("");
+    }
+
+    function csvEscape(value) {
+      const text = String(value ?? "");
+      return /[",\n]/.test(text) ? `"${text.replaceAll('"', '""')}"` : text;
+    }
+
+    function selectedRows() {
+      return DATA.filter(item => state.selected.has(item.txHash));
+    }
+
+    function download(filename, content, mime) {
+      const blob = new Blob([content], { type: mime });
+      const url = URL.createObjectURL(blob);
+      const anchor = document.createElement("a");
+      anchor.href = url;
+      anchor.download = filename;
+      anchor.click();
+      setTimeout(() => URL.revokeObjectURL(url), 1500);
+    }
+
+    function exportRowsAsCsv(rows, filename) {
+      const enrichedRows = rows.map(enrichRow);
+      const fields = [
+        "txHash", "blockNumber", "from", "to", "selector", "profit", "revenue", "gap",
+        "bucket", "analysisSource", "fallbackReason", "categoryCode", "category",
+        "confidence", "determinationLogic", "evidenceSummary", "eigentxUrl", "etherscanUrl"
+      ];
+      const lines = [
+        fields.join(","),
+        ...enrichedRows.map(row => fields.map(field => csvEscape(row[field])).join(",")),
+      ];
+      download(filename, lines.join("\n"), "text/csv;charset=utf-8");
+    }
+
+    function exportRowsAsJson(rows, filename) {
+      download(filename, JSON.stringify(rows.map(enrichRow), null, 2), "application/json;charset=utf-8");
+    }
+
+    function markProcessed(txHash, processed) {
+      const existing = state.processed[txHash] || {};
+      if (processed) {
+        state.processed[txHash] = {
+          ...existing,
+          processed: true,
+          processedAt: existing.processedAt || new Date().toISOString(),
+        };
+      } else if (existing.opinion) {
+        state.processed[txHash] = { ...existing, processed: false };
+      } else {
+        delete state.processed[txHash];
+      }
+      saveProcessedState();
+      renderTable();
+      setStatus(processed ? `已标记 ${shortHash(txHash)} 为已处理。` : `已取消 ${shortHash(txHash)} 的处理标记。`);
+    }
+
+    function bindEvents() {
+      els.searchInput.addEventListener("input", event => {
+        state.search = event.target.value;
+        renderTable();
+      });
+
+      els.categoryFilter.addEventListener("change", event => {
+        state.category = event.target.value;
+        renderTable();
+      });
+
+      els.confidenceFilter.addEventListener("change", event => {
+        state.confidence = event.target.value;
+        renderTable();
+      });
+
+      els.toFilter.addEventListener("change", event => {
+        state.to = event.target.value;
+        renderTable();
+      });
+
+      els.bucketFilter.addEventListener("change", event => {
+        state.bucket = event.target.value;
+        renderTable();
+      });
+
+      els.sortMode.addEventListener("change", event => {
+        state.sortMode = event.target.value;
+        renderTable();
+      });
+
+      els.hideProcessedToggle.addEventListener("change", event => {
+        state.hideProcessed = event.target.checked;
+        renderTable();
+      });
+
+      els.selectedOnlyToggle.addEventListener("change", event => {
+        state.selectedOnly = event.target.checked;
+        renderTable();
+      });
+
+      els.highGapToggle.addEventListener("change", event => {
+        state.highGapOnly = event.target.checked;
+        renderTable();
+      });
+
+      els.selectVisibleBtn.addEventListener("click", () => {
+        for (const item of getFilteredData()) {
+          state.selected.add(item.txHash);
+        }
+        renderTable();
+        setStatus("已选择当前筛选结果。");
+      });
+
+      els.clearSelectionBtn.addEventListener("click", () => {
+        state.selected.clear();
+        renderTable();
+        setStatus("已清空当前选择。");
+      });
+
+      els.markSelectedProcessedBtn.addEventListener("click", () => {
+        const rows = selectedRows();
+        if (!rows.length) {
+          setStatus("没有选中的 tx。");
+          return;
+        }
+        for (const row of rows) {
+          const existing = state.processed[row.txHash] || {};
+          state.processed[row.txHash] = { ...existing, processed: true, processedAt: existing.processedAt || new Date().toISOString() };
+        }
+        saveProcessedState();
+        renderTable();
+        setStatus(`已将 ${rows.length} 笔选中 tx 标记为已处理。`);
+      });
+
+      els.clearProcessedBtn.addEventListener("click", () => {
+        state.processed = {};
+        saveProcessedState();
+        renderTable();
+        setStatus("已清空本地处理状态。");
+      });
+
+      els.exportSelectedCsvBtn.addEventListener("click", () => {
+        const rows = selectedRows();
+        if (!rows.length) {
+          setStatus("没有选中的 tx，无法导出 CSV。");
+          return;
+        }
+        exportRowsAsCsv(rows, "mevscan-fp-selected.csv");
+        setStatus(`已导出 ${rows.length} 笔选中 tx 的 CSV。`);
+      });
+
+      els.exportSelectedJsonBtn.addEventListener("click", () => {
+        const rows = selectedRows();
+        if (!rows.length) {
+          setStatus("没有选中的 tx，无法导出 JSON。");
+          return;
+        }
+        exportRowsAsJson(rows, "mevscan-fp-selected.json");
+        setStatus(`已导出 ${rows.length} 笔选中 tx 的 JSON。`);
+      });
+
+      els.exportProcessedJsonBtn.addEventListener("click", () => {
+        download("mevscan-fp-processed-state.json", JSON.stringify(state.processed, null, 2), "application/json;charset=utf-8");
+        setStatus("已导出本地处理状态 JSON。");
+      });
+
+      els.selectAllVisible.addEventListener("change", event => {
+        const visible = getFilteredData();
+        if (event.target.checked) {
+          visible.forEach(item => state.selected.add(item.txHash));
+          setStatus(`已选择当前可见的 ${visible.length} 笔 tx。`);
+        } else {
+          visible.forEach(item => state.selected.delete(item.txHash));
+          setStatus("已取消当前可见 tx 的选择。");
+        }
+        renderTable();
+      });
+
+      document.addEventListener("input", event => {
+        const opinionInput = event.target.closest(".opinion-input");
+        if (!opinionInput) return;
+        const txHash = opinionInput.dataset.tx;
+        const value = opinionInput.value.trim();
+        const existing = state.processed[txHash] || {};
+        if (value) {
+          state.processed[txHash] = { ...existing, processed: Boolean(existing.processed), opinion: value, processedAt: existing.processedAt || new Date().toISOString() };
+        } else if (existing.processed) {
+          state.processed[txHash] = { ...existing, opinion: "" };
+        } else {
+          delete state.processed[txHash];
+        }
+        saveProcessedState();
+      });
+
+      document.addEventListener("click", async event => {
+        const rowSelect = event.target.closest(".row-select");
+        if (rowSelect) {
+          const tx = rowSelect.dataset.tx;
+          if (rowSelect.checked) state.selected.add(tx);
+          else state.selected.delete(tx);
+          renderTable();
+          return;
+        }
+
+        const processedToggle = event.target.closest(".processed-toggle");
+        if (processedToggle) {
+          markProcessed(processedToggle.dataset.tx, processedToggle.checked);
+          return;
+        }
+
+        const exportOne = event.target.closest(".export-one");
+        if (exportOne) {
+          const tx = exportOne.dataset.tx;
+          const row = DATA.find(item => item.txHash === tx);
+          exportRowsAsJson([row], `mevscan-${tx.slice(0, 10)}.json`);
+          setStatus(`已导出 ${shortHash(tx)}。`);
+          return;
+        }
+
+        const copyButton = event.target.closest(".copy-link");
+        if (copyButton) {
+          try {
+            await navigator.clipboard.writeText(copyButton.dataset.copy);
+            setStatus(`已复制 ${shortHash(copyButton.dataset.copy)}。`);
+          } catch (error) {
+            setStatus("复制失败，浏览器可能不允许在当前上下文使用剪贴板。");
+          }
+        }
+      });
+    }
+
+    function hydrateControls() {
+      els.searchInput.value = state.search;
+      els.categoryFilter.value = state.category;
+      els.confidenceFilter.value = state.confidence;
+      els.toFilter.value = state.to;
+      els.bucketFilter.value = state.bucket;
+      els.sortMode.value = state.sortMode;
+      els.hideProcessedToggle.checked = state.hideProcessed;
+      els.selectedOnlyToggle.checked = state.selectedOnly;
+      els.highGapToggle.checked = state.highGapOnly;
+    }
+
+    function init() {
+      loadProcessedState();
+      populateFilters();
+      hydrateControls();
+      bindEvents();
+      renderTable();
+      setStatus("页面已就绪。处理状态会自动保存到本地。");
+    }
+
+    init();
+  </script>
+</body>
+</html>

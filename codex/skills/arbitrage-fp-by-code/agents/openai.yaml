@@ -1,0 +1,4 @@
+interface:
+  display_name: "Arbitrage FP by Code"
+  short_description: "Explain pipeline-ts arbitrage false positives"
+  default_prompt: "Use $arbitrage-fp-by-code to explain why a transaction was or was not recognized as arbitrage in pipeline-ts."
