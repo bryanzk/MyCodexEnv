@@ -17,7 +17,7 @@ cd MyCodexEnv
 - superpowers 固定版本见 `locks/superpowers.lock`
 - bootstrap 会安装固定版本 `chrome-devtools-mcp@0.20.0`；默认关闭 usage statistics 与 performance CrUX URL 查询
 - 若本机缺少 Google Chrome，bootstrap 会补装 `google-chrome`
-- Codex skills 单一来源：`codex/skills/*`（同步到 `~/.codex/skills/*`）
+- Codex skills 单一来源：`codex/skills/*`（同步到 `~/.codex/skills/*`），其中 `gstack` 也作为全局 skill 集合由本仓库托管
 - Codex 通用层 `AGENTS.md` 唯一源码：`codex/AGENTS.md`（同步到 `~/.codex/AGENTS.md`）
 - Codex hooks 来源：`codex/hooks.json` 与 `codex/hooks/*`（同步到 `~/.codex/hooks.json` 与 `~/.codex/hooks/*`）
 - Codex zsh 标题钩子来源：`codex/zsh/*`（同步到 `~/.codex/zsh/*`）
@@ -27,9 +27,14 @@ cd MyCodexEnv
 - 全局 zsh 会话标题钩子默认生成 `<项目缩写>-<YYYYMMDD>-summary`，避免被旧的 `[Repo] zsh` 标题覆盖
 - 若 Codex Desktop 在新建会话时对 `~/Documents` 或 `~/Desktop` 报 `EPERM: operation not permitted, mkdir`，优先将会话根目录切到 `~/Codes/Codex` 这类非受保护目录，或在 macOS `隐私与安全性 -> 文件与文件夹 / 完全磁盘访问权限` 中授权 `Codex`
 
-## 新增技能
+## 全局技能
 
-已合并一组从 `garrytan/gstack` 适配过来的 Codex skills：
+仓库托管两类全局 Codex skills：
+
+- 本仓库维护的通用 skills，例如 `planner`、`verification-loop`、`thread-topic-guard`
+- 从 `garrytan/gstack` 同步的完整全局 skill 集合，包括 `gstack` 根支持目录和 `gstack-*` namespaced skills
+
+早期已适配的短名 gstack skills 仍保留：
 
 - `plan-ceo-review`
 - `plan-eng-review`
@@ -40,7 +45,13 @@ cd MyCodexEnv
 - `qa`
 - `setup-browser-cookies`
 
-其中 `browse` 是带 supporting files 的本地浏览器自动化 skill，首次使用前需在 `codex/skills/browse` 或同步后的 `~/.codex/skills/browse` 下执行一次 `./setup`。源码适配版保留在仓库 `codex/skills/*`，上游来源为 MIT License，许可证副本位于 `codex/skills/browse/LICENSE.gstack`。
+完整 gstack 集合使用 namespaced 目录，例如 `gstack-qa`、`gstack-ship`、`gstack-review`、`gstack-design-review`、`gstack-investigate`。它们依赖 `codex/skills/gstack/*` 中的共享支持文件。首次使用需要在同步后执行：
+
+```bash
+~/.codex/skills/gstack/setup
+```
+
+该 setup 只在 `~/.codex/skills/gstack` 内构建本地支持二进制，不会把 skill 迁移成指向 `/Users/kezheng/gstack` 的本机 symlink。早期短名 `browse` 也带 supporting files，首次使用前可在 `codex/skills/browse` 或同步后的 `~/.codex/skills/browse` 下执行一次 `./setup`。上游来源为 MIT License。
 
 ## 多仓库 AGENTS 管理
 

@@ -131,6 +131,26 @@ def test_sync_renders_template_and_copies_skills():
             (codex_home / "skills" / "browse" / "bin" / "find-browse").exists(),
             "browse helper scripts should be copied with the skill",
         )
+        require(
+            (codex_home / "skills" / "gstack" / "setup").exists(),
+            "gstack root setup should be copied with the global skill",
+        )
+        require(
+            (codex_home / "skills" / "gstack" / "bin" / "gstack-config").exists(),
+            "gstack shared helper scripts should be copied with the global skill",
+        )
+        require(
+            (codex_home / "skills" / "gstack" / "browse" / "src" / "cli.ts").exists(),
+            "gstack browse source should be copied with the global skill",
+        )
+        require(
+            (codex_home / "skills" / "gstack-qa" / "SKILL.md").exists(),
+            "gstack namespaced qa skill should be copied",
+        )
+        require(
+            (codex_home / "skills" / "gstack-ship" / "SKILL.md").exists(),
+            "gstack namespaced ship skill should be copied",
+        )
 
     print("[PASS] sync render + skills copy")
 
