@@ -3,11 +3,13 @@
 ## Scope
 - Target OS: macOS ARM (Apple Silicon)
 - One command after clone:
-  - `./bootstrap.sh --eigenphi-backend-root <path>`
+  - `./bootstrap.sh`
 
 ## What This Repository Syncs
 - `codex/config.template.toml` -> `~/.codex/config.toml`
 - `codex/AGENTS.md` -> `~/.codex/AGENTS.md`
+- `codex/remote-access.md` -> `~/.codex/remote-access.md`
+- `codex/remote-hosts.md` -> `~/.codex/remote-hosts.md`
 - `codex/skills/*` -> `~/.codex/skills/*`
 - `codex/workflow/*` -> `~/.codex/workflow/*`（排除 `workflow/memory/`）
 - `claude/workflow/*` -> `~/.claude/workflow/*`（排除 `workflow/memory/`）
@@ -15,6 +17,7 @@
 - `~/.codex/superpowers` pinned by `locks/superpowers.lock`
 - `scripts/install_prereqs.sh` installs pinned `chrome-devtools-mcp@0.20.0` globally via npm
 - `chrome-devtools-mcp` is rendered into `~/.codex/config.toml` with `--no-usage-statistics` and `--no-performance-crux`
+- EigenPhi MCP server is kept as a commented template block and is disabled by default.
 - If Google Chrome is missing, bootstrap installs `google-chrome`
 
 ## Skills Source of Truth
@@ -27,8 +30,9 @@
 - `browse` includes supporting code under `codex/skills/browse/*`; first use requires `./setup` in that directory after sync so Bun can build the local binary and install Playwright Chromium.
 
 ## AGENTS Source of Truth
-- Codex 通用层 `AGENTS.md` 的唯一源码是 `codex/AGENTS.md`。
-- `scripts/sync_codex_home.sh --sync-agents-only` 只同步 `codex/AGENTS.md` 到 `~/.codex/AGENTS.md`，不会改写 config / skills / workflow。
+- Codex 通用层入口源码是 `codex/AGENTS.md`。
+- Remote 访问流程细则拆在 `codex/remote-access.md`；具体主机登记表拆在 `codex/remote-hosts.md`。
+- `scripts/sync_codex_home.sh --sync-agents-only` 会同步 `codex/AGENTS.md`、`codex/remote-access.md`、`codex/remote-hosts.md` 到 `~/.codex/`，不会改写 config / skills / workflow。
 - 多仓库 repo 级 `AGENTS.md` 的批量管理入口是 `python3 scripts/manage_agents.py`。
 - 批量更新前会将现存多级 `AGENTS.md` 备份到 `/Users/kezheng/Codes/CursorDeveloper/.agents-backups/<backup_id>/`。
 
@@ -42,7 +46,7 @@
 ```bash
 git clone https://github.com/bryanzk/MyCodexEnv.git
 cd MyCodexEnv
-./bootstrap.sh --eigenphi-backend-root /absolute/path/to/eigenphi-backend-go
+./bootstrap.sh
 ```
 
 ## Verification
@@ -69,8 +73,8 @@ python3 scripts/manage_agents.py verify
 1. `Homebrew not found`
 - Run interactive bootstrap without `--non-interactive`, or install Homebrew manually.
 
-2. `Missing MCP server entrypoint`
-- Ensure `--eigenphi-backend-root` points to a repo containing `cmd/mcp-server/main.go`.
+2. `Need EigenPhi MCP locally`
+- Uncomment the `eigenphi-blockchain` block in `codex/config.template.toml`, set the backend path, then rerun sync.
 
 3. `codex login status` not authenticated
 - Run `codex login`.

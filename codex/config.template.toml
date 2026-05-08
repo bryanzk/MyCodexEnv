@@ -2,12 +2,14 @@ model = "gpt-5.4"
 model_reasoning_effort = "high"
 personality = "pragmatic"
 
-[mcp_servers."eigenphi-blockchain"]
-command = "/opt/homebrew/bin/go"
-args = ["run", "${EIGENPHI_BACKEND_ROOT}/cmd/mcp-server/main.go"]
-
-[mcp_servers."eigenphi-blockchain".env]
-ETH_RPC_URL = "https://ethereum.publicnode.com"
+# EigenPhi MCP server is disabled by default.
+# To re-enable it, uncomment this block and replace the backend path.
+# [mcp_servers."eigenphi-blockchain"]
+# command = "/opt/homebrew/bin/go"
+# args = ["run", "/absolute/path/to/eigenphi-backend-go/cmd/mcp-server/main.go"]
+#
+# [mcp_servers."eigenphi-blockchain".env]
+# ETH_RPC_URL = "https://ethereum.publicnode.com"
 
 [mcp_servers.sequential-thinking]
 command = "npx"

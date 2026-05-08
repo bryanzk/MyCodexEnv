@@ -11,10 +11,10 @@ NON_INTERACTIVE="false"
 
 usage() {
   cat <<USAGE
-Usage: ./bootstrap.sh --eigenphi-backend-root <path> [--codex-home <path>] [--claude-home <path>] [--non-interactive]
+Usage: ./bootstrap.sh [--eigenphi-backend-root <path>] [--codex-home <path>] [--claude-home <path>] [--non-interactive]
 
 Options:
-  --eigenphi-backend-root   本地 eigenphi backend 源码根目录（必填）
+  --eigenphi-backend-root   本地 eigenphi backend 源码根目录（可选；EigenPhi MCP 默认禁用）
   --codex-home              Codex home 目录（默认: ~/.codex）
   --claude-home             Claude home 目录（默认: ~/.claude）
   --non-interactive         非交互模式（缺少 Homebrew 时直接失败）
@@ -51,12 +51,6 @@ while [[ $# -gt 0 ]]; do
   esac
 done
 
-if [[ -z "${EIGENPHI_BACKEND_ROOT}" ]]; then
-  echo "--eigenphi-backend-root is required" >&2
-  usage
-  exit 1
-fi
-
 if [[ "$(uname -s)" != "Darwin" ]]; then
   echo "This bootstrap only supports macOS (Darwin)." >&2
   exit 1
@@ -71,10 +65,14 @@ echo "[1/5] Installing prerequisites..."
 "${SCRIPT_DIR}/scripts/install_prereqs.sh" $( [[ "${NON_INTERACTIVE}" == "true" ]] && echo "--non-interactive" )
 
 echo "[2/5] Syncing Codex home content..."
-"${SCRIPT_DIR}/scripts/sync_codex_home.sh" \
+sync_args=(
   --repo-root "${SCRIPT_DIR}" \
-  --codex-home "${CODEX_HOME}" \
-  --eigenphi-backend-root "${EIGENPHI_BACKEND_ROOT}"
+  --codex-home "${CODEX_HOME}"
+)
+if [[ -n "${EIGENPHI_BACKEND_ROOT}" ]]; then
+  sync_args+=(--eigenphi-backend-root "${EIGENPHI_BACKEND_ROOT}")
+fi
+"${SCRIPT_DIR}/scripts/sync_codex_home.sh" "${sync_args[@]}"
 
 echo "[3/5] Syncing Claude workflow content..."
 "${SCRIPT_DIR}/scripts/sync_claude_home.sh" \

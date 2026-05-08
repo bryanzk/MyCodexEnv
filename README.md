@@ -7,7 +7,7 @@
 ```bash
 git clone https://github.com/bryanzk/MyCodexEnv.git
 cd MyCodexEnv
-./bootstrap.sh --eigenphi-backend-root /absolute/path/to/eigenphi-backend-go
+./bootstrap.sh
 ```
 
 ## 说明
@@ -16,9 +16,11 @@ cd MyCodexEnv
 - 认证不随仓库迁移；新机器执行 `codex login`
 - superpowers 固定版本见 `locks/superpowers.lock`
 - bootstrap 会安装固定版本 `chrome-devtools-mcp@0.20.0`；默认关闭 usage statistics 与 performance CrUX URL 查询
+- EigenPhi MCP server 默认禁用；`--eigenphi-backend-root` 仅作为兼容旧命令的可选参数保留
 - 若本机缺少 Google Chrome，bootstrap 会补装 `google-chrome`
 - Codex skills 单一来源：`codex/skills/*`（同步到 `~/.codex/skills/*`），其中 `gstack` 也作为全局 skill 集合由本仓库托管
-- Codex 通用层 `AGENTS.md` 唯一源码：`codex/AGENTS.md`（同步到 `~/.codex/AGENTS.md`）
+- Codex 通用层入口源码：`codex/AGENTS.md`（同步到 `~/.codex/AGENTS.md`）
+- Codex 远程访问流程规则：`codex/remote-access.md`（同步到 `~/.codex/remote-access.md`）；远程主机登记表：`codex/remote-hosts.md`（同步到 `~/.codex/remote-hosts.md`）
 - Codex hooks 来源：`codex/hooks.json` 与 `codex/hooks/*`（同步到 `~/.codex/hooks.json` 与 `~/.codex/hooks/*`）
 - Codex zsh 标题钩子来源：`codex/zsh/*`（同步到 `~/.codex/zsh/*`）
 - Codex / Claude workflow 来源分别为 `codex/workflow/*`、`claude/workflow/*`，但都排除 `workflow/memory/` 这类运行态热数据
@@ -66,6 +68,8 @@ python3 scripts/manage_agents.py verify
 
 - 统一备份目录：`/Users/kezheng/Codes/CursorDeveloper/.agents-backups/`
 - 运行时 Codex 通用层副本：`~/.codex/AGENTS.md`
+- 远程访问运行时规则：`~/.codex/remote-access.md`
+- 远程主机运行时登记表：`~/.codex/remote-hosts.md`
 - 若只需同步 Codex 通用层到本机运行时：
 
 ```bash

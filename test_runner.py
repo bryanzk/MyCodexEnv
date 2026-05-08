@@ -31,17 +31,13 @@ def count_top_dirs(path: Path) -> int:
     return len([item for item in path.iterdir() if item.is_dir()])
 
 
-def make_fake_eigenphi(root: Path) -> Path:
-    backend = root / "eigenphi-backend-go"
-    entry = backend / "cmd" / "mcp-server"
-    entry.mkdir(parents=True, exist_ok=True)
-    (entry / "main.go").write_text("package main\nfunc main() {}\n", encoding="utf-8")
-    return backend
-
-
 def write(path: Path, content: str) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(content, encoding="utf-8")
+
+
+def active_toml_lines(text: str) -> str:
+    return "\n".join(line for line in text.splitlines() if not line.lstrip().startswith("#"))
 
 
 def make_git_repo(path: Path) -> Path:
@@ -54,17 +50,19 @@ def run_manage_agents(*args):
     return run([sys.executable, str(MANAGE_AGENTS), *args])
 
 
-def test_bootstrap_requires_argument():
-    code, out, err = run([str(BOOTSTRAP)])
-    require(code != 0, "bootstrap should fail when required argument is missing")
+def test_bootstrap_eigenphi_argument_is_optional():
+    code, out, err = run([str(BOOTSTRAP), "--help"])
+    require(code == 0, "bootstrap help should render successfully")
     text = f"{out}\n{err}"
-    require("--eigenphi-backend-root is required" in text, "missing required-argument error message")
-    print("[PASS] bootstrap required argument check")
+    require("[--eigenphi-backend-root <path>]" in text, "eigenphi argument should be optional in usage")
+    require("默认禁用" in text, "help should explain EigenPhi MCP is disabled by default")
+    print("[PASS] bootstrap optional EigenPhi argument check")
 
 
-def test_sync_requires_entrypoint_file():
+def test_sync_ignores_legacy_eigenphi_argument():
     with tempfile.TemporaryDirectory() as tmp:
         missing_backend = Path(tmp) / "missing-backend"
+        codex_home = Path(tmp) / ".codex"
         code, out, err = run(
             [
                 str(SYNC),
@@ -73,28 +71,26 @@ def test_sync_requires_entrypoint_file():
                 "--eigenphi-backend-root",
                 str(missing_backend),
                 "--codex-home",
-                str(Path(tmp) / ".codex"),
+                str(codex_home),
                 "--skip-superpowers-sync",
             ]
         )
-        require(code != 0, "sync should fail when backend root is invalid")
-        require("Invalid eigenphi backend root" in f"{out}\n{err}", "expected invalid root error")
-    print("[PASS] sync invalid backend root check")
+        require(code == 0, f"sync should ignore legacy EigenPhi path: {err or out}")
+        rendered = (codex_home / "config.toml").read_text(encoding="utf-8")
+        require('[mcp_servers."eigenphi-blockchain"]' not in active_toml_lines(rendered), "EigenPhi MCP should not be active")
+    print("[PASS] sync ignores legacy EigenPhi argument")
 
 
 def test_sync_renders_template_and_copies_skills():
     with tempfile.TemporaryDirectory() as tmp:
         tmp_path = Path(tmp)
         codex_home = tmp_path / ".codex"
-        backend = make_fake_eigenphi(tmp_path)
 
         code, out, err = run(
             [
                 str(SYNC),
                 "--repo-root",
                 str(ROOT),
-                "--eigenphi-backend-root",
-                str(backend),
                 "--codex-home",
                 str(codex_home),
                 "--skip-superpowers-sync",
@@ -103,13 +99,20 @@ def test_sync_renders_template_and_copies_skills():
         require(code == 0, f"sync failed: {err or out}")
 
         rendered = (codex_home / "config.toml").read_text(encoding="utf-8")
-        require("${EIGENPHI_BACKEND_ROOT}" not in rendered, "template placeholder should be replaced")
         require("${NPM_GLOBAL_BIN}" not in rendered, "npm global bin placeholder should be replaced")
-        require(str(backend / "cmd" / "mcp-server" / "main.go") in rendered, "rendered MCP path mismatch")
+        require('[mcp_servers."eigenphi-blockchain"]' not in active_toml_lines(rendered), "EigenPhi MCP should not be active")
+        require('# [mcp_servers."eigenphi-blockchain"]' in rendered, "disabled EigenPhi MCP block should remain documented")
         require('[mcp_servers."chrome-devtools"]' in rendered, "chrome-devtools MCP should be rendered")
         require("--no-usage-statistics" in rendered, "chrome-devtools MCP should disable usage statistics")
         require("--no-performance-crux" in rendered, "chrome-devtools MCP should disable CrUX lookups")
         require((codex_home / "AGENTS.md").exists(), "AGENTS.md should be copied")
+        require((codex_home / "remote-access.md").exists(), "remote access policy should be copied")
+        require((codex_home / "remote-hosts.md").exists(), "remote hosts registry should be copied")
+        require(
+            (codex_home / "remote-access.md").read_text(encoding="utf-8")
+            == (ROOT / "codex" / "remote-access.md").read_text(encoding="utf-8"),
+            "runtime remote-access.md should match source",
+        )
         require((codex_home / "workflow" / "rules" / "behaviors.md").exists(), "codex workflow rules should be copied")
 
         expected_skills = count_top_dirs(ROOT / "codex" / "skills")
@@ -175,10 +178,17 @@ def test_sync_agents_only_copies_and_backs_up_agents():
         )
         require(code == 0, f"sync agents only failed: {err or out}")
         require((codex_home / "AGENTS.md").exists(), "AGENTS.md should be copied in sync-agents-only mode")
+        require((codex_home / "remote-access.md").exists(), "remote-access.md should be copied in sync-agents-only mode")
+        require((codex_home / "remote-hosts.md").exists(), "remote-hosts.md should be copied in sync-agents-only mode")
         require(
             (codex_home / "AGENTS.md").read_text(encoding="utf-8")
             == (ROOT / "codex" / "AGENTS.md").read_text(encoding="utf-8"),
             "sync-agents-only should copy repo codex/AGENTS.md",
+        )
+        require(
+            (codex_home / "remote-access.md").read_text(encoding="utf-8")
+            == (ROOT / "codex" / "remote-access.md").read_text(encoding="utf-8"),
+            "sync-agents-only should copy repo codex/remote-access.md",
         )
         backups = list(codex_home.glob("AGENTS.md.backup.*"))
         require(backups, "sync-agents-only should back up existing AGENTS.md")
@@ -220,15 +230,12 @@ def test_verify_after_full_sync():
         tmp_path = Path(tmp)
         codex_home = tmp_path / ".codex"
         claude_home = tmp_path / ".claude"
-        backend = make_fake_eigenphi(tmp_path)
 
         code, out, err = run(
             [
                 str(SYNC),
                 "--repo-root",
                 str(ROOT),
-                "--eigenphi-backend-root",
-                str(backend),
                 "--codex-home",
                 str(codex_home),
             ]
@@ -361,9 +368,13 @@ def test_manage_agents_scan_backup_generate_restore():
         codex_runtime.parent.mkdir(parents=True, exist_ok=True)
         write(
             codex_source,
-            "# Codex Global\n\n## Purpose\n- 通用规则。\n\n## Verification Gate\n- `command`\n- `exit_code`\n- `key_output`\n- `timestamp`\n\n## Layering\n- Codex level\n\n## Repo AGENTS Expectations\n- repo-specific\n",
+            "# Codex Global\n\n## Purpose\n- 通用规则。\n\n## Verification Gate\n- `command`\n- `exit_code`\n- `key_output`\n- `timestamp`\n\n## Remote Operations\n- 远程操作前读取 `~/.codex/remote-access.md`。\n\n## Layering\n- Codex level\n\n## Repo AGENTS Expectations\n- repo-specific\n",
         )
         codex_runtime.write_text("# old runtime\n", encoding="utf-8")
+        write(control_root / "codex" / "remote-access.md", "# Remote Access Policy\n")
+        write(control_root / "codex" / "remote-hosts.md", "# Remote Hosts Registry\n")
+        write(codex_runtime.parent / "remote-access.md", "# old remote access\n")
+        write(codex_runtime.parent / "remote-hosts.md", "# old remote hosts\n")
 
         repo_python = make_git_repo(workspace_root / "repo-python")
         write(repo_python / "README.md", "# Repo Python\n\nA Python service.\n")
@@ -559,8 +570,8 @@ def main():
     require(VERIFY.exists(), f"missing verify script: {VERIFY}")
     require(MANAGE_AGENTS.exists(), f"missing manage_agents script: {MANAGE_AGENTS}")
 
-    test_bootstrap_requires_argument()
-    test_sync_requires_entrypoint_file()
+    test_bootstrap_eigenphi_argument_is_optional()
+    test_sync_ignores_legacy_eigenphi_argument()
     test_sync_renders_template_and_copies_skills()
     test_sync_agents_only_copies_and_backs_up_agents()
     test_sync_claude_injects_integration_block()

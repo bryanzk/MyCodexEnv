@@ -8,7 +8,7 @@
 1. Restore previous branch state:
    - `git checkout <known-good-commit>`
 2. Re-run sync:
-   - `./bootstrap.sh --eigenphi-backend-root <path>`
+   - `./bootstrap.sh`
 3. Verify both homes:
    - `./scripts/verify_codex_env.sh --repo-root "$(pwd)" --codex-home "$HOME/.codex" --claude-home "$HOME/.claude"`
 

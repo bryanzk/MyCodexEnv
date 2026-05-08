@@ -366,6 +366,14 @@ def scan_workspace(workspace_root: Path, codex_source: Path, codex_runtime: Path
     }
 
 
+def codex_remote_source(codex_source: Path, filename: str) -> Path:
+    return codex_source.parent / filename
+
+
+def codex_remote_runtime(codex_runtime: Path, filename: str) -> Path:
+    return codex_runtime.parent / filename
+
+
 def infer_workflows(repo: RepoRecord) -> list[str]:
     workflows: list[str] = []
     if repo.package_scripts:
@@ -588,6 +596,10 @@ def build_backup_entries(scan_payload: dict) -> list[dict]:
 
     append_entry(Path(scan_payload["codex_source"]), "codex_source", "MyCodexEnv")
     append_entry(Path(scan_payload["codex_runtime"]), "codex_runtime", ".codex")
+    for source_path in scan_payload.get("codex_remote_sources", []):
+        append_entry(Path(source_path), "codex_remote_source", "MyCodexEnv")
+    for runtime_path in scan_payload.get("codex_remote_runtimes", []):
+        append_entry(Path(runtime_path), "codex_remote_runtime", ".codex")
 
     for repo in scan_payload["repos"]:
         repo_path = Path(repo["path"])
@@ -622,12 +634,28 @@ def render_backup_report(manifest: dict) -> str:
 
 def command_scan(args: argparse.Namespace) -> int:
     payload = scan_workspace(args.workspace_root, args.codex_source, args.codex_runtime, args.backup_root)
+    payload["codex_remote_sources"] = [
+        codex_remote_source(args.codex_source, "remote-access.md").as_posix(),
+        codex_remote_source(args.codex_source, "remote-hosts.md").as_posix(),
+    ]
+    payload["codex_remote_runtimes"] = [
+        codex_remote_runtime(args.codex_runtime, "remote-access.md").as_posix(),
+        codex_remote_runtime(args.codex_runtime, "remote-hosts.md").as_posix(),
+    ]
     print(json.dumps(payload, ensure_ascii=False, indent=2))
     return 0
 
 
 def command_backup(args: argparse.Namespace) -> int:
     scan_payload = scan_workspace(args.workspace_root, args.codex_source, args.codex_runtime, args.backup_root)
+    scan_payload["codex_remote_sources"] = [
+        codex_remote_source(args.codex_source, "remote-access.md").as_posix(),
+        codex_remote_source(args.codex_source, "remote-hosts.md").as_posix(),
+    ]
+    scan_payload["codex_remote_runtimes"] = [
+        codex_remote_runtime(args.codex_runtime, "remote-access.md").as_posix(),
+        codex_remote_runtime(args.codex_runtime, "remote-hosts.md").as_posix(),
+    ]
     backup_id = args.backup_id or datetime.now().strftime("%Y%m%d%H%M%S")
     backup_dir = args.backup_root / backup_id
     if backup_dir.exists():
@@ -666,6 +694,18 @@ def command_generate(args: argparse.Namespace) -> int:
         shutil.copy2(args.codex_runtime, backup_path)
     shutil.copy2(args.codex_source, args.codex_runtime)
     actions.append({"path": args.codex_runtime.as_posix(), "action": "update"})
+
+    for filename in ("remote-access.md", "remote-hosts.md"):
+        source = codex_remote_source(args.codex_source, filename)
+        target = codex_remote_runtime(args.codex_runtime, filename)
+        if not source.exists():
+            fail(f"Codex remote doc source does not exist: {source}")
+        target.parent.mkdir(parents=True, exist_ok=True)
+        if target.exists():
+            backup_path = target.with_name(f"{target.name}.backup.{datetime.now().strftime('%Y%m%d%H%M%S')}")
+            shutil.copy2(target, backup_path)
+        shutil.copy2(source, target)
+        actions.append({"path": target.as_posix(), "action": "update"})
 
     for repo_payload in scan_payload["repos"]:
         repo = build_repo_record(Path(repo_payload["path"]))
@@ -737,6 +777,19 @@ def command_verify(args: argparse.Namespace) -> int:
         for header in REQUIRED_CODEX_HEADERS:
             if header not in source_text:
                 errors.append(f"codex source missing header: {header}")
+        if "remote-access.md" not in source_text:
+            errors.append("codex source missing remote-access.md route")
+
+    for filename in ("remote-access.md", "remote-hosts.md"):
+        source = codex_remote_source(args.codex_source, filename)
+        runtime = codex_remote_runtime(args.codex_runtime, filename)
+        if not source.exists():
+            errors.append(f"missing codex remote doc source: {source}")
+        if not runtime.exists():
+            errors.append(f"missing codex remote doc runtime: {runtime}")
+        if source.exists() and runtime.exists():
+            if sha256_bytes(source.read_bytes()) != sha256_bytes(runtime.read_bytes()):
+                errors.append(f"codex remote doc source/runtime hash mismatch: {filename}")
 
     for repo_payload in scan_payload["repos"]:
         repo_path = Path(repo_payload["path"])

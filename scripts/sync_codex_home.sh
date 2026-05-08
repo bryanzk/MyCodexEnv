@@ -11,6 +11,9 @@ SYNC_AGENTS_ONLY="false"
 usage() {
   cat <<USAGE
 Usage: sync_codex_home.sh --repo-root <path> [--eigenphi-backend-root <path>] [--codex-home <path>] [--skip-superpowers-sync] [--sync-agents-only]
+
+Options:
+  --eigenphi-backend-root   Optional legacy argument; EigenPhi MCP is disabled by default.
 USAGE
 }
 
@@ -61,6 +64,25 @@ fi
 
 mkdir -p "${CODEX_HOME}"
 
+sync_codex_remote_docs() {
+  local source target backup
+  for filename in remote-access.md remote-hosts.md; do
+    source="${REPO_ROOT}/codex/${filename}"
+    target="${CODEX_HOME}/${filename}"
+    if [[ ! -f "${source}" ]]; then
+      echo "Missing Codex remote doc source: ${source}" >&2
+      exit 1
+    fi
+    if [[ -f "${target}" ]]; then
+      backup="${target}.backup.$(date +%Y%m%d%H%M%S)"
+      cp "${target}" "${backup}"
+      echo "Backed up existing ${filename} to ${backup}"
+    fi
+    cp "${source}" "${target}"
+    echo "Codex ${filename} synchronized: ${target}"
+  done
+}
+
 if [[ "${SYNC_AGENTS_ONLY}" == "true" ]]; then
   AGENTS_SOURCE="${REPO_ROOT}/codex/AGENTS.md"
   AGENTS_TARGET="${CODEX_HOME}/AGENTS.md"
@@ -75,6 +97,7 @@ if [[ "${SYNC_AGENTS_ONLY}" == "true" ]]; then
   fi
   cp "${AGENTS_SOURCE}" "${AGENTS_TARGET}"
   echo "Codex AGENTS synchronized: ${AGENTS_TARGET}"
+  sync_codex_remote_docs
   if [[ -f "${REPO_ROOT}/codex/hooks.json" ]]; then
     cp "${REPO_ROOT}/codex/hooks.json" "${CODEX_HOME}/hooks.json"
     echo "Codex hooks config synchronized: ${CODEX_HOME}/hooks.json"
@@ -116,22 +139,6 @@ PY
   exit 0
 fi
 
-if [[ -z "${EIGENPHI_BACKEND_ROOT}" ]]; then
-  echo "--eigenphi-backend-root is required unless --sync-agents-only is used" >&2
-  usage
-  exit 1
-fi
-
-if [[ ! -d "${EIGENPHI_BACKEND_ROOT}" ]]; then
-  echo "Invalid eigenphi backend root: ${EIGENPHI_BACKEND_ROOT}" >&2
-  exit 1
-fi
-
-if [[ ! -f "${EIGENPHI_BACKEND_ROOT}/cmd/mcp-server/main.go" ]]; then
-  echo "Missing MCP server entrypoint: ${EIGENPHI_BACKEND_ROOT}/cmd/mcp-server/main.go" >&2
-  exit 1
-fi
-
 CONFIG_TARGET="${CODEX_HOME}/config.toml"
 if [[ -f "${CONFIG_TARGET}" ]]; then
   backup="${CONFIG_TARGET}.backup.$(date +%Y%m%d%H%M%S)"
@@ -157,11 +164,9 @@ if [[ -z "${npm_global_prefix}" ]]; then
 fi
 
 npm_global_bin="${npm_global_prefix}/bin"
-escaped_root="$(printf '%s' "${EIGENPHI_BACKEND_ROOT}" | sed 's/[\/&]/\\&/g')"
 escaped_npm_global_bin="$(printf '%s' "${npm_global_bin}" | sed 's/[\/&]/\\&/g')"
 rendered_tmp="$(mktemp)"
 sed \
-  -e "s|\${EIGENPHI_BACKEND_ROOT}|${escaped_root}|g" \
   -e "s|\${NPM_GLOBAL_BIN}|${escaped_npm_global_bin}|g" \
   "${TEMPLATE_PATH}" > "${rendered_tmp}"
 
@@ -191,6 +196,8 @@ if [[ -f "${REPO_ROOT}/codex/AGENTS.md" ]]; then
   fi
   cp "${REPO_ROOT}/codex/AGENTS.md" "${CODEX_HOME}/AGENTS.md"
 fi
+
+sync_codex_remote_docs
 
 if [[ -f "${REPO_ROOT}/codex/hooks.json" ]]; then
   if [[ -f "${CODEX_HOME}/hooks.json" ]]; then
