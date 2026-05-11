@@ -50,6 +50,11 @@ Evidence helper behavior:
 - missing required verification fields: fail non-zero and do not write.
 - partial write risk: validate before append.
 - observer hook failure: warn and continue so observability does not block normal work.
+- report view: `scripts/harness_report.py` summarizes local JSONL evidence with
+  `--cwd`, `--since`, `--phase`, `--event-type`, `--limit`, and `--json`.
+- empty evidence: report exits 0 with an explicit empty summary.
+- malformed JSONL lines: report continues, increments `malformed_count`, and
+  lists file and line.
 
 ## Checkpoint Contract
 Create a checkpoint when a task crosses any of these boundaries:
@@ -66,6 +71,16 @@ A checkpoint must record:
 - next safe task;
 - whether a git commit exists.
 
+Checkpoint helper:
+- `scripts/harness_checkpoint.py append` updates `docs/harness-state.md` and
+  appends a checkpoint entry.
+- it records git branch, latest commit, dirty status, changed surfaces, blockers,
+  latest verification, and next safe task.
+- it does not create git commits or push changes.
+- missing verification fields fail non-zero before writing.
+- `--allow-unverified` is only valid for `handoff` checkpoints with an explicit
+  blocker.
+
 ## Subagent Contract
 Each delegated agent must receive:
 - role: planner, worker, reviewer, security, or qa;
@@ -81,6 +96,15 @@ Default permissions:
 - main agent: integration and final judgment.
 
 Overlapping worker write sets block dispatch until the task is split again.
+
+Agent team validator:
+- `scripts/harness_agent_team.py validate PLAN.json` validates `agents[]`.
+- every agent requires `id`, `role`, `scope`, `write_set`, and
+  `verification_command`.
+- planner, reviewer, security, and qa roles must have an empty `write_set`.
+- worker roles must have a non-empty `write_set` and verification command.
+- worker write sets are normalized to repo-relative paths and must be disjoint.
+- empty paths, `..` traversal, and absolute paths outside the repo fail.
 
 ## Failure Modes
 - missing state file: fail or warn at startup, then read repo AGENTS and README before acting.

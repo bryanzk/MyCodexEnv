@@ -15,6 +15,9 @@ SYNC_CLAUDE = ROOT / "scripts" / "sync_claude_home.sh"
 VERIFY = ROOT / "scripts" / "verify_codex_env.sh"
 MANAGE_AGENTS = ROOT / "scripts" / "manage_agents.py"
 HARNESS_EVIDENCE = ROOT / "scripts" / "harness_evidence.py"
+HARNESS_REPORT = ROOT / "scripts" / "harness_report.py"
+HARNESS_AGENT_TEAM = ROOT / "scripts" / "harness_agent_team.py"
+HARNESS_CHECKPOINT = ROOT / "scripts" / "harness_checkpoint.py"
 HARNESS_GUARD = ROOT / "codex" / "hooks" / "harness_guard.py"
 HARNESS_OBSERVER = ROOT / "codex" / "hooks" / "harness_observer.py"
 
@@ -271,6 +274,9 @@ def test_harness_runtime_surfaces_exist_and_parse():
         ROOT / "codex" / "hooks" / "harness_guard.py",
         ROOT / "codex" / "hooks" / "harness_observer.py",
         HARNESS_EVIDENCE,
+        HARNESS_REPORT,
+        HARNESS_AGENT_TEAM,
+        HARNESS_CHECKPOINT,
     ]
     for path in required_paths:
         require(path.exists(), f"missing harness runtime surface: {path}")
@@ -388,6 +394,291 @@ def test_harness_evidence_append_and_observer_failure_mode():
         require("warning" in err, "observer should warn on write failure")
 
     print("[PASS] harness evidence append and observer failure mode")
+
+
+def test_harness_report_cli_summarizes_evidence():
+    with tempfile.TemporaryDirectory() as tmp:
+        codex_home = Path(tmp) / ".codex"
+
+        code, out, err = run([sys.executable, str(HARNESS_REPORT), "--codex-home", str(codex_home), "--json"])
+        require(code == 0, f"empty report should succeed: {err or out}")
+        empty_summary = json.loads(out)
+        require(empty_summary["total_events"] == 0, "empty report should have zero total events")
+
+        code, out, err = run(
+            [
+                sys.executable,
+                str(HARNESS_EVIDENCE),
+                "append",
+                "--codex-home",
+                str(codex_home),
+                "--event-type",
+                "verification_result",
+                "--phase",
+                "validation",
+                "--cwd",
+                str(ROOT),
+                "--command",
+                "python3 test_runner.py",
+                "--exit-code",
+                "0",
+                "--key-output",
+                "[PASS] all tests",
+            ]
+        )
+        require(code == 0, f"verification evidence append failed: {err or out}")
+        evidence_file = Path(out)
+        code, out, err = run(
+            [
+                sys.executable,
+                str(HARNESS_EVIDENCE),
+                "append",
+                "--codex-home",
+                str(codex_home),
+                "--event-type",
+                "guardrail_decision",
+                "--phase",
+                "development",
+                "--cwd",
+                str(ROOT),
+                "--approval-state",
+                "blocked",
+                "--failure-class",
+                "forbidden_input",
+                "--message",
+                "dynamic execution denied",
+            ]
+        )
+        require(code == 0, f"guardrail evidence append failed: {err or out}")
+        with evidence_file.open("a", encoding="utf-8") as handle:
+            handle.write("{bad json\n")
+
+        code, out, err = run(
+            [
+                sys.executable,
+                str(HARNESS_REPORT),
+                "--codex-home",
+                str(codex_home),
+                "--cwd",
+                str(ROOT),
+                "--phase",
+                "validation",
+                "--json",
+            ]
+        )
+        require(code == 0, f"filtered report should succeed: {err or out}")
+        summary = json.loads(out)
+        require(summary["total_events"] == 1, f"expected one validation event, got {summary['total_events']}")
+        require(summary["malformed_count"] == 1, "malformed JSONL line should be counted")
+        require(summary["phase_counts"]["validation"] == 1, "validation phase should be counted")
+        require(
+            summary["recent_verifications"][0]["command"] == "python3 test_runner.py",
+            "recent verification should include command",
+        )
+
+        code, out, err = run(
+            [
+                sys.executable,
+                str(HARNESS_REPORT),
+                "--codex-home",
+                str(codex_home),
+                "--event-type",
+                "guardrail_decision",
+            ]
+        )
+        require(code == 0, f"markdown report should succeed: {err or out}")
+        require("Recent Guardrail Or Sandbox Failure" in out, "markdown report should include failure section")
+        require("dynamic execution denied" in out, "markdown report should include guardrail message")
+
+    print("[PASS] harness report CLI summarizes evidence")
+
+
+def test_harness_agent_team_validator():
+    with tempfile.TemporaryDirectory() as tmp:
+        tmp_path = Path(tmp)
+        plan_path = tmp_path / "plan.json"
+
+        valid_plan = {
+            "agents": [
+                {
+                    "id": "worker-runtime",
+                    "role": "worker",
+                    "scope": "runtime report CLI",
+                    "write_set": ["scripts/harness_report.py"],
+                    "verification_command": "python3 test_runner.py",
+                },
+                {
+                    "id": "worker-docs",
+                    "role": "worker",
+                    "scope": "runtime docs",
+                    "write_set": ["docs/HARNESS_RUNTIME.md"],
+                    "verification_command": "python3 test_runner.py",
+                },
+                {
+                    "id": "qa",
+                    "role": "qa",
+                    "scope": "read-only verification",
+                    "write_set": [],
+                    "verification_command": "python3 test_runner.py",
+                },
+            ]
+        }
+        write(plan_path, json.dumps(valid_plan))
+        code, out, err = run([sys.executable, str(HARNESS_AGENT_TEAM), "validate", str(plan_path), "--repo-root", str(ROOT)])
+        require(code == 0, f"valid agent team should pass: {err or out}")
+        require("Agent team valid" in out and "worker-runtime" in out, "valid summary should be handoff-ready")
+
+        overlap_plan = {
+            "agents": [
+                {
+                    "id": "w1",
+                    "role": "worker",
+                    "scope": "scripts",
+                    "write_set": ["scripts"],
+                    "verification_command": "python3 test_runner.py",
+                },
+                {
+                    "id": "w2",
+                    "role": "worker",
+                    "scope": "report",
+                    "write_set": ["scripts/harness_report.py"],
+                    "verification_command": "python3 test_runner.py",
+                },
+            ]
+        }
+        write(plan_path, json.dumps(overlap_plan))
+        code, out, err = run([sys.executable, str(HARNESS_AGENT_TEAM), "validate", str(plan_path), "--repo-root", str(ROOT)])
+        require(code != 0 and "write_set_overlap" in err, "overlapping workers should fail with conflict detail")
+
+        read_only_plan = {
+            "agents": [
+                {
+                    "id": "reviewer",
+                    "role": "reviewer",
+                    "scope": "review docs",
+                    "write_set": ["docs/HARNESS_RUNTIME.md"],
+                    "verification_command": "python3 test_runner.py",
+                }
+            ]
+        }
+        write(plan_path, json.dumps(read_only_plan))
+        code, out, err = run([sys.executable, str(HARNESS_AGENT_TEAM), "validate", str(plan_path), "--repo-root", str(ROOT)])
+        require(code != 0 and "read_only_write_set" in err, "read-only role with write_set should fail")
+
+        outside_plan = {
+            "agents": [
+                {
+                    "id": "worker",
+                    "role": "worker",
+                    "scope": "bad path",
+                    "write_set": [str(tmp_path / "outside.txt")],
+                    "verification_command": "python3 test_runner.py",
+                }
+            ]
+        }
+        write(plan_path, json.dumps(outside_plan))
+        code, out, err = run([sys.executable, str(HARNESS_AGENT_TEAM), "validate", str(plan_path), "--repo-root", str(ROOT)])
+        require(code != 0 and "path_outside_repo" in err, "repo-outside absolute path should fail")
+
+    print("[PASS] harness agent team validator")
+
+
+def test_harness_checkpoint_helper():
+    with tempfile.TemporaryDirectory() as tmp:
+        repo = Path(tmp) / "repo"
+        repo.mkdir(parents=True)
+        code, out, err = run(["git", "init", str(repo)])
+        require(code == 0, f"temp git init failed: {err or out}")
+        state_file = repo / "docs" / "harness-state.md"
+        write(
+            state_file,
+            "# Harness State\n\n"
+            "## Current Snapshot\n"
+            "- phase: development\n"
+            "- next_safe_task: initial\n"
+            "- latest_checkpoint: pending\n"
+            "- latest_verification: pending\n\n"
+            "## State Log\n",
+        )
+        write(repo / "dirty.txt", "dirty\n")
+
+        code, out, err = run(
+            [
+                sys.executable,
+                str(HARNESS_CHECKPOINT),
+                "append",
+                "--repo-root",
+                str(repo),
+                "--state-file",
+                str(state_file),
+                "--phase",
+                "validation",
+                "--summary",
+                "checkpoint smoke",
+                "--changed-surface",
+                "scripts/harness_checkpoint.py",
+                "--verification-command",
+                "python3 test_runner.py",
+                "--verification-exit-code",
+                "0",
+                "--verification-key-output",
+                "[PASS] checkpoint",
+                "--next-safe-task",
+                "continue validation",
+            ]
+        )
+        require(code == 0, f"valid checkpoint append failed: {err or out}")
+        state_text = state_file.read_text(encoding="utf-8")
+        require("checkpoint smoke" in state_text, "checkpoint summary should be appended")
+        require("- phase: validation" in state_text, "current snapshot phase should update")
+        require("dirty_status: dirty" in state_text, "dirty git status should be captured")
+        require("command=python3 test_runner.py" in state_text, "latest verification should be updated")
+
+        before = state_text
+        code, out, err = run(
+            [
+                sys.executable,
+                str(HARNESS_CHECKPOINT),
+                "append",
+                "--repo-root",
+                str(repo),
+                "--state-file",
+                str(state_file),
+                "--phase",
+                "validation",
+                "--summary",
+                "missing verification",
+                "--next-safe-task",
+                "continue validation",
+            ]
+        )
+        require(code != 0, "missing verification fields should fail")
+        require(state_file.read_text(encoding="utf-8") == before, "failed checkpoint should not write partial state")
+
+        code, out, err = run(
+            [
+                sys.executable,
+                str(HARNESS_CHECKPOINT),
+                "append",
+                "--repo-root",
+                str(repo),
+                "--state-file",
+                str(state_file),
+                "--phase",
+                "handoff",
+                "--summary",
+                "blocked handoff",
+                "--next-safe-task",
+                "resume after blocker clears",
+                "--blocker",
+                "waiting for external decision",
+                "--allow-unverified",
+            ]
+        )
+        require(code == 0, f"allow-unverified handoff with blocker should pass: {err or out}")
+        require("blocked handoff" in state_file.read_text(encoding="utf-8"), "blocked handoff should be appended")
+
+    print("[PASS] harness checkpoint helper")
 
 
 def test_sync_claude_injects_integration_block():
@@ -764,6 +1055,9 @@ def main():
     require(VERIFY.exists(), f"missing verify script: {VERIFY}")
     require(MANAGE_AGENTS.exists(), f"missing manage_agents script: {MANAGE_AGENTS}")
     require(HARNESS_EVIDENCE.exists(), f"missing harness evidence helper: {HARNESS_EVIDENCE}")
+    require(HARNESS_REPORT.exists(), f"missing harness report helper: {HARNESS_REPORT}")
+    require(HARNESS_AGENT_TEAM.exists(), f"missing harness agent team helper: {HARNESS_AGENT_TEAM}")
+    require(HARNESS_CHECKPOINT.exists(), f"missing harness checkpoint helper: {HARNESS_CHECKPOINT}")
     require(HARNESS_GUARD.exists(), f"missing harness guard hook: {HARNESS_GUARD}")
     require(HARNESS_OBSERVER.exists(), f"missing harness observer hook: {HARNESS_OBSERVER}")
 
@@ -775,6 +1069,9 @@ def main():
     test_harness_runtime_surfaces_exist_and_parse()
     test_harness_guard_policy_decisions()
     test_harness_evidence_append_and_observer_failure_mode()
+    test_harness_report_cli_summarizes_evidence()
+    test_harness_agent_team_validator()
+    test_harness_checkpoint_helper()
     test_sync_claude_injects_integration_block()
     test_verify_after_full_sync()
     test_capture_text_auto_classifies_input_types()

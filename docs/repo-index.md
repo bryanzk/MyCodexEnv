@@ -18,6 +18,9 @@
 - `codex/runtime/evidence.schema.json`: local evidence JSONL event contract.
 - `codex/hooks/`: Codex lifecycle hooks copied to `~/.codex/hooks/`.
 - `scripts/harness_evidence.py`: evidence validation and append helper.
+- `scripts/harness_report.py`: local evidence summary CLI.
+- `scripts/harness_agent_team.py`: agent team and write-set validator.
+- `scripts/harness_checkpoint.py`: append-only state checkpoint helper.
 - `scripts/verify_codex_env.sh`: runtime sync and environment verification.
 
 ## Verification
@@ -46,7 +49,7 @@
 - Session State: `docs/harness-state.md` plus local evidence JSONL.
 - Permissions: `codex/runtime/tool-policy.json` and guard hooks.
 - Hooks: `codex/hooks.json` and `codex/hooks/*`.
-- Observability: `scripts/harness_evidence.py` and local evidence files.
+- Observability: `scripts/harness_evidence.py`, `scripts/harness_report.py`, and local evidence files.
 - Tool Router: lifecycle stage policy in `tool-policy.json`.
-- Checkpoints: `docs/HARNESS_RUNTIME.md` contract and `docs/harness-state.md` log.
+- Checkpoints: `docs/HARNESS_RUNTIME.md` contract, `scripts/harness_checkpoint.py`, and `docs/harness-state.md` log.
 - Guardrails: hooks, global AGENTS rules, remote-access policy, and verification gate.

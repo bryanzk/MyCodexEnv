@@ -19,7 +19,7 @@ Stable rules belong in `AGENTS.md`, `README.md`, `docs/repo-index.md`, or
   - `python3 test_runner.py`
   - `git diff --check`
   - `./scripts/verify_codex_env.sh --repo-root "$(pwd)" --codex-home "$HOME/.codex" --claude-home "$HOME/.claude"`
-- latest_checkpoint: not yet committed in this session
+- latest_checkpoint: updated by `scripts/harness_checkpoint.py append`; helper records git status but never commits automatically.
 - latest_verification: pending
 
 ## State Log

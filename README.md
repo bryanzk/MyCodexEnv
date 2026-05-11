@@ -51,6 +51,9 @@ cd MyCodexEnv
 - `codex/runtime/tool-policy.json`：按 `research / requirements / planning / development / validation / review / ship / handoff` 定义工具和权限策略
 - `codex/runtime/evidence.schema.json`：本机 evidence JSONL 事件结构
 - `scripts/harness_evidence.py`：验证并追加结构化 evidence
+- `scripts/harness_report.py`：汇总本机 evidence JSONL，支持 Markdown 与 JSON 输出
+- `scripts/harness_agent_team.py`：校验 subagent team 的 role、scope、write set 和 verification contract
+- `scripts/harness_checkpoint.py`：追加 `docs/harness-state.md` checkpoint，不自动 commit
 - `codex/hooks/harness_guard.py`：`PreToolUse` guardrail，处理 destructive、secret、remote、dynamic execution 和越阶段写入
 - `codex/hooks/harness_observer.py`：`PostToolUse` observer，非阻塞记录工具事件
 

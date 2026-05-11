@@ -78,6 +78,22 @@ python3 scripts/harness_evidence.py append \
   --key-output "[PASS] all tests"
 ```
 
+Harness runtime report and checkpoint helpers:
+
+```bash
+python3 scripts/harness_report.py --phase validation
+python3 scripts/harness_report.py --json --limit 20
+python3 scripts/harness_agent_team.py validate PLAN.json
+python3 scripts/harness_checkpoint.py append \
+  --phase validation \
+  --summary "validated runtime slice" \
+  --changed-surface "scripts/harness_report.py" \
+  --verification-command "python3 test_runner.py" \
+  --verification-exit-code 0 \
+  --verification-key-output "[PASS] all tests" \
+  --next-safe-task "continue with handoff"
+```
+
 ## Idempotency
 - Running `bootstrap.sh` multiple times is supported.
 - Existing `~/.codex/config.toml` is backed up before overwrite.
