@@ -154,8 +154,48 @@ def test_sync_renders_template_and_copies_skills():
             (codex_home / "skills" / "gstack-ship" / "SKILL.md").exists(),
             "gstack namespaced ship skill should be copied",
         )
+        project_lifecycle_skill = codex_home / "skills" / "project-lifecycle-harness" / "SKILL.md"
+        project_lifecycle_agent = codex_home / "skills" / "project-lifecycle-harness" / "agents" / "openai.yaml"
+        require(project_lifecycle_skill.exists(), "project lifecycle harness skill should be copied")
+        require(project_lifecycle_agent.exists(), "project lifecycle harness OpenAI agent metadata should be copied")
+        require(
+            project_lifecycle_skill.read_text(encoding="utf-8")
+            == (ROOT / "codex" / "skills" / "project-lifecycle-harness" / "SKILL.md").read_text(encoding="utf-8"),
+            "runtime project lifecycle harness skill should match source",
+        )
+        require(
+            project_lifecycle_agent.read_text(encoding="utf-8")
+            == (ROOT / "codex" / "skills" / "project-lifecycle-harness" / "agents" / "openai.yaml").read_text(encoding="utf-8"),
+            "runtime project lifecycle harness agent metadata should match source",
+        )
 
     print("[PASS] sync render + skills copy")
+
+
+def test_project_lifecycle_harness_stays_generic():
+    skill_root = ROOT / "codex" / "skills" / "project-lifecycle-harness"
+    skill_text = (skill_root / "SKILL.md").read_text(encoding="utf-8")
+    agent_text = (skill_root / "agents" / "openai.yaml").read_text(encoding="utf-8")
+
+    require("name: project-lifecycle-harness" in skill_text, "project lifecycle harness skill name missing")
+    require(
+        "Use $project-lifecycle-harness" in agent_text,
+        "OpenAI agent metadata should route to the generic lifecycle harness",
+    )
+    forbidden_terms = [
+        "ShipQ",
+        "shipq",
+        "workbook",
+        "freight",
+        "quote demo",
+        "/Users/",
+        "CursorDeveloper",
+    ]
+    combined = f"{skill_text}\n{agent_text}"
+    offenders = [term for term in forbidden_terms if term in combined]
+    require(not offenders, f"generic project lifecycle harness contains project-specific terms: {offenders}")
+
+    print("[PASS] project lifecycle harness generic boundary")
 
 
 def test_sync_agents_only_copies_and_backs_up_agents():
@@ -573,6 +613,7 @@ def main():
     test_bootstrap_eigenphi_argument_is_optional()
     test_sync_ignores_legacy_eigenphi_argument()
     test_sync_renders_template_and_copies_skills()
+    test_project_lifecycle_harness_stays_generic()
     test_sync_agents_only_copies_and_backs_up_agents()
     test_sync_claude_injects_integration_block()
     test_verify_after_full_sync()

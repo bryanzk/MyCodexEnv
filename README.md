@@ -33,8 +33,10 @@ cd MyCodexEnv
 
 仓库托管两类全局 Codex skills：
 
-- 本仓库维护的通用 skills，例如 `planner`、`verification-loop`、`thread-topic-guard`
+- 本仓库维护的通用 skills，例如 `planner`、`verification-loop`、`thread-topic-guard`、`project-lifecycle-harness`
 - 从 `garrytan/gstack` 同步的完整全局 skill 集合，包括 `gstack` 根支持目录和 `gstack-*` namespaced skills
+
+`project-lifecycle-harness` 是通用生命周期路由 skill，只定义跨项目的状态读取、阶段分类、错误处理与验证协议；项目专属路径、命令和安全边界应放在 repo-specific adapter skill 中，例如 `shipq-lifecycle-harness`。
 
 早期已适配的短名 gstack skills 仍保留：
 
