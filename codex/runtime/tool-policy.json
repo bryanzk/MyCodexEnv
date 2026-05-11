@@ -1,0 +1,123 @@
+{
+  "version": 1,
+  "default_phase": "development",
+  "unknown_phase_behavior": "read_only",
+  "evidence_dir": "~/.codex/harness/evidence",
+  "phases": {
+    "research": {
+      "allow_repo_write": false,
+      "allow_network": false,
+      "allow_remote": false,
+      "allow_subagents": true,
+      "require_approval": ["network", "remote", "secret", "destructive", "dynamic_exec"],
+      "minimum_gate": "source files read and cited"
+    },
+    "requirements": {
+      "allow_repo_write": false,
+      "allow_network": false,
+      "allow_remote": false,
+      "allow_subagents": false,
+      "require_approval": ["network", "remote", "secret", "destructive", "dynamic_exec"],
+      "minimum_gate": "success criteria captured"
+    },
+    "planning": {
+      "allow_repo_write": false,
+      "allow_network": false,
+      "allow_remote": false,
+      "allow_subagents": true,
+      "require_approval": ["network", "remote", "secret", "destructive", "dynamic_exec", "repo_write"],
+      "minimum_gate": "decision-complete plan and validation gate"
+    },
+    "development": {
+      "allow_repo_write": true,
+      "allow_network": false,
+      "allow_remote": false,
+      "allow_subagents": true,
+      "require_approval": ["network", "remote", "secret", "destructive", "dynamic_exec"],
+      "minimum_gate": "focused tests for touched behavior"
+    },
+    "validation": {
+      "allow_repo_write": false,
+      "allow_network": false,
+      "allow_remote": false,
+      "allow_subagents": true,
+      "require_approval": ["network", "remote", "secret", "destructive", "dynamic_exec", "repo_write"],
+      "minimum_gate": "fresh verification evidence"
+    },
+    "review": {
+      "allow_repo_write": false,
+      "allow_network": false,
+      "allow_remote": false,
+      "allow_subagents": true,
+      "require_approval": ["network", "remote", "secret", "destructive", "dynamic_exec", "repo_write"],
+      "minimum_gate": "findings or no-issue statement"
+    },
+    "ship": {
+      "allow_repo_write": true,
+      "allow_network": true,
+      "allow_remote": false,
+      "allow_subagents": true,
+      "require_approval": ["remote", "secret", "destructive", "dynamic_exec"],
+      "minimum_gate": "ship and release gates"
+    },
+    "handoff": {
+      "allow_repo_write": true,
+      "allow_network": false,
+      "allow_remote": false,
+      "allow_subagents": false,
+      "require_approval": ["network", "remote", "secret", "destructive", "dynamic_exec"],
+      "minimum_gate": "state log and next safe task"
+    }
+  },
+  "secret_path_patterns": [
+    "(^|/)\\.env(\\.|$|/)?",
+    "(^|/)auth\\.json$",
+    "(^|/)id_rsa$",
+    "\\.(pem|key|p12|pfx)$",
+    "(token|secret|credential|password)"
+  ],
+  "destructive_command_patterns": [
+    "\\brm\\s+(-[A-Za-z]*r[A-Za-z]*|--recursive)\\b",
+    "\\bgit\\s+reset\\s+--hard\\b",
+    "\\bgit\\s+(checkout|restore)\\s+\\.\\b",
+    "\\bgit\\s+push\\b.*\\s(-f|--force)\\b",
+    "\\bdrop\\s+(table|database)\\b",
+    "\\btruncate\\b",
+    "\\bkubectl\\s+delete\\b",
+    "\\bdocker\\s+(rm\\s+-f|system\\s+prune)\\b"
+  ],
+  "dynamic_exec_patterns": [
+    "\\b(curl|wget)\\b.*\\|\\s*(sh|bash|zsh|python|python3)\\b",
+    "\\b(sh|bash|zsh)\\s+<\\s*\\(\\s*(curl|wget)\\b",
+    "\\bnpx\\s+.*(@latest|--yes|-y)\\b"
+  ],
+  "remote_command_patterns": [
+    "^\\s*ssh\\b",
+    "^\\s*scp\\b",
+    "^\\s*rsync\\b.*:",
+    "\\bkubectl\\b",
+    "\\bterraform\\s+apply\\b",
+    "\\bgh\\s+workflow\\s+run\\b"
+  ],
+  "network_command_patterns": [
+    "^\\s*(curl|wget)\\b",
+    "\\bnpm\\s+(install|add|update|exec)\\b",
+    "\\bnpx\\b",
+    "\\bpip\\s+install\\b",
+    "\\buv\\s+add\\b",
+    "\\bgo\\s+(get|install)\\b"
+  ],
+  "repo_write_command_patterns": [
+    "\\bapply_patch\\b",
+    "\\b(sed|perl)\\s+.*-i\\b",
+    "\\btee\\s+",
+    "\\bcp\\s+",
+    "\\bmv\\s+",
+    "\\bmkdir\\s+",
+    "\\btouch\\s+",
+    "\\bpython3?\\b.*\\b(write_text|open\\(.+,[^)]*[wa])"
+  ],
+  "safe_read_command_patterns": [
+    "^\\s*(pwd|ls|find|rg|sed\\s+-n|tail|head|wc|git\\s+(status|log|show|diff)|test\\s+-f|cat)\\b"
+  ]
+}

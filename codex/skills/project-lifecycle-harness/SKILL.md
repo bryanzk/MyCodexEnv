@@ -14,6 +14,25 @@ truth, probes, error handling, verification, and handoff evidence.
 If a repo-specific lifecycle harness exists, use this skill only to confirm the
 project phase and then delegate to that repo-specific harness.
 
+## Runtime Surfaces
+
+When a repo implements a harness runtime, prefer these surfaces after local
+`AGENTS.md`:
+
+- `docs/repo-index.md`: low-token map of source of truth, verification commands,
+  runtime surfaces, and high-risk areas.
+- `docs/harness-state.md`: append-only current phase, blockers, next safe task,
+  latest verification, and checkpoint notes.
+- `docs/HARNESS_RUNTIME.md`: repo-specific contract for workflow, infra,
+  evidence, checkpoints, and agent teams.
+- `codex/runtime/tool-policy.json`: lifecycle-stage tool and permission policy.
+- `codex/runtime/evidence.schema.json`: structured local evidence contract.
+
+Runtime evidence should stay local by default, typically under a Codex home
+evidence directory. Do not commit private transcripts, credentials, auth files,
+or local evidence logs unless the user explicitly asks and the content is
+sanitized.
+
 ## Startup Probes
 
 Run cheap probes before choosing a stage:
@@ -56,6 +75,22 @@ If sources conflict, preserve the conflict in the output and ask only when the
 choice affects architecture, data shape, public API, security, or destructive
 operations.
 
+## Standard Runtime Stages
+
+Use these normalized phase names when a runtime policy or state file needs a
+stable value:
+
+| Phase | Purpose | Default Permissions | Minimum Gate |
+| --- | --- | --- | --- |
+| `research` | Find and verify source context. | Read-only; network only if explicitly allowed. | Sources read and cited. |
+| `requirements` | Lock goal, audience, success criteria, scope, and constraints. | Read-only. | Success criteria captured. |
+| `planning` | Decide architecture, interfaces, data flow, risks, and tests. | Read-only by default. | Decision-complete plan and validation gate. |
+| `development` | Make scoped repo changes. | Scoped writes allowed; remote/network approval-gated. | Focused tests for touched behavior. |
+| `validation` | Run tests, smoke checks, and evidence capture. | No repo edits by default. | Fresh evidence with command, exit code, key output, timestamp. |
+| `review` | Inspect diff, risks, behavior, and test gaps. | Read-only by default. | Findings or explicit no-issue statement. |
+| `ship` | Commit, push, PR, release, deploy, or production checks. | Requested release actions only. | Ship/deploy gates and rollback note. |
+| `handoff` | Preserve state for next session. | Docs/state updates only. | State log and next safe task. |
+
 ## Stage Classifier
 
 Choose the first matching lifecycle stage. If multiple match, choose the
@@ -89,9 +124,12 @@ project state
 
 execution harness
   deterministic probes
+  lifecycle tool policy
   tests and smoke checks
   public/private boundary checks
+  evidence schema and append-only local evidence log
   failure-mode checks
+  checkpoint and subagent contracts
   JSON or structured evidence when useful
 ```
 
@@ -99,6 +137,33 @@ Use append-only updates for ongoing evidence: phase transitions, refreshed
 counts, blockers, approvals, rollback decisions, verification results, browser
 smoke results, and handoff notes. Stable rules may be edited in place, but old
 evidence should be preserved unless the user explicitly asks for cleanup.
+
+## Tool Router Defaults
+
+If a repo provides `codex/runtime/tool-policy.json`, use it as the runtime policy
+source. If no runtime policy exists, use these conservative defaults:
+
+- research, requirements, planning, review: read-only.
+- development: scoped repo writes allowed after source context is read.
+- validation: tests, static checks, and browser smoke allowed; repo edits only
+  when fixing a discovered issue.
+- ship: commit, push, PR, merge, remote, or deploy actions only when explicitly
+  requested and verified.
+- handoff: docs/state updates only.
+
+Secret paths, destructive commands, remote operations, and dynamic download
+execution require an explicit safety check regardless of phase.
+
+## Checkpoint and Agent Team Defaults
+
+For long-running or parallel work, require:
+
+- checkpoint: phase, changed surfaces, verification evidence, blockers, next
+  safe task, and whether a git commit exists.
+- worker agent: exact write set, verification command, and report format.
+- reviewer/security/qa agent: read-only scope unless the user explicitly asks
+  for fixes.
+- multiple workers: disjoint write sets; overlapping write sets block dispatch.
 
 ## Exception Handling Principles
 

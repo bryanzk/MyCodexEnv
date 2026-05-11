@@ -22,10 +22,12 @@ cd MyCodexEnv
 - Codex 通用层入口源码：`codex/AGENTS.md`（同步到 `~/.codex/AGENTS.md`）
 - Codex 远程访问流程规则：`codex/remote-access.md`（同步到 `~/.codex/remote-access.md`）；远程主机登记表：`codex/remote-hosts.md`（同步到 `~/.codex/remote-hosts.md`）
 - Codex hooks 来源：`codex/hooks.json` 与 `codex/hooks/*`（同步到 `~/.codex/hooks.json` 与 `~/.codex/hooks/*`）
+- Codex harness runtime 来源：`codex/runtime/*`（同步到 `~/.codex/runtime/*`），当前包含阶段化工具权限策略与 evidence schema
 - Codex zsh 标题钩子来源：`codex/zsh/*`（同步到 `~/.codex/zsh/*`）
 - Codex / Claude workflow 来源分别为 `codex/workflow/*`、`claude/workflow/*`，但都排除 `workflow/memory/` 这类运行态热数据
 - Claude workflow 同步到 `~/.claude/workflow/*`，通过注入块挂到 `~/.claude/CLAUDE.md`
 - 默认启用 Codex hooks；全局 `SessionStart` hook 会在新会话启动时提醒会话名采用 `<项目缩写>-<YYYYMMDD>-<概要>` 格式
+- Harness runtime 默认启用薄 hooks：`PreToolUse` 读取 `tool-policy.json` 做客观 guardrail，`PostToolUse` 尝试把工具事件写入本机 `~/.codex/harness/evidence/*.jsonl`
 - 全局 zsh 会话标题钩子默认生成 `<项目缩写>-<YYYYMMDD>-summary`，避免被旧的 `[Repo] zsh` 标题覆盖
 - 若 Codex Desktop 在新建会话时对 `~/Documents` 或 `~/Desktop` 报 `EPERM: operation not permitted, mkdir`，优先将会话根目录切到 `~/Codes/Codex` 这类非受保护目录，或在 macOS `隐私与安全性 -> 文件与文件夹 / 完全磁盘访问权限` 中授权 `Codex`
 
@@ -37,6 +39,22 @@ cd MyCodexEnv
 - 从 `garrytan/gstack` 同步的完整全局 skill 集合，包括 `gstack` 根支持目录和 `gstack-*` namespaced skills
 
 `project-lifecycle-harness` 是通用生命周期路由 skill，只定义跨项目的状态读取、阶段分类、错误处理与验证协议；项目专属路径、命令和安全边界应放在 repo-specific adapter skill 中，例如 `shipq-lifecycle-harness`。
+
+## Harness Runtime
+
+本仓库新增一层 generic Harness Runtime，用来把规则、技能、hooks、验证脚本组织成可恢复、可观测、可验证的运行时系统：
+
+- `docs/repo-index.md`：低 token 项目导航，作为 Codex 开局读取入口
+- `docs/harness-state.md`：append-only 状态日志，记录 phase、source of truth、next safe task、latest verification 和 checkpoint
+- `docs/HARNESS_RUNTIME.md`：Workflow + Infra 合同，覆盖生命周期、权限、证据、checkpoint 与 subagent team
+- `docs/AGENT_HARNESS_STATUS.md`：参照 Agent Harness 架构图维护当前状态图谱
+- `codex/runtime/tool-policy.json`：按 `research / requirements / planning / development / validation / review / ship / handoff` 定义工具和权限策略
+- `codex/runtime/evidence.schema.json`：本机 evidence JSONL 事件结构
+- `scripts/harness_evidence.py`：验证并追加结构化 evidence
+- `codex/hooks/harness_guard.py`：`PreToolUse` guardrail，处理 destructive、secret、remote、dynamic execution 和越阶段写入
+- `codex/hooks/harness_observer.py`：`PostToolUse` observer，非阻塞记录工具事件
+
+运行态证据默认保存在 `~/.codex/harness/evidence/`，不进入 Git。`docs/harness-state.md` 只保存可公开的阶段、验证与 handoff 事实。Memory / subconscious 只能作为提示，行动前必须回查 repo 文件、git 状态或 fresh verification。
 
 早期已适配的短名 gstack skills 仍保留：
 

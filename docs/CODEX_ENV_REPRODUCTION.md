@@ -11,6 +11,8 @@
 - `codex/remote-access.md` -> `~/.codex/remote-access.md`
 - `codex/remote-hosts.md` -> `~/.codex/remote-hosts.md`
 - `codex/skills/*` -> `~/.codex/skills/*`
+- `codex/hooks.json` and `codex/hooks/*` -> `~/.codex/hooks.json` and `~/.codex/hooks/*`
+- `codex/runtime/*` -> `~/.codex/runtime/*`
 - `codex/workflow/*` -> `~/.codex/workflow/*`（排除 `workflow/memory/`）
 - `claude/workflow/*` -> `~/.claude/workflow/*`（排除 `workflow/memory/`）
 - `claude/CLAUDE_INTEGRATION_BLOCK.md` -> 注入 `~/.claude/CLAUDE.md`（不覆盖既有内容）
@@ -19,6 +21,7 @@
 - `chrome-devtools-mcp` is rendered into `~/.codex/config.toml` with `--no-usage-statistics` and `--no-performance-crux`
 - EigenPhi MCP server is kept as a commented template block and is disabled by default.
 - If Google Chrome is missing, bootstrap installs `google-chrome`
+- Harness runtime policy and evidence schema are synced into `~/.codex/runtime/*`; local evidence logs are written under `~/.codex/harness/evidence/*` and are not committed.
 
 ## Skills Source of Truth
 - Repository source of truth is `codex/skills/*`.
@@ -62,6 +65,17 @@ Repo 级 / 多仓库 `AGENTS.md` 验证：
 
 ```bash
 python3 scripts/manage_agents.py verify
+```
+
+Harness runtime evidence helper:
+
+```bash
+python3 scripts/harness_evidence.py append \
+  --event-type verification_result \
+  --phase validation \
+  --command "python3 test_runner.py" \
+  --exit-code 0 \
+  --key-output "[PASS] all tests"
 ```
 
 ## Idempotency

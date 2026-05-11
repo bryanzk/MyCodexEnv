@@ -107,6 +107,11 @@ if [[ "${SYNC_AGENTS_ONLY}" == "true" ]]; then
     rsync -a --delete "${REPO_ROOT}/codex/hooks/" "${CODEX_HOME}/hooks/"
     echo "Codex hook scripts synchronized: ${CODEX_HOME}/hooks/"
   fi
+  if [[ -d "${REPO_ROOT}/codex/runtime" ]]; then
+    mkdir -p "${CODEX_HOME}/runtime"
+    rsync -a --delete "${REPO_ROOT}/codex/runtime/" "${CODEX_HOME}/runtime/"
+    echo "Codex runtime policy synchronized: ${CODEX_HOME}/runtime/"
+  fi
   if [[ -d "${REPO_ROOT}/codex/zsh" ]]; then
     mkdir -p "${CODEX_HOME}/zsh"
     rsync -a --delete "${REPO_ROOT}/codex/zsh/" "${CODEX_HOME}/zsh/"
@@ -211,6 +216,11 @@ fi
 if [[ -d "${REPO_ROOT}/codex/hooks" ]]; then
   mkdir -p "${CODEX_HOME}/hooks"
   rsync -a --delete "${REPO_ROOT}/codex/hooks/" "${CODEX_HOME}/hooks/"
+fi
+
+if [[ -d "${REPO_ROOT}/codex/runtime" ]]; then
+  mkdir -p "${CODEX_HOME}/runtime"
+  rsync -a --delete "${REPO_ROOT}/codex/runtime/" "${CODEX_HOME}/runtime/"
 fi
 
 if [[ -d "${REPO_ROOT}/codex/zsh" ]]; then

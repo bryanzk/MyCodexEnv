@@ -11,6 +11,30 @@
           }
         ]
       }
+    ],
+    "PreToolUse": [
+      {
+        "matcher": "*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "/usr/bin/python3 ~/.codex/hooks/harness_guard.py",
+            "statusMessage": "Checking harness tool policy"
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "/usr/bin/python3 ~/.codex/hooks/harness_observer.py",
+            "statusMessage": "Recording harness evidence"
+          }
+        ]
+      }
     ]
   }
 }
