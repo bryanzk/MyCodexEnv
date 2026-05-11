@@ -1,0 +1,4 @@
+interface:
+  display_name: "Project Lifecycle Harness"
+  short_description: "Route project work by lifecycle stage"
+  default_prompt: "Use $project-lifecycle-harness to inspect project state, classify the lifecycle stage, and choose the right next workflow."
