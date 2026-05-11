@@ -18,6 +18,10 @@ HARNESS_EVIDENCE = ROOT / "scripts" / "harness_evidence.py"
 HARNESS_REPORT = ROOT / "scripts" / "harness_report.py"
 HARNESS_AGENT_TEAM = ROOT / "scripts" / "harness_agent_team.py"
 HARNESS_CHECKPOINT = ROOT / "scripts" / "harness_checkpoint.py"
+HARNESS_REQUIREMENTS = ROOT / "scripts" / "harness_requirements.py"
+HARNESS_RECOVER = ROOT / "scripts" / "harness_recover.py"
+HARNESS_ENV_PROBE = ROOT / "scripts" / "harness_env_probe.py"
+HARNESS_REQUIREMENTS_TEMPLATE = ROOT / "docs" / "templates" / "harness-requirements.md"
 HARNESS_GUARD = ROOT / "codex" / "hooks" / "harness_guard.py"
 HARNESS_OBSERVER = ROOT / "codex" / "hooks" / "harness_observer.py"
 
@@ -277,6 +281,10 @@ def test_harness_runtime_surfaces_exist_and_parse():
         HARNESS_REPORT,
         HARNESS_AGENT_TEAM,
         HARNESS_CHECKPOINT,
+        HARNESS_REQUIREMENTS,
+        HARNESS_RECOVER,
+        HARNESS_ENV_PROBE,
+        HARNESS_REQUIREMENTS_TEMPLATE,
     ]
     for path in required_paths:
         require(path.exists(), f"missing harness runtime surface: {path}")
@@ -726,6 +734,204 @@ def test_harness_checkpoint_helper():
     print("[PASS] harness checkpoint helper")
 
 
+def test_harness_requirements_validator():
+    with tempfile.TemporaryDirectory() as tmp:
+        tmp_path = Path(tmp)
+
+        code, out, err = run([sys.executable, str(HARNESS_REQUIREMENTS), "validate", str(HARNESS_REQUIREMENTS_TEMPLATE)])
+        require(code == 0, f"requirements template should validate: {err or out}")
+        require("valid" in out, "requirements validator should print valid on success")
+
+        invalid_missing_heading = tmp_path / "missing-heading.md"
+        invalid_missing_heading.write_text(
+            "# Harness Requirements\n\n"
+            "## Goal\nShip a runtime slice.\n\n"
+            "## Audience\nCodex operator.\n\n"
+            "## Scope\n- scripts\n\n"
+            "## Non-Goals\n- no remote operations\n\n"
+            "## Constraints\n- standard library only\n\n"
+            "## Source Of Truth\n- docs\n\n"
+            "## Acceptance Criteria\n- [ ] validator catches missing sections\n\n"
+            "## Risks\n- stale docs\n\n"
+            "## Handoff Notes\n- continue safely\n",
+            encoding="utf-8",
+        )
+        code, out, err = run([sys.executable, str(HARNESS_REQUIREMENTS), "validate", str(invalid_missing_heading)])
+        require(code != 0 and "missing heading" in err, "missing verification gate heading should fail")
+
+        invalid_empty_acceptance = tmp_path / "empty-acceptance.md"
+        invalid_empty_acceptance.write_text(
+            HARNESS_REQUIREMENTS_TEMPLATE.read_text(encoding="utf-8").replace(
+                "- [ ] Define at least one concrete acceptance criterion.",
+                "",
+            ),
+            encoding="utf-8",
+        )
+        code, out, err = run([sys.executable, str(HARNESS_REQUIREMENTS), "validate", str(invalid_empty_acceptance)])
+        require(code != 0 and "acceptance criterion" in err, "empty acceptance criteria should fail")
+
+        invalid_missing_verification = tmp_path / "missing-verification.md"
+        invalid_missing_verification.write_text(
+            HARNESS_REQUIREMENTS_TEMPLATE.read_text(encoding="utf-8").replace(
+                "- `python3 test_runner.py`",
+                "",
+            ),
+            encoding="utf-8",
+        )
+        code, out, err = run([sys.executable, str(HARNESS_REQUIREMENTS), "validate", str(invalid_missing_verification)])
+        require(code != 0 and "verification command" in err, "missing verification command should fail")
+
+    print("[PASS] harness requirements validator")
+
+
+def test_harness_recovery_smoke():
+    with tempfile.TemporaryDirectory() as tmp:
+        tmp_path = Path(tmp)
+        repo = tmp_path / "repo"
+        codex_home = tmp_path / ".codex"
+        repo.mkdir(parents=True)
+        code, out, err = run(["git", "init", str(repo)])
+        require(code == 0, f"temp git init failed: {err or out}")
+        write(repo / "docs" / "repo-index.md", "# Repo Index\n\n## Verification\n- `python3 test_runner.py`\n")
+        write(
+            repo / "docs" / "harness-state.md",
+            "# Harness State\n\n"
+            "## Current Snapshot\n"
+            "- phase: validation\n"
+            "- blocked_sources: none\n"
+            "- next_safe_task: run recovery smoke\n"
+            "- latest_verification: pending\n\n"
+            "## State Log\n",
+        )
+        write(repo / "dirty.txt", "dirty\n")
+
+        code, out, err = run(
+            [
+                sys.executable,
+                str(HARNESS_RECOVER),
+                "--repo-root",
+                str(repo),
+                "--codex-home",
+                str(codex_home),
+                "--json",
+            ]
+        )
+        require(code == 0, f"empty-evidence recovery should succeed: {err or out}")
+        empty_payload = json.loads(out)
+        require(empty_payload["phase"] == "validation", "recovery should parse current phase")
+        require(empty_payload["dirty_status"] == "dirty", "recovery should report dirty repo")
+        require(empty_payload["evidence_status"] == "empty", "empty evidence should be explicit")
+        require(empty_payload["next_safe_task"] == "run recovery smoke", "recovery should parse next safe task")
+
+        code, out, err = run(
+            [
+                sys.executable,
+                str(HARNESS_EVIDENCE),
+                "append",
+                "--codex-home",
+                str(codex_home),
+                "--event-type",
+                "verification_result",
+                "--phase",
+                "validation",
+                "--cwd",
+                str(repo),
+                "--command",
+                "python3 test_runner.py",
+                "--exit-code",
+                "0",
+                "--key-output",
+                "[PASS] recovery smoke",
+            ]
+        )
+        require(code == 0, f"recovery evidence append failed: {err or out}")
+
+        code, out, err = run(
+            [
+                sys.executable,
+                str(HARNESS_RECOVER),
+                "--repo-root",
+                str(repo),
+                "--codex-home",
+                str(codex_home),
+                "--json",
+            ]
+        )
+        require(code == 0, f"recovery with evidence should succeed: {err or out}")
+        payload = json.loads(out)
+        require(payload["evidence_status"] == "present", "evidence status should be present")
+        require(payload["latest_verification"]["command"] == "python3 test_runner.py", "latest verification command should be reported")
+
+        missing_state_repo = tmp_path / "missing-state"
+        missing_state_repo.mkdir()
+        write(missing_state_repo / "docs" / "repo-index.md", "# Repo Index\n")
+        code, out, err = run(
+            [
+                sys.executable,
+                str(HARNESS_RECOVER),
+                "--repo-root",
+                str(missing_state_repo),
+                "--codex-home",
+                str(codex_home),
+            ]
+        )
+        require(code != 0 and "missing state" in err, "missing harness state should fail")
+
+    print("[PASS] harness recovery smoke")
+
+
+def test_harness_env_probe():
+    with tempfile.TemporaryDirectory() as tmp:
+        tmp_path = Path(tmp)
+        codex_home = tmp_path / ".codex"
+        runtime_dir = codex_home / "runtime"
+        runtime_dir.mkdir(parents=True)
+        write(
+            codex_home / "config.toml",
+            'model = "gpt-5.4"\n'
+            'sandbox_mode = "workspace-write"\n'
+            'approval_policy = "on-request"\n\n'
+            "[features]\n"
+            "codex_hooks = true\n",
+        )
+        write(
+            codex_home / "hooks.json",
+            json.dumps({"hooks": {"SessionStart": [], "PreToolUse": [], "PostToolUse": []}}),
+        )
+        write(runtime_dir / "tool-policy.json", (ROOT / "codex" / "runtime" / "tool-policy.json").read_text(encoding="utf-8"))
+        write(runtime_dir / "evidence.schema.json", (ROOT / "codex" / "runtime" / "evidence.schema.json").read_text(encoding="utf-8"))
+
+        code, out, err = run([sys.executable, str(HARNESS_ENV_PROBE), "--codex-home", str(codex_home), "--json"])
+        require(code == 0, f"env probe should pass: {err or out}")
+        payload = json.loads(out)
+        require(payload["config"]["observable"] is True, "sandbox config should be observable when fields exist")
+        require(payload["config"]["sandbox_mode"] == "workspace-write", "sandbox_mode should be reported")
+        require(payload["hooks"]["enabled"] is True, "hooks should be reported enabled")
+        require(payload["runtime"]["policy_phases_present"] is True, "policy phases should be present")
+
+        no_sandbox_home = tmp_path / ".codex-no-sandbox"
+        no_sandbox_runtime = no_sandbox_home / "runtime"
+        no_sandbox_runtime.mkdir(parents=True)
+        write(no_sandbox_home / "config.toml", 'model = "gpt-5.4"\n[features]\ncodex_hooks = true\n')
+        write(no_sandbox_home / "hooks.json", json.dumps({"hooks": {"PreToolUse": [], "PostToolUse": []}}))
+        write(no_sandbox_runtime / "tool-policy.json", (ROOT / "codex" / "runtime" / "tool-policy.json").read_text(encoding="utf-8"))
+        write(no_sandbox_runtime / "evidence.schema.json", (ROOT / "codex" / "runtime" / "evidence.schema.json").read_text(encoding="utf-8"))
+        code, out, err = run([sys.executable, str(HARNESS_ENV_PROBE), "--codex-home", str(no_sandbox_home), "--json"])
+        require(code == 0, f"env probe without sandbox fields should still pass: {err or out}")
+        payload = json.loads(out)
+        require(payload["config"]["observable"] is False, "missing sandbox fields should be explicit")
+        require("not declared" in payload["config"]["observable_reason"], "missing sandbox reason should be clear")
+
+        missing_runtime_home = tmp_path / ".codex-missing-runtime"
+        write(missing_runtime_home / "config.toml", 'sandbox_mode = "workspace-write"\napproval_policy = "on-request"\n')
+        write(missing_runtime_home / "hooks.json", json.dumps({"hooks": {}}))
+        write(missing_runtime_home / "runtime" / "tool-policy.json", "{}")
+        code, out, err = run([sys.executable, str(HARNESS_ENV_PROBE), "--codex-home", str(missing_runtime_home), "--json"])
+        require(code != 0 and "evidence.schema.json" in err, "missing runtime file should fail")
+
+    print("[PASS] harness env probe")
+
+
 def test_sync_claude_injects_integration_block():
     with tempfile.TemporaryDirectory() as tmp:
         tmp_path = Path(tmp)
@@ -1103,6 +1309,10 @@ def main():
     require(HARNESS_REPORT.exists(), f"missing harness report helper: {HARNESS_REPORT}")
     require(HARNESS_AGENT_TEAM.exists(), f"missing harness agent team helper: {HARNESS_AGENT_TEAM}")
     require(HARNESS_CHECKPOINT.exists(), f"missing harness checkpoint helper: {HARNESS_CHECKPOINT}")
+    require(HARNESS_REQUIREMENTS.exists(), f"missing harness requirements helper: {HARNESS_REQUIREMENTS}")
+    require(HARNESS_RECOVER.exists(), f"missing harness recover helper: {HARNESS_RECOVER}")
+    require(HARNESS_ENV_PROBE.exists(), f"missing harness env probe helper: {HARNESS_ENV_PROBE}")
+    require(HARNESS_REQUIREMENTS_TEMPLATE.exists(), f"missing harness requirements template: {HARNESS_REQUIREMENTS_TEMPLATE}")
     require(HARNESS_GUARD.exists(), f"missing harness guard hook: {HARNESS_GUARD}")
     require(HARNESS_OBSERVER.exists(), f"missing harness observer hook: {HARNESS_OBSERVER}")
 
@@ -1117,6 +1327,9 @@ def main():
     test_harness_report_cli_summarizes_evidence()
     test_harness_agent_team_validator()
     test_harness_checkpoint_helper()
+    test_harness_requirements_validator()
+    test_harness_recovery_smoke()
+    test_harness_env_probe()
     test_sync_claude_injects_integration_block()
     test_verify_after_full_sync()
     test_capture_text_auto_classifies_input_types()
