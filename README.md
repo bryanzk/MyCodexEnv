@@ -54,6 +54,10 @@ cd MyCodexEnv
 - `scripts/harness_report.py`：汇总本机 evidence JSONL，支持 Markdown 与 JSON 输出
 - `scripts/harness_agent_team.py`：校验 subagent team 的 role、scope、write set 和 verification contract
 - `scripts/harness_checkpoint.py`：追加 `docs/harness-state.md` checkpoint，不自动 commit
+- `docs/templates/harness-requirements.md`：Harness 需求 artifact 模板
+- `scripts/harness_requirements.py`：校验需求 artifact 的字段、验收标准和验证命令
+- `scripts/harness_recover.py`：从 repo index、state、git 和 evidence 恢复 next safe task
+- `scripts/harness_env_probe.py`：观测本机 Codex runtime 配置、hooks、policy 和 schema 状态
 - `codex/hooks/harness_guard.py`：`PreToolUse` guardrail，处理 destructive、secret、remote、dynamic execution 和越阶段写入
 - `codex/hooks/harness_observer.py`：`PostToolUse` observer，非阻塞记录工具事件
 

@@ -14,13 +14,13 @@ Stable rules belong in `AGENTS.md`, `README.md`, `docs/repo-index.md`, or
   - `codex/skills/project-lifecycle-harness/SKILL.md`
 - blocked_sources: none
 - unsafe_inputs: none
-- next_safe_task: continue with requirements artifact template, recovery smoke, or visual evidence dashboard
+- next_safe_task: continue with source freshness scoring, orchestration integration, or visual evidence dashboard
 - required_commands:
   - `python3 test_runner.py`
   - `git diff --check`
   - `./scripts/verify_codex_env.sh --repo-root "$(pwd)" --codex-home "$HOME/.codex" --claude-home "$HOME/.claude"`
-- latest_checkpoint: 2026-05-11T17:14:08-04:00 validated Harness Runtime top 3 helpers after checkpoint clean-status fix
-- latest_verification: 2026-05-11T17:14:08-04:00 command=./scripts/verify_codex_env.sh --repo-root "/Users/kezheng/Codes/CursorDeveloper/MyCodexEnv" --codex-home "/Users/kezheng/.codex" --claude-home "/Users/kezheng/.claude"; exit_code=0; key_output=Verification passed.
+- latest_checkpoint: 2026-05-11T17:30:17-04:00 implemented requirements recovery and env probe harness closures
+- latest_verification: 2026-05-11T17:30:17-04:00 command=./scripts/verify_codex_env.sh --repo-root "/Users/kezheng/Codes/CursorDeveloper/MyCodexEnv" --codex-home "/Users/kezheng/.codex" --claude-home "/Users/kezheng/.claude"; exit_code=0; key_output=Verification passed.
 
 ## State Log
 
@@ -95,3 +95,28 @@ Stable rules belong in `AGENTS.md`, `README.md`, `docs/repo-index.md`, or
 - blockers:
   - none
 - next_safe_task: continue with requirements artifact template, recovery smoke, or visual evidence dashboard
+
+### 2026-05-11T17:30:17-04:00
+- phase: validation
+- event: checkpoint
+- summary: implemented requirements recovery and env probe harness closures
+- git:
+  - branch: main
+  - latest_commit: 48be28f
+  - dirty_status: dirty
+  - dirty_count: 7
+- changed_surfaces:
+  - `docs/templates/harness-requirements.md`
+  - `scripts/harness_requirements.py`
+  - `scripts/harness_recover.py`
+  - `scripts/harness_env_probe.py`
+  - `test_runner.py`
+  - `docs/HARNESS_RUNTIME.md`
+  - `docs/AGENT_HARNESS_STATUS.md`
+- verification:
+  - command: `./scripts/verify_codex_env.sh --repo-root "/Users/kezheng/Codes/CursorDeveloper/MyCodexEnv" --codex-home "/Users/kezheng/.codex" --claude-home "/Users/kezheng/.claude"`
+  - exit_code: 0
+  - key_output: Verification passed.
+- blockers:
+  - none
+- next_safe_task: continue with source freshness scoring, orchestration integration, or visual evidence dashboard

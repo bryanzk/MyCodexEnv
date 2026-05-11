@@ -6,12 +6,12 @@ orchestration, Infra is runtime governance.
 | Diagram Module | Current Status | Implemented Evidence | Remaining Gap | Next Step |
 | --- | --- | --- | --- | --- |
 | Research | done | `docs/repo-index.md`, startup probes in `project-lifecycle-harness`, `AGENTS.md` read-first rules | automatic source freshness scoring | add optional research evidence events per source |
-| Requirements | partial | lifecycle stage table and `docs/harness-state.md` snapshot | no dedicated requirements artifact template | add lightweight requirements section to state/handoff templates |
+| Requirements | done | lifecycle stage table, `docs/templates/harness-requirements.md`, `scripts/harness_requirements.py` | template must be filled per task before becoming source of truth | validate requirements artifacts before planning or development |
 | Planning | done | planning stage policy, lifecycle router, `docs/HARNESS_RUNTIME.md` | no graphical plan report | keep plan output text-first; add visual report only when requested |
 | Development | done | scoped write policy for `development`, repo change rules, `scripts/harness_agent_team.py` write-set validator | validator is explicit, not yet wired into automatic subagent dispatch | run validator before multi-worker dispatch and later integrate with orchestration |
 | Validation | done | `verify_codex_env.sh`, `test_runner.py`, evidence schema, verification gate | no automatic final-answer gate in the model runtime | keep AGENTS gate and evidence helper; add completion hook if Codex exposes one |
-| Sandbox | partial | Codex sandbox/approval model, tool policy guard categories | repo cannot control global sandbox mode | document expected sandbox and verify config where possible |
-| Memory | partial | `docs/harness-state.md`, `codex_subconscious.py`, repo index | subconscious remains heuristic and local-only | keep memory as hint; add state recovery smoke checks |
+| Sandbox | done | Codex sandbox/approval model, tool policy guard categories, `scripts/harness_env_probe.py` | global sandbox can be observed and reported, not forced by repo | keep probe output in verification and document runtime limits |
+| Memory | done | `docs/harness-state.md`, `codex_subconscious.py`, repo index, `scripts/harness_recover.py` | recovery is an explicit smoke output, not automatic model memory | run recovery smoke at session start or before handoff-sensitive work |
 | Skills | done | `codex/skills/*`, sync tests, generic lifecycle skill boundary test | skill quality varies by imported upstream content | add targeted validation for critical local skills |
 | Session State | done | `docs/harness-state.md`, local evidence JSONL schema, `scripts/harness_checkpoint.py` | runtime state updates still require explicit helper invocation | use checkpoint helper at phase transitions and handoff |
 | Permissions | done | `codex/runtime/tool-policy.json`, `harness_guard.py` | stage inference depends on payload/env/state | add explicit phase marker support in future Codex hook payloads |

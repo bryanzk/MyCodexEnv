@@ -21,6 +21,10 @@
 - `scripts/harness_report.py`: local evidence summary CLI.
 - `scripts/harness_agent_team.py`: agent team and write-set validator.
 - `scripts/harness_checkpoint.py`: append-only state checkpoint helper.
+- `docs/templates/harness-requirements.md`: task requirements artifact template.
+- `scripts/harness_requirements.py`: requirements artifact validator.
+- `scripts/harness_recover.py`: fresh-session recovery smoke check.
+- `scripts/harness_env_probe.py`: observable Codex runtime config probe.
 - `scripts/verify_codex_env.sh`: runtime sync and environment verification.
 
 ## Verification
@@ -37,14 +41,14 @@
 
 ## Harness Workflow Map
 - Research: read repo index, AGENTS, README, docs, and relevant state before acting.
-- Requirements: capture success criteria and scope in plan, state, or handoff surfaces.
+- Requirements: capture success criteria and scope in a validated requirements artifact, plan, state, or handoff surface.
 - Planning: use lifecycle routing and keep planning read-only unless implementation is explicitly requested.
 - Development: edit only scoped repo files and preserve unrelated user changes.
 - Validation: run fresh gates and record evidence with command, exit code, key output, and timestamp.
 
 ## Harness Infra Map
-- Sandbox: Codex sandbox and approval rules, plus repo high-risk path guidance.
-- Memory: `docs/harness-state.md` and local subconscious briefs as hints only.
+- Sandbox: Codex sandbox and approval rules, repo high-risk path guidance, and env probe output.
+- Memory: `docs/harness-state.md`, recovery smoke output, and local subconscious briefs as hints only.
 - Skills: `codex/skills/*` copied into `~/.codex/skills/*`.
 - Session State: `docs/harness-state.md` plus local evidence JSONL.
 - Permissions: `codex/runtime/tool-policy.json` and guard hooks.

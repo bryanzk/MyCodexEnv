@@ -823,6 +823,43 @@ def test_harness_recovery_smoke():
         require(empty_payload["dirty_status"] == "dirty", "recovery should report dirty repo")
         require(empty_payload["evidence_status"] == "empty", "empty evidence should be explicit")
         require(empty_payload["next_safe_task"] == "run recovery smoke", "recovery should parse next safe task")
+        require(empty_payload["latest_verification"] == {}, "empty evidence should not invent latest verification")
+
+        code, out, err = run(
+            [
+                sys.executable,
+                str(HARNESS_EVIDENCE),
+                "append",
+                "--codex-home",
+                str(codex_home),
+                "--event-type",
+                "tool_call",
+                "--phase",
+                "development",
+                "--cwd",
+                str(repo),
+                "--tool-name",
+                "exec_command",
+                "--command",
+                "pwd",
+            ]
+        )
+        require(code == 0, f"tool-call evidence append failed: {err or out}")
+        code, out, err = run(
+            [
+                sys.executable,
+                str(HARNESS_RECOVER),
+                "--repo-root",
+                str(repo),
+                "--codex-home",
+                str(codex_home),
+                "--json",
+            ]
+        )
+        require(code == 0, f"tool-call-only recovery should succeed: {err or out}")
+        tool_only_payload = json.loads(out)
+        require(tool_only_payload["evidence_status"] == "present", "tool-call evidence should mark evidence present")
+        require(tool_only_payload["latest_verification"] == {}, "tool-call evidence should not masquerade as verification")
 
         code, out, err = run(
             [

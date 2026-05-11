@@ -84,6 +84,9 @@ Harness runtime report and checkpoint helpers:
 python3 scripts/harness_report.py --phase validation
 python3 scripts/harness_report.py --json --limit 20
 python3 scripts/harness_agent_team.py validate PLAN.json
+python3 scripts/harness_requirements.py validate docs/templates/harness-requirements.md
+python3 scripts/harness_recover.py --repo-root "$(pwd)" --codex-home "$HOME/.codex"
+python3 scripts/harness_env_probe.py --codex-home "$HOME/.codex"
 python3 scripts/harness_checkpoint.py append \
   --phase validation \
   --summary "validated runtime slice" \

@@ -23,9 +23,13 @@ The lifecycle router uses these stages:
 Memory is a hint. Before acting, Codex must verify against repo files, git state,
 tests, or runtime evidence.
 
+Requirements artifacts use `docs/templates/harness-requirements.md`. Validate
+them with `scripts/harness_requirements.py validate PATH` before treating them
+as source of truth.
+
 ## Infra Contract
-- `Sandbox`: Codex sandboxing and approval rules remain the primary technical boundary.
-- `Memory`: `docs/harness-state.md` is the repo-visible memory surface; subconscious output is local and advisory.
+- `Sandbox`: Codex sandboxing and approval rules remain the primary technical boundary; `scripts/harness_env_probe.py` reports the observable runtime configuration.
+- `Memory`: `docs/harness-state.md` is the repo-visible memory surface; `scripts/harness_recover.py` proves recovery from state, git, and local evidence.
 - `Skills`: `codex/skills/*` is the source copied into runtime `~/.codex/skills/*`.
 - `Session State`: `docs/harness-state.md` records durable phase and handoff facts.
 - `Permissions`: `codex/runtime/tool-policy.json` declares stage-level tool permissions.
@@ -55,6 +59,28 @@ Evidence helper behavior:
 - empty evidence: report exits 0 with an explicit empty summary.
 - malformed JSONL lines: report continues, increments `malformed_count`, and
   lists file and line.
+
+## Recovery Contract
+Fresh sessions should be able to recover the next safe task without chat
+history. `scripts/harness_recover.py` reads repo index, harness state, git
+status/log, and local evidence summary.
+
+Recovery behavior:
+- missing repo index or harness state: fail non-zero and print the missing path.
+- no matching local evidence: exit 0 with `evidence_status=empty`.
+- dirty repo: report `dirty_status=dirty` and `dirty_count`.
+- JSON output: use `--json` for automation and visual reports.
+
+## Environment Probe Contract
+`scripts/harness_env_probe.py` reports what the repo can observe about the local
+Codex runtime: config, hooks, tool policy, evidence schema, sandbox fields, and
+approval fields.
+
+Probe behavior:
+- missing required runtime files: fail non-zero and name each missing file.
+- sandbox fields absent from config: do not infer; report `observable=false`.
+- global Desktop sandbox is outside repo control; the probe reports observable
+  config only.
 
 ## Checkpoint Contract
 Create a checkpoint when a task crosses any of these boundaries:

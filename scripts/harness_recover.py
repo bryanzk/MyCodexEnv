@@ -69,7 +69,7 @@ def latest_evidence(codex: Path, repo_root: Path) -> tuple[str, dict[str, Any] |
         return "empty", None, malformed_count
     events.sort(key=lambda event: str(event.get("timestamp", "")), reverse=True)
     verifications = [event for event in events if event.get("event_type") == "verification_result"]
-    return "present", (verifications[0] if verifications else events[0]), malformed_count
+    return "present", (verifications[0] if verifications else None), malformed_count
 
 
 def build_recovery(args: argparse.Namespace) -> tuple[int, dict[str, Any] | None, str | None]:
