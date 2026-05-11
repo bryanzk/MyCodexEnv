@@ -771,13 +771,14 @@ def test_harness_requirements_validator():
         require(code != 0 and "acceptance criterion" in err, "empty acceptance criteria should fail")
 
         invalid_missing_verification = tmp_path / "missing-verification.md"
-        invalid_missing_verification.write_text(
-            HARNESS_REQUIREMENTS_TEMPLATE.read_text(encoding="utf-8").replace(
-                "- `python3 test_runner.py`",
-                "",
-            ),
-            encoding="utf-8",
-        )
+        template_without_verification = HARNESS_REQUIREMENTS_TEMPLATE.read_text(encoding="utf-8")
+        for command in [
+            "- `python3 test_runner.py`",
+            "- `git diff --check`",
+            '- `./scripts/verify_codex_env.sh --repo-root "$(pwd)" --codex-home "$HOME/.codex" --claude-home "$HOME/.claude"`',
+        ]:
+            template_without_verification = template_without_verification.replace(command, "")
+        invalid_missing_verification.write_text(template_without_verification, encoding="utf-8")
         code, out, err = run([sys.executable, str(HARNESS_REQUIREMENTS), "validate", str(invalid_missing_verification)])
         require(code != 0 and "verification command" in err, "missing verification command should fail")
 
