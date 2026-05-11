@@ -15,11 +15,11 @@ def now_iso() -> str:
     return datetime.now().astimezone().replace(microsecond=0).isoformat()
 
 
-def run_git(repo_root: Path, args: list[str]) -> str:
+def run_git(repo_root: Path, args: list[str], empty_value: str = "unknown") -> str:
     proc = subprocess.run(["git", *args], cwd=repo_root, capture_output=True, text=True, check=False)
     if proc.returncode != 0:
         return "unknown"
-    return proc.stdout.strip() or "unknown"
+    return proc.stdout.strip() or empty_value
 
 
 def git_root(value: str | None) -> Path:
@@ -32,7 +32,7 @@ def git_root(value: str | None) -> Path:
 
 
 def git_snapshot(repo_root: Path) -> dict[str, str | int]:
-    status = run_git(repo_root, ["status", "--short"])
+    status = run_git(repo_root, ["status", "--short"], empty_value="")
     dirty_lines = [] if status == "unknown" else [line for line in status.splitlines() if line.strip()]
     return {
         "branch": run_git(repo_root, ["rev-parse", "--abbrev-ref", "HEAD"]),

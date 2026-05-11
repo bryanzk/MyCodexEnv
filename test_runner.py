@@ -22,8 +22,8 @@ HARNESS_GUARD = ROOT / "codex" / "hooks" / "harness_guard.py"
 HARNESS_OBSERVER = ROOT / "codex" / "hooks" / "harness_observer.py"
 
 
-def run(cmd):
-    proc = subprocess.run(cmd, capture_output=True, text=True, check=False)
+def run(cmd, cwd=None):
+    proc = subprocess.run(cmd, cwd=cwd, capture_output=True, text=True, check=False)
     return proc.returncode, proc.stdout.strip(), proc.stderr.strip()
 
 
@@ -634,7 +634,52 @@ def test_harness_checkpoint_helper():
         require("dirty_status: dirty" in state_text, "dirty git status should be captured")
         require("command=python3 test_runner.py" in state_text, "latest verification should be updated")
 
-        before = state_text
+        code, out, err = run(["git", "add", "dirty.txt", "docs/harness-state.md"], cwd=repo)
+        require(code == 0, f"temp git add failed: {err or out}")
+        code, out, err = run(["git", "commit", "-m", "seed"], cwd=repo)
+        if code != 0:
+            code, out, err = run(
+                [
+                    "git",
+                    "-c",
+                    "user.name=Harness Test",
+                    "-c",
+                    "user.email=harness-test@example.invalid",
+                    "commit",
+                    "-m",
+                    "seed",
+                ],
+                cwd=repo,
+            )
+        require(code == 0, f"temp git commit failed: {err or out}")
+
+        code, out, err = run(
+            [
+                sys.executable,
+                str(HARNESS_CHECKPOINT),
+                "append",
+                "--repo-root",
+                str(repo),
+                "--state-file",
+                str(state_file),
+                "--phase",
+                "validation",
+                "--summary",
+                "clean checkpoint smoke",
+                "--verification-command",
+                "python3 test_runner.py",
+                "--verification-exit-code",
+                "0",
+                "--verification-key-output",
+                "[PASS] clean checkpoint",
+                "--next-safe-task",
+                "continue validation",
+            ]
+        )
+        require(code == 0, f"clean checkpoint append failed: {err or out}")
+        require("dirty_status: clean" in state_file.read_text(encoding="utf-8"), "clean git status should be captured")
+
+        before = state_file.read_text(encoding="utf-8")
         code, out, err = run(
             [
                 sys.executable,
