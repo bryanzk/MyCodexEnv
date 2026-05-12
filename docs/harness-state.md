@@ -5,7 +5,7 @@ Stable rules belong in `AGENTS.md`, `README.md`, `docs/repo-index.md`, or
 `docs/HARNESS_RUNTIME.md`; session facts and phase transitions are appended here.
 
 ## Current Snapshot
-- phase: validation
+- phase: handoff
 - source_of_truth:
   - `AGENTS.md`
   - `docs/repo-index.md`
@@ -14,13 +14,13 @@ Stable rules belong in `AGENTS.md`, `README.md`, `docs/repo-index.md`, or
   - `codex/skills/project-lifecycle-harness/SKILL.md`
 - blocked_sources: none
 - unsafe_inputs: none
-- next_safe_task: continue with source freshness scoring, orchestration integration, or visual evidence dashboard
+- next_safe_task: update project-lifecycle-harness skill to route through latest runtime helpers and gstack decision points
 - required_commands:
   - `python3 test_runner.py`
   - `git diff --check`
   - `./scripts/verify_codex_env.sh --repo-root "$(pwd)" --codex-home "$HOME/.codex" --claude-home "$HOME/.claude"`
-- latest_checkpoint: 2026-05-11T17:30:17-04:00 implemented requirements recovery and env probe harness closures
-- latest_verification: 2026-05-11T17:30:17-04:00 command=./scripts/verify_codex_env.sh --repo-root "/Users/kezheng/Codes/CursorDeveloper/MyCodexEnv" --codex-home "/Users/kezheng/.codex" --claude-home "/Users/kezheng/.claude"; exit_code=0; key_output=Verification passed.
+- latest_checkpoint: 2026-05-11T20:10:39-04:00 generated current harness runtime handoff document
+- latest_verification: 2026-05-11T20:10:39-04:00 command=git diff --check; exit_code=0; key_output=No whitespace errors.
 
 ## State Log
 
@@ -120,3 +120,22 @@ Stable rules belong in `AGENTS.md`, `README.md`, `docs/repo-index.md`, or
 - blockers:
   - none
 - next_safe_task: continue with source freshness scoring, orchestration integration, or visual evidence dashboard
+
+### 2026-05-11T20:10:39-04:00
+- phase: handoff
+- event: checkpoint
+- summary: generated current harness runtime handoff document
+- git:
+  - branch: main
+  - latest_commit: 12b4ba6
+  - dirty_status: dirty
+  - dirty_count: 1
+- changed_surfaces:
+  - `docs/handoffs/2026-05-11-harness-runtime-current-state.md`
+- verification:
+  - command: `git diff --check`
+  - exit_code: 0
+  - key_output: No whitespace errors.
+- blockers:
+  - none
+- next_safe_task: update project-lifecycle-harness skill to route through latest runtime helpers and gstack decision points

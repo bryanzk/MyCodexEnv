@@ -227,6 +227,57 @@ def test_project_lifecycle_harness_stays_generic():
     print("[PASS] project lifecycle harness generic boundary")
 
 
+def test_project_lifecycle_harness_routes_runtime_helpers():
+    skill_text = (ROOT / "codex" / "skills" / "project-lifecycle-harness" / "SKILL.md").read_text(encoding="utf-8")
+
+    required_runtime_helpers = [
+        "scripts/harness_requirements.py",
+        "scripts/harness_recover.py",
+        "scripts/harness_env_probe.py",
+        "scripts/harness_report.py",
+        "scripts/harness_agent_team.py",
+        "scripts/harness_checkpoint.py",
+    ]
+    for helper in required_runtime_helpers:
+        require(helper in skill_text, f"project lifecycle harness should route through {helper}")
+
+    required_commands = [
+        "scripts/harness_requirements.py validate PATH",
+        "scripts/harness_recover.py --repo-root",
+        "scripts/harness_env_probe.py --codex-home",
+        "scripts/harness_report.py",
+        "scripts/harness_agent_team.py validate PLAN.json",
+        "scripts/harness_checkpoint.py append",
+    ]
+    for command in required_commands:
+        require(command in skill_text, f"project lifecycle harness missing command route: {command}")
+
+    gstack_routes = [
+        "gstack-plan-ceo-review",
+        "gstack-plan-eng-review",
+        "gstack-plan-design-review",
+        "gstack-qa",
+        "gstack-cso",
+        "gstack-review",
+        "gstack-ship",
+        "gstack-land-and-deploy",
+        "gstack-canary",
+        "gstack-document-release",
+    ]
+    for route in gstack_routes:
+        require(route in skill_text, f"project lifecycle harness missing gstack lifecycle route: {route}")
+
+    boundary_terms = [
+        "generic lifecycle router",
+        "repo-specific lifecycle harness",
+        "gstack owns",
+    ]
+    for term in boundary_terms:
+        require(term in skill_text, f"project lifecycle harness missing lifecycle boundary term: {term}")
+
+    print("[PASS] project lifecycle harness runtime helper routes")
+
+
 def test_sync_agents_only_copies_and_backs_up_agents():
     with tempfile.TemporaryDirectory() as tmp:
         tmp_path = Path(tmp)
@@ -1358,6 +1409,7 @@ def main():
     test_sync_ignores_legacy_eigenphi_argument()
     test_sync_renders_template_and_copies_skills()
     test_project_lifecycle_harness_stays_generic()
+    test_project_lifecycle_harness_routes_runtime_helpers()
     test_sync_agents_only_copies_and_backs_up_agents()
     test_harness_runtime_surfaces_exist_and_parse()
     test_harness_guard_policy_decisions()
