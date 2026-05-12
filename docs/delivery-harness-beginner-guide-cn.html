@@ -161,12 +161,13 @@
     }
 
     h1 {
-      max-width: 980px;
+      max-width: 960px;
       margin: 0;
       font-family: var(--font-display);
-      font-size: clamp(46px, 8vw, 92px);
+      font-size: clamp(42px, 7vw, 82px);
       line-height: 0.94;
       letter-spacing: -0.02em;
+      text-wrap: balance;
     }
 
     .lead {
@@ -512,7 +513,7 @@
     <main class="main">
       <section class="hero" id="what" style="--i:0">
         <div class="eyebrow">Delivery Harness Framework / DHF Beginner Guide</div>
-        <h1>Delivery Harness Framework (DHF) 是 prompts 和 proof 之间的系统。</h1>
+        <h1>Delivery Harness Framework (DHF)<br>将 prompts 实现为 proof。</h1>
         <p class="lead">它不是一个更聪明的 prompt，也不是单个 agent。它是一套工作框架，让 AI 工程任务先恢复事实，再锁定范围，按阶段路由执行，最后用新鲜证据证明完成。</p>
         <div class="definition">
           一句话：<strong>DHF 把“帮我做这个”变成“已读哪些事实、当前处于哪个阶段、谁负责执行、怎样验证、下一次如何接手”。</strong>
