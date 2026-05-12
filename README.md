@@ -63,17 +63,20 @@ cd MyCodexEnv
 
 运行态证据默认保存在 `~/.codex/harness/evidence/`，不进入 Git。`docs/harness-state.md` 只保存可公开的阶段、验证与 handoff 事实。Memory / subconscious 只能作为提示，行动前必须回查 repo 文件、git 状态或 fresh verification。
 
-生命周期阶段、覆盖流程、对应 skill 和 helper 用途见 `docs/LIFECYCLE_SKILL_ROUTING.md`。中文可视化说明见 `docs/project-lifecycle-harness-flow-cn.html` 和 `docs/project-lifecycle-harness-flow-skills.html`。
+生命周期阶段、覆盖流程、对应 skill 和 helper 用途见 `docs/LIFECYCLE_SKILL_ROUTING.md`。公开页面入口见 `docs/index.html`；面向 agentic engineering beginner 的中文入门说明见 `docs/delivery-harness-beginner-guide-cn.html`；中文可视化说明见 `docs/project-lifecycle-harness-flow-cn.html` 和 `docs/project-lifecycle-harness-flow-skills-zh-status-style.html`。
 
 相关文档互链入口：
 
 - `docs/repo-index.md`：低 token 项目导航与 runtime surface 索引
+- `docs/index.html`：Delivery Harness 公共页面入口
+- `docs/delivery-harness-beginner-guide-cn.html`：面向 agentic engineering beginner 的中文入门指南
 - `docs/HARNESS_RUNTIME.md`：生命周期、证据、checkpoint、权限和 subagent 合同
 - `docs/AGENT_HARNESS_STATUS.md`：Agent Harness workflow/infra 状态图谱
 - `docs/CODEX_ENV_REPRODUCTION.md`：Codex + Claude 环境复现说明
 - `docs/LIFECYCLE_SKILL_ROUTING.md`：生命周期阶段、workflow、skill 和 helper 路由
 - `docs/project-lifecycle-harness-flow-cn.html`：中文纵向生命周期流程图
 - `docs/project-lifecycle-harness-flow-skills.html`：中文 skill/helper 路由可视化速查页
+- `docs/project-lifecycle-harness-flow-skills-zh-status-style.html`：新版 Delivery Harness 技能路由可视化速查页
 
 早期已适配的短名 gstack skills 仍保留：
 

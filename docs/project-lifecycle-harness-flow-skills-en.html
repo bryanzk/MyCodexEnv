@@ -1,55 +1,56 @@
 <!DOCTYPE html>
-<html lang="zh-CN">
+<html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>MyCodexEnv 生命周期 Skill 路由（中文版）</title>
+  <title>MyCodexEnv Delivery Harness Skill Routing</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;700;900&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Source+Sans+3:wght@400;500;600;700&family=Source+Serif+4:wght@500;600;700&display=swap" rel="stylesheet">
   <style>
     :root {
-      --font-body: 'Noto Sans SC', 'PingFang SC', 'Microsoft YaHei', sans-serif;
-      --font-mono: 'JetBrains Mono', 'SF Mono', Consolas, monospace;
-      --bg: #f2fbf8;
-      --surface: #ffffff;
-      --surface2: #e7f5ef;
-      --border: rgba(17, 72, 58, 0.10);
-      --border-strong: rgba(17, 72, 58, 0.18);
-      --text: #11382f;
-      --text-dim: #5c756e;
-      --recover: #0d9488;
-      --recover-dim: rgba(13, 148, 136, 0.10);
-      --decide: #7c3aed;
-      --decide-dim: rgba(124, 58, 237, 0.10);
-      --build: #d97706;
-      --build-dim: rgba(217, 119, 6, 0.12);
-      --verify: #0f766e;
-      --verify-dim: rgba(15, 118, 110, 0.10);
-      --ship: #be123c;
-      --ship-dim: rgba(190, 18, 60, 0.10);
-      --shadow: 0 14px 34px rgba(17, 72, 58, 0.08), 0 2px 8px rgba(17, 72, 58, 0.06);
+      --font-body: 'Source Sans 3', sans-serif;
+      --font-display: 'Source Serif 4', serif;
+      --font-mono: 'IBM Plex Mono', monospace;
+      --bg: #f3eadf;
+      --surface: #fffaf2;
+      --surface2: #f0e3d2;
+      --border: rgba(43, 35, 29, 0.12);
+      --border-strong: rgba(43, 35, 29, 0.20);
+      --text: #2b231d;
+      --text-dim: #675b51;
+      --recover: #3f765b;
+      --recover-dim: rgba(63, 118, 91, 0.10);
+      --decide: #4e619d;
+      --decide-dim: rgba(78, 97, 157, 0.11);
+      --build: #b36a2f;
+      --build-dim: rgba(179, 106, 47, 0.12);
+      --verify: #35796f;
+      --verify-dim: rgba(53, 121, 111, 0.10);
+      --ship: #a8425d;
+      --ship-dim: rgba(168, 66, 93, 0.10);
+      --shadow: 0 14px 34px rgba(75, 55, 36, 0.09), 0 2px 8px rgba(75, 55, 36, 0.07);
     }
 
     @media (prefers-color-scheme: dark) {
       :root {
-        --bg: #081512;
-        --surface: #101f1b;
-        --surface2: #172a25;
-        --border: rgba(225, 248, 240, 0.10);
-        --border-strong: rgba(225, 248, 240, 0.18);
-        --text: #e6f7f1;
-        --text-dim: #9bb8ae;
-        --recover: #2dd4bf;
-        --recover-dim: rgba(45, 212, 191, 0.14);
-        --decide: #c4b5fd;
-        --decide-dim: rgba(196, 181, 253, 0.13);
-        --build: #fbbf24;
-        --build-dim: rgba(251, 191, 36, 0.13);
-        --verify: #5eead4;
-        --verify-dim: rgba(94, 234, 212, 0.12);
-        --ship: #fb7185;
-        --ship-dim: rgba(251, 113, 133, 0.13);
+        --bg: #211914;
+        --surface: #2a211c;
+        --surface2: #352a23;
+        --border: rgba(255, 246, 235, 0.10);
+        --border-strong: rgba(255, 246, 235, 0.18);
+        --text: #f4eadf;
+        --text-dim: #c7b8a7;
+        --recover: #9fc7a8;
+        --recover-dim: rgba(159, 199, 168, 0.13);
+        --decide: #b8c4ee;
+        --decide-dim: rgba(184, 196, 238, 0.13);
+        --build: #f0b978;
+        --build-dim: rgba(240, 185, 120, 0.13);
+        --verify: #a7d0c7;
+        --verify-dim: rgba(167, 208, 199, 0.13);
+        --ship: #e5a3b1;
+        --ship-dim: rgba(229, 163, 177, 0.13);
         --shadow: 0 14px 34px rgba(0, 0, 0, 0.24), 0 2px 8px rgba(0, 0, 0, 0.20);
       }
     }
@@ -63,9 +64,9 @@
       font-family: var(--font-body);
       background-color: var(--bg);
       background-image:
-        radial-gradient(circle at 15% 10%, var(--recover-dim) 0 18%, transparent 34%),
-        radial-gradient(circle at 86% 18%, var(--decide-dim) 0 16%, transparent 34%),
-        radial-gradient(circle at 50% 100%, var(--build-dim) 0 18%, transparent 38%),
+        radial-gradient(circle at 15% 10%, var(--build-dim) 0 18%, transparent 34%),
+        radial-gradient(circle at 86% 18%, var(--recover-dim) 0 16%, transparent 34%),
+        radial-gradient(circle at 50% 100%, var(--ship-dim) 0 18%, transparent 38%),
         radial-gradient(circle, var(--border) 1px, transparent 1px);
       background-size: auto, auto, auto, 26px 26px;
       overflow-wrap: break-word;
@@ -75,6 +76,7 @@
       from { opacity: 0; transform: translateY(14px); }
       to { opacity: 1; transform: translateY(0); }
     }
+
     @media (prefers-reduced-motion: reduce) {
       *, *::before, *::after {
         animation-duration: 0.01ms !important;
@@ -149,6 +151,8 @@
     }
     h1 {
       margin: 0 0 12px;
+      font-family: var(--font-display);
+      font-weight: 700;
       font-size: clamp(34px, 5.4vw, 68px);
       line-height: 0.95;
       letter-spacing: 0;
@@ -169,16 +173,12 @@
       padding: 1px 5px;
       border-radius: 5px;
     }
-
     a {
       color: var(--recover);
       text-decoration: none;
       border-bottom: 1px solid color-mix(in srgb, var(--recover) 34%, transparent);
     }
-
-    a:hover {
-      border-bottom-color: var(--recover);
-    }
+    a:hover { border-bottom-color: var(--recover); }
 
     .kpis {
       display: grid;
@@ -210,6 +210,7 @@
     }
     .section h2 {
       margin: 0 0 8px;
+      font-family: var(--font-display);
       font-size: clamp(24px, 3vw, 38px);
       letter-spacing: 0;
     }
@@ -335,13 +336,8 @@
       letter-spacing: 0.8px;
     }
     tr:last-child td { border-bottom: none; }
-    tr:nth-child(even) td {
-      background: color-mix(in srgb, var(--surface2) 38%, transparent);
-    }
-    .phase {
-      font-weight: 700;
-      white-space: nowrap;
-    }
+    tr:nth-child(even) td { background: color-mix(in srgb, var(--surface2) 38%, transparent); }
+    .phase { font-weight: 700; white-space: nowrap; }
     .badge {
       display: inline-block;
       margin: 0 4px 4px 0;
@@ -404,32 +400,32 @@
 <body>
   <div class="wrap">
     <nav class="toc" id="toc">
-      <div class="toc-title">目录</div>
-      <a href="#overview">总览</a>
-      <a href="#flow">流程图</a>
-      <a href="#skills">Skill 映射</a>
-      <a href="#rules">路由规则</a>
-      <a href="#handoff">交接</a>
+      <div class="toc-title">Contents</div>
+      <a href="#overview">Overview</a>
+      <a href="#flow">Flowchart</a>
+      <a href="#skills">Skill Map</a>
+      <a href="#rules">Routing Rules</a>
+      <a href="#handoff">Handoff</a>
     </nav>
 
     <main class="main">
       <section class="hero" id="overview">
-        <div class="eyebrow">Project Lifecycle Harness / 当前 skill 路由</div>
-        <h1>每个生命周期阶段该用哪个 skill。</h1>
+        <div class="eyebrow">Delivery Harness / Current Skill Routing</div>
+        <h1>Which skill powers each Delivery Harness stage.</h1>
         <p class="lead">
-          当前 MyCodexEnv 用 <code>project-lifecycle-harness</code> 做通用入口：它恢复运行时事实、探测 Codex 环境、识别生命周期阶段，然后把任务路由给 repo-specific harness、gstack 专项 skill、本地开发/验证 skill 或确定性 runtime helper。Helper 提供可机器检查的执行层，skill 负责认知编排。
+          MyCodexEnv uses <code>project-lifecycle-harness</code> as the Delivery Harness entry point. It restores runtime facts, probes the Codex environment, identifies the lifecycle stage, and routes the work to a repo-specific harness, a gstack specialist skill, local development and verification skills, or deterministic runtime helpers. Helpers provide a machine-checkable execution layer; skills provide cognitive orchestration.
         </p>
         <div class="kpis">
-          <div class="kpi"><strong>8</strong><span>标准生命周期阶段</span></div>
-          <div class="kpi"><strong>9</strong><span>helper / 验证入口</span></div>
-          <div class="kpi"><strong>3</strong><span>generic、repo-specific、gstack 分工</span></div>
-          <div class="kpi"><strong>4</strong><span>完成证据字段</span></div>
+          <div class="kpi"><strong>8</strong><span>standard lifecycle stages</span></div>
+          <div class="kpi"><strong>9</strong><span>helper / verification entry points</span></div>
+          <div class="kpi"><strong>3</strong><span>generic, repo-specific, gstack roles</span></div>
+          <div class="kpi"><strong>4</strong><span>completion evidence fields</span></div>
         </div>
       </section>
 
       <section class="section" id="flow">
-        <h2>当前流程</h2>
-        <div class="section-note">Mermaid 纵向流程图：先恢复运行时事实，再选择 skill/helper，最后 checkpoint</div>
+        <h2>Current Flow</h2>
+        <div class="section-note">Vertical Mermaid flowchart: restore runtime facts, select the right skill/helper, then checkpoint</div>
         <div class="mermaid-wrap" data-zoom="1">
           <div class="zoom-controls">
             <button type="button" data-action="in">+</button>
@@ -438,50 +434,50 @@
           </div>
           <pre class="mermaid">
 flowchart TD
-  Start(["用户任务进入<br/>project-lifecycle-harness"])
-  AGENTS["读取 AGENTS.md<br/>README 与 docs/repo-index.md"]
-  Recover["运行 harness_recover.py --json<br/>恢复 phase、dirty state、next safe task"]
-  Env["运行 harness_env_probe.py --json<br/>观测 hooks、policy、schema"]
-  NeedsReq{"目标、范围、验收是否清晰？"}
-  Req["需求锁定<br/>planner / req-to-dev / task-flow-orchestrator"]
+  Start(["User task enters<br/>Delivery Harness"])
+  AGENTS["Read AGENTS.md<br/>README and docs/repo-index.md"]
+  Recover["Run harness_recover.py --json<br/>restore phase, dirty state, next safe task"]
+  Env["Run harness_env_probe.py --json<br/>observe hooks, policy, schema"]
+  NeedsReq{"Are goal, scope,<br/>and acceptance clear?"}
+  Req["Requirements lock<br/>planner / req-to-dev / task-flow-orchestrator"]
   ReqVal["harness_requirements.py validate PATH"]
-  Classify{"分类生命周期阶段<br/>和风险边界"}
-  Repo{"是否有 repo-specific harness？"}
-  RepoSkill["交给项目 adapter<br/>业务路径、命令、smoke matrix"]
-  Product["产品/范围判断<br/>gstack-plan-ceo-review / gstack-office-hours"]
-  Plan["工程/设计规划<br/>gstack-plan-eng-review / gstack-plan-design-review"]
-  Dev["开发实现<br/>tdd-guide / atdd-guide / scoped workers"]
-  Team{"是否并行 agents？"}
+  Classify{"Classify lifecycle stage<br/>and risk boundary"}
+  Repo{"Repo-specific harness available?"}
+  RepoSkill["Hand off to project adapter<br/>business paths, commands, smoke matrix"]
+  Product["Product / scope judgment<br/>gstack-plan-ceo-review / gstack-office-hours"]
+  Plan["Engineering / design planning<br/>gstack-plan-eng-review / gstack-plan-design-review"]
+  Dev["Implementation<br/>tdd-guide / atdd-guide / scoped workers"]
+  Team{"Parallel agents?"}
   TeamVal["harness_agent_team.py validate PLAN.json"]
-  Val["验证与证据<br/>verification-loop / harness_report.py / test_runner.py"]
-  QA["QA / 安全 / 评审<br/>gstack-qa / gstack-cso / gstack-review / code-reviewer"]
-  Ship["发布/部署<br/>gstack-ship / gstack-land-and-deploy / gstack-canary"]
-  Docs["文档发布<br/>gstack-document-release / doc-updater"]
-  Handoff["交接<br/>harness_checkpoint.py append"]
-  Done(["输出<br/>skill 路由、验证证据、next safe task"])
+  Val["Verification and evidence<br/>verification-loop / harness_report.py / test_runner.py"]
+  QA["QA / security / review<br/>gstack-qa / gstack-cso / gstack-review / code-reviewer"]
+  Ship["Ship / deploy<br/>gstack-ship / gstack-land-and-deploy / gstack-canary"]
+  Docs["Documentation release<br/>gstack-document-release / doc-updater"]
+  Handoff["Handoff<br/>harness_checkpoint.py append"]
+  Done(["Delivery Harness output<br/>skill routing, verification evidence, next safe task"])
 
   Start --> AGENTS --> Recover --> Env --> NeedsReq
-  NeedsReq -- 否 --> Req --> ReqVal --> Classify
-  NeedsReq -- 是 --> Classify
+  NeedsReq -- "No" --> Req --> ReqVal --> Classify
+  NeedsReq -- "Yes" --> Classify
   Classify --> Repo
-  Repo -- 是 --> RepoSkill --> Dev
-  Repo -- 否且偏产品 --> Product --> Plan
-  Repo -- 否且偏工程/设计 --> Plan
-  Repo -- 否且可直接开发 --> Dev
+  Repo -- "Yes" --> RepoSkill --> Dev
+  Repo -- "No, product-oriented" --> Product --> Plan
+  Repo -- "No, engineering/design-oriented" --> Plan
+  Repo -- "No, directly implementable" --> Dev
   Plan --> Team
   Dev --> Team
-  Team -- 是 --> TeamVal --> Val
-  Team -- 否 --> Val
-  Classify -- 验证 --> Val
-  Classify -- QA/安全/评审 --> QA --> Val
-  Classify -- 发布/部署 --> Ship --> Val
+  Team -- "Yes" --> TeamVal --> Val
+  Team -- "No" --> Val
+  Classify -- "Verification" --> Val
+  Classify -- "QA/security/review" --> QA --> Val
+  Classify -- "Ship/deploy" --> Ship --> Val
   Val --> Docs --> Handoff --> Done
 
-  classDef runtime fill:#dff7ef,stroke:#0d9488,color:#11382f;
-  classDef decision fill:#eee7ff,stroke:#7c3aed,color:#241247;
-  classDef build fill:#fff3d5,stroke:#d97706,color:#4a2c04;
-  classDef verify fill:#dff7f4,stroke:#0f766e,color:#0f3d38;
-  classDef ship fill:#ffe4eb,stroke:#be123c,color:#5b1025;
+  classDef runtime fill:#edf3e9,stroke:#3f765b,color:#26372d;
+  classDef decision fill:#eee9dc,stroke:#6f675e,color:#2b231d;
+  classDef build fill:#f6e1ca,stroke:#b36a2f,color:#4a2e1e;
+  classDef verify fill:#e7f0ea,stroke:#35796f,color:#26372d;
+  classDef ship fill:#f4dde0,stroke:#a8425d,color:#51242f;
 
   class AGENTS,Recover,Env,ReqVal,TeamVal,Handoff runtime;
   class NeedsReq,Classify,Team decision;
@@ -493,72 +489,72 @@ flowchart TD
       </section>
 
       <section class="section" id="skills">
-        <h2>Skill 与 Helper 映射</h2>
-        <div class="section-note">Helper 负责客观运行时事实；skill 负责认知工作流</div>
+        <h2>Skill and Helper Map</h2>
+        <div class="section-note">Helpers provide objective runtime facts; skills provide cognitive workflow routing</div>
         <div class="table-wrap">
           <table>
             <thead>
               <tr>
-                <th>流程步骤</th>
-                <th>主要 Skill</th>
-                <th>Helper 命令</th>
-                <th>何时路由到这里</th>
+                <th>Flow Step</th>
+                <th>Primary Skill</th>
+                <th>Helper Command</th>
+                <th>When to Route Here</th>
               </tr>
             </thead>
             <tbody>
               <tr>
-                <td class="phase">启动 / 恢复</td>
+                <td class="phase">Start / recover</td>
                 <td><span class="badge primary">project-lifecycle-harness</span></td>
                 <td><code>scripts/harness_recover.py --json</code><br><code>scripts/harness_env_probe.py --json</code></td>
-                <td>任何复杂任务、恢复会话、dirty 工作树、跨阶段交接或含糊请求。</td>
+                <td>Any complex task, resumed session, dirty worktree, cross-stage handoff, or ambiguous request.</td>
               </tr>
               <tr>
-                <td class="phase">需求</td>
+                <td class="phase">Requirements</td>
                 <td><span class="badge decision">planner</span><span class="badge decision">req-to-dev</span><span class="badge decision">task-flow-orchestrator</span></td>
                 <td><code>docs/templates/harness-requirements.md</code><br><code>scripts/harness_requirements.py validate PATH</code></td>
-                <td>目标、范围、受众、约束、成功标准或验收测试尚未锁定。</td>
+                <td>The goal, scope, audience, constraints, success criteria, or acceptance tests are not locked.</td>
               </tr>
               <tr>
-                <td class="phase">产品 / 业务判断</td>
+                <td class="phase">Product / business judgment</td>
                 <td><span class="badge decision">gstack-plan-ceo-review</span><span class="badge decision">gstack-office-hours</span></td>
                 <td><code>scripts/harness_requirements.py validate PATH</code> when a requirement artifact exists</td>
-                <td>需要明确用户价值、范围、demo 边界、优先级或业务取舍。</td>
+                <td>User value, scope, demo boundary, priority, or business tradeoffs need to be clarified.</td>
               </tr>
               <tr>
-                <td class="phase">工程 / 设计规划</td>
+                <td class="phase">Engineering / design planning</td>
                 <td><span class="badge decision">gstack-plan-eng-review</span><span class="badge decision">gstack-plan-design-review</span><span class="badge decision">planner</span></td>
                 <td><code>scripts/harness_agent_team.py validate PLAN.json</code> when parallel work is proposed</td>
-                <td>需要决策架构、API、数据流、迁移、视觉结构、任务拆分或多 agent 归属。</td>
+                <td>Architecture, API, data flow, migration, visual structure, task split, or multi-agent ownership must be decided.</td>
               </tr>
               <tr>
-                <td class="phase">开发</td>
+                <td class="phase">Development</td>
                 <td><span class="badge build">tdd-guide</span><span class="badge build">atdd-guide</span><span class="badge build">scoped worker agents</span></td>
                 <td><code>scripts/harness_agent_team.py validate PLAN.json</code><br><code>git status --short --branch</code></td>
-                <td>已有清晰验收标准，且生命周期策略允许有范围的 repo 写入。</td>
+                <td>Acceptance criteria are clear and lifecycle policy allows scoped repo writes.</td>
               </tr>
               <tr>
-                <td class="phase">验证 / 证据</td>
+                <td class="phase">Verification / evidence</td>
                 <td><span class="badge verify">verification-loop</span><span class="badge verify">harness_report.py</span></td>
                 <td><code>python3 test_runner.py</code><br><code>git diff --check</code><br><code>scripts/verify_codex_env.sh ...</code></td>
-                <td>声明完成前、代码/配置/文档变更后，或需要 runtime sync 证据时。</td>
+                <td>Before declaring completion, after code/config/docs changes, or when runtime-sync evidence is required.</td>
               </tr>
               <tr>
-                <td class="phase">QA / 评审 / 安全</td>
+                <td class="phase">QA / review / security</td>
                 <td><span class="badge verify">gstack-qa</span><span class="badge verify">gstack-qa-only</span><span class="badge verify">gstack-review</span><span class="badge verify">code-reviewer</span><span class="badge verify">gstack-cso</span><span class="badge verify">security-reviewer</span></td>
                 <td><code>git diff</code>, <code>scripts/harness_env_probe.py --json</code> for runtime-sensitive work</td>
-                <td>存在 diff、用户可见行为、安全/隐私边界，或工作接近交接/发布时。</td>
+                <td>A diff exists, behavior is user-visible, a safety/privacy boundary is involved, or the work is close to handoff or release.</td>
               </tr>
               <tr>
-                <td class="phase">发布 / 部署 / Canary</td>
+                <td class="phase">Ship / deploy / canary</td>
                 <td><span class="badge ship">gstack-ship</span><span class="badge ship">gstack-land-and-deploy</span><span class="badge ship">gstack-canary</span></td>
                 <td><code>scripts/verify_codex_env.sh ...</code><br><code>scripts/harness_checkpoint.py append</code></td>
-                <td>用户明确要求 commit、PR、merge、release、deploy 或生产验证时。</td>
+                <td>The user explicitly asks for commit, PR, merge, release, deploy, or production validation.</td>
               </tr>
               <tr>
-                <td class="phase">文档 / 交接</td>
+                <td class="phase">Docs / handoff</td>
                 <td><span class="badge ship">gstack-document-release</span><span class="badge ship">doc-updater</span><span class="badge ship">project-lifecycle-harness</span></td>
                 <td><code>scripts/harness_checkpoint.py append</code><br><code>scripts/harness_report.py --json</code></td>
-                <td>文档需要反映已交付行为，或会话需要持久化 next safe task 状态时。</td>
+                <td>Docs need to reflect delivered behavior, or the session must persist next-safe-task state.</td>
               </tr>
             </tbody>
           </table>
@@ -566,48 +562,48 @@ flowchart TD
       </section>
 
       <section class="section" id="rules">
-        <h2>路由规则</h2>
+        <h2>Routing Rules</h2>
         <div class="grid">
           <div class="card accent-recover">
-            <b>1. 运行时事实优先于记忆</b>
-            <small>先运行 recovery 与 env probe。聊天历史和 subconscious 输出只是提示，不能作为唯一事实来源。</small>
+            <b>1. Runtime facts outrank memory</b>
+            <small>Run recovery and env probe first. Chat history and subconscious output are hints, not the only source of truth.</small>
           </div>
           <div class="card accent-decide">
-            <b>2. 需求 gate before planning</b>
-            <small>如果范围或验收标准不稳定，先创建或验证 requirements artifact，再做架构规划。</small>
+            <b>2. Requirements gate before planning</b>
+            <small>If scope or acceptance criteria are unstable, create or validate the requirements artifact before architecture planning.</small>
           </div>
           <div class="card accent-build">
-            <b>3. 没有 validator 就不并行写入</b>
-            <small>任何 worker team 都必须通过 <code>harness_agent_team.py validate</code> 证明 write set 不重叠。</small>
+            <b>3. No parallel writes without a validator</b>
+            <small>Any worker team must pass <code>harness_agent_team.py validate</code> to prove write sets do not overlap.</small>
           </div>
           <div class="card accent-verify">
-            <b>4. 完成声明需要 fresh evidence</b>
-            <small>声明完成前必须记录 <code>command</code>、<code>exit_code</code>、<code>key_output</code>、<code>timestamp</code>。</small>
+            <b>4. Completion claims require fresh evidence</b>
+            <small>Before declaring completion, record <code>command</code>, <code>exit_code</code>, <code>key_output</code>, and <code>timestamp</code>.</small>
           </div>
           <div class="card accent-ship">
-            <b>5. 交接是运行时事件</b>
-            <small>有意义的工作切片结束时，用 <code>harness_checkpoint.py append</code> 记录 command、exit code、key output、timestamp 和 next safe task。</small>
+            <b>5. Handoff is a runtime event</b>
+            <small>At the end of meaningful work slices, use <code>harness_checkpoint.py append</code> to record command, exit code, key output, timestamp, and next safe task.</small>
           </div>
           <div class="card accent-recover">
-            <b>6. Repo 不能强制全局 sandbox</b>
-            <small>env probe 只能报告可观测的 sandbox/approval 配置，不能假装知道隐藏的 Desktop thread 状态。</small>
+            <b>6. Repos cannot force global sandbox truth</b>
+            <small>Env probe may report observable sandbox and approval settings; it must not pretend to know hidden Desktop thread state.</small>
           </div>
         </div>
       </section>
 
       <section class="section" id="handoff">
-        <h2>交付资产</h2>
+        <h2>Handoff Assets</h2>
         <div class="callout">
-          <b>当前文档入口：</b>
-          <a href="./index.html"><code>docs/index.html</code></a> 是公开页面入口；
-          <a href="./delivery-harness-beginner-guide-cn.html"><code>docs/delivery-harness-beginner-guide-cn.html</code></a> 是 beginner 中文入门指南；
-          <a href="./LIFECYCLE_SKILL_ROUTING.md"><code>docs/LIFECYCLE_SKILL_ROUTING.md</code></a> 是生命周期和 skill/helper 路由的文字说明；
-          <a href="./project-lifecycle-harness-flow-cn.html"><code>docs/project-lifecycle-harness-flow-cn.html</code></a> 是纵向主流程图；
-          <a href="./project-lifecycle-harness-flow-skills-zh-status-style.html"><code>docs/project-lifecycle-harness-flow-skills-zh-status-style.html</code></a> 是新版 Delivery Harness 技能路由图；
-          <a href="./HARNESS_RUNTIME.md"><code>docs/HARNESS_RUNTIME.md</code></a> 是运行时合同；
-          <a href="./AGENT_HARNESS_STATUS.md"><code>docs/AGENT_HARNESS_STATUS.md</code></a> 是 Harness 模块状态；
-          <a href="./CODEX_ENV_REPRODUCTION.md"><code>docs/CODEX_ENV_REPRODUCTION.md</code></a> 是环境复现说明；
-          <a href="./repo-index.md"><code>docs/repo-index.md</code></a> 是低 token repo index。
+          <b>Current documentation entry points:</b>
+          <a href="./index.html"><code>docs/index.html</code></a> is the public docs landing page;
+          <a href="./delivery-harness-beginner-guide-cn.html"><code>docs/delivery-harness-beginner-guide-cn.html</code></a> is the Chinese beginner guide;
+          <a href="./LIFECYCLE_SKILL_ROUTING.md"><code>docs/LIFECYCLE_SKILL_ROUTING.md</code></a> is the written lifecycle and skill/helper routing guide;
+          <a href="./project-lifecycle-harness-flow-cn.html"><code>docs/project-lifecycle-harness-flow-cn.html</code></a> is the vertical main flowchart;
+          <a href="./project-lifecycle-harness-flow-skills-zh-status-style.html"><code>docs/project-lifecycle-harness-flow-skills-zh-status-style.html</code></a> is the current Chinese Delivery Harness skill/helper routing guide;
+          <a href="./HARNESS_RUNTIME.md"><code>docs/HARNESS_RUNTIME.md</code></a> is the runtime contract;
+          <a href="./AGENT_HARNESS_STATUS.md"><code>docs/AGENT_HARNESS_STATUS.md</code></a> is the Harness module status;
+          <a href="./CODEX_ENV_REPRODUCTION.md"><code>docs/CODEX_ENV_REPRODUCTION.md</code></a> documents environment reproduction;
+          <a href="./repo-index.md"><code>docs/repo-index.md</code></a> is the low-token repo index.
         </div>
       </section>
     </main>
@@ -622,15 +618,15 @@ flowchart TD
       look: 'classic',
       flowchart: { curve: 'basis', padding: 16 },
       themeVariables: {
-        fontFamily: 'Noto Sans SC, PingFang SC, sans-serif',
-        primaryColor: '#e7f5ef',
-        primaryTextColor: '#11382f',
-        primaryBorderColor: '#0d9488',
-        lineColor: '#5c756e',
-        secondaryColor: '#eee7ff',
-        tertiaryColor: '#fff3d5',
-        noteBkgColor: '#ffffff',
-        noteTextColor: '#11382f',
+        fontFamily: 'Source Sans 3, sans-serif',
+        primaryColor: '#fffaf2',
+        primaryTextColor: '#2b231d',
+        primaryBorderColor: '#b36a2f',
+        lineColor: '#675b51',
+        secondaryColor: '#edf3e9',
+        tertiaryColor: '#f6e1ca',
+        noteBkgColor: '#fffaf2',
+        noteTextColor: '#2b231d',
         fontSize: '15px'
       }
     });

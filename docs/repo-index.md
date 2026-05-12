@@ -11,8 +11,11 @@
 - `docs/harness-state.md`: append-only harness runtime state and latest safe task.
 - `docs/HARNESS_RUNTIME.md`: design contract for workflow, infra, state, policy, evidence, hooks, checkpoints, and agent teams.
 - `docs/LIFECYCLE_SKILL_ROUTING.md`: Chinese lifecycle-to-skill routing map for current project workflows.
+- `docs/index.html`: public Delivery Harness docs landing page for GitHub Pages.
+- `docs/delivery-harness-beginner-guide-cn.html`: Chinese beginner guide for agentic engineering readers.
 - `docs/project-lifecycle-harness-flow-cn.html`: Chinese vertical lifecycle flow visual guide.
 - `docs/project-lifecycle-harness-flow-skills.html`: Chinese skill/helper routing visual guide.
+- `docs/project-lifecycle-harness-flow-skills-zh-status-style.html`: current styled Chinese Delivery Harness skill/helper routing guide.
 - `codex/AGENTS.md`: global Codex rules source copied into `~/.codex/AGENTS.md`.
 
 ## Runtime Surfaces
@@ -30,8 +33,11 @@
 - `scripts/harness_env_probe.py`: observable Codex runtime config probe.
 - `scripts/verify_codex_env.sh`: runtime sync and environment verification.
 - `docs/LIFECYCLE_SKILL_ROUTING.md`: stage, workflow, skill, and helper usage guide.
+- `docs/index.html`: public docs landing page.
+- `docs/delivery-harness-beginner-guide-cn.html`: beginner-oriented Delivery Harness explanation.
 - `docs/project-lifecycle-harness-flow-cn.html`: visual vertical lifecycle flow.
 - `docs/project-lifecycle-harness-flow-skills.html`: visual skill/helper routing map.
+- `docs/project-lifecycle-harness-flow-skills-zh-status-style.html`: current status-style skill/helper routing map.
 
 ## Related Documentation
 - `README.md`: top-level quick start and Harness Runtime overview.
@@ -39,8 +45,11 @@
 - `docs/AGENT_HARNESS_STATUS.md`: Agent Harness workflow/infra status map.
 - `docs/CODEX_ENV_REPRODUCTION.md`: Codex + Claude environment reproduction guide.
 - `docs/LIFECYCLE_SKILL_ROUTING.md`: lifecycle stage, workflow, skill, and helper routing.
+- `docs/index.html`: GitHub Pages public entry for Delivery Harness guides.
+- `docs/delivery-harness-beginner-guide-cn.html`: beginner guide explaining what Delivery Harness does.
 - `docs/project-lifecycle-harness-flow-cn.html`: Chinese vertical lifecycle flow.
 - `docs/project-lifecycle-harness-flow-skills.html`: Chinese lifecycle skill/helper routing visual guide.
+- `docs/project-lifecycle-harness-flow-skills-zh-status-style.html`: current styled Chinese Delivery Harness visual guide.
 
 ## Verification
 - Primary: `python3 test_runner.py`.

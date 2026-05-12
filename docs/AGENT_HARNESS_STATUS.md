@@ -8,9 +8,12 @@ orchestration, Infra is runtime governance.
 - `docs/repo-index.md`: low-token repo navigation and runtime surface index.
 - `docs/HARNESS_RUNTIME.md`: lifecycle, evidence, checkpoint, permission, and subagent contracts.
 - `docs/LIFECYCLE_SKILL_ROUTING.md`: lifecycle stage, workflow, skill, and helper routing.
+- `docs/index.html`: public Delivery Harness docs entry for GitHub Pages.
+- `docs/delivery-harness-beginner-guide-cn.html`: beginner-oriented Chinese Delivery Harness guide.
 - `docs/CODEX_ENV_REPRODUCTION.md`: Codex + Claude environment reproduction guide.
 - `docs/project-lifecycle-harness-flow-cn.html`: Chinese vertical lifecycle flow.
 - `docs/project-lifecycle-harness-flow-skills.html`: Chinese lifecycle skill/helper routing visual guide.
+- `docs/project-lifecycle-harness-flow-skills-zh-status-style.html`: current styled Chinese Delivery Harness skill/helper routing visual guide.
 
 | Diagram Module | Current Status | Implemented Evidence | Remaining Gap | Next Step |
 | --- | --- | --- | --- | --- |

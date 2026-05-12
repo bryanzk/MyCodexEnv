@@ -1,0 +1,325 @@
+version: 2
+
+goal:
+  title: "LinkedIn Flow Visuals"
+  slug: "linkedin-flow-visuals"
+  kind: specific
+  tranche: "Create a complete LinkedIn visual package from the HTML lifecycle flow, including flowchart image, intro image, multiple style samples, final exported artifacts, and audit evidence."
+  status: done
+  intake:
+    original_request: "Create a GoalBuddy board, then generate a complete flowchart from the HTML flow diagram, add an intro image, and make several Anthropic/OpenAI-inspired samples without asking further."
+    interpreted_outcome: "Final LinkedIn-ready English image artifacts exist for the lifecycle flow and intro concept, with several polished style candidates and verified readability."
+    input_shape: specific
+    audience: "potential customers and LinkedIn viewers"
+    authority: requested
+    proof_type: artifact
+    completion_proof: "Saved image artifacts exist, are inspected, and a final audit maps them to the source HTML flow and requested design directions."
+    likely_misfire: "Producing generic decorative posters or only preparing a board instead of completing final usable images."
+    blind_spots_considered:
+      - "Generated-image text can drift; final audit must inspect text readability."
+      - "The complete flowchart must reflect the source HTML flow, not only the previous marketing summary."
+      - "Anthropic/OpenAI should be treated as style inspiration, without logos or implied affiliation."
+      - "LinkedIn readability requires feed-safe type size and contrast."
+      - "Output paths must be durable and reported."
+    existing_plan_facts:
+      - "Source HTML: docs/project-lifecycle-harness-flow-skills.html"
+      - "Previous poster HTML: /Users/kezheng/.agent/diagrams/mce-linkedin-lifecycle-poster.html"
+      - "Previous poster PNG: /Users/kezheng/.agent/diagrams/mce-linkedin-lifecycle-poster.png"
+      - "Requested outputs: relatively complete flowchart, introductory image, multiple design samples, final images."
+      - "Style references: Anthropic design feel, OpenAI design feel, and recent blue glass visual direction."
+
+rules:
+  pm_owns_state: true
+  one_active_task: true
+  max_write_workers: 1
+  no_implementation_without_worker_or_pm_task: true
+  no_completion_without_judge_or_pm_audit: true
+  planning_is_not_completion: true
+  queued_required_worker_blocks_completion: true
+  continuous_until_full_outcome: true
+  missing_input_or_credentials_do_not_stop_goal: true
+  preserve_and_validate_existing_plan: true
+  intake_misfire_must_be_audited: true
+
+agents:
+  scout: bundled_not_installed
+  worker: bundled_not_installed
+  judge: bundled_not_installed
+
+visual_board:
+  selected: local
+  local:
+    status: live
+    url: "http://127.0.0.1:62893/"
+    command: "npx goalbuddy board docs/goals/linkedin-flow-visuals"
+  github_projects:
+    status: not_requested
+    url: null
+    command: "npx goalbuddy extend github-projects"
+    missing: []
+
+active_task: null
+
+tasks:
+  - id: T001
+    type: scout
+    assignee: Scout
+    status: done
+    reasoning_hint: medium
+    objective: "Extract the complete source flow, existing asset paths, and design requirements for the LinkedIn visual package."
+    inputs:
+      - "docs/project-lifecycle-harness-flow-skills.html"
+      - "/Users/kezheng/.agent/diagrams/mce-linkedin-lifecycle-poster.html"
+      - "/Users/kezheng/.agent/diagrams/mce-linkedin-lifecycle-poster.png"
+      - "User request in current thread"
+    constraints:
+      - "Read-only."
+      - "Do not generate images or edit implementation files."
+      - "Capture exact source flow stages and output requirements."
+    expected_output:
+      - "Complete lifecycle flow summary"
+      - "Required deliverables"
+      - "Style directions"
+      - "Candidate output filenames"
+      - "Risks that Worker must handle"
+    receipt:
+      result: done
+      summary: "Extracted the full source lifecycle flow and visual package requirements. The source diagram has 21 nodes spanning intake, runtime recovery, requirement gating, classification, repo-specific routing, product/engineering planning, implementation, parallel-agent validation, verification, QA/security/review, ship/deploy, docs, handoff, and final output."
+      evidence:
+        - "docs/project-lifecycle-harness-flow-skills.html:430"
+        - "docs/project-lifecycle-harness-flow-skills.html:495"
+        - "/Users/kezheng/.agent/diagrams/mce-linkedin-lifecycle-poster.html"
+        - "/Users/kezheng/.agent/diagrams/mce-linkedin-lifecycle-poster.png"
+      deliverables:
+        - "Complete process-flow image with source flow fidelity."
+        - "Introductory image for LinkedIn audience."
+        - "Multiple polished samples: Anthropic-inspired, OpenAI-inspired, blue-glass, and readability-first variants."
+      risks:
+        - "Generated bitmap text can drift; deterministic HTML rendering is preferred for text-heavy artifacts."
+        - "Brand-inspired styles must avoid logos and implied affiliation."
+        - "LinkedIn feed readability needs 1200x1500 or similar portrait exports with high contrast."
+  - id: T002
+    type: judge
+    assignee: Judge
+    status: done
+    reasoning_hint: high
+    objective: "Choose the execution plan and style candidate set that best satisfies the requested visual package."
+    inputs:
+      - "T001 receipt"
+    constraints:
+      - "Do not implement."
+      - "Preserve all required deliverables."
+      - "Avoid overfitting to one style if multiple samples are requested."
+    expected_output:
+      - "Approved deliverable list"
+      - "Exact Worker objectives"
+      - "allowed_files"
+      - "verification commands"
+      - "stop_if conditions"
+    receipt:
+      result: done
+      decision: "Use deterministic HTML/CSS as the primary artifact path because the requested images are text-heavy and need faithful lifecycle-flow wording. Render PNG exports from those HTML files. Treat Anthropic and OpenAI as style inspiration only, with no logos or implied affiliation."
+      approved_deliverables:
+        - "linkedin-flow-visuals-flow-openai.html/png: complete process-flow candidate with cool, spacious product-lab styling."
+        - "linkedin-flow-visuals-flow-anthropic.html/png: complete process-flow candidate with warm editorial/system-card styling."
+        - "linkedin-flow-visuals-intro-blueglass.html/png: introductory LinkedIn image matching the recent luminous blue glass direction."
+        - "linkedin-flow-visuals-intro-openai.html/png: introductory image with clean monochrome/soft-accent style."
+        - "linkedin-flow-visuals-intro-anthropic.html/png: introductory image with warm paper, clear hierarchy, and consulting-friendly tone."
+      next_allowed_task: T003
+      worker_objective: "Create the deterministic HTML/CSS source files for all five candidates under /Users/kezheng/.agent/diagrams/."
+      allowed_files:
+        - "/Users/kezheng/.agent/diagrams/linkedin-flow-visuals-*.html"
+        - "/Users/kezheng/.agent/diagrams/linkedin-flow-visuals-*.png"
+      verify:
+        - "Render each HTML with Playwright screenshot."
+        - "Inspect dimensions and major-text readability."
+      stop_if:
+        - "Cannot preserve source flow within portrait format."
+        - "Rendering toolchain fails with no local fallback."
+  - id: T003
+    type: worker
+    assignee: Worker
+    status: done
+    reasoning_hint: medium
+    objective: "Create deterministic HTML/CSS source files for the complete flowchart and intro visual candidates."
+    allowed_files:
+      - "/Users/kezheng/.agent/diagrams/linkedin-flow-visuals-flow-openai.html"
+      - "/Users/kezheng/.agent/diagrams/linkedin-flow-visuals-flow-anthropic.html"
+      - "/Users/kezheng/.agent/diagrams/linkedin-flow-visuals-intro-blueglass.html"
+      - "/Users/kezheng/.agent/diagrams/linkedin-flow-visuals-intro-openai.html"
+      - "/Users/kezheng/.agent/diagrams/linkedin-flow-visuals-intro-anthropic.html"
+    verify:
+      - "Open/render each HTML candidate with Playwright or browser-equivalent screenshot."
+      - "Inspect exported PNG dimensions and readability."
+    stop_if:
+      - "Need to modify repo implementation files outside GoalBuddy control files."
+      - "Source flow cannot be extracted from the HTML."
+      - "Rendering tooling is unavailable and no local fallback works."
+    receipt:
+      result: done
+      changed_files:
+        - "/Users/kezheng/.agent/diagrams/linkedin-flow-visuals-flow-openai.html"
+        - "/Users/kezheng/.agent/diagrams/linkedin-flow-visuals-flow-anthropic.html"
+        - "/Users/kezheng/.agent/diagrams/linkedin-flow-visuals-intro-blueglass.html"
+        - "/Users/kezheng/.agent/diagrams/linkedin-flow-visuals-intro-openai.html"
+        - "/Users/kezheng/.agent/diagrams/linkedin-flow-visuals-intro-anthropic.html"
+      commands:
+        - cmd: "ls -lh /Users/kezheng/.agent/diagrams/linkedin-flow-visuals-*.html"
+          status: pass
+      summary: "Created five deterministic HTML/CSS source files: two complete flowchart candidates and three introductory LinkedIn image candidates. Text-heavy artifacts use HTML rendering to preserve readable wording and source-flow fidelity."
+  - id: T004
+    type: worker
+    assignee: Worker
+    status: done
+    reasoning_hint: medium
+    objective: "Generate or render multiple polished image samples, including Anthropic-inspired, OpenAI-inspired, blue-glass, and readability-first variants."
+    allowed_files:
+      - "/Users/kezheng/.agent/diagrams/linkedin-flow-visuals-flow-openai.png"
+      - "/Users/kezheng/.agent/diagrams/linkedin-flow-visuals-flow-anthropic.png"
+      - "/Users/kezheng/.agent/diagrams/linkedin-flow-visuals-intro-blueglass.png"
+      - "/Users/kezheng/.agent/diagrams/linkedin-flow-visuals-intro-openai.png"
+      - "/Users/kezheng/.agent/diagrams/linkedin-flow-visuals-intro-anthropic.png"
+    verify:
+      - "Inspect final image dimensions."
+      - "Visually inspect exported candidates for legible major text and section integrity."
+    stop_if:
+      - "Generated image text is too distorted to be useful after one targeted iteration."
+      - "A requested style would require using protected logos or implying brand affiliation."
+    receipt:
+      result: done
+      changed_files:
+        - "/Users/kezheng/.agent/diagrams/linkedin-flow-visuals-flow-openai.png"
+        - "/Users/kezheng/.agent/diagrams/linkedin-flow-visuals-flow-anthropic.png"
+        - "/Users/kezheng/.agent/diagrams/linkedin-flow-visuals-intro-blueglass.png"
+        - "/Users/kezheng/.agent/diagrams/linkedin-flow-visuals-intro-openai.png"
+        - "/Users/kezheng/.agent/diagrams/linkedin-flow-visuals-intro-anthropic.png"
+      commands:
+        - cmd: "npx playwright screenshot --browser chromium --viewport-size 1200,1500 --color-scheme light --wait-for-timeout 800 file://<html> <png>"
+          status: pass
+        - cmd: "python3 - <<'PY' ... PIL Image.open(...).width/height/mode/size ..."
+          status: pass
+      summary: "Rendered five 1200x1500 PNG samples from deterministic HTML sources. Visual inspection found flow-openai clearest for the complete source flow, flow-anthropic usable but with larger bottom whitespace, intro-blueglass closest to the provided blue glass reference, and both intro-openai and intro-anthropic readable as alternate style samples."
+  - id: T005
+    type: judge
+    assignee: Judge
+    status: done
+    reasoning_hint: high
+    objective: "Audit candidate outputs and select the final deliverables that best match the original request."
+    inputs:
+      - "T003 receipt"
+      - "T004 receipt"
+    constraints:
+      - "Do not implement."
+      - "Reject candidates with unreadable text or missing required deliverables."
+    expected_output:
+      - "Selected final images"
+      - "Rejected candidates and why"
+      - "Any required polish Worker task"
+      - "Whether full outcome is ready for final audit"
+    receipt:
+      result: done
+      decision: "Select flow-openai as the primary complete flowchart because it preserves the most source-flow detail while remaining readable in a LinkedIn portrait image. Select intro-blueglass as the primary introduction image because it best matches the user's provided blue reference style. Keep intro-openai and intro-anthropic as readable alternate intro samples, and keep flow-anthropic as an alternate warm complete-flow sample despite bottom whitespace."
+      selected_final_images:
+        - "/Users/kezheng/.agent/diagrams/linkedin-flow-visuals-flow-openai.png"
+        - "/Users/kezheng/.agent/diagrams/linkedin-flow-visuals-intro-blueglass.png"
+      alternate_samples:
+        - "/Users/kezheng/.agent/diagrams/linkedin-flow-visuals-flow-anthropic.png"
+        - "/Users/kezheng/.agent/diagrams/linkedin-flow-visuals-intro-openai.png"
+        - "/Users/kezheng/.agent/diagrams/linkedin-flow-visuals-intro-anthropic.png"
+      rejected_candidates: []
+      polish_required: "No design rewrite required. Run T006 to validate stable paths, dimensions, and repo test gate."
+      next_allowed_task: T006
+  - id: T006
+    type: worker
+    assignee: Worker
+    status: done
+    reasoning_hint: low
+    objective: "Perform final polish on selected images and ensure stable exported paths."
+    allowed_files:
+      - "/Users/kezheng/.agent/diagrams/linkedin-flow-visuals-*.html"
+      - "/Users/kezheng/.agent/diagrams/linkedin-flow-visuals-*.png"
+    verify:
+      - "List final artifact paths."
+      - "Validate image dimensions and file sizes."
+      - "Run project test gate if repo files changed."
+    stop_if:
+      - "Final selection requires owner preference."
+      - "Verification fails twice."
+    receipt:
+      result: done
+      changed_files: []
+      final_artifacts:
+        primary:
+          - "/Users/kezheng/.agent/diagrams/linkedin-flow-visuals-flow-openai.png"
+          - "/Users/kezheng/.agent/diagrams/linkedin-flow-visuals-intro-blueglass.png"
+        alternates:
+          - "/Users/kezheng/.agent/diagrams/linkedin-flow-visuals-flow-anthropic.png"
+          - "/Users/kezheng/.agent/diagrams/linkedin-flow-visuals-intro-openai.png"
+          - "/Users/kezheng/.agent/diagrams/linkedin-flow-visuals-intro-anthropic.png"
+      commands:
+        - cmd: "python3 - <<'PY' ... PIL Image.open(...) dimensions ..."
+          status: pass
+          key_output: "All five PNGs are 1200x1500 RGB."
+        - cmd: "git diff --check -- docs/goals/linkedin-flow-visuals/goal.md docs/goals/linkedin-flow-visuals/state.yaml"
+          status: pass
+          key_output: "No whitespace errors."
+        - cmd: "python3 test_runner.py"
+          status: pass
+          key_output: "[PASS] all tests"
+      summary: "Validated final image paths, dimensions, file sizes, markdown/YAML diff whitespace, and repository test gate. No final image rewrite was needed."
+  - id: T999
+    type: judge
+    assignee: Judge
+    status: done
+    reasoning_hint: high
+    objective: "Audit whether the full requested visual package is complete."
+    inputs:
+      - "All done task receipts"
+      - "Final artifact paths"
+      - "Last verification"
+      - "Original user request"
+    constraints:
+      - "Do not implement."
+      - "Reject completion if any required image category is missing."
+      - "Reject completion if artifacts are only planned and not saved."
+      - "Reject completion if text readability was not inspected."
+    expected_output:
+      - "complete | not_complete"
+      - "full_outcome_complete: true | false"
+      - "missing evidence"
+      - "next task if not complete"
+    receipt:
+      result: done
+      decision: complete
+      full_outcome_complete: true
+      summary: "The requested visual package is complete. It includes a relatively complete flowchart derived from the source HTML flow, an introductory image, and multiple polished style samples inspired by clean frontier-lab, warm editorial, and blue glass directions. Final artifacts are saved as PNGs with matching HTML sources."
+      completion_mapping:
+        complete_flowchart:
+          primary: "/Users/kezheng/.agent/diagrams/linkedin-flow-visuals-flow-openai.png"
+          alternate: "/Users/kezheng/.agent/diagrams/linkedin-flow-visuals-flow-anthropic.png"
+        introduction_image:
+          primary: "/Users/kezheng/.agent/diagrams/linkedin-flow-visuals-intro-blueglass.png"
+          alternates:
+            - "/Users/kezheng/.agent/diagrams/linkedin-flow-visuals-intro-openai.png"
+            - "/Users/kezheng/.agent/diagrams/linkedin-flow-visuals-intro-anthropic.png"
+        source_fidelity: "Primary flowchart preserves runtime recovery, requirement gate, classification, repo/product/planning/development routing, parallel-agent gate, verification, QA/security/review, ship/deploy, docs, checkpoint, and output stages."
+        readability: "All five final PNGs were visually inspected; major text and section structure are readable at 1200x1500."
+      evidence:
+        - "T001 Scout extracted the source flow and requirements."
+        - "T002 Judge selected deterministic HTML rendering for text fidelity."
+        - "T003 Worker created five HTML sources."
+        - "T004 Worker rendered five PNGs."
+        - "T005 Judge selected primary and alternate deliverables."
+        - "T006 Worker validated dimensions, stable paths, diff whitespace, and project tests."
+      missing_evidence: []
+      next_task: null
+
+checks:
+  dirty_fingerprint: unknown
+  last_verification:
+    result: pass
+    task: T006
+    commands:
+      - "python3 - <<'PY' ... PIL Image.open(...) dimensions ..."
+      - "git diff --check -- docs/goals/linkedin-flow-visuals/goal.md docs/goals/linkedin-flow-visuals/state.yaml"
+      - "python3 test_runner.py"
