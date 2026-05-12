@@ -68,7 +68,7 @@ cd MyCodexEnv
 相关文档互链入口：
 
 - `docs/repo-index.md`：低 token 项目导航与 runtime surface 索引
-- `docs/index.html`：Delivery Harness 公共页面入口
+- `docs/index.html`：Delivery Harness Framework (DHF) 公共页面入口
 - `docs/delivery-harness-beginner-guide-cn.html`：面向 agentic engineering beginner 的中文入门指南
 - `docs/HARNESS_RUNTIME.md`：生命周期、证据、checkpoint、权限和 subagent 合同
 - `docs/AGENT_HARNESS_STATUS.md`：Agent Harness workflow/infra 状态图谱
@@ -76,7 +76,7 @@ cd MyCodexEnv
 - `docs/LIFECYCLE_SKILL_ROUTING.md`：生命周期阶段、workflow、skill 和 helper 路由
 - `docs/project-lifecycle-harness-flow-cn.html`：中文纵向生命周期流程图
 - `docs/project-lifecycle-harness-flow-skills.html`：中文 skill/helper 路由可视化速查页
-- `docs/project-lifecycle-harness-flow-skills-zh-status-style.html`：新版 Delivery Harness 技能路由可视化速查页
+- `docs/project-lifecycle-harness-flow-skills-zh-status-style.html`：新版 DHF 技能路由可视化速查页
 
 早期已适配的短名 gstack skills 仍保留：
 

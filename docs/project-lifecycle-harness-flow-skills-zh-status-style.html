@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>MyCodexEnv Delivery Harness 技能路由 - 运行时状态风格</title>
+  <title>MyCodexEnv Delivery Harness Framework (DHF) 技能路由 - 运行时状态风格</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=Fraunces:opsz,wght@9..144,600;9..144,750&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
@@ -432,10 +432,10 @@
 
     <main class="main">
       <section class="hero" id="overview">
-        <div class="eyebrow">Delivery Harness / 当前技能路由</div>
-        <h1>每个 Delivery Harness 阶段由哪个技能驱动。</h1>
+        <div class="eyebrow">Delivery Harness Framework / DHF 当前技能路由</div>
+        <h1>每个 DHF 阶段由哪个技能驱动。</h1>
         <p class="lead">
-          MyCodexEnv 使用 <code>project-lifecycle-harness</code> 作为 Delivery Harness 的入口。它先恢复运行时事实，探测 Codex 环境，识别当前生命周期阶段，再把任务路由到仓库专用 harness、gstack 专家技能、本地开发与验证技能，或确定性的运行时辅助脚本。辅助脚本提供机器可检查的执行层；技能负责认知编排。
+          MyCodexEnv 使用 <code>project-lifecycle-harness</code> 作为 Delivery Harness Framework (DHF) 的入口。DHF 先恢复运行时事实，探测 Codex 环境，识别当前生命周期阶段，再把任务路由到仓库专用 harness、gstack 专家技能、本地开发与验证技能，或确定性的运行时辅助脚本。辅助脚本提供机器可检查的执行层；技能负责认知编排。
         </p>
         <div class="kpis">
           <div class="kpi"><strong>8</strong><span>标准生命周期阶段</span></div>
@@ -457,7 +457,7 @@
           <div class="brand-watermark">ShipAI.ca</div>
           <pre class="mermaid">
 flowchart TD
-  Start(["用户任务进入<br/>Delivery Harness"])
+  Start(["用户任务进入<br/>DHF"])
   AGENTS["读取 AGENTS.md<br/>README 和 docs/repo-index.md"]
   Recover["运行 harness_recover.py --json<br/>恢复阶段、脏状态、下一个安全任务"]
   Env["运行 harness_env_probe.py --json<br/>观察 hooks、策略、schema"]
@@ -477,7 +477,7 @@ flowchart TD
   Ship["发布 / 部署<br/>gstack-ship / gstack-land-and-deploy / gstack-canary"]
   Docs["文档发布<br/>gstack-document-release / doc-updater"]
   Handoff["交接<br/>harness_checkpoint.py append"]
-  Done(["Delivery Harness 输出<br/>技能路由、验证证据、下一个安全任务"])
+  Done(["DHF 输出<br/>技能路由、验证证据、下一个安全任务"])
 
   Start --> AGENTS --> Recover --> Env --> NeedsReq
   NeedsReq -- "否" --> Req --> ReqVal --> Classify

@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Delivery Harness 新手指南</title>
+  <title>Delivery Harness Framework (DHF) 新手指南</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,650;9..144,760&family=IBM+Plex+Mono:wght@400;500;600&family=Atkinson+Hyperlegible:wght@400;700&display=swap" rel="stylesheet">
@@ -511,11 +511,11 @@
 
     <main class="main">
       <section class="hero" id="what" style="--i:0">
-        <div class="eyebrow">Delivery Harness / Beginner Guide</div>
-        <h1>Delivery Harness 是 prompts 和 proof 之间的系统。</h1>
+        <div class="eyebrow">Delivery Harness Framework / DHF Beginner Guide</div>
+        <h1>Delivery Harness Framework (DHF) 是 prompts 和 proof 之间的系统。</h1>
         <p class="lead">它不是一个更聪明的 prompt，也不是单个 agent。它是一套工作框架，让 AI 工程任务先恢复事实，再锁定范围，按阶段路由执行，最后用新鲜证据证明完成。</p>
         <div class="definition">
-          一句话：<strong>Delivery Harness 把“帮我做这个”变成“已读哪些事实、当前处于哪个阶段、谁负责执行、怎样验证、下一次如何接手”。</strong>
+          一句话：<strong>DHF 把“帮我做这个”变成“已读哪些事实、当前处于哪个阶段、谁负责执行、怎样验证、下一次如何接手”。</strong>
         </div>
       </section>
 
@@ -541,7 +541,7 @@
           <article class="card verify">
             <div class="label">Problem 04</div>
             <h3>“完成”不可审计</h3>
-            <p>Delivery Harness 要求每个完成声明带上 command、exit_code、key_output、timestamp。</p>
+            <p>DHF 要求每个完成声明带上 command、exit_code、key_output、timestamp。</p>
           </article>
           <article class="card handoff">
             <div class="label">Problem 05</div>
@@ -558,7 +558,7 @@
 
       <section class="section" id="layers" style="--i:2">
         <h2>三层架构</h2>
-        <div class="section-note">这是理解 Delivery Harness 的最短路径：runtime 给边界，router 选路线，specialists 做具体工作。</div>
+        <div class="section-note">这是理解 DHF 的最短路径：runtime 给边界，router 选路线，specialists 做具体工作。</div>
         <div class="grid">
           <article class="card recover">
             <div class="label">Layer 01</div>
@@ -594,7 +594,7 @@
         <div class="steps" style="margin-top:18px">
           <div class="step">
             <div class="step-num">01</div>
-            <div><h3>如果任务不明确，不要开始实现</h3><p>先把模糊请求转成可验证目标。Delivery Harness 把“需求澄清”看作正式工程阶段，而不是聊天前奏。</p></div>
+            <div><h3>如果任务不明确，不要开始实现</h3><p>先把模糊请求转成可验证目标。DHF 把“需求澄清”看作正式工程阶段，而不是聊天前奏。</p></div>
           </div>
           <div class="step">
             <div class="step-num">02</div>
@@ -614,7 +614,7 @@
           <div class="quote">“帮我把这个功能做好，然后发出去。”</div>
           <div class="steps">
             <div class="step"><div class="step-num">A</div><div><h3>没有 Harness</h3><p>agent 可能直接改代码、猜测范围、跳过需求、最后用“看起来可以”作为完成依据。</p></div></div>
-            <div class="step"><div class="step-num">B</div><div><h3>使用 Delivery Harness</h3><p>先恢复 repo 状态，判断需求是否清晰；若不清晰，进入 requirements；若清晰，路由到 planning 或 development。</p></div></div>
+            <div class="step"><div class="step-num">B</div><div><h3>使用 DHF</h3><p>先恢复 repo 状态，判断需求是否清晰；若不清晰，进入 requirements；若清晰，路由到 planning 或 development。</p></div></div>
             <div class="step"><div class="step-num">C</div><div><h3>交付结果</h3><p>输出包含阶段判断、已读来源、执行路径、验证命令、退出码、关键输出、时间戳和下一步安全任务。</p></div></div>
           </div>
         </div>
@@ -648,13 +648,13 @@
       <section class="section" id="next" style="--i:6">
         <h2>下一步怎么读</h2>
         <div class="links">
-          <a class="link-card" href="./index.html"><b>公共入口</b><span>从这里进入全部 Delivery Harness 公开页面。</span></a>
+          <a class="link-card" href="./index.html"><b>公共入口</b><span>从这里进入全部 DHF 公开页面。</span></a>
           <a class="link-card" href="./project-lifecycle-harness-flow-cn.html"><b>生命周期主流程图</b><span>看任务从进入到交接的完整路径。</span></a>
           <a class="link-card" href="./project-lifecycle-harness-flow-skills-zh-status-style.html"><b>技能路由图</b><span>看每个阶段由哪个 skill 或 helper 接管。</span></a>
           <a class="link-card" href="./LIFECYCLE_SKILL_ROUTING.md"><b>文字规范</b><span>查 workflow、stage map、helper 和 evidence standard。</span></a>
         </div>
         <div class="footer">
-          生成来源：<code>docs/LIFECYCLE_SKILL_ROUTING.md</code>、<code>docs/HARNESS_RUNTIME.md</code>、<code>docs/AGENT_HARNESS_STATUS.md</code>。页面目标：让 agentic engineering beginner 先理解 Delivery Harness 在做什么，再进入详细流程图。
+          生成来源：<code>docs/LIFECYCLE_SKILL_ROUTING.md</code>、<code>docs/HARNESS_RUNTIME.md</code>、<code>docs/AGENT_HARNESS_STATUS.md</code>。页面目标：让 agentic engineering beginner 先理解 DHF 在做什么，再进入详细流程图。
         </div>
       </section>
     </main>

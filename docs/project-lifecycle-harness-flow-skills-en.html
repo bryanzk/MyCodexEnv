@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>MyCodexEnv Delivery Harness Skill Routing</title>
+  <title>MyCodexEnv Delivery Harness Framework (DHF) Skill Routing</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Source+Sans+3:wght@400;500;600;700&family=Source+Serif+4:wght@500;600;700&display=swap" rel="stylesheet">
@@ -410,10 +410,10 @@
 
     <main class="main">
       <section class="hero" id="overview">
-        <div class="eyebrow">Delivery Harness / Current Skill Routing</div>
-        <h1>Which skill powers each Delivery Harness stage.</h1>
+        <div class="eyebrow">Delivery Harness Framework / DHF Skill Routing</div>
+        <h1>Which skill powers each DHF stage.</h1>
         <p class="lead">
-          MyCodexEnv uses <code>project-lifecycle-harness</code> as the Delivery Harness entry point. It restores runtime facts, probes the Codex environment, identifies the lifecycle stage, and routes the work to a repo-specific harness, a gstack specialist skill, local development and verification skills, or deterministic runtime helpers. Helpers provide a machine-checkable execution layer; skills provide cognitive orchestration.
+          MyCodexEnv uses <code>project-lifecycle-harness</code> as the Delivery Harness Framework (DHF) entry point. DHF restores runtime facts, probes the Codex environment, identifies the lifecycle stage, and routes the work to a repo-specific harness, a gstack specialist skill, local development and verification skills, or deterministic runtime helpers. Helpers provide a machine-checkable execution layer; skills provide cognitive orchestration.
         </p>
         <div class="kpis">
           <div class="kpi"><strong>8</strong><span>standard lifecycle stages</span></div>
@@ -434,7 +434,7 @@
           </div>
           <pre class="mermaid">
 flowchart TD
-  Start(["User task enters<br/>Delivery Harness"])
+  Start(["User task enters<br/>DHF"])
   AGENTS["Read AGENTS.md<br/>README and docs/repo-index.md"]
   Recover["Run harness_recover.py --json<br/>restore phase, dirty state, next safe task"]
   Env["Run harness_env_probe.py --json<br/>observe hooks, policy, schema"]
@@ -454,7 +454,7 @@ flowchart TD
   Ship["Ship / deploy<br/>gstack-ship / gstack-land-and-deploy / gstack-canary"]
   Docs["Documentation release<br/>gstack-document-release / doc-updater"]
   Handoff["Handoff<br/>harness_checkpoint.py append"]
-  Done(["Delivery Harness output<br/>skill routing, verification evidence, next safe task"])
+  Done(["DHF output<br/>skill routing, verification evidence, next safe task"])
 
   Start --> AGENTS --> Recover --> Env --> NeedsReq
   NeedsReq -- "No" --> Req --> ReqVal --> Classify
@@ -599,7 +599,7 @@ flowchart TD
           <a href="./delivery-harness-beginner-guide-cn.html"><code>docs/delivery-harness-beginner-guide-cn.html</code></a> is the Chinese beginner guide;
           <a href="./LIFECYCLE_SKILL_ROUTING.md"><code>docs/LIFECYCLE_SKILL_ROUTING.md</code></a> is the written lifecycle and skill/helper routing guide;
           <a href="./project-lifecycle-harness-flow-cn.html"><code>docs/project-lifecycle-harness-flow-cn.html</code></a> is the vertical main flowchart;
-          <a href="./project-lifecycle-harness-flow-skills-zh-status-style.html"><code>docs/project-lifecycle-harness-flow-skills-zh-status-style.html</code></a> is the current Chinese Delivery Harness skill/helper routing guide;
+          <a href="./project-lifecycle-harness-flow-skills-zh-status-style.html"><code>docs/project-lifecycle-harness-flow-skills-zh-status-style.html</code></a> is the current Chinese Delivery Harness Framework skill/helper routing guide;
           <a href="./HARNESS_RUNTIME.md"><code>docs/HARNESS_RUNTIME.md</code></a> is the runtime contract;
           <a href="./AGENT_HARNESS_STATUS.md"><code>docs/AGENT_HARNESS_STATUS.md</code></a> is the Harness module status;
           <a href="./CODEX_ENV_REPRODUCTION.md"><code>docs/CODEX_ENV_REPRODUCTION.md</code></a> documents environment reproduction;
