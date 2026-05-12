@@ -1,6 +1,6 @@
 ---
 name: project-lifecycle-harness
-description: Use when starting or resuming a complex software project task and Codex must first inspect durable project state, classify the software lifecycle stage, choose the right skill/tool workflow, define required probes and verification gates, preserve append-only evidence, or decide whether a repo-specific lifecycle harness should take over.
+description: Use when starting, resuming, or taking over a complex software project task where Codex must inspect durable repo state or handoff files, classify the lifecycle stage, choose between generic, repo-specific, gstack, and verification workflows, or preserve checkpoint evidence.
 ---
 
 # Project Lifecycle Harness

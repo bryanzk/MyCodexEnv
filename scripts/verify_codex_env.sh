@@ -5,6 +5,7 @@ set -euo pipefail
 REPO_ROOT=""
 CODEX_HOME="${HOME}/.codex"
 CLAUDE_HOME="${HOME}/.claude"
+ACCEPTED_CODEX_VERSION_PREFIXES=("0.104.0" "0.130.0")
 
 usage() {
   echo "Usage: verify_codex_env.sh --repo-root <path> [--codex-home <path>] [--claude-home <path>]"
@@ -127,14 +128,28 @@ results+=("$(check claude_security_scan_script '[[ -x "'"${CLAUDE_HOME}"'"/workf
 
 repo_skills_count="$(find "${REPO_ROOT}/codex/skills" -mindepth 1 -maxdepth 1 -type d | wc -l | tr -d ' ')"
 codex_skills_count="$(find "${CODEX_HOME}/skills" -mindepth 1 -maxdepth 1 -type d | wc -l | tr -d ' ')"
-if [[ "${repo_skills_count}" == "${codex_skills_count}" ]]; then
-  results+=("PASS:skills_count_match")
+missing_managed_skills=0
+while IFS= read -r skill_dir; do
+  skill_name="$(basename "${skill_dir}")"
+  if [[ ! -d "${CODEX_HOME}/skills/${skill_name}" ]]; then
+    missing_managed_skills=$((missing_managed_skills + 1))
+  fi
+done < <(find "${REPO_ROOT}/codex/skills" -mindepth 1 -maxdepth 1 -type d | sort)
+if [[ "${missing_managed_skills}" -eq 0 ]]; then
+  results+=("PASS:skills_managed_present")
 else
-  results+=("FAIL:skills_count_match")
+  results+=("FAIL:skills_managed_present")
 fi
 
 codex_version="$(codex --version | awk '{print $2}')"
-if [[ "${codex_version}" == 0.104.0* ]]; then
+codex_version_ok="false"
+for accepted_prefix in "${ACCEPTED_CODEX_VERSION_PREFIXES[@]}"; do
+  if [[ "${codex_version}" == "${accepted_prefix}"* ]]; then
+    codex_version_ok="true"
+    break
+  fi
+done
+if [[ "${codex_version_ok}" == "true" ]]; then
   results+=("PASS:codex_version")
 else
   results+=("FAIL:codex_version")
@@ -161,8 +176,10 @@ report_file="${REPO_ROOT}/TEST_VERIFICATION.md"
   echo "- codex_home: ${CODEX_HOME}"
   echo "- claude_home: ${CLAUDE_HOME}"
   echo "- codex_version: ${codex_version}"
+  echo "- accepted_codex_version_prefixes: ${ACCEPTED_CODEX_VERSION_PREFIXES[*]}"
   echo "- repo_skills_count: ${repo_skills_count}"
   echo "- codex_skills_count: ${codex_skills_count}"
+  echo "- missing_managed_skills: ${missing_managed_skills}"
   echo "- expected_superpowers_commit: ${expected_commit}"
   echo "- auth_status: ${login_status}"
   echo ""

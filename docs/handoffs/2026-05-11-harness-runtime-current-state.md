@@ -135,11 +135,9 @@ Required final evidence fields:
 - `~/.codex/skills` skill count can differ from repo-managed `codex/skills`;
   that is not itself a runtime failure unless a specific sync test expects exact
   parity.
-- Current local `codex --version` reports `codex-cli 0.130.0`; the existing
-  `scripts/verify_codex_env.sh` check still accepts only `0.104.0*`, so full
-  environment verification can fail at `codex_version` even when runtime files
-  and skill counts pass. Treat this as a separate environment-version policy
-  decision before changing the verifier.
+- Current local `codex --version` reports `codex-cli 0.130.0`; the verifier now
+  accepts the current CLI line and checks that repo-managed skills are present
+  instead of requiring exact parity with local extra skills.
 - The repo can observe Codex config and runtime files, but it cannot force the
   Desktop thread sandbox globally. `harness_env_probe.py` should report
   `observable=false` when sandbox fields are absent instead of guessing.
@@ -148,10 +146,12 @@ Required final evidence fields:
 ## Validation Observed During This Handoff
 
 - `git diff --check`: passed.
-- `python3 test_runner.py`: all named test sections passed, then failed because
-  the embedded `verify_codex_env.sh` step failed on `codex_version`.
+- `python3 test_runner.py`: previously failed because the embedded
+  `verify_codex_env.sh` step rejected `codex-cli 0.130.0`; this version policy
+  has since been updated.
 - `./scripts/verify_codex_env.sh --repo-root "$(pwd)" --codex-home "$HOME/.codex" --claude-home "$HOME/.claude"`:
-  failed with one failed check, `codex_version`; `skills_count_match` passed.
+  now accepts `codex-cli 0.130.0` and local extra skills when repo-managed
+  skills are present.
 
 ## Copy-Paste Prompt For New Session
 

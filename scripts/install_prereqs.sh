@@ -4,6 +4,7 @@ set -euo pipefail
 # 安装并验证 bootstrap 依赖。
 NON_INTERACTIVE="false"
 CHROME_DEVTOOLS_MCP_VERSION="0.20.0"
+ACCEPTED_CODEX_VERSION_PREFIXES=("0.104.0" "0.130.0")
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
@@ -109,8 +110,15 @@ if [[ ! -x "${npm_global_bin}/chrome-devtools-mcp" ]]; then
 fi
 
 codex_version_raw="$(codex --version | awk '{print $2}')"
-if [[ "${codex_version_raw}" != 0.104.0* ]]; then
-  echo "Expected codex version prefix 0.104.0, got: ${codex_version_raw}" >&2
+codex_version_ok="false"
+for accepted_prefix in "${ACCEPTED_CODEX_VERSION_PREFIXES[@]}"; do
+  if [[ "${codex_version_raw}" == "${accepted_prefix}"* ]]; then
+    codex_version_ok="true"
+    break
+  fi
+done
+if [[ "${codex_version_ok}" != "true" ]]; then
+  echo "Expected codex version prefix in [${ACCEPTED_CODEX_VERSION_PREFIXES[*]}], got: ${codex_version_raw}" >&2
   exit 1
 fi
 

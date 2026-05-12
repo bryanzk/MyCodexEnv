@@ -96,6 +96,24 @@ def test_sync_ignores_legacy_eigenphi_argument():
     print("[PASS] sync ignores legacy EigenPhi argument")
 
 
+def test_codex_version_policy_accepts_current_cli():
+    verify_text = VERIFY.read_text(encoding="utf-8")
+    install_text = (ROOT / "scripts" / "install_prereqs.sh").read_text(encoding="utf-8")
+
+    for script_name, script_text in [
+        ("verify_codex_env.sh", verify_text),
+        ("install_prereqs.sh", install_text),
+    ]:
+        require("ACCEPTED_CODEX_VERSION_PREFIXES" in script_text, f"{script_name} should declare accepted Codex versions")
+        require('"0.104.0" "0.130.0"' in script_text, f"{script_name} should accept current codex-cli 0.130.0")
+        require("codex_version_ok" in script_text, f"{script_name} should evaluate version prefixes explicitly")
+
+    require("skills_managed_present" in verify_text, "verify should require managed repo skills to exist")
+    require("skills_count_match" not in verify_text, "verify should not fail only because runtime has extra skills")
+
+    print("[PASS] codex version policy accepts current CLI")
+
+
 def test_sync_renders_template_and_copies_skills():
     with tempfile.TemporaryDirectory() as tmp:
         tmp_path = Path(tmp)
@@ -276,6 +294,37 @@ def test_project_lifecycle_harness_routes_runtime_helpers():
         require(term in skill_text, f"project lifecycle harness missing lifecycle boundary term: {term}")
 
     print("[PASS] project lifecycle harness runtime helper routes")
+
+
+def test_project_lifecycle_harness_eval_matrix():
+    eval_path = ROOT / "codex" / "skills" / "project-lifecycle-harness" / "evals" / "evals.json"
+    require(eval_path.exists(), "project lifecycle harness eval matrix should exist")
+    data = json.loads(eval_path.read_text(encoding="utf-8"))
+    require(data.get("skill_name") == "project-lifecycle-harness", "eval matrix should target project-lifecycle-harness")
+    evals = data.get("evals")
+    require(isinstance(evals, list) and evals, "eval matrix should contain evals")
+
+    required_categories = {"positive_routing", "negative_routing", "forbidden_load", "progressive_loading", "end_to_end"}
+    categories = {case.get("category") for case in evals}
+    missing_categories = required_categories - categories
+    require(not missing_categories, f"eval matrix missing categories: {sorted(missing_categories)}")
+
+    for case in evals:
+        for key in ["id", "category", "name", "prompt", "expected_load", "expected_output", "assertions"]:
+            require(key in case, f"eval case missing {key}: {case}")
+        require(isinstance(case["assertions"], list) and case["assertions"], f"eval case should have assertions: {case['id']}")
+
+    forbidden_skills = {case.get("expected_skill") for case in evals if case.get("category") == "forbidden_load"}
+    require("shipq-lifecycle-harness" in forbidden_skills, "eval matrix should guard ShipQ adapter ownership")
+    require("visual-explainer" in forbidden_skills, "eval matrix should guard visual-explainer ownership")
+
+    progressive_helpers = {case.get("expected_helper") for case in evals if case.get("category") == "progressive_loading"}
+    require(
+        "scripts/harness_requirements.py" in progressive_helpers,
+        "eval matrix should cover requirements helper progressive loading",
+    )
+
+    print("[PASS] project lifecycle harness eval matrix")
 
 
 def test_sync_agents_only_copies_and_backs_up_agents():
@@ -1407,9 +1456,11 @@ def main():
 
     test_bootstrap_eigenphi_argument_is_optional()
     test_sync_ignores_legacy_eigenphi_argument()
+    test_codex_version_policy_accepts_current_cli()
     test_sync_renders_template_and_copies_skills()
     test_project_lifecycle_harness_stays_generic()
     test_project_lifecycle_harness_routes_runtime_helpers()
+    test_project_lifecycle_harness_eval_matrix()
     test_sync_agents_only_copies_and_backs_up_agents()
     test_harness_runtime_surfaces_exist_and_parse()
     test_harness_guard_policy_decisions()

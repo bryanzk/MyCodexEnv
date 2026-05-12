@@ -1,0 +1,114 @@
+{
+  "skill_name": "project-lifecycle-harness",
+  "evals": [
+    {
+      "id": "routing-positive-handoff-takeover",
+      "category": "positive_routing",
+      "name": "loads for handoff takeover and next safe task",
+      "prompt": "接手这个 repo 的上一个 handoff，先判断现在处于什么阶段、下一步该用哪个 skill，以及要跑哪些验证。",
+      "expected_load": true,
+      "expected_output": "The output reads durable state, classifies the lifecycle stage, names the next workflow, and lists verification gates.",
+      "assertions": [
+        "The output references durable repo state or handoff files before implementation.",
+        "The output selects a lifecycle stage.",
+        "The output names at least one required helper or verification command."
+      ]
+    },
+    {
+      "id": "routing-positive-agent-team",
+      "category": "positive_routing",
+      "name": "loads before multi-agent write-set planning",
+      "prompt": "这个任务要拆给多个 worker 并行做，先帮我确认 agent 分工、write set 是否冲突、checkpoint 怎么记录。",
+      "expected_load": true,
+      "expected_output": "The output routes through the lifecycle harness, validates an agent team plan, and defines checkpoint evidence.",
+      "assertions": [
+        "The output requires validating worker write sets before dispatch.",
+        "The output mentions checkpoint or handoff evidence.",
+        "The output keeps implementation scoped until routing is complete."
+      ]
+    },
+    {
+      "id": "routing-negative-single-file-fix",
+      "category": "negative_routing",
+      "name": "does not load for a simple bounded fix",
+      "prompt": "修复这个单文件 typo，跑一下最小测试。",
+      "expected_load": false,
+      "expected_output": "The agent should perform the small fix directly using normal repo rules and verification.",
+      "assertions": [
+        "The output does not expand into a full lifecycle routing plan.",
+        "The output identifies a narrow verification command.",
+        "The output avoids unnecessary recovery or checkpoint helpers."
+      ]
+    },
+    {
+      "id": "routing-negative-browser-qa",
+      "category": "negative_routing",
+      "name": "routes browser QA to QA skill",
+      "prompt": "给这个 Web 页面做一次系统 QA，包含截图、console/network 检查和响应式检查。",
+      "expected_load": false,
+      "expected_skill": "gstack-qa",
+      "expected_output": "The agent should route to QA/browser workflow rather than the generic lifecycle harness.",
+      "assertions": [
+        "The output selects a QA or browser testing workflow.",
+        "The output does not use project-lifecycle-harness as the primary executor.",
+        "The output includes browser-visible checks."
+      ]
+    },
+    {
+      "id": "forbidden-load-shipq-adapter",
+      "category": "forbidden_load",
+      "name": "ShipQ lifecycle adapter owns ShipQ-specific work",
+      "prompt": "在 ShipQ repo 里处理 quote workbook runtime demo 问题，先分类生命周期阶段再决定验证。",
+      "expected_load": false,
+      "expected_skill": "shipq-lifecycle-harness",
+      "expected_output": "The generic skill should defer to the ShipQ-specific lifecycle harness.",
+      "assertions": [
+        "The output routes to shipq-lifecycle-harness.",
+        "The output does not encode ShipQ-specific paths into the generic skill.",
+        "The output treats the generic skill as a pre-router at most."
+      ]
+    },
+    {
+      "id": "forbidden-load-visual-explainer",
+      "category": "forbidden_load",
+      "name": "visual explanation is owned by visual-explainer",
+      "prompt": "把这个系统流程生成一个漂亮的中文 HTML 图。",
+      "expected_load": false,
+      "expected_skill": "visual-explainer",
+      "expected_output": "The agent should use the visual explanation skill, not lifecycle routing.",
+      "assertions": [
+        "The output creates or plans an HTML visual artifact.",
+        "The output does not require lifecycle classification first.",
+        "The output follows visual-explainer delivery expectations."
+      ]
+    },
+    {
+      "id": "progressive-helper-requirements",
+      "category": "progressive_loading",
+      "name": "requirements helper only when artifact becomes source of truth",
+      "prompt": "我有一个 harness requirements 文档，要先确认它能不能作为开发 source of truth。",
+      "expected_load": true,
+      "expected_helper": "scripts/harness_requirements.py",
+      "expected_output": "The output validates the requirements artifact before planning or development.",
+      "assertions": [
+        "The output uses scripts/harness_requirements.py validate PATH.",
+        "The output does not run unrelated checkpoint or agent-team helpers.",
+        "The output states whether the artifact can be treated as source of truth."
+      ]
+    },
+    {
+      "id": "e2e-runtime-update",
+      "category": "end_to_end",
+      "name": "routes a complex runtime update end to end",
+      "prompt": "继续更新通用 harness runtime：先恢复状态，确认 helper 路由，改 skill 和测试，同步到 ~/.codex/skills，然后给 fresh verification evidence。",
+      "expected_load": true,
+      "expected_output": "The output follows recovery, scoped development, sync, validation, and evidence reporting.",
+      "assertions": [
+        "The output reads durable state before edits.",
+        "The output updates tests to prevent drift.",
+        "The output syncs the skill to the runtime home.",
+        "The final evidence includes command, exit_code, key_output, and timestamp."
+      ]
+    }
+  ]
+}
