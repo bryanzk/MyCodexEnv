@@ -27,6 +27,9 @@ Requirements artifacts use `docs/templates/harness-requirements.md`. Validate
 them with `scripts/harness_requirements.py validate PATH` before treating them
 as source of truth.
 
+For the current project workflow and skill routing map, read
+`docs/LIFECYCLE_SKILL_ROUTING.md`.
+
 ## Infra Contract
 - `Sandbox`: Codex sandboxing and approval rules remain the primary technical boundary; `scripts/harness_env_probe.py` reports the observable runtime configuration.
 - `Memory`: `docs/harness-state.md` is the repo-visible memory surface; `scripts/harness_recover.py` proves recovery from state, git, and local evidence.

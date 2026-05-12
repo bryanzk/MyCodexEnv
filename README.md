@@ -63,6 +63,8 @@ cd MyCodexEnv
 
 运行态证据默认保存在 `~/.codex/harness/evidence/`，不进入 Git。`docs/harness-state.md` 只保存可公开的阶段、验证与 handoff 事实。Memory / subconscious 只能作为提示，行动前必须回查 repo 文件、git 状态或 fresh verification。
 
+生命周期阶段、覆盖流程、对应 skill 和 helper 用途见 `docs/LIFECYCLE_SKILL_ROUTING.md`。
+
 早期已适配的短名 gstack skills 仍保留：
 
 - `plan-ceo-review`

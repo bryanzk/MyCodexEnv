@@ -22,6 +22,7 @@ HARNESS_REQUIREMENTS = ROOT / "scripts" / "harness_requirements.py"
 HARNESS_RECOVER = ROOT / "scripts" / "harness_recover.py"
 HARNESS_ENV_PROBE = ROOT / "scripts" / "harness_env_probe.py"
 HARNESS_REQUIREMENTS_TEMPLATE = ROOT / "docs" / "templates" / "harness-requirements.md"
+LIFECYCLE_SKILL_ROUTING_DOC = ROOT / "docs" / "LIFECYCLE_SKILL_ROUTING.md"
 HARNESS_GUARD = ROOT / "codex" / "hooks" / "harness_guard.py"
 HARNESS_OBSERVER = ROOT / "codex" / "hooks" / "harness_observer.py"
 
@@ -407,6 +408,34 @@ def test_harness_runtime_surfaces_exist_and_parse():
         require(module in status_text, f"agent harness status missing module: {module}")
 
     print("[PASS] harness runtime surfaces exist and parse")
+
+
+def test_lifecycle_skill_routing_doc_is_discoverable():
+    require(LIFECYCLE_SKILL_ROUTING_DOC.exists(), "missing lifecycle skill routing doc")
+    doc_text = LIFECYCLE_SKILL_ROUTING_DOC.read_text(encoding="utf-8")
+
+    for stage in ["research", "requirements", "planning", "development", "validation", "review", "ship", "handoff"]:
+        require(f"`{stage}`" in doc_text, f"lifecycle routing doc missing stage: {stage}")
+
+    required_terms = [
+        "project-lifecycle-harness",
+        "gstack-plan-eng-review",
+        "gstack-qa",
+        "gstack-document-release",
+        "verification-loop",
+        "scripts/harness_checkpoint.py",
+        "scripts/verify_codex_env.sh",
+    ]
+    for term in required_terms:
+        require(term in doc_text, f"lifecycle routing doc missing term: {term}")
+
+    for entrypoint in [ROOT / "README.md", ROOT / "docs" / "repo-index.md", ROOT / "docs" / "CODEX_ENV_REPRODUCTION.md", ROOT / "docs" / "HARNESS_RUNTIME.md"]:
+        require(
+            "docs/LIFECYCLE_SKILL_ROUTING.md" in entrypoint.read_text(encoding="utf-8"),
+            f"{entrypoint} should link lifecycle skill routing doc",
+        )
+
+    print("[PASS] lifecycle skill routing doc discoverable")
 
 
 def test_harness_guard_policy_decisions():
@@ -1463,6 +1492,7 @@ def main():
     test_project_lifecycle_harness_eval_matrix()
     test_sync_agents_only_copies_and_backs_up_agents()
     test_harness_runtime_surfaces_exist_and_parse()
+    test_lifecycle_skill_routing_doc_is_discoverable()
     test_harness_guard_policy_decisions()
     test_harness_evidence_append_and_observer_failure_mode()
     test_harness_report_cli_summarizes_evidence()

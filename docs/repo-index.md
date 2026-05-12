@@ -10,6 +10,7 @@
 - `README.md`: environment reproduction, sync, skills, and common commands.
 - `docs/harness-state.md`: append-only harness runtime state and latest safe task.
 - `docs/HARNESS_RUNTIME.md`: design contract for workflow, infra, state, policy, evidence, hooks, checkpoints, and agent teams.
+- `docs/LIFECYCLE_SKILL_ROUTING.md`: Chinese lifecycle-to-skill routing map for current project workflows.
 - `codex/AGENTS.md`: global Codex rules source copied into `~/.codex/AGENTS.md`.
 
 ## Runtime Surfaces
@@ -26,6 +27,7 @@
 - `scripts/harness_recover.py`: fresh-session recovery smoke check.
 - `scripts/harness_env_probe.py`: observable Codex runtime config probe.
 - `scripts/verify_codex_env.sh`: runtime sync and environment verification.
+- `docs/LIFECYCLE_SKILL_ROUTING.md`: stage, workflow, skill, and helper usage guide.
 
 ## Verification
 - Primary: `python3 test_runner.py`.

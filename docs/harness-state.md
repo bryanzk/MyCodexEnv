@@ -14,13 +14,13 @@ Stable rules belong in `AGENTS.md`, `README.md`, `docs/repo-index.md`, or
   - `codex/skills/project-lifecycle-harness/SKILL.md`
 - blocked_sources: none
 - unsafe_inputs: none
-- next_safe_task: update project-lifecycle-harness skill to route through latest runtime helpers and gstack decision points
+- next_safe_task: review and stage lifecycle skill routing documentation
 - required_commands:
   - `python3 test_runner.py`
   - `git diff --check`
   - `./scripts/verify_codex_env.sh --repo-root "$(pwd)" --codex-home "$HOME/.codex" --claude-home "$HOME/.claude"`
-- latest_checkpoint: 2026-05-11T20:10:39-04:00 generated current harness runtime handoff document
-- latest_verification: 2026-05-11T20:10:39-04:00 command=git diff --check; exit_code=0; key_output=No whitespace errors.
+- latest_checkpoint: 2026-05-11T21:27:17-04:00 documented lifecycle skill routing map
+- latest_verification: 2026-05-11T21:27:17-04:00 command=python3 test_runner.py; exit_code=0; key_output=[PASS] all tests
 
 ## State Log
 
@@ -139,3 +139,27 @@ Stable rules belong in `AGENTS.md`, `README.md`, `docs/repo-index.md`, or
 - blockers:
   - none
 - next_safe_task: update project-lifecycle-harness skill to route through latest runtime helpers and gstack decision points
+
+### 2026-05-11T21:27:17-04:00
+- phase: handoff
+- event: checkpoint
+- summary: documented lifecycle skill routing map
+- git:
+  - branch: main
+  - latest_commit: 2c62d56
+  - dirty_status: dirty
+  - dirty_count: 6
+- changed_surfaces:
+  - `docs/LIFECYCLE_SKILL_ROUTING.md`
+  - `README.md`
+  - `docs/repo-index.md`
+  - `docs/CODEX_ENV_REPRODUCTION.md`
+  - `docs/HARNESS_RUNTIME.md`
+  - `test_runner.py`
+- verification:
+  - command: `python3 test_runner.py`
+  - exit_code: 0
+  - key_output: [PASS] all tests
+- blockers:
+  - none
+- next_safe_task: review and stage lifecycle skill routing documentation
