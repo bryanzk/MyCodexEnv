@@ -19,6 +19,21 @@ The generic lifecycle skill should stay generic. Project-only paths, fixtures,
 commands, smoke matrices, and business safety boundaries belong in repo-specific
 adapter skills.
 
+## Visual Guides
+
+- `docs/project-lifecycle-harness-flow-cn.html`: 中文纵向主流程图，帮助用户从入口、状态恢复、阶段分类一路看到验证、发布和交接。
+- `docs/project-lifecycle-harness-flow-skills.html`: 中文 skill/helper 路由速查页，帮助用户理解每个生命周期阶段应使用哪个 skill，以及 helper 的执行职责。
+
+## Related Documentation
+
+- `README.md`: top-level quick start and Harness Runtime overview.
+- `docs/repo-index.md`: low-token repo navigation and runtime surface index.
+- `docs/HARNESS_RUNTIME.md`: lifecycle, evidence, checkpoint, permission, and subagent contracts.
+- `docs/AGENT_HARNESS_STATUS.md`: Agent Harness workflow/infra status map.
+- `docs/CODEX_ENV_REPRODUCTION.md`: Codex + Claude environment reproduction guide.
+- `docs/project-lifecycle-harness-flow-cn.html`: Chinese vertical lifecycle flow.
+- `docs/project-lifecycle-harness-flow-skills.html`: Chinese lifecycle skill/helper routing visual guide.
+
 ## Covered Workflows
 
 | Workflow | What It Covers | Primary Entry |

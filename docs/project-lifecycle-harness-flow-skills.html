@@ -1,0 +1,716 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MyCodexEnv 生命周期 Skill 路由（中文版）</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;700;900&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --font-body: 'Noto Sans SC', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+      --font-mono: 'JetBrains Mono', 'SF Mono', Consolas, monospace;
+      --bg: #f2fbf8;
+      --surface: #ffffff;
+      --surface2: #e7f5ef;
+      --border: rgba(17, 72, 58, 0.10);
+      --border-strong: rgba(17, 72, 58, 0.18);
+      --text: #11382f;
+      --text-dim: #5c756e;
+      --recover: #0d9488;
+      --recover-dim: rgba(13, 148, 136, 0.10);
+      --decide: #7c3aed;
+      --decide-dim: rgba(124, 58, 237, 0.10);
+      --build: #d97706;
+      --build-dim: rgba(217, 119, 6, 0.12);
+      --verify: #0f766e;
+      --verify-dim: rgba(15, 118, 110, 0.10);
+      --ship: #be123c;
+      --ship-dim: rgba(190, 18, 60, 0.10);
+      --shadow: 0 14px 34px rgba(17, 72, 58, 0.08), 0 2px 8px rgba(17, 72, 58, 0.06);
+    }
+
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #081512;
+        --surface: #101f1b;
+        --surface2: #172a25;
+        --border: rgba(225, 248, 240, 0.10);
+        --border-strong: rgba(225, 248, 240, 0.18);
+        --text: #e6f7f1;
+        --text-dim: #9bb8ae;
+        --recover: #2dd4bf;
+        --recover-dim: rgba(45, 212, 191, 0.14);
+        --decide: #c4b5fd;
+        --decide-dim: rgba(196, 181, 253, 0.13);
+        --build: #fbbf24;
+        --build-dim: rgba(251, 191, 36, 0.13);
+        --verify: #5eead4;
+        --verify-dim: rgba(94, 234, 212, 0.12);
+        --ship: #fb7185;
+        --ship-dim: rgba(251, 113, 133, 0.13);
+        --shadow: 0 14px 34px rgba(0, 0, 0, 0.24), 0 2px 8px rgba(0, 0, 0, 0.20);
+      }
+    }
+
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      color: var(--text);
+      font-family: var(--font-body);
+      background-color: var(--bg);
+      background-image:
+        radial-gradient(circle at 15% 10%, var(--recover-dim) 0 18%, transparent 34%),
+        radial-gradient(circle at 86% 18%, var(--decide-dim) 0 16%, transparent 34%),
+        radial-gradient(circle at 50% 100%, var(--build-dim) 0 18%, transparent 38%),
+        radial-gradient(circle, var(--border) 1px, transparent 1px);
+      background-size: auto, auto, auto, 26px 26px;
+      overflow-wrap: break-word;
+    }
+
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(14px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after {
+        animation-duration: 0.01ms !important;
+        animation-delay: 0ms !important;
+        transition-duration: 0.01ms !important;
+        scroll-behavior: auto !important;
+      }
+      .mermaid-wrap .mermaid { transition: none; }
+    }
+
+    .wrap {
+      max-width: 1480px;
+      margin: 0 auto;
+      display: grid;
+      grid-template-columns: 188px minmax(0, 1fr);
+      gap: 0 34px;
+      padding: 34px 38px 58px;
+    }
+    .main { min-width: 0; }
+    .toc {
+      position: sticky;
+      top: 24px;
+      align-self: start;
+      max-height: calc(100dvh - 48px);
+      overflow-y: auto;
+      padding: 12px 0;
+    }
+    .toc-title {
+      font-family: var(--font-mono);
+      font-size: 10px;
+      letter-spacing: 1.6px;
+      text-transform: uppercase;
+      color: var(--text-dim);
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 10px;
+      margin-bottom: 10px;
+    }
+    .toc a {
+      display: block;
+      text-decoration: none;
+      color: var(--text-dim);
+      font-family: var(--font-mono);
+      font-size: 11px;
+      line-height: 1.35;
+      padding: 6px 8px;
+      margin-bottom: 2px;
+      border-left: 2px solid transparent;
+      border-radius: 6px;
+    }
+    .toc a:hover,
+    .toc a.active {
+      color: var(--text);
+      background: var(--surface2);
+      border-left-color: var(--recover);
+    }
+
+    .hero {
+      background: color-mix(in srgb, var(--surface) 88%, var(--recover) 12%);
+      border: 1px solid color-mix(in srgb, var(--border-strong) 72%, var(--recover) 28%);
+      border-radius: 18px;
+      padding: 28px;
+      box-shadow: var(--shadow);
+      animation: fadeUp 0.42s ease-out both;
+    }
+    .eyebrow {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      letter-spacing: 1.4px;
+      text-transform: uppercase;
+      color: var(--recover);
+      margin-bottom: 12px;
+    }
+    h1 {
+      margin: 0 0 12px;
+      font-size: clamp(34px, 5.4vw, 68px);
+      line-height: 0.95;
+      letter-spacing: 0;
+    }
+    .lead {
+      max-width: 980px;
+      margin: 0;
+      color: var(--text-dim);
+      font-size: 17px;
+      line-height: 1.65;
+    }
+    code {
+      font-family: var(--font-mono);
+      font-size: 0.88em;
+      color: var(--recover);
+      background: var(--recover-dim);
+      border: 1px solid color-mix(in srgb, var(--recover) 22%, transparent);
+      padding: 1px 5px;
+      border-radius: 5px;
+    }
+
+    a {
+      color: var(--recover);
+      text-decoration: none;
+      border-bottom: 1px solid color-mix(in srgb, var(--recover) 34%, transparent);
+    }
+
+    a:hover {
+      border-bottom-color: var(--recover);
+    }
+
+    .kpis {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 12px;
+      margin-top: 20px;
+    }
+    .kpi {
+      background: color-mix(in srgb, var(--surface) 76%, transparent);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 14px;
+    }
+    .kpi strong {
+      display: block;
+      font-size: 30px;
+      line-height: 1;
+      margin-bottom: 6px;
+    }
+    .kpi span {
+      font-family: var(--font-mono);
+      color: var(--text-dim);
+      font-size: 11px;
+    }
+
+    .section {
+      margin-top: 28px;
+      animation: fadeUp 0.45s ease-out both;
+    }
+    .section h2 {
+      margin: 0 0 8px;
+      font-size: clamp(24px, 3vw, 38px);
+      letter-spacing: 0;
+    }
+    .section-note {
+      color: var(--text-dim);
+      font-family: var(--font-mono);
+      font-size: 12px;
+      margin-bottom: 14px;
+    }
+
+    .mermaid-wrap {
+      position: relative;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 36px 22px 26px;
+      overflow: auto;
+      box-shadow: var(--shadow);
+      scrollbar-width: thin;
+      scrollbar-color: var(--border) transparent;
+    }
+    .mermaid-wrap .mermaid {
+      display: flex;
+      justify-content: center;
+      transition: transform 0.2s ease;
+      transform-origin: top center;
+      min-width: 760px;
+    }
+    .zoom-controls {
+      position: absolute;
+      top: 8px;
+      right: 8px;
+      display: flex;
+      gap: 2px;
+      z-index: 10;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 2px;
+    }
+    .zoom-controls button {
+      width: 28px;
+      height: 28px;
+      border: none;
+      background: transparent;
+      color: var(--text-dim);
+      font-family: var(--font-mono);
+      cursor: pointer;
+      border-radius: 4px;
+    }
+    .zoom-controls button:hover {
+      background: var(--surface2);
+      color: var(--text);
+    }
+    .mermaid-wrap.is-zoomed { cursor: grab; }
+    .mermaid-wrap.is-panning { cursor: grabbing; user-select: none; }
+    .mermaid .nodeLabel {
+      font-family: var(--font-body) !important;
+      font-size: 15px !important;
+    }
+    .mermaid .edgeLabel {
+      font-family: var(--font-mono) !important;
+      font-size: 12px !important;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 14px;
+    }
+    .card {
+      min-width: 0;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 16px;
+    }
+    .card b {
+      display: block;
+      margin-bottom: 8px;
+      font-size: 18px;
+    }
+    .card small {
+      display: block;
+      color: var(--text-dim);
+      line-height: 1.55;
+    }
+    .accent-recover { border-top: 3px solid var(--recover); }
+    .accent-decide { border-top: 3px solid var(--decide); }
+    .accent-build { border-top: 3px solid var(--build); }
+    .accent-verify { border-top: 3px solid var(--verify); }
+    .accent-ship { border-top: 3px solid var(--ship); }
+
+    .table-wrap {
+      overflow-x: auto;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      box-shadow: var(--shadow);
+    }
+    table {
+      width: 100%;
+      min-width: 980px;
+      border-collapse: collapse;
+    }
+    th, td {
+      text-align: left;
+      vertical-align: top;
+      border-bottom: 1px solid var(--border);
+      padding: 12px 14px;
+      line-height: 1.5;
+      font-size: 14px;
+    }
+    th {
+      position: sticky;
+      top: 0;
+      z-index: 1;
+      background: var(--surface2);
+      color: var(--text);
+      font-family: var(--font-mono);
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+    }
+    tr:last-child td { border-bottom: none; }
+    tr:nth-child(even) td {
+      background: color-mix(in srgb, var(--surface2) 38%, transparent);
+    }
+    .phase {
+      font-weight: 700;
+      white-space: nowrap;
+    }
+    .badge {
+      display: inline-block;
+      margin: 0 4px 4px 0;
+      padding: 2px 7px;
+      border-radius: 999px;
+      font-family: var(--font-mono);
+      font-size: 11px;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      color: var(--text-dim);
+    }
+    .primary { color: var(--recover); background: var(--recover-dim); border-color: color-mix(in srgb, var(--recover) 25%, transparent); }
+    .decision { color: var(--decide); background: var(--decide-dim); border-color: color-mix(in srgb, var(--decide) 25%, transparent); }
+    .build { color: var(--build); background: var(--build-dim); border-color: color-mix(in srgb, var(--build) 25%, transparent); }
+    .verify { color: var(--verify); background: var(--verify-dim); border-color: color-mix(in srgb, var(--verify) 25%, transparent); }
+    .ship { color: var(--ship); background: var(--ship-dim); border-color: color-mix(in srgb, var(--ship) 25%, transparent); }
+
+    .callout {
+      background: color-mix(in srgb, var(--surface) 82%, var(--build) 18%);
+      border: 1px solid color-mix(in srgb, var(--border-strong) 70%, var(--build) 30%);
+      border-radius: 14px;
+      padding: 18px;
+      line-height: 1.6;
+    }
+    .callout b { color: var(--build); }
+
+    @media (max-width: 1100px) {
+      .wrap { grid-template-columns: 1fr; padding: 0 20px 42px; }
+      .toc {
+        position: sticky;
+        top: 0;
+        z-index: 20;
+        display: flex;
+        gap: 4px;
+        overflow-x: auto;
+        max-height: none;
+        background: var(--bg);
+        border-bottom: 1px solid var(--border);
+        margin: 0 -20px;
+        padding: 10px 20px;
+      }
+      .toc-title { display: none; }
+      .toc a {
+        white-space: nowrap;
+        flex-shrink: 0;
+        border-left: none;
+        border-bottom: 2px solid transparent;
+      }
+      .toc a.active { border-left: none; border-bottom-color: var(--recover); }
+      .main { padding-top: 20px; }
+      .kpis, .grid { grid-template-columns: 1fr 1fr; }
+    }
+    @media (max-width: 680px) {
+      .kpis, .grid { grid-template-columns: 1fr; }
+      .hero { padding: 22px; }
+      h1 { font-size: 38px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <nav class="toc" id="toc">
+      <div class="toc-title">目录</div>
+      <a href="#overview">总览</a>
+      <a href="#flow">流程图</a>
+      <a href="#skills">Skill 映射</a>
+      <a href="#rules">路由规则</a>
+      <a href="#handoff">交接</a>
+    </nav>
+
+    <main class="main">
+      <section class="hero" id="overview">
+        <div class="eyebrow">Project Lifecycle Harness / 当前 skill 路由</div>
+        <h1>每个生命周期阶段该用哪个 skill。</h1>
+        <p class="lead">
+          当前 MyCodexEnv 用 <code>project-lifecycle-harness</code> 做通用入口：它恢复运行时事实、探测 Codex 环境、识别生命周期阶段，然后把任务路由给 repo-specific harness、gstack 专项 skill、本地开发/验证 skill 或确定性 runtime helper。Helper 提供可机器检查的执行层，skill 负责认知编排。
+        </p>
+        <div class="kpis">
+          <div class="kpi"><strong>8</strong><span>标准生命周期阶段</span></div>
+          <div class="kpi"><strong>9</strong><span>helper / 验证入口</span></div>
+          <div class="kpi"><strong>3</strong><span>generic、repo-specific、gstack 分工</span></div>
+          <div class="kpi"><strong>4</strong><span>完成证据字段</span></div>
+        </div>
+      </section>
+
+      <section class="section" id="flow">
+        <h2>当前流程</h2>
+        <div class="section-note">Mermaid 纵向流程图：先恢复运行时事实，再选择 skill/helper，最后 checkpoint</div>
+        <div class="mermaid-wrap" data-zoom="1">
+          <div class="zoom-controls">
+            <button type="button" data-action="in">+</button>
+            <button type="button" data-action="out">-</button>
+            <button type="button" data-action="reset">0</button>
+          </div>
+          <pre class="mermaid">
+flowchart TD
+  Start(["用户任务进入<br/>project-lifecycle-harness"])
+  AGENTS["读取 AGENTS.md<br/>README 与 docs/repo-index.md"]
+  Recover["运行 harness_recover.py --json<br/>恢复 phase、dirty state、next safe task"]
+  Env["运行 harness_env_probe.py --json<br/>观测 hooks、policy、schema"]
+  NeedsReq{"目标、范围、验收是否清晰？"}
+  Req["需求锁定<br/>planner / req-to-dev / task-flow-orchestrator"]
+  ReqVal["harness_requirements.py validate PATH"]
+  Classify{"分类生命周期阶段<br/>和风险边界"}
+  Repo{"是否有 repo-specific harness？"}
+  RepoSkill["交给项目 adapter<br/>业务路径、命令、smoke matrix"]
+  Product["产品/范围判断<br/>gstack-plan-ceo-review / gstack-office-hours"]
+  Plan["工程/设计规划<br/>gstack-plan-eng-review / gstack-plan-design-review"]
+  Dev["开发实现<br/>tdd-guide / atdd-guide / scoped workers"]
+  Team{"是否并行 agents？"}
+  TeamVal["harness_agent_team.py validate PLAN.json"]
+  Val["验证与证据<br/>verification-loop / harness_report.py / test_runner.py"]
+  QA["QA / 安全 / 评审<br/>gstack-qa / gstack-cso / gstack-review / code-reviewer"]
+  Ship["发布/部署<br/>gstack-ship / gstack-land-and-deploy / gstack-canary"]
+  Docs["文档发布<br/>gstack-document-release / doc-updater"]
+  Handoff["交接<br/>harness_checkpoint.py append"]
+  Done(["输出<br/>skill 路由、验证证据、next safe task"])
+
+  Start --> AGENTS --> Recover --> Env --> NeedsReq
+  NeedsReq -- 否 --> Req --> ReqVal --> Classify
+  NeedsReq -- 是 --> Classify
+  Classify --> Repo
+  Repo -- 是 --> RepoSkill --> Dev
+  Repo -- 否且偏产品 --> Product --> Plan
+  Repo -- 否且偏工程/设计 --> Plan
+  Repo -- 否且可直接开发 --> Dev
+  Plan --> Team
+  Dev --> Team
+  Team -- 是 --> TeamVal --> Val
+  Team -- 否 --> Val
+  Classify -- 验证 --> Val
+  Classify -- QA/安全/评审 --> QA --> Val
+  Classify -- 发布/部署 --> Ship --> Val
+  Val --> Docs --> Handoff --> Done
+
+  classDef runtime fill:#dff7ef,stroke:#0d9488,color:#11382f;
+  classDef decision fill:#eee7ff,stroke:#7c3aed,color:#241247;
+  classDef build fill:#fff3d5,stroke:#d97706,color:#4a2c04;
+  classDef verify fill:#dff7f4,stroke:#0f766e,color:#0f3d38;
+  classDef ship fill:#ffe4eb,stroke:#be123c,color:#5b1025;
+
+  class AGENTS,Recover,Env,ReqVal,TeamVal,Handoff runtime;
+  class NeedsReq,Classify,Team decision;
+  class Req,Plan,Dev,RepoSkill,Product build;
+  class Val,QA,Docs verify;
+  class Ship ship;
+          </pre>
+        </div>
+      </section>
+
+      <section class="section" id="skills">
+        <h2>Skill 与 Helper 映射</h2>
+        <div class="section-note">Helper 负责客观运行时事实；skill 负责认知工作流</div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>流程步骤</th>
+                <th>主要 Skill</th>
+                <th>Helper 命令</th>
+                <th>何时路由到这里</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td class="phase">启动 / 恢复</td>
+                <td><span class="badge primary">project-lifecycle-harness</span></td>
+                <td><code>scripts/harness_recover.py --json</code><br><code>scripts/harness_env_probe.py --json</code></td>
+                <td>任何复杂任务、恢复会话、dirty 工作树、跨阶段交接或含糊请求。</td>
+              </tr>
+              <tr>
+                <td class="phase">需求</td>
+                <td><span class="badge decision">planner</span><span class="badge decision">req-to-dev</span><span class="badge decision">task-flow-orchestrator</span></td>
+                <td><code>docs/templates/harness-requirements.md</code><br><code>scripts/harness_requirements.py validate PATH</code></td>
+                <td>目标、范围、受众、约束、成功标准或验收测试尚未锁定。</td>
+              </tr>
+              <tr>
+                <td class="phase">产品 / 业务判断</td>
+                <td><span class="badge decision">gstack-plan-ceo-review</span><span class="badge decision">gstack-office-hours</span></td>
+                <td><code>scripts/harness_requirements.py validate PATH</code> when a requirement artifact exists</td>
+                <td>需要明确用户价值、范围、demo 边界、优先级或业务取舍。</td>
+              </tr>
+              <tr>
+                <td class="phase">工程 / 设计规划</td>
+                <td><span class="badge decision">gstack-plan-eng-review</span><span class="badge decision">gstack-plan-design-review</span><span class="badge decision">planner</span></td>
+                <td><code>scripts/harness_agent_team.py validate PLAN.json</code> when parallel work is proposed</td>
+                <td>需要决策架构、API、数据流、迁移、视觉结构、任务拆分或多 agent 归属。</td>
+              </tr>
+              <tr>
+                <td class="phase">开发</td>
+                <td><span class="badge build">tdd-guide</span><span class="badge build">atdd-guide</span><span class="badge build">scoped worker agents</span></td>
+                <td><code>scripts/harness_agent_team.py validate PLAN.json</code><br><code>git status --short --branch</code></td>
+                <td>已有清晰验收标准，且生命周期策略允许有范围的 repo 写入。</td>
+              </tr>
+              <tr>
+                <td class="phase">验证 / 证据</td>
+                <td><span class="badge verify">verification-loop</span><span class="badge verify">harness_report.py</span></td>
+                <td><code>python3 test_runner.py</code><br><code>git diff --check</code><br><code>scripts/verify_codex_env.sh ...</code></td>
+                <td>声明完成前、代码/配置/文档变更后，或需要 runtime sync 证据时。</td>
+              </tr>
+              <tr>
+                <td class="phase">QA / 评审 / 安全</td>
+                <td><span class="badge verify">gstack-qa</span><span class="badge verify">gstack-qa-only</span><span class="badge verify">gstack-review</span><span class="badge verify">code-reviewer</span><span class="badge verify">gstack-cso</span><span class="badge verify">security-reviewer</span></td>
+                <td><code>git diff</code>, <code>scripts/harness_env_probe.py --json</code> for runtime-sensitive work</td>
+                <td>存在 diff、用户可见行为、安全/隐私边界，或工作接近交接/发布时。</td>
+              </tr>
+              <tr>
+                <td class="phase">发布 / 部署 / Canary</td>
+                <td><span class="badge ship">gstack-ship</span><span class="badge ship">gstack-land-and-deploy</span><span class="badge ship">gstack-canary</span></td>
+                <td><code>scripts/verify_codex_env.sh ...</code><br><code>scripts/harness_checkpoint.py append</code></td>
+                <td>用户明确要求 commit、PR、merge、release、deploy 或生产验证时。</td>
+              </tr>
+              <tr>
+                <td class="phase">文档 / 交接</td>
+                <td><span class="badge ship">gstack-document-release</span><span class="badge ship">doc-updater</span><span class="badge ship">project-lifecycle-harness</span></td>
+                <td><code>scripts/harness_checkpoint.py append</code><br><code>scripts/harness_report.py --json</code></td>
+                <td>文档需要反映已交付行为，或会话需要持久化 next safe task 状态时。</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="section" id="rules">
+        <h2>路由规则</h2>
+        <div class="grid">
+          <div class="card accent-recover">
+            <b>1. 运行时事实优先于记忆</b>
+            <small>先运行 recovery 与 env probe。聊天历史和 subconscious 输出只是提示，不能作为唯一事实来源。</small>
+          </div>
+          <div class="card accent-decide">
+            <b>2. 需求 gate before planning</b>
+            <small>如果范围或验收标准不稳定，先创建或验证 requirements artifact，再做架构规划。</small>
+          </div>
+          <div class="card accent-build">
+            <b>3. 没有 validator 就不并行写入</b>
+            <small>任何 worker team 都必须通过 <code>harness_agent_team.py validate</code> 证明 write set 不重叠。</small>
+          </div>
+          <div class="card accent-verify">
+            <b>4. 完成声明需要 fresh evidence</b>
+            <small>声明完成前必须记录 <code>command</code>、<code>exit_code</code>、<code>key_output</code>、<code>timestamp</code>。</small>
+          </div>
+          <div class="card accent-ship">
+            <b>5. 交接是运行时事件</b>
+            <small>有意义的工作切片结束时，用 <code>harness_checkpoint.py append</code> 记录 command、exit code、key output、timestamp 和 next safe task。</small>
+          </div>
+          <div class="card accent-recover">
+            <b>6. Repo 不能强制全局 sandbox</b>
+            <small>env probe 只能报告可观测的 sandbox/approval 配置，不能假装知道隐藏的 Desktop thread 状态。</small>
+          </div>
+        </div>
+      </section>
+
+      <section class="section" id="handoff">
+        <h2>交付资产</h2>
+        <div class="callout">
+          <b>当前文档入口：</b>
+          <a href="./LIFECYCLE_SKILL_ROUTING.md"><code>docs/LIFECYCLE_SKILL_ROUTING.md</code></a> 是生命周期和 skill/helper 路由的文字说明；
+          <a href="./project-lifecycle-harness-flow-cn.html"><code>docs/project-lifecycle-harness-flow-cn.html</code></a> 是纵向主流程图；
+          <a href="./HARNESS_RUNTIME.md"><code>docs/HARNESS_RUNTIME.md</code></a> 是运行时合同；
+          <a href="./AGENT_HARNESS_STATUS.md"><code>docs/AGENT_HARNESS_STATUS.md</code></a> 是 Harness 模块状态；
+          <a href="./CODEX_ENV_REPRODUCTION.md"><code>docs/CODEX_ENV_REPRODUCTION.md</code></a> 是环境复现说明；
+          <a href="./repo-index.md"><code>docs/repo-index.md</code></a> 是低 token repo index。
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <script type="module">
+    import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs';
+
+    mermaid.initialize({
+      startOnLoad: true,
+      theme: 'base',
+      look: 'classic',
+      flowchart: { curve: 'basis', padding: 16 },
+      themeVariables: {
+        fontFamily: 'Noto Sans SC, PingFang SC, sans-serif',
+        primaryColor: '#e7f5ef',
+        primaryTextColor: '#11382f',
+        primaryBorderColor: '#0d9488',
+        lineColor: '#5c756e',
+        secondaryColor: '#eee7ff',
+        tertiaryColor: '#fff3d5',
+        noteBkgColor: '#ffffff',
+        noteTextColor: '#11382f',
+        fontSize: '15px'
+      }
+    });
+
+    function setupZoom(wrap) {
+      const diagram = wrap.querySelector('.mermaid');
+      const buttons = wrap.querySelectorAll('[data-action]');
+      let zoom = 1;
+      let isPanning = false;
+      let startX = 0;
+      let startY = 0;
+      let scrollLeft = 0;
+      let scrollTop = 0;
+
+      function applyZoom() {
+        diagram.style.transform = `scale(${zoom})`;
+        wrap.classList.toggle('is-zoomed', zoom > 1);
+      }
+
+      buttons.forEach(button => {
+        button.addEventListener('click', () => {
+          const action = button.getAttribute('data-action');
+          if (action === 'in') zoom = Math.min(2.4, zoom + 0.15);
+          if (action === 'out') zoom = Math.max(0.7, zoom - 0.15);
+          if (action === 'reset') zoom = 1;
+          applyZoom();
+        });
+      });
+
+      wrap.addEventListener('wheel', event => {
+        if (!event.ctrlKey && !event.metaKey) return;
+        event.preventDefault();
+        zoom = event.deltaY < 0 ? Math.min(2.4, zoom + 0.08) : Math.max(0.7, zoom - 0.08);
+        applyZoom();
+      }, { passive: false });
+
+      wrap.addEventListener('mousedown', event => {
+        if (zoom <= 1) return;
+        isPanning = true;
+        wrap.classList.add('is-panning');
+        startX = event.pageX - wrap.offsetLeft;
+        startY = event.pageY - wrap.offsetTop;
+        scrollLeft = wrap.scrollLeft;
+        scrollTop = wrap.scrollTop;
+      });
+      window.addEventListener('mouseup', () => {
+        isPanning = false;
+        wrap.classList.remove('is-panning');
+      });
+      wrap.addEventListener('mousemove', event => {
+        if (!isPanning) return;
+        event.preventDefault();
+        const x = event.pageX - wrap.offsetLeft;
+        const y = event.pageY - wrap.offsetTop;
+        wrap.scrollLeft = scrollLeft - (x - startX);
+        wrap.scrollTop = scrollTop - (y - startY);
+      });
+    }
+
+    document.querySelectorAll('.mermaid-wrap').forEach(setupZoom);
+
+    const toc = document.getElementById('toc');
+    const links = toc.querySelectorAll('a');
+    const sections = [];
+    links.forEach(link => {
+      const id = link.getAttribute('href').slice(1);
+      const el = document.getElementById(id);
+      if (el) sections.push({ el, link });
+    });
+    const observer = new IntersectionObserver(entries => {
+      entries.forEach(entry => {
+        if (!entry.isIntersecting) return;
+        links.forEach(link => link.classList.remove('active'));
+        const match = sections.find(section => section.el === entry.target);
+        if (match) {
+          match.link.classList.add('active');
+          if (window.innerWidth <= 1100) {
+            match.link.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+          }
+        }
+      });
+    }, { rootMargin: '-12% 0px -76% 0px' });
+    sections.forEach(section => observer.observe(section.el));
+  </script>
+</body>
+</html>

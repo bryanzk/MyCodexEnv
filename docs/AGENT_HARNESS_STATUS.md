@@ -3,6 +3,15 @@
 This status map follows the Agent Harness diagram: Workflow is cognitive
 orchestration, Infra is runtime governance.
 
+## Related Documentation
+- `README.md`: top-level quick start and Harness Runtime overview.
+- `docs/repo-index.md`: low-token repo navigation and runtime surface index.
+- `docs/HARNESS_RUNTIME.md`: lifecycle, evidence, checkpoint, permission, and subagent contracts.
+- `docs/LIFECYCLE_SKILL_ROUTING.md`: lifecycle stage, workflow, skill, and helper routing.
+- `docs/CODEX_ENV_REPRODUCTION.md`: Codex + Claude environment reproduction guide.
+- `docs/project-lifecycle-harness-flow-cn.html`: Chinese vertical lifecycle flow.
+- `docs/project-lifecycle-harness-flow-skills.html`: Chinese lifecycle skill/helper routing visual guide.
+
 | Diagram Module | Current Status | Implemented Evidence | Remaining Gap | Next Step |
 | --- | --- | --- | --- | --- |
 | Research | done | `docs/repo-index.md`, startup probes in `project-lifecycle-harness`, `AGENTS.md` read-first rules | automatic source freshness scoring | add optional research evidence events per source |

@@ -23,6 +23,8 @@ HARNESS_RECOVER = ROOT / "scripts" / "harness_recover.py"
 HARNESS_ENV_PROBE = ROOT / "scripts" / "harness_env_probe.py"
 HARNESS_REQUIREMENTS_TEMPLATE = ROOT / "docs" / "templates" / "harness-requirements.md"
 LIFECYCLE_SKILL_ROUTING_DOC = ROOT / "docs" / "LIFECYCLE_SKILL_ROUTING.md"
+LIFECYCLE_FLOW_HTML = ROOT / "docs" / "project-lifecycle-harness-flow-cn.html"
+LIFECYCLE_SKILLS_HTML = ROOT / "docs" / "project-lifecycle-harness-flow-skills.html"
 HARNESS_GUARD = ROOT / "codex" / "hooks" / "harness_guard.py"
 HARNESS_OBSERVER = ROOT / "codex" / "hooks" / "harness_observer.py"
 
@@ -412,7 +414,11 @@ def test_harness_runtime_surfaces_exist_and_parse():
 
 def test_lifecycle_skill_routing_doc_is_discoverable():
     require(LIFECYCLE_SKILL_ROUTING_DOC.exists(), "missing lifecycle skill routing doc")
+    require(LIFECYCLE_FLOW_HTML.exists(), "missing lifecycle flow HTML guide")
+    require(LIFECYCLE_SKILLS_HTML.exists(), "missing lifecycle skill routing HTML guide")
     doc_text = LIFECYCLE_SKILL_ROUTING_DOC.read_text(encoding="utf-8")
+    flow_html = LIFECYCLE_FLOW_HTML.read_text(encoding="utf-8")
+    skills_html = LIFECYCLE_SKILLS_HTML.read_text(encoding="utf-8")
 
     for stage in ["research", "requirements", "planning", "development", "validation", "review", "ship", "handoff"]:
         require(f"`{stage}`" in doc_text, f"lifecycle routing doc missing stage: {stage}")
@@ -429,11 +435,103 @@ def test_lifecycle_skill_routing_doc_is_discoverable():
     for term in required_terms:
         require(term in doc_text, f"lifecycle routing doc missing term: {term}")
 
-    for entrypoint in [ROOT / "README.md", ROOT / "docs" / "repo-index.md", ROOT / "docs" / "CODEX_ENV_REPRODUCTION.md", ROOT / "docs" / "HARNESS_RUNTIME.md"]:
-        require(
-            "docs/LIFECYCLE_SKILL_ROUTING.md" in entrypoint.read_text(encoding="utf-8"),
-            f"{entrypoint} should link lifecycle skill routing doc",
-        )
+    html_expectations = {
+        LIFECYCLE_FLOW_HTML.name: (
+            flow_html,
+            [
+                'lang="zh-CN"',
+                "通用项目生命周期路由流程",
+                "flowchart TD",
+                "project-lifecycle-harness",
+                "gstack-document-release",
+                "harness_checkpoint.py",
+            ],
+        ),
+        LIFECYCLE_SKILLS_HTML.name: (
+            skills_html,
+            [
+                'lang="zh-CN"',
+                "每个生命周期阶段该用哪个 skill",
+                "Skill 与 Helper 映射",
+                "flowchart TD",
+                "gstack-plan-eng-review",
+                "gstack-document-release",
+                "scripts/verify_codex_env.sh",
+            ],
+        ),
+    }
+    for filename, (text, terms) in html_expectations.items():
+        for term in terms:
+            require(term in text, f"{filename} missing visual guide term: {term}")
+
+    primary_docs = [
+        ROOT / "README.md",
+        ROOT / "docs" / "repo-index.md",
+        ROOT / "docs" / "CODEX_ENV_REPRODUCTION.md",
+        ROOT / "docs" / "HARNESS_RUNTIME.md",
+        ROOT / "docs" / "AGENT_HARNESS_STATUS.md",
+        LIFECYCLE_SKILL_ROUTING_DOC,
+    ]
+    target_paths = {
+        "README.md": ROOT / "README.md",
+        "docs/repo-index.md": ROOT / "docs" / "repo-index.md",
+        "docs/CODEX_ENV_REPRODUCTION.md": ROOT / "docs" / "CODEX_ENV_REPRODUCTION.md",
+        "docs/HARNESS_RUNTIME.md": ROOT / "docs" / "HARNESS_RUNTIME.md",
+        "docs/AGENT_HARNESS_STATUS.md": ROOT / "docs" / "AGENT_HARNESS_STATUS.md",
+        "docs/LIFECYCLE_SKILL_ROUTING.md": LIFECYCLE_SKILL_ROUTING_DOC,
+        "docs/project-lifecycle-harness-flow-cn.html": LIFECYCLE_FLOW_HTML,
+        "docs/project-lifecycle-harness-flow-skills.html": LIFECYCLE_SKILLS_HTML,
+    }
+
+    for entrypoint in primary_docs:
+        entrypoint_text = entrypoint.read_text(encoding="utf-8")
+        if entrypoint != LIFECYCLE_SKILL_ROUTING_DOC:
+            require("docs/LIFECYCLE_SKILL_ROUTING.md" in entrypoint_text, f"{entrypoint} should link lifecycle skill routing doc")
+
+    related_targets = [
+        "README.md",
+        "docs/repo-index.md",
+        "docs/CODEX_ENV_REPRODUCTION.md",
+        "docs/HARNESS_RUNTIME.md",
+        "docs/AGENT_HARNESS_STATUS.md",
+        "docs/LIFECYCLE_SKILL_ROUTING.md",
+        "docs/project-lifecycle-harness-flow-cn.html",
+        "docs/project-lifecycle-harness-flow-skills.html",
+    ]
+    for entrypoint in primary_docs:
+        entrypoint_text = entrypoint.read_text(encoding="utf-8")
+        for target in related_targets:
+            if target_paths[target] == entrypoint:
+                continue
+            require(target in entrypoint_text, f"{entrypoint} should link {target}")
+
+    html_links = {
+        LIFECYCLE_FLOW_HTML.name: (
+            flow_html,
+            [
+                'href="./project-lifecycle-harness-flow-skills.html"',
+                'href="./LIFECYCLE_SKILL_ROUTING.md"',
+                'href="./HARNESS_RUNTIME.md"',
+                'href="./AGENT_HARNESS_STATUS.md"',
+                'href="./CODEX_ENV_REPRODUCTION.md"',
+                'href="./repo-index.md"',
+            ],
+        ),
+        LIFECYCLE_SKILLS_HTML.name: (
+            skills_html,
+            [
+                'href="./project-lifecycle-harness-flow-cn.html"',
+                'href="./LIFECYCLE_SKILL_ROUTING.md"',
+                'href="./HARNESS_RUNTIME.md"',
+                'href="./AGENT_HARNESS_STATUS.md"',
+                'href="./CODEX_ENV_REPRODUCTION.md"',
+                'href="./repo-index.md"',
+            ],
+        ),
+    }
+    for filename, (text, links) in html_links.items():
+        for link in links:
+            require(link in text, f"{filename} missing related doc link: {link}")
 
     print("[PASS] lifecycle skill routing doc discoverable")
 

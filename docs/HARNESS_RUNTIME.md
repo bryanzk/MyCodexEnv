@@ -30,6 +30,15 @@ as source of truth.
 For the current project workflow and skill routing map, read
 `docs/LIFECYCLE_SKILL_ROUTING.md`.
 
+## Related Documentation
+- `README.md`: top-level quick start and Harness Runtime overview.
+- `docs/repo-index.md`: low-token repo navigation and runtime surface index.
+- `docs/LIFECYCLE_SKILL_ROUTING.md`: lifecycle stage, workflow, skill, and helper routing.
+- `docs/AGENT_HARNESS_STATUS.md`: Agent Harness workflow/infra status map.
+- `docs/CODEX_ENV_REPRODUCTION.md`: Codex + Claude environment reproduction guide.
+- `docs/project-lifecycle-harness-flow-cn.html`: Chinese vertical lifecycle flow.
+- `docs/project-lifecycle-harness-flow-skills.html`: Chinese lifecycle skill/helper routing visual guide.
+
 ## Infra Contract
 - `Sandbox`: Codex sandboxing and approval rules remain the primary technical boundary; `scripts/harness_env_probe.py` reports the observable runtime configuration.
 - `Memory`: `docs/harness-state.md` is the repo-visible memory surface; `scripts/harness_recover.py` proves recovery from state, git, and local evidence.

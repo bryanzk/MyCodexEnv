@@ -34,6 +34,15 @@
 - `browse` includes supporting code under `codex/skills/browse/*`; first use requires `./setup` in that directory after sync so Bun can build the local binary and install Playwright Chromium.
 - The lifecycle-to-skill routing guide is `docs/LIFECYCLE_SKILL_ROUTING.md`; it maps current project workflows and runtime stages to the relevant generic, repo-specific, gstack, validation, review, QA, ship, and documentation skills.
 
+## Related Documentation
+- `README.md`: top-level quick start and Harness Runtime overview.
+- `docs/repo-index.md`: low-token repo navigation and runtime surface index.
+- `docs/HARNESS_RUNTIME.md`: lifecycle, evidence, checkpoint, permission, and subagent contracts.
+- `docs/AGENT_HARNESS_STATUS.md`: Agent Harness workflow/infra status map.
+- `docs/LIFECYCLE_SKILL_ROUTING.md`: lifecycle stage, workflow, skill, and helper routing.
+- `docs/project-lifecycle-harness-flow-cn.html`: Chinese vertical lifecycle flow.
+- `docs/project-lifecycle-harness-flow-skills.html`: Chinese lifecycle skill/helper routing visual guide.
+
 ## AGENTS Source of Truth
 - Codex 通用层入口源码是 `codex/AGENTS.md`。
 - Remote 访问流程细则拆在 `codex/remote-access.md`；具体主机登记表拆在 `codex/remote-hosts.md`。
