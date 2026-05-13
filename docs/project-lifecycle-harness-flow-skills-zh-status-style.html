@@ -435,7 +435,7 @@
         <div class="eyebrow">Delivery Harness Framework / DHF 当前技能路由</div>
         <h1>每个 DHF 阶段由哪个技能驱动。</h1>
         <p class="lead">
-          MyCodexEnv 使用 <code>project-lifecycle-harness</code> 作为 Delivery Harness Framework (DHF) 的入口。DHF 先恢复运行时事实，探测 Codex 环境，识别当前生命周期阶段，再把任务路由到仓库专用 harness、gstack 专家技能、本地开发与验证技能，或确定性的运行时辅助脚本。辅助脚本提供机器可检查的执行层；技能负责认知编排。
+          MyCodexEnv 使用 <code>delivery-harness-framework</code> 作为 Delivery Harness Framework (DHF) 的入口。DHF 先恢复运行时事实，探测 Codex 环境，识别当前生命周期阶段，再把任务路由到仓库专用 harness、gstack 专家技能、本地开发与验证技能，或确定性的运行时辅助脚本。辅助脚本提供机器可检查的执行层；技能负责认知编排。
         </p>
         <div class="kpis">
           <div class="kpi"><strong>8</strong><span>标准生命周期阶段</span></div>
@@ -527,7 +527,7 @@ flowchart TD
             <tbody>
               <tr>
                 <td class="phase">开始 / 恢复</td>
-                <td><span class="badge primary">project-lifecycle-harness</span></td>
+                <td><span class="badge primary">delivery-harness-framework</span></td>
                 <td><code>scripts/harness_recover.py --json</code><br><code>scripts/harness_env_probe.py --json</code></td>
                 <td>任何复杂任务、恢复中的会话、脏工作区、跨阶段交接，或目标不清的请求。</td>
               </tr>
@@ -575,7 +575,7 @@ flowchart TD
               </tr>
               <tr>
                 <td class="phase">文档 / 交接</td>
-                <td><span class="badge ship">gstack-document-release</span><span class="badge ship">doc-updater</span><span class="badge ship">project-lifecycle-harness</span></td>
+                <td><span class="badge ship">gstack-document-release</span><span class="badge ship">doc-updater</span><span class="badge ship">delivery-harness-framework</span></td>
                 <td><code>scripts/harness_checkpoint.py append</code><br><code>scripts/harness_report.py --json</code></td>
                 <td>文档需要反映已交付行为，或会话必须持久化下一个安全任务状态时。</td>
               </tr>

@@ -27,7 +27,7 @@
 - Repository source of truth is `codex/skills/*`.
 - Bootstrap/sync scripts only read `codex/skills/*` when populating `~/.codex/skills/*`.
 - Claude workflow source of truth is `claude/workflow/*`.
-- `project-lifecycle-harness` is a generic lifecycle router; repo-specific lifecycle skills should stay as adapters that add project paths, commands, safety boundaries, and smoke matrices.
+- `delivery-harness-framework` is a generic lifecycle router; repo-specific lifecycle skills should stay as adapters that add project paths, commands, safety boundaries, and smoke matrices.
 - The repository includes Codex-adapted short-name imports of selected `gstack` skills: `plan-ceo-review`, `plan-eng-review`, `review`, `ship`, `retro`, `browse`, `qa`, and `setup-browser-cookies`.
 - The repository also vendors the complete global `gstack` skill set under `codex/skills/gstack` and `codex/skills/gstack-*`, so different machines and projects can use the same namespaced skills after a normal bootstrap/sync.
 - `codex/skills/gstack/setup` is intentionally repository-local: it builds support binaries inside `~/.codex/skills/gstack` and does not recreate symlinks to `/Users/kezheng/gstack`.

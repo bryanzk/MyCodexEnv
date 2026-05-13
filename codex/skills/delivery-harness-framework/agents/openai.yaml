@@ -1,0 +1,4 @@
+interface:
+  display_name: "Delivery Harness Framework"
+  short_description: "Route project work by lifecycle stage"
+  default_prompt: "Use $delivery-harness-framework to inspect project state, classify the lifecycle stage, and choose the right next workflow."

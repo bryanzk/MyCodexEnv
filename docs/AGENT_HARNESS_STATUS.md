@@ -17,7 +17,7 @@ orchestration, Infra is runtime governance.
 
 | Diagram Module | Current Status | Implemented Evidence | Remaining Gap | Next Step |
 | --- | --- | --- | --- | --- |
-| Research | done | `docs/repo-index.md`, startup probes in `project-lifecycle-harness`, `AGENTS.md` read-first rules | automatic source freshness scoring | add optional research evidence events per source |
+| Research | done | `docs/repo-index.md`, startup probes in `delivery-harness-framework`, `AGENTS.md` read-first rules | automatic source freshness scoring | add optional research evidence events per source |
 | Requirements | done | lifecycle stage table, `docs/templates/harness-requirements.md`, `scripts/harness_requirements.py` | template must be filled per task before becoming source of truth | validate requirements artifacts before planning or development |
 | Planning | done | planning stage policy, lifecycle router, `docs/HARNESS_RUNTIME.md` | no graphical plan report | keep plan output text-first; add visual report only when requested |
 | Development | done | scoped write policy for `development`, repo change rules, `scripts/harness_agent_team.py` write-set validator | validator is explicit, not yet wired into automatic subagent dispatch | run validator before multi-worker dispatch and later integrate with orchestration |

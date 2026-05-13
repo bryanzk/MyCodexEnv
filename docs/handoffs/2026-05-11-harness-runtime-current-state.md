@@ -11,7 +11,7 @@ Working tree at handoff creation: clean before this document was added
 
 This handoff lets a new Codex session resume MyCodexEnv Harness Runtime work
 without relying on chat history. The immediate context is the generic
-`project-lifecycle-harness` skill and its alignment with the current runtime:
+`delivery-harness-framework` skill and its alignment with the current runtime:
 repo index, state log, requirements artifacts, recovery smoke, env probe,
 evidence reporting, checkpointing, and agent team validation.
 
@@ -21,7 +21,7 @@ evidence reporting, checkpointing, and agent team validation.
 - blocked_sources: none
 - unsafe_inputs: none
 - evidence_status: present
-- next_safe_task: update `project-lifecycle-harness` so it routes through the
+- next_safe_task: update `delivery-harness-framework` so it routes through the
   latest Harness Runtime helpers and gstack decision points, then sync it into
   `~/.codex/skills`
 
@@ -34,8 +34,8 @@ Read these in order:
 3. `docs/harness-state.md`
 4. `docs/HARNESS_RUNTIME.md`
 5. `docs/AGENT_HARNESS_STATUS.md`
-6. `codex/skills/project-lifecycle-harness/SKILL.md`
-7. `/Users/kezheng/.codex/skills/project-lifecycle-harness/SKILL.md`
+6. `codex/skills/delivery-harness-framework/SKILL.md`
+7. `/Users/kezheng/.codex/skills/delivery-harness-framework/SKILL.md`
 
 Then run the recovery probes:
 
@@ -76,7 +76,7 @@ Key runtime surfaces now present:
 ## Important Gap
 
 The repo runtime has advanced further than the current generic
-`project-lifecycle-harness` skill text.
+`delivery-harness-framework` skill text.
 
 The current skill still describes the right lifecycle protocol, but it does not
 yet fully route through the latest helper CLIs:
@@ -96,7 +96,7 @@ behavior.
 
 ## Suggested Next Task
 
-Update `codex/skills/project-lifecycle-harness/SKILL.md` so it matches the
+Update `codex/skills/delivery-harness-framework/SKILL.md` so it matches the
 current Harness Runtime:
 
 1. Add latest runtime helper surfaces and when to use each helper.
@@ -120,7 +120,7 @@ python3 test_runner.py
 git diff --check
 ./scripts/sync_codex_home.sh --repo-root "$(pwd)" --codex-home "$HOME/.codex" --skip-superpowers-sync
 ./scripts/verify_codex_env.sh --repo-root "$(pwd)" --codex-home "$HOME/.codex" --claude-home "$HOME/.claude"
-cmp codex/skills/project-lifecycle-harness/SKILL.md "$HOME/.codex/skills/project-lifecycle-harness/SKILL.md"
+cmp codex/skills/delivery-harness-framework/SKILL.md "$HOME/.codex/skills/delivery-harness-framework/SKILL.md"
 ```
 
 Required final evidence fields:
@@ -156,7 +156,7 @@ Required final evidence fields:
 ## Copy-Paste Prompt For New Session
 
 ```text
-请在 MyCodexEnv 中继续更新通用 skill：project-lifecycle-harness。
+请在 MyCodexEnv 中继续更新通用 skill：delivery-harness-framework。
 
 工作目录：
 /Users/kezheng/Codes/CursorDeveloper/MyCodexEnv
@@ -168,10 +168,10 @@ Required final evidence fields:
 4. docs/HARNESS_RUNTIME.md
 5. docs/AGENT_HARNESS_STATUS.md
 6. docs/handoffs/2026-05-11-harness-runtime-current-state.md
-7. codex/skills/project-lifecycle-harness/SKILL.md
+7. codex/skills/delivery-harness-framework/SKILL.md
 
 目标：
-- 让 project-lifecycle-harness 符合当前完整 Harness Runtime。
+- 让 delivery-harness-framework 符合当前完整 Harness Runtime。
 - 将 requirements/recovery/env probe/report/agent team/checkpoint helpers 纳入路由。
 - 将 generic skill 与 gstack skill 的生命周期分工写进 skill。
 - 保持 skill generic，不写入业务 repo 专属路径。
@@ -182,5 +182,5 @@ Required final evidence fields:
 - python3 test_runner.py
 - git diff --check
 - ./scripts/verify_codex_env.sh --repo-root "$(pwd)" --codex-home "$HOME/.codex" --claude-home "$HOME/.claude"
-- cmp codex/skills/project-lifecycle-harness/SKILL.md "$HOME/.codex/skills/project-lifecycle-harness/SKILL.md"
+- cmp codex/skills/delivery-harness-framework/SKILL.md "$HOME/.codex/skills/delivery-harness-framework/SKILL.md"
 ```

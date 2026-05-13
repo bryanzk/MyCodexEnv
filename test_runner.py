@@ -204,32 +204,32 @@ def test_sync_renders_template_and_copies_skills():
             (codex_home / "skills" / "gstack-ship" / "SKILL.md").exists(),
             "gstack namespaced ship skill should be copied",
         )
-        project_lifecycle_skill = codex_home / "skills" / "project-lifecycle-harness" / "SKILL.md"
-        project_lifecycle_agent = codex_home / "skills" / "project-lifecycle-harness" / "agents" / "openai.yaml"
-        require(project_lifecycle_skill.exists(), "project lifecycle harness skill should be copied")
-        require(project_lifecycle_agent.exists(), "project lifecycle harness OpenAI agent metadata should be copied")
+        delivery_harness_skill = codex_home / "skills" / "delivery-harness-framework" / "SKILL.md"
+        delivery_harness_agent = codex_home / "skills" / "delivery-harness-framework" / "agents" / "openai.yaml"
+        require(delivery_harness_skill.exists(), "delivery harness framework skill should be copied")
+        require(delivery_harness_agent.exists(), "delivery harness framework OpenAI agent metadata should be copied")
         require(
-            project_lifecycle_skill.read_text(encoding="utf-8")
-            == (ROOT / "codex" / "skills" / "project-lifecycle-harness" / "SKILL.md").read_text(encoding="utf-8"),
-            "runtime project lifecycle harness skill should match source",
+            delivery_harness_skill.read_text(encoding="utf-8")
+            == (ROOT / "codex" / "skills" / "delivery-harness-framework" / "SKILL.md").read_text(encoding="utf-8"),
+            "runtime delivery harness framework skill should match source",
         )
         require(
-            project_lifecycle_agent.read_text(encoding="utf-8")
-            == (ROOT / "codex" / "skills" / "project-lifecycle-harness" / "agents" / "openai.yaml").read_text(encoding="utf-8"),
-            "runtime project lifecycle harness agent metadata should match source",
+            delivery_harness_agent.read_text(encoding="utf-8")
+            == (ROOT / "codex" / "skills" / "delivery-harness-framework" / "agents" / "openai.yaml").read_text(encoding="utf-8"),
+            "runtime delivery harness framework agent metadata should match source",
         )
 
     print("[PASS] sync render + skills copy")
 
 
-def test_project_lifecycle_harness_stays_generic():
-    skill_root = ROOT / "codex" / "skills" / "project-lifecycle-harness"
+def test_delivery_harness_framework_stays_generic():
+    skill_root = ROOT / "codex" / "skills" / "delivery-harness-framework"
     skill_text = (skill_root / "SKILL.md").read_text(encoding="utf-8")
     agent_text = (skill_root / "agents" / "openai.yaml").read_text(encoding="utf-8")
 
-    require("name: project-lifecycle-harness" in skill_text, "project lifecycle harness skill name missing")
+    require("name: delivery-harness-framework" in skill_text, "delivery harness framework skill name missing")
     require(
-        "Use $project-lifecycle-harness" in agent_text,
+        "Use $delivery-harness-framework" in agent_text,
         "OpenAI agent metadata should route to the generic lifecycle harness",
     )
     forbidden_terms = [
@@ -243,13 +243,13 @@ def test_project_lifecycle_harness_stays_generic():
     ]
     combined = f"{skill_text}\n{agent_text}"
     offenders = [term for term in forbidden_terms if term in combined]
-    require(not offenders, f"generic project lifecycle harness contains project-specific terms: {offenders}")
+    require(not offenders, f"generic delivery harness framework contains project-specific terms: {offenders}")
 
-    print("[PASS] project lifecycle harness generic boundary")
+    print("[PASS] delivery harness framework generic boundary")
 
 
-def test_project_lifecycle_harness_routes_runtime_helpers():
-    skill_text = (ROOT / "codex" / "skills" / "project-lifecycle-harness" / "SKILL.md").read_text(encoding="utf-8")
+def test_delivery_harness_framework_routes_runtime_helpers():
+    skill_text = (ROOT / "codex" / "skills" / "delivery-harness-framework" / "SKILL.md").read_text(encoding="utf-8")
 
     required_runtime_helpers = [
         "scripts/harness_requirements.py",
@@ -260,7 +260,7 @@ def test_project_lifecycle_harness_routes_runtime_helpers():
         "scripts/harness_checkpoint.py",
     ]
     for helper in required_runtime_helpers:
-        require(helper in skill_text, f"project lifecycle harness should route through {helper}")
+        require(helper in skill_text, f"delivery harness framework should route through {helper}")
 
     required_commands = [
         "scripts/harness_requirements.py validate PATH",
@@ -271,7 +271,7 @@ def test_project_lifecycle_harness_routes_runtime_helpers():
         "scripts/harness_checkpoint.py append",
     ]
     for command in required_commands:
-        require(command in skill_text, f"project lifecycle harness missing command route: {command}")
+        require(command in skill_text, f"delivery harness framework missing command route: {command}")
 
     gstack_routes = [
         "gstack-plan-ceo-review",
@@ -286,7 +286,7 @@ def test_project_lifecycle_harness_routes_runtime_helpers():
         "gstack-document-release",
     ]
     for route in gstack_routes:
-        require(route in skill_text, f"project lifecycle harness missing gstack lifecycle route: {route}")
+        require(route in skill_text, f"delivery harness framework missing gstack lifecycle route: {route}")
 
     boundary_terms = [
         "generic lifecycle router",
@@ -294,16 +294,16 @@ def test_project_lifecycle_harness_routes_runtime_helpers():
         "gstack owns",
     ]
     for term in boundary_terms:
-        require(term in skill_text, f"project lifecycle harness missing lifecycle boundary term: {term}")
+        require(term in skill_text, f"delivery harness framework missing lifecycle boundary term: {term}")
 
-    print("[PASS] project lifecycle harness runtime helper routes")
+    print("[PASS] delivery harness framework runtime helper routes")
 
 
-def test_project_lifecycle_harness_eval_matrix():
-    eval_path = ROOT / "codex" / "skills" / "project-lifecycle-harness" / "evals" / "evals.json"
-    require(eval_path.exists(), "project lifecycle harness eval matrix should exist")
+def test_delivery_harness_framework_eval_matrix():
+    eval_path = ROOT / "codex" / "skills" / "delivery-harness-framework" / "evals" / "evals.json"
+    require(eval_path.exists(), "delivery harness framework eval matrix should exist")
     data = json.loads(eval_path.read_text(encoding="utf-8"))
-    require(data.get("skill_name") == "project-lifecycle-harness", "eval matrix should target project-lifecycle-harness")
+    require(data.get("skill_name") == "delivery-harness-framework", "eval matrix should target delivery-harness-framework")
     evals = data.get("evals")
     require(isinstance(evals, list) and evals, "eval matrix should contain evals")
 
@@ -327,7 +327,7 @@ def test_project_lifecycle_harness_eval_matrix():
         "eval matrix should cover requirements helper progressive loading",
     )
 
-    print("[PASS] project lifecycle harness eval matrix")
+    print("[PASS] delivery harness framework eval matrix")
 
 
 def test_sync_agents_only_copies_and_backs_up_agents():
@@ -424,7 +424,7 @@ def test_lifecycle_skill_routing_doc_is_discoverable():
         require(f"`{stage}`" in doc_text, f"lifecycle routing doc missing stage: {stage}")
 
     required_terms = [
-        "project-lifecycle-harness",
+        "delivery-harness-framework",
         "gstack-plan-eng-review",
         "gstack-qa",
         "gstack-document-release",
@@ -442,7 +442,7 @@ def test_lifecycle_skill_routing_doc_is_discoverable():
                 'lang="zh-CN"',
                 "通用项目生命周期路由流程",
                 "flowchart TD",
-                "project-lifecycle-harness",
+                "delivery-harness-framework",
                 "gstack-document-release",
                 "harness_checkpoint.py",
             ],
@@ -1585,9 +1585,9 @@ def main():
     test_sync_ignores_legacy_eigenphi_argument()
     test_codex_version_policy_accepts_current_cli()
     test_sync_renders_template_and_copies_skills()
-    test_project_lifecycle_harness_stays_generic()
-    test_project_lifecycle_harness_routes_runtime_helpers()
-    test_project_lifecycle_harness_eval_matrix()
+    test_delivery_harness_framework_stays_generic()
+    test_delivery_harness_framework_routes_runtime_helpers()
+    test_delivery_harness_framework_eval_matrix()
     test_sync_agents_only_copies_and_backs_up_agents()
     test_harness_runtime_surfaces_exist_and_parse()
     test_lifecycle_skill_routing_doc_is_discoverable()

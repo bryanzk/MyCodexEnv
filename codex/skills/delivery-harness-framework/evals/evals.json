@@ -1,5 +1,5 @@
 {
-  "skill_name": "project-lifecycle-harness",
+  "skill_name": "delivery-harness-framework",
   "evals": [
     {
       "id": "routing-positive-handoff-takeover",
@@ -50,7 +50,7 @@
       "expected_output": "The agent should route to QA/browser workflow rather than the generic lifecycle harness.",
       "assertions": [
         "The output selects a QA or browser testing workflow.",
-        "The output does not use project-lifecycle-harness as the primary executor.",
+        "The output does not use delivery-harness-framework as the primary executor.",
         "The output includes browser-visible checks."
       ]
     },

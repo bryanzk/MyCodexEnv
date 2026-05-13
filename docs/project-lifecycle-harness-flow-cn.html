@@ -544,7 +544,7 @@
         <div class="eyebrow">Delivery Harness Framework</div>
         <h1>通用项目生命周期路由流程</h1>
         <p class="subtitle">
-          这张图把 <code>project-lifecycle-harness</code> 放在入口层：先恢复状态、确认阶段、选择专门 skill 或 helper，再进入开发、验证、评审、交付和交接。通用 skill 只做跨仓库路由；业务路径交给 repo-specific harness；产品、工程、QA、安全和发布交给 gstack 系列 skill。
+          这张图把 <code>delivery-harness-framework</code> 放在入口层：先恢复状态、确认阶段、选择专门 skill 或 helper，再进入开发、验证、评审、交付和交接。通用 skill 只做跨仓库路由；业务路径交给 repo-specific harness；产品、工程、QA、安全和发布交给 gstack 系列 skill。
         </p>
       </section>
 
@@ -568,7 +568,7 @@
           </div>
           <div class="mermaid">
 flowchart TD
-  A["入口<br/>使用 project-lifecycle-harness"]:::router
+  A["入口<br/>使用 delivery-harness-framework"]:::router
   B["读取本地规则<br/>AGENTS.md 和 repo-index"]:::router
   C["恢复当前状态<br/>harness_recover.py"]:::helper
   D["探测运行环境<br/>harness_env_probe.py"]:::helper
@@ -632,7 +632,7 @@ flowchart TD
           <article class="stage-card" style="--card-accent: var(--blue)">
             <h3>启动与恢复</h3>
             <p>用于新会话、接手 handoff、状态不明或需要先读 repo 事实。</p>
-            <div class="badges"><span class="badge">project-lifecycle-harness</span><span class="badge">harness_recover.py</span><span class="badge">harness_env_probe.py</span></div>
+            <div class="badges"><span class="badge">delivery-harness-framework</span><span class="badge">harness_recover.py</span><span class="badge">harness_env_probe.py</span></div>
           </article>
           <article class="stage-card" style="--card-accent: var(--green)">
             <h3>需求锁定</h3>
@@ -751,7 +751,7 @@ flowchart TD
           </ul>
         </div>
         <div class="footer">
-          生成来源：<code>docs/LIFECYCLE_SKILL_ROUTING.md</code> 与 <code>project-lifecycle-harness/SKILL.md</code> 当前路由规则。文件位置：<code>docs/project-lifecycle-harness-flow-cn.html</code>。
+          生成来源：<code>docs/LIFECYCLE_SKILL_ROUTING.md</code> 与 <code>delivery-harness-framework/SKILL.md</code> 当前路由规则。文件位置：<code>docs/project-lifecycle-harness-flow-cn.html</code>。
         </div>
       </section>
     </main>

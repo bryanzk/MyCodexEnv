@@ -435,7 +435,7 @@
         <div class="eyebrow">Delivery Harness Framework / DHF Skill Routing</div>
         <h1>Which skill powers each DHF stage.</h1>
         <p class="lead">
-          MyCodexEnv uses <code>project-lifecycle-harness</code> as the Delivery Harness Framework (DHF) entry point. DHF restores runtime facts, probes the Codex environment, identifies the lifecycle stage, and routes the work to a repo-specific harness, a gstack specialist skill, local development and verification skills, or deterministic runtime helpers. Helpers provide a machine-checkable execution layer; skills provide cognitive orchestration.
+          MyCodexEnv uses <code>delivery-harness-framework</code> as the Delivery Harness Framework (DHF) entry point. DHF restores runtime facts, probes the Codex environment, identifies the lifecycle stage, and routes the work to a repo-specific harness, a gstack specialist skill, local development and verification skills, or deterministic runtime helpers. Helpers provide a machine-checkable execution layer; skills provide cognitive orchestration.
         </p>
         <div class="kpis">
           <div class="kpi"><strong>8</strong><span>standard lifecycle stages</span></div>
@@ -527,7 +527,7 @@ flowchart TD
             <tbody>
               <tr>
                 <td class="phase">Start / recover</td>
-                <td><span class="badge primary">project-lifecycle-harness</span></td>
+                <td><span class="badge primary">delivery-harness-framework</span></td>
                 <td><code>scripts/harness_recover.py --json</code><br><code>scripts/harness_env_probe.py --json</code></td>
                 <td>Any complex task, resumed session, dirty worktree, cross-stage handoff, or ambiguous request.</td>
               </tr>
@@ -575,7 +575,7 @@ flowchart TD
               </tr>
               <tr>
                 <td class="phase">Docs / handoff</td>
-                <td><span class="badge ship">gstack-document-release</span><span class="badge ship">doc-updater</span><span class="badge ship">project-lifecycle-harness</span></td>
+                <td><span class="badge ship">gstack-document-release</span><span class="badge ship">doc-updater</span><span class="badge ship">delivery-harness-framework</span></td>
                 <td><code>scripts/harness_checkpoint.py append</code><br><code>scripts/harness_report.py --json</code></td>
                 <td>Docs need to reflect delivered behavior, or the session must persist next-safe-task state.</td>
               </tr>

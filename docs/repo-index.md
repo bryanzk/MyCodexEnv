@@ -19,7 +19,7 @@
 - `codex/AGENTS.md`: global Codex rules source copied into `~/.codex/AGENTS.md`.
 
 ## Runtime Surfaces
-- `codex/skills/project-lifecycle-harness/`: lifecycle router skill.
+- `codex/skills/delivery-harness-framework/`: lifecycle router skill.
 - `codex/runtime/tool-policy.json`: stage-aware tool and permission policy.
 - `codex/runtime/evidence.schema.json`: local evidence JSONL event contract.
 - `codex/hooks/`: Codex lifecycle hooks copied to `~/.codex/hooks/`.

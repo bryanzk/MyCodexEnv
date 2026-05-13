@@ -570,7 +570,7 @@
           <article class="card route">
             <div class="label">Layer 02</div>
             <h3>Router layer</h3>
-            <p><code>project-lifecycle-harness</code> 读取 durable state，恢复当前阶段，选择下一条 workflow。它回答：现在应该进入 research、requirements、planning、development、validation、review、ship 还是 handoff。</p>
+            <p><code>delivery-harness-framework</code> 读取 durable state，恢复当前阶段，选择下一条 workflow。它回答：现在应该进入 research、requirements、planning、development、validation、review、ship 还是 handoff。</p>
             <div class="badges"><span class="badge">phase</span><span class="badge">routing</span><span class="badge">next safe task</span></div>
           </article>
           <article class="card build">
@@ -633,9 +633,9 @@
               </tr>
             </thead>
             <tbody>
-              <tr><td>Harness</td><td>把 agent 工作固定在安全流程里的“安全带”和“交付轨道”。</td><td><code>project-lifecycle-harness</code>、runtime docs、helpers</td></tr>
+              <tr><td>Harness</td><td>把 agent 工作固定在安全流程里的“安全带”和“交付轨道”。</td><td><code>delivery-harness-framework</code>、runtime docs、helpers</td></tr>
               <tr><td>Runtime</td><td>围绕模型运行的规则、权限、证据、状态和 hooks。</td><td><code>docs/HARNESS_RUNTIME.md</code>、<code>codex/runtime/*</code></td></tr>
-              <tr><td>Router</td><td>决定当前任务处于哪个阶段、该交给哪个技能或脚本。</td><td><code>project-lifecycle-harness</code></td></tr>
+              <tr><td>Router</td><td>决定当前任务处于哪个阶段、该交给哪个技能或脚本。</td><td><code>delivery-harness-framework</code></td></tr>
               <tr><td>Skill</td><td>认知工作流：规划、TDD、QA、安全、发布、文档等。</td><td><code>codex/skills/*</code>、<code>gstack-*</code></td></tr>
               <tr><td>Helper</td><td>确定性脚本：恢复、探测、验证、报告、checkpoint。</td><td><code>scripts/harness_*.py</code></td></tr>
               <tr><td>Evidence</td><td>证明任务完成的新鲜命令结果。</td><td><code>command</code>、<code>exit_code</code>、<code>key_output</code>、<code>timestamp</code></td></tr>

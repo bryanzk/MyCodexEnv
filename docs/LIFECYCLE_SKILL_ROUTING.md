@@ -10,7 +10,7 @@ MyCodexEnv has three layers:
 
 - Runtime layer: `AGENTS.md`, hooks, tool policy, evidence schema, verification
   scripts, and checkpoint helpers.
-- Router layer: `project-lifecycle-harness`, which reads durable state,
+- Router layer: `delivery-harness-framework`, which reads durable state,
   classifies the lifecycle stage, and selects the next workflow.
 - Specialist layer: repo-specific lifecycle adapters, gstack skills, local
   planning/testing/review skills, and deterministic helper scripts.
@@ -48,7 +48,7 @@ adapter skills.
 | Environment reproduction | Clone, bootstrap, sync Codex/Claude homes, install pinned prerequisites, verify local setup. | `README.md`, `bootstrap.sh`, `scripts/verify_codex_env.sh` |
 | Global rules and repo routing | Keep cross-repo Codex rules in one source and route repo-local constraints through `AGENTS.md`. | `codex/AGENTS.md`, root `AGENTS.md`, `scripts/manage_agents.py` |
 | Skill synchronization | Keep `codex/skills/*` as source of truth and copy managed skills into `~/.codex/skills/*`. | `scripts/sync_codex_home.sh` |
-| Harness lifecycle routing | Recover state, classify phase, choose generic/repo-specific/gstack workflow, define gates. | `project-lifecycle-harness` |
+| Harness lifecycle routing | Recover state, classify phase, choose generic/repo-specific/gstack workflow, define gates. | `delivery-harness-framework` |
 | Requirements and planning | Capture success criteria, scope, constraints, risks, and validation gates before implementation. | `planner`, `req-to-dev`, `task-flow-orchestrator`, `scripts/harness_requirements.py` |
 | Development execution | Make scoped repo changes, use tests first when behavior changes, preserve unrelated user work. | `tdd-guide`, `atdd-guide`, repo-local workflow |
 | Validation and evidence | Run fresh tests/checks and record `command`, `exit_code`, `key_output`, `timestamp`. | `verification-loop`, `scripts/harness_evidence.py`, `scripts/harness_report.py` |
@@ -61,7 +61,7 @@ adapter skills.
 
 | Stage | Signals | Default Permission | Skill Or Helper | Purpose |
 | --- | --- | --- | --- | --- |
-| `research` | Unknown repo, stale handoff, unclear source ownership, missing context. | Read-only. | `project-lifecycle-harness`, `scripts/harness_recover.py`, `scripts/harness_env_probe.py` | Read durable sources and recover the next safe task before acting. |
+| `research` | Unknown repo, stale handoff, unclear source ownership, missing context. | Read-only. | `delivery-harness-framework`, `scripts/harness_recover.py`, `scripts/harness_env_probe.py` | Read durable sources and recover the next safe task before acting. |
 | `requirements` | Goal, audience, acceptance criteria, scope, or constraints are unclear. | Read-only. | `planner`, `req-to-dev`, `scripts/harness_requirements.py` | Turn ambiguity into success criteria and validate requirements artifacts before treating them as source of truth. |
 | `planning` | Architecture, API shape, migration, runtime, data flow, or cross-module decisions. | Read-only by default. | `gstack-plan-eng-review`, `planner`, `task-flow-orchestrator` | Produce an implementation plan, risk list, and validation gate before edits. |
 | `development` | Acceptance criteria are clear and touched files/modules are bounded. | Scoped writes. | `tdd-guide`, `atdd-guide`, repo workflow, scoped worker agents | Implement the change with tests appropriate to the risk. |
@@ -74,7 +74,7 @@ adapter skills.
 
 | Skill | Use For | Notes |
 | --- | --- | --- |
-| `project-lifecycle-harness` | Generic startup/resume routing, durable state reads, phase classification, helper selection, evidence expectations. | Use first for complex or resumed work; delegate after phase selection. |
+| `delivery-harness-framework` | Generic startup/resume routing, durable state reads, phase classification, helper selection, evidence expectations. | Use first for complex or resumed work; delegate after phase selection. |
 | repo-specific lifecycle harnesses | Project paths, local commands, business fixtures, deployment topology, smoke matrices. | These adapters take over after the generic router identifies a repo-specific boundary. |
 | `gstack-plan-ceo-review` | Product framing, user value, scope, demo boundaries, strategic tradeoffs. | Use when product judgment is the work. |
 | `gstack-office-hours` | Founder-style pressure testing, market/user/business clarity. | Useful before committing to a product direction. |
@@ -116,7 +116,7 @@ adapter skills.
 
 ## Routing Rules
 
-- Start with `project-lifecycle-harness` when work is complex, resumed,
+- Start with `delivery-harness-framework` when work is complex, resumed,
   cross-session, security-sensitive, release-facing, or ambiguous.
 - Prefer repo-specific lifecycle harnesses when a known project adapter owns the
   business domain.

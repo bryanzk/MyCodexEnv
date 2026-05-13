@@ -1,9 +1,9 @@
 ---
-name: project-lifecycle-harness
+name: delivery-harness-framework
 description: Use when starting, resuming, or taking over a complex software project task where Codex must inspect durable repo state or handoff files, classify the lifecycle stage, choose between generic, repo-specific, gstack, and verification workflows, or preserve checkpoint evidence.
 ---
 
-# Project Lifecycle Harness
+# Delivery Harness Framework
 
 ## Overview
 
@@ -18,7 +18,7 @@ project-only commands here.
 
 ## Lifecycle Ownership
 
-- `project-lifecycle-harness` owns cross-repo startup, state recovery, phase
+- `delivery-harness-framework` owns cross-repo startup, state recovery, phase
   classification, helper routing, evidence requirements, and generic safety
   gates.
 - A repo-specific lifecycle harness owns project paths, local commands, domain

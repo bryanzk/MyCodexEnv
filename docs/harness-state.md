@@ -11,7 +11,7 @@ Stable rules belong in `AGENTS.md`, `README.md`, `docs/repo-index.md`, or
   - `docs/repo-index.md`
   - `README.md`
   - `docs/HARNESS_RUNTIME.md`
-  - `codex/skills/project-lifecycle-harness/SKILL.md`
+  - `codex/skills/delivery-harness-framework/SKILL.md`
 - blocked_sources: none
 - unsafe_inputs: none
 - next_safe_task: review and stage lifecycle skill routing documentation
@@ -32,7 +32,7 @@ Stable rules belong in `AGENTS.md`, `README.md`, `docs/repo-index.md`, or
   - `README.md`
   - `codex/AGENTS.md`
   - `docs/handoffs/2026-05-11-project-lifecycle-harness.md`
-  - `codex/skills/project-lifecycle-harness/SKILL.md`
+  - `codex/skills/delivery-harness-framework/SKILL.md`
   - `/Users/kezheng/Downloads/What Is the Agent Harness-.md`
 - decision: implement generic MyCodexEnv harness runtime without project-specific business paths.
 
@@ -138,7 +138,7 @@ Stable rules belong in `AGENTS.md`, `README.md`, `docs/repo-index.md`, or
   - key_output: No whitespace errors.
 - blockers:
   - none
-- next_safe_task: update project-lifecycle-harness skill to route through latest runtime helpers and gstack decision points
+- next_safe_task: update delivery-harness-framework skill to route through latest runtime helpers and gstack decision points
 
 ### 2026-05-11T21:27:17-04:00
 - phase: handoff

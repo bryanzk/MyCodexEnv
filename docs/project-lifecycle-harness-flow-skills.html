@@ -417,7 +417,7 @@
         <div class="eyebrow">Delivery Harness Framework / 当前 skill 路由</div>
         <h1>每个生命周期阶段该用哪个 skill。</h1>
         <p class="lead">
-          当前 MyCodexEnv 用 <code>project-lifecycle-harness</code> 做通用入口：它恢复运行时事实、探测 Codex 环境、识别生命周期阶段，然后把任务路由给 repo-specific harness、gstack 专项 skill、本地开发/验证 skill 或确定性 runtime helper。Helper 提供可机器检查的执行层，skill 负责认知编排。
+          当前 MyCodexEnv 用 <code>delivery-harness-framework</code> 做通用入口：它恢复运行时事实、探测 Codex 环境、识别生命周期阶段，然后把任务路由给 repo-specific harness、gstack 专项 skill、本地开发/验证 skill 或确定性 runtime helper。Helper 提供可机器检查的执行层，skill 负责认知编排。
         </p>
         <div class="kpis">
           <div class="kpi"><strong>8</strong><span>标准生命周期阶段</span></div>
@@ -438,7 +438,7 @@
           </div>
           <pre class="mermaid">
 flowchart TD
-  Start(["用户任务进入<br/>project-lifecycle-harness"])
+  Start(["用户任务进入<br/>delivery-harness-framework"])
   AGENTS["读取 AGENTS.md<br/>README 与 docs/repo-index.md"]
   Recover["运行 harness_recover.py --json<br/>恢复 phase、dirty state、next safe task"]
   Env["运行 harness_env_probe.py --json<br/>观测 hooks、policy、schema"]
@@ -508,7 +508,7 @@ flowchart TD
             <tbody>
               <tr>
                 <td class="phase">启动 / 恢复</td>
-                <td><span class="badge primary">project-lifecycle-harness</span></td>
+                <td><span class="badge primary">delivery-harness-framework</span></td>
                 <td><code>scripts/harness_recover.py --json</code><br><code>scripts/harness_env_probe.py --json</code></td>
                 <td>任何复杂任务、恢复会话、dirty 工作树、跨阶段交接或含糊请求。</td>
               </tr>
@@ -556,7 +556,7 @@ flowchart TD
               </tr>
               <tr>
                 <td class="phase">文档 / 交接</td>
-                <td><span class="badge ship">gstack-document-release</span><span class="badge ship">doc-updater</span><span class="badge ship">project-lifecycle-harness</span></td>
+                <td><span class="badge ship">gstack-document-release</span><span class="badge ship">doc-updater</span><span class="badge ship">delivery-harness-framework</span></td>
                 <td><code>scripts/harness_checkpoint.py append</code><br><code>scripts/harness_report.py --json</code></td>
                 <td>文档需要反映已交付行为，或会话需要持久化 next safe task 状态时。</td>
               </tr>
