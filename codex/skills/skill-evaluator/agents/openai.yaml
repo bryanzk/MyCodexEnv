@@ -1,0 +1,4 @@
+interface:
+  display_name: "Skill Evaluator"
+  short_description: "Evaluate whether a skill actually helps"
+  default_prompt: "Use $skill-evaluator to assess whether this skill should exist and how to evaluate it."

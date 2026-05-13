@@ -1,5 +1,5 @@
-model = "gpt-5.4"
-model_reasoning_effort = "high"
+model = "gpt-5.5"
+model_reasoning_effort = "medium"
 personality = "pragmatic"
 
 # EigenPhi MCP server is disabled by default.
@@ -22,3 +22,9 @@ args = ["--no-usage-statistics", "--no-performance-crux"]
 [features]
 collaboration_modes = true
 codex_hooks = true
+
+[plugins."goalbuddy@goalbuddy"]
+enabled = true
+
+[plugins."browser-use@openai-bundled"]
+enabled = true
