@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="zh-CN">
+<html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Delivery Harness Framework (DHF) 公共说明入口</title>
+  <title>Delivery Harness Framework (DHF) Public Guide</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,650;9..144,760&family=IBM+Plex+Mono:wght@400;500;600&family=Atkinson+Hyperlegible:wght@400;700&display=swap" rel="stylesheet">
@@ -12,21 +12,21 @@
       --font-body: 'Atkinson Hyperlegible', Verdana, sans-serif;
       --font-display: 'Fraunces', Georgia, serif;
       --font-mono: 'IBM Plex Mono', monospace;
-      --bg: #fbf7ef;
+      --bg: #f7f4ec;
       --surface: #fffdf8;
-      --surface2: #f2eadf;
-      --border: rgba(67, 46, 31, 0.13);
-      --text: #251d18;
-      --text-dim: #6d5f55;
+      --surface2: #ebe6da;
+      --border: rgba(51, 42, 33, 0.14);
+      --text: #231f1a;
+      --text-dim: #665f55;
       --green: #147a62;
       --green-dim: rgba(20, 122, 98, 0.11);
-      --amber: #a35d22;
-      --amber-dim: rgba(163, 93, 34, 0.12);
-      --rose: #b9475b;
-      --rose-dim: rgba(185, 71, 91, 0.10);
+      --amber: #a15f22;
+      --amber-dim: rgba(161, 95, 34, 0.12);
+      --rose: #a9475b;
+      --rose-dim: rgba(169, 71, 91, 0.10);
       --blue: #2f6f92;
       --blue-dim: rgba(47, 111, 146, 0.10);
-      --shadow: 0 18px 44px rgba(67, 46, 31, 0.10), 0 2px 10px rgba(67, 46, 31, 0.06);
+      --shadow: 0 18px 44px rgba(51, 42, 33, 0.10), 0 2px 10px rgba(51, 42, 33, 0.06);
     }
 
     @media (prefers-color-scheme: dark) {
@@ -111,9 +111,8 @@
       max-width: 100%;
       font-family: var(--font-display);
       font-size: clamp(38px, 5.9vw, 76px);
-      line-height: 0.94;
-      letter-spacing: -0.02em;
-      white-space: nowrap;
+      line-height: 0.96;
+      letter-spacing: 0;
     }
 
     .lead {
@@ -165,7 +164,7 @@
       padding: 24px;
       color: inherit;
       text-decoration: none;
-      box-shadow: 0 8px 26px rgba(67, 46, 31, 0.07);
+      box-shadow: 0 8px 26px rgba(51, 42, 33, 0.07);
       transition: transform 0.16s ease, border-color 0.16s ease, box-shadow 0.16s ease;
     }
 
@@ -187,6 +186,7 @@
       font-family: var(--font-display);
       font-size: 34px;
       line-height: 1.02;
+      letter-spacing: 0;
     }
 
     .card p {
@@ -218,7 +218,6 @@
       body { padding: 18px; }
       .grid { grid-template-columns: 1fr; }
       .hero { min-height: 0; }
-      h1 { white-space: normal; }
       .footer { flex-direction: column; }
     }
   </style>
@@ -227,76 +226,76 @@
   <main class="wrap">
     <section class="hero" style="--i:0">
       <div class="eyebrow">Delivery Harness Framework / DHF Public Guide</div>
-      <h1>从模糊请求到可验证交付。</h1>
-      <p class="lead">这组页面解释 Delivery Harness Framework (DHF) 如何把 agentic engineering 的工作组织成事实恢复、领域语义与 ADR 对齐、阶段路由、验证证据和可恢复交接。</p>
+      <h1>From ambiguous requests<br>to verifiable delivery.</h1>
+      <p class="lead">These pages explain how Delivery Harness Framework (DHF) turns agentic engineering work into fact recovery, domain and ADR alignment, lifecycle routing, verification evidence, and recoverable handoff.</p>
     </section>
 
-    <nav class="strip" aria-label="快速入口" style="--i:1">
-      <a class="tag" href="./delivery-harness-beginner-guide-cn.html">Beginner 中文指南</a>
-      <a class="tag" href="./project-lifecycle-harness-flow-cn.html">生命周期主流程</a>
-      <a class="tag" href="./project-lifecycle-harness-flow-skills-zh-status-style.html">技能路由图</a>
-      <a class="tag" href="./index-en.html">English guide</a>
-      <a class="tag" href="./LIFECYCLE_SKILL_ROUTING.md">文字路由说明</a>
+    <nav class="strip" aria-label="Quick links" style="--i:1">
+      <a class="tag" href="./index.html">Chinese landing</a>
+      <a class="tag" href="./project-lifecycle-harness-flow-skills-en-status-style.html">English flow map</a>
+      <a class="tag" href="./project-lifecycle-harness-flow-skills-en.html">Classic English map</a>
+      <a class="tag" href="./LIFECYCLE_SKILL_ROUTING.md">Routing spec</a>
+      <a class="tag" href="./project-lifecycle-harness-flow-skills-en-status-style-flowchart@2x.png">Share image</a>
     </nav>
 
-    <section class="grid" aria-label="说明页面">
-      <a class="card" href="./delivery-harness-beginner-guide-cn.html" style="--i:2">
+    <section class="grid" aria-label="Public guide pages">
+      <a class="card" href="./project-lifecycle-harness-flow-skills-en-status-style.html" style="--i:2">
         <div>
           <div class="label">Start Here</div>
-          <h2>新手先读</h2>
-          <p>用一句话定义、三层架构、五步流程、术语表和一个具体例子解释 DHF 如何避免跳过需求、测试和交接。</p>
+          <h2>Current Flow Map</h2>
+          <p>The public English DHF skill and helper routing map, including domain docs, ADR checks, vertical slices, feedback loops, prototypes, durable briefs, and handoff gates.</p>
         </div>
-        <div class="meta">适合 agentic engineering beginner</div>
+        <div class="meta">best public visual</div>
       </a>
 
-      <a class="card" href="./project-lifecycle-harness-flow-cn.html" style="--i:3">
+      <a class="card" href="./LIFECYCLE_SKILL_ROUTING.md" style="--i:3">
         <div>
-          <div class="label">Lifecycle</div>
-          <h2>主流程图</h2>
-          <p>从任务进入、读取事实、恢复状态、分类阶段，到垂直切片、验证、发布和交接的纵向流程。</p>
+          <div class="label">Reference</div>
+          <h2>Written Routing Spec</h2>
+          <p>The source-of-truth lifecycle guide for stage ownership, specialist skills, runtime helpers, agent briefs, evidence standards, and completion gates.</p>
         </div>
-        <div class="meta">看懂工作如何流动</div>
+        <div class="meta">docs/LIFECYCLE_SKILL_ROUTING.md</div>
       </a>
 
-      <a class="card" href="./project-lifecycle-harness-flow-skills-zh-status-style.html" style="--i:4">
+      <a class="card" href="./project-lifecycle-harness-flow-skills-en.html" style="--i:4">
         <div>
-          <div class="label">Routing</div>
-          <h2>技能地图</h2>
-          <p>解释每个 DHF 阶段应由哪个 skill 或 helper 接管，包括 domain docs、ADR、feedback loop 和 durable brief 触发点。</p>
+          <div class="label">Classic</div>
+          <h2>English Skill Map</h2>
+          <p>A compact English version of the lifecycle skill/helper map for readers who want a traditional flowchart view.</p>
         </div>
-        <div class="meta">看懂 agent 如何选工具</div>
+        <div class="meta">classic visual page</div>
       </a>
 
-      <a class="card" href="./index-en.html" style="--i:5">
+      <a class="card" href="./project-lifecycle-harness-flow-skills-en-status-style-flowchart@2x.png" style="--i:5">
         <div>
-          <div class="label">English</div>
-          <h2>英文入口</h2>
-          <p>为 English audience 独立整理的 DHF public guide，连接英文 skill map、文字 routing spec 和可分享图片素材。</p>
-        </div>
-        <div class="meta">docs/index-en.html</div>
-      </a>
-
-      <a class="card" href="./project-lifecycle-harness-flow-skills-en-status-style-flowchart@2x.png" style="--i:6">
-        <div>
-          <div class="label">Image</div>
-          <h2>流程图图片</h2>
-          <p>高分辨率流程图 PNG，可用于文章、演示或社交媒体。</p>
+          <div class="label">Asset</div>
+          <h2>Shareable PNG</h2>
+          <p>A high-resolution flowchart image for articles, social posts, talks, and handoff decks.</p>
         </div>
         <div class="meta">image asset</div>
       </a>
 
-      <a class="card" href="./LIFECYCLE_SKILL_ROUTING.md" style="--i:7">
+      <a class="card" href="./project-lifecycle-harness-flow-cn.html" style="--i:6">
         <div>
-          <div class="label">Reference</div>
-          <h2>文字规范</h2>
-          <p>覆盖 workflow、stage map、specialist skills、runtime helpers、routing rules、agent brief 和 evidence standard。</p>
+          <div class="label">Chinese</div>
+          <h2>Main Lifecycle Flow</h2>
+          <p>The Chinese vertical lifecycle flow shows how DHF moves from task intake through recovery, classification, slicing, validation, release, and handoff.</p>
         </div>
-        <div class="meta">source-of-truth document</div>
+        <div class="meta">Chinese visual guide</div>
+      </a>
+
+      <a class="card" href="./delivery-harness-beginner-guide-cn.html" style="--i:7">
+        <div>
+          <div class="label">Beginner</div>
+          <h2>Chinese Beginner Guide</h2>
+          <p>A plain-language guide for agentic engineering beginners, covering the DHF definition, three-layer model, five-step workflow, examples, and glossary.</p>
+        </div>
+        <div class="meta">Chinese explainer</div>
       </a>
     </section>
 
     <footer class="footer">
-      <span>Public docs entries: <strong>docs/index.html</strong> / <strong>docs/index-en.html</strong></span>
+      <span>English docs entry: <strong>docs/index-en.html</strong></span>
       <span>Watermark / brand reference: ShipAI.ca</span>
     </footer>
   </main>

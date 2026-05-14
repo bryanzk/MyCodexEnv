@@ -24,6 +24,8 @@ HARNESS_ENV_PROBE = ROOT / "scripts" / "harness_env_probe.py"
 HARNESS_REQUIREMENTS_TEMPLATE = ROOT / "docs" / "templates" / "harness-requirements.md"
 HARNESS_AGENT_BRIEF_TEMPLATE = ROOT / "docs" / "templates" / "harness-agent-brief.md"
 LIFECYCLE_SKILL_ROUTING_DOC = ROOT / "docs" / "LIFECYCLE_SKILL_ROUTING.md"
+PUBLIC_INDEX_HTML = ROOT / "docs" / "index.html"
+PUBLIC_INDEX_EN_HTML = ROOT / "docs" / "index-en.html"
 LIFECYCLE_FLOW_HTML = ROOT / "docs" / "project-lifecycle-harness-flow-cn.html"
 LIFECYCLE_SKILLS_HTML = ROOT / "docs" / "project-lifecycle-harness-flow-skills.html"
 HARNESS_GUARD = ROOT / "codex" / "hooks" / "harness_guard.py"
@@ -452,9 +454,13 @@ def test_harness_agent_brief_template():
 
 def test_lifecycle_skill_routing_doc_is_discoverable():
     require(LIFECYCLE_SKILL_ROUTING_DOC.exists(), "missing lifecycle skill routing doc")
+    require(PUBLIC_INDEX_HTML.exists(), "missing public index HTML guide")
+    require(PUBLIC_INDEX_EN_HTML.exists(), "missing English public index HTML guide")
     require(LIFECYCLE_FLOW_HTML.exists(), "missing lifecycle flow HTML guide")
     require(LIFECYCLE_SKILLS_HTML.exists(), "missing lifecycle skill routing HTML guide")
     doc_text = LIFECYCLE_SKILL_ROUTING_DOC.read_text(encoding="utf-8")
+    public_index_html = PUBLIC_INDEX_HTML.read_text(encoding="utf-8")
+    public_index_en_html = PUBLIC_INDEX_EN_HTML.read_text(encoding="utf-8")
     flow_html = LIFECYCLE_FLOW_HTML.read_text(encoding="utf-8")
     skills_html = LIFECYCLE_SKILLS_HTML.read_text(encoding="utf-8")
 
@@ -525,6 +531,34 @@ def test_lifecycle_skill_routing_doc_is_discoverable():
     for filename, (text, terms) in html_expectations.items():
         for term in terms:
             require(term in text, f"{filename} missing visual guide term: {term}")
+
+    public_index_expectations = {
+        PUBLIC_INDEX_HTML.name: (
+            public_index_html,
+            [
+                'lang="zh-CN"',
+                'href="./index-en.html"',
+                "英文入口",
+                "docs/index-en.html",
+            ],
+        ),
+        PUBLIC_INDEX_EN_HTML.name: (
+            public_index_en_html,
+            [
+                'lang="en"',
+                "From ambiguous requests",
+                'href="./index.html"',
+                'href="./project-lifecycle-harness-flow-skills-en-status-style.html"',
+                'href="./project-lifecycle-harness-flow-skills-en.html"',
+                'href="./LIFECYCLE_SKILL_ROUTING.md"',
+                "domain and ADR alignment",
+                "docs/index-en.html",
+            ],
+        ),
+    }
+    for filename, (text, terms) in public_index_expectations.items():
+        for term in terms:
+            require(term in text, f"{filename} missing public entry term: {term}")
 
     primary_docs = [
         ROOT / "README.md",

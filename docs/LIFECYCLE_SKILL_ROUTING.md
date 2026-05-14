@@ -21,7 +21,8 @@ adapter skills.
 
 ## Visual Guides
 
-- `docs/index.html`: Delivery Harness Framework public landing page for GitHub Pages.
+- `docs/index.html`: Chinese Delivery Harness Framework public landing page for GitHub Pages.
+- `docs/index-en.html`: English Delivery Harness Framework public landing page for English readers.
 - `docs/delivery-harness-beginner-guide-cn.html`: 中文 beginner guide，用一句话定义、三层架构、五步流程、例子和术语表解释 Delivery Harness Framework。
 - `docs/project-lifecycle-harness-flow-cn.html`: 中文纵向主流程图，帮助用户从入口、状态恢复、阶段分类一路看到验证、发布和交接。
 - `docs/project-lifecycle-harness-flow-skills.html`: 中文 skill/helper 路由速查页，帮助用户理解每个生命周期阶段应使用哪个 skill，以及 helper 的执行职责。
@@ -32,7 +33,8 @@ adapter skills.
 
 - `README.md`: top-level quick start and Harness Runtime overview.
 - `docs/repo-index.md`: low-token repo navigation and runtime surface index.
-- `docs/index.html`: public Delivery Harness Framework docs entry.
+- `docs/index.html`: Chinese public Delivery Harness Framework docs entry.
+- `docs/index-en.html`: English public Delivery Harness Framework docs entry.
 - `docs/delivery-harness-beginner-guide-cn.html`: beginner-oriented Chinese explanation.
 - `docs/HARNESS_RUNTIME.md`: lifecycle, evidence, checkpoint, permission, and subagent contracts.
 - `docs/AGENT_HARNESS_STATUS.md`: Agent Harness workflow/infra status map.
