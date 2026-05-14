@@ -13,6 +13,8 @@
 - `docs/LIFECYCLE_SKILL_ROUTING.md`: Chinese lifecycle-to-skill routing map for current project workflows.
 - `docs/index.html`: Chinese public Delivery Harness Framework docs landing page for GitHub Pages.
 - `docs/index-en.html`: English public Delivery Harness Framework docs landing page for GitHub Pages.
+- `docs/dhf-workflow-skills-cn.html`: Chinese DHF workflow skill inventory with GitHub source links.
+- `docs/dhf-workflow-skills-en.html`: English DHF workflow skill inventory with GitHub source links.
 - `docs/delivery-harness-beginner-guide-cn.html`: Chinese beginner guide for agentic engineering readers.
 - `docs/project-lifecycle-harness-flow-cn.html`: Chinese vertical lifecycle flow visual guide.
 - `docs/project-lifecycle-harness-flow-skills.html`: Chinese skill/helper routing visual guide.
@@ -38,6 +40,8 @@
 - `docs/LIFECYCLE_SKILL_ROUTING.md`: stage, workflow, skill, and helper usage guide.
 - `docs/index.html`: Chinese public docs landing page.
 - `docs/index-en.html`: English public docs landing page.
+- `docs/dhf-workflow-skills-cn.html`: Chinese workflow skill inventory with GitHub links.
+- `docs/dhf-workflow-skills-en.html`: English workflow skill inventory with GitHub links.
 - `docs/delivery-harness-beginner-guide-cn.html`: beginner-oriented Delivery Harness Framework explanation.
 - `docs/project-lifecycle-harness-flow-cn.html`: visual vertical lifecycle flow.
 - `docs/project-lifecycle-harness-flow-skills.html`: visual skill/helper routing map.
@@ -51,6 +55,8 @@
 - `docs/LIFECYCLE_SKILL_ROUTING.md`: lifecycle stage, workflow, skill, and helper routing.
 - `docs/index.html`: GitHub Pages Chinese public entry for Delivery Harness Framework guides.
 - `docs/index-en.html`: GitHub Pages English public entry for Delivery Harness Framework guides.
+- `docs/dhf-workflow-skills-cn.html`: GitHub Pages Chinese DHF workflow skill inventory.
+- `docs/dhf-workflow-skills-en.html`: GitHub Pages English DHF workflow skill inventory.
 - `docs/delivery-harness-beginner-guide-cn.html`: beginner guide explaining what Delivery Harness Framework does.
 - `docs/project-lifecycle-harness-flow-cn.html`: Chinese vertical lifecycle flow.
 - `docs/project-lifecycle-harness-flow-skills.html`: Chinese lifecycle skill/helper routing visual guide.

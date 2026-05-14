@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DHF 工作流程 Skill 矩阵</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,650;9..144,760&family=IBM+Plex+Mono:wght@400;500;600&family=Atkinson+Hyperlegible:wght@400;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --font-body: 'Atkinson Hyperlegible', Verdana, sans-serif;
+      --font-display: 'Fraunces', Georgia, serif;
+      --font-mono: 'IBM Plex Mono', monospace;
+      --bg: #fbf7ef;
+      --surface: #fffdf8;
+      --surface-strong: #efe6d9;
+      --border: rgba(67, 46, 31, 0.14);
+      --text: #251d18;
+      --dim: #6d5f55;
+      --green: #147a62;
+      --amber: #a35d22;
+      --blue: #2f6f92;
+      --rose: #b9475b;
+      --shadow: 0 18px 42px rgba(67, 46, 31, 0.10);
+    }
+
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #15120f;
+        --surface: #211c18;
+        --surface-strong: #2d261f;
+        --border: rgba(255, 239, 218, 0.14);
+        --text: #f6eee3;
+        --dim: #b8aa9a;
+        --green: #5cd0b2;
+        --amber: #f3b36b;
+        --blue: #91c8e6;
+        --rose: #f095a5;
+      }
+    }
+
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      color: var(--text);
+      font-family: var(--font-body);
+      background:
+        linear-gradient(135deg, transparent 0 26px, rgba(67, 46, 31, 0.08) 27px, transparent 28px),
+        radial-gradient(circle at 12% 10%, color-mix(in srgb, var(--green) 18%, transparent), transparent 36%),
+        radial-gradient(circle at 88% 24%, color-mix(in srgb, var(--amber) 16%, transparent), transparent 34%),
+        var(--bg);
+      background-size: 44px 44px, auto, auto, auto;
+      padding: 38px;
+      overflow-wrap: break-word;
+    }
+
+    a { color: inherit; }
+    .wrap { max-width: 1220px; margin: 0 auto; display: grid; gap: 24px; }
+    .hero, .panel, .stage { border: 1px solid var(--border); box-shadow: var(--shadow); }
+
+    .hero {
+      display: grid;
+      gap: 22px;
+      padding: clamp(30px, 5vw, 58px);
+      border-radius: 24px;
+      background: color-mix(in srgb, var(--surface) 88%, var(--green) 12%);
+    }
+
+    .eyebrow, .tag, .label, .source-link, .step-number {
+      font-family: var(--font-mono);
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    .eyebrow { color: var(--green); font-size: 13px; font-weight: 600; }
+    h1, h2, h3 { font-family: var(--font-display); letter-spacing: 0; }
+    h1 { max-width: 920px; margin: 0; font-size: clamp(42px, 6vw, 82px); line-height: 0.95; }
+    .lead { max-width: 850px; margin: 0; color: var(--dim); font-size: clamp(18px, 2.1vw, 24px); line-height: 1.52; }
+
+    .links { display: flex; flex-wrap: wrap; gap: 10px; }
+    .tag {
+      display: inline-flex;
+      align-items: center;
+      min-height: 36px;
+      padding: 8px 13px;
+      border-radius: 999px;
+      color: var(--green);
+      background: color-mix(in srgb, var(--surface) 76%, var(--green) 12%);
+      border: 1px solid color-mix(in srgb, var(--green) 28%, transparent);
+      font-size: 11px;
+      text-decoration: none;
+    }
+
+    .panel {
+      display: grid;
+      gap: 12px;
+      padding: 22px;
+      border-radius: 18px;
+      background: color-mix(in srgb, var(--surface) 86%, transparent);
+    }
+
+    .panel h2 { margin: 0; font-size: clamp(28px, 3vw, 42px); line-height: 1; }
+    .panel p { margin: 0; color: var(--dim); line-height: 1.55; }
+
+    .stage-list { display: grid; gap: 16px; }
+    .stage {
+      display: grid;
+      grid-template-columns: 220px minmax(0, 1fr);
+      gap: 18px;
+      padding: 18px;
+      border-radius: 20px;
+      background: var(--surface);
+    }
+
+    .stage-head {
+      display: grid;
+      align-content: start;
+      gap: 10px;
+      padding: 18px;
+      border-radius: 14px;
+      background: var(--surface-strong);
+      border: 1px solid var(--border);
+    }
+
+    .step-number { color: var(--amber); font-size: 11px; font-weight: 700; }
+    .stage-head h3 { margin: 0; font-size: 26px; line-height: 1.02; }
+    .stage-head p { margin: 0; color: var(--dim); line-height: 1.45; font-size: 14px; }
+
+    .skills {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px;
+    }
+
+    .skill {
+      min-width: 0;
+      display: grid;
+      gap: 10px;
+      padding: 16px;
+      border-radius: 14px;
+      border: 1px solid var(--border);
+      background: color-mix(in srgb, var(--surface) 94%, var(--blue) 6%);
+    }
+
+    .skill strong { font-size: 18px; line-height: 1.2; }
+    .skill p { margin: 0; color: var(--dim); line-height: 1.5; }
+    .source-link { color: var(--blue); font-size: 11px; font-weight: 700; text-decoration: none; }
+    .source-link:hover { text-decoration: underline; }
+
+    .label { color: var(--rose); font-size: 11px; font-weight: 700; }
+    .footer {
+      display: flex;
+      justify-content: space-between;
+      gap: 16px;
+      color: var(--dim);
+      border-top: 1px solid var(--border);
+      padding-top: 18px;
+      font-family: var(--font-mono);
+      font-size: 12px;
+      line-height: 1.5;
+    }
+
+    @media (max-width: 860px) {
+      body { padding: 18px; }
+      .stage { grid-template-columns: 1fr; }
+      .skills { grid-template-columns: 1fr; }
+      .footer { flex-direction: column; }
+    }
+  </style>
+</head>
+<body>
+  <main class="wrap">
+    <section class="hero">
+      <div class="eyebrow">Delivery Harness Framework / Skill Inventory</div>
+      <h1>DHF 每一步由哪些 Skill 接管。</h1>
+      <p class="lead">本页把当前 DHF 工作流程拆成逐步矩阵：每一步使用哪些 Skill、这些 Skill 具体做什么，并附上对应的 GitHub 源码链接。</p>
+      <nav class="links" aria-label="相关页面">
+        <a class="tag" href="./dhf-workflow-skills-en.html">English version</a>
+        <a class="tag" href="./index.html">中文入口</a>
+        <a class="tag" href="./LIFECYCLE_SKILL_ROUTING.md">文字路由规范</a>
+        <a class="tag" href="https://github.com/bryanzk/MyCodexEnv/tree/main/codex/skills">GitHub 全部 Skills</a>
+      </nav>
+    </section>
+
+    <section class="panel">
+      <div class="label">How to read this</div>
+      <h2>DHF 先路由，再委托给专用 Skill。</h2>
+      <p>生命周期路由器负责恢复持久状态、判断阶段、选择专用工作流。Helper scripts 负责验证证据或 agent plan；本页聚焦 Skill，因为它们定义每个阶段中 agent 应该怎样行动。</p>
+    </section>
+
+    <section class="stage-list" aria-label="DHF 工作流程 Skill 矩阵">
+      <article class="stage">
+        <div class="stage-head">
+          <div class="step-number">Step 01</div>
+          <h3>恢复与路由</h3>
+          <p>从 repo 持久状态启动或恢复复杂任务，然后选择下一步工作流。</p>
+        </div>
+        <div class="skills">
+          <div class="skill"><strong>delivery-harness-framework</strong><p>读取 repo 指南、恢复当前阶段、分类生命周期、选择下一步 skill/helper，并明确验证证据门槛。</p><a class="source-link" href="https://github.com/bryanzk/MyCodexEnv/blob/main/codex/skills/delivery-harness-framework/SKILL.md">GitHub 源码</a></div>
+          <div class="skill"><strong>shipq-lifecycle-harness</strong><p>repo-specific lifecycle adapter 示例。已知项目需要业务路径、本地命令、fixtures 或部署边界时，由它接管。</p><a class="source-link" href="https://github.com/bryanzk/MyCodexEnv/blob/main/codex/skills/shipq-lifecycle-harness/SKILL.md">GitHub 源码</a></div>
+        </div>
+      </article>
+
+      <article class="stage">
+        <div class="stage-head">
+          <div class="step-number">Step 02</div>
+          <h3>需求澄清</h3>
+          <p>把模糊目标变成成功标准、范围、约束和可作为 source of truth 的材料。</p>
+        </div>
+        <div class="skills">
+          <div class="skill"><strong>planner</strong><p>分析复杂需求、架构上下文、任务拆解与风险，在改代码前把问题边界理清。</p><a class="source-link" href="https://github.com/bryanzk/MyCodexEnv/blob/main/codex/skills/planner/SKILL.md">GitHub 源码</a></div>
+          <div class="skill"><strong>req-to-dev</strong><p>把需求或原则文档转成可执行开发包，包括计划、安全网、契约、验收测试和 owner 分工。</p><a class="source-link" href="https://github.com/bryanzk/MyCodexEnv/blob/main/codex/skills/req-to-dev/SKILL.md">GitHub 源码</a></div>
+        </div>
+      </article>
+
+      <article class="stage">
+        <div class="stage-head">
+          <div class="step-number">Step 03</div>
+          <h3>计划锁定</h3>
+          <p>在进入实现前锁定产品、工程、设计和执行顺序。</p>
+        </div>
+        <div class="skills">
+          <div class="skill"><strong>gstack-plan-eng-review</strong><p>审查架构、数据流、边界情况、测试覆盖、性能和运维风险，确保工程计划能落地。</p><a class="source-link" href="https://github.com/bryanzk/MyCodexEnv/blob/main/codex/skills/gstack-plan-eng-review/SKILL.md">GitHub 源码</a></div>
+          <div class="skill"><strong>gstack-plan-ceo-review</strong><p>从产品与创始人视角压力测试定位、范围、用户价值和战略取舍。</p><a class="source-link" href="https://github.com/bryanzk/MyCodexEnv/blob/main/codex/skills/gstack-plan-ceo-review/SKILL.md">GitHub 源码</a></div>
+          <div class="skill"><strong>gstack-office-hours</strong><p>以 founder 或 builder office hours 方式暴露需求真实性、最窄切入点和产品想法是否值得继续。</p><a class="source-link" href="https://github.com/bryanzk/MyCodexEnv/blob/main/codex/skills/gstack-office-hours/SKILL.md">GitHub 源码</a></div>
+          <div class="skill"><strong>gstack-plan-design-review</strong><p>在 UI 实现前审查 UX 结构、视觉方向、响应式行为和设计验收标准。</p><a class="source-link" href="https://github.com/bryanzk/MyCodexEnv/blob/main/codex/skills/gstack-plan-design-review/SKILL.md">GitHub 源码</a></div>
+          <div class="skill"><strong>task-flow-orchestrator</strong><p>为复杂任务安排执行顺序，把 Karpathy 思考、规划、TDD 和验证组合成可执行流程。</p><a class="source-link" href="https://github.com/bryanzk/MyCodexEnv/blob/main/codex/skills/task-flow-orchestrator/SKILL.md">GitHub 源码</a></div>
+        </div>
+      </article>
+
+      <article class="stage">
+        <div class="stage-head">
+          <div class="step-number">Step 04</div>
+          <h3>开发实现</h3>
+          <p>在文件/模块范围明确后，按风险选择测试优先或验收优先的实现路径。</p>
+        </div>
+        <div class="skills">
+          <div class="skill"><strong>tdd-guide</strong><p>对功能、bug 修复、重构和核心业务逻辑执行 RED -> GREEN -> REFACTOR。</p><a class="source-link" href="https://github.com/bryanzk/MyCodexEnv/blob/main/codex/skills/tdd-guide/SKILL.md">GitHub 源码</a></div>
+          <div class="skill"><strong>atdd-guide</strong><p>从业务可读的验收场景开始，用可执行规格驱动实现和生产级验证。</p><a class="source-link" href="https://github.com/bryanzk/MyCodexEnv/blob/main/codex/skills/atdd-guide/SKILL.md">GitHub 源码</a></div>
+        </div>
+      </article>
+
+      <article class="stage">
+        <div class="stage-head">
+          <div class="step-number">Step 05</div>
+          <h3>验证证据</h3>
+          <p>用 fresh command evidence 证明代码、文档或配置修改真的可用。</p>
+        </div>
+        <div class="skills">
+          <div class="skill"><strong>verification-loop</strong><p>交付前执行构建、静态检查、测试、覆盖率和安全扫描等全量验证流程。</p><a class="source-link" href="https://github.com/bryanzk/MyCodexEnv/blob/main/codex/skills/verification-loop/SKILL.md">GitHub 源码</a></div>
+        </div>
+      </article>
+
+      <article class="stage">
+        <div class="stage-head">
+          <div class="step-number">Step 06</div>
+          <h3>Review 与 QA</h3>
+          <p>在发布前发现回归、可见故障、安全风险和缺失测试。</p>
+        </div>
+        <div class="skills">
+          <div class="skill"><strong>gstack-review</strong><p>做 pre-landing diff review，检查结构性风险、信任边界、副作用分支和合并准备度。</p><a class="source-link" href="https://github.com/bryanzk/MyCodexEnv/blob/main/codex/skills/gstack-review/SKILL.md">GitHub 源码</a></div>
+          <div class="skill"><strong>code-reviewer</strong><p>审查 staged、unstaged 或 PR 变更，聚焦正确性、安全性、可维护性和项目规范。</p><a class="source-link" href="https://github.com/bryanzk/MyCodexEnv/blob/main/codex/skills/code-reviewer/SKILL.md">GitHub 源码</a></div>
+          <div class="skill"><strong>review-swarm</strong><p>并行运行只读 review agents，覆盖行为、安全、性能、可靠性和测试覆盖风险。</p><a class="source-link" href="https://github.com/bryanzk/MyCodexEnv/blob/main/codex/skills/review-swarm/SKILL.md">GitHub 源码</a></div>
+          <div class="skill"><strong>gstack-cso</strong><p>做 infrastructure-first 安全与隐私审查，覆盖 auth、tokens、secrets、PII、审批、审计和公私边界。</p><a class="source-link" href="https://github.com/bryanzk/MyCodexEnv/blob/main/codex/skills/gstack-cso/SKILL.md">GitHub 源码</a></div>
+          <div class="skill"><strong>security-reviewer</strong><p>检查输入校验、认证授权、密钥泄漏、注入和错误信息泄露风险。</p><a class="source-link" href="https://github.com/bryanzk/MyCodexEnv/blob/main/codex/skills/security-reviewer/SKILL.md">GitHub 源码</a></div>
+          <div class="skill"><strong>gstack-qa</strong><p>系统化浏览器 QA，包含截图、console/network 检查、响应式检查和 bug 回归验证。</p><a class="source-link" href="https://github.com/bryanzk/MyCodexEnv/blob/main/codex/skills/gstack-qa/SKILL.md">GitHub 源码</a></div>
+          <div class="skill"><strong>gstack-qa-only</strong><p>当用户只要报告而不要自动修复时，执行只读浏览器 QA、截图、风险记录和 findings 汇总。</p><a class="source-link" href="https://github.com/bryanzk/MyCodexEnv/blob/main/codex/skills/gstack-qa-only/SKILL.md">GitHub 源码</a></div>
+        </div>
+      </article>
+
+      <article class="stage">
+        <div class="stage-head">
+          <div class="step-number">Step 07</div>
+          <h3>委员会评分循环</h3>
+          <p>仅在用户明确要求 committee/subagent review 和目标评分时使用。</p>
+        </div>
+        <div class="skills">
+          <div class="skill"><strong>committee-review-loop</strong><p>组织三领域专家委员会评分并给出 findings，把 revision brief 交给 worker 修改，循环到目标分或遇到 blocker。</p><a class="source-link" href="https://github.com/bryanzk/MyCodexEnv/blob/main/codex/skills/committee-review-loop/SKILL.md">GitHub 源码</a></div>
+        </div>
+      </article>
+
+      <article class="stage">
+        <div class="stage-head">
+          <div class="step-number">Step 08</div>
+          <h3>发布与部署</h3>
+          <p>用户明确要求发布时，才进入 commit、PR、merge、deploy 和生产监控。</p>
+        </div>
+        <div class="skills">
+          <div class="skill"><strong>gstack-ship</strong><p>执行 opinionated ship workflow：识别 base branch、测试、review diff、更新 release metadata、commit、push、准备 PR。</p><a class="source-link" href="https://github.com/bryanzk/MyCodexEnv/blob/main/codex/skills/gstack-ship/SKILL.md">GitHub 源码</a></div>
+          <div class="skill"><strong>gstack-land-and-deploy</strong><p>在 ship 后合并与部署，等待 CI/deploy 完成，并验证生产健康状态。</p><a class="source-link" href="https://github.com/bryanzk/MyCodexEnv/blob/main/codex/skills/gstack-land-and-deploy/SKILL.md">GitHub 源码</a></div>
+          <div class="skill"><strong>gstack-canary</strong><p>部署后监控 console errors、性能回退、页面失败和截图差异。</p><a class="source-link" href="https://github.com/bryanzk/MyCodexEnv/blob/main/codex/skills/gstack-canary/SKILL.md">GitHub 源码</a></div>
+        </div>
+      </article>
+
+      <article class="stage">
+        <div class="stage-head">
+          <div class="step-number">Step 09</div>
+          <h3>交接与学习</h3>
+          <p>跨 session 工作需要留下可恢复状态，并沉淀可复用经验。</p>
+        </div>
+        <div class="skills">
+          <div class="skill"><strong>gstack-retro</strong><p>基于提交历史、工作模式和质量指标生成工程 retrospective。</p><a class="source-link" href="https://github.com/bryanzk/MyCodexEnv/blob/main/codex/skills/gstack-retro/SKILL.md">GitHub 源码</a></div>
+          <div class="skill"><strong>gstack-learn</strong><p>检索、整理、修剪和导出项目 learnings，让后续 session 复用已有经验。</p><a class="source-link" href="https://github.com/bryanzk/MyCodexEnv/blob/main/codex/skills/gstack-learn/SKILL.md">GitHub 源码</a></div>
+        </div>
+      </article>
+
+      <article class="stage">
+        <div class="stage-head">
+          <div class="step-number">Step 10</div>
+          <h3>文档发布</h3>
+          <p>让 public docs、README、路由规范和 release notes 与已交付行为一致。</p>
+        </div>
+        <div class="skills">
+          <div class="skill"><strong>gstack-document-release</strong><p>发布后同步 README、架构文档、CHANGELOG、TODOS 和 VERSION 等文档表面。</p><a class="source-link" href="https://github.com/bryanzk/MyCodexEnv/blob/main/codex/skills/gstack-document-release/SKILL.md">GitHub 源码</a></div>
+          <div class="skill"><strong>doc-updater</strong><p>在功能、API 或架构变更后更新 docs、codemaps、README、指南、路径和示例。</p><a class="source-link" href="https://github.com/bryanzk/MyCodexEnv/blob/main/codex/skills/doc-updater/SKILL.md">GitHub 源码</a></div>
+          <div class="skill"><strong>skill-evaluator</strong><p>评估一个 skill 是否应该存在、如何路由、需要哪些 eval，以及是否相对 baseline 有真实提升。</p><a class="source-link" href="https://github.com/bryanzk/MyCodexEnv/blob/main/codex/skills/skill-evaluator/SKILL.md">GitHub 源码</a></div>
+          <div class="skill"><strong>visual-explainer</strong><p>生成自包含 HTML 图、流程图、架构视图和技术概念可视化说明。</p><a class="source-link" href="https://github.com/bryanzk/MyCodexEnv/blob/main/codex/skills/visual-explainer/SKILL.md">GitHub 源码</a></div>
+        </div>
+      </article>
+    </section>
+
+    <footer class="footer">
+      <span>源码链接指向 <strong>github.com/bryanzk/MyCodexEnv</strong></span>
+      <span>Public docs entry: <strong>docs/dhf-workflow-skills-cn.html</strong></span>
+    </footer>
+  </main>
+</body>
+</html>

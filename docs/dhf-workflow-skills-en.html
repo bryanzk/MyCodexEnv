@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DHF Workflow Skills Matrix</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,650;9..144,760&family=IBM+Plex+Mono:wght@400;500;600&family=Atkinson+Hyperlegible:wght@400;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --font-body: 'Atkinson Hyperlegible', Verdana, sans-serif;
+      --font-display: 'Fraunces', Georgia, serif;
+      --font-mono: 'IBM Plex Mono', monospace;
+      --bg: #f7f4ec;
+      --surface: #fffdf8;
+      --surface-strong: #ebe5d8;
+      --border: rgba(48, 38, 29, 0.15);
+      --text: #241f1a;
+      --dim: #6d6257;
+      --green: #137960;
+      --amber: #a26122;
+      --blue: #2b6e8d;
+      --rose: #a84b5e;
+      --shadow: 0 18px 42px rgba(48, 38, 29, 0.10);
+    }
+
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #15120f;
+        --surface: #211c18;
+        --surface-strong: #2d261f;
+        --border: rgba(255, 239, 218, 0.14);
+        --text: #f6eee3;
+        --dim: #b7aa9b;
+        --green: #5dd0b4;
+        --amber: #f0b066;
+        --blue: #91c9e4;
+        --rose: #ee97a8;
+      }
+    }
+
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      color: var(--text);
+      font-family: var(--font-body);
+      background:
+        linear-gradient(135deg, transparent 0 26px, rgba(48, 38, 29, 0.08) 27px, transparent 28px),
+        radial-gradient(circle at 12% 10%, color-mix(in srgb, var(--green) 18%, transparent), transparent 36%),
+        radial-gradient(circle at 88% 24%, color-mix(in srgb, var(--amber) 16%, transparent), transparent 34%),
+        var(--bg);
+      background-size: 44px 44px, auto, auto, auto;
+      padding: 38px;
+      overflow-wrap: break-word;
+    }
+
+    a { color: inherit; }
+    .wrap { max-width: 1220px; margin: 0 auto; display: grid; gap: 24px; }
+    .hero, .panel, .stage { border: 1px solid var(--border); box-shadow: var(--shadow); }
+
+    .hero {
+      display: grid;
+      gap: 22px;
+      padding: clamp(30px, 5vw, 58px);
+      border-radius: 24px;
+      background: color-mix(in srgb, var(--surface) 88%, var(--green) 12%);
+    }
+
+    .eyebrow, .tag, .label, .source-link, .step-number {
+      font-family: var(--font-mono);
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    .eyebrow { color: var(--green); font-size: 13px; font-weight: 600; }
+    h1, h2, h3 { font-family: var(--font-display); letter-spacing: 0; }
+    h1 { max-width: 920px; margin: 0; font-size: clamp(42px, 6vw, 82px); line-height: 0.95; }
+    .lead { max-width: 850px; margin: 0; color: var(--dim); font-size: clamp(18px, 2.1vw, 24px); line-height: 1.52; }
+
+    .links, .legend { display: flex; flex-wrap: wrap; gap: 10px; }
+    .tag {
+      display: inline-flex;
+      align-items: center;
+      min-height: 36px;
+      padding: 8px 13px;
+      border-radius: 999px;
+      color: var(--green);
+      background: color-mix(in srgb, var(--surface) 76%, var(--green) 12%);
+      border: 1px solid color-mix(in srgb, var(--green) 28%, transparent);
+      font-size: 11px;
+      text-decoration: none;
+    }
+
+    .panel {
+      display: grid;
+      gap: 12px;
+      padding: 22px;
+      border-radius: 18px;
+      background: color-mix(in srgb, var(--surface) 86%, transparent);
+    }
+
+    .panel h2 { margin: 0; font-size: clamp(28px, 3vw, 42px); line-height: 1; }
+    .panel p { margin: 0; color: var(--dim); line-height: 1.55; }
+
+    .stage-list { display: grid; gap: 16px; }
+    .stage {
+      display: grid;
+      grid-template-columns: 220px minmax(0, 1fr);
+      gap: 18px;
+      padding: 18px;
+      border-radius: 20px;
+      background: var(--surface);
+    }
+
+    .stage-head {
+      display: grid;
+      align-content: start;
+      gap: 10px;
+      padding: 18px;
+      border-radius: 14px;
+      background: var(--surface-strong);
+      border: 1px solid var(--border);
+    }
+
+    .step-number { color: var(--amber); font-size: 11px; font-weight: 700; }
+    .stage-head h3 { margin: 0; font-size: 26px; line-height: 1.02; }
+    .stage-head p { margin: 0; color: var(--dim); line-height: 1.45; font-size: 14px; }
+
+    .skills {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px;
+    }
+
+    .skill {
+      min-width: 0;
+      display: grid;
+      gap: 10px;
+      padding: 16px;
+      border-radius: 14px;
+      border: 1px solid var(--border);
+      background: color-mix(in srgb, var(--surface) 94%, var(--blue) 6%);
+    }
+
+    .skill strong { font-size: 18px; line-height: 1.2; }
+    .skill p { margin: 0; color: var(--dim); line-height: 1.5; }
+    .source-link { color: var(--blue); font-size: 11px; font-weight: 700; text-decoration: none; }
+    .source-link:hover { text-decoration: underline; }
+
+    .label { color: var(--rose); font-size: 11px; font-weight: 700; }
+    .footer {
+      display: flex;
+      justify-content: space-between;
+      gap: 16px;
+      color: var(--dim);
+      border-top: 1px solid var(--border);
+      padding-top: 18px;
+      font-family: var(--font-mono);
+      font-size: 12px;
+      line-height: 1.5;
+    }
+
+    @media (max-width: 860px) {
+      body { padding: 18px; }
+      .stage { grid-template-columns: 1fr; }
+      .skills { grid-template-columns: 1fr; }
+      .footer { flex-direction: column; }
+    }
+  </style>
+</head>
+<body>
+  <main class="wrap">
+    <section class="hero">
+      <div class="eyebrow">Delivery Harness Framework / Skill Inventory</div>
+      <h1>Every DHF step, every owning skill.</h1>
+      <p class="lead">This page maps the current Delivery Harness Framework workflow to the skills used at each step, explains what each skill does, and links directly to the GitHub source for that skill.</p>
+      <nav class="links" aria-label="Related pages">
+        <a class="tag" href="./dhf-workflow-skills-cn.html">中文版本</a>
+        <a class="tag" href="./index-en.html">English landing</a>
+        <a class="tag" href="./LIFECYCLE_SKILL_ROUTING.md">Written routing spec</a>
+        <a class="tag" href="https://github.com/bryanzk/MyCodexEnv/tree/main/codex/skills">All skills on GitHub</a>
+      </nav>
+    </section>
+
+    <section class="panel">
+      <div class="label">How to read this</div>
+      <h2>DHF starts with routing, then delegates.</h2>
+      <p>The lifecycle router recovers durable state, classifies the stage, and chooses a specialist workflow. Helper scripts may validate evidence or agent plans, but this matrix focuses on skills because they define the agent behavior at each step.</p>
+    </section>
+
+    <section class="stage-list" aria-label="DHF workflow skill matrix">
+      <article class="stage">
+        <div class="stage-head">
+          <div class="step-number">Step 01</div>
+          <h3>Recover and route</h3>
+          <p>Start or resume complex work from durable repo state before choosing the next workflow.</p>
+        </div>
+        <div class="skills">
+          <div class="skill"><strong>delivery-harness-framework</strong><p>Reads repo guidance, recovers current phase, classifies the lifecycle stage, selects the next skill/helper route, and defines evidence gates.</p><a class="source-link" href="https://github.com/bryanzk/MyCodexEnv/blob/main/codex/skills/delivery-harness-framework/SKILL.md">GitHub source</a></div>
+          <div class="skill"><strong>shipq-lifecycle-harness</strong><p>Example repo-specific lifecycle adapter. Takes over when a known repository needs domain paths, local commands, fixtures, or deployment boundaries.</p><a class="source-link" href="https://github.com/bryanzk/MyCodexEnv/blob/main/codex/skills/shipq-lifecycle-harness/SKILL.md">GitHub source</a></div>
+        </div>
+      </article>
+
+      <article class="stage">
+        <div class="stage-head">
+          <div class="step-number">Step 02</div>
+          <h3>Requirements</h3>
+          <p>Turn ambiguity into success criteria, scope, constraints, and source-of-truth artifacts.</p>
+        </div>
+        <div class="skills">
+          <div class="skill"><strong>planner</strong><p>Analyzes complex requirements, architecture context, task decomposition, and implementation risks before code changes.</p><a class="source-link" href="https://github.com/bryanzk/MyCodexEnv/blob/main/codex/skills/planner/SKILL.md">GitHub source</a></div>
+          <div class="skill"><strong>req-to-dev</strong><p>Converts requirements or principles into an executable development package with plans, safety net, contracts, acceptance tests, and owner handoffs.</p><a class="source-link" href="https://github.com/bryanzk/MyCodexEnv/blob/main/codex/skills/req-to-dev/SKILL.md">GitHub source</a></div>
+        </div>
+      </article>
+
+      <article class="stage">
+        <div class="stage-head">
+          <div class="step-number">Step 03</div>
+          <h3>Planning</h3>
+          <p>Lock product, engineering, design, and execution decisions before scoped implementation.</p>
+        </div>
+        <div class="skills">
+          <div class="skill"><strong>gstack-plan-eng-review</strong><p>Reviews architecture, data flow, edge cases, test coverage, performance, and operational risks before implementation.</p><a class="source-link" href="https://github.com/bryanzk/MyCodexEnv/blob/main/codex/skills/gstack-plan-eng-review/SKILL.md">GitHub source</a></div>
+          <div class="skill"><strong>gstack-plan-ceo-review</strong><p>Pressure-tests product framing, scope, user value, strategy, and whether the plan should expand, hold, or reduce scope.</p><a class="source-link" href="https://github.com/bryanzk/MyCodexEnv/blob/main/codex/skills/gstack-plan-ceo-review/SKILL.md">GitHub source</a></div>
+          <div class="skill"><strong>gstack-office-hours</strong><p>Runs founder-style or builder-style office hours to expose demand reality, narrow the wedge, and clarify the product idea before committing to a plan.</p><a class="source-link" href="https://github.com/bryanzk/MyCodexEnv/blob/main/codex/skills/gstack-office-hours/SKILL.md">GitHub source</a></div>
+          <div class="skill"><strong>gstack-plan-design-review</strong><p>Reviews UX structure, visual direction, responsive behavior, and design acceptance criteria before UI work begins.</p><a class="source-link" href="https://github.com/bryanzk/MyCodexEnv/blob/main/codex/skills/gstack-plan-design-review/SKILL.md">GitHub source</a></div>
+          <div class="skill"><strong>task-flow-orchestrator</strong><p>Orders the execution workflow across Karpathy-style thinking, planning, TDD, and verification for complex work.</p><a class="source-link" href="https://github.com/bryanzk/MyCodexEnv/blob/main/codex/skills/task-flow-orchestrator/SKILL.md">GitHub source</a></div>
+        </div>
+      </article>
+
+      <article class="stage">
+        <div class="stage-head">
+          <div class="step-number">Step 04</div>
+          <h3>Development</h3>
+          <p>Implement scoped changes with tests appropriate to behavioral and user-facing risk.</p>
+        </div>
+        <div class="skills">
+          <div class="skill"><strong>tdd-guide</strong><p>Enforces a RED -> GREEN -> REFACTOR loop for feature work, bug fixes, refactors, and core business logic.</p><a class="source-link" href="https://github.com/bryanzk/MyCodexEnv/blob/main/codex/skills/tdd-guide/SKILL.md">GitHub source</a></div>
+          <div class="skill"><strong>atdd-guide</strong><p>Starts from business-facing acceptance scenarios, then drives implementation through executable specifications and production-like checks.</p><a class="source-link" href="https://github.com/bryanzk/MyCodexEnv/blob/main/codex/skills/atdd-guide/SKILL.md">GitHub source</a></div>
+        </div>
+      </article>
+
+      <article class="stage">
+        <div class="stage-head">
+          <div class="step-number">Step 05</div>
+          <h3>Validation</h3>
+          <p>Prove the implemented or documented change with fresh command evidence.</p>
+        </div>
+        <div class="skills">
+          <div class="skill"><strong>verification-loop</strong><p>Runs the delivery verification pass across build, static checks, tests, coverage, and security scan where applicable.</p><a class="source-link" href="https://github.com/bryanzk/MyCodexEnv/blob/main/codex/skills/verification-loop/SKILL.md">GitHub source</a></div>
+        </div>
+      </article>
+
+      <article class="stage">
+        <div class="stage-head">
+          <div class="step-number">Step 06</div>
+          <h3>Review and QA</h3>
+          <p>Find regressions, user-visible failures, security risks, and missing tests before release.</p>
+        </div>
+        <div class="skills">
+          <div class="skill"><strong>gstack-review</strong><p>Performs pre-landing diff review for structural risks, trust boundaries, conditional side effects, and merge readiness.</p><a class="source-link" href="https://github.com/bryanzk/MyCodexEnv/blob/main/codex/skills/gstack-review/SKILL.md">GitHub source</a></div>
+          <div class="skill"><strong>code-reviewer</strong><p>Reviews staged, unstaged, or PR changes for correctness, security, maintainability, and project standards.</p><a class="source-link" href="https://github.com/bryanzk/MyCodexEnv/blob/main/codex/skills/code-reviewer/SKILL.md">GitHub source</a></div>
+          <div class="skill"><strong>review-swarm</strong><p>Runs parallel read-only review agents across behavioral, security, performance, reliability, and test coverage risks.</p><a class="source-link" href="https://github.com/bryanzk/MyCodexEnv/blob/main/codex/skills/review-swarm/SKILL.md">GitHub source</a></div>
+          <div class="skill"><strong>gstack-cso</strong><p>Runs infrastructure-first security and privacy review for auth, tokens, secrets, PII, approvals, audit trails, and public/private boundaries.</p><a class="source-link" href="https://github.com/bryanzk/MyCodexEnv/blob/main/codex/skills/gstack-cso/SKILL.md">GitHub source</a></div>
+          <div class="skill"><strong>security-reviewer</strong><p>Checks input validation, authentication, authorization, secret leakage, injection, and error disclosure risks.</p><a class="source-link" href="https://github.com/bryanzk/MyCodexEnv/blob/main/codex/skills/security-reviewer/SKILL.md">GitHub source</a></div>
+          <div class="skill"><strong>gstack-qa</strong><p>Runs systematic browser QA, screenshots, console/network checks, responsive checks, and iterative bug verification.</p><a class="source-link" href="https://github.com/bryanzk/MyCodexEnv/blob/main/codex/skills/gstack-qa/SKILL.md">GitHub source</a></div>
+          <div class="skill"><strong>gstack-qa-only</strong><p>Runs report-only browser QA when the user wants findings, screenshots, and risk notes without automatic fixes.</p><a class="source-link" href="https://github.com/bryanzk/MyCodexEnv/blob/main/codex/skills/gstack-qa-only/SKILL.md">GitHub source</a></div>
+        </div>
+      </article>
+
+      <article class="stage">
+        <div class="stage-head">
+          <div class="step-number">Step 07</div>
+          <h3>Committee rating loop</h3>
+          <p>Use only when the user explicitly asks for committee/subagent review and a target score.</p>
+        </div>
+        <div class="skills">
+          <div class="skill"><strong>committee-review-loop</strong><p>Creates a three-domain expert committee, collects ratings and findings, gives a revision brief to a worker, and repeats until the target rating or a blocker is reached.</p><a class="source-link" href="https://github.com/bryanzk/MyCodexEnv/blob/main/codex/skills/committee-review-loop/SKILL.md">GitHub source</a></div>
+        </div>
+      </article>
+
+      <article class="stage">
+        <div class="stage-head">
+          <div class="step-number">Step 08</div>
+          <h3>Ship and deploy</h3>
+          <p>Move verified work through commit, PR, merge, deployment, and production monitoring when explicitly requested.</p>
+        </div>
+        <div class="skills">
+          <div class="skill"><strong>gstack-ship</strong><p>Runs the opinionated ship workflow: detect base branch, test, review diff, update release metadata, commit, push, and prepare PR.</p><a class="source-link" href="https://github.com/bryanzk/MyCodexEnv/blob/main/codex/skills/gstack-ship/SKILL.md">GitHub source</a></div>
+          <div class="skill"><strong>gstack-land-and-deploy</strong><p>Merges and deploys after ship, waits for CI/deploy completion, and verifies production health.</p><a class="source-link" href="https://github.com/bryanzk/MyCodexEnv/blob/main/codex/skills/gstack-land-and-deploy/SKILL.md">GitHub source</a></div>
+          <div class="skill"><strong>gstack-canary</strong><p>Performs post-deploy canary monitoring for console errors, performance regressions, page failures, and screenshot drift.</p><a class="source-link" href="https://github.com/bryanzk/MyCodexEnv/blob/main/codex/skills/gstack-canary/SKILL.md">GitHub source</a></div>
+        </div>
+      </article>
+
+      <article class="stage">
+        <div class="stage-head">
+          <div class="step-number">Step 09</div>
+          <h3>Handoff and learning</h3>
+          <p>Preserve recoverable state and capture durable learning when work spans sessions.</p>
+        </div>
+        <div class="skills">
+          <div class="skill"><strong>gstack-retro</strong><p>Creates engineering retrospectives from commit history, work patterns, quality metrics, and team-aware summaries.</p><a class="source-link" href="https://github.com/bryanzk/MyCodexEnv/blob/main/codex/skills/gstack-retro/SKILL.md">GitHub source</a></div>
+          <div class="skill"><strong>gstack-learn</strong><p>Reviews, searches, prunes, and exports project learnings so future sessions reuse operational knowledge.</p><a class="source-link" href="https://github.com/bryanzk/MyCodexEnv/blob/main/codex/skills/gstack-learn/SKILL.md">GitHub source</a></div>
+        </div>
+      </article>
+
+      <article class="stage">
+        <div class="stage-head">
+          <div class="step-number">Step 10</div>
+          <h3>Documentation release</h3>
+          <p>Keep public docs, README, routing specs, and release notes aligned with shipped behavior.</p>
+        </div>
+        <div class="skills">
+          <div class="skill"><strong>gstack-document-release</strong><p>Performs post-ship documentation updates across README, architecture docs, changelog voice, TODOs, and version notes.</p><a class="source-link" href="https://github.com/bryanzk/MyCodexEnv/blob/main/codex/skills/gstack-document-release/SKILL.md">GitHub source</a></div>
+          <div class="skill"><strong>doc-updater</strong><p>Updates docs, codemaps, README, guides, paths, and examples after feature, API, or architecture changes.</p><a class="source-link" href="https://github.com/bryanzk/MyCodexEnv/blob/main/codex/skills/doc-updater/SKILL.md">GitHub source</a></div>
+          <div class="skill"><strong>skill-evaluator</strong><p>Evaluates whether a skill should exist, how it should route, what evals it needs, and whether it improves behavior over baseline.</p><a class="source-link" href="https://github.com/bryanzk/MyCodexEnv/blob/main/codex/skills/skill-evaluator/SKILL.md">GitHub source</a></div>
+          <div class="skill"><strong>visual-explainer</strong><p>Builds self-contained HTML diagrams, flowcharts, architecture views, and visual explanations for complex technical concepts.</p><a class="source-link" href="https://github.com/bryanzk/MyCodexEnv/blob/main/codex/skills/visual-explainer/SKILL.md">GitHub source</a></div>
+        </div>
+      </article>
+    </section>
+
+    <footer class="footer">
+      <span>Source links target <strong>github.com/bryanzk/MyCodexEnv</strong></span>
+      <span>Public docs entry: <strong>docs/dhf-workflow-skills-en.html</strong></span>
+    </footer>
+  </main>
+</body>
+</html>
