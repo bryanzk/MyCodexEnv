@@ -25,9 +25,10 @@
 - `codex/hooks/`: Codex lifecycle hooks copied to `~/.codex/hooks/`.
 - `scripts/harness_evidence.py`: evidence validation and append helper.
 - `scripts/harness_report.py`: local evidence summary CLI.
-- `scripts/harness_agent_team.py`: agent team and write-set validator.
+- `scripts/harness_agent_team.py`: agent team, write-set, and optional durable brief validator.
 - `scripts/harness_checkpoint.py`: append-only state checkpoint helper.
 - `docs/templates/harness-requirements.md`: task requirements artifact template.
+- `docs/templates/harness-agent-brief.md`: worker durable brief template.
 - `scripts/harness_requirements.py`: requirements artifact validator.
 - `scripts/harness_recover.py`: fresh-session recovery smoke check.
 - `scripts/harness_env_probe.py`: observable Codex runtime config probe.

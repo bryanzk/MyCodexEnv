@@ -12,6 +12,17 @@ from typing import Any
 READ_ONLY_ROLES = {"planner", "reviewer", "security", "qa"}
 WRITE_ROLES = {"worker"}
 VALID_ROLES = READ_ONLY_ROLES | WRITE_ROLES
+BRIEF_STRING_FIELDS = [
+    "category",
+    "summary",
+    "current_behavior",
+    "desired_behavior",
+]
+BRIEF_LIST_FIELDS = [
+    "key_interfaces",
+    "acceptance_criteria",
+    "out_of_scope",
+]
 
 
 def git_root() -> Path:
@@ -53,6 +64,42 @@ def paths_overlap(left: str, right: str) -> bool:
     left_path = Path(left)
     right_path = Path(right)
     return left == right or left_path in right_path.parents or right_path in left_path.parents
+
+
+def validate_brief(agent: dict[str, Any], agent_id: str, errors: list[str]) -> dict[str, Any] | None:
+    if "brief" not in agent:
+        return None
+
+    brief = agent.get("brief")
+    if not isinstance(brief, dict):
+        errors.append(f"ERROR[brief_type] agent={agent_id}: brief must be an object")
+        return None
+
+    normalized: dict[str, Any] = {}
+    for field in BRIEF_STRING_FIELDS:
+        value = brief.get(field)
+        if not isinstance(value, str) or not value.strip():
+            errors.append(f"ERROR[brief_{field}] agent={agent_id}: brief.{field} is required")
+        else:
+            normalized[field] = value.strip()
+
+    for field in BRIEF_LIST_FIELDS:
+        value = brief.get(field)
+        if not isinstance(value, list) or not value:
+            errors.append(f"ERROR[brief_{field}] agent={agent_id}: brief.{field} must be a non-empty list")
+            continue
+        cleaned: list[str] = []
+        for index, item in enumerate(value):
+            if not isinstance(item, str) or not item.strip():
+                errors.append(
+                    f"ERROR[brief_{field}] agent={agent_id}: brief.{field}[{index}] must be a non-empty string"
+                )
+            else:
+                cleaned.append(item.strip())
+        if cleaned:
+            normalized[field] = cleaned
+
+    return normalized
 
 
 def validate_plan(plan: dict[str, Any], repo_root: Path) -> tuple[list[str], list[dict[str, Any]]]:
@@ -106,6 +153,7 @@ def validate_plan(plan: dict[str, Any], repo_root: Path) -> tuple[list[str], lis
         if role == "worker":
             for path in normalized:
                 worker_paths.append((agent_id, path))
+        brief = validate_brief(agent, agent_id, errors)
 
         summary.append(
             {
@@ -114,6 +162,7 @@ def validate_plan(plan: dict[str, Any], repo_root: Path) -> tuple[list[str], lis
                 "scope": scope,
                 "write_set": sorted(set(normalized)),
                 "verification_command": verification,
+                "brief": brief,
             }
         )
 
@@ -147,10 +196,11 @@ def cmd_validate(args: argparse.Namespace) -> int:
     print(f"repo_root: {repo_root}")
     for agent in summary:
         owned = ", ".join(agent["write_set"]) if agent["write_set"] else "read-only"
+        brief_status = " brief=yes" if agent.get("brief") else ""
         print(
             "- "
             f"{agent['id']} role={agent['role']} scope={agent['scope']} "
-            f"write_set={owned} verification={agent['verification_command']}"
+            f"write_set={owned} verification={agent['verification_command']}{brief_status}"
         )
     return 0
 

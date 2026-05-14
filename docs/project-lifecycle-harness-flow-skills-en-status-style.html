@@ -435,11 +435,11 @@
         <div class="eyebrow">Delivery Harness Framework / DHF Skill Routing</div>
         <h1>Which skill powers each DHF stage.</h1>
         <p class="lead">
-          MyCodexEnv uses <code>delivery-harness-framework</code> as the Delivery Harness Framework (DHF) entry point. DHF restores runtime facts, probes the Codex environment, identifies the lifecycle stage, and routes the work to a repo-specific harness, a gstack specialist skill, local development and verification skills, or deterministic runtime helpers. Helpers provide a machine-checkable execution layer; skills provide cognitive orchestration.
+          MyCodexEnv uses <code>delivery-harness-framework</code> as the Delivery Harness Framework (DHF) entry point. DHF restores runtime facts, probes the Codex environment, identifies the lifecycle stage, and routes the work to a repo-specific harness, a gstack specialist skill, local development and verification skills, or deterministic runtime helpers. The latest routing gates also cover domain docs / ADRs, vertical slices, feedback loops, throwaway prototypes, and durable agent briefs.
         </p>
         <div class="kpis">
           <div class="kpi"><strong>8</strong><span>standard lifecycle stages</span></div>
-          <div class="kpi"><strong>9</strong><span>helper / verification entry points</span></div>
+          <div class="kpi"><strong>9+</strong><span>helper / verification / brief entry points</span></div>
           <div class="kpi"><strong>3</strong><span>generic, repo-specific, gstack roles</span></div>
           <div class="kpi"><strong>4</strong><span>completion evidence fields</span></div>
         </div>
@@ -462,17 +462,18 @@ flowchart TD
   Recover["Run harness_recover.py --json<br/>restore phase, dirty state, next safe task"]
   Env["Run harness_env_probe.py --json<br/>observe hooks, policy, schema"]
   NeedsReq{"Are goal, scope,<br/>and acceptance clear?"}
-  Req["Requirements lock<br/>planner / req-to-dev / task-flow-orchestrator"]
+  Req["Requirements lock<br/>planner / req-to-dev<br/>CONTEXT / ADR"]
   ReqVal["harness_requirements.py validate PATH"]
   Classify{"Classify lifecycle stage<br/>and risk boundary"}
   Repo{"Repo-specific harness available?"}
   RepoSkill["Hand off to project adapter<br/>business paths, commands, smoke matrix"]
   Product["Product / scope judgment<br/>gstack-plan-ceo-review / gstack-office-hours"]
-  Plan["Engineering / design planning<br/>gstack-plan-eng-review / gstack-plan-design-review"]
+  Plan["Engineering / design planning<br/>vertical slices / AFK / HITL"]
+  Proto["Prototype learning / deep modules<br/>throwaway prototype / deep module"]
   Dev["Implementation<br/>tdd-guide / atdd-guide / scoped workers"]
   Team{"Parallel agents?"}
-  TeamVal["harness_agent_team.py validate PLAN.json"]
-  Val["Verification and evidence<br/>verification-loop / harness_report.py / test_runner.py"]
+  TeamVal["harness_agent_team.py validate PLAN.json<br/>optional durable brief"]
+  Val["Verification and evidence<br/>feedback loop / verification-loop / harness_report.py"]
   QA["QA / security / review<br/>gstack-qa / gstack-cso / gstack-review / code-reviewer"]
   Ship["Ship / deploy<br/>gstack-ship / gstack-land-and-deploy / gstack-canary"]
   Docs["Documentation release<br/>gstack-document-release / doc-updater"]
@@ -485,9 +486,9 @@ flowchart TD
   Classify --> Repo
   Repo -- "Yes" --> RepoSkill --> Dev
   Repo -- "No, product-oriented" --> Product --> Plan
-  Repo -- "No, engineering/design-oriented" --> Plan
+  Repo -- "No, engineering/design-oriented" --> Plan --> Proto
   Repo -- "No, directly implementable" --> Dev
-  Plan --> Team
+  Proto --> Team
   Dev --> Team
   Team -- "Yes" --> TeamVal --> Val
   Team -- "No" --> Val
@@ -504,7 +505,7 @@ flowchart TD
 
   class AGENTS,Recover,Env,ReqVal,TeamVal,Handoff runtime;
   class NeedsReq,Classify,Team decision;
-  class Req,Plan,Dev,RepoSkill,Product build;
+  class Req,Plan,Proto,Dev,RepoSkill,Product build;
   class Val,QA,Docs verify;
   class Ship ship;
           </pre>
@@ -534,8 +535,8 @@ flowchart TD
               <tr>
                 <td class="phase">Requirements</td>
                 <td><span class="badge decision">planner</span><span class="badge decision">req-to-dev</span><span class="badge decision">task-flow-orchestrator</span></td>
-                <td><code>docs/templates/harness-requirements.md</code><br><code>scripts/harness_requirements.py validate PATH</code></td>
-                <td>The goal, scope, audience, constraints, success criteria, or acceptance tests are not locked.</td>
+                <td><code>docs/templates/harness-requirements.md</code><br><code>scripts/harness_requirements.py validate PATH</code><br><code>CONTEXT.md</code> / <code>CONTEXT-MAP.md</code> / ADR</td>
+                <td>The goal, scope, audience, constraints, domain vocabulary, success criteria, or acceptance tests are not locked.</td>
               </tr>
               <tr>
                 <td class="phase">Product / business judgment</td>
@@ -546,20 +547,20 @@ flowchart TD
               <tr>
                 <td class="phase">Engineering / design planning</td>
                 <td><span class="badge decision">gstack-plan-eng-review</span><span class="badge decision">gstack-plan-design-review</span><span class="badge decision">planner</span></td>
-                <td><code>scripts/harness_agent_team.py validate PLAN.json</code> when parallel work is proposed</td>
-                <td>Architecture, API, data flow, migration, visual structure, task split, or multi-agent ownership must be decided.</td>
+                <td><code>scripts/harness_agent_team.py validate PLAN.json</code> when parallel work is proposed<br><code>docs/templates/harness-agent-brief.md</code> when a worker needs a durable contract</td>
+                <td>Architecture, API, data flow, migration, visual structure, vertical slices, <code>AFK</code>/<code>HITL</code>, or multi-agent ownership must be decided.</td>
               </tr>
               <tr>
                 <td class="phase">Development</td>
                 <td><span class="badge build">tdd-guide</span><span class="badge build">atdd-guide</span><span class="badge build">scoped worker agents</span></td>
                 <td><code>scripts/harness_agent_team.py validate PLAN.json</code><br><code>git status --short --branch</code></td>
-                <td>Acceptance criteria are clear and lifecycle policy allows scoped repo writes.</td>
+                <td>Acceptance criteria are clear and lifecycle policy allows scoped repo writes; worker briefs can validate current/desired behavior, key interfaces, and acceptance criteria.</td>
               </tr>
               <tr>
                 <td class="phase">Verification / evidence</td>
                 <td><span class="badge verify">verification-loop</span><span class="badge verify">harness_report.py</span></td>
                 <td><code>python3 test_runner.py</code><br><code>git diff --check</code><br><code>scripts/verify_codex_env.sh ...</code></td>
-                <td>Before declaring completion, after code/config/docs changes, or when runtime-sync evidence is required.</td>
+                <td>Before declaring completion, after code/config/docs changes, or when a debug task needs a runnable feedback loop first.</td>
               </tr>
               <tr>
                 <td class="phase">QA / review / security</td>
@@ -593,15 +594,15 @@ flowchart TD
           </div>
           <div class="card accent-decide">
             <b>2. Requirements gate before planning</b>
-            <small>If scope or acceptance criteria are unstable, create or validate the requirements artifact before architecture planning.</small>
+            <small>If scope, acceptance criteria, or domain vocabulary are unstable, create or validate the requirements artifact and read <code>CONTEXT.md</code> / ADRs.</small>
           </div>
           <div class="card accent-build">
             <b>3. No parallel writes without a validator</b>
-            <small>Any worker team must pass <code>harness_agent_team.py validate</code> to prove write sets do not overlap.</small>
+            <small>Any worker team must pass <code>harness_agent_team.py validate</code> to prove write sets do not overlap; add a durable brief when the task must survive handoff.</small>
           </div>
           <div class="card accent-verify">
             <b>4. Completion claims require fresh evidence</b>
-            <small>Before declaring completion, record <code>command</code>, <code>exit_code</code>, <code>key_output</code>, and <code>timestamp</code>.</small>
+            <small>Before declaring completion, record <code>command</code>, <code>exit_code</code>, <code>key_output</code>, and <code>timestamp</code>; before debugging fixes, prove the feedback loop exists.</small>
           </div>
           <div class="card accent-ship">
             <b>5. Handoff is a runtime event</b>

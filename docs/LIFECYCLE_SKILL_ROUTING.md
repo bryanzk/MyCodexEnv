@@ -49,7 +49,7 @@ adapter skills.
 | Global rules and repo routing | Keep cross-repo Codex rules in one source and route repo-local constraints through `AGENTS.md`. | `codex/AGENTS.md`, root `AGENTS.md`, `scripts/manage_agents.py` |
 | Skill synchronization | Keep `codex/skills/*` as source of truth and copy managed skills into `~/.codex/skills/*`. | `scripts/sync_codex_home.sh` |
 | Harness lifecycle routing | Recover state, classify phase, choose generic/repo-specific/gstack workflow, define gates. | `delivery-harness-framework` |
-| Requirements and planning | Capture success criteria, scope, constraints, risks, and validation gates before implementation. | `planner`, `req-to-dev`, `task-flow-orchestrator`, `scripts/harness_requirements.py` |
+| Requirements and planning | Capture success criteria, scope, constraints, domain docs, ADR conflicts, vertical slices, risks, and validation gates before implementation. | `planner`, `req-to-dev`, `task-flow-orchestrator`, `scripts/harness_requirements.py` |
 | Development execution | Make scoped repo changes, use tests first when behavior changes, preserve unrelated user work. | `tdd-guide`, `atdd-guide`, repo-local workflow |
 | Validation and evidence | Run fresh tests/checks and record `command`, `exit_code`, `key_output`, `timestamp`. | `verification-loop`, `scripts/harness_evidence.py`, `scripts/harness_report.py` |
 | Review and QA | Inspect diffs, browser behavior, security/privacy boundaries, and user-visible regressions. | `gstack-review`, `code-reviewer`, `gstack-qa`, `security-reviewer` |
@@ -62,8 +62,8 @@ adapter skills.
 | Stage | Signals | Default Permission | Skill Or Helper | Purpose |
 | --- | --- | --- | --- | --- |
 | `research` | Unknown repo, stale handoff, unclear source ownership, missing context. | Read-only. | `delivery-harness-framework`, `scripts/harness_recover.py`, `scripts/harness_env_probe.py` | Read durable sources and recover the next safe task before acting. |
-| `requirements` | Goal, audience, acceptance criteria, scope, or constraints are unclear. | Read-only. | `planner`, `req-to-dev`, `scripts/harness_requirements.py` | Turn ambiguity into success criteria and validate requirements artifacts before treating them as source of truth. |
-| `planning` | Architecture, API shape, migration, runtime, data flow, or cross-module decisions. | Read-only by default. | `gstack-plan-eng-review`, `planner`, `task-flow-orchestrator` | Produce an implementation plan, risk list, and validation gate before edits. |
+| `requirements` | Goal, audience, acceptance criteria, scope, constraints, or domain language are unclear. | Read-only. | `planner`, `req-to-dev`, `scripts/harness_requirements.py` | Turn ambiguity into success criteria, read `CONTEXT.md` / `CONTEXT-MAP.md` and relevant ADRs when present, then validate requirements artifacts before treating them as source of truth. |
+| `planning` | Architecture, API shape, migration, runtime, data flow, cross-module decisions, or multi-step work breakdown. | Read-only by default. | `gstack-plan-eng-review`, `planner`, `task-flow-orchestrator` | Produce an implementation plan, vertical slice breakdown, risk list, and validation gate before edits. |
 | `development` | Acceptance criteria are clear and touched files/modules are bounded. | Scoped writes. | `tdd-guide`, `atdd-guide`, repo workflow, scoped worker agents | Implement the change with tests appropriate to the risk. |
 | `validation` | Work is implemented or docs/config changed and needs fresh evidence. | Tests/checks by default. | `verification-loop`, `scripts/harness_report.py`, `scripts/verify_codex_env.sh` | Prove the result with fresh command output and required evidence fields. |
 | `review` | Diff exists, work is near handoff/PR/landing, or user asks for review. | Read-only by default. | `gstack-review`, `code-reviewer`, `review-swarm`, `security-reviewer` | Find bugs, regressions, security risks, and missing tests before shipping. |
@@ -100,6 +100,17 @@ adapter skills.
 | `skill-evaluator` | Skill existence, routing, eval matrix, baseline comparison, off-target load diagnosis. | Use before expanding or revising critical skills. |
 | `visual-explainer` | Self-contained HTML diagrams, flowcharts, architecture views, tables, and visual explanations. | Use for visual documentation and system explanations. |
 
+## Skillset Gap Routes
+
+| Pattern | Lifecycle Slot | Harness Rule |
+| --- | --- | --- |
+| Domain docs and ADRs | `requirements`, `planning` | Read `CONTEXT.md`, `CONTEXT-MAP.md`, and relevant ADR files when present; use their domain vocabulary and flag conflicts instead of inventing terms. |
+| Vertical slices | `planning`, `development` | Break multi-step work into independently verifiable vertical slice units; mark each unit `AFK` when a worker can proceed from durable context or `HITL` when human judgment is required. |
+| Feedback loop first | `debug/investigation` | Establish a runnable feedback loop before hypotheses or fixes: failing test, CLI fixture, curl script, browser check, trace replay, throwaway harness, fuzz loop, or differential run. |
+| Prototype learning | `planning` | Use a throwaway prototype only to answer one named logic, state, interface, or UI question; delete it or capture the durable decision before handoff. |
+| Durable agent brief | `planning`, `development`, `handoff` | Use `docs/templates/harness-agent-brief.md` for a durable agent brief when worker contracts need current behavior, desired behavior, key interfaces, acceptance criteria, and out of scope. |
+| Deep module review | `planning`, `review` | Prefer a deep module shape with small public interfaces and meaningful behavior behind them; use the interface as the test surface and preserve locality/leverage. |
+
 ## Runtime Helper Map
 
 | Helper | Lifecycle Slot | Purpose |
@@ -107,7 +118,7 @@ adapter skills.
 | `scripts/harness_recover.py` | `research`, `handoff` | Read repo index, harness state, git status/log, and local evidence summary to recover current phase and next safe task. |
 | `scripts/harness_env_probe.py` | `research`, `validation` | Report observable Codex runtime config, hooks, tool policy, evidence schema, sandbox fields, and approval fields. |
 | `scripts/harness_requirements.py` | `requirements` | Validate requirements artifacts before planning or development treats them as source of truth. |
-| `scripts/harness_agent_team.py` | `planning`, `development` | Validate agent role, scope, write set, and verification command before parallel worker dispatch. |
+| `scripts/harness_agent_team.py` | `planning`, `development` | Validate agent role, scope, write set, verification command, and optional durable worker brief before parallel worker dispatch. |
 | `scripts/harness_evidence.py` | `validation` | Validate and append structured local evidence events. |
 | `scripts/harness_report.py` | `validation`, `review`, `handoff` | Summarize local JSONL evidence by phase, event type, time window, or JSON output. |
 | `scripts/harness_checkpoint.py` | `handoff`, phase transitions | Append checkpoint entries to `docs/harness-state.md` with changed surfaces, verification, blockers, and next safe task. |

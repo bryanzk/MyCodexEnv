@@ -417,11 +417,11 @@
         <div class="eyebrow">Delivery Harness Framework / 当前 skill 路由</div>
         <h1>每个生命周期阶段该用哪个 skill。</h1>
         <p class="lead">
-          当前 MyCodexEnv 用 <code>delivery-harness-framework</code> 做通用入口：它恢复运行时事实、探测 Codex 环境、识别生命周期阶段，然后把任务路由给 repo-specific harness、gstack 专项 skill、本地开发/验证 skill 或确定性 runtime helper。Helper 提供可机器检查的执行层，skill 负责认知编排。
+          当前 MyCodexEnv 用 <code>delivery-harness-framework</code> 做通用入口：它恢复运行时事实、探测 Codex 环境、识别生命周期阶段，然后把任务路由给 repo-specific harness、gstack 专项 skill、本地开发/验证 skill 或确定性 runtime helper。最新路由还覆盖 domain docs / ADR、vertical slices、feedback loop、throwaway prototype 和 durable agent brief。
         </p>
         <div class="kpis">
           <div class="kpi"><strong>8</strong><span>标准生命周期阶段</span></div>
-          <div class="kpi"><strong>9</strong><span>helper / 验证入口</span></div>
+          <div class="kpi"><strong>9+</strong><span>helper / 验证 / brief 入口</span></div>
           <div class="kpi"><strong>3</strong><span>generic、repo-specific、gstack 分工</span></div>
           <div class="kpi"><strong>4</strong><span>完成证据字段</span></div>
         </div>
@@ -515,8 +515,8 @@ flowchart TD
               <tr>
                 <td class="phase">需求</td>
                 <td><span class="badge decision">planner</span><span class="badge decision">req-to-dev</span><span class="badge decision">task-flow-orchestrator</span></td>
-                <td><code>docs/templates/harness-requirements.md</code><br><code>scripts/harness_requirements.py validate PATH</code></td>
-                <td>目标、范围、受众、约束、成功标准或验收测试尚未锁定。</td>
+                <td><code>docs/templates/harness-requirements.md</code><br><code>scripts/harness_requirements.py validate PATH</code><br><code>CONTEXT.md</code> / <code>CONTEXT-MAP.md</code> / ADR</td>
+                <td>目标、范围、受众、约束、领域词汇、成功标准或验收测试尚未锁定。</td>
               </tr>
               <tr>
                 <td class="phase">产品 / 业务判断</td>
@@ -527,20 +527,20 @@ flowchart TD
               <tr>
                 <td class="phase">工程 / 设计规划</td>
                 <td><span class="badge decision">gstack-plan-eng-review</span><span class="badge decision">gstack-plan-design-review</span><span class="badge decision">planner</span></td>
-                <td><code>scripts/harness_agent_team.py validate PLAN.json</code> when parallel work is proposed</td>
-                <td>需要决策架构、API、数据流、迁移、视觉结构、任务拆分或多 agent 归属。</td>
+                <td><code>scripts/harness_agent_team.py validate PLAN.json</code> when parallel work is proposed<br><code>docs/templates/harness-agent-brief.md</code> when a worker needs a durable contract</td>
+                <td>需要决策架构、API、数据流、迁移、视觉结构、vertical slices、<code>AFK</code>/<code>HITL</code> 或多 agent 归属。</td>
               </tr>
               <tr>
                 <td class="phase">开发</td>
                 <td><span class="badge build">tdd-guide</span><span class="badge build">atdd-guide</span><span class="badge build">scoped worker agents</span></td>
                 <td><code>scripts/harness_agent_team.py validate PLAN.json</code><br><code>git status --short --branch</code></td>
-                <td>已有清晰验收标准，且生命周期策略允许有范围的 repo 写入。</td>
+                <td>已有清晰验收标准，且生命周期策略允许有范围的 repo 写入；worker brief 可校验 current/desired behavior、key interfaces 和 acceptance criteria。</td>
               </tr>
               <tr>
                 <td class="phase">验证 / 证据</td>
                 <td><span class="badge verify">verification-loop</span><span class="badge verify">harness_report.py</span></td>
                 <td><code>python3 test_runner.py</code><br><code>git diff --check</code><br><code>scripts/verify_codex_env.sh ...</code></td>
-                <td>声明完成前、代码/配置/文档变更后，或需要 runtime sync 证据时。</td>
+                <td>声明完成前、代码/配置/文档变更后，或 debug 任务需要先建立 runnable feedback loop 时。</td>
               </tr>
               <tr>
                 <td class="phase">QA / 评审 / 安全</td>
@@ -574,15 +574,15 @@ flowchart TD
           </div>
           <div class="card accent-decide">
             <b>2. 需求 gate before planning</b>
-            <small>如果范围或验收标准不稳定，先创建或验证 requirements artifact，再做架构规划。</small>
+            <small>如果范围、验收标准或领域词汇不稳定，先创建或验证 requirements artifact，并读取 <code>CONTEXT.md</code> / ADR。</small>
           </div>
           <div class="card accent-build">
             <b>3. 没有 validator 就不并行写入</b>
-            <small>任何 worker team 都必须通过 <code>harness_agent_team.py validate</code> 证明 write set 不重叠。</small>
+            <small>任何 worker team 都必须通过 <code>harness_agent_team.py validate</code> 证明 write set 不重叠；长期交接任务要补 durable brief。</small>
           </div>
           <div class="card accent-verify">
             <b>4. 完成声明需要 fresh evidence</b>
-            <small>声明完成前必须记录 <code>command</code>、<code>exit_code</code>、<code>key_output</code>、<code>timestamp</code>。</small>
+            <small>声明完成前必须记录 <code>command</code>、<code>exit_code</code>、<code>key_output</code>、<code>timestamp</code>；debug 修复前先证明 feedback loop。</small>
           </div>
           <div class="card accent-ship">
             <b>5. 交接是运行时事件</b>

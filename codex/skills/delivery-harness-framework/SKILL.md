@@ -128,8 +128,8 @@ stable value:
 | Phase | Purpose | Default Permissions | Minimum Gate |
 | --- | --- | --- | --- |
 | `research` | Find and verify source context. | Read-only; network only if explicitly allowed. | Sources read and cited. |
-| `requirements` | Lock goal, audience, success criteria, scope, and constraints. | Read-only. | Success criteria captured and, when artifact-based, validated. |
-| `planning` | Decide architecture, interfaces, data flow, risks, and tests. | Read-only by default. | Decision-complete plan and validation gate. |
+| `requirements` | Lock goal, audience, success criteria, scope, constraints, and domain vocabulary. | Read-only. | Success criteria captured and, when artifact-based, validated. |
+| `planning` | Decide architecture, interfaces, data flow, risks, vertical slices, and tests. | Read-only by default. | Decision-complete plan and validation gate. |
 | `development` | Make scoped repo changes. | Scoped writes allowed; remote/network approval-gated. | Focused tests for touched behavior. |
 | `validation` | Run tests, smoke checks, and evidence capture. | No repo edits by default. | Fresh evidence with command, exit code, key output, timestamp. |
 | `review` | Inspect diff, risks, behavior, and test gaps. | Read-only by default. | Findings or explicit no-issue statement. |
@@ -144,18 +144,19 @@ earliest stage that changes the decision.
 | Stage | Signals | Route |
 | --- | --- | --- |
 | Research | Unknown repo, stale handoff, unclear source ownership, missing context. | Read durable sources, run recovery/env probes, then classify again. |
-| Requirements | Goal, audience, success criteria, constraints, scope, or acceptance criteria are unclear. | Capture requirements; validate artifacts with `scripts/harness_requirements.py validate PATH` when used. |
+| Requirements | Goal, audience, success criteria, constraints, scope, domain terms, or acceptance criteria are unclear. | Capture requirements; read `CONTEXT.md`, `CONTEXT-MAP.md`, and relevant `docs/adr` files when present; use domain vocabulary and flag conflicts; validate artifacts with `scripts/harness_requirements.py validate PATH` when used. |
 | Product boundary | What to build, who it is for, positioning, pricing, demo scope, or product tradeoff. | Route to `gstack-plan-ceo-review` or `gstack-office-hours` when product judgment is the core work. |
-| Engineering plan | Architecture, data model, API contract, migration, runtime, cross-module workflow, exception taxonomy. | Route to `gstack-plan-eng-review` or a repo engineering planning skill. |
+| Engineering plan | Architecture, data model, API contract, migration, runtime, cross-module workflow, exception taxonomy, or deep module shape. | Route to `gstack-plan-eng-review` or a repo engineering planning skill; for multi-step work, decompose into vertical slice units and mark each slice `AFK` or `HITL`. |
+| Prototype | A data model, state machine, module interface, or UI direction needs fast learning before production work. | Build only a clearly marked throwaway prototype that answers one named question; delete it or capture the durable decision in an ADR, issue, checkpoint, or notes before handoff. |
 | Design plan | UX direction, information architecture, visual system, responsive behavior, or design acceptance. | Route to `gstack-plan-design-review` or a repo design skill. |
 | Implementation | Clear acceptance criteria and bounded files/modules. | Use repo workflow, TDD skill, or scoped worker agents after source context is read. |
-| Debug/investigation | Failing tests, wrong output, 401/500, broken UI flow, data mismatch, unclear root cause. | Use investigation/debugging workflow before patching. |
+| Debug/investigation | Failing tests, wrong output, 401/500, broken UI flow, data mismatch, unclear root cause. | Establish a runnable feedback loop before hypotheses or fixes, then use investigation/debugging workflow. |
 | QA/browser | User-facing page, browser smoke, console/network errors, screenshots, accessibility, responsive checks. | Route to `gstack-qa`, `gstack-qa-only`, or browser QA skill. |
 | Security/privacy | Auth, tokens, credentials, public/private boundary, PII, approvals, audit trail, data leak risk. | Route to `gstack-cso` or security review before implementation. |
 | Review | Diff exists and work is near handoff, PR, or landing. | Route to `gstack-review` or code review workflow. |
 | Ship/deploy | Commit, push, PR, merge, release, deploy, or production verification. | Route to `gstack-ship`, `gstack-land-and-deploy`, `gstack-canary`, and rollback docs as appropriate. |
 | Documentation/release notes | Public docs, release notes, shipped behavior summary, or post-ship documentation. | Route to `gstack-document-release` or doc-updater workflow. |
-| Handoff/learning | Save state, summarize, update docs, capture operational learning, prepare next session. | Use `scripts/harness_checkpoint.py append`; route to `gstack-retro` or `gstack-learn` when retrospective knowledge is requested. |
+| Handoff/learning | Save state, summarize, update docs, capture operational learning, prepare next session. | Use `scripts/harness_checkpoint.py append`; reference existing PRDs, ADRs, issues, diffs, and checkpoints instead of duplicating them; route to `gstack-retro` or `gstack-learn` when retrospective knowledge is requested. |
 
 ## Requirements Gate
 
@@ -170,6 +171,26 @@ python3 scripts/harness_requirements.py validate PATH
 If no artifact exists, the plan or state log must still capture definition of
 done, scope, constraints, verification commands, user-visible behavior, and
 known blockers.
+
+## Engineering Planning Gate
+
+For multi-step work, prefer vertical slice decomposition over layer-by-layer
+tasks. Each slice should be independently demoable or verifiable, list blocking
+dependencies, and be marked `AFK` when an agent can implement it from durable
+context or `HITL` when human judgment, credentials, design approval, or external
+access is required.
+
+When planning module changes, prefer deep module opportunities: keep the public
+interface small, put meaningful behavior behind that interface, and treat the
+interface as the test surface. Use the repo's domain vocabulary when naming
+modules and seams.
+
+## Debug Feedback Gate
+
+Do not patch a hard bug from inspection alone. First build or identify a
+feedback loop such as a failing test, CLI fixture, curl script, browser check,
+trace replay, throwaway harness, fuzz loop, or differential run. If no loop can
+be built, report the missing artifact or access needed before hypothesizing.
 
 ## Tool Router Defaults
 
@@ -200,6 +221,11 @@ Each agent needs role, scope, write set, verification command, and report
 expectations. Planner, reviewer, security, and QA roles are read-only by
 default. Worker write sets must be non-empty, repo-relative, and disjoint.
 Overlapping worker write sets block dispatch until the task is split again.
+When a worker needs a durable task contract, use
+`docs/templates/harness-agent-brief.md`. The optional `brief` object in an agent
+team plan should capture category, summary, current behavior, desired behavior,
+key interfaces, acceptance criteria, and out of scope. Do not use line numbers
+or file-path-only instructions as the task contract.
 
 ## Evidence And Report Gate
 

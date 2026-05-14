@@ -22,6 +22,7 @@ HARNESS_REQUIREMENTS = ROOT / "scripts" / "harness_requirements.py"
 HARNESS_RECOVER = ROOT / "scripts" / "harness_recover.py"
 HARNESS_ENV_PROBE = ROOT / "scripts" / "harness_env_probe.py"
 HARNESS_REQUIREMENTS_TEMPLATE = ROOT / "docs" / "templates" / "harness-requirements.md"
+HARNESS_AGENT_BRIEF_TEMPLATE = ROOT / "docs" / "templates" / "harness-agent-brief.md"
 LIFECYCLE_SKILL_ROUTING_DOC = ROOT / "docs" / "LIFECYCLE_SKILL_ROUTING.md"
 LIFECYCLE_FLOW_HTML = ROOT / "docs" / "project-lifecycle-harness-flow-cn.html"
 LIFECYCLE_SKILLS_HTML = ROOT / "docs" / "project-lifecycle-harness-flow-skills.html"
@@ -296,6 +297,22 @@ def test_delivery_harness_framework_routes_runtime_helpers():
     for term in boundary_terms:
         require(term in skill_text, f"delivery harness framework missing lifecycle boundary term: {term}")
 
+    gap_route_terms = [
+        "CONTEXT.md",
+        "CONTEXT-MAP.md",
+        "docs/adr",
+        "domain vocabulary",
+        "vertical slice",
+        "AFK",
+        "HITL",
+        "feedback loop",
+        "throwaway prototype",
+        "harness-agent-brief.md",
+        "deep module",
+    ]
+    for term in gap_route_terms:
+        require(term in skill_text, f"delivery harness framework missing skillset gap route term: {term}")
+
     print("[PASS] delivery harness framework runtime helper routes")
 
 
@@ -388,6 +405,7 @@ def test_harness_runtime_surfaces_exist_and_parse():
         HARNESS_RECOVER,
         HARNESS_ENV_PROBE,
         HARNESS_REQUIREMENTS_TEMPLATE,
+        HARNESS_AGENT_BRIEF_TEMPLATE,
     ]
     for path in required_paths:
         require(path.exists(), f"missing harness runtime surface: {path}")
@@ -410,6 +428,26 @@ def test_harness_runtime_surfaces_exist_and_parse():
         require(module in status_text, f"agent harness status missing module: {module}")
 
     print("[PASS] harness runtime surfaces exist and parse")
+
+
+def test_harness_agent_brief_template():
+    text = HARNESS_AGENT_BRIEF_TEMPLATE.read_text(encoding="utf-8")
+    required_terms = [
+        "# Harness Agent Brief",
+        "Category",
+        "Summary",
+        "Current Behavior",
+        "Desired Behavior",
+        "Key Interfaces",
+        "Acceptance Criteria",
+        "Out Of Scope",
+        "Do not use line numbers",
+        "file-path-only",
+    ]
+    for term in required_terms:
+        require(term in text, f"harness agent brief template missing term: {term}")
+
+    print("[PASS] harness agent brief template")
 
 
 def test_lifecycle_skill_routing_doc_is_discoverable():
@@ -435,6 +473,21 @@ def test_lifecycle_skill_routing_doc_is_discoverable():
     for term in required_terms:
         require(term in doc_text, f"lifecycle routing doc missing term: {term}")
 
+    gap_terms = [
+        "CONTEXT.md",
+        "CONTEXT-MAP.md",
+        "ADR",
+        "vertical slice",
+        "AFK",
+        "HITL",
+        "feedback loop",
+        "prototype",
+        "durable agent brief",
+        "deep module",
+    ]
+    for term in gap_terms:
+        require(term in doc_text, f"lifecycle routing doc missing skillset gap term: {term}")
+
     html_expectations = {
         LIFECYCLE_FLOW_HTML.name: (
             flow_html,
@@ -443,6 +496,10 @@ def test_lifecycle_skill_routing_doc_is_discoverable():
                 "通用项目生命周期路由流程",
                 "flowchart TD",
                 "delivery-harness-framework",
+                "CONTEXT / ADR",
+                "AFK / HITL",
+                "feedback loop",
+                "harness-agent-brief.md",
                 "gstack-document-release",
                 "harness_checkpoint.py",
             ],
@@ -454,6 +511,11 @@ def test_lifecycle_skill_routing_doc_is_discoverable():
                 "每个生命周期阶段该用哪个 skill",
                 "Skill 与 Helper 映射",
                 "flowchart TD",
+                "CONTEXT.md",
+                "AFK",
+                "HITL",
+                "feedback loop",
+                "harness-agent-brief.md",
                 "gstack-plan-eng-review",
                 "gstack-document-release",
                 "scripts/verify_codex_env.sh",
@@ -741,6 +803,15 @@ def test_harness_agent_team_validator():
                     "scope": "runtime report CLI",
                     "write_set": ["scripts/harness_report.py"],
                     "verification_command": "python3 test_runner.py",
+                    "brief": {
+                        "category": "enhancement",
+                        "summary": "Add runtime report behavior.",
+                        "current_behavior": "Runtime reports summarize existing evidence.",
+                        "desired_behavior": "Runtime reports include the requested behavior.",
+                        "key_interfaces": ["scripts/harness_report.py CLI"],
+                        "acceptance_criteria": ["python3 test_runner.py passes"],
+                        "out_of_scope": ["Changing evidence schema"],
+                    },
                 },
                 {
                     "id": "worker-docs",
@@ -799,6 +870,53 @@ def test_harness_agent_team_validator():
         write(plan_path, json.dumps(read_only_plan))
         code, out, err = run([sys.executable, str(HARNESS_AGENT_TEAM), "validate", str(plan_path), "--repo-root", str(ROOT)])
         require(code != 0 and "read_only_write_set" in err, "read-only role with write_set should fail")
+
+        missing_brief_field_plan = {
+            "agents": [
+                {
+                    "id": "worker",
+                    "role": "worker",
+                    "scope": "brief validation",
+                    "write_set": ["scripts/harness_agent_team.py"],
+                    "verification_command": "python3 test_runner.py",
+                    "brief": {
+                        "category": "enhancement",
+                        "summary": "Validate durable briefs.",
+                        "current_behavior": "Briefs are not validated.",
+                        "key_interfaces": ["scripts/harness_agent_team.py validate"],
+                        "acceptance_criteria": ["Missing desired behavior fails"],
+                        "out_of_scope": ["Issue tracker integration"],
+                    },
+                }
+            ]
+        }
+        write(plan_path, json.dumps(missing_brief_field_plan))
+        code, out, err = run([sys.executable, str(HARNESS_AGENT_TEAM), "validate", str(plan_path), "--repo-root", str(ROOT)])
+        require(code != 0 and "brief_desired_behavior" in err, "missing desired behavior should fail")
+
+        empty_acceptance_plan = {
+            "agents": [
+                {
+                    "id": "worker",
+                    "role": "worker",
+                    "scope": "brief validation",
+                    "write_set": ["scripts/harness_agent_team.py"],
+                    "verification_command": "python3 test_runner.py",
+                    "brief": {
+                        "category": "enhancement",
+                        "summary": "Validate durable briefs.",
+                        "current_behavior": "Briefs are not validated.",
+                        "desired_behavior": "Briefs reject empty acceptance criteria.",
+                        "key_interfaces": ["scripts/harness_agent_team.py validate"],
+                        "acceptance_criteria": [],
+                        "out_of_scope": ["Issue tracker integration"],
+                    },
+                }
+            ]
+        }
+        write(plan_path, json.dumps(empty_acceptance_plan))
+        code, out, err = run([sys.executable, str(HARNESS_AGENT_TEAM), "validate", str(plan_path), "--repo-root", str(ROOT)])
+        require(code != 0 and "brief_acceptance_criteria" in err, "empty acceptance criteria should fail")
 
         outside_plan = {
             "agents": [
@@ -1578,6 +1696,7 @@ def main():
     require(HARNESS_RECOVER.exists(), f"missing harness recover helper: {HARNESS_RECOVER}")
     require(HARNESS_ENV_PROBE.exists(), f"missing harness env probe helper: {HARNESS_ENV_PROBE}")
     require(HARNESS_REQUIREMENTS_TEMPLATE.exists(), f"missing harness requirements template: {HARNESS_REQUIREMENTS_TEMPLATE}")
+    require(HARNESS_AGENT_BRIEF_TEMPLATE.exists(), f"missing harness agent brief template: {HARNESS_AGENT_BRIEF_TEMPLATE}")
     require(HARNESS_GUARD.exists(), f"missing harness guard hook: {HARNESS_GUARD}")
     require(HARNESS_OBSERVER.exists(), f"missing harness observer hook: {HARNESS_OBSERVER}")
 
@@ -1590,6 +1709,7 @@ def main():
     test_delivery_harness_framework_eval_matrix()
     test_sync_agents_only_copies_and_backs_up_agents()
     test_harness_runtime_surfaces_exist_and_parse()
+    test_harness_agent_brief_template()
     test_lifecycle_skill_routing_doc_is_discoverable()
     test_harness_guard_policy_decisions()
     test_harness_evidence_append_and_observer_failure_mode()

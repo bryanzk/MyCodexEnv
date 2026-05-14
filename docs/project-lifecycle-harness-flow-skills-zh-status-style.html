@@ -435,11 +435,11 @@
         <div class="eyebrow">Delivery Harness Framework / DHF 当前技能路由</div>
         <h1>每个 DHF 阶段由哪个技能驱动。</h1>
         <p class="lead">
-          MyCodexEnv 使用 <code>delivery-harness-framework</code> 作为 Delivery Harness Framework (DHF) 的入口。DHF 先恢复运行时事实，探测 Codex 环境，识别当前生命周期阶段，再把任务路由到仓库专用 harness、gstack 专家技能、本地开发与验证技能，或确定性的运行时辅助脚本。辅助脚本提供机器可检查的执行层；技能负责认知编排。
+          MyCodexEnv 使用 <code>delivery-harness-framework</code> 作为 Delivery Harness Framework (DHF) 的入口。DHF 先恢复运行时事实，探测 Codex 环境，识别当前生命周期阶段，再把任务路由到仓库专用 harness、gstack 专家技能、本地开发与验证技能，或确定性的运行时辅助脚本。最新路由还覆盖 domain docs / ADR、vertical slices、feedback loop、throwaway prototype 和 durable agent brief。
         </p>
         <div class="kpis">
           <div class="kpi"><strong>8</strong><span>标准生命周期阶段</span></div>
-          <div class="kpi"><strong>9</strong><span>辅助 / 验证入口</span></div>
+          <div class="kpi"><strong>9+</strong><span>辅助 / 验证 / brief 入口</span></div>
           <div class="kpi"><strong>3</strong><span>通用、仓库专用、gstack 角色</span></div>
           <div class="kpi"><strong>4</strong><span>完成证据字段</span></div>
         </div>
@@ -462,17 +462,18 @@ flowchart TD
   Recover["运行 harness_recover.py --json<br/>恢复阶段、脏状态、下一个安全任务"]
   Env["运行 harness_env_probe.py --json<br/>观察 hooks、策略、schema"]
   NeedsReq{"目标、范围和<br/>验收标准是否清晰？"}
-  Req["锁定需求<br/>planner / req-to-dev / task-flow-orchestrator"]
+  Req["锁定需求<br/>planner / req-to-dev<br/>CONTEXT / ADR"]
   ReqVal["harness_requirements.py validate PATH"]
   Classify{"分类生命周期阶段<br/>和风险边界"}
   Repo{"是否存在仓库专用 harness？"}
   RepoSkill["交给项目适配器<br/>业务路径、命令、冒烟矩阵"]
   Product["产品 / 范围判断<br/>gstack-plan-ceo-review / gstack-office-hours"]
-  Plan["工程 / 设计规划<br/>gstack-plan-eng-review / gstack-plan-design-review"]
+  Plan["工程 / 设计规划<br/>vertical slices / AFK / HITL"]
+  Proto["原型学习 / 深模块<br/>throwaway prototype / deep module"]
   Dev["实现<br/>tdd-guide / atdd-guide / scoped workers"]
   Team{"是否使用并行 agents？"}
-  TeamVal["harness_agent_team.py validate PLAN.json"]
-  Val["验证与证据<br/>verification-loop / harness_report.py / test_runner.py"]
+  TeamVal["harness_agent_team.py validate PLAN.json<br/>optional durable brief"]
+  Val["验证与证据<br/>feedback loop / verification-loop / harness_report.py"]
   QA["QA / 安全 / Review<br/>gstack-qa / gstack-cso / gstack-review / code-reviewer"]
   Ship["发布 / 部署<br/>gstack-ship / gstack-land-and-deploy / gstack-canary"]
   Docs["文档发布<br/>gstack-document-release / doc-updater"]
@@ -485,9 +486,9 @@ flowchart TD
   Classify --> Repo
   Repo -- "是" --> RepoSkill --> Dev
   Repo -- "否，偏产品" --> Product --> Plan
-  Repo -- "否，偏工程/设计" --> Plan
+  Repo -- "否，偏工程/设计" --> Plan --> Proto
   Repo -- "否，可直接实现" --> Dev
-  Plan --> Team
+  Proto --> Team
   Dev --> Team
   Team -- "是" --> TeamVal --> Val
   Team -- "否" --> Val
@@ -504,7 +505,7 @@ flowchart TD
 
   class AGENTS,Recover,Env,ReqVal,TeamVal,Handoff runtime;
   class NeedsReq,Classify,Team decision;
-  class Req,Plan,Dev,RepoSkill,Product build;
+  class Req,Plan,Proto,Dev,RepoSkill,Product build;
   class Val,QA,Docs verify;
   class Ship ship;
           </pre>
@@ -534,8 +535,8 @@ flowchart TD
               <tr>
                 <td class="phase">需求</td>
                 <td><span class="badge decision">planner</span><span class="badge decision">req-to-dev</span><span class="badge decision">task-flow-orchestrator</span></td>
-                <td><code>docs/templates/harness-requirements.md</code><br><code>scripts/harness_requirements.py validate PATH</code></td>
-                <td>目标、范围、受众、约束、成功标准或验收测试尚未锁定。</td>
+                <td><code>docs/templates/harness-requirements.md</code><br><code>scripts/harness_requirements.py validate PATH</code><br><code>CONTEXT.md</code> / <code>CONTEXT-MAP.md</code> / ADR</td>
+                <td>目标、范围、受众、约束、领域词汇、成功标准或验收测试尚未锁定。</td>
               </tr>
               <tr>
                 <td class="phase">产品 / 业务判断</td>
@@ -546,20 +547,20 @@ flowchart TD
               <tr>
                 <td class="phase">工程 / 设计规划</td>
                 <td><span class="badge decision">gstack-plan-eng-review</span><span class="badge decision">gstack-plan-design-review</span><span class="badge decision">planner</span></td>
-                <td>提出并行工作时运行 <code>scripts/harness_agent_team.py validate PLAN.json</code></td>
-                <td>需要决定架构、API、数据流、迁移、视觉结构、任务拆分或多 agent 写入归属时。</td>
+                <td>提出并行工作时运行 <code>scripts/harness_agent_team.py validate PLAN.json</code><br>需要 worker 合同时使用 <code>docs/templates/harness-agent-brief.md</code></td>
+                <td>需要决定架构、API、数据流、迁移、视觉结构、vertical slice、<code>AFK</code>/<code>HITL</code> 或多 agent 写入归属时。</td>
               </tr>
               <tr>
                 <td class="phase">开发</td>
                 <td><span class="badge build">tdd-guide</span><span class="badge build">atdd-guide</span><span class="badge build">scoped worker agents</span></td>
                 <td><code>scripts/harness_agent_team.py validate PLAN.json</code><br><code>git status --short --branch</code></td>
-                <td>验收标准已清晰，且生命周期策略允许有范围的仓库写入。</td>
+                <td>验收标准已清晰，且生命周期策略允许有范围的仓库写入；worker brief 可校验 current/desired behavior、key interfaces 和 acceptance criteria。</td>
               </tr>
               <tr>
                 <td class="phase">验证 / 证据</td>
                 <td><span class="badge verify">verification-loop</span><span class="badge verify">harness_report.py</span></td>
                 <td><code>python3 test_runner.py</code><br><code>git diff --check</code><br><code>scripts/verify_codex_env.sh ...</code></td>
-                <td>声明完成之前、代码 / 配置 / 文档变更之后，或需要运行时同步证据时。</td>
+                <td>声明完成之前、代码 / 配置 / 文档变更之后，或 debug 任务需要先建立 runnable feedback loop 时。</td>
               </tr>
               <tr>
                 <td class="phase">QA / Review / 安全</td>
@@ -593,15 +594,15 @@ flowchart TD
           </div>
           <div class="card accent-decide">
             <b>2. 规划前必须通过需求门禁</b>
-            <small>如果范围或验收标准不稳定，先创建或验证需求产物，再进入架构规划。</small>
+            <small>如果范围、验收标准或领域词汇不稳定，先创建或验证需求产物，并读取 <code>CONTEXT.md</code> / ADR。</small>
           </div>
           <div class="card accent-build">
             <b>3. 没有验证器，不允许并行写入</b>
-            <small>任何 worker 团队都必须通过 <code>harness_agent_team.py validate</code>，证明写入集合不重叠。</small>
+            <small>任何 worker 团队都必须通过 <code>harness_agent_team.py validate</code>，证明写入集合不重叠；需要长期交接时补 durable brief。</small>
           </div>
           <div class="card accent-verify">
             <b>4. 完成声明必须有新鲜证据</b>
-            <small>声明完成前，记录 <code>command</code>、<code>exit_code</code>、<code>key_output</code> 和 <code>timestamp</code>。</small>
+            <small>声明完成前，记录 <code>command</code>、<code>exit_code</code>、<code>key_output</code> 和 <code>timestamp</code>；debug 修复前先证明反馈回路存在。</small>
           </div>
           <div class="card accent-ship">
             <b>5. 交接是运行时事件</b>

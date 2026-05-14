@@ -514,7 +514,7 @@
       <section class="hero" id="what" style="--i:0">
         <div class="eyebrow">Delivery Harness Framework / DHF Beginner Guide</div>
         <h1>Delivery Harness Framework (DHF)<br>将 prompts 实现为 proof。</h1>
-        <p class="lead">它不是一个更聪明的 prompt，也不是单个 agent。它是一套工作框架，让 AI 工程任务先恢复事实，再锁定范围，按阶段路由执行，最后用新鲜证据证明完成。</p>
+        <p class="lead">它不是一个更聪明的 prompt，也不是单个 agent。它是一套工作框架，让 AI 工程任务先恢复事实，再用领域语言和 ADR 锁定范围，按阶段路由执行，最后用新鲜证据证明完成。</p>
         <div class="definition">
           一句话：<strong>DHF 把“帮我做这个”变成“已读哪些事实、当前处于哪个阶段、谁负责执行、怎样验证、下一次如何接手”。</strong>
         </div>
@@ -532,7 +532,7 @@
           <article class="card route">
             <div class="label">Problem 02</div>
             <h3>请求太模糊</h3>
-            <p>如果目标、范围、验收标准不清楚，直接开发会把便宜的澄清问题变成昂贵返工。</p>
+            <p>如果目标、范围、验收标准或领域词汇不清楚，直接开发会把便宜的澄清问题变成昂贵返工。</p>
           </article>
           <article class="card build">
             <div class="label">Problem 03</div>
@@ -587,23 +587,27 @@
         <div class="section-note">Beginner 可以把每个任务都压进这五步，而不是直接跳到写代码。</div>
         <div class="pipeline">
           <div class="pipe"><b>1. Recover</b><span>读取 AGENTS、README、repo-index、harness state、git 状态和本地 evidence。</span></div>
-          <div class="pipe"><b>2. Clarify</b><span>确认目标、范围、受众、约束和验收标准；不清楚就进入 requirements。</span></div>
-          <div class="pipe"><b>3. Route</b><span>按生命周期阶段选择 planner、TDD、QA、安全、发布、文档或 runtime helper。</span></div>
+          <div class="pipe"><b>2. Clarify</b><span>确认目标、范围、受众、约束、领域词汇和验收标准；不清楚就进入 requirements。</span></div>
+          <div class="pipe"><b>3. Route</b><span>按生命周期阶段选择 planner、TDD、QA、安全、发布、文档或 runtime helper；多步工作拆成垂直切片。</span></div>
           <div class="pipe"><b>4. Verify</b><span>运行测试、静态检查、浏览器 smoke 或脚本验证，记录四个证据字段。</span></div>
           <div class="pipe"><b>5. Handoff</b><span>写入 checkpoint：变更面、验证、阻塞项、下一步安全任务。</span></div>
         </div>
         <div class="steps" style="margin-top:18px">
           <div class="step">
             <div class="step-num">01</div>
-            <div><h3>如果任务不明确，不要开始实现</h3><p>先把模糊请求转成可验证目标。DHF 把“需求澄清”看作正式工程阶段，而不是聊天前奏。</p></div>
+            <div><h3>如果任务不明确，不要开始实现</h3><p>先把模糊请求转成可验证目标。DHF 会读取 <code>CONTEXT.md</code>、<code>CONTEXT-MAP.md</code> 和相关 ADR，避免用错领域词。</p></div>
           </div>
           <div class="step">
             <div class="step-num">02</div>
-            <div><h3>如果要并行 agent，先验证写入边界</h3><p>多 agent 不是越多越好。只有当 write set 不重叠、验证命令明确时，才允许 scoped workers。</p></div>
+            <div><h3>如果要并行 agent，先验证写入边界</h3><p>多 agent 不是越多越好。只有当 write set 不重叠、验证命令明确，必要时还有 durable agent brief，才允许 scoped workers。</p></div>
           </div>
           <div class="step">
             <div class="step-num">03</div>
             <div><h3>如果要说完成，必须给 fresh evidence</h3><p>完成不是感觉，而是最近一次命令输出。缺少 <code>command</code>、<code>exit_code</code>、<code>key_output</code>、<code>timestamp</code> 就还没完成。</p></div>
+          </div>
+          <div class="step">
+            <div class="step-num">04</div>
+            <div><h3>如果在 debug，先建立反馈回路</h3><p>不要先猜修复。先拿到 failing test、CLI fixture、browser check、trace replay 或 throwaway harness，再进入假设和修复。</p></div>
           </div>
         </div>
       </section>
@@ -615,7 +619,7 @@
           <div class="quote">“帮我把这个功能做好，然后发出去。”</div>
           <div class="steps">
             <div class="step"><div class="step-num">A</div><div><h3>没有 Harness</h3><p>agent 可能直接改代码、猜测范围、跳过需求、最后用“看起来可以”作为完成依据。</p></div></div>
-            <div class="step"><div class="step-num">B</div><div><h3>使用 DHF</h3><p>先恢复 repo 状态，判断需求是否清晰；若不清晰，进入 requirements；若清晰，路由到 planning 或 development。</p></div></div>
+            <div class="step"><div class="step-num">B</div><div><h3>使用 DHF</h3><p>先恢复 repo 状态，判断需求和领域语言是否清晰；若不清晰，进入 requirements；若清晰，把多步工作拆成可验证的 vertical slices。</p></div></div>
             <div class="step"><div class="step-num">C</div><div><h3>交付结果</h3><p>输出包含阶段判断、已读来源、执行路径、验证命令、退出码、关键输出、时间戳和下一步安全任务。</p></div></div>
           </div>
         </div>
@@ -638,6 +642,8 @@
               <tr><td>Router</td><td>决定当前任务处于哪个阶段、该交给哪个技能或脚本。</td><td><code>delivery-harness-framework</code></td></tr>
               <tr><td>Skill</td><td>认知工作流：规划、TDD、QA、安全、发布、文档等。</td><td><code>codex/skills/*</code>、<code>gstack-*</code></td></tr>
               <tr><td>Helper</td><td>确定性脚本：恢复、探测、验证、报告、checkpoint。</td><td><code>scripts/harness_*.py</code></td></tr>
+              <tr><td>Vertical slice</td><td>一个能单独验证的端到端小切片，而不是只改某一层。</td><td><code>AFK</code> / <code>HITL</code> planning</td></tr>
+              <tr><td>Durable brief</td><td>给 worker agent 的耐久任务合同，记录 current/desired behavior、key interfaces、acceptance criteria 和 out of scope。</td><td><code>docs/templates/harness-agent-brief.md</code></td></tr>
               <tr><td>Evidence</td><td>证明任务完成的新鲜命令结果。</td><td><code>command</code>、<code>exit_code</code>、<code>key_output</code>、<code>timestamp</code></td></tr>
               <tr><td>Checkpoint</td><td>给下一次会话恢复用的状态记录。</td><td><code>docs/harness-state.md</code></td></tr>
               <tr><td>Next safe task</td><td>下一位 agent 不需要猜就能继续做的安全动作。</td><td><code>scripts/harness_recover.py</code> 输出</td></tr>

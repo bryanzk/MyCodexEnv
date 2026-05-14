@@ -27,6 +27,10 @@ Requirements artifacts use `docs/templates/harness-requirements.md`. Validate
 them with `scripts/harness_requirements.py validate PATH` before treating them
 as source of truth.
 
+When a repo has domain docs, use `CONTEXT.md`, `CONTEXT-MAP.md`, and relevant
+ADRs as planning inputs. They sharpen domain vocabulary, surface ADR conflicts,
+and keep plans from inventing inconsistent terms.
+
 For the current project workflow and skill routing map, read
 `docs/LIFECYCLE_SKILL_ROUTING.md`.
 
@@ -130,6 +134,12 @@ Each delegated agent must receive:
 - verification command;
 - report schema: changes, evidence, blockers, and risks.
 
+Worker agents may also receive a durable brief using
+`docs/templates/harness-agent-brief.md`. A brief records category, summary,
+current behavior, desired behavior, key interfaces, acceptance criteria, and out
+of scope. Use behavior and interfaces as the task contract; line numbers and
+file-path-only instructions are not durable enough.
+
 Default permissions:
 - planner: read-only;
 - worker: scoped writes only;
@@ -142,6 +152,8 @@ Agent team validator:
 - `scripts/harness_agent_team.py validate PLAN.json` validates `agents[]`.
 - every agent requires `id`, `role`, `scope`, `write_set`, and
   `verification_command`.
+- optional worker `brief` objects are validated when present and are backward
+  compatible when omitted.
 - planner, reviewer, security, and qa roles must have an empty `write_set`.
 - worker roles must have a non-empty `write_set` and verification command.
 - worker write sets are normalized to repo-relative paths and must be disjoint.

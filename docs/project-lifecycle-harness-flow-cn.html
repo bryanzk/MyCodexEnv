@@ -544,13 +544,13 @@
         <div class="eyebrow">Delivery Harness Framework</div>
         <h1>通用项目生命周期路由流程</h1>
         <p class="subtitle">
-          这张图把 <code>delivery-harness-framework</code> 放在入口层：先恢复状态、确认阶段、选择专门 skill 或 helper，再进入开发、验证、评审、交付和交接。通用 skill 只做跨仓库路由；业务路径交给 repo-specific harness；产品、工程、QA、安全和发布交给 gstack 系列 skill。
+          这张图把 <code>delivery-harness-framework</code> 放在入口层：先恢复状态、确认阶段、对齐领域词和 ADR、选择专门 skill 或 helper，再进入开发、验证、评审、交付和交接。通用 skill 只做跨仓库路由；业务路径交给 repo-specific harness；产品、工程、QA、安全和发布交给 gstack 系列 skill。
         </p>
       </section>
 
       <div class="kpis animate" style="--i:1">
         <div class="kpi"><strong>8</strong><span>标准 runtime 阶段，从 research 到 handoff。</span></div>
-        <div class="kpi"><strong>9</strong><span>核心入口：requirements、recover、env probe、report、agent team、checkpoint、evidence、verify、tests。</span></div>
+        <div class="kpi"><strong>9+</strong><span>核心入口：requirements、recover、env probe、report、agent team、agent brief、checkpoint、evidence、verify、tests。</span></div>
         <div class="kpi"><strong>10+</strong><span>gstack 专项路由覆盖产品、工程、设计、QA、安全、发布。</span></div>
         <div class="kpi"><strong>4 字段</strong><span>验证证据必须包含 command、exit_code、key_output、timestamp。</span></div>
       </div>
@@ -573,16 +573,17 @@ flowchart TD
   C["恢复当前状态<br/>harness_recover.py"]:::helper
   D["探测运行环境<br/>harness_env_probe.py"]:::helper
   E{"请求是否明确"}:::decision
-  F["Requirements<br/>捕获 DoD、范围、约束"]:::stage
+  F["Requirements<br/>捕获 DoD、范围、约束<br/>读取 CONTEXT / ADR"]:::stage
   G["验证需求 artifact<br/>harness_requirements.py validate PATH"]:::helper
   H{"是否需要专门判断"}:::decision
   I["产品判断<br/>gstack-plan-ceo-review<br/>gstack-office-hours"]:::gstack
-  J["工程/设计计划<br/>gstack-plan-eng-review<br/>gstack-plan-design-review"]:::gstack
+  J["工程/设计计划<br/>vertical slices<br/>AFK / HITL"]:::gstack
+  J2["原型学习 / 深模块判断<br/>throwaway prototype<br/>deep module review"]:::gstack
   K["安全或隐私边界<br/>gstack-cso<br/>security-reviewer"]:::gstack
   L{"是否多 agent 并行"}:::decision
-  M["校验 agent team<br/>harness_agent_team.py validate PLAN.json"]:::helper
+  M["校验 agent team<br/>harness_agent_team.py validate PLAN.json<br/>可选 durable brief"]:::helper
   N["Development<br/>repo workflow / TDD / scoped workers"]:::stage
-  O["Validation<br/>测试、smoke、fresh evidence"]:::stage
+  O["Validation<br/>测试、smoke、fresh evidence<br/>debug 先建 feedback loop"]:::stage
   P["证据报告<br/>harness_report.py"]:::helper
   Q{"是否用户可见或浏览器相关"}:::decision
   R["浏览器 QA<br/>gstack-qa 或 gstack-qa-only"]:::gstack
@@ -598,7 +599,7 @@ flowchart TD
   E -- "不明确" --> F --> G --> H
   E -- "明确" --> H
   H -- "产品" --> I --> L
-  H -- "工程或设计" --> J --> L
+  H -- "工程或设计" --> J --> J2 --> L
   H -- "安全" --> K --> L
   H -- "无需专项" --> L
   L -- "是" --> M --> N
@@ -636,7 +637,7 @@ flowchart TD
           </article>
           <article class="stage-card" style="--card-accent: var(--green)">
             <h3>需求锁定</h3>
-            <p>用于目标、范围、验收标准、限制条件不清晰的复杂任务。</p>
+            <p>用于目标、范围、验收标准、限制条件或领域词汇不清晰的复杂任务；读取 <code>CONTEXT.md</code>、<code>CONTEXT-MAP.md</code> 与相关 ADR。</p>
             <div class="badges"><span class="badge">planner</span><span class="badge">req-to-dev</span><span class="badge">harness_requirements.py</span></div>
           </article>
           <article class="stage-card" style="--card-accent: var(--amber)">
@@ -646,8 +647,8 @@ flowchart TD
           </article>
           <article class="stage-card" style="--card-accent: var(--amber)">
             <h3>工程计划</h3>
-            <p>用于架构、API、迁移、运行时、跨模块工作流。</p>
-            <div class="badges"><span class="badge">gstack-plan-eng-review</span><span class="badge">planner</span><span class="badge">task-flow-orchestrator</span></div>
+            <p>用于架构、API、迁移、运行时、跨模块工作流和 vertical slice 拆分；每个切片标记 <code>AFK</code> 或 <code>HITL</code>。</p>
+            <div class="badges"><span class="badge">gstack-plan-eng-review</span><span class="badge">planner</span><span class="badge">task-flow-orchestrator</span><span class="badge">harness-agent-brief.md</span></div>
           </article>
           <article class="stage-card" style="--card-accent: var(--amber)">
             <h3>设计与浏览器体验</h3>
@@ -661,12 +662,12 @@ flowchart TD
           </article>
           <article class="stage-card" style="--card-accent: var(--green)">
             <h3>开发实现</h3>
-            <p>用于 acceptance criteria 清楚、文件范围可控的修改。</p>
+            <p>用于 acceptance criteria 清楚、文件范围可控的修改；worker 可携带 durable brief。</p>
             <div class="badges"><span class="badge">tdd-guide</span><span class="badge">atdd-guide</span><span class="badge">worker agents</span></div>
           </article>
           <article class="stage-card" style="--card-accent: var(--blue)">
             <h3>验证与评审</h3>
-            <p>用于 fresh evidence、diff review、缺陷风险和测试缺口。</p>
+            <p>用于 fresh evidence、diff review、缺陷风险和测试缺口；debug 任务必须先建立 runnable feedback loop。</p>
             <div class="badges"><span class="badge">verification-loop</span><span class="badge">gstack-review</span><span class="badge">code-reviewer</span></div>
           </article>
           <article class="stage-card" style="--card-accent: var(--amber)">
@@ -701,13 +702,13 @@ flowchart TD
               </tr>
               <tr>
                 <td><code>scripts/harness_requirements.py</code></td>
-                <td>需求 artifact 成为 source of truth 前。</td>
+                <td>需求 artifact 成为 source of truth 前，尤其是 domain docs / ADR 已参与需求判断时。</td>
                 <td>缺字段、格式错误、未填模板时非零退出。</td>
               </tr>
               <tr>
                 <td><code>scripts/harness_agent_team.py</code></td>
                 <td>准备多 worker 或并行 agent 之前。</td>
-                <td>校验 role、scope、write_set、verification_command，阻断重叠写集。</td>
+                <td>校验 role、scope、write_set、verification_command、可选 durable brief，阻断重叠写集。</td>
               </tr>
               <tr>
                 <td><code>scripts/harness_report.py</code></td>
