@@ -77,7 +77,7 @@
       gap: 24px;
     }
 
-    .hero, .card, .strip {
+    .hero, .card, .strip, .section-block {
       animation: fadeUp 0.42s ease-out both;
       animation-delay: calc(var(--i, 0) * 0.05s);
     }
@@ -112,7 +112,7 @@
       font-family: var(--font-display);
       font-size: clamp(38px, 5.9vw, 76px);
       line-height: 0.94;
-      letter-spacing: -0.02em;
+      letter-spacing: 0;
       white-space: nowrap;
     }
 
@@ -122,6 +122,39 @@
       color: var(--text-dim);
       font-size: clamp(18px, 2.2vw, 25px);
       line-height: 1.5;
+    }
+
+    .hero-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      margin-top: 28px;
+    }
+
+    .primary-link, .secondary-link {
+      display: inline-flex;
+      align-items: center;
+      min-height: 44px;
+      padding: 11px 16px;
+      border-radius: 999px;
+      font-family: var(--font-mono);
+      font-size: 12px;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      text-decoration: none;
+    }
+
+    .primary-link {
+      color: var(--surface);
+      background: var(--green);
+      border: 1px solid var(--green);
+    }
+
+    .secondary-link {
+      color: var(--green);
+      background: color-mix(in srgb, var(--surface) 82%, var(--green) 18%);
+      border: 1px solid color-mix(in srgb, var(--green) 34%, transparent);
     }
 
     .strip {
@@ -151,6 +184,46 @@
       display: grid;
       grid-template-columns: repeat(3, minmax(0, 1fr));
       gap: 16px;
+    }
+
+    .section-block {
+      display: grid;
+      gap: 14px;
+      padding-top: 6px;
+    }
+
+    .section-heading {
+      display: flex;
+      justify-content: space-between;
+      gap: 20px;
+      align-items: end;
+      border-top: 1px solid var(--border);
+      padding-top: 20px;
+    }
+
+    .section-heading h2 {
+      margin: 0;
+      font-family: var(--font-display);
+      font-size: clamp(28px, 3vw, 42px);
+      line-height: 1;
+      letter-spacing: 0;
+    }
+
+    .section-heading p {
+      max-width: 520px;
+      margin: 0;
+      color: var(--text-dim);
+      line-height: 1.5;
+    }
+
+    .card-row {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 16px;
+    }
+
+    .card-row.three {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
     }
 
     .card {
@@ -216,9 +289,10 @@
 
     @media (max-width: 860px) {
       body { padding: 18px; }
-      .grid { grid-template-columns: 1fr; }
+      .grid, .card-row, .card-row.three { grid-template-columns: 1fr; }
       .hero { min-height: 0; }
       h1 { white-space: normal; }
+      .section-heading { align-items: start; flex-direction: column; }
       .footer { flex-direction: column; }
     }
   </style>
@@ -229,70 +303,90 @@
       <div class="eyebrow">Delivery Harness Framework / DHF Public Guide</div>
       <h1>从模糊请求到可验证交付。</h1>
       <p class="lead">这组页面解释 Delivery Harness Framework (DHF) 如何把 agentic engineering 的工作组织成事实恢复、领域语义与 ADR 对齐、阶段路由、验证证据和可恢复交接。</p>
+      <div class="hero-actions" aria-label="主要入口">
+        <a class="primary-link" href="./delivery-harness-beginner-guide-cn.html">先读新手指南</a>
+        <a class="secondary-link" href="./project-lifecycle-harness-flow-skills-zh-status-style.html">打开 Skill 路由图</a>
+      </div>
     </section>
 
     <nav class="strip" aria-label="快速入口" style="--i:1">
       <a class="tag" href="./delivery-harness-beginner-guide-cn.html">Beginner 中文指南</a>
-      <a class="tag" href="./project-lifecycle-harness-flow-cn.html">生命周期主流程</a>
-      <a class="tag" href="./project-lifecycle-harness-flow-skills-zh-status-style.html">技能路由图</a>
+      <a class="tag" href="./project-lifecycle-harness-flow-cn.html">生命周期流程</a>
+      <a class="tag" href="./project-lifecycle-harness-flow-skills-zh-status-style.html">Skill 路由图</a>
       <a class="tag" href="./index-en.html">English guide</a>
-      <a class="tag" href="./LIFECYCLE_SKILL_ROUTING.md">文字路由说明</a>
+      <a class="tag" href="./LIFECYCLE_SKILL_ROUTING.md">文字规范</a>
     </nav>
 
-    <section class="grid" aria-label="说明页面">
-      <a class="card" href="./delivery-harness-beginner-guide-cn.html" style="--i:2">
+    <section class="section-block" aria-labelledby="learn-heading" style="--i:2">
+      <div class="section-heading">
         <div>
           <div class="label">Start Here</div>
-          <h2>新手先读</h2>
-          <p>用一句话定义、三层架构、五步流程、术语表和一个具体例子解释 DHF 如何避免跳过需求、测试和交接。</p>
+          <h2 id="learn-heading">先理解 DHF</h2>
         </div>
-        <div class="meta">适合 agentic engineering beginner</div>
-      </a>
+        <p>先读入门解释，再看任务如何流动、每个阶段由哪个 skill 或 helper 接管。</p>
+      </div>
+      <div class="card-row three">
+        <a class="card" href="./delivery-harness-beginner-guide-cn.html">
+          <div>
+            <div class="label">新手入口</div>
+            <h2>新手先读</h2>
+            <p>用一句话定义、三层架构、五步流程、术语表和一个具体例子解释 DHF 如何避免跳过需求、测试和交接。</p>
+          </div>
+          <div class="meta">适合 agentic engineering beginner</div>
+        </a>
+        <a class="card" href="./project-lifecycle-harness-flow-cn.html">
+          <div>
+            <div class="label">生命周期流程</div>
+            <h2>任务如何流动</h2>
+            <p>从任务进入、读取事实、恢复状态、分类阶段，到垂直切片、验证、发布和交接的纵向流程。</p>
+          </div>
+          <div class="meta">看懂工作如何流动</div>
+        </a>
+        <a class="card" href="./project-lifecycle-harness-flow-skills-zh-status-style.html">
+          <div>
+            <div class="label">Skill 路由图</div>
+            <h2>工具如何接管</h2>
+            <p>解释每个 DHF 阶段应由哪个 skill 或 helper 接管，包括 domain docs、ADR、feedback loop 和 durable brief 触发点。</p>
+          </div>
+          <div class="meta">看懂 agent 如何选工具</div>
+        </a>
+      </div>
+    </section>
 
-      <a class="card" href="./project-lifecycle-harness-flow-cn.html" style="--i:3">
-        <div>
-          <div class="label">Lifecycle</div>
-          <h2>主流程图</h2>
-          <p>从任务进入、读取事实、恢复状态、分类阶段，到垂直切片、验证、发布和交接的纵向流程。</p>
-        </div>
-        <div class="meta">看懂工作如何流动</div>
-      </a>
-
-      <a class="card" href="./project-lifecycle-harness-flow-skills-zh-status-style.html" style="--i:4">
-        <div>
-          <div class="label">Routing</div>
-          <h2>技能地图</h2>
-          <p>解释每个 DHF 阶段应由哪个 skill 或 helper 接管，包括 domain docs、ADR、feedback loop 和 durable brief 触发点。</p>
-        </div>
-        <div class="meta">看懂 agent 如何选工具</div>
-      </a>
-
-      <a class="card" href="./index-en.html" style="--i:5">
-        <div>
-          <div class="label">English</div>
-          <h2>英文入口</h2>
-          <p>为 English audience 独立整理的 DHF public guide，连接英文 skill map、文字 routing spec 和可分享图片素材。</p>
-        </div>
-        <div class="meta">docs/index-en.html</div>
-      </a>
-
-      <a class="card" href="./project-lifecycle-harness-flow-skills-en-status-style-flowchart@2x.png" style="--i:6">
-        <div>
-          <div class="label">Image</div>
-          <h2>流程图图片</h2>
-          <p>高分辨率流程图 PNG，可用于文章、演示或社交媒体。</p>
-        </div>
-        <div class="meta">image asset</div>
-      </a>
-
-      <a class="card" href="./LIFECYCLE_SKILL_ROUTING.md" style="--i:7">
+    <section class="section-block" aria-labelledby="reference-heading" style="--i:3">
+      <div class="section-heading">
         <div>
           <div class="label">Reference</div>
-          <h2>文字规范</h2>
-          <p>覆盖 workflow、stage map、specialist skills、runtime helpers、routing rules、agent brief 和 evidence standard。</p>
+          <h2 id="reference-heading">查规范与素材</h2>
         </div>
-        <div class="meta">source-of-truth document</div>
-      </a>
+        <p>读者已经知道 DHF 是什么之后，再进入文字规范、分享图片或英文版本。</p>
+      </div>
+      <div class="card-row three">
+        <a class="card" href="./LIFECYCLE_SKILL_ROUTING.md">
+          <div>
+            <div class="label">文字规范</div>
+            <h2>路由细则</h2>
+            <p>覆盖 workflow、stage map、specialist skills、runtime helpers、routing rules、agent brief 和 evidence standard。</p>
+          </div>
+          <div class="meta">source-of-truth document</div>
+        </a>
+        <a class="card" href="./project-lifecycle-harness-flow-skills-en-status-style-flowchart@2x.png">
+          <div>
+            <div class="label">分享素材</div>
+            <h2>流程图图片</h2>
+            <p>高分辨率流程图 PNG，可用于文章、演示或社交媒体。</p>
+          </div>
+          <div class="meta">image asset</div>
+        </a>
+        <a class="card" href="./index-en.html">
+          <div>
+            <div class="label">English</div>
+            <h2>英文入口</h2>
+            <p>为 English audience 独立整理的 DHF public guide，连接英文 flow map、文字 spec 和可分享图片素材。</p>
+          </div>
+          <div class="meta">docs/index-en.html</div>
+        </a>
+      </div>
     </section>
 
     <footer class="footer">

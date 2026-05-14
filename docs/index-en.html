@@ -77,7 +77,7 @@
       gap: 24px;
     }
 
-    .hero, .card, .strip {
+    .hero, .card, .strip, .section-block {
       animation: fadeUp 0.42s ease-out both;
       animation-delay: calc(var(--i, 0) * 0.05s);
     }
@@ -123,6 +123,39 @@
       line-height: 1.5;
     }
 
+    .hero-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      margin-top: 28px;
+    }
+
+    .primary-link, .secondary-link {
+      display: inline-flex;
+      align-items: center;
+      min-height: 44px;
+      padding: 11px 16px;
+      border-radius: 999px;
+      font-family: var(--font-mono);
+      font-size: 12px;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      text-decoration: none;
+    }
+
+    .primary-link {
+      color: var(--surface);
+      background: var(--green);
+      border: 1px solid var(--green);
+    }
+
+    .secondary-link {
+      color: var(--green);
+      background: color-mix(in srgb, var(--surface) 82%, var(--green) 18%);
+      border: 1px solid color-mix(in srgb, var(--green) 34%, transparent);
+    }
+
     .strip {
       display: flex;
       flex-wrap: wrap;
@@ -149,6 +182,42 @@
     .grid {
       display: grid;
       grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 16px;
+    }
+
+    .section-block {
+      display: grid;
+      gap: 14px;
+      padding-top: 6px;
+    }
+
+    .section-heading {
+      display: flex;
+      justify-content: space-between;
+      gap: 20px;
+      align-items: end;
+      border-top: 1px solid var(--border);
+      padding-top: 20px;
+    }
+
+    .section-heading h2 {
+      margin: 0;
+      font-family: var(--font-display);
+      font-size: clamp(28px, 3vw, 42px);
+      line-height: 1;
+      letter-spacing: 0;
+    }
+
+    .section-heading p {
+      max-width: 520px;
+      margin: 0;
+      color: var(--text-dim);
+      line-height: 1.5;
+    }
+
+    .card-row {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
       gap: 16px;
     }
 
@@ -216,8 +285,9 @@
 
     @media (max-width: 860px) {
       body { padding: 18px; }
-      .grid { grid-template-columns: 1fr; }
+      .grid, .card-row { grid-template-columns: 1fr; }
       .hero { min-height: 0; }
+      .section-heading { align-items: start; flex-direction: column; }
       .footer { flex-direction: column; }
     }
   </style>
@@ -228,70 +298,100 @@
       <div class="eyebrow">Delivery Harness Framework / DHF Public Guide</div>
       <h1>From ambiguous requests<br>to verifiable delivery.</h1>
       <p class="lead">These pages explain how Delivery Harness Framework (DHF) turns agentic engineering work into fact recovery, domain and ADR alignment, lifecycle routing, verification evidence, and recoverable handoff.</p>
+      <div class="hero-actions" aria-label="Primary actions">
+        <a class="primary-link" href="./project-lifecycle-harness-flow-skills-en-status-style.html">Open the English Flow Map</a>
+        <a class="secondary-link" href="./LIFECYCLE_SKILL_ROUTING.md">Read the Written Spec</a>
+      </div>
     </section>
 
     <nav class="strip" aria-label="Quick links" style="--i:1">
       <a class="tag" href="./index.html">Chinese landing</a>
-      <a class="tag" href="./project-lifecycle-harness-flow-skills-en-status-style.html">English flow map</a>
-      <a class="tag" href="./project-lifecycle-harness-flow-skills-en.html">Classic English map</a>
-      <a class="tag" href="./LIFECYCLE_SKILL_ROUTING.md">Routing spec</a>
-      <a class="tag" href="./project-lifecycle-harness-flow-skills-en-status-style-flowchart@2x.png">Share image</a>
+      <a class="tag" href="./project-lifecycle-harness-flow-skills-en-status-style.html">Skill routing map</a>
+      <a class="tag" href="./LIFECYCLE_SKILL_ROUTING.md">Written spec</a>
     </nav>
 
-    <section class="grid" aria-label="Public guide pages">
-      <a class="card" href="./project-lifecycle-harness-flow-skills-en-status-style.html" style="--i:2">
+    <section class="section-block" aria-labelledby="learn-heading" style="--i:2">
+      <div class="section-heading">
         <div>
           <div class="label">Start Here</div>
-          <h2>Current Flow Map</h2>
-          <p>The public English DHF skill and helper routing map, including domain docs, ADR checks, vertical slices, feedback loops, prototypes, durable briefs, and handoff gates.</p>
+          <h2 id="learn-heading">Learn the framework</h2>
         </div>
-        <div class="meta">best public visual</div>
-      </a>
+        <p>Start with the visual route, then use the written spec when you need exact stage ownership and verification rules.</p>
+      </div>
+      <div class="card-row">
+        <a class="card" href="./project-lifecycle-harness-flow-skills-en-status-style.html">
+          <div>
+            <div class="label">Primary Path</div>
+            <h2>English Flow Map</h2>
+            <p>The public DHF skill and helper routing map, including domain docs, ADR checks, vertical slices, feedback loops, prototypes, durable briefs, and handoff gates.</p>
+          </div>
+          <div class="meta">primary visual guide</div>
+        </a>
+        <a class="card" href="./LIFECYCLE_SKILL_ROUTING.md">
+          <div>
+            <div class="label">Reference</div>
+            <h2>Written Routing Spec</h2>
+            <p>The source-of-truth lifecycle guide for stage ownership, specialist skills, runtime helpers, agent briefs, evidence standards, and completion gates.</p>
+          </div>
+          <div class="meta">docs/LIFECYCLE_SKILL_ROUTING.md</div>
+        </a>
+      </div>
+    </section>
 
-      <a class="card" href="./LIFECYCLE_SKILL_ROUTING.md" style="--i:3">
+    <section class="section-block" aria-labelledby="resources-heading" style="--i:3">
+      <div class="section-heading">
         <div>
-          <div class="label">Reference</div>
-          <h2>Written Routing Spec</h2>
-          <p>The source-of-truth lifecycle guide for stage ownership, specialist skills, runtime helpers, agent briefs, evidence standards, and completion gates.</p>
+          <div class="label">Resources</div>
+          <h2 id="resources-heading">Share or switch language</h2>
         </div>
-        <div class="meta">docs/LIFECYCLE_SKILL_ROUTING.md</div>
-      </a>
+        <p>Use these when the reader needs a presentation asset or the Chinese version of the same guide.</p>
+      </div>
+      <div class="card-row">
+        <a class="card" href="./project-lifecycle-harness-flow-skills-en-status-style-flowchart@2x.png">
+          <div>
+            <div class="label">Assets</div>
+            <h2>Shareable PNG</h2>
+            <p>A high-resolution flowchart image for articles, social posts, talks, and handoff decks.</p>
+          </div>
+          <div class="meta">image asset</div>
+        </a>
+        <a class="card" href="./index.html">
+          <div>
+            <div class="label">Chinese Docs</div>
+            <h2>Chinese Landing</h2>
+            <p>The Chinese entry point groups the beginner guide, lifecycle flow, skill routing map, written spec, and shareable image.</p>
+          </div>
+          <div class="meta">localized guide</div>
+        </a>
+      </div>
+    </section>
 
-      <a class="card" href="./project-lifecycle-harness-flow-skills-en.html" style="--i:4">
+    <section class="section-block" aria-labelledby="implementation-heading" style="--i:4">
+      <div class="section-heading">
         <div>
-          <div class="label">Classic</div>
-          <h2>English Skill Map</h2>
-          <p>A compact English version of the lifecycle skill/helper map for readers who want a traditional flowchart view.</p>
+          <div class="label">Implementation Notes</div>
+          <h2 id="implementation-heading">For maintainers</h2>
         </div>
-        <div class="meta">classic visual page</div>
-      </a>
-
-      <a class="card" href="./project-lifecycle-harness-flow-skills-en-status-style-flowchart@2x.png" style="--i:5">
-        <div>
-          <div class="label">Asset</div>
-          <h2>Shareable PNG</h2>
-          <p>A high-resolution flowchart image for articles, social posts, talks, and handoff decks.</p>
-        </div>
-        <div class="meta">image asset</div>
-      </a>
-
-      <a class="card" href="./project-lifecycle-harness-flow-cn.html" style="--i:6">
-        <div>
-          <div class="label">Chinese</div>
-          <h2>Main Lifecycle Flow</h2>
-          <p>The Chinese vertical lifecycle flow shows how DHF moves from task intake through recovery, classification, slicing, validation, release, and handoff.</p>
-        </div>
-        <div class="meta">Chinese visual guide</div>
-      </a>
-
-      <a class="card" href="./delivery-harness-beginner-guide-cn.html" style="--i:7">
-        <div>
-          <div class="label">Beginner</div>
-          <h2>Chinese Beginner Guide</h2>
-          <p>A plain-language guide for agentic engineering beginners, covering the DHF definition, three-layer model, five-step workflow, examples, and glossary.</p>
-        </div>
-        <div class="meta">Chinese explainer</div>
-      </a>
+        <p>These are useful after the public concept is clear. They should not compete with the learning path.</p>
+      </div>
+      <div class="card-row">
+        <a class="card" href="./HARNESS_RUNTIME.md">
+          <div>
+            <div class="label">Runtime Reference</div>
+            <h2>Harness Runtime</h2>
+            <p>The implementation contract for workflow state, helper scripts, evidence, checkpoints, permissions, hooks, and agent teams.</p>
+          </div>
+          <div class="meta">reference docs</div>
+        </a>
+        <a class="card" href="./project-lifecycle-harness-flow-skills-en.html">
+          <div>
+            <div class="label">Archive</div>
+            <h2>Classic Skill Map</h2>
+            <p>The older English skill/helper visual remains available for comparison, but the status-style English Flow Map is the primary public path.</p>
+          </div>
+          <div class="meta">legacy visual page</div>
+        </a>
+      </div>
     </section>
 
     <footer class="footer">

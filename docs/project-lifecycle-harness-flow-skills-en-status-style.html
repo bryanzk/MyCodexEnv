@@ -386,6 +386,32 @@
     }
     .callout b { color: var(--build); }
 
+    .link-groups {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 14px;
+    }
+
+    .link-group {
+      display: grid;
+      gap: 8px;
+      align-content: start;
+    }
+
+    .link-group ul {
+      display: grid;
+      gap: 7px;
+      margin: 0;
+      padding: 0;
+      list-style: none;
+    }
+
+    .link-group a {
+      color: inherit;
+      text-decoration-thickness: 1px;
+      text-underline-offset: 3px;
+    }
+
     @media (max-width: 1100px) {
       .wrap { grid-template-columns: 1fr; padding: 0 20px 42px; }
       .toc {
@@ -411,6 +437,7 @@
       .toc a.active { border-left: none; border-bottom-color: var(--recover); }
       .main { padding-top: 20px; }
       .kpis, .grid { grid-template-columns: 1fr 1fr; }
+      .link-groups { grid-template-columns: 1fr; }
     }
     @media (max-width: 680px) {
       .kpis, .grid { grid-template-columns: 1fr; }
@@ -618,17 +645,34 @@ flowchart TD
       <section class="section" id="handoff">
         <h2>Handoff Assets</h2>
         <div class="callout">
-          <b>Current documentation entry points:</b>
-          <a href="./index-en.html"><code>docs/index-en.html</code></a> is the English public docs landing page;
-          <a href="./index.html"><code>docs/index.html</code></a> is the Chinese public docs landing page;
-          <a href="./delivery-harness-beginner-guide-cn.html"><code>docs/delivery-harness-beginner-guide-cn.html</code></a> is the Chinese beginner guide;
-          <a href="./LIFECYCLE_SKILL_ROUTING.md"><code>docs/LIFECYCLE_SKILL_ROUTING.md</code></a> is the written lifecycle and skill/helper routing guide;
-          <a href="./project-lifecycle-harness-flow-cn.html"><code>docs/project-lifecycle-harness-flow-cn.html</code></a> is the vertical main flowchart;
-          <a href="./project-lifecycle-harness-flow-skills-zh-status-style.html"><code>docs/project-lifecycle-harness-flow-skills-zh-status-style.html</code></a> is the current Chinese Delivery Harness Framework skill/helper routing guide;
-          <a href="./HARNESS_RUNTIME.md"><code>docs/HARNESS_RUNTIME.md</code></a> is the runtime contract;
-          <a href="./AGENT_HARNESS_STATUS.md"><code>docs/AGENT_HARNESS_STATUS.md</code></a> is the Harness module status;
-          <a href="./CODEX_ENV_REPRODUCTION.md"><code>docs/CODEX_ENV_REPRODUCTION.md</code></a> documents environment reproduction;
-          <a href="./repo-index.md"><code>docs/repo-index.md</code></a> is the low-token repo index.
+          <div class="link-groups">
+            <div class="link-group">
+              <b>Primary English Docs</b>
+              <ul>
+                <li><a href="./index-en.html"><code>docs/index-en.html</code></a></li>
+                <li><a href="./LIFECYCLE_SKILL_ROUTING.md"><code>docs/LIFECYCLE_SKILL_ROUTING.md</code></a></li>
+                <li><a href="./project-lifecycle-harness-flow-skills-en.html"><code>docs/project-lifecycle-harness-flow-skills-en.html</code></a></li>
+              </ul>
+            </div>
+            <div class="link-group">
+              <b>Chinese Docs</b>
+              <ul>
+                <li><a href="./index.html"><code>docs/index.html</code></a></li>
+                <li><a href="./delivery-harness-beginner-guide-cn.html"><code>docs/delivery-harness-beginner-guide-cn.html</code></a></li>
+                <li><a href="./project-lifecycle-harness-flow-cn.html"><code>docs/project-lifecycle-harness-flow-cn.html</code></a></li>
+                <li><a href="./project-lifecycle-harness-flow-skills-zh-status-style.html"><code>docs/project-lifecycle-harness-flow-skills-zh-status-style.html</code></a></li>
+              </ul>
+            </div>
+            <div class="link-group">
+              <b>Runtime References</b>
+              <ul>
+                <li><a href="./HARNESS_RUNTIME.md"><code>docs/HARNESS_RUNTIME.md</code></a></li>
+                <li><a href="./AGENT_HARNESS_STATUS.md"><code>docs/AGENT_HARNESS_STATUS.md</code></a></li>
+                <li><a href="./CODEX_ENV_REPRODUCTION.md"><code>docs/CODEX_ENV_REPRODUCTION.md</code></a></li>
+                <li><a href="./repo-index.md"><code>docs/repo-index.md</code></a></li>
+              </ul>
+            </div>
+          </div>
         </div>
       </section>
     </main>

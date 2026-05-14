@@ -28,6 +28,9 @@ PUBLIC_INDEX_HTML = ROOT / "docs" / "index.html"
 PUBLIC_INDEX_EN_HTML = ROOT / "docs" / "index-en.html"
 LIFECYCLE_FLOW_HTML = ROOT / "docs" / "project-lifecycle-harness-flow-cn.html"
 LIFECYCLE_SKILLS_HTML = ROOT / "docs" / "project-lifecycle-harness-flow-skills.html"
+LIFECYCLE_SKILLS_ZH_STATUS_HTML = ROOT / "docs" / "project-lifecycle-harness-flow-skills-zh-status-style.html"
+LIFECYCLE_SKILLS_EN_STATUS_HTML = ROOT / "docs" / "project-lifecycle-harness-flow-skills-en-status-style.html"
+LIFECYCLE_SKILLS_EN_ARCHIVE_HTML = ROOT / "docs" / "project-lifecycle-harness-flow-skills-en.html"
 HARNESS_GUARD = ROOT / "codex" / "hooks" / "harness_guard.py"
 HARNESS_OBSERVER = ROOT / "codex" / "hooks" / "harness_observer.py"
 
@@ -458,11 +461,17 @@ def test_lifecycle_skill_routing_doc_is_discoverable():
     require(PUBLIC_INDEX_EN_HTML.exists(), "missing English public index HTML guide")
     require(LIFECYCLE_FLOW_HTML.exists(), "missing lifecycle flow HTML guide")
     require(LIFECYCLE_SKILLS_HTML.exists(), "missing lifecycle skill routing HTML guide")
+    require(LIFECYCLE_SKILLS_ZH_STATUS_HTML.exists(), "missing current Chinese skill routing HTML guide")
+    require(LIFECYCLE_SKILLS_EN_STATUS_HTML.exists(), "missing current English skill routing HTML guide")
+    require(LIFECYCLE_SKILLS_EN_ARCHIVE_HTML.exists(), "missing archived English skill routing HTML guide")
     doc_text = LIFECYCLE_SKILL_ROUTING_DOC.read_text(encoding="utf-8")
     public_index_html = PUBLIC_INDEX_HTML.read_text(encoding="utf-8")
     public_index_en_html = PUBLIC_INDEX_EN_HTML.read_text(encoding="utf-8")
     flow_html = LIFECYCLE_FLOW_HTML.read_text(encoding="utf-8")
     skills_html = LIFECYCLE_SKILLS_HTML.read_text(encoding="utf-8")
+    skills_zh_status_html = LIFECYCLE_SKILLS_ZH_STATUS_HTML.read_text(encoding="utf-8")
+    skills_en_status_html = LIFECYCLE_SKILLS_EN_STATUS_HTML.read_text(encoding="utf-8")
+    skills_en_archive_html = LIFECYCLE_SKILLS_EN_ARCHIVE_HTML.read_text(encoding="utf-8")
 
     for stage in ["research", "requirements", "planning", "development", "validation", "review", "ship", "handoff"]:
         require(f"`{stage}`" in doc_text, f"lifecycle routing doc missing stage: {stage}")
@@ -538,6 +547,11 @@ def test_lifecycle_skill_routing_doc_is_discoverable():
             [
                 'lang="zh-CN"',
                 'href="./index-en.html"',
+                "先读新手指南",
+                "先理解 DHF",
+                "生命周期流程",
+                "Skill 路由图",
+                "查规范与素材",
                 "英文入口",
                 "docs/index-en.html",
             ],
@@ -552,6 +566,12 @@ def test_lifecycle_skill_routing_doc_is_discoverable():
                 'href="./project-lifecycle-harness-flow-skills-en.html"',
                 'href="./LIFECYCLE_SKILL_ROUTING.md"',
                 "domain and ADR alignment",
+                "Open the English Flow Map",
+                "Learn the framework",
+                "Share or switch language",
+                "For maintainers",
+                "English Flow Map",
+                "Archive",
                 "docs/index-en.html",
             ],
         ),
@@ -559,6 +579,32 @@ def test_lifecycle_skill_routing_doc_is_discoverable():
     for filename, (text, terms) in public_index_expectations.items():
         for term in terms:
             require(term in text, f"{filename} missing public entry term: {term}")
+
+    handoff_group_expectations = {
+        LIFECYCLE_SKILLS_EN_STATUS_HTML.name: (
+            skills_en_status_html,
+            ["link-groups", "Primary English Docs", "Chinese Docs", "Runtime References", "project-lifecycle-harness-flow-skills-en.html"],
+        ),
+        LIFECYCLE_SKILLS_EN_ARCHIVE_HTML.name: (
+            skills_en_archive_html,
+            ["link-groups", "Primary English Docs", "Chinese Docs", "Runtime References", "project-lifecycle-harness-flow-skills-en-status-style.html"],
+        ),
+        LIFECYCLE_SKILLS_ZH_STATUS_HTML.name: (
+            skills_zh_status_html,
+            ["link-groups", "中文文档", "英文文档", "Runtime 参考", "project-lifecycle-harness-flow-skills.html"],
+        ),
+        LIFECYCLE_SKILLS_HTML.name: (
+            skills_html,
+            ["link-groups", "中文文档", "英文文档", "Runtime 参考", "project-lifecycle-harness-flow-skills-zh-status-style.html"],
+        ),
+        LIFECYCLE_FLOW_HTML.name: (
+            flow_html,
+            ["中文文档", "英文文档", "Runtime 参考", "Current English Flow Map"],
+        ),
+    }
+    for filename, (text, terms) in handoff_group_expectations.items():
+        for term in terms:
+            require(term in text, f"{filename} missing grouped handoff term: {term}")
 
     primary_docs = [
         ROOT / "README.md",
