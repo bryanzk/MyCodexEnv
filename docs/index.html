@@ -226,6 +226,34 @@
       grid-template-columns: repeat(3, minmax(0, 1fr));
     }
 
+    .sequence {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 12px;
+    }
+
+    .sequence-step {
+      min-width: 0;
+      padding: 16px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      text-decoration: none;
+      color: inherit;
+    }
+
+    .sequence-step strong {
+      display: block;
+      margin: 8px 0 6px;
+      font-size: 18px;
+    }
+
+    .sequence-step span {
+      color: var(--text-dim);
+      line-height: 1.45;
+      font-size: 14px;
+    }
+
     .card {
       min-width: 0;
       min-height: 220px;
@@ -289,7 +317,7 @@
 
     @media (max-width: 860px) {
       body { padding: 18px; }
-      .grid, .card-row, .card-row.three { grid-template-columns: 1fr; }
+      .grid, .card-row, .card-row.three, .sequence { grid-template-columns: 1fr; }
       .hero { min-height: 0; }
       h1 { white-space: normal; }
       .section-heading { align-items: start; flex-direction: column; }
@@ -323,7 +351,29 @@
           <div class="label">Start Here</div>
           <h2 id="learn-heading">先理解 DHF</h2>
         </div>
-        <p>先读入门解释，再看任务如何流动、每个阶段由哪个 skill 或 helper 接管。</p>
+        <p>推荐学习顺序：Beginner -> Lifecycle Flow -> Skill Routing Map -> Written Spec。先读入门解释，再看任务如何流动、每个阶段由哪个 skill 或 helper 接管。</p>
+      </div>
+      <div class="sequence" aria-label="推荐学习顺序">
+        <a class="sequence-step" href="./delivery-harness-beginner-guide-cn.html">
+          <div class="label">01</div>
+          <strong>Beginner</strong>
+          <span>先理解 DHF 为什么存在、怎样定义完成。</span>
+        </a>
+        <a class="sequence-step" href="./project-lifecycle-harness-flow-cn.html">
+          <div class="label">02</div>
+          <strong>Lifecycle Flow</strong>
+          <span>再看任务从进入到交接的完整生命周期。</span>
+        </a>
+        <a class="sequence-step" href="./project-lifecycle-harness-flow-skills-zh-status-style.html">
+          <div class="label">03</div>
+          <strong>Skill Routing Map</strong>
+          <span>然后看当前阶段由哪个 skill 或 helper 负责。</span>
+        </a>
+        <a class="sequence-step" href="./LIFECYCLE_SKILL_ROUTING.md">
+          <div class="label">04</div>
+          <strong>Written Spec</strong>
+          <span>最后查文字规范、路由规则和证据标准。</span>
+        </a>
       </div>
       <div class="card-row three">
         <a class="card" href="./delivery-harness-beginner-guide-cn.html">
@@ -345,7 +395,7 @@
         <a class="card" href="./project-lifecycle-harness-flow-skills-zh-status-style.html">
           <div>
             <div class="label">Skill 路由图</div>
-            <h2>工具如何接管</h2>
+            <h2>Skill Routing Map</h2>
             <p>解释每个 DHF 阶段应由哪个 skill 或 helper 接管，包括 domain docs、ADR、feedback loop 和 durable brief 触发点。</p>
           </div>
           <div class="meta">看懂 agent 如何选工具</div>
@@ -391,7 +441,7 @@
 
     <footer class="footer">
       <span>Public docs entries: <strong>docs/index.html</strong> / <strong>docs/index-en.html</strong></span>
-      <span>Watermark / brand reference: ShipAI.ca</span>
+      <span>Published by ShipAI.ca as a public DHF reference</span>
     </footer>
   </main>
 </body>

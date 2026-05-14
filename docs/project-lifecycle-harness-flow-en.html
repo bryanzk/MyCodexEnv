@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Delivery Harness Framework (DHF) Lifecycle Flow</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,650;9..144,760&family=IBM+Plex+Mono:wght@400;500;600&family=Atkinson+Hyperlegible:wght@400;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --font-body: 'Atkinson Hyperlegible', Verdana, sans-serif;
+      --font-display: 'Fraunces', Georgia, serif;
+      --font-mono: 'IBM Plex Mono', monospace;
+      --bg: #f7faf7;
+      --surface: #ffffff;
+      --surface2: #eef7f1;
+      --border: rgba(22, 45, 37, 0.12);
+      --text: #17241f;
+      --text-dim: #62736b;
+      --green: #0f9b8e;
+      --green-dim: rgba(15, 155, 142, 0.10);
+      --purple: #8a4fff;
+      --purple-dim: rgba(138, 79, 255, 0.10);
+      --amber: #b26a00;
+      --amber-dim: rgba(178, 106, 0, 0.12);
+      --shadow: 0 14px 40px rgba(22, 45, 37, 0.08), 0 2px 8px rgba(22, 45, 37, 0.05);
+    }
+
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #101613;
+        --surface: #171f1b;
+        --surface2: #1e2924;
+        --border: rgba(222, 245, 235, 0.12);
+        --text: #e7f4ee;
+        --text-dim: #9db2a8;
+        --green: #35d5c6;
+        --green-dim: rgba(53, 213, 198, 0.12);
+        --purple: #b99cff;
+        --purple-dim: rgba(185, 156, 255, 0.13);
+        --amber: #ffc15a;
+        --amber-dim: rgba(255, 193, 90, 0.12);
+        --shadow: 0 14px 40px rgba(0, 0, 0, 0.22), 0 2px 8px rgba(0, 0, 0, 0.18);
+      }
+    }
+
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      color: var(--text);
+      font-family: var(--font-body);
+      background-color: var(--bg);
+      background-image:
+        radial-gradient(circle at 14% 10%, var(--green-dim) 0 22%, transparent 42%),
+        radial-gradient(circle at 84% 16%, var(--purple-dim) 0 18%, transparent 40%),
+        radial-gradient(circle at 52% 96%, var(--amber-dim) 0 20%, transparent 44%);
+      padding: 36px;
+      overflow-wrap: break-word;
+    }
+
+    .wrap {
+      max-width: 1240px;
+      margin: 0 auto;
+      display: grid;
+      gap: 22px;
+    }
+
+    .hero, .section {
+      background: color-mix(in srgb, var(--surface) 88%, transparent);
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      box-shadow: var(--shadow);
+    }
+
+    .hero {
+      min-height: 360px;
+      display: grid;
+      align-content: center;
+      padding: clamp(28px, 5vw, 56px);
+    }
+
+    .section {
+      padding: clamp(22px, 3vw, 34px);
+    }
+
+    .eyebrow, .label, .footer, code {
+      font-family: var(--font-mono);
+    }
+
+    .eyebrow, .label {
+      color: var(--green);
+      font-size: 12px;
+      font-weight: 600;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+    }
+
+    h1, h2 {
+      margin: 0;
+      font-family: var(--font-display);
+      letter-spacing: 0;
+    }
+
+    h1 {
+      max-width: 900px;
+      margin-top: 14px;
+      font-size: clamp(42px, 7vw, 78px);
+      line-height: 0.96;
+    }
+
+    h2 {
+      font-size: clamp(30px, 4vw, 48px);
+      line-height: 1.02;
+    }
+
+    .lead {
+      max-width: 860px;
+      margin: 22px 0 0;
+      color: var(--text-dim);
+      font-size: clamp(18px, 2.1vw, 24px);
+      line-height: 1.55;
+    }
+
+    p, li {
+      color: var(--text-dim);
+      line-height: 1.6;
+    }
+
+    code {
+      color: var(--green);
+      background: var(--green-dim);
+      border: 1px solid color-mix(in srgb, var(--green) 22%, transparent);
+      border-radius: 5px;
+      padding: 1px 5px;
+      font-size: 0.9em;
+    }
+
+    a {
+      color: var(--green);
+      text-decoration: none;
+      border-bottom: 1px solid color-mix(in srgb, var(--green) 34%, transparent);
+    }
+
+    a:hover { border-bottom-color: var(--green); }
+
+    .mermaid-wrap {
+      margin-top: 18px;
+      min-height: 480px;
+      overflow: auto;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 20px;
+    }
+
+    .mermaid {
+      min-width: 900px;
+      margin: 0;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 12px;
+      margin-top: 18px;
+    }
+
+    .card {
+      min-width: 0;
+      padding: 16px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+    }
+
+    .card b {
+      display: block;
+      margin-bottom: 6px;
+      color: var(--text);
+    }
+
+    .links {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 12px;
+      margin-top: 18px;
+    }
+
+    .link-card {
+      display: block;
+      min-width: 0;
+      padding: 16px;
+      color: inherit;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      text-decoration: none;
+    }
+
+    .link-card b {
+      display: block;
+      margin-bottom: 6px;
+      color: var(--text);
+    }
+
+    .footer {
+      color: var(--text-dim);
+      border-top: 1px solid var(--border);
+      padding-top: 16px;
+      font-size: 12px;
+      line-height: 1.55;
+    }
+
+    @media (max-width: 860px) {
+      body { padding: 18px; }
+      .hero { min-height: 0; }
+      .grid, .links { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <main class="wrap">
+    <section class="hero">
+      <div class="eyebrow">Delivery Harness Framework / DHF Lifecycle Flow</div>
+      <h1>DHF Lifecycle Flow from intake to handoff.</h1>
+      <p class="lead">Use this Flow Map after the beginner guide. It shows how <code>delivery-harness-framework</code> moves a task through fact recovery, requirements, planning, implementation, verification evidence, review, release, and handoff.</p>
+    </section>
+
+    <section class="section">
+      <div class="label">Lifecycle Flow</div>
+      <h2>Flow Map</h2>
+      <div class="mermaid-wrap">
+        <pre class="mermaid">
+flowchart TD
+  Start(["User request enters DHF"])
+  Recover["Recover facts<br/>AGENTS.md, README, repo state<br/>harness_recover.py"]
+  Env["Probe runtime<br/>harness_env_probe.py"]
+  Clear{"Are goal, scope,<br/>and acceptance clear?"}
+  Req["Requirements<br/>planner / req-to-dev<br/>CONTEXT / ADR"]
+  Plan["Planning<br/>vertical slice / AFK / HITL"]
+  Dev["Implementation<br/>TDD / ATDD / scoped workers"]
+  Verify["Verification evidence<br/>command, exit_code,<br/>key_output, timestamp"]
+  Review["QA / security / review<br/>gstack-qa / gstack-cso / gstack-review"]
+  Ship["Ship / deploy / canary<br/>gstack-ship / land-and-deploy"]
+  Docs["Docs release<br/>document-release / doc-updater"]
+  Handoff["Handoff<br/>harness_checkpoint.py append"]
+  Done(["DHF output<br/>route, evidence, next safe task"])
+
+  Start --> Recover --> Env --> Clear
+  Clear -- "No" --> Req --> Plan
+  Clear -- "Yes" --> Plan
+  Plan --> Dev --> Verify
+  Verify --> Review --> Ship --> Docs --> Handoff --> Done
+  Verify --> Handoff
+
+  classDef runtime fill:#e9f7f5,stroke:#0f9b8e,color:#17241f;
+  classDef decision fill:#f0eaff,stroke:#8a4fff,color:#17241f;
+  classDef build fill:#fbf0dc,stroke:#b26a00,color:#17241f;
+  classDef verify fill:#eaf6f0,stroke:#12805c,color:#17241f;
+  classDef ship fill:#faeaf1,stroke:#d13574,color:#17241f;
+
+  class Recover,Env,Handoff runtime;
+  class Clear decision;
+  class Req,Plan,Dev build;
+  class Verify,Review,Docs verify;
+  class Ship ship;
+        </pre>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="label">How to read it</div>
+      <h2>Use the map as a gate, not a poster.</h2>
+      <div class="grid">
+        <div class="card"><b>1. Recover</b><span>Start with durable facts, not memory.</span></div>
+        <div class="card"><b>2. Lock scope</b><span>If acceptance is unclear, route to requirements before planning.</span></div>
+        <div class="card"><b>3. Build in slices</b><span>Development starts only after the lifecycle stage and owner are clear.</span></div>
+        <div class="card"><b>4. Prove and hand off</b><span>Verification evidence and next safe task are part of the deliverable.</span></div>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="label">Next</div>
+      <h2>Continue the English path</h2>
+      <div class="links">
+        <a class="link-card" href="./delivery-harness-beginner-guide-en.html"><b>Beginner</b><span>Review the plain-English DHF model.</span></a>
+        <a class="link-card" href="./project-lifecycle-harness-flow-skills-en-status-style.html"><b>Skill Routing Map</b><span>See which skill or helper owns each stage.</span></a>
+        <a class="link-card" href="./LIFECYCLE_SKILL_ROUTING.md"><b>Written Spec</b><span>Read the routing contract and evidence rules.</span></a>
+        <a class="link-card" href="./index-en.html"><b>English Index</b><span>Return to the public guide entry.</span></a>
+      </div>
+    </section>
+
+    <footer class="footer">Published by ShipAI.ca as a public DHF reference. File: <code>docs/project-lifecycle-harness-flow-en.html</code>.</footer>
+  </main>
+
+  <script type="module">
+    import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs';
+    mermaid.initialize({
+      startOnLoad: true,
+      theme: 'base',
+      look: 'classic',
+      flowchart: { curve: 'basis', padding: 24, htmlLabels: true, nodeSpacing: 52, rankSpacing: 64 },
+      themeVariables: {
+        fontFamily: 'Atkinson Hyperlegible, Verdana, sans-serif',
+        primaryColor: '#ffffff',
+        primaryTextColor: '#17241f',
+        primaryBorderColor: '#0f9b8e',
+        lineColor: '#62736b',
+        secondaryColor: '#eef7f1',
+        tertiaryColor: '#f0eaff',
+        noteBkgColor: '#ffffff',
+        noteTextColor: '#17241f',
+        fontSize: '18px'
+      }
+    });
+  </script>
+</body>
+</html>

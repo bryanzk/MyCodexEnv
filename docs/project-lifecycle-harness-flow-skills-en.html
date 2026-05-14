@@ -430,17 +430,17 @@
       <div class="toc-title">Contents</div>
       <a href="#overview">Overview</a>
       <a href="#flow">Flowchart</a>
-      <a href="#skills">Skill Map</a>
+      <a href="#skills">Skill Routing Map</a>
       <a href="#rules">Routing Rules</a>
       <a href="#handoff">Handoff</a>
     </nav>
 
     <main class="main">
       <section class="hero" id="overview">
-        <div class="eyebrow">Delivery Harness Framework / DHF Skill Routing</div>
-        <h1>Which skill powers each DHF stage.</h1>
+        <div class="eyebrow">Delivery Harness Framework / Archive Only</div>
+        <h1>Classic DHF Skill Routing Map.</h1>
         <p class="lead">
-          MyCodexEnv uses <code>delivery-harness-framework</code> as the Delivery Harness Framework (DHF) entry point. DHF restores runtime facts, probes the Codex environment, identifies the lifecycle stage, and routes the work to a repo-specific harness, a gstack specialist skill, local development and verification skills, or deterministic runtime helpers. The latest routing gates also cover domain docs / ADRs, vertical slices, feedback loops, throwaway prototypes, and durable agent briefs.
+          Archive Only. This classic visual is kept for comparison. Use the Current Skill Routing Map for the primary public flow and current handoff links.
         </p>
         <div class="kpis">
           <div class="kpi"><strong>8</strong><span>standard lifecycle stages</span></div>
@@ -451,8 +451,8 @@
       </section>
 
       <section class="section" id="flow">
-        <h2>Current Flow</h2>
-        <div class="section-note">Vertical Mermaid flowchart: restore runtime facts, select the right skill/helper, then checkpoint</div>
+        <h2>Archive Flow</h2>
+        <div class="section-note">Classic Mermaid flowchart retained for comparison; the current status-style page is the primary Flow Map.</div>
         <div class="mermaid-wrap" data-zoom="1">
           <div class="zoom-controls">
             <button type="button" data-action="in">+</button>
@@ -516,7 +516,7 @@ flowchart TD
       </section>
 
       <section class="section" id="skills">
-        <h2>Skill and Helper Map</h2>
+        <h2>Skill Routing Map</h2>
         <div class="section-note">Helpers provide objective runtime facts; skills provide cognitive workflow routing</div>
         <div class="table-wrap">
           <table>
@@ -626,8 +626,16 @@ flowchart TD
               <b>Primary English Docs</b>
               <ul>
                 <li><a href="./index-en.html"><code>docs/index-en.html</code></a></li>
+                <li><a href="./delivery-harness-beginner-guide-en.html"><code>docs/delivery-harness-beginner-guide-en.html</code></a></li>
+                <li><a href="./project-lifecycle-harness-flow-en.html"><code>docs/project-lifecycle-harness-flow-en.html</code></a></li>
                 <li><a href="./project-lifecycle-harness-flow-skills-en-status-style.html"><code>docs/project-lifecycle-harness-flow-skills-en-status-style.html</code></a></li>
                 <li><a href="./LIFECYCLE_SKILL_ROUTING.md"><code>docs/LIFECYCLE_SKILL_ROUTING.md</code></a></li>
+              </ul>
+            </div>
+            <div class="link-group">
+              <b>Archive Only</b>
+              <ul>
+                <li><a href="./project-lifecycle-harness-flow-skills-en.html"><code>docs/project-lifecycle-harness-flow-skills-en.html</code></a></li>
               </ul>
             </div>
             <div class="link-group">
@@ -649,6 +657,7 @@ flowchart TD
               </ul>
             </div>
           </div>
+          <p class="section-note">Published by ShipAI.ca as a public DHF reference. This page is archive-only; use the current status-style Skill Routing Map for the primary flow.</p>
         </div>
       </section>
     </main>

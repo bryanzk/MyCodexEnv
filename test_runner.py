@@ -27,6 +27,9 @@ LIFECYCLE_SKILL_ROUTING_DOC = ROOT / "docs" / "LIFECYCLE_SKILL_ROUTING.md"
 PUBLIC_INDEX_HTML = ROOT / "docs" / "index.html"
 PUBLIC_INDEX_EN_HTML = ROOT / "docs" / "index-en.html"
 LIFECYCLE_FLOW_HTML = ROOT / "docs" / "project-lifecycle-harness-flow-cn.html"
+BEGINNER_GUIDE_CN_HTML = ROOT / "docs" / "delivery-harness-beginner-guide-cn.html"
+BEGINNER_GUIDE_EN_HTML = ROOT / "docs" / "delivery-harness-beginner-guide-en.html"
+LIFECYCLE_FLOW_EN_HTML = ROOT / "docs" / "project-lifecycle-harness-flow-en.html"
 LIFECYCLE_SKILLS_HTML = ROOT / "docs" / "project-lifecycle-harness-flow-skills.html"
 LIFECYCLE_SKILLS_ZH_STATUS_HTML = ROOT / "docs" / "project-lifecycle-harness-flow-skills-zh-status-style.html"
 LIFECYCLE_SKILLS_EN_STATUS_HTML = ROOT / "docs" / "project-lifecycle-harness-flow-skills-en-status-style.html"
@@ -58,6 +61,14 @@ def count_top_dirs(path: Path) -> int:
 def write(path: Path, content: str) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(content, encoding="utf-8")
+
+
+def require_in_order(text: str, terms: list[str], message: str) -> None:
+    cursor = -1
+    for term in terms:
+        position = text.find(term, cursor + 1)
+        require(position != -1, f"{message}: missing or out of order term: {term}")
+        cursor = position
 
 
 def active_toml_lines(text: str) -> str:
@@ -459,7 +470,10 @@ def test_lifecycle_skill_routing_doc_is_discoverable():
     require(LIFECYCLE_SKILL_ROUTING_DOC.exists(), "missing lifecycle skill routing doc")
     require(PUBLIC_INDEX_HTML.exists(), "missing public index HTML guide")
     require(PUBLIC_INDEX_EN_HTML.exists(), "missing English public index HTML guide")
+    require(BEGINNER_GUIDE_CN_HTML.exists(), "missing beginner guide HTML")
+    require(BEGINNER_GUIDE_EN_HTML.exists(), "missing English beginner guide HTML")
     require(LIFECYCLE_FLOW_HTML.exists(), "missing lifecycle flow HTML guide")
+    require(LIFECYCLE_FLOW_EN_HTML.exists(), "missing English lifecycle flow HTML guide")
     require(LIFECYCLE_SKILLS_HTML.exists(), "missing lifecycle skill routing HTML guide")
     require(LIFECYCLE_SKILLS_ZH_STATUS_HTML.exists(), "missing current Chinese skill routing HTML guide")
     require(LIFECYCLE_SKILLS_EN_STATUS_HTML.exists(), "missing current English skill routing HTML guide")
@@ -467,7 +481,10 @@ def test_lifecycle_skill_routing_doc_is_discoverable():
     doc_text = LIFECYCLE_SKILL_ROUTING_DOC.read_text(encoding="utf-8")
     public_index_html = PUBLIC_INDEX_HTML.read_text(encoding="utf-8")
     public_index_en_html = PUBLIC_INDEX_EN_HTML.read_text(encoding="utf-8")
+    beginner_cn_html = BEGINNER_GUIDE_CN_HTML.read_text(encoding="utf-8")
+    beginner_en_html = BEGINNER_GUIDE_EN_HTML.read_text(encoding="utf-8")
     flow_html = LIFECYCLE_FLOW_HTML.read_text(encoding="utf-8")
+    flow_en_html = LIFECYCLE_FLOW_EN_HTML.read_text(encoding="utf-8")
     skills_html = LIFECYCLE_SKILLS_HTML.read_text(encoding="utf-8")
     skills_zh_status_html = LIFECYCLE_SKILLS_ZH_STATUS_HTML.read_text(encoding="utf-8")
     skills_en_status_html = LIFECYCLE_SKILLS_EN_STATUS_HTML.read_text(encoding="utf-8")
@@ -562,6 +579,8 @@ def test_lifecycle_skill_routing_doc_is_discoverable():
                 'lang="en"',
                 "From ambiguous requests",
                 'href="./index.html"',
+                'href="./delivery-harness-beginner-guide-en.html"',
+                'href="./project-lifecycle-harness-flow-en.html"',
                 'href="./project-lifecycle-harness-flow-skills-en-status-style.html"',
                 'href="./project-lifecycle-harness-flow-skills-en.html"',
                 'href="./LIFECYCLE_SKILL_ROUTING.md"',
@@ -580,10 +599,154 @@ def test_lifecycle_skill_routing_doc_is_discoverable():
         for term in terms:
             require(term in text, f"{filename} missing public entry term: {term}")
 
+    public_learning_sequences = {
+        PUBLIC_INDEX_HTML.name: (
+            public_index_html,
+            [
+                "推荐学习顺序",
+                "Beginner",
+                "Lifecycle Flow",
+                "Skill Routing Map",
+                "Written Spec",
+                'href="./delivery-harness-beginner-guide-cn.html"',
+                'href="./project-lifecycle-harness-flow-cn.html"',
+                'href="./project-lifecycle-harness-flow-skills-zh-status-style.html"',
+                'href="./LIFECYCLE_SKILL_ROUTING.md"',
+            ],
+        ),
+        PUBLIC_INDEX_EN_HTML.name: (
+            public_index_en_html,
+            [
+                "Recommended learning sequence",
+                "Beginner",
+                "Lifecycle Flow",
+                "Skill Routing Map",
+                "Written Spec",
+                'href="./delivery-harness-beginner-guide-en.html"',
+                'href="./project-lifecycle-harness-flow-en.html"',
+                'href="./project-lifecycle-harness-flow-skills-en-status-style.html"',
+                'href="./LIFECYCLE_SKILL_ROUTING.md"',
+            ],
+        ),
+    }
+    for filename, (text, terms) in public_learning_sequences.items():
+        for term in terms:
+            require(term in text, f"{filename} missing recommended learning sequence term: {term}")
+        require_in_order(
+            text,
+            ["Beginner", "Lifecycle Flow", "Skill Routing Map", "Written Spec"],
+            f"{filename} should show the recommended learning sequence",
+        )
+    require("Chinese-only" not in public_index_en_html, "English public path should be self-contained, not Chinese-only")
+    english_sequence_section = public_index_en_html.split('aria-label="Recommended learning sequence"', 1)[-1].split('<div class="card-row"', 1)[0]
+    require("delivery-harness-beginner-guide-cn.html" not in english_sequence_section, "English sequence should not point beginner step at Chinese page")
+    require("project-lifecycle-harness-flow-cn.html" not in english_sequence_section, "English sequence should not point lifecycle step at Chinese page")
+
+    english_page_expectations = {
+        BEGINNER_GUIDE_EN_HTML.name: (
+            beginner_en_html,
+            [
+                'lang="en"',
+                "DHF Beginner Guide",
+                "What DHF Does",
+                "Five-step flow",
+                "input request",
+                "DHF output",
+                "command",
+                "exit_code",
+                "key_output",
+                "timestamp",
+                'href="./project-lifecycle-harness-flow-en.html"',
+                'href="./project-lifecycle-harness-flow-skills-en-status-style.html"',
+                'href="./LIFECYCLE_SKILL_ROUTING.md"',
+                "Published by ShipAI.ca as a public DHF reference",
+            ],
+        ),
+        LIFECYCLE_FLOW_EN_HTML.name: (
+            flow_en_html,
+            [
+                'lang="en"',
+                "DHF Lifecycle Flow",
+                "flowchart TD",
+                "Lifecycle Flow",
+                "Skill Routing Map",
+                "Written Spec",
+                "delivery-harness-framework",
+                "harness_recover.py",
+                "verification evidence",
+                'href="./delivery-harness-beginner-guide-en.html"',
+                'href="./project-lifecycle-harness-flow-skills-en-status-style.html"',
+                'href="./LIFECYCLE_SKILL_ROUTING.md"',
+                "Published by ShipAI.ca as a public DHF reference",
+            ],
+        ),
+    }
+    for filename, (text, terms) in english_page_expectations.items():
+        for term in terms:
+            require(term in text, f"{filename} missing English self-contained page term: {term}")
+
+    published_by = "Published by ShipAI.ca as a public DHF reference"
+    brand_pages = {
+        PUBLIC_INDEX_HTML.name: public_index_html,
+        PUBLIC_INDEX_EN_HTML.name: public_index_en_html,
+        BEGINNER_GUIDE_CN_HTML.name: beginner_cn_html,
+        BEGINNER_GUIDE_EN_HTML.name: beginner_en_html,
+        LIFECYCLE_FLOW_HTML.name: flow_html,
+        LIFECYCLE_FLOW_EN_HTML.name: flow_en_html,
+        LIFECYCLE_SKILLS_EN_STATUS_HTML.name: skills_en_status_html,
+        LIFECYCLE_SKILLS_ZH_STATUS_HTML.name: skills_zh_status_html,
+        LIFECYCLE_SKILLS_EN_ARCHIVE_HTML.name: skills_en_archive_html,
+        LIFECYCLE_SKILLS_HTML.name: skills_html,
+    }
+    for filename, text in brand_pages.items():
+        require(published_by in text, f"{filename} missing ShipAI.ca publisher statement")
+        require("brand reference" not in text, f"{filename} should not use ambiguous brand reference wording")
+
+    current_archive_expectations = {
+        LIFECYCLE_SKILLS_EN_STATUS_HTML.name: (
+            skills_en_status_html,
+            ["Current Skill Routing Map", "Primary English Docs", "docs/project-lifecycle-harness-flow-skills-en-status-style.html"],
+            "docs/project-lifecycle-harness-flow-skills-en.html",
+        ),
+        LIFECYCLE_SKILLS_ZH_STATUS_HTML.name: (
+            skills_zh_status_html,
+            ["当前 Skill Routing Map", "中文文档", "docs/project-lifecycle-harness-flow-skills-zh-status-style.html"],
+            "docs/project-lifecycle-harness-flow-skills.html",
+        ),
+        LIFECYCLE_SKILLS_EN_ARCHIVE_HTML.name: (
+            skills_en_archive_html,
+            ["Archive Only", "Current Skill Routing Map", "docs/project-lifecycle-harness-flow-skills-en-status-style.html"],
+            "",
+        ),
+        LIFECYCLE_SKILLS_HTML.name: (
+            skills_html,
+            ["仅归档", "当前 Skill Routing Map", "docs/project-lifecycle-harness-flow-skills-zh-status-style.html"],
+            "",
+        ),
+    }
+    for filename, (text, required, forbidden_primary) in current_archive_expectations.items():
+        for term in required:
+            require(term in text, f"{filename} missing current/archive term: {term}")
+        if forbidden_primary:
+            primary_section = text.split("Primary English Docs", 1)[-1].split("Chinese Docs", 1)[0]
+            require(forbidden_primary not in primary_section, f"{filename} should not list archive map as primary")
+
+    beginner_evidence_terms = [
+        "把一次模糊请求变成 DHF 输出",
+        "input request",
+        "DHF output",
+        "command",
+        "exit_code",
+        "key_output",
+        "timestamp",
+    ]
+    for term in beginner_evidence_terms:
+        require(term in beginner_cn_html, f"{BEGINNER_GUIDE_CN_HTML.name} missing beginner evidence example term: {term}")
+
     handoff_group_expectations = {
         LIFECYCLE_SKILLS_EN_STATUS_HTML.name: (
             skills_en_status_html,
-            ["link-groups", "Primary English Docs", "Chinese Docs", "Runtime References", "project-lifecycle-harness-flow-skills-en.html"],
+            ["link-groups", "Primary English Docs", "Chinese Docs", "Runtime References", "project-lifecycle-harness-flow-skills-en-status-style.html"],
         ),
         LIFECYCLE_SKILLS_EN_ARCHIVE_HTML.name: (
             skills_en_archive_html,
@@ -591,7 +754,7 @@ def test_lifecycle_skill_routing_doc_is_discoverable():
         ),
         LIFECYCLE_SKILLS_ZH_STATUS_HTML.name: (
             skills_zh_status_html,
-            ["link-groups", "中文文档", "英文文档", "Runtime 参考", "project-lifecycle-harness-flow-skills.html"],
+            ["link-groups", "中文文档", "英文文档", "Runtime 参考", "project-lifecycle-harness-flow-skills-zh-status-style.html"],
         ),
         LIFECYCLE_SKILLS_HTML.name: (
             skills_html,

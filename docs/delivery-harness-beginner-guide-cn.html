@@ -166,7 +166,7 @@
       font-family: var(--font-display);
       font-size: clamp(42px, 7vw, 82px);
       line-height: 0.94;
-      letter-spacing: -0.02em;
+      letter-spacing: 0;
       text-wrap: balance;
     }
 
@@ -391,6 +391,42 @@
       line-height: 1.08;
     }
 
+    .io-example {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 14px;
+      margin-top: 18px;
+    }
+
+    .io-box {
+      min-width: 0;
+      padding: 18px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+    }
+
+    .io-box h3 {
+      margin: 0 0 10px;
+      font-size: 20px;
+    }
+
+    .io-box p {
+      margin: 0;
+      color: var(--text-dim);
+      line-height: 1.58;
+    }
+
+    .evidence-list {
+      display: grid;
+      gap: 8px;
+      margin: 0;
+      padding: 0;
+      list-style: none;
+      color: var(--text-dim);
+      line-height: 1.5;
+    }
+
     .table-wrap {
       overflow-x: auto;
       border: 1px solid var(--border);
@@ -484,7 +520,7 @@
       }
       .toc a.active { border-left: none; border-bottom-color: var(--recover); }
       .main { padding-top: 20px; }
-      .grid, .two, .example, .links { grid-template-columns: 1fr; }
+      .grid, .two, .example, .io-example, .links { grid-template-columns: 1fr; }
       .pipeline { grid-template-columns: 1fr; }
       .pipe:not(:last-child)::after { display: none; }
     }
@@ -513,7 +549,7 @@
     <main class="main">
       <section class="hero" id="what" style="--i:0">
         <div class="eyebrow">Delivery Harness Framework / DHF Beginner Guide</div>
-        <h1>Delivery Harness Framework (DHF)<br>将 prompts 实现为 proof。</h1>
+        <h1>Delivery Harness Framework (DHF)<br>把模糊请求变成可验证交付。</h1>
         <p class="lead">它不是一个更聪明的 prompt，也不是单个 agent。它是一套工作框架，让 AI 工程任务先恢复事实，再用领域语言和 ADR 锁定范围，按阶段路由执行，最后用新鲜证据证明完成。</p>
         <div class="definition">
           一句话：<strong>DHF 把“帮我做这个”变成“已读哪些事实、当前处于哪个阶段、谁负责执行、怎样验证、下一次如何接手”。</strong>
@@ -623,6 +659,23 @@
             <div class="step"><div class="step-num">C</div><div><h3>交付结果</h3><p>输出包含阶段判断、已读来源、执行路径、验证命令、退出码、关键输出、时间戳和下一步安全任务。</p></div></div>
           </div>
         </div>
+        <div class="io-example" aria-label="把一次模糊请求变成 DHF 输出">
+          <div class="io-box">
+            <div class="label">input request</div>
+            <h3>把一次模糊请求变成 DHF 输出</h3>
+            <p>“请修一下 public docs，让新读者知道应该先看哪一页，并确认改完是通过测试的。”</p>
+          </div>
+          <div class="io-box">
+            <div class="label">DHF output</div>
+            <h3>最小可交付证据</h3>
+            <ul class="evidence-list">
+              <li><code>command</code>: <code>python3 test_runner.py</code></li>
+              <li><code>exit_code</code>: <code>0</code></li>
+              <li><code>key_output</code>: <code>[PASS] lifecycle skill routing doc discoverable</code></li>
+              <li><code>timestamp</code>: <code>2026-05-14T00:00:00-04:00</code></li>
+            </ul>
+          </div>
+        </div>
       </section>
 
       <section class="section" id="glossary" style="--i:5">
@@ -662,7 +715,7 @@
           <a class="link-card" href="./LIFECYCLE_SKILL_ROUTING.md"><b>Written Spec</b><span>查 workflow、stage map、helper 和 evidence standard。</span></a>
         </div>
         <div class="footer">
-          生成来源：<code>docs/LIFECYCLE_SKILL_ROUTING.md</code>、<code>docs/HARNESS_RUNTIME.md</code>、<code>docs/AGENT_HARNESS_STATUS.md</code>。页面目标：让 agentic engineering beginner 先理解 DHF 在做什么，再进入详细流程图。
+          Published by ShipAI.ca as a public DHF reference. 生成来源：<code>docs/LIFECYCLE_SKILL_ROUTING.md</code>、<code>docs/HARNESS_RUNTIME.md</code>、<code>docs/AGENT_HARNESS_STATUS.md</code>。页面目标：让 agentic engineering beginner 先理解 DHF 在做什么，再进入详细流程图。
         </div>
       </section>
     </main>
