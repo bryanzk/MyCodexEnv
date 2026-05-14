@@ -55,6 +55,7 @@ adapter skills.
 | Development execution | Make scoped repo changes, use tests first when behavior changes, preserve unrelated user work. | `tdd-guide`, `atdd-guide`, repo-local workflow |
 | Validation and evidence | Run fresh tests/checks and record `command`, `exit_code`, `key_output`, `timestamp`. | `verification-loop`, `scripts/harness_evidence.py`, `scripts/harness_report.py` |
 | Review and QA | Inspect diffs, browser behavior, security/privacy boundaries, and user-visible regressions. | `gstack-review`, `code-reviewer`, `gstack-qa`, `security-reviewer` |
+| Committee review loop | Run an explicit expert-committee scoring loop with a separate revision worker until a target rating is met. | `committee-review-loop` |
 | Ship and deployment | Commit/PR/release/deploy/canary only when explicitly requested and verified. | `gstack-ship`, `gstack-land-and-deploy`, `gstack-canary` |
 | Handoff and recovery | Append state, preserve next safe task, recover without chat history. | `scripts/harness_checkpoint.py`, `scripts/harness_recover.py` |
 | Documentation release | Keep README/docs aligned with shipped behavior and skill/runtime changes. | `gstack-document-release`, `doc-updater` |
@@ -69,6 +70,7 @@ adapter skills.
 | `development` | Acceptance criteria are clear and touched files/modules are bounded. | Scoped writes. | `tdd-guide`, `atdd-guide`, repo workflow, scoped worker agents | Implement the change with tests appropriate to the risk. |
 | `validation` | Work is implemented or docs/config changed and needs fresh evidence. | Tests/checks by default. | `verification-loop`, `scripts/harness_report.py`, `scripts/verify_codex_env.sh` | Prove the result with fresh command output and required evidence fields. |
 | `review` | Diff exists, work is near handoff/PR/landing, or user asks for review. | Read-only by default. | `gstack-review`, `code-reviewer`, `review-swarm`, `security-reviewer` | Find bugs, regressions, security risks, and missing tests before shipping. |
+| `review` | User explicitly asks for a committee, expert panel, subagent reviewer/worker split, rating loop, or improvement until a score such as `9.5/10`. | Committee read-only; revision worker scoped writes. | `committee-review-loop`, `scripts/harness_agent_team.py` | Keep ordinary review routes separate while iterating committee findings into bounded, verified revisions. |
 | `ship` | User requests commit, push, PR, merge, release, deploy, or production verification. | Requested release actions only. | `gstack-ship`, `gstack-land-and-deploy`, `gstack-canary` | Complete release steps, verify deployment, and preserve rollback context. |
 | `handoff` | Session is ending, task crosses phases, work spans sessions, or next safe task must survive. | Docs/state only. | `scripts/harness_checkpoint.py`, `gstack-retro`, `gstack-learn` | Append checkpoint state, capture blockers, and leave a recoverable next step. |
 
@@ -89,6 +91,7 @@ adapter skills.
 | `gstack-review` | Pre-landing diff review and risk scan. | Use near PR, handoff, or ship. |
 | `code-reviewer` | Local code review of staged or unstaged changes. | Use for focused findings with file/line references. |
 | `review-swarm` | Parallel read-only review across behavioral/security/performance/test risks. | Use when the user asks for multi-agent review. |
+| `committee-review-loop` | Explicit expert-committee/subagent loops with scoring, revision briefs, and a target rating such as `9.5/10`. | Do not use for one-off design/code/QA review; preserve read-only committee roles and bounded revision-worker write sets. |
 | `gstack-ship` | Opinionated release workflow before PR/landing. | Only use when user asks to ship. |
 | `gstack-land-and-deploy` | Merge and deploy workflow with post-deploy checks. | Requires explicit release/deploy intent. |
 | `gstack-canary` | Post-deploy canary monitoring. | Use after deploy when live behavior must be watched. |
@@ -111,6 +114,7 @@ adapter skills.
 | Feedback loop first | `debug/investigation` | Establish a runnable feedback loop before hypotheses or fixes: failing test, CLI fixture, curl script, browser check, trace replay, throwaway harness, fuzz loop, or differential run. |
 | Prototype learning | `planning` | Use a throwaway prototype only to answer one named logic, state, interface, or UI question; delete it or capture the durable decision before handoff. |
 | Durable agent brief | `planning`, `development`, `handoff` | Use `docs/templates/harness-agent-brief.md` for a durable agent brief when worker contracts need current behavior, desired behavior, key interfaces, acceptance criteria, and out of scope. |
+| Expert committee rating loop | `review`, `development` | Route only explicit committee/subagent rating loops to `committee-review-loop`; capture expert domains, target rating, revision worker scope, verification gate, and stopping condition. |
 | Deep module review | `planning`, `review` | Prefer a deep module shape with small public interfaces and meaningful behavior behind them; use the interface as the test surface and preserve locality/leverage. |
 
 ## Runtime Helper Map

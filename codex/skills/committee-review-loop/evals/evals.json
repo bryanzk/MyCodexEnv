@@ -1,0 +1,112 @@
+{
+  "skill_name": "committee-review-loop",
+  "evals": [
+    {
+      "id": "routing-positive-explicit-subagents-rating-loop",
+      "category": "positive_routing",
+      "name": "loads for explicit committee and worker loop",
+      "prompt": "Use two subagents: one expert committee to rate this output, and one worker to revise it until the committee gives at least 9.5/10.",
+      "expected_load": true,
+      "expected_output": "The agent should set up an expert committee, a revision worker, and an iterative review loop with a target rating.",
+      "assertions": [
+        "The output defines the committee role and revision worker role.",
+        "The output includes a numeric target rating such as 9.5/10.",
+        "The output loops review and revision until the threshold or a blocker is reached."
+      ]
+    },
+    {
+      "id": "routing-positive-committee-review-output",
+      "category": "positive_routing",
+      "name": "loads for committee review and scoring",
+      "prompt": "Organize a three-expert committee to review this page, give a final score, then keep improving it until the final score reaches 9.5.",
+      "expected_load": true,
+      "expected_output": "The agent should select three relevant expert domains, collect ratings, revise the page, and repeat until the rating target is met.",
+      "assertions": [
+        "The output selects three relevant expert domains.",
+        "Each expert gives a score or rating rationale.",
+        "The revision brief is based on committee findings."
+      ]
+    },
+    {
+      "id": "routing-negative-one-off-design-review",
+      "category": "negative_routing",
+      "name": "does not load for one-off design review",
+      "prompt": "Review the latest page and give me the top 5 design improvements.",
+      "expected_load": false,
+      "expected_skill": "design-review",
+      "expected_output": "The agent should perform a one-off design review without creating a committee loop.",
+      "assertions": [
+        "The output gives top design findings directly.",
+        "The output does not create subagents or a committee.",
+        "The output does not require a 9.5/10 iteration loop."
+      ]
+    },
+    {
+      "id": "routing-negative-skill-evaluation",
+      "category": "negative_routing",
+      "name": "skill-evaluator owns skill review",
+      "prompt": "Evaluate this skill and tell me whether it should exist, how it should route, and what evals it needs.",
+      "expected_load": false,
+      "expected_skill": "skill-evaluator",
+      "expected_output": "The agent should evaluate the skill using skill-evaluator, not start a committee revision loop.",
+      "assertions": [
+        "The output includes an existence verdict.",
+        "The output includes routing and end-to-end evals.",
+        "The output does not dispatch a revision worker."
+      ]
+    },
+    {
+      "id": "forbidden-load-simple-fix",
+      "category": "forbidden_load",
+      "name": "simple implementation should stay direct",
+      "prompt": "Fix this typo and run the smallest relevant test.",
+      "expected_load": false,
+      "expected_output": "The agent should make the small fix directly using normal repo rules.",
+      "assertions": [
+        "The output does not create an expert committee.",
+        "The output keeps the change scoped to the typo.",
+        "The output runs or names a minimal verification command."
+      ]
+    },
+    {
+      "id": "forbidden-load-review-swarm",
+      "category": "forbidden_load",
+      "name": "parallel read-only review belongs to review-swarm",
+      "prompt": "Run a parallel multi-agent read-only code review of the current branch and aggregate findings.",
+      "expected_load": false,
+      "expected_skill": "review-swarm",
+      "expected_output": "The agent should use a read-only review-swarm workflow, not an iterative revision loop.",
+      "assertions": [
+        "The output keeps agents read-only.",
+        "The output aggregates code-review findings.",
+        "The output does not assign a revision worker to edit files."
+      ]
+    },
+    {
+      "id": "progressive-loading-no-accessories",
+      "category": "progressive_loading",
+      "name": "no accessory files required",
+      "prompt": "Use a committee and worker loop to improve this output to 9.5/10.",
+      "expected_load": true,
+      "expected_output": "The agent should rely on SKILL.md only because this skill has no required references, scripts, or assets.",
+      "assertions": [
+        "The output does not claim a required helper script exists.",
+        "The output does not read unrelated accessory files.",
+        "The output follows the role and loop contracts from SKILL.md."
+      ]
+    },
+    {
+      "id": "end-to-end-committee-worker-loop",
+      "category": "end_to_end",
+      "name": "runs committee, revision, verification, and final report",
+      "prompt": "For this local documentation page, use a 3-expert committee and a revision worker to improve it until the committee rating reaches 9.5/10, then report evidence.",
+      "expected_load": true,
+      "expected_output": "The agent should perform an iterative committee review and revision loop, verify the result, and report final rating and evidence.",
+      "assertions": [
+        "The output includes three expert domains and their ratings.",
+        "The output makes or delegates concrete revisions based on committee findings.",
+        "The final report includes changed files and verification evidence with command, exit_code, key_output, and timestamp."
+      ]
+    }
+  ]
+}

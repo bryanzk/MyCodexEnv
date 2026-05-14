@@ -21,6 +21,7 @@
 
 ## Runtime Surfaces
 - `codex/skills/delivery-harness-framework/`: lifecycle router skill.
+- `codex/skills/committee-review-loop/`: explicit expert-committee review and revision loop skill.
 - `codex/runtime/tool-policy.json`: stage-aware tool and permission policy.
 - `codex/runtime/evidence.schema.json`: local evidence JSONL event contract.
 - `codex/hooks/`: Codex lifecycle hooks copied to `~/.codex/hooks/`.

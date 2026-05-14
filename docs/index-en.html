@@ -344,7 +344,43 @@
       <a class="tag" href="./LIFECYCLE_SKILL_ROUTING.md">Written spec</a>
     </nav>
 
-    <section class="section-block" aria-labelledby="learn-heading" style="--i:2">
+    <section class="section-block" aria-labelledby="latest-heading" style="--i:2">
+      <div class="section-heading">
+        <div>
+          <div class="label">Latest Routing Update</div>
+          <h2 id="latest-heading">Committee review loops are now explicit</h2>
+        </div>
+        <p>DHF now separates ordinary review from explicit expert-committee loops, where a committee rates the output and a revision worker iterates toward a target score.</p>
+      </div>
+      <div class="card-row three">
+        <div class="card">
+          <div>
+            <div class="label">New Skill</div>
+            <h2>Committee Review Loop</h2>
+            <p>Use this route only when the user explicitly asks for a committee, subagents, reviewer/worker split, rating loop, or a target such as 9.5/10.</p>
+          </div>
+          <div class="meta">committee-review-loop</div>
+        </div>
+        <div class="card">
+          <div>
+            <div class="label">DHF Boundary</div>
+            <h2>Specialized Reviews Stay Specialized</h2>
+            <p>One-off design review, code review, browser QA, security review, and read-only review swarms keep their existing specialist routes.</p>
+          </div>
+          <div class="meta">avoids off-target routing</div>
+        </div>
+        <div class="card">
+          <div>
+            <div class="label">Agent Gate</div>
+            <h2>Worker Scope Still Matters</h2>
+            <p>Reviewer committees stay read-only by default, while revision workers need bounded write sets, verification gates, and clear stopping conditions.</p>
+          </div>
+          <div class="meta">agent-team safe path</div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section-block" aria-labelledby="learn-heading" style="--i:3">
       <div class="section-heading">
         <div>
           <div class="label">Start Here</div>
@@ -404,7 +440,7 @@
       </div>
     </section>
 
-    <section class="section-block" aria-labelledby="resources-heading" style="--i:3">
+    <section class="section-block" aria-labelledby="resources-heading" style="--i:4">
       <div class="section-heading">
         <div>
           <div class="label">Resources</div>
@@ -432,7 +468,7 @@
       </div>
     </section>
 
-    <section class="section-block" aria-labelledby="implementation-heading" style="--i:4">
+    <section class="section-block" aria-labelledby="implementation-heading" style="--i:5">
       <div class="section-heading">
         <div>
           <div class="label">Implementation Notes</div>

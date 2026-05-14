@@ -28,6 +28,20 @@
       ]
     },
     {
+      "id": "routing-positive-committee-loop",
+      "category": "positive_routing",
+      "name": "routes explicit committee and revision worker loop",
+      "prompt": "用 subagent 1 组织三位专家委员会评分，用 subagent 2 根据建议修改输出，循环直到 committee.rating 达到 9.5/10。",
+      "expected_load": true,
+      "expected_skill": "committee-review-loop",
+      "expected_output": "The output routes through the lifecycle harness, selects committee-review-loop, and preserves agent-team validation and verification gates.",
+      "assertions": [
+        "The output identifies committee-review-loop as the required workflow.",
+        "The output records the target rating as committee.rating >= 9.5/10.",
+        "The output requires scoped revision worker write sets and fresh verification evidence."
+      ]
+    },
+    {
       "id": "routing-negative-single-file-fix",
       "category": "negative_routing",
       "name": "does not load for a simple bounded fix",
@@ -52,6 +66,20 @@
         "The output selects a QA or browser testing workflow.",
         "The output does not use delivery-harness-framework as the primary executor.",
         "The output includes browser-visible checks."
+      ]
+    },
+    {
+      "id": "routing-negative-one-off-design-review",
+      "category": "negative_routing",
+      "name": "one-off design review stays with design-review",
+      "prompt": "review the latest page and give me top 5 design improvements",
+      "expected_load": false,
+      "expected_skill": "design-review",
+      "expected_output": "The agent should route to a one-off design review workflow, not an iterative committee loop.",
+      "assertions": [
+        "The output selects design-review or an equivalent one-off design review workflow.",
+        "The output does not create a committee/revision-worker loop.",
+        "The output does not require a 9.5/10 rating threshold."
       ]
     },
     {
@@ -80,6 +108,20 @@
         "The output creates or plans an HTML visual artifact.",
         "The output does not require lifecycle classification first.",
         "The output follows visual-explainer delivery expectations."
+      ]
+    },
+    {
+      "id": "forbidden-load-review-swarm",
+      "category": "forbidden_load",
+      "name": "read-only parallel code review belongs to review-swarm",
+      "prompt": "Run a parallel multi-agent read-only code review of the current branch and aggregate findings.",
+      "expected_load": false,
+      "expected_skill": "review-swarm",
+      "expected_output": "The agent should use a read-only review-swarm workflow rather than an iterative revision-worker loop.",
+      "assertions": [
+        "The output keeps review agents read-only.",
+        "The output aggregates code-review findings.",
+        "The output does not assign a revision worker to edit files."
       ]
     },
     {

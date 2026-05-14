@@ -28,6 +28,10 @@ project-only commands here.
   plan review, design review, browser QA, security review, diff review, ship,
   land/deploy, canary monitoring, release documentation, retro, and learning
   capture.
+- `committee-review-loop` owns explicit expert-committee/subagent loops where a
+  review committee rates an output and a revision worker iterates until a target
+  score such as `9.5/10` is reached. Do not use it for ordinary one-off review,
+  QA, or polish requests.
 
 ## Runtime Surfaces
 
@@ -149,6 +153,7 @@ earliest stage that changes the decision.
 | Engineering plan | Architecture, data model, API contract, migration, runtime, cross-module workflow, exception taxonomy, or deep module shape. | Route to `gstack-plan-eng-review` or a repo engineering planning skill; for multi-step work, decompose into vertical slice units and mark each slice `AFK` or `HITL`. |
 | Prototype | A data model, state machine, module interface, or UI direction needs fast learning before production work. | Build only a clearly marked throwaway prototype that answers one named question; delete it or capture the durable decision in an ADR, issue, checkpoint, or notes before handoff. |
 | Design plan | UX direction, information architecture, visual system, responsive behavior, or design acceptance. | Route to `gstack-plan-design-review` or a repo design skill. |
+| Committee loop | User explicitly asks for a committee, expert panel, subagent reviewer/worker split, rating loop, or to keep improving until a score such as `9.5/10`. | Route to `committee-review-loop`; preserve DHF agent-team validation and verification gates. Ordinary design, code, QA, or read-only reviews keep their specialized routes. |
 | Implementation | Clear acceptance criteria and bounded files/modules. | Use repo workflow, TDD skill, or scoped worker agents after source context is read. |
 | Debug/investigation | Failing tests, wrong output, 401/500, broken UI flow, data mismatch, unclear root cause. | Establish a runnable feedback loop before hypotheses or fixes, then use investigation/debugging workflow. |
 | QA/browser | User-facing page, browser smoke, console/network errors, screenshots, accessibility, responsive checks. | Route to `gstack-qa`, `gstack-qa-only`, or browser QA skill. |
@@ -171,6 +176,10 @@ python3 scripts/harness_requirements.py validate PATH
 If no artifact exists, the plan or state log must still capture definition of
 done, scope, constraints, verification commands, user-visible behavior, and
 known blockers.
+
+If success is defined as a subjective committee score and the user explicitly
+requests subagents or a committee, record the score as the loop target and route
+to `committee-review-loop` before development.
 
 ## Engineering Planning Gate
 
@@ -221,6 +230,9 @@ Each agent needs role, scope, write set, verification command, and report
 expectations. Planner, reviewer, security, and QA roles are read-only by
 default. Worker write sets must be non-empty, repo-relative, and disjoint.
 Overlapping worker write sets block dispatch until the task is split again.
+If the requested agent team is a review committee plus a revision worker with a
+numeric rating target, route to `committee-review-loop` after validating the
+team shape and write-set boundaries.
 When a worker needs a durable task contract, use
 `docs/templates/harness-agent-brief.md`. The optional `brief` object in an agent
 team plan should capture category, summary, current behavior, desired behavior,
@@ -310,6 +322,8 @@ After routing, state:
 6. Failure modes that must be handled.
 7. Any user decision, credential, approval, or external dependency blocking safe
    execution.
+8. For `committee-review-loop`, the three expert domains, target rating,
+   revision worker scope, verification gate, and stopping condition.
 
 Do not start substantial implementation before this routing step when the task
 is ambiguous, cross-module, security-sensitive, data-sensitive, release-facing,
