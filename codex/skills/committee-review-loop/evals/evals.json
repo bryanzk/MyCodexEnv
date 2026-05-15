@@ -5,12 +5,12 @@
       "id": "routing-positive-explicit-subagents-rating-loop",
       "category": "positive_routing",
       "name": "loads for explicit committee and worker loop",
-      "prompt": "Use two subagents: one expert committee to rate this output, and one worker to revise it until the committee gives at least 9.5/10.",
+      "prompt": "Use two subagents: one expert committee to rate this output, and one worker to revise it until the committee gives 10/10.",
       "expected_load": true,
       "expected_output": "The agent should set up an expert committee, a revision worker, and an iterative review loop with a target rating.",
       "assertions": [
         "The output defines the committee role and revision worker role.",
-        "The output includes a numeric target rating such as 9.5/10.",
+        "The output includes a numeric target rating such as 10/10.",
         "The output loops review and revision until the threshold or a blocker is reached."
       ]
     },
@@ -18,7 +18,7 @@
       "id": "routing-positive-committee-review-output",
       "category": "positive_routing",
       "name": "loads for committee review and scoring",
-      "prompt": "Organize a three-expert committee to review this page, give a final score, then keep improving it until the final score reaches 9.5.",
+      "prompt": "Organize a three-expert committee to review this page, give a final score, then keep improving it until the final score reaches 10.",
       "expected_load": true,
       "expected_output": "The agent should select three relevant expert domains, collect ratings, revise the page, and repeat until the rating target is met.",
       "assertions": [
@@ -38,7 +38,7 @@
       "assertions": [
         "The output gives top design findings directly.",
         "The output does not create subagents or a committee.",
-        "The output does not require a 9.5/10 iteration loop."
+        "The output does not require a 10/10 iteration loop."
       ]
     },
     {
@@ -86,7 +86,7 @@
       "id": "progressive-loading-no-accessories",
       "category": "progressive_loading",
       "name": "no accessory files required",
-      "prompt": "Use a committee and worker loop to improve this output to 9.5/10.",
+      "prompt": "Use a committee and worker loop to improve this output to 10/10.",
       "expected_load": true,
       "expected_output": "The agent should rely on SKILL.md only because this skill has no required references, scripts, or assets.",
       "assertions": [
@@ -99,7 +99,7 @@
       "id": "end-to-end-committee-worker-loop",
       "category": "end_to_end",
       "name": "runs committee, revision, verification, and final report",
-      "prompt": "For this local documentation page, use a 3-expert committee and a revision worker to improve it until the committee rating reaches 9.5/10, then report evidence.",
+      "prompt": "For this local documentation page, use a 3-expert committee and a revision worker to improve it until the committee rating reaches 10/10, then report evidence.",
       "expected_load": true,
       "expected_output": "The agent should perform an iterative committee review and revision loop, verify the result, and report final rating and evidence.",
       "assertions": [

@@ -1,6 +1,6 @@
 ---
 name: committee-review-loop
-description: Use when a user explicitly asks for a committee or subagents to iteratively review, rate, and revise a task output until a target score such as 9.5/10 is reached.
+description: Use when a user explicitly asks for a committee or subagents to iteratively review, rate, and revise a task output until a perfect target score such as 10/10 is reached.
 ---
 
 # Committee Review Loop
@@ -9,7 +9,7 @@ Use this skill to turn a broad quality target into a structured review-and-revis
 
 ## Preconditions
 
-- Confirm the task output to review, the editable scope, and the rating target. Default target: `committee.rating >= 9.5/10`.
+- Confirm the task output to review, the editable scope, and the rating target. Default target: `committee.rating >= 10/10`.
 - Use subagents only when the user explicitly asks for subagents, a committee, delegation, or parallel agent work.
 - Do not use this skill for one-off reviews, ordinary QA, or normal polish passes. Route those to the relevant review, QA, or design skill.
 - Treat the committee as expert perspectives unless the user provides actual named reviewers. Do not imply real people reviewed the work.
