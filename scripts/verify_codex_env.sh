@@ -5,7 +5,7 @@ set -euo pipefail
 REPO_ROOT=""
 CODEX_HOME="${HOME}/.codex"
 CLAUDE_HOME="${HOME}/.claude"
-ACCEPTED_CODEX_VERSION_PREFIXES=("0.104.0" "0.130.0")
+ACCEPTED_CODEX_VERSION_PREFIXES=("0.104.0" "0.130.0" "0.131.0")
 
 usage() {
   echo "Usage: verify_codex_env.sh --repo-root <path> [--codex-home <path>] [--claude-home <path>]"
@@ -87,6 +87,7 @@ results+=("$(check codex_hooks_exists '[[ -f "'"${CODEX_HOME}"'"/hooks.json ]]')
 results+=("$(check codex_hook_script_exists '[[ -f "'"${CODEX_HOME}"'"/hooks/session_start_require_naming.py ]]')")
 results+=("$(check codex_harness_guard_hook_exists '[[ -f "'"${CODEX_HOME}"'"/hooks/harness_guard.py ]]')")
 results+=("$(check codex_harness_observer_hook_exists '[[ -f "'"${CODEX_HOME}"'"/hooks/harness_observer.py ]]')")
+results+=("$(check codex_model_router_hook_exists '[[ -f "'"${CODEX_HOME}"'"/hooks/model_router.py ]]')")
 results+=("$(check codex_runtime_tool_policy_exists '[[ -f "'"${CODEX_HOME}"'"/runtime/tool-policy.json ]]')")
 results+=("$(check codex_runtime_evidence_schema_exists '[[ -f "'"${CODEX_HOME}"'"/runtime/evidence.schema.json ]]')")
 results+=("$(check codex_zsh_title_hook_exists '[[ -f "'"${CODEX_HOME}"'"/zsh/codex-session-title.zsh ]]')")

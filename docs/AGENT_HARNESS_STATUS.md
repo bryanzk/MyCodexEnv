@@ -27,8 +27,9 @@ orchestration, Infra is runtime governance.
 | Skills | done | `codex/skills/*`, sync tests, generic lifecycle skill boundary test | skill quality varies by imported upstream content | add targeted validation for critical local skills |
 | Session State | done | `docs/harness-state.md`, local evidence JSONL schema, `scripts/harness_checkpoint.py` | runtime state updates still require explicit helper invocation | use checkpoint helper at phase transitions and handoff |
 | Permissions | done | `codex/runtime/tool-policy.json`, `harness_guard.py` | stage inference depends on payload/env/state | add explicit phase marker support in future Codex hook payloads |
-| Hooks | done | `SessionStart`, `PreToolUse`, `PostToolUse`, hook sync tests | completion hook not available in current config | keep final verification gate in AGENTS and skill |
+| Hooks | done | `SessionStart`, `UserPromptSubmit`, `PreToolUse`, `PostToolUse`, hook sync tests | completion hook not available in current config | keep final verification gate in AGENTS and skill |
 | Observability | done | `evidence.schema.json`, `harness_evidence.py`, `harness_observer.py`, `scripts/harness_report.py` | no browser dashboard | generate optional visual report from `harness_report.py --json` |
 | Tool Router | done | phase-based policy and guard classifier | not all Codex tools expose identical payload shape | keep payload parser permissive and test common forms |
+| Model Router | done | `codex/hooks/model_router.py`, prompt/subtask complexity tests | hook can recommend and emit JSON; actual model switching depends on runtime or wrapper support | keep deterministic, non-blocking, and quality-floor first |
 | Checkpoints | done | `docs/HARNESS_RUNTIME.md` checkpoint contract, `docs/harness-state.md`, `scripts/harness_checkpoint.py` | helper records state but deliberately does not commit | create commits only on explicit user request; otherwise append state checkpoints |
 | Guardrails | done | guard hook blocks or asks on destructive, secret, remote, dynamic-exec, and phase write violations | high-risk patterns need ongoing tuning | extend policy with observed false positives/negatives |

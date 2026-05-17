@@ -38,6 +38,7 @@ For the current project workflow and skill routing map, read
 - `README.md`: top-level quick start and Harness Runtime overview.
 - `docs/repo-index.md`: low-token repo navigation and runtime surface index.
 - `docs/LIFECYCLE_SKILL_ROUTING.md`: lifecycle stage, workflow, skill, and helper routing.
+- `docs/MODEL_ROUTER_EVAL_MATRIX.md`: prompt/subtask model router eval matrix.
 - `docs/index.html`: public Delivery Harness Framework docs entry for GitHub Pages.
 - `docs/delivery-harness-beginner-guide-cn.html`: beginner-oriented Chinese explanation of what Delivery Harness Framework does.
 - `docs/AGENT_HARNESS_STATUS.md`: Agent Harness workflow/infra status map.
@@ -52,9 +53,10 @@ For the current project workflow and skill routing map, read
 - `Skills`: `codex/skills/*` is the source copied into runtime `~/.codex/skills/*`.
 - `Session State`: `docs/harness-state.md` records durable phase and handoff facts.
 - `Permissions`: `codex/runtime/tool-policy.json` declares stage-level tool permissions.
-- `Hooks`: `codex/hooks/*` implements thin objective guardrails and evidence plumbing.
+- `Hooks`: `codex/hooks/*` implements thin objective guardrails, prompt model routing recommendations, and evidence plumbing.
 - `Observability`: local JSONL evidence records lifecycle and verification events.
 - `Tool Router`: lifecycle stage determines allowed read/write/network/remote behavior.
+- `Model Router`: `codex/hooks/model_router.py` classifies each prompt or subtask as `simple`, `medium`, or `complex` and recommends the cheapest quality-safe model tier. It intentionally stays non-blocking; runtimes or wrapper scripts that can switch models may consume the JSON `routing` object, while plain Codex hooks inject the recommendation as additional context.
 - `Checkpoints`: use git commits, state log entries, and handoff docs as recovery points.
 - `Guardrails`: destructive, secret, remote, and dynamic-execution actions are blocked or require approval.
 
@@ -100,6 +102,32 @@ Probe behavior:
 - sandbox fields absent from config: do not infer; report `observable=false`.
 - global Desktop sandbox is outside repo control; the probe reports observable
   config only.
+
+## Model Routing Contract
+`codex/hooks/model_router.py` is the pre-task prompt router. It reads hook JSON
+from stdin and exits 0 in all normal cases so routing cannot block task intake.
+
+Routing behavior:
+- missing or malformed prompt: recommend balanced fallback `gpt-5.4` with low
+  confidence;
+- very short harmless prompts: recommend `gpt-5.4-mini` with low reasoning;
+- simple formatting, translation, README, and documentation subtasks: recommend
+  `gpt-5.4-mini` with low reasoning;
+- ordinary implementation, tests, scripts, and refactors: recommend `gpt-5.4`
+  with medium reasoning;
+- architecture, auth, security, migrations, deploys, destructive operations, or
+  long cross-module tasks: recommend `gpt-5.5` with high reasoning;
+- review phase: recommend `gpt-5.5` with high reasoning;
+- validation phase without high-risk signals: recommend `gpt-5.4-mini` with low
+  reasoning for evidence collection and summarization;
+- when `subtask` is present, classify the subtask instead of anchoring on the
+  parent prompt, allowing complex tasks to downshift for cheap subtasks and
+  upgrade again for planning, security, review, or release steps.
+
+The hook output includes `routing.switch_points` for complex prompts so an
+orchestrator can re-run or apply routing at research, planning, development,
+validation, and review boundaries. The hook does not claim to force a model
+change in Codex versions that only accept additional prompt context.
 
 ## Checkpoint Contract
 Create a checkpoint when a task crosses any of these boundaries:

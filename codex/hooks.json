@@ -12,6 +12,18 @@
         ]
       }
     ],
+    "UserPromptSubmit": [
+      {
+        "matcher": "*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "/usr/bin/python3 ~/.codex/hooks/model_router.py",
+            "statusMessage": "Routing prompt to a cost-aware model tier"
+          }
+        ]
+      }
+    ],
     "PreToolUse": [
       {
         "matcher": "*",

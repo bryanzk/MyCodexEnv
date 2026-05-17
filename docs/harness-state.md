@@ -5,7 +5,7 @@ Stable rules belong in `AGENTS.md`, `README.md`, `docs/repo-index.md`, or
 `docs/HARNESS_RUNTIME.md`; session facts and phase transitions are appended here.
 
 ## Current Snapshot
-- phase: handoff
+- phase: validation
 - source_of_truth:
   - `AGENTS.md`
   - `docs/repo-index.md`
@@ -14,13 +14,13 @@ Stable rules belong in `AGENTS.md`, `README.md`, `docs/repo-index.md`, or
   - `codex/skills/delivery-harness-framework/SKILL.md`
 - blocked_sources: none
 - unsafe_inputs: none
-- next_safe_task: review and stage lifecycle skill routing documentation
+- next_safe_task: review and stage model router hook and eval matrix
 - required_commands:
   - `python3 test_runner.py`
   - `git diff --check`
   - `./scripts/verify_codex_env.sh --repo-root "$(pwd)" --codex-home "$HOME/.codex" --claude-home "$HOME/.claude"`
-- latest_checkpoint: 2026-05-11T21:27:17-04:00 documented lifecycle skill routing map
-- latest_verification: 2026-05-11T21:27:17-04:00 command=python3 test_runner.py; exit_code=0; key_output=[PASS] all tests
+- latest_checkpoint: 2026-05-17T09:17:56-04:00 hardened model router eval boundaries
+- latest_verification: 2026-05-17T09:17:56-04:00 command=python3 test_runner.py; exit_code=0; key_output=[PASS] all tests
 
 ## State Log
 
@@ -163,3 +163,55 @@ Stable rules belong in `AGENTS.md`, `README.md`, `docs/repo-index.md`, or
 - blockers:
   - none
 - next_safe_task: review and stage lifecycle skill routing documentation
+
+### 2026-05-17T09:10:46-04:00
+- phase: validation
+- event: checkpoint
+- summary: implemented cost-aware prompt model router hook
+- git:
+  - branch: main
+  - latest_commit: 9c8d6ba
+  - dirty_status: dirty
+  - dirty_count: 10
+- changed_surfaces:
+  - `codex/hooks/model_router.py`
+  - `codex/hooks.json`
+  - `README.md`
+  - `docs/HARNESS_RUNTIME.md`
+  - `docs/repo-index.md`
+  - `docs/AGENT_HARNESS_STATUS.md`
+  - `docs/CODEX_ENV_REPRODUCTION.md`
+  - `scripts/verify_codex_env.sh`
+  - `scripts/install_prereqs.sh`
+  - `test_runner.py`
+- verification:
+  - command: `./scripts/verify_codex_env.sh --repo-root "/Users/kezheng/Codes/CursorDeveloper/MyCodexEnv" --codex-home "/Users/kezheng/.codex" --claude-home "/Users/kezheng/.claude"`
+  - exit_code: 0
+  - key_output: Verification passed.
+- blockers:
+  - none
+- next_safe_task: review and stage model router hook changes
+
+### 2026-05-17T09:17:56-04:00
+- phase: validation
+- event: checkpoint
+- summary: hardened model router eval boundaries
+- git:
+  - branch: main
+  - latest_commit: 9c8d6ba
+  - dirty_status: dirty
+  - dirty_count: 12
+- changed_surfaces:
+  - `codex/hooks/model_router.py`
+  - `docs/MODEL_ROUTER_EVAL_MATRIX.md`
+  - `test_runner.py`
+  - `docs/HARNESS_RUNTIME.md`
+  - `docs/repo-index.md`
+  - `README.md`
+- verification:
+  - command: `python3 test_runner.py`
+  - exit_code: 0
+  - key_output: [PASS] all tests
+- blockers:
+  - none
+- next_safe_task: review and stage model router hook and eval matrix

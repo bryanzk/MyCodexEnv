@@ -27,7 +27,7 @@ cd MyCodexEnv
 - Codex / Claude workflow 来源分别为 `codex/workflow/*`、`claude/workflow/*`，但都排除 `workflow/memory/` 这类运行态热数据
 - Claude workflow 同步到 `~/.claude/workflow/*`，通过注入块挂到 `~/.claude/CLAUDE.md`
 - 默认启用 Codex hooks；全局 `SessionStart` hook 会在新会话启动时提醒会话名采用 `<项目缩写>-<YYYYMMDD>-<概要>` 格式
-- Harness runtime 默认启用薄 hooks：`PreToolUse` 读取 `tool-policy.json` 做客观 guardrail，`PostToolUse` 尝试把工具事件写入本机 `~/.codex/harness/evidence/*.jsonl`
+- Harness runtime 默认启用薄 hooks：`UserPromptSubmit` 运行 `model_router.py` 给出 prompt/subtask 级模型路由建议，`PreToolUse` 读取 `tool-policy.json` 做客观 guardrail，`PostToolUse` 尝试把工具事件写入本机 `~/.codex/harness/evidence/*.jsonl`
 - 全局 zsh 会话标题钩子默认生成 `<项目缩写>-<YYYYMMDD>-summary`，避免被旧的 `[Repo] zsh` 标题覆盖
 - 若 Codex Desktop 在新建会话时对 `~/Documents` 或 `~/Desktop` 报 `EPERM: operation not permitted, mkdir`，优先将会话根目录切到 `~/Codes/Codex` 这类非受保护目录，或在 macOS `隐私与安全性 -> 文件与文件夹 / 完全磁盘访问权限` 中授权 `Codex`
 
@@ -48,6 +48,7 @@ cd MyCodexEnv
 - `docs/harness-state.md`：append-only 状态日志，记录 phase、source of truth、next safe task、latest verification 和 checkpoint
 - `docs/HARNESS_RUNTIME.md`：Workflow + Infra 合同，覆盖生命周期、权限、证据、checkpoint 与 subagent team
 - `docs/AGENT_HARNESS_STATUS.md`：参照 Agent Harness 架构图维护当前状态图谱
+- `docs/MODEL_ROUTER_EVAL_MATRIX.md`：prompt/subtask 模型路由评估矩阵，覆盖正例、负例、forbidden upgrade、渐进切换和端到端断言
 - `codex/runtime/tool-policy.json`：按 `research / requirements / planning / development / validation / review / ship / handoff` 定义工具和权限策略
 - `codex/runtime/evidence.schema.json`：本机 evidence JSONL 事件结构
 - `scripts/harness_evidence.py`：验证并追加结构化 evidence
@@ -59,6 +60,7 @@ cd MyCodexEnv
 - `scripts/harness_requirements.py`：校验需求 artifact 的字段、验收标准和验证命令
 - `scripts/harness_recover.py`：从 repo index、state、git 和 evidence 恢复 next safe task
 - `scripts/harness_env_probe.py`：观测本机 Codex runtime 配置、hooks、policy 和 schema 状态
+- `codex/hooks/model_router.py`：`UserPromptSubmit` prompt 复杂度路由器，按 simple/medium/complex 和质量地板选择 `gpt-5.4-mini`、`gpt-5.4` 或 `gpt-5.5`，复杂任务可在阶段或 subtask 边界重复调用以自动下探或升级
 - `codex/hooks/harness_guard.py`：`PreToolUse` guardrail，处理 destructive、secret、remote、dynamic execution 和越阶段写入
 - `codex/hooks/harness_observer.py`：`PostToolUse` observer，非阻塞记录工具事件
 

@@ -22,6 +22,7 @@
 - EigenPhi MCP server is kept as a commented template block and is disabled by default.
 - If Google Chrome is missing, bootstrap installs `google-chrome`
 - Harness runtime policy and evidence schema are synced into `~/.codex/runtime/*`; local evidence logs are written under `~/.codex/harness/evidence/*` and are not committed.
+- `codex/hooks/model_router.py` is synced as the prompt/subtask model router. It emits a non-blocking JSON recommendation for `gpt-5.4-mini`, `gpt-5.4`, or `gpt-5.5` based on complexity and quality-floor signals; runtimes or wrapper scripts that can switch models may consume the recommendation directly.
 
 ## Skills Source of Truth
 - Repository source of truth is `codex/skills/*`.

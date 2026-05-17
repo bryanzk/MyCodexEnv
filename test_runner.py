@@ -36,6 +36,7 @@ LIFECYCLE_SKILLS_EN_STATUS_HTML = ROOT / "docs" / "project-lifecycle-harness-flo
 LIFECYCLE_SKILLS_EN_ARCHIVE_HTML = ROOT / "docs" / "project-lifecycle-harness-flow-skills-en.html"
 HARNESS_GUARD = ROOT / "codex" / "hooks" / "harness_guard.py"
 HARNESS_OBSERVER = ROOT / "codex" / "hooks" / "harness_observer.py"
+MODEL_ROUTER = ROOT / "codex" / "hooks" / "model_router.py"
 
 
 def run(cmd, cwd=None):
@@ -125,7 +126,7 @@ def test_codex_version_policy_accepts_current_cli():
         ("install_prereqs.sh", install_text),
     ]:
         require("ACCEPTED_CODEX_VERSION_PREFIXES" in script_text, f"{script_name} should declare accepted Codex versions")
-        require('"0.104.0" "0.130.0"' in script_text, f"{script_name} should accept current codex-cli 0.130.0")
+        require('"0.104.0" "0.130.0" "0.131.0"' in script_text, f"{script_name} should accept current codex-cli 0.131.0")
         require("codex_version_ok" in script_text, f"{script_name} should evaluate version prefixes explicitly")
 
     require("skills_managed_present" in verify_text, "verify should require managed repo skills to exist")
@@ -165,6 +166,7 @@ def test_sync_renders_template_and_copies_skills():
         require((codex_home / "runtime" / "evidence.schema.json").exists(), "harness evidence schema should be copied")
         require((codex_home / "hooks" / "harness_guard.py").exists(), "harness guard hook should be copied")
         require((codex_home / "hooks" / "harness_observer.py").exists(), "harness observer hook should be copied")
+        require((codex_home / "hooks" / "model_router.py").exists(), "model router hook should be copied")
         require(
             (codex_home / "remote-access.md").read_text(encoding="utf-8")
             == (ROOT / "codex" / "remote-access.md").read_text(encoding="utf-8"),
@@ -387,6 +389,7 @@ def test_sync_agents_only_copies_and_backs_up_agents():
         require((codex_home / "remote-hosts.md").exists(), "remote-hosts.md should be copied in sync-agents-only mode")
         require((codex_home / "runtime" / "tool-policy.json").exists(), "tool-policy should be copied in sync-agents-only mode")
         require((codex_home / "hooks" / "harness_guard.py").exists(), "harness guard should be copied in sync-agents-only mode")
+        require((codex_home / "hooks" / "model_router.py").exists(), "model router should be copied in sync-agents-only mode")
         require(
             (codex_home / "AGENTS.md").read_text(encoding="utf-8")
             == (ROOT / "codex" / "AGENTS.md").read_text(encoding="utf-8"),
@@ -413,6 +416,7 @@ def test_harness_runtime_surfaces_exist_and_parse():
         ROOT / "codex" / "runtime" / "evidence.schema.json",
         ROOT / "codex" / "hooks" / "harness_guard.py",
         ROOT / "codex" / "hooks" / "harness_observer.py",
+        ROOT / "codex" / "hooks" / "model_router.py",
         HARNESS_EVIDENCE,
         HARNESS_REPORT,
         HARNESS_AGENT_TEAM,
@@ -436,6 +440,7 @@ def test_harness_runtime_surfaces_exist_and_parse():
     require("verification_result" in schema["properties"]["event_type"]["enum"], "evidence schema should include verification events")
 
     hooks = json.loads((ROOT / "codex" / "hooks.json").read_text(encoding="utf-8"))
+    require("UserPromptSubmit" in hooks["hooks"], "hooks config should include UserPromptSubmit")
     require("PreToolUse" in hooks["hooks"], "hooks config should include PreToolUse")
     require("PostToolUse" in hooks["hooks"], "hooks config should include PostToolUse")
 
@@ -877,6 +882,74 @@ def test_harness_guard_policy_decisions():
         require(json.loads(out).get("permissionDecision") == "deny", "dynamic exec should be denied")
 
     print("[PASS] harness guard policy decisions")
+
+
+def test_model_router_prompt_complexity_decisions():
+    simple_payload = json.dumps({"prompt": "把这段话翻译成英文：你好"})
+    code, out, err = run_with_input([sys.executable, str(MODEL_ROUTER)], simple_payload)
+    require(code == 0, f"model router simple prompt failed: {err or out}")
+    simple = json.loads(out)
+    require(simple["routing"]["model"] == "gpt-5.4-mini", "simple prompt should use the cheapest quality-safe model")
+    require(simple["routing"]["reasoning_effort"] == "low", "simple prompt should use low reasoning")
+    require(simple["routing"]["complexity"] == "simple", "simple prompt should be classified as simple")
+    require("simple_signal" in simple["routing"]["reasons"], "simple routing should explain the simple signal")
+    require(simple["continue"] is True, "model router should not block prompt handling")
+
+    complex_payload = json.dumps(
+        {
+            "prompt": (
+                "设计并实现一个跨模块认证迁移，需要更新数据库 schema、API contract、"
+                "安全审查、回滚策略、测试计划，并支持后续部署。"
+            )
+        }
+    )
+    code, out, err = run_with_input([sys.executable, str(MODEL_ROUTER)], complex_payload)
+    require(code == 0, f"model router complex prompt failed: {err or out}")
+    complex_result = json.loads(out)
+    require(complex_result["routing"]["model"] == "gpt-5.5", "complex high-risk prompt should upgrade model")
+    require(complex_result["routing"]["reasoning_effort"] == "high", "complex high-risk prompt should use high reasoning")
+    require(complex_result["routing"]["complexity"] == "complex", "complex prompt should be classified as complex")
+    require("quality_floor" in complex_result["routing"]["reasons"], "complex routing should explain quality floor")
+
+    plan_payload = json.dumps(
+        {
+            "prompt": "实现登录功能，包含 README 更新、后端 API、鉴权安全、单元测试和 PR 描述。",
+            "phase": "development",
+            "subtask": "README 更新和命令说明同步",
+        }
+    )
+    code, out, err = run_with_input([sys.executable, str(MODEL_ROUTER)], plan_payload)
+    require(code == 0, f"model router subtask prompt failed: {err or out}")
+    subtask = json.loads(out)
+    require(subtask["routing"]["model"] == "gpt-5.4-mini", "simple subtask in complex task should downshift")
+    require(subtask["routing"]["switch_allowed"] is True, "router should allow repeated switches by subtask")
+
+    short_payload = json.dumps({"prompt": "谢谢"})
+    code, out, err = run_with_input([sys.executable, str(MODEL_ROUTER)], short_payload)
+    require(code == 0, f"model router short prompt failed: {err or out}")
+    short_result = json.loads(out)
+    require(short_result["routing"]["model"] == "gpt-5.4-mini", "short harmless prompt should use economy model")
+    require("short_prompt" in short_result["routing"]["reasons"], "short prompt routing should explain the downshift")
+
+    review_payload = json.dumps({"prompt": "review current diff for regressions", "phase": "review"})
+    code, out, err = run_with_input([sys.executable, str(MODEL_ROUTER)], review_payload)
+    require(code == 0, f"model router review phase failed: {err or out}")
+    review_result = json.loads(out)
+    require(review_result["routing"]["model"] == "gpt-5.5", "review phase should use frontier model for quality")
+
+    validation_payload = json.dumps({"prompt": "run validation and summarize test evidence", "phase": "validation"})
+    code, out, err = run_with_input([sys.executable, str(MODEL_ROUTER)], validation_payload)
+    require(code == 0, f"model router validation phase failed: {err or out}")
+    validation_result = json.loads(out)
+    require(validation_result["routing"]["model"] == "gpt-5.4-mini", "validation evidence summary should downshift")
+
+    malformed_code, malformed_out, malformed_err = run_with_input([sys.executable, str(MODEL_ROUTER)], "{bad json")
+    require(malformed_code == 0, f"model router malformed input should not block: {malformed_err or malformed_out}")
+    malformed = json.loads(malformed_out)
+    require(malformed["routing"]["model"] == "gpt-5.4", "missing prompt should use balanced fallback")
+    require(malformed["routing"]["confidence"] == "low", "missing prompt should report low confidence")
+
+    print("[PASS] model router prompt complexity decisions")
 
 
 def test_harness_evidence_append_and_observer_failure_mode():
@@ -1942,6 +2015,7 @@ def main():
     require(HARNESS_AGENT_BRIEF_TEMPLATE.exists(), f"missing harness agent brief template: {HARNESS_AGENT_BRIEF_TEMPLATE}")
     require(HARNESS_GUARD.exists(), f"missing harness guard hook: {HARNESS_GUARD}")
     require(HARNESS_OBSERVER.exists(), f"missing harness observer hook: {HARNESS_OBSERVER}")
+    require(MODEL_ROUTER.exists(), f"missing model router hook: {MODEL_ROUTER}")
 
     test_bootstrap_eigenphi_argument_is_optional()
     test_sync_ignores_legacy_eigenphi_argument()
@@ -1955,6 +2029,7 @@ def main():
     test_harness_agent_brief_template()
     test_lifecycle_skill_routing_doc_is_discoverable()
     test_harness_guard_policy_decisions()
+    test_model_router_prompt_complexity_decisions()
     test_harness_evidence_append_and_observer_failure_mode()
     test_harness_report_cli_summarizes_evidence()
     test_harness_agent_team_validator()

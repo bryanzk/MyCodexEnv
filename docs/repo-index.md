@@ -11,6 +11,7 @@
 - `docs/harness-state.md`: append-only harness runtime state and latest safe task.
 - `docs/HARNESS_RUNTIME.md`: design contract for workflow, infra, state, policy, evidence, hooks, checkpoints, and agent teams.
 - `docs/LIFECYCLE_SKILL_ROUTING.md`: Chinese lifecycle-to-skill routing map for current project workflows.
+- `docs/MODEL_ROUTER_EVAL_MATRIX.md`: prompt/subtask model router eval matrix and routing assertions.
 - `docs/index.html`: Chinese public Delivery Harness Framework docs landing page for GitHub Pages.
 - `docs/index-en.html`: English public Delivery Harness Framework docs landing page for GitHub Pages.
 - `docs/dhf-workflow-skills-cn.html`: Chinese DHF workflow skill inventory with GitHub source links.
@@ -27,6 +28,7 @@
 - `codex/runtime/tool-policy.json`: stage-aware tool and permission policy.
 - `codex/runtime/evidence.schema.json`: local evidence JSONL event contract.
 - `codex/hooks/`: Codex lifecycle hooks copied to `~/.codex/hooks/`.
+- `codex/hooks/model_router.py`: prompt/subtask complexity router for cheapest quality-safe model recommendations.
 - `scripts/harness_evidence.py`: evidence validation and append helper.
 - `scripts/harness_report.py`: local evidence summary CLI.
 - `scripts/harness_agent_team.py`: agent team, write-set, and optional durable brief validator.
@@ -50,6 +52,7 @@
 ## Related Documentation
 - `README.md`: top-level quick start and Harness Runtime overview.
 - `docs/HARNESS_RUNTIME.md`: lifecycle, evidence, checkpoint, permission, and subagent contracts.
+- `docs/MODEL_ROUTER_EVAL_MATRIX.md`: model routing existence, positive/negative, progressive-switching, and end-to-end evals.
 - `docs/AGENT_HARNESS_STATUS.md`: Agent Harness workflow/infra status map.
 - `docs/CODEX_ENV_REPRODUCTION.md`: Codex + Claude environment reproduction guide.
 - `docs/LIFECYCLE_SKILL_ROUTING.md`: lifecycle stage, workflow, skill, and helper routing.
@@ -90,5 +93,6 @@
 - Hooks: `codex/hooks.json` and `codex/hooks/*`.
 - Observability: `scripts/harness_evidence.py`, `scripts/harness_report.py`, and local evidence files.
 - Tool Router: lifecycle stage policy in `tool-policy.json`.
+- Model Router: `model_router.py` recommends `gpt-5.4-mini`, `gpt-5.4`, or `gpt-5.5` per prompt/subtask and can be re-run at complex task phase boundaries.
 - Checkpoints: `docs/HARNESS_RUNTIME.md` contract, `scripts/harness_checkpoint.py`, and `docs/harness-state.md` log.
 - Guardrails: hooks, global AGENTS rules, remote-access policy, and verification gate.
