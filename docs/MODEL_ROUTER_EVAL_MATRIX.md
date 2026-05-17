@@ -41,9 +41,13 @@ For a complex parent task, reroute at each durable stage boundary:
 ## End-To-End Assertions
 - The router output includes `routing.model`, `routing.reasoning_effort`,
   `routing.complexity`, `routing.confidence`, and `routing.reasons`.
+- The router output includes `telemetry.models_used`, `telemetry.token_usage`,
+  and `telemetry.five_hour_limit`.
 - The hook exits 0 for all normal and malformed payloads.
 - Simple work should lower expected token cost compared with always using
   `gpt-5.5`.
 - High-risk work should avoid false downshift even when the prompt is short.
 - Complex tasks should support repeated routing by honoring `subtask` over the
   parent prompt.
+- Missing token or limit data should be represented as `unavailable`, never
+  inferred from local guesses.

@@ -14,13 +14,13 @@ Stable rules belong in `AGENTS.md`, `README.md`, `docs/repo-index.md`, or
   - `codex/skills/delivery-harness-framework/SKILL.md`
 - blocked_sources: none
 - unsafe_inputs: none
-- next_safe_task: review and stage model router hook and eval matrix
+- next_safe_task: review and stage model router telemetry changes
 - required_commands:
   - `python3 test_runner.py`
   - `git diff --check`
   - `./scripts/verify_codex_env.sh --repo-root "$(pwd)" --codex-home "$HOME/.codex" --claude-home "$HOME/.claude"`
-- latest_checkpoint: 2026-05-17T09:17:56-04:00 hardened model router eval boundaries
-- latest_verification: 2026-05-17T09:17:56-04:00 command=python3 test_runner.py; exit_code=0; key_output=[PASS] all tests
+- latest_checkpoint: 2026-05-17T10:11:13-04:00 added model router response telemetry contract
+- latest_verification: 2026-05-17T10:11:13-04:00 command=python3 test_runner.py; exit_code=0; key_output=[PASS] all tests
 
 ## State Log
 
@@ -215,3 +215,26 @@ Stable rules belong in `AGENTS.md`, `README.md`, `docs/repo-index.md`, or
 - blockers:
   - none
 - next_safe_task: review and stage model router hook and eval matrix
+
+### 2026-05-17T10:11:13-04:00
+- phase: validation
+- event: checkpoint
+- summary: added model router response telemetry contract
+- git:
+  - branch: main
+  - latest_commit: 612f829
+  - dirty_status: dirty
+  - dirty_count: 9
+- changed_surfaces:
+  - `codex/hooks/model_router.py`
+  - `test_runner.py`
+  - `README.md`
+  - `docs/HARNESS_RUNTIME.md`
+  - `docs/MODEL_ROUTER_EVAL_MATRIX.md`
+- verification:
+  - command: `python3 test_runner.py`
+  - exit_code: 0
+  - key_output: [PASS] all tests
+- blockers:
+  - none
+- next_safe_task: review and stage model router telemetry changes

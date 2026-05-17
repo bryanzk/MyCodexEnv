@@ -56,7 +56,7 @@ For the current project workflow and skill routing map, read
 - `Hooks`: `codex/hooks/*` implements thin objective guardrails, prompt model routing recommendations, and evidence plumbing.
 - `Observability`: local JSONL evidence records lifecycle and verification events.
 - `Tool Router`: lifecycle stage determines allowed read/write/network/remote behavior.
-- `Model Router`: `codex/hooks/model_router.py` classifies each prompt or subtask as `simple`, `medium`, or `complex` and recommends the cheapest quality-safe model tier. It intentionally stays non-blocking; runtimes or wrapper scripts that can switch models may consume the JSON `routing` object, while plain Codex hooks inject the recommendation as additional context.
+- `Model Router`: `codex/hooks/model_router.py` classifies each prompt or subtask as `simple`, `medium`, or `complex` and recommends the cheapest quality-safe model tier. It intentionally stays non-blocking; runtimes or wrapper scripts that can switch models may consume the JSON `routing` object, while plain Codex hooks inject the recommendation and response telemetry requirement as additional context.
 - `Checkpoints`: use git commits, state log entries, and handoff docs as recovery points.
 - `Guardrails`: destructive, secret, remote, and dynamic-execution actions are blocked or require approval.
 
@@ -128,6 +128,19 @@ The hook output includes `routing.switch_points` for complex prompts so an
 orchestrator can re-run or apply routing at research, planning, development,
 validation, and review boundaries. The hook does not claim to force a model
 change in Codex versions that only accept additional prompt context.
+
+Response telemetry behavior:
+- output includes `telemetry.models_used`, `telemetry.token_usage`, and
+  `telemetry.five_hour_limit`;
+- actual model names are read from payload fields such as `model`,
+  `current_model`, `selected_model`, or `active_model`, then combined with the
+  routed recommendation;
+- token usage is read from payload `usage` / `token_usage` fields such as
+  `input_tokens`, `output_tokens`, and `total_tokens`;
+- five-hour limit data is read from payload `limits` / `quota` / `rate_limit`
+  fields or from `CODEX_5H_LIMIT_REMAINING` and `CODEX_5H_LIMIT_RESET_AT`;
+- unavailable telemetry must be reported as `unavailable`; the hook and final
+  response instructions must not estimate or invent token usage or limits.
 
 ## Checkpoint Contract
 Create a checkpoint when a task crosses any of these boundaries:

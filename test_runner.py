@@ -1033,11 +1033,33 @@ def test_model_router_prompt_complexity_decisions():
     validation_result = json.loads(out)
     require(validation_result["routing"]["model"] == "gpt-5.4-mini", "validation evidence summary should downshift")
 
+    usage_payload = json.dumps(
+        {
+            "prompt": "review current diff for regressions",
+            "phase": "review",
+            "model": "gpt-5.4",
+            "usage": {"input_tokens": 1200, "output_tokens": 300, "total_tokens": 1500},
+            "limits": {"five_hour_remaining": 42, "five_hour_reset_at": "2026-05-17T14:00:00-04:00"},
+        }
+    )
+    code, out, err = run_with_input([sys.executable, str(MODEL_ROUTER)], usage_payload)
+    require(code == 0, f"model router usage telemetry failed: {err or out}")
+    usage_result = json.loads(out)
+    telemetry = usage_result["telemetry"]
+    require(telemetry["models_used"] == ["gpt-5.4", "gpt-5.5"], "telemetry should include actual and routed models")
+    require(telemetry["token_usage"]["total_tokens"] == 1500, "telemetry should expose total tokens when provided")
+    require(telemetry["five_hour_limit"]["remaining"] == 42, "telemetry should expose five-hour remaining limit")
+    context = usage_result["hookSpecificOutput"]["additionalContext"]
+    require("每次最终回复必须包含" in context, "context should require final response telemetry")
+    require("5小时 limit 剩余" in context, "context should mention five-hour limit remaining")
+
     malformed_code, malformed_out, malformed_err = run_with_input([sys.executable, str(MODEL_ROUTER)], "{bad json")
     require(malformed_code == 0, f"model router malformed input should not block: {malformed_err or malformed_out}")
     malformed = json.loads(malformed_out)
     require(malformed["routing"]["model"] == "gpt-5.4", "missing prompt should use balanced fallback")
     require(malformed["routing"]["confidence"] == "low", "missing prompt should report low confidence")
+    require(malformed["telemetry"]["token_usage"]["total_tokens"] == "unavailable", "missing usage should be explicit")
+    require(malformed["telemetry"]["five_hour_limit"]["remaining"] == "unavailable", "missing limit should be explicit")
 
     print("[PASS] model router prompt complexity decisions")
 

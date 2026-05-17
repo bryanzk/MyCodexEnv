@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import json
+import os
 import re
 import sys
 from typing import Any
@@ -112,6 +113,15 @@ def first_text(payload: dict[str, Any], keys: tuple[str, ...]) -> str:
             if isinstance(value, str) and value.strip():
                 return value.strip()
     return ""
+
+
+def first_value(payload: dict[str, Any], keys: tuple[str, ...]) -> Any:
+    data = nested_dict(payload)
+    for source in (payload, data):
+        for key in keys:
+            if key in source and source[key] not in ("", None):
+                return source[key]
+    return None
 
 
 def count_matches(patterns: list[str], text: str) -> int:
@@ -229,20 +239,80 @@ def switch_points(payload: dict[str, Any]) -> list[dict[str, str]]:
     ]
 
 
+def nested_value(payload: dict[str, Any], containers: tuple[str, ...], keys: tuple[str, ...]) -> Any:
+    for container in containers:
+        value = payload.get(container)
+        if isinstance(value, dict):
+            for key in keys:
+                if key in value and value[key] not in ("", None):
+                    return value[key]
+    return first_value(payload, keys)
+
+
+def token_usage(payload: dict[str, Any]) -> dict[str, Any]:
+    return {
+        "input_tokens": nested_value(payload, ("usage", "token_usage"), ("input_tokens", "prompt_tokens")),
+        "output_tokens": nested_value(payload, ("usage", "token_usage"), ("output_tokens", "completion_tokens")),
+        "total_tokens": nested_value(payload, ("usage", "token_usage"), ("total_tokens", "tokens_used")),
+    } | {}
+
+
+def normalize_unavailable(data: dict[str, Any]) -> dict[str, Any]:
+    return {key: (value if value is not None else "unavailable") for key, value in data.items()}
+
+
+def five_hour_limit(payload: dict[str, Any]) -> dict[str, Any]:
+    remaining = nested_value(
+        payload,
+        ("limits", "quota", "rate_limit"),
+        ("five_hour_remaining", "five_hour_limit_remaining", "remaining_5h", "limit_remaining"),
+    )
+    reset_at = nested_value(
+        payload,
+        ("limits", "quota", "rate_limit"),
+        ("five_hour_reset_at", "reset_at_5h", "limit_reset_at"),
+    )
+    if remaining is None:
+        remaining = os.environ.get("CODEX_5H_LIMIT_REMAINING")
+    if reset_at is None:
+        reset_at = os.environ.get("CODEX_5H_LIMIT_RESET_AT")
+    return normalize_unavailable({"remaining": remaining, "reset_at": reset_at})
+
+
+def build_telemetry(payload: dict[str, Any], routing: dict[str, Any]) -> dict[str, Any]:
+    actual_model = first_text(payload, ("model", "current_model", "selected_model", "active_model"))
+    models = []
+    if actual_model:
+        models.append(actual_model)
+    routed_model = str(routing["model"])
+    if routed_model not in models:
+        models.append(routed_model)
+    return {
+        "models_used": models,
+        "token_usage": normalize_unavailable(token_usage(payload)),
+        "five_hour_limit": five_hour_limit(payload),
+    }
+
+
 def build_response(payload: dict[str, Any]) -> dict[str, Any]:
     classification = classify(payload)
     tier = MODEL_TIERS[classification.pop("tier")]
     routing = {**tier, **classification, "switch_points": switch_points(payload)}
+    telemetry = build_telemetry(payload, routing)
     context = (
         "Model routing recommendation: "
         f"use `{routing['model']}` with `{routing['reasoning_effort']}` reasoning "
         f"for this prompt/subtask; complexity={routing['complexity']}; "
         f"reasons={', '.join(routing['reasons'])}. "
-        "For multi-stage tasks, re-run routing at each stage or subtask boundary."
+        "For multi-stage tasks, re-run routing at each stage or subtask boundary.\n"
+        "每次最终回复必须包含 telemetry：本轮处理过程中使用的 model、token 消耗、"
+        "以及 5小时 limit 剩余。若 hook payload 未提供真实 token 或 limit 字段，"
+        "必须写 `unavailable`，不得估算或编造。"
     )
     return {
         "continue": True,
         "routing": routing,
+        "telemetry": telemetry,
         "hookSpecificOutput": {
             "hookEventName": "UserPromptSubmit",
             "additionalContext": context,
