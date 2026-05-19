@@ -86,27 +86,27 @@ adapter skills.
 | repo-specific lifecycle harnesses | Project paths, local commands, business fixtures, deployment topology, smoke matrices. | These adapters take over after the generic router identifies a repo-specific boundary. |
 | `gstack-plan-ceo-review` | Product framing, user value, scope, demo boundaries, strategic tradeoffs. | Use when product judgment is the work. |
 | `gstack-office-hours` | Founder-style pressure testing, market/user/business clarity. | Useful before committing to a product direction. |
-| `gstack-plan-eng-review` | Architecture, data model, API contract, migration, performance, test strategy. | Use before implementation on complex engineering plans. |
-| `gstack-plan-design-review` | UX structure, visual direction, responsive behavior, design acceptance. | Use before UI implementation or major design changes. |
-| `gstack-qa` | Browser QA, screenshots, console/network checks, responsiveness, accessibility smoke. | Use for user-facing web behavior. |
+| `gstack-plan-eng-review` | Architecture, data model, API contract, migration, performance, test strategy, and distribution/publish readiness for new artifacts. | Use before implementation on complex engineering plans; the current upstream workflow is explicitly search-aware and completeness-biased. |
+| `gstack-plan-design-review` | UX structure, visual direction, responsive behavior, design acceptance, and mockup-first plan refinement. | Use before UI implementation or major design changes. When a design binary/mockup path exists, prefer visual review over prose-only critique. |
+| `gstack-qa` | Browser QA, screenshots, console/network checks, responsiveness, accessibility smoke, then iterative bug fixing with regression evidence. | Use for user-facing web behavior when fixes are allowed. |
 | `gstack-qa-only` | Report-only QA when fixes should not be applied automatically. | Keeps QA read-only. |
 | `gstack-cso` | Infrastructure-first security and privacy review. | Use for auth, tokens, secrets, PII, or public/private boundaries. |
 | `security-reviewer` | Code-level security review for validation, auth, injection, secret leakage, error disclosure. | Good for narrower security audits. |
-| `gstack-review` | Pre-landing diff review and risk scan. | Use near PR, handoff, or ship. |
+| `gstack-review` | Pre-landing diff review, specialist checks, and fix-first handling of mechanical findings. | Use near PR, handoff, or ship; current upstream review is explicitly geared toward auto-fixing low-risk findings before asking. |
 | `code-reviewer` | Local code review of staged or unstaged changes. | Use for focused findings with file/line references. |
 | `review-swarm` | Parallel read-only review across behavioral/security/performance/test risks. | Use when the user asks for multi-agent review. |
 | `committee-review-loop` | Explicit expert-committee/subagent loops with scoring, revision briefs, and a target rating such as `9.5/10`. | Do not use for one-off design/code/QA review; preserve read-only committee roles and bounded revision-worker write sets. |
-| `gstack-ship` | Opinionated release workflow before PR/landing. | Only use when user asks to ship. |
+| `gstack-ship` | Opinionated release workflow before PR/landing, including coverage audit, plan-completion audit, pre-landing review, PR title/version hygiene, and documentation sync. | Only use when user asks to ship. |
 | `gstack-land-and-deploy` | Merge and deploy workflow with post-deploy checks. | Requires explicit release/deploy intent. |
 | `gstack-canary` | Post-deploy canary monitoring. | Use after deploy when live behavior must be watched. |
-| `gstack-document-release` | Post-ship documentation update across README/docs/CHANGELOG/TODOS/VERSION. | Use when docs must reflect shipped behavior. |
+| `gstack-document-release` | Post-ship documentation update across README/docs/CHANGELOG/TODOS/VERSION, with coverage-map and documentation-debt checks. | Use when docs must reflect shipped behavior. |
 | `doc-updater` | Targeted docs/codemap/README updates for feature, API, or structure changes. | Use for repo-local documentation maintenance. |
 | `verification-loop` | Build/static/test/coverage/security verification before completion. | Use when a full validation loop is required. |
 | `tdd-guide` | Test-first implementation for behavior changes and bug fixes. | Use before writing production code. |
 | `atdd-guide` | Acceptance-test-first workflow for business-facing criteria. | Use when external behavior and acceptance scenarios matter. |
 | `planner` | Requirement analysis, architecture sorting, task decomposition, risk detection. | Use for complex features and refactors. |
 | `task-flow-orchestrator` | Ordered execution across Karpathy, Planner, TDD, and verification workflows. | Use when the task needs workflow sequencing. |
-| `skill-evaluator` | Skill existence, routing, eval matrix, baseline comparison, off-target load diagnosis. | Use before expanding or revising critical skills. |
+| `skill-evaluator` | Skill existence, routing, eval matrix, baseline comparison, off-target load diagnosis. | Use before expanding or revising critical skills, especially when upstream workflow text changed and routing precision may drift. |
 | `visual-explainer` | Self-contained HTML diagrams, flowcharts, architecture views, tables, and visual explanations. | Use for visual documentation and system explanations. |
 
 ## Skillset Gap Routes
@@ -144,6 +144,11 @@ adapter skills.
 - Prefer gstack skills when the task is product review, engineering review,
   design review, browser QA, security review, ship, deploy, canary, release
   documentation, retro, or learning capture.
+- Prefer the richer upstream gstack posture when available:
+  `gstack-office-hours` for problem discovery, mockup-first `gstack-plan-design-review`
+  for UI planning, fix-first `gstack-review` for near-landing diffs,
+  coverage-aware `gstack-ship` for release readiness, and
+  debt-aware `gstack-document-release` for post-ship docs.
 - Prefer deterministic helper scripts when the runtime already provides one;
   do not reimplement their parsing or validation manually.
 - Use `verification-loop` or repo-native commands before any completion claim.
