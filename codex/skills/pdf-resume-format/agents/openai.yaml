@@ -1,0 +1,4 @@
+interface:
+  display_name: "PDF Resume Format"
+  short_description: "Polish resume PDFs for readability and links"
+  default_prompt: "Use $pdf-resume-format to polish this resume PDF for readability, natural role fit, clickable links, and clean export verification."
