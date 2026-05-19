@@ -38,6 +38,7 @@
 - `scripts/harness_requirements.py`: requirements artifact validator.
 - `scripts/harness_recover.py`: fresh-session recovery smoke check.
 - `scripts/harness_env_probe.py`: observable Codex runtime config probe.
+- `scripts/sync_gstack_vendor.py`: bulk-sync `codex/skills/gstack` from an upstream `garrytan/gstack` git snapshot.
 - `scripts/verify_codex_env.sh`: runtime sync and environment verification.
 - `docs/LIFECYCLE_SKILL_ROUTING.md`: stage, workflow, skill, and helper usage guide.
 - `docs/index.html`: Chinese public docs landing page.
@@ -69,6 +70,7 @@
 - Primary: `python3 test_runner.py`.
 - Runtime sync: `./scripts/verify_codex_env.sh --repo-root "$(pwd)" --codex-home "$HOME/.codex" --claude-home "$HOME/.claude"`.
 - Formatting: `git diff --check`.
+- Gstack vendor refresh: `python3 scripts/sync_gstack_vendor.py --repo-root "$(pwd)" --dry-run --json`, then rerun without `--dry-run` when the snapshot is acceptable.
 - Repo-local docs/config changes must keep README, docs, tests, and sync behavior consistent.
 
 ## High-Risk Areas

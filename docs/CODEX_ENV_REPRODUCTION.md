@@ -32,8 +32,17 @@
 - The repository includes Codex-adapted short-name imports of selected `gstack` skills: `plan-ceo-review`, `plan-eng-review`, `review`, `ship`, `retro`, `browse`, `qa`, and `setup-browser-cookies`.
 - The repository also vendors the complete global `gstack` skill set under `codex/skills/gstack` and `codex/skills/gstack-*`, so different machines and projects can use the same namespaced skills after a normal bootstrap/sync.
 - `codex/skills/gstack/setup` is intentionally repository-local: it builds support binaries inside `~/.codex/skills/gstack` and does not recreate symlinks to `/Users/kezheng/gstack`.
+- `scripts/sync_gstack_vendor.py` is the repeatable bulk snapshot sync entry for `codex/skills/gstack`; it clones upstream, validates `VERSION` / `package.json` / `setup`, replaces the vendor tree, deletes stale files, and strips upstream `.git` metadata.
 - `browse` includes supporting code under `codex/skills/browse/*`; first use requires `./setup` in that directory after sync so Bun can build the local binary and install Playwright Chromium.
 - The lifecycle-to-skill routing guide is `docs/LIFECYCLE_SKILL_ROUTING.md`; it maps current project workflows and runtime stages to the relevant generic, repo-specific, gstack, validation, review, QA, ship, and documentation skills.
+
+Bulk refresh command:
+
+```bash
+python3 scripts/sync_gstack_vendor.py --repo-root "$(pwd)" --source https://github.com/garrytan/gstack.git --dry-run --json
+python3 scripts/sync_gstack_vendor.py --repo-root "$(pwd)" --source https://github.com/garrytan/gstack.git
+python3 test_runner.py
+```
 
 ## Related Documentation
 - `README.md`: top-level quick start and Harness Runtime overview.

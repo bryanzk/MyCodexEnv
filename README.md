@@ -101,6 +101,17 @@ cd MyCodexEnv
 
 该 setup 只在 `~/.codex/skills/gstack` 内构建本地支持二进制，不会把 skill 迁移成指向 `/Users/kezheng/gstack` 的本机 symlink。早期短名 `browse` 也带 supporting files，首次使用前可在 `codex/skills/browse` 或同步后的 `~/.codex/skills/browse` 下执行一次 `./setup`。上游来源为 MIT License。
 
+批量刷新仓库内 vendored gstack 快照时，使用：
+
+```bash
+python3 scripts/sync_gstack_vendor.py --repo-root "$(pwd)" --source https://github.com/garrytan/gstack.git
+python3 test_runner.py
+./scripts/sync_codex_home.sh --repo-root "$(pwd)" --codex-home "$HOME/.codex" --skip-superpowers-sync
+~/.codex/skills/gstack/setup
+```
+
+可先用 `--dry-run --json` 只克隆并校验上游快照，不改写 `codex/skills/gstack`。脚本会删除旧快照中上游已移除的 stale 文件，并且不会保留上游 `.git` 元数据。
+
 ## 多仓库 AGENTS 管理
 
 如果你需要为 `/Users/kezheng/Codes/CursorDeveloper` 下多个 repo 批量扫描、备份、生成、恢复与校验 `AGENTS.md`，使用：

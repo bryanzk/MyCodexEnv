@@ -21,6 +21,7 @@ HARNESS_CHECKPOINT = ROOT / "scripts" / "harness_checkpoint.py"
 HARNESS_REQUIREMENTS = ROOT / "scripts" / "harness_requirements.py"
 HARNESS_RECOVER = ROOT / "scripts" / "harness_recover.py"
 HARNESS_ENV_PROBE = ROOT / "scripts" / "harness_env_probe.py"
+SYNC_GSTACK_VENDOR = ROOT / "scripts" / "sync_gstack_vendor.py"
 HARNESS_REQUIREMENTS_TEMPLATE = ROOT / "docs" / "templates" / "harness-requirements.md"
 HARNESS_AGENT_BRIEF_TEMPLATE = ROOT / "docs" / "templates" / "harness-agent-brief.md"
 LIFECYCLE_SKILL_ROUTING_DOC = ROOT / "docs" / "LIFECYCLE_SKILL_ROUTING.md"
@@ -79,6 +80,15 @@ def active_toml_lines(text: str) -> str:
 def make_git_repo(path: Path) -> Path:
     path.mkdir(parents=True, exist_ok=True)
     (path / ".git").mkdir(parents=True, exist_ok=True)
+    return path
+
+
+def make_real_git_repo(path: Path) -> Path:
+    path.mkdir(parents=True, exist_ok=True)
+    code, out, err = run(["git", "init", "-b", "main"], cwd=path)
+    require(code == 0, f"git init should work: {err or out}")
+    run(["git", "config", "user.email", "test@example.com"], cwd=path)
+    run(["git", "config", "user.name", "Test User"], cwd=path)
     return path
 
 
@@ -844,6 +854,86 @@ def test_lifecycle_skill_routing_doc_is_discoverable():
             require(link in text, f"{filename} missing related doc link: {link}")
 
     print("[PASS] lifecycle skill routing doc discoverable")
+
+
+def test_sync_gstack_vendor_replaces_snapshot_from_git_source():
+    with tempfile.TemporaryDirectory() as tmp:
+        tmp_path = Path(tmp)
+        upstream = make_real_git_repo(tmp_path / "upstream-gstack")
+        write(upstream / "VERSION", "9.9.9.9\n")
+        write(upstream / "README.md", "# upstream gstack\n")
+        write(upstream / "package.json", '{"name":"gstack","version":"9.9.9.9"}\n')
+        write(upstream / "setup", "#!/usr/bin/env bash\necho setup\n")
+        os.chmod(upstream / "setup", 0o755)
+        write(upstream / "qa" / "SKILL.md", "---\nname: qa\n---\n# QA\n")
+        code, out, err = run(["git", "add", "."], cwd=upstream)
+        require(code == 0, f"git add should work: {err or out}")
+        code, out, err = run(["git", "commit", "-m", "seed upstream"], cwd=upstream)
+        require(code == 0, f"git commit should work: {err or out}")
+
+        repo = tmp_path / "consumer"
+        vendor = repo / "codex" / "skills" / "gstack"
+        write(vendor / "VERSION", "0.0.0.1\n")
+        write(vendor / "stale.txt", "remove me\n")
+
+        code, out, err = run(
+            [
+                sys.executable,
+                str(SYNC_GSTACK_VENDOR),
+                "--repo-root",
+                str(repo),
+                "--source",
+                str(upstream),
+                "--json",
+            ]
+        )
+        require(code == 0, f"gstack vendor sync should succeed: {err or out}")
+        payload = json.loads(out)
+        require(payload["version"] == "9.9.9.9", "sync should report upstream version")
+        require(payload["changed_files"] >= 4, "sync should report copied snapshot files")
+        require((vendor / "VERSION").read_text(encoding="utf-8") == "9.9.9.9\n", "vendor VERSION should update")
+        require((vendor / "qa" / "SKILL.md").exists(), "nested skill files should be copied")
+        require(not (vendor / ".git").exists(), "vendored snapshot should not keep upstream .git metadata")
+        require(not (vendor / "stale.txt").exists(), "stale files should be deleted during snapshot sync")
+
+    print("[PASS] gstack vendor sync replaces snapshot from git source")
+
+
+def test_sync_gstack_vendor_dry_run_leaves_vendor_unchanged():
+    with tempfile.TemporaryDirectory() as tmp:
+        tmp_path = Path(tmp)
+        upstream = make_real_git_repo(tmp_path / "upstream-gstack")
+        write(upstream / "VERSION", "2.0.0.0\n")
+        write(upstream / "package.json", '{"name":"gstack","version":"2.0.0.0"}\n')
+        write(upstream / "setup", "#!/usr/bin/env bash\necho setup\n")
+        os.chmod(upstream / "setup", 0o755)
+        code, out, err = run(["git", "add", "."], cwd=upstream)
+        require(code == 0, f"git add should work: {err or out}")
+        code, out, err = run(["git", "commit", "-m", "seed upstream"], cwd=upstream)
+        require(code == 0, f"git commit should work: {err or out}")
+
+        repo = tmp_path / "consumer"
+        vendor = repo / "codex" / "skills" / "gstack"
+        write(vendor / "VERSION", "1.0.0.0\n")
+
+        code, out, err = run(
+            [
+                sys.executable,
+                str(SYNC_GSTACK_VENDOR),
+                "--repo-root",
+                str(repo),
+                "--source",
+                str(upstream),
+                "--dry-run",
+                "--json",
+            ]
+        )
+        require(code == 0, f"gstack vendor dry-run should succeed: {err or out}")
+        payload = json.loads(out)
+        require(payload["dry_run"] is True, "dry-run payload should mark dry_run")
+        require((vendor / "VERSION").read_text(encoding="utf-8") == "1.0.0.0\n", "dry-run should not change vendor files")
+
+    print("[PASS] gstack vendor sync dry-run leaves vendor unchanged")
 
 
 def test_harness_guard_policy_decisions():
@@ -2028,6 +2118,8 @@ def main():
     test_harness_runtime_surfaces_exist_and_parse()
     test_harness_agent_brief_template()
     test_lifecycle_skill_routing_doc_is_discoverable()
+    test_sync_gstack_vendor_replaces_snapshot_from_git_source()
+    test_sync_gstack_vendor_dry_run_leaves_vendor_unchanged()
     test_harness_guard_policy_decisions()
     test_model_router_prompt_complexity_decisions()
     test_harness_evidence_append_and_observer_failure_mode()

@@ -109,3 +109,10 @@ Upstream gstack is getting more specialized, not less. DHF still provides the ge
   The shell environment cannot resolve GitHub hosts directly, and this session does not expose a bulk repo archive import path for safely replacing the full gstack vendor tree.
 - Safe next step for a future refresh:
   add a dedicated sync path that can import upstream `garrytan/gstack` source snapshots wholesale, then run `bun run gen:skill-docs --host all` and repo verification.
+
+## Follow-up Fix Added
+
+- Added repeatable bulk snapshot sync entry:
+  `python3 scripts/sync_gstack_vendor.py --repo-root "$(pwd)" --source https://github.com/garrytan/gstack.git`
+- Added `--dry-run --json` support so the automation can validate an upstream snapshot before replacing `codex/skills/gstack`.
+- Added tests that prove the sync replaces the vendor tree, removes stale files, strips upstream `.git` metadata, and leaves the tree unchanged during dry-run.
