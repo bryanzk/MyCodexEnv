@@ -25,9 +25,9 @@ project-only commands here.
   source-of-truth files, fixtures, deployment topology, and project-specific
   safety boundaries.
 - gstack owns specialized lifecycle workflows: product critique, engineering
-  plan review, design review, browser QA, security review, diff review, ship,
-  land/deploy, canary monitoring, release documentation, retro, and learning
-  capture.
+  plan review, design review and mockup generation, browser QA, security
+  review, fix-first diff review, ship, land/deploy, canary monitoring, release
+  documentation, retrospective analytics, and learning capture.
 - `committee-review-loop` owns explicit expert-committee/subagent loops where a
   review committee rates an output and a revision worker iterates until a target
   score such as `9.5/10` is reached. Do not use it for ordinary one-off review,
@@ -149,19 +149,19 @@ earliest stage that changes the decision.
 | --- | --- | --- |
 | Research | Unknown repo, stale handoff, unclear source ownership, missing context. | Read durable sources, run recovery/env probes, then classify again. |
 | Requirements | Goal, audience, success criteria, constraints, scope, domain terms, or acceptance criteria are unclear. | Capture requirements; read `CONTEXT.md`, `CONTEXT-MAP.md`, and relevant `docs/adr` files when present; use domain vocabulary and flag conflicts; validate artifacts with `scripts/harness_requirements.py validate PATH` when used. |
-| Product boundary | What to build, who it is for, positioning, pricing, demo scope, or product tradeoff. | Route to `gstack-plan-ceo-review` or `gstack-office-hours` when product judgment is the core work. |
-| Engineering plan | Architecture, data model, API contract, migration, runtime, cross-module workflow, exception taxonomy, or deep module shape. | Route to `gstack-plan-eng-review` or a repo engineering planning skill; for multi-step work, decompose into vertical slice units and mark each slice `AFK` or `HITL`. |
+| Product boundary | What to build, who it is for, positioning, pricing, demo scope, or product tradeoff. | Route to `gstack-plan-ceo-review` or `gstack-office-hours` when product judgment is the core work. Prefer `gstack-office-hours` when the problem statement, demand signal, or wedge is still fluid. |
+| Engineering plan | Architecture, data model, API contract, migration, runtime, cross-module workflow, exception taxonomy, or deep module shape. | Route to `gstack-plan-eng-review` or a repo engineering planning skill; for multi-step work, decompose into vertical slice units and mark each slice `AFK` or `HITL`. When the change introduces new artifacts or infrastructure, ensure the plan includes distribution/publish paths rather than code-only scope. |
 | Prototype | A data model, state machine, module interface, or UI direction needs fast learning before production work. | Build only a clearly marked throwaway prototype that answers one named question; delete it or capture the durable decision in an ADR, issue, checkpoint, or notes before handoff. |
-| Design plan | UX direction, information architecture, visual system, responsive behavior, or design acceptance. | Route to `gstack-plan-design-review` or a repo design skill. |
+| Design plan | UX direction, information architecture, visual system, responsive behavior, or design acceptance. | Route to `gstack-plan-design-review` or a repo design skill. When visual UI is in scope and a design binary/mockup workflow exists, prefer mockup-first review over prose-only design critique. |
 | Committee loop | User explicitly asks for a committee, expert panel, subagent reviewer/worker split, rating loop, or to keep improving until a score such as `9.5/10`. | Route to `committee-review-loop`; preserve DHF agent-team validation and verification gates. Ordinary design, code, QA, or read-only reviews keep their specialized routes. |
 | Implementation | Clear acceptance criteria and bounded files/modules. | Use repo workflow, TDD skill, or scoped worker agents after source context is read. |
 | Debug/investigation | Failing tests, wrong output, 401/500, broken UI flow, data mismatch, unclear root cause. | Establish a runnable feedback loop before hypotheses or fixes, then use investigation/debugging workflow. |
 | QA/browser | User-facing page, browser smoke, console/network errors, screenshots, accessibility, responsive checks. | Route to `gstack-qa`, `gstack-qa-only`, or browser QA skill. |
 | Security/privacy | Auth, tokens, credentials, public/private boundary, PII, approvals, audit trail, data leak risk. | Route to `gstack-cso` or security review before implementation. |
-| Review | Diff exists and work is near handoff, PR, or landing. | Route to `gstack-review` or code review workflow. |
+| Review | Diff exists and work is near handoff, PR, or landing. | Route to `gstack-review` or code review workflow. Prefer fix-first review flows when the review surface is narrow enough to auto-fix mechanical issues without changing product intent. |
 | Ship/deploy | Commit, push, PR, merge, release, deploy, or production verification. | Route to `gstack-ship`, `gstack-land-and-deploy`, `gstack-canary`, and rollback docs as appropriate. |
-| Documentation/release notes | Public docs, release notes, shipped behavior summary, or post-ship documentation. | Route to `gstack-document-release` or doc-updater workflow. |
-| Handoff/learning | Save state, summarize, update docs, capture operational learning, prepare next session. | Use `scripts/harness_checkpoint.py append`; reference existing PRDs, ADRs, issues, diffs, and checkpoints instead of duplicating them; route to `gstack-retro` or `gstack-learn` when retrospective knowledge is requested. |
+| Documentation/release notes | Public docs, release notes, shipped behavior summary, or post-ship documentation. | Route to `gstack-document-release` or doc-updater workflow. Treat discoverability gaps, stale architecture diagrams, and missing how-to/tutorial coverage as first-class documentation debt. |
+| Handoff/learning | Save state, summarize, update docs, capture operational learning, prepare next session. | Use `scripts/harness_checkpoint.py append`; reference existing PRDs, ADRs, issues, diffs, and checkpoints instead of duplicating them; route to `gstack-retro` for time-windowed or cross-project retrospective analysis and `gstack-learn` when reusable learnings must be searched, exported, or pruned. |
 
 ## Requirements Gate
 
@@ -324,6 +324,12 @@ After routing, state:
    execution.
 8. For `committee-review-loop`, the three expert domains, target rating,
    revision worker scope, verification gate, and stopping condition.
+
+When gstack is the delegated specialist, also note which advanced posture is
+expected: product interrogation, mockup-first design review, fix-first review,
+distribution-aware ship planning, documentation-debt audit, or retrospective
+analytics. This keeps the router aligned with newer gstack workflows without
+hard-coding repo-specific commands.
 
 Do not start substantial implementation before this routing step when the task
 is ambiguous, cross-module, security-sensitive, data-sensitive, release-facing,
