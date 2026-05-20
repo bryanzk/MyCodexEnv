@@ -27,7 +27,8 @@ project-only commands here.
 - gstack owns specialized lifecycle workflows: product critique, engineering
   plan review, design review and mockup generation, browser QA, security
   review, fix-first diff review, ship, land/deploy, canary monitoring, release
-  documentation, retrospective analytics, and learning capture.
+  documentation, documentation generation, context save/restore, retrospective
+  analytics, learning capture, and optional gbrain-backed repo memory.
 - `committee-review-loop` owns explicit expert-committee/subagent loops where a
   review committee rates an output and a revision worker iterates until a target
   score such as `9.5/10` is reached. Do not use it for ordinary one-off review,
@@ -156,12 +157,12 @@ earliest stage that changes the decision.
 | Committee loop | User explicitly asks for a committee, expert panel, subagent reviewer/worker split, rating loop, or to keep improving until a score such as `9.5/10`. | Route to `committee-review-loop`; preserve DHF agent-team validation and verification gates. Ordinary design, code, QA, or read-only reviews keep their specialized routes. |
 | Implementation | Clear acceptance criteria and bounded files/modules. | Use repo workflow, TDD skill, or scoped worker agents after source context is read. |
 | Debug/investigation | Failing tests, wrong output, 401/500, broken UI flow, data mismatch, unclear root cause. | Establish a runnable feedback loop before hypotheses or fixes, then use investigation/debugging workflow. |
-| QA/browser | User-facing page, browser smoke, console/network errors, screenshots, accessibility, responsive checks. | Route to `gstack-qa`, `gstack-qa-only`, or browser QA skill. |
+| QA/browser | User-facing page, browser smoke, console/network errors, screenshots, accessibility, responsive checks, or read-only page data extraction. | Route to `gstack-qa`, `gstack-qa-only`, browser QA skill, or vendored gstack `scrape`/`skillify` when the work is extracting and codifying browser data flows rather than testing behavior. |
 | Security/privacy | Auth, tokens, credentials, public/private boundary, PII, approvals, audit trail, data leak risk. | Route to `gstack-cso` or security review before implementation. |
 | Review | Diff exists and work is near handoff, PR, or landing. | Route to `gstack-review` or code review workflow. Prefer fix-first review flows when the review surface is narrow enough to auto-fix mechanical issues without changing product intent. |
-| Ship/deploy | Commit, push, PR, merge, release, deploy, or production verification. | Route to `gstack-ship`, `gstack-land-and-deploy`, `gstack-canary`, and rollback docs as appropriate. |
-| Documentation/release notes | Public docs, release notes, shipped behavior summary, or post-ship documentation. | Route to `gstack-document-release` or doc-updater workflow. Treat discoverability gaps, stale architecture diagrams, and missing how-to/tutorial coverage as first-class documentation debt. |
-| Handoff/learning | Save state, summarize, update docs, capture operational learning, prepare next session. | Use `scripts/harness_checkpoint.py append`; reference existing PRDs, ADRs, issues, diffs, and checkpoints instead of duplicating them; route to `gstack-retro` for time-windowed or cross-project retrospective analysis and `gstack-learn` when reusable learnings must be searched, exported, or pruned. |
+| Ship/deploy | Commit, push, PR, merge, release, deploy, production verification, or version-slot queue visibility. | Route to `gstack-ship`, `gstack-land-and-deploy`, `gstack-canary`, `gstack-landing-report`, and rollback docs as appropriate. |
+| Documentation/release notes | Public docs, release notes, shipped behavior summary, missing docs for a module/feature, polished PDF artifacts, or post-ship documentation. | Route to `gstack-document-release`, vendored gstack `document-generate`/`make-pdf`, or doc-updater workflow. Treat discoverability gaps, stale architecture diagrams, missing how-to/tutorial coverage, and publication-quality artifacts as first-class documentation debt. |
+| Handoff/learning | Save state, restore state, summarize, update docs, capture operational learning, prepare next session, or refresh persistent repo memory. | Use `scripts/harness_checkpoint.py append` for repo-local harness state; use vendored gstack `context-save`/`context-restore` for user-facing session continuity; route to `gstack-retro` for time-windowed or cross-project retrospective analysis, `gstack-learn` when reusable learnings must be searched/exported/pruned, and vendored gstack `setup-gbrain`/`sync-gbrain` only when the user explicitly wants gbrain setup or repo re-indexing. |
 
 ## Requirements Gate
 

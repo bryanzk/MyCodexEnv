@@ -61,8 +61,8 @@ adapter skills.
 | Review and QA | Inspect diffs, browser behavior, security/privacy boundaries, and user-visible regressions. | `gstack-review`, `code-reviewer`, `gstack-qa`, `security-reviewer` |
 | Committee review loop | Run an explicit expert-committee scoring loop with a separate revision worker until a target rating is met. | `committee-review-loop` |
 | Ship and deployment | Commit/PR/release/deploy/canary only when explicitly requested and verified. | `gstack-ship`, `gstack-land-and-deploy`, `gstack-canary` |
-| Handoff and recovery | Append state, preserve next safe task, recover without chat history. | `scripts/harness_checkpoint.py`, `scripts/harness_recover.py` |
-| Documentation release | Keep README/docs aligned with shipped behavior and skill/runtime changes. | `gstack-document-release`, `doc-updater` |
+| Handoff and recovery | Append state, preserve next safe task, recover without chat history, and optionally save/restore user-facing gstack context. | `scripts/harness_checkpoint.py`, `scripts/harness_recover.py`, vendored gstack `context-save` / `context-restore` |
+| Documentation release | Keep README/docs aligned with shipped behavior and skill/runtime changes; generate missing docs or polished artifacts when requested. | `gstack-document-release`, vendored gstack `document-generate`, vendored gstack `make-pdf`, `doc-updater` |
 
 ## Lifecycle Stage Map
 
@@ -75,8 +75,8 @@ adapter skills.
 | `validation` | Work is implemented or docs/config changed and needs fresh evidence. | Tests/checks by default. | `verification-loop`, `scripts/harness_report.py`, `scripts/verify_codex_env.sh` | Prove the result with fresh command output and required evidence fields. |
 | `review` | Diff exists, work is near handoff/PR/landing, or user asks for review. | Read-only by default. | `gstack-review`, `code-reviewer`, `review-swarm`, `security-reviewer` | Find bugs, regressions, security risks, and missing tests before shipping. |
 | `review` | User explicitly asks for a committee, expert panel, subagent reviewer/worker split, rating loop, or improvement until a score such as `9.5/10`. | Committee read-only; revision worker scoped writes. | `committee-review-loop`, `scripts/harness_agent_team.py` | Keep ordinary review routes separate while iterating committee findings into bounded, verified revisions. |
-| `ship` | User requests commit, push, PR, merge, release, deploy, or production verification. | Requested release actions only. | `gstack-ship`, `gstack-land-and-deploy`, `gstack-canary` | Complete release steps, verify deployment, and preserve rollback context. |
-| `handoff` | Session is ending, task crosses phases, work spans sessions, or next safe task must survive. | Docs/state only. | `scripts/harness_checkpoint.py`, `gstack-retro`, `gstack-learn` | Append checkpoint state, capture blockers, and leave a recoverable next step. |
+| `ship` | User requests commit, push, PR, merge, release, deploy, production verification, or version-slot queue visibility. | Requested release actions only. | `gstack-ship`, `gstack-land-and-deploy`, `gstack-canary`, vendored gstack `landing-report` | Complete release steps, verify deployment, and preserve rollback or version-queue context. |
+| `handoff` | Session is ending, task crosses phases, work spans sessions, next safe task must survive, or the user asks to save/restore working context. | Docs/state only unless a gstack context skill is explicitly invoked. | `scripts/harness_checkpoint.py`, vendored gstack `context-save` / `context-restore`, `gstack-retro`, `gstack-learn` | Append harness checkpoint state, capture blockers, preserve resumable user context, and leave a recoverable next step. |
 
 ## Specialist Skill Map
 
@@ -100,6 +100,12 @@ adapter skills.
 | `gstack-land-and-deploy` | Merge and deploy workflow with post-deploy checks. | Requires explicit release/deploy intent. |
 | `gstack-canary` | Post-deploy canary monitoring. | Use after deploy when live behavior must be watched. |
 | `gstack-document-release` | Post-ship documentation update across README/docs/CHANGELOG/TODOS/VERSION, with coverage-map and documentation-debt checks. | Use when docs must reflect shipped behavior. |
+| vendored gstack `document-generate` | Missing tutorials, how-to docs, reference pages, or explanatory docs for a feature/module/project. | Use when documentation must be created from scratch rather than just updated after release. |
+| vendored gstack `make-pdf` | Convert Markdown into a polished PDF artifact. | Use for publication-quality exports, not routine repo docs. |
+| vendored gstack `landing-report` | Read-only version queue and PR landing visibility before ship. | Use when asking what version slot or landing order comes next. |
+| vendored gstack `context-save` / `context-restore` | User-facing save/resume of working context across sessions or Conductor workspaces. | Use alongside, not instead of, `scripts/harness_checkpoint.py`; the harness checkpoint remains the repo-local append-only state source. |
+| vendored gstack `scrape` / `skillify` | Read-only browser data extraction and codifying repeated scrape flows into browser-skills. | Use for extraction workflows; use `gstack-qa` for behavior testing and bug fixing. |
+| vendored gstack `setup-gbrain` / `sync-gbrain` | Configure or refresh optional gbrain-backed repo memory/search. | Use only when the user explicitly wants gbrain setup, refresh, or repo re-indexing. |
 | `doc-updater` | Targeted docs/codemap/README updates for feature, API, or structure changes. | Use for repo-local documentation maintenance. |
 | `verification-loop` | Build/static/test/coverage/security verification before completion. | Use when a full validation loop is required. |
 | `tdd-guide` | Test-first implementation for behavior changes and bug fixes. | Use before writing production code. |
@@ -148,7 +154,11 @@ adapter skills.
   `gstack-office-hours` for problem discovery, mockup-first `gstack-plan-design-review`
   for UI planning, fix-first `gstack-review` for near-landing diffs,
   coverage-aware `gstack-ship` for release readiness, and
-  debt-aware `gstack-document-release` for post-ship docs.
+  debt-aware `gstack-document-release` for post-ship docs. With gstack
+  `1.42.x`, also prefer vendored `context-save` / `context-restore` for
+  user-facing session continuity, `landing-report` for version queue visibility,
+  `document-generate` / `make-pdf` for generated docs and artifacts, and
+  `setup-gbrain` / `sync-gbrain` only for explicit persistent memory setup.
 - Prefer deterministic helper scripts when the runtime already provides one;
   do not reimplement their parsing or validation manually.
 - Use `verification-loop` or repo-native commands before any completion claim.

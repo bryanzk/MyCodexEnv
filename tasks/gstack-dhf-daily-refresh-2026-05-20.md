@@ -185,3 +185,65 @@
   - `git fetch origin && git switch main && git pull --ff-only`
   - `python3 scripts/sync_gstack_vendor.py --repo-root "$(pwd)" --source https://github.com/garrytan/gstack.git --dry-run --json`
 - 只有当 GitHub 恢复可达且 dry-run 成功并显示 snapshot delta，才继续实际 vendor sync、重新评估 DHF skill、执行完整验证并尝试 push。
+
+## 本次自动刷新（2026-05-20 17:58 EDT）
+
+## 结果概览
+
+- 状态：ready / changed
+- 仓库：`/Users/kezheng/.codex/automations/gstack-dhf-daily-refresh/repo`
+- 当前基线 commit：`2387f822aa61d193f6c585c444281127792efb3f`
+- 本地 vendored gstack 版本：`0.18.3.0`
+- 上游 gstack 版本：`1.42.1.0`
+- gstack 同步：已执行实际同步，`changed_files=845`，`diff_files=736`
+- DHF skill 调整：已小幅更新 `delivery-harness-framework` 的 gstack 路由描述
+- 文档调整：已更新 `docs/LIFECYCLE_SKILL_ROUTING.md`，覆盖上游新增 `context-save` / `context-restore`、`document-generate`、`make-pdf`、`landing-report`、`scrape` / `skillify`、`setup-gbrain` / `sync-gbrain`
+
+## 本轮 prepare / sync 证据
+
+1. prepare preflight：
+   - command: `python3 scripts/prepare_gstack_dhf_daily_refresh.py --json`
+   - exit_code: `0`
+   - key_output: `status=ready; clone_root=/Users/kezheng/.codex/automations/gstack-dhf-daily-refresh/repo; dry_run.needs_update=true; dry_run.version=1.42.1.0; dry_run.diff_files=736`
+   - timestamp: `2026-05-20T21:58:39Z`
+2. gstack vendor sync：
+   - command: `python3 scripts/sync_gstack_vendor.py --repo-root "$(pwd)" --source https://github.com/garrytan/gstack.git --json`
+   - exit_code: `0`
+   - key_output: `dry_run=false; needs_update=true; version=1.42.1.0; changed_files=845; diff_files=736`
+   - timestamp: `2026-05-20T21:58:39Z`
+
+## 本轮 skill-evaluator 结论
+
+- Existence verdict：`delivery-harness-framework` 仍应保留为 generic lifecycle router。上游 gstack 新增的是 specialist workflows 与 supporting runtime，不能替代 DHF 对 repo durable state、阶段分类、helper gate 和验证证据的通用约束。
+- Routing review：`description` 仍聚焦“何时加载”，未把流程细节塞进 description；本轮不改 description，避免扩大触发面。正文需要更新的点是 gstack 职责边界：新增 context save/restore、documentation generation、landing report、browser data extraction、gbrain-backed memory。
+- Eval plan：路由正例覆盖“save progress / restore context”“generate docs”“make PDF”“landing report”“sync gbrain”“scrape this page”；负例覆盖普通 repo checkpoint、普通 post-ship docs、普通 browser QA 和安全审查，确保仍走 harness helper、`gstack-document-release`、`gstack-qa`、`gstack-cso`。
+- Evidence summary：已根据上游 `1.42.1.0` 的新增/删除 skill 面调整 DHF 正文与 `docs/LIFECYCLE_SKILL_ROUTING.md`。未新增 Codex top-level wrapper；本轮只同步 vendored gstack snapshot 和 generic router 文档。
+
+## 上游差异摘要
+
+- 新增能力面：`context-save` / `context-restore`、`document-generate`、`make-pdf`、`landing-report`、`scrape`、`skillify`、`setup-gbrain`、`sync-gbrain`、browser skill 支持文件与 gbrain runtime 文件。
+- 移除能力面：vendored gstack 内的 `checkpoint` 和 `connect-chrome` skill 被上游移除；DHF 改用 `context-save` / `context-restore` 描述用户-facing context continuity。
+- 保持不变：repo-local harness state 仍由 `scripts/harness_checkpoint.py` 与 `docs/harness-state.md` 负责，不由 gstack context skills 取代。
+
+## 本轮验证结果
+
+1. `python3 test_runner.py`
+   - exit_code: `0`
+   - key_output: `[PASS] all tests`
+   - timestamp: `2026-05-20T22:01:37Z`
+2. `git diff --check`
+   - exit_code: `0`
+   - key_output: `无输出`
+   - timestamp: `2026-05-20T22:01:37Z`
+3. `./scripts/sync_codex_home.sh --repo-root "$(pwd)" --codex-home "$HOME/.codex" --skip-superpowers-sync`
+   - exit_code: `0`
+   - key_output: `Skipping superpowers sync by request.`
+   - timestamp: `2026-05-20T22:01:37Z`
+4. `~/.codex/skills/gstack/setup`
+   - exit_code: `0`
+   - key_output: `gstack ready (claude).; linked skills include gstack-context-save, gstack-context-restore, gstack-document-generate, gstack-landing-report, gstack-make-pdf, gstack-scrape, gstack-skillify, gstack-setup-gbrain, gstack-sync-gbrain`
+   - timestamp: `2026-05-20T22:01:37Z`
+5. `./scripts/verify_codex_env.sh --repo-root "$(pwd)" --codex-home "$HOME/.codex" --claude-home "$HOME/.claude" --skip-check app_google_chrome`
+   - exit_code: `0`
+   - key_output: `SKIP:app_google_chrome; Verification passed.`
+   - timestamp: `2026-05-20T22:01:37Z`
