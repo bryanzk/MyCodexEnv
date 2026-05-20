@@ -41,7 +41,40 @@
   - `python3 scripts/sync_gstack_vendor.py --repo-root "$(pwd)" --source https://github.com/garrytan/gstack.git --dry-run --json`
 - 只有当 dry-run 成功并显示快照差异时，才继续实际同步、评估 DHF skill、跑完整验证并提交推送。
 
-## 待补充
+## 本地验证结果
 
-- 本地验证结果：待本次 report/memory 写入后补充
-- commit / push 状态：待最终执行后补充
+1. `python3 test_runner.py`
+   - exit_code: `0`
+   - key_output: `all tests`
+   - timestamp: `2026-05-20T09:02:23-0400`
+2. `git diff --check`
+   - exit_code: `0`
+   - key_output: `无输出`
+   - timestamp: `2026-05-20T09:02:23-0400`
+3. `./scripts/verify_codex_env.sh --repo-root "$(pwd)" --codex-home "$HOME/.codex" --claude-home "$HOME/.claude"`
+   - exit_code: `1`
+   - key_output: `Verification failed with 1 failed checks.`，唯一失败项为 `FAIL:app_google_chrome`
+   - timestamp: `2026-05-20T09:02:23-0400`
+
+## commit / push 状态
+
+- 本地 commit 已创建：
+  - command: `git add tasks/gstack-dhf-daily-refresh-2026-05-20.md && git commit -m "Add 2026-05-20 gstack dhf refresh report"`
+  - exit_code: `0`
+  - key_output: `[main 12e486f] Add 2026-05-20 gstack dhf refresh report`
+  - timestamp: `2026-05-20T09:02:23-0400`
+- 首次 push 被远端快进保护拒绝：
+  - command: `git push origin HEAD:main`
+  - exit_code: `1`
+  - key_output: `[rejected] HEAD -> main (fetch first)`
+  - timestamp: `2026-05-20T09:02:29-0400`
+- 随后尝试补 fetch/pull 时再次遇到 GitHub DNS 阻塞：
+  - command: `git fetch origin && git status --short --branch`
+  - exit_code: `128`
+  - key_output: `fatal: unable to access 'https://github.com/bryanzk/MyCodexEnv.git/': Could not resolve host: github.com`
+  - timestamp: `2026-05-20T09:02:44-0400`
+- 当前本地状态：
+  - command: `git status --short --branch`
+  - exit_code: `0`
+  - key_output: `## main...origin/main [ahead 1]`
+  - timestamp: `2026-05-20T09:02:50-0400`
