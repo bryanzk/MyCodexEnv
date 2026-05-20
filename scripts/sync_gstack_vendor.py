@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import argparse
+import filecmp
 import json
 import shutil
 import subprocess
@@ -28,6 +29,29 @@ def fail(message: str) -> None:
 
 def count_files(path: Path) -> int:
     return sum(1 for item in path.rglob("*") if item.is_file())
+
+
+def relative_files(path: Path) -> set[Path]:
+    if not path.exists():
+        return set()
+    return {item.relative_to(path) for item in path.rglob("*") if item.is_file()}
+
+
+def count_diff_files(snapshot: Path, vendor: Path) -> int:
+    snapshot_files = relative_files(snapshot)
+    vendor_files = relative_files(vendor)
+    diff_count = 0
+
+    for relative in sorted(snapshot_files | vendor_files):
+        snapshot_file = snapshot / relative
+        vendor_file = vendor / relative
+        if not snapshot_file.exists() or not vendor_file.exists():
+            diff_count += 1
+            continue
+        if not filecmp.cmp(snapshot_file, vendor_file, shallow=False):
+            diff_count += 1
+
+    return diff_count
 
 
 def ignore_snapshot_noise(directory: str, names: list[str]) -> set[str]:
@@ -115,12 +139,15 @@ def main() -> int:
         snapshot = clone_snapshot(args.source, args.ref or None, Path(tmp))
         version = validate_snapshot(snapshot)
         snapshot_files = count_files(snapshot)
+        diff_files = count_diff_files(snapshot, vendor)
         payload = {
             "source": args.source,
             "ref": args.ref or "default",
             "vendor": str(vendor),
             "version": version,
             "changed_files": snapshot_files,
+            "diff_files": diff_files,
+            "needs_update": diff_files > 0,
             "dry_run": args.dry_run,
             "backup": None,
         }

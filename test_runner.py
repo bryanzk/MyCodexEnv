@@ -22,6 +22,7 @@ HARNESS_REQUIREMENTS = ROOT / "scripts" / "harness_requirements.py"
 HARNESS_RECOVER = ROOT / "scripts" / "harness_recover.py"
 HARNESS_ENV_PROBE = ROOT / "scripts" / "harness_env_probe.py"
 SYNC_GSTACK_VENDOR = ROOT / "scripts" / "sync_gstack_vendor.py"
+PREPARE_GSTACK_DAILY_REFRESH = ROOT / "scripts" / "prepare_gstack_dhf_daily_refresh.py"
 HARNESS_REQUIREMENTS_TEMPLATE = ROOT / "docs" / "templates" / "harness-requirements.md"
 HARNESS_AGENT_BRIEF_TEMPLATE = ROOT / "docs" / "templates" / "harness-agent-brief.md"
 LIFECYCLE_SKILL_ROUTING_DOC = ROOT / "docs" / "LIFECYCLE_SKILL_ROUTING.md"
@@ -934,6 +935,62 @@ def test_sync_gstack_vendor_dry_run_leaves_vendor_unchanged():
         require((vendor / "VERSION").read_text(encoding="utf-8") == "1.0.0.0\n", "dry-run should not change vendor files")
 
     print("[PASS] gstack vendor sync dry-run leaves vendor unchanged")
+
+
+def test_prepare_gstack_daily_refresh_creates_standalone_clone():
+    with tempfile.TemporaryDirectory() as tmp:
+        tmp_path = Path(tmp)
+
+        upstream_gstack = make_real_git_repo(tmp_path / "upstream-gstack")
+        write(upstream_gstack / "VERSION", "4.0.0.0\n")
+        write(upstream_gstack / "package.json", '{"name":"gstack","version":"4.0.0.0"}\n')
+        write(upstream_gstack / "setup", "#!/usr/bin/env bash\necho setup\n")
+        os.chmod(upstream_gstack / "setup", 0o755)
+        code, out, err = run(["git", "add", "."], cwd=upstream_gstack)
+        require(code == 0, f"git add should work: {err or out}")
+        code, out, err = run(["git", "commit", "-m", "seed gstack upstream"], cwd=upstream_gstack)
+        require(code == 0, f"git commit should work: {err or out}")
+
+        origin = make_real_git_repo(tmp_path / "origin")
+        write(origin / "scripts" / "sync_gstack_vendor.py", SYNC_GSTACK_VENDOR.read_text(encoding="utf-8"))
+        write(origin / "codex" / "skills" / "gstack" / "VERSION", "0.1.0.0\n")
+        code, out, err = run(["git", "add", "."], cwd=origin)
+        require(code == 0, f"git add should work: {err or out}")
+        code, out, err = run(["git", "commit", "-m", "seed origin"], cwd=origin)
+        require(code == 0, f"git commit should work: {err or out}")
+
+        controller = make_real_git_repo(tmp_path / "controller")
+        write(controller / "scripts" / "sync_gstack_vendor.py", SYNC_GSTACK_VENDOR.read_text(encoding="utf-8"))
+        code, out, err = run(["git", "remote", "add", "origin", str(origin)], cwd=controller)
+        require(code == 0, f"git remote add should work: {err or out}")
+
+        clone_root = tmp_path / "automation-repo"
+        memory_file = tmp_path / "memory.md"
+        code, out, err = run(
+            [
+                sys.executable,
+                str(PREPARE_GSTACK_DAILY_REFRESH),
+                "--controller-repo-root",
+                str(controller),
+                "--clone-root",
+                str(clone_root),
+                "--memory-file",
+                str(memory_file),
+                "--gstack-source",
+                str(upstream_gstack),
+                "--json",
+            ]
+        )
+        require(code == 0, f"prepare script should succeed: {err or out}")
+        payload = json.loads(out)
+        require(payload["status"] == "ready", "prepare script should report ready status")
+        require(payload["clone_root"] == str(clone_root.resolve()), "prepare script should return clone path")
+        require((clone_root / ".git").is_dir(), "prepare should create a standalone clone with a .git directory")
+        require(payload["dry_run"]["dry_run"] is True, "prepare should include dry-run payload")
+        require(payload["dry_run"]["needs_update"] is True, "prepare should report vendor update need when versions differ")
+        require(payload["local_version"] == "0.1.0.0", "prepare should report current local vendor version")
+
+    print("[PASS] prepare gstack daily refresh creates standalone clone")
 
 
 def test_harness_guard_policy_decisions():
@@ -2123,6 +2180,7 @@ def main():
     require(HARNESS_REQUIREMENTS.exists(), f"missing harness requirements helper: {HARNESS_REQUIREMENTS}")
     require(HARNESS_RECOVER.exists(), f"missing harness recover helper: {HARNESS_RECOVER}")
     require(HARNESS_ENV_PROBE.exists(), f"missing harness env probe helper: {HARNESS_ENV_PROBE}")
+    require(PREPARE_GSTACK_DAILY_REFRESH.exists(), f"missing daily refresh prepare helper: {PREPARE_GSTACK_DAILY_REFRESH}")
     require(HARNESS_REQUIREMENTS_TEMPLATE.exists(), f"missing harness requirements template: {HARNESS_REQUIREMENTS_TEMPLATE}")
     require(HARNESS_AGENT_BRIEF_TEMPLATE.exists(), f"missing harness agent brief template: {HARNESS_AGENT_BRIEF_TEMPLATE}")
     require(HARNESS_GUARD.exists(), f"missing harness guard hook: {HARNESS_GUARD}")
@@ -2142,6 +2200,7 @@ def main():
     test_lifecycle_skill_routing_doc_is_discoverable()
     test_sync_gstack_vendor_replaces_snapshot_from_git_source()
     test_sync_gstack_vendor_dry_run_leaves_vendor_unchanged()
+    test_prepare_gstack_daily_refresh_creates_standalone_clone()
     test_harness_guard_policy_decisions()
     test_model_router_prompt_complexity_decisions()
     test_harness_evidence_append_and_observer_failure_mode()
