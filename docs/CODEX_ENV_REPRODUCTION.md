@@ -32,13 +32,15 @@
 - The repository includes Codex-adapted short-name imports of selected `gstack` skills: `plan-ceo-review`, `plan-eng-review`, `review`, `ship`, `retro`, `browse`, `qa`, and `setup-browser-cookies`.
 - The repository also vendors the complete global `gstack` skill set under `codex/skills/gstack` and `codex/skills/gstack-*`, so different machines and projects can use the same namespaced skills after a normal bootstrap/sync.
 - `codex/skills/gstack/setup` is intentionally repository-local: it builds support binaries inside `~/.codex/skills/gstack` and does not recreate symlinks to `/Users/kezheng/gstack`.
-- `scripts/sync_gstack_vendor.py` is the repeatable bulk snapshot sync entry for `codex/skills/gstack`; it clones upstream, validates `VERSION` / `package.json` / `setup`, replaces the vendor tree, deletes stale files, and strips upstream `.git` metadata.
+- `scripts/prepare_gstack_dhf_daily_refresh.py` is the daily refresh automation preflight entry; it requires a standalone clone, probes GitHub DNS first, syncs `main`, and returns fresh dry-run evidence before any repo mutation.
+- `scripts/sync_gstack_vendor.py` is the repeatable bulk snapshot sync entry for `codex/skills/gstack`; it clones upstream, validates `VERSION` / `package.json` / `setup`, reports `needs_update` / `diff_files`, replaces the vendor tree, deletes stale files, and strips upstream `.git` metadata.
 - `browse` includes supporting code under `codex/skills/browse/*`; first use requires `./setup` in that directory after sync so Bun can build the local binary and install Playwright Chromium.
 - The lifecycle-to-skill routing guide is `docs/LIFECYCLE_SKILL_ROUTING.md`; it maps current project workflows and runtime stages to the relevant generic, repo-specific, gstack, validation, review, QA, ship, and documentation skills.
 
 Bulk refresh command:
 
 ```bash
+python3 scripts/prepare_gstack_dhf_daily_refresh.py --json
 python3 scripts/sync_gstack_vendor.py --repo-root "$(pwd)" --source https://github.com/garrytan/gstack.git --dry-run --json
 python3 scripts/sync_gstack_vendor.py --repo-root "$(pwd)" --source https://github.com/garrytan/gstack.git
 python3 test_runner.py
@@ -76,6 +78,7 @@ cd MyCodexEnv
 ## Verification
 ```bash
 ./scripts/verify_codex_env.sh --repo-root "$(pwd)" --codex-home "$HOME/.codex" --claude-home "$HOME/.claude"
+./scripts/verify_codex_env.sh --repo-root "$(pwd)" --codex-home "$HOME/.codex" --claude-home "$HOME/.claude" --skip-check app_google_chrome
 ```
 
 Verification evidence is appended to `TEST_VERIFICATION.md`.

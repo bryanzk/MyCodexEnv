@@ -6,9 +6,10 @@ REPO_ROOT=""
 CODEX_HOME="${HOME}/.codex"
 CLAUDE_HOME="${HOME}/.claude"
 ACCEPTED_CODEX_VERSION_PREFIXES=("0.104.0" "0.130.0" "0.131.0")
+SKIP_CHECKS=()
 
 usage() {
-  echo "Usage: verify_codex_env.sh --repo-root <path> [--codex-home <path>] [--claude-home <path>]"
+  echo "Usage: verify_codex_env.sh --repo-root <path> [--codex-home <path>] [--claude-home <path>] [--skip-check <name>]"
 }
 
 while [[ $# -gt 0 ]]; do
@@ -23,6 +24,10 @@ while [[ $# -gt 0 ]]; do
       ;;
     --claude-home)
       CLAUDE_HOME="${2:-}"
+      shift 2
+      ;;
+    --skip-check)
+      SKIP_CHECKS+=("${2:-}")
       shift 2
       ;;
     -h|--help)
@@ -55,9 +60,27 @@ if [[ -z "${expected_commit}" ]]; then
   exit 1
 fi
 
+should_skip() {
+  local target="$1"
+  local item
+  if [[ ${#SKIP_CHECKS[@]} -eq 0 ]]; then
+    return 1
+  fi
+  for item in "${SKIP_CHECKS[@]}"; do
+    if [[ "${item}" == "${target}" ]]; then
+      return 0
+    fi
+  done
+  return 1
+}
+
 check() {
   local name="$1"
   local cmd="$2"
+  if should_skip "${name}"; then
+    echo "SKIP:${name}"
+    return 0
+  fi
   if bash -c "${cmd}" >/dev/null 2>&1; then
     echo "PASS:${name}"
   else
@@ -190,6 +213,8 @@ report_file="${REPO_ROOT}/TEST_VERIFICATION.md"
     name="${line#*:}"
     if [[ "${status}" == "PASS" ]]; then
       echo "- [x] ${name}"
+    elif [[ "${status}" == "SKIP" ]]; then
+      echo "- [-] ${name} (skipped)"
     else
       echo "- [ ] ${name}"
     fi

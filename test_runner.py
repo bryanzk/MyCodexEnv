@@ -128,6 +128,16 @@ def test_sync_ignores_legacy_eigenphi_argument():
     print("[PASS] sync ignores legacy EigenPhi argument")
 
 
+def test_verify_supports_skip_check_argument():
+    code, out, err = run([str(VERIFY), "--help"])
+    require(code == 0, "verify help should render successfully")
+    text = f"{out}\n{err}"
+    require("--skip-check <name>" in text, "verify help should document skip-check")
+    script_text = VERIFY.read_text(encoding="utf-8")
+    require("SKIP:" in script_text, "verify script should emit SKIP status for skipped checks")
+    print("[PASS] verify skip-check support")
+
+
 def test_codex_version_policy_accepts_current_cli():
     verify_text = VERIFY.read_text(encoding="utf-8")
     install_text = (ROOT / "scripts" / "install_prereqs.sh").read_text(encoding="utf-8")
@@ -892,6 +902,8 @@ def test_sync_gstack_vendor_replaces_snapshot_from_git_source():
         payload = json.loads(out)
         require(payload["version"] == "9.9.9.9", "sync should report upstream version")
         require(payload["changed_files"] >= 4, "sync should report copied snapshot files")
+        require(payload["needs_update"] is True, "sync payload should report update need when snapshot differs")
+        require(payload["diff_files"] >= 2, "sync payload should report differing files")
         require((vendor / "VERSION").read_text(encoding="utf-8") == "9.9.9.9\n", "vendor VERSION should update")
         require((vendor / "qa" / "SKILL.md").exists(), "nested skill files should be copied")
         require(not (vendor / ".git").exists(), "vendored snapshot should not keep upstream .git metadata")
@@ -932,9 +944,53 @@ def test_sync_gstack_vendor_dry_run_leaves_vendor_unchanged():
         require(code == 0, f"gstack vendor dry-run should succeed: {err or out}")
         payload = json.loads(out)
         require(payload["dry_run"] is True, "dry-run payload should mark dry_run")
+        require(payload["needs_update"] is True, "dry-run payload should report update need when vendor differs")
+        require(payload["diff_files"] >= 1, "dry-run payload should report differing files")
         require((vendor / "VERSION").read_text(encoding="utf-8") == "1.0.0.0\n", "dry-run should not change vendor files")
 
     print("[PASS] gstack vendor sync dry-run leaves vendor unchanged")
+
+
+def test_sync_gstack_vendor_dry_run_reports_no_update_when_snapshot_matches():
+    with tempfile.TemporaryDirectory() as tmp:
+        tmp_path = Path(tmp)
+        upstream = make_real_git_repo(tmp_path / "upstream-gstack")
+        write(upstream / "VERSION", "3.0.0.0\n")
+        write(upstream / "package.json", '{"name":"gstack","version":"3.0.0.0"}\n')
+        write(upstream / "setup", "#!/usr/bin/env bash\necho setup\n")
+        os.chmod(upstream / "setup", 0o755)
+        write(upstream / "qa" / "SKILL.md", "---\nname: qa\n---\n# QA\n")
+        code, out, err = run(["git", "add", "."], cwd=upstream)
+        require(code == 0, f"git add should work: {err or out}")
+        code, out, err = run(["git", "commit", "-m", "seed upstream"], cwd=upstream)
+        require(code == 0, f"git commit should work: {err or out}")
+
+        repo = tmp_path / "consumer"
+        vendor = repo / "codex" / "skills" / "gstack"
+        write(vendor / "VERSION", "3.0.0.0\n")
+        write(vendor / "package.json", '{"name":"gstack","version":"3.0.0.0"}\n')
+        write(vendor / "setup", "#!/usr/bin/env bash\necho setup\n")
+        os.chmod(vendor / "setup", 0o755)
+        write(vendor / "qa" / "SKILL.md", "---\nname: qa\n---\n# QA\n")
+
+        code, out, err = run(
+            [
+                sys.executable,
+                str(SYNC_GSTACK_VENDOR),
+                "--repo-root",
+                str(repo),
+                "--source",
+                str(upstream),
+                "--dry-run",
+                "--json",
+            ]
+        )
+        require(code == 0, f"matching dry-run should succeed: {err or out}")
+        payload = json.loads(out)
+        require(payload["needs_update"] is False, "matching snapshot should not require update")
+        require(payload["diff_files"] == 0, "matching snapshot should report zero differing files")
+
+    print("[PASS] gstack vendor sync dry-run reports no update when snapshot matches")
 
 
 def test_prepare_gstack_daily_refresh_creates_standalone_clone():
@@ -2189,6 +2245,7 @@ def main():
 
     test_bootstrap_eigenphi_argument_is_optional()
     test_sync_ignores_legacy_eigenphi_argument()
+    test_verify_supports_skip_check_argument()
     test_codex_version_policy_accepts_current_cli()
     test_sync_renders_template_and_copies_skills()
     test_delivery_harness_framework_stays_generic()
@@ -2200,6 +2257,7 @@ def main():
     test_lifecycle_skill_routing_doc_is_discoverable()
     test_sync_gstack_vendor_replaces_snapshot_from_git_source()
     test_sync_gstack_vendor_dry_run_leaves_vendor_unchanged()
+    test_sync_gstack_vendor_dry_run_reports_no_update_when_snapshot_matches()
     test_prepare_gstack_daily_refresh_creates_standalone_clone()
     test_harness_guard_policy_decisions()
     test_model_router_prompt_complexity_decisions()

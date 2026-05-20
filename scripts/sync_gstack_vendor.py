@@ -4,7 +4,7 @@
 from __future__ import annotations
 
 import argparse
-import filecmp
+import hashlib
 import json
 import shutil
 import subprocess
@@ -31,27 +31,30 @@ def count_files(path: Path) -> int:
     return sum(1 for item in path.rglob("*") if item.is_file())
 
 
-def relative_files(path: Path) -> set[Path]:
-    if not path.exists():
-        return set()
-    return {item.relative_to(path) for item in path.rglob("*") if item.is_file()}
+def file_digest(path: Path) -> str:
+    digest = hashlib.sha256()
+    with path.open("rb") as handle:
+        for chunk in iter(lambda: handle.read(1024 * 1024), b""):
+            digest.update(chunk)
+    return digest.hexdigest()
 
 
-def count_diff_files(snapshot: Path, vendor: Path) -> int:
-    snapshot_files = relative_files(snapshot)
-    vendor_files = relative_files(vendor)
-    diff_count = 0
-
-    for relative in sorted(snapshot_files | vendor_files):
-        snapshot_file = snapshot / relative
-        vendor_file = vendor / relative
-        if not snapshot_file.exists() or not vendor_file.exists():
-            diff_count += 1
+def build_manifest(path: Path) -> dict[str, str]:
+    manifest: dict[str, str] = {}
+    for item in sorted(path.rglob("*")):
+        if ".git" in item.parts:
             continue
-        if not filecmp.cmp(snapshot_file, vendor_file, shallow=False):
-            diff_count += 1
+        relative = item.relative_to(path).as_posix()
+        if item.is_symlink():
+            manifest[relative] = f"symlink:{item.readlink()}"
+        elif item.is_file():
+            manifest[relative] = f"file:{file_digest(item)}"
+    return manifest
 
-    return diff_count
+
+def diff_manifest_count(left: dict[str, str], right: dict[str, str]) -> int:
+    keys = set(left) | set(right)
+    return sum(1 for key in keys if left.get(key) != right.get(key))
 
 
 def ignore_snapshot_noise(directory: str, names: list[str]) -> set[str]:
@@ -139,7 +142,9 @@ def main() -> int:
         snapshot = clone_snapshot(args.source, args.ref or None, Path(tmp))
         version = validate_snapshot(snapshot)
         snapshot_files = count_files(snapshot)
-        diff_files = count_diff_files(snapshot, vendor)
+        snapshot_manifest = build_manifest(snapshot)
+        vendor_manifest = build_manifest(vendor) if vendor.exists() else {}
+        diff_files = diff_manifest_count(snapshot_manifest, vendor_manifest)
         payload = {
             "source": args.source,
             "ref": args.ref or "default",
