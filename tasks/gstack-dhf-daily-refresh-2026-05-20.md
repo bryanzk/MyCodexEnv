@@ -78,3 +78,51 @@
   - exit_code: `0`
   - key_output: `## main...origin/main [ahead 1]`
   - timestamp: `2026-05-20T09:02:50-0400`
+
+## 同日修复验证
+
+- 修复时间：`2026-05-20T09:48:58-0400`
+- 修复结论：3 个阻塞项已恢复；原始失败主要由当时的执行权限边界、间歇性 GitHub DNS 失败，以及本地日报 commit 与远端新增 commit 分叉叠加造成。
+- 当前 worktree git metadata 验证：
+  - command: `git fetch origin`
+  - exit_code: `0`
+  - key_output: `From https://github.com/bryanzk/MyCodexEnv`
+  - timestamp: `2026-05-20T09:48:58-0400`
+- 自动化专用 clone 同步验证：
+  - command: `git fetch origin && git switch main && git pull --ff-only`
+  - exit_code: `0`
+  - key_output: `Already up to date.`
+  - timestamp: `2026-05-20T09:48:58-0400`
+- 上游 gstack dry-run 验证：
+  - command: `python3 scripts/sync_gstack_vendor.py --repo-root "$(pwd)" --source https://github.com/garrytan/gstack.git --dry-run --json`
+  - exit_code: `0`
+  - key_output: `{"dry_run": true, "version": "1.40.0.0", "changed_files": 825}`
+  - timestamp: `2026-05-20T09:48:58-0400`
+- 分支整理：
+  - command: `git rebase origin/main`
+  - exit_code: `0`
+  - key_output: `Successfully rebased and updated refs/heads/main.`
+  - timestamp: `2026-05-20T09:48:58-0400`
+  - command: `git push origin HEAD:main`
+  - exit_code: `0`
+  - key_output: `0b6af0d..097e43d  HEAD -> main`
+  - timestamp: `2026-05-20T09:48:58-0400`
+  - command: `git fetch origin && git status --short --branch && git rev-parse HEAD origin/main`
+  - exit_code: `0`
+  - key_output: `## main...origin/main` and both refs at `097e43d94ab6d2069738228cf5199bfb530560f5`
+  - timestamp: `2026-05-20T09:48:58-0400`
+
+## 修复后验证
+
+1. `python3 test_runner.py`
+   - exit_code: `0`
+   - key_output: `[PASS] all tests`
+   - timestamp: `2026-05-20T09:49:43-0400`
+2. `git diff --check`
+   - exit_code: `0`
+   - key_output: `无输出`
+   - timestamp: `2026-05-20T09:49:43-0400`
+3. `./scripts/verify_codex_env.sh --repo-root "$(pwd)" --codex-home "$HOME/.codex" --claude-home "$HOME/.claude"`
+   - exit_code: `0`
+   - key_output: `Verification passed.`
+   - timestamp: `2026-05-20T09:49:43-0400`
