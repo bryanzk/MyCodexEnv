@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 import subprocess
+import importlib.util
 import json
 import sys
 import tempfile
@@ -1047,6 +1048,38 @@ def test_prepare_gstack_daily_refresh_creates_standalone_clone():
         require(payload["local_version"] == "0.1.0.0", "prepare should report current local vendor version")
 
     print("[PASS] prepare gstack daily refresh creates standalone clone")
+
+
+def test_prepare_gstack_daily_refresh_retries_transient_dns_failures():
+    spec = importlib.util.spec_from_file_location("prepare_gstack_daily_refresh", PREPARE_GSTACK_DAILY_REFRESH)
+    require(spec is not None and spec.loader is not None, "prepare module should load from file")
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+
+    calls = []
+    sleeps = []
+    original_getaddrinfo = module.socket.getaddrinfo
+    original_sleep = module.time.sleep
+
+    def flaky_getaddrinfo(host, port, type=0):
+        calls.append((host, port, type))
+        if len(calls) < 3:
+            raise OSError("temporary resolver failure")
+        return [(module.socket.AF_INET, module.socket.SOCK_STREAM, 6, "", ("140.82.113.3", 443))]
+
+    module.socket.getaddrinfo = flaky_getaddrinfo
+    module.time.sleep = lambda seconds: sleeps.append(seconds)
+    try:
+        result = module.resolve_host("github.com", attempts=3, base_delay_seconds=1.0)
+    finally:
+        module.socket.getaddrinfo = original_getaddrinfo
+        module.time.sleep = original_sleep
+
+    require(result["resolved"] is True, "transient DNS failures should recover before deferred/no-op")
+    require(result["attempts"] == 3, "DNS resolver should retry until success")
+    require(sleeps == [1.0, 2.0], "DNS retry should use bounded increasing delays")
+
+    print("[PASS] prepare gstack daily refresh retries transient DNS failures")
 
 
 def test_harness_guard_policy_decisions():
@@ -2259,6 +2292,7 @@ def main():
     test_sync_gstack_vendor_dry_run_leaves_vendor_unchanged()
     test_sync_gstack_vendor_dry_run_reports_no_update_when_snapshot_matches()
     test_prepare_gstack_daily_refresh_creates_standalone_clone()
+    test_prepare_gstack_daily_refresh_retries_transient_dns_failures()
     test_harness_guard_policy_decisions()
     test_model_router_prompt_complexity_decisions()
     test_harness_evidence_append_and_observer_failure_mode()

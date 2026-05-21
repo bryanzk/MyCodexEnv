@@ -38,7 +38,7 @@
 - `scripts/harness_requirements.py`: requirements artifact validator.
 - `scripts/harness_recover.py`: fresh-session recovery smoke check.
 - `scripts/harness_env_probe.py`: observable Codex runtime config probe.
-- `scripts/prepare_gstack_dhf_daily_refresh.py`: preflight the daily refresh automation, require a standalone clone, and return dry-run evidence before repo mutation.
+- `scripts/prepare_gstack_dhf_daily_refresh.py`: preflight the daily refresh automation, retry DNS probes, require a standalone clone, and return dry-run evidence before repo mutation.
 - `scripts/sync_gstack_vendor.py`: bulk-sync `codex/skills/gstack` from an upstream `garrytan/gstack` git snapshot.
 - `scripts/verify_codex_env.sh`: runtime sync and environment verification.
 - `docs/LIFECYCLE_SKILL_ROUTING.md`: stage, workflow, skill, and helper usage guide.

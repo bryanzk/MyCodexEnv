@@ -112,7 +112,7 @@ python3 test_runner.py
 ~/.codex/skills/gstack/setup
 ```
 
-可先用 `python3 scripts/prepare_gstack_dhf_daily_refresh.py --json` 为 daily refresh automation 预热 standalone clone、前置 DNS 检查并拿到 fresh dry-run 结果，再决定是否真正同步。`sync_gstack_vendor.py --dry-run --json` 会额外返回 `needs_update` 和 `diff_files`，用于判断这次是否真的需要改写 `codex/skills/gstack`。脚本会删除旧快照中上游已移除的 stale 文件，并且不会保留上游 `.git` 元数据。
+可先用 `python3 scripts/prepare_gstack_dhf_daily_refresh.py --json` 为 daily refresh automation 预热 standalone clone、带重试地检查 DNS 并拿到 fresh dry-run 结果，再决定是否真正同步。`sync_gstack_vendor.py --dry-run --json` 会额外返回 `needs_update` 和 `diff_files`，用于判断这次是否真的需要改写 `codex/skills/gstack`。脚本会删除旧快照中上游已移除的 stale 文件，并且不会保留上游 `.git` 元数据。
 
 ## 多仓库 AGENTS 管理
 

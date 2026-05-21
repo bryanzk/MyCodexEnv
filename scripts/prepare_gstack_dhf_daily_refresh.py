@@ -48,12 +48,17 @@ def extract_host(value: str) -> str | None:
     return parsed.hostname
 
 
-def host_resolves(host: str) -> bool:
-    try:
-        socket.getaddrinfo(host, 443, type=socket.SOCK_STREAM)
-        return True
-    except OSError:
-        return False
+def resolve_host(host: str, attempts: int = 5, base_delay_seconds: float = 2.0) -> dict[str, object]:
+    last_error = ""
+    for attempt in range(1, attempts + 1):
+        try:
+            socket.getaddrinfo(host, 443, type=socket.SOCK_STREAM)
+            return {"host": host, "resolved": True, "attempts": attempt, "last_error": ""}
+        except OSError as exc:
+            last_error = str(exc)
+            if attempt < attempts:
+                time.sleep(base_delay_seconds * attempt)
+    return {"host": host, "resolved": False, "attempts": attempts, "last_error": last_error}
 
 
 def git_origin(repo_root: Path) -> str:
@@ -112,12 +117,21 @@ def main() -> int:
         if host:
             hosts.append((label, source, host))
 
-    unresolved = [item for item in hosts if not host_resolves(item[2])]
+    resolution = [
+        {
+            "label": label,
+            "source": source,
+            **resolve_host(host),
+        }
+        for label, source, host in hosts
+    ]
+    unresolved = [item for item in resolution if not item["resolved"]]
     if unresolved:
         payload = make_payload(
             "deferred",
             reason="dns_unreachable",
-            blocked_hosts=[item[2] for item in unresolved],
+            blocked_hosts=[item["host"] for item in unresolved],
+            dns_resolution=resolution,
             controller_repo_root=str(controller_repo_root),
             clone_root=str(clone_root),
             memory_file=str(memory_file),
