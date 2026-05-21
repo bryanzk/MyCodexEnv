@@ -5,7 +5,7 @@ Stable rules belong in `AGENTS.md`, `README.md`, `docs/repo-index.md`, or
 `docs/HARNESS_RUNTIME.md`; session facts and phase transitions are appended here.
 
 ## Current Snapshot
-- phase: validation
+- phase: handoff
 - source_of_truth:
   - `AGENTS.md`
   - `docs/repo-index.md`
@@ -14,13 +14,13 @@ Stable rules belong in `AGENTS.md`, `README.md`, `docs/repo-index.md`, or
   - `codex/skills/delivery-harness-framework/SKILL.md`
 - blocked_sources: none
 - unsafe_inputs: none
-- next_safe_task: review and stage model router telemetry changes
+- next_safe_task: install bun if runtime gstack setup build is required, then rerun ~/.codex/skills/gstack/setup
 - required_commands:
   - `python3 test_runner.py`
   - `git diff --check`
   - `./scripts/verify_codex_env.sh --repo-root "$(pwd)" --codex-home "$HOME/.codex" --claude-home "$HOME/.claude"`
-- latest_checkpoint: 2026-05-17T10:11:13-04:00 added model router response telemetry contract
-- latest_verification: 2026-05-17T10:11:13-04:00 command=python3 test_runner.py; exit_code=0; key_output=[PASS] all tests
+- latest_checkpoint: 2026-05-21T11:00:47-04:00 daily refresh synced gstack 1.42.2.0 and recorded DHF no-op evaluation
+- latest_verification: 2026-05-21T11:00:47-04:00 command=python3 test_runner.py; exit_code=0; key_output=[PASS] all tests
 
 ## State Log
 
@@ -238,3 +238,23 @@ Stable rules belong in `AGENTS.md`, `README.md`, `docs/repo-index.md`, or
 - blockers:
   - none
 - next_safe_task: review and stage model router telemetry changes
+
+### 2026-05-21T11:00:47-04:00
+- phase: handoff
+- event: checkpoint
+- summary: daily refresh synced gstack 1.42.2.0 and recorded DHF no-op evaluation
+- git:
+  - branch: main
+  - latest_commit: c860eb8
+  - dirty_status: dirty
+  - dirty_count: 7
+- changed_surfaces:
+  - `codex/skills/gstack`
+  - `tasks/gstack-dhf-daily-refresh-2026-05-21.md`
+- verification:
+  - command: `python3 test_runner.py`
+  - exit_code: 0
+  - key_output: [PASS] all tests
+- blockers:
+  - none
+- next_safe_task: install bun if runtime gstack setup build is required, then rerun ~/.codex/skills/gstack/setup
