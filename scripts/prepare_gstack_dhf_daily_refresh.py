@@ -15,6 +15,8 @@ from urllib.parse import urlparse
 
 DEFAULT_AUTOMATION_ID = "gstack-dhf-daily-refresh"
 DEFAULT_GSTACK_SOURCE = "https://github.com/garrytan/gstack.git"
+DNS_RESOLVE_ATTEMPTS = 25
+DNS_RESOLVE_RETRY_SECONDS = 5.0
 
 
 def run(cmd: list[str], cwd: Path | None = None) -> tuple[int, str, str]:
@@ -48,7 +50,12 @@ def extract_host(value: str) -> str | None:
     return parsed.hostname
 
 
-def resolve_host(host: str, attempts: int = 5, base_delay_seconds: float = 2.0) -> dict[str, object]:
+def resolve_host(
+    host: str,
+    attempts: int = DNS_RESOLVE_ATTEMPTS,
+    base_delay_seconds: float = DNS_RESOLVE_RETRY_SECONDS,
+    max_delay_seconds: float = DNS_RESOLVE_RETRY_SECONDS,
+) -> dict[str, object]:
     last_error = ""
     for attempt in range(1, attempts + 1):
         try:
@@ -57,8 +64,18 @@ def resolve_host(host: str, attempts: int = 5, base_delay_seconds: float = 2.0) 
         except OSError as exc:
             last_error = str(exc)
             if attempt < attempts:
-                time.sleep(base_delay_seconds * attempt)
+                time.sleep(min(base_delay_seconds * attempt, max_delay_seconds))
     return {"host": host, "resolved": False, "attempts": attempts, "last_error": last_error}
+
+
+def resolve_sources(sources: list[tuple[str, str, str]]) -> list[dict[str, object]]:
+    cache: dict[str, dict[str, object]] = {}
+    resolution = []
+    for label, source, host in sources:
+        if host not in cache:
+            cache[host] = resolve_host(host)
+        resolution.append({"label": label, "source": source, **cache[host]})
+    return resolution
 
 
 def git_origin(repo_root: Path) -> str:
@@ -117,14 +134,7 @@ def main() -> int:
         if host:
             hosts.append((label, source, host))
 
-    resolution = [
-        {
-            "label": label,
-            "source": source,
-            **resolve_host(host),
-        }
-        for label, source, host in hosts
-    ]
+    resolution = resolve_sources(hosts)
     unresolved = [item for item in resolution if not item["resolved"]]
     if unresolved:
         payload = make_payload(

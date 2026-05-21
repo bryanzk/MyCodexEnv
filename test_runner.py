@@ -1082,6 +1082,62 @@ def test_prepare_gstack_daily_refresh_retries_transient_dns_failures():
     print("[PASS] prepare gstack daily refresh retries transient DNS failures")
 
 
+def test_prepare_gstack_daily_refresh_dns_defaults_cover_slow_startup():
+    spec = importlib.util.spec_from_file_location("prepare_gstack_daily_refresh", PREPARE_GSTACK_DAILY_REFRESH)
+    require(spec is not None and spec.loader is not None, "prepare module should load from file")
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+
+    sleeps = []
+    original_getaddrinfo = module.socket.getaddrinfo
+    original_sleep = module.time.sleep
+
+    module.socket.getaddrinfo = lambda host, port, type=0: (_ for _ in ()).throw(OSError("temporary resolver failure"))
+    module.time.sleep = lambda seconds: sleeps.append(seconds)
+    try:
+        result = module.resolve_host("github.com")
+    finally:
+        module.socket.getaddrinfo = original_getaddrinfo
+        module.time.sleep = original_sleep
+
+    require(result["resolved"] is False, "persistent DNS failure should still defer")
+    require(result["attempts"] >= 25, "default DNS retry window should cover automation startup lag")
+    require(sum(sleeps) >= 120, "default DNS retry sleeps should cover at least two minutes")
+
+    print("[PASS] prepare gstack daily refresh DNS defaults cover slow startup")
+
+
+def test_prepare_gstack_daily_refresh_resolves_duplicate_dns_hosts_once():
+    spec = importlib.util.spec_from_file_location("prepare_gstack_daily_refresh", PREPARE_GSTACK_DAILY_REFRESH)
+    require(spec is not None and spec.loader is not None, "prepare module should load from file")
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+
+    calls = []
+    original_resolve_host = module.resolve_host
+
+    def fake_resolve_host(host):
+        calls.append(host)
+        return {"host": host, "resolved": True, "attempts": 1, "last_error": ""}
+
+    module.resolve_host = fake_resolve_host
+    try:
+        resolution = module.resolve_sources(
+            [
+                ("repo_origin", "https://github.com/bryanzk/MyCodexEnv.git", "github.com"),
+                ("gstack_source", "https://github.com/garrytan/gstack.git", "github.com"),
+            ]
+        )
+    finally:
+        module.resolve_host = original_resolve_host
+
+    require(calls == ["github.com"], "duplicate DNS hosts should be resolved once")
+    require([item["label"] for item in resolution] == ["repo_origin", "gstack_source"], "resolution should preserve source labels")
+    require(all(item["resolved"] is True for item in resolution), "cached host resolution should apply to both sources")
+
+    print("[PASS] prepare gstack daily refresh resolves duplicate DNS hosts once")
+
+
 def test_harness_guard_policy_decisions():
     with tempfile.TemporaryDirectory() as tmp:
         tmp_path = Path(tmp)
@@ -2293,6 +2349,8 @@ def main():
     test_sync_gstack_vendor_dry_run_reports_no_update_when_snapshot_matches()
     test_prepare_gstack_daily_refresh_creates_standalone_clone()
     test_prepare_gstack_daily_refresh_retries_transient_dns_failures()
+    test_prepare_gstack_daily_refresh_dns_defaults_cover_slow_startup()
+    test_prepare_gstack_daily_refresh_resolves_duplicate_dns_hosts_once()
     test_harness_guard_policy_decisions()
     test_model_router_prompt_complexity_decisions()
     test_harness_evidence_append_and_observer_failure_mode()
