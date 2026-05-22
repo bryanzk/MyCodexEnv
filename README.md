@@ -93,7 +93,7 @@ cd MyCodexEnv
 - `qa`
 - `setup-browser-cookies`
 
-完整 gstack 集合使用 namespaced 目录，例如 `gstack-qa`、`gstack-ship`、`gstack-review`、`gstack-design-review`、`gstack-investigate`。它们依赖 `codex/skills/gstack/*` 中的共享支持文件。首次使用需要在同步后执行：
+完整 gstack 集合使用 namespaced 目录，例如 `gstack-qa`、`gstack-ship`、`gstack-review`、`gstack-design-review`、`gstack-investigate`，以及新增的 `gstack-ios-qa`、`gstack-ios-design-review`、`gstack-ios-fix`。它们依赖 `codex/skills/gstack/*` 中的共享支持文件。首次使用需要在同步后执行：
 
 ```bash
 ~/.codex/skills/gstack/setup

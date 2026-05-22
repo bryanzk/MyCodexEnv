@@ -69,6 +69,20 @@
       ]
     },
     {
+      "id": "routing-negative-ios-qa",
+      "category": "negative_routing",
+      "name": "routes live iOS QA to iOS QA skill",
+      "prompt": "给这个 iPhone app 做一次真机 QA，连上设备后跑截图检查、交互验证并找出 bug。",
+      "expected_load": false,
+      "expected_skill": "gstack-ios-qa",
+      "expected_output": "The agent should route to the live-device iOS QA workflow rather than the generic lifecycle harness.",
+      "assertions": [
+        "The output selects a live-device iOS QA workflow.",
+        "The output does not use delivery-harness-framework as the primary executor.",
+        "The output includes device-visible verification such as screenshots or interaction checks."
+      ]
+    },
+    {
       "id": "routing-negative-one-off-design-review",
       "category": "negative_routing",
       "name": "one-off design review stays with design-review",

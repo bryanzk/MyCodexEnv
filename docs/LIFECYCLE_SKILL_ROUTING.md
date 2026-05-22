@@ -90,6 +90,10 @@ adapter skills.
 | `gstack-plan-design-review` | UX structure, visual direction, responsive behavior, design acceptance, and mockup-first plan refinement. | Use before UI implementation or major design changes. When a design binary/mockup path exists, prefer visual review over prose-only critique. |
 | `gstack-qa` | Browser QA, screenshots, console/network checks, responsiveness, accessibility smoke, then iterative bug fixing with regression evidence. | Use for user-facing web behavior when fixes are allowed. |
 | `gstack-qa-only` | Report-only QA when fixes should not be applied automatically. | Keeps QA read-only. |
+| `gstack-ios-qa` | Real-device iOS QA on a live app via the embedded StateServer and agent loop. | Use for "test my iPhone app", device-only bug hunts, or live iOS smoke runs. |
+| `gstack-ios-design-review` | Real-device iOS visual audit against Apple HIG and app design intent. | Use for shipped iOS UI review, not pre-implementation design planning. |
+| `gstack-ios-fix` | Closed-loop iOS bug fixing after a real-device repro exists. | Use when an iOS defect should be fixed, redeployed, and reverified autonomously. |
+| vendored gstack `ios-sync` / `ios-clean` | Maintain or remove the gstack iOS debug bridge and debug-only instrumentation. | Use only for explicit iOS bridge regeneration or release-cleanup requests. |
 | `gstack-cso` | Infrastructure-first security and privacy review. | Use for auth, tokens, secrets, PII, or public/private boundaries. |
 | `security-reviewer` | Code-level security review for validation, auth, injection, secret leakage, error disclosure. | Good for narrower security audits. |
 | `gstack-review` | Pre-landing diff review, specialist checks, and fix-first handling of mechanical findings. | Use near PR, handoff, or ship; current upstream review is explicitly geared toward auto-fixing low-risk findings before asking. |
@@ -148,17 +152,20 @@ adapter skills.
 - Prefer repo-specific lifecycle harnesses when a known project adapter owns the
   business domain.
 - Prefer gstack skills when the task is product review, engineering review,
-  design review, browser QA, security review, ship, deploy, canary, release
-  documentation, retro, or learning capture.
+  design review, browser QA, real-device iOS QA, security review, ship,
+  deploy, canary, release documentation, retro, or learning capture.
 - Prefer the richer upstream gstack posture when available:
   `gstack-office-hours` for problem discovery, mockup-first `gstack-plan-design-review`
   for UI planning, fix-first `gstack-review` for near-landing diffs,
   coverage-aware `gstack-ship` for release readiness, and
   debt-aware `gstack-document-release` for post-ship docs. With gstack
-  `1.42.x`, also prefer vendored `context-save` / `context-restore` for
-  user-facing session continuity, `landing-report` for version queue visibility,
-  `document-generate` / `make-pdf` for generated docs and artifacts, and
-  `setup-gbrain` / `sync-gbrain` only for explicit persistent memory setup.
+  `1.43.x`, also prefer `gstack-ios-qa` / `gstack-ios-design-review` /
+  `gstack-ios-fix` for live-device iOS workflows, vendored `ios-sync` /
+  `ios-clean` only for explicit iOS debug-bridge maintenance, vendored
+  `context-save` / `context-restore` for user-facing session continuity,
+  `landing-report` for version queue visibility, `document-generate` /
+  `make-pdf` for generated docs and artifacts, and `setup-gbrain` /
+  `sync-gbrain` only for explicit persistent memory setup.
 - Prefer deterministic helper scripts when the runtime already provides one;
   do not reimplement their parsing or validation manually.
 - Use `verification-loop` or repo-native commands before any completion claim.

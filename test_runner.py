@@ -148,7 +148,7 @@ def test_codex_version_policy_accepts_current_cli():
         ("install_prereqs.sh", install_text),
     ]:
         require("ACCEPTED_CODEX_VERSION_PREFIXES" in script_text, f"{script_name} should declare accepted Codex versions")
-        require('"0.104.0" "0.130.0" "0.131.0"' in script_text, f"{script_name} should accept current codex-cli 0.131.0")
+        require('"0.104.0" "0.130.0" "0.131.0" "0.133.0"' in script_text, f"{script_name} should accept current codex-cli 0.133.0")
         require("codex_version_ok" in script_text, f"{script_name} should evaluate version prefixes explicitly")
 
     require("skills_managed_present" in verify_text, "verify should require managed repo skills to exist")
@@ -319,6 +319,9 @@ def test_delivery_harness_framework_routes_runtime_helpers():
         "gstack-plan-eng-review",
         "gstack-plan-design-review",
         "gstack-qa",
+        "gstack-ios-qa",
+        "gstack-ios-design-review",
+        "gstack-ios-fix",
         "gstack-cso",
         "gstack-review",
         "gstack-ship",
@@ -377,6 +380,9 @@ def test_delivery_harness_framework_eval_matrix():
     forbidden_skills = {case.get("expected_skill") for case in evals if case.get("category") == "forbidden_load"}
     require("shipq-lifecycle-harness" in forbidden_skills, "eval matrix should guard ShipQ adapter ownership")
     require("visual-explainer" in forbidden_skills, "eval matrix should guard visual-explainer ownership")
+
+    negative_skills = {case.get("expected_skill") for case in evals if case.get("category") == "negative_routing"}
+    require("gstack-ios-qa" in negative_skills, "eval matrix should route live-device iOS QA away from the generic harness")
 
     progressive_helpers = {case.get("expected_helper") for case in evals if case.get("category") == "progressive_loading"}
     require(

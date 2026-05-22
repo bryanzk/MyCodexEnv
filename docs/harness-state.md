@@ -14,13 +14,13 @@ Stable rules belong in `AGENTS.md`, `README.md`, `docs/repo-index.md`, or
   - `codex/skills/delivery-harness-framework/SKILL.md`
 - blocked_sources: none
 - unsafe_inputs: none
-- next_safe_task: install bun if runtime gstack setup build is required, then rerun ~/.codex/skills/gstack/setup
+- next_safe_task: On the next daily refresh, rerun prepare first and then compare whether any new upstream specialized workflow needs explicit DHF routing boundaries.
 - required_commands:
   - `python3 test_runner.py`
   - `git diff --check`
   - `./scripts/verify_codex_env.sh --repo-root "$(pwd)" --codex-home "$HOME/.codex" --claude-home "$HOME/.claude"`
-- latest_checkpoint: 2026-05-21T11:00:47-04:00 daily refresh synced gstack 1.42.2.0 and recorded DHF no-op evaluation
-- latest_verification: 2026-05-21T11:00:47-04:00 command=python3 test_runner.py; exit_code=0; key_output=[PASS] all tests
+- latest_checkpoint: 2026-05-22T09:08:22-04:00 daily refresh synced gstack 1.43.3.0, expanded DHF routing for live-device iOS workflows, and fixed Codex 0.133.0 verification drift
+- latest_verification: 2026-05-22T09:08:22-04:00 command=python3 test_runner.py; exit_code=0; key_output=[PASS] all tests
 
 ## State Log
 
@@ -258,3 +258,29 @@ Stable rules belong in `AGENTS.md`, `README.md`, `docs/repo-index.md`, or
 - blockers:
   - none
 - next_safe_task: install bun if runtime gstack setup build is required, then rerun ~/.codex/skills/gstack/setup
+
+### 2026-05-22T09:08:22-04:00
+- phase: handoff
+- event: checkpoint
+- summary: daily refresh synced gstack 1.43.3.0, expanded DHF routing for live-device iOS workflows, and fixed Codex 0.133.0 verification drift
+- git:
+  - branch: main
+  - latest_commit: b527651
+  - dirty_status: dirty
+  - dirty_count: 91
+- changed_surfaces:
+  - `codex/skills/gstack`
+  - `codex/skills/delivery-harness-framework/SKILL.md`
+  - `codex/skills/delivery-harness-framework/evals/evals.json`
+  - `docs/LIFECYCLE_SKILL_ROUTING.md`
+  - `scripts/verify_codex_env.sh`
+  - `scripts/install_prereqs.sh`
+  - `test_runner.py`
+  - `tasks/gstack-dhf-daily-refresh-2026-05-22.md`
+- verification:
+  - command: `python3 test_runner.py`
+  - exit_code: 0
+  - key_output: [PASS] all tests
+- blockers:
+  - none
+- next_safe_task: On the next daily refresh, rerun prepare first and then compare whether any new upstream specialized workflow needs explicit DHF routing boundaries.
