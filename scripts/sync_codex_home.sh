@@ -181,6 +181,99 @@ if rg -n '\$\{[A-Z0-9_]+\}' "${rendered_tmp}" >/dev/null 2>&1; then
   exit 1
 fi
 
+if [[ -f "${CONFIG_TARGET}" ]]; then
+  python3 - "${rendered_tmp}" "${CONFIG_TARGET}" <<'PY'
+from pathlib import Path
+import re
+import sys
+
+rendered_path = Path(sys.argv[1])
+existing_path = Path(sys.argv[2])
+rendered = rendered_path.read_text(encoding="utf-8")
+existing = existing_path.read_text(encoding="utf-8")
+
+
+def table_blocks(text):
+    headers = list(re.finditer(r"(?m)^\[([^\]\n]+)\]\s*$", text))
+    blocks = []
+    for index, match in enumerate(headers):
+        end = headers[index + 1].start() if index + 1 < len(headers) else len(text)
+        blocks.append((match.group(1), text[match.start():end].strip()))
+    return blocks
+
+
+def preserve_table(name):
+    return (
+        name.startswith("plugins.")
+        or name.startswith("marketplaces.")
+        or name.startswith("projects.")
+        or name == "hooks.state"
+        or name.startswith("hooks.state.")
+        or name == "desktop"
+        or name.startswith("desktop.")
+        or name == "memories"
+        or name == "mcp_servers.node_repl"
+        or name == "mcp_servers.node_repl.env"
+    )
+
+
+def table_key_lines(block):
+    keys = {}
+    for line in block.splitlines()[1:]:
+        match = re.match(r"\s*([A-Za-z0-9_-]+)\s*=", line)
+        if match:
+            keys[match.group(1)] = line
+    return keys
+
+
+def merge_table_keys(text, table_name, source_block):
+    target_match = re.search(rf"(?m)^\[{re.escape(table_name)}\]\s*$", text)
+    if not target_match:
+        return text
+    next_match = re.search(r"(?m)^\[[^\]\n]+\]\s*$", text[target_match.end():])
+    end = target_match.end() + next_match.start() if next_match else len(text)
+    target_block = text[target_match.start():end]
+    target_keys = table_key_lines(target_block)
+    additions = [
+        line
+        for key, line in table_key_lines(source_block).items()
+        if key not in target_keys
+    ]
+    if not additions:
+        return text
+    insertion = "\n" + "\n".join(additions)
+    return text[:end].rstrip() + insertion + "\n\n" + text[end:].lstrip("\n")
+
+
+existing_blocks = table_blocks(existing)
+rendered_names = {name for name, _ in table_blocks(rendered)}
+
+notify_match = re.search(r"(?m)^notify\s*=.*$", existing)
+if notify_match and not re.search(r"(?m)^notify\s*=", rendered):
+    first_table = re.search(r"(?m)^\[[^\]\n]+\]\s*$", rendered)
+    insert_at = first_table.start() if first_table else len(rendered)
+    rendered = (
+        rendered[:insert_at].rstrip()
+        + "\n\n"
+        + notify_match.group(0)
+        + "\n\n"
+        + rendered[insert_at:].lstrip("\n")
+    )
+
+for name, block in existing_blocks:
+    if name == "features":
+        rendered = merge_table_keys(rendered, "features", block)
+    elif preserve_table(name):
+        if name in rendered_names:
+            rendered = merge_table_keys(rendered, name, block)
+        else:
+            rendered = rendered.rstrip() + "\n\n" + block + "\n"
+            rendered_names.add(name)
+
+rendered_path.write_text(rendered, encoding="utf-8")
+PY
+fi
+
 cp "${rendered_tmp}" "${CONFIG_TARGET}"
 rm -f "${rendered_tmp}"
 

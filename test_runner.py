@@ -148,7 +148,10 @@ def test_codex_version_policy_accepts_current_cli():
         ("install_prereqs.sh", install_text),
     ]:
         require("ACCEPTED_CODEX_VERSION_PREFIXES" in script_text, f"{script_name} should declare accepted Codex versions")
-        require('"0.104.0" "0.130.0" "0.131.0" "0.133.0"' in script_text, f"{script_name} should accept current codex-cli 0.133.0")
+        require(
+            '"0.104.0" "0.130.0" "0.131.0" "0.133.0"' in script_text,
+            f"{script_name} should accept current codex-cli 0.133.0",
+        )
         require("codex_version_ok" in script_text, f"{script_name} should evaluate version prefixes explicitly")
 
     require("skills_managed_present" in verify_text, "verify should require managed repo skills to exist")
@@ -261,6 +264,85 @@ def test_sync_renders_template_and_copies_skills():
         )
 
     print("[PASS] sync render + skills copy")
+
+
+def test_sync_preserves_runtime_plugin_state():
+    with tempfile.TemporaryDirectory() as tmp:
+        tmp_path = Path(tmp)
+        codex_home = tmp_path / ".codex"
+        write(
+            codex_home / "config.toml",
+            'model = "gpt-5.5"\n'
+            'notify = ["/tmp/Codex Computer Use.app/client", "turn-ended"]\n\n'
+            "[features]\n"
+            "codex_hooks = true\n"
+            "memories = true\n"
+            "chronicle = true\n\n"
+            "[mcp_servers.node_repl]\n"
+            'command = "/Applications/Codex.app/Contents/Resources/node_repl"\n'
+            "args = []\n\n"
+            "[mcp_servers.node_repl.env]\n"
+            'BROWSER_USE_AVAILABLE_BACKENDS = "chrome,iab"\n'
+            'BROWSER_USE_MARKETPLACE_NAME = "openai-bundled"\n\n'
+            '[plugins."browser-use@openai-bundled"]\n'
+            "enabled = true\n"
+            'install_source = "runtime"\n\n'
+            '[plugins."browser@openai-bundled"]\n'
+            "enabled = true\n\n"
+            '[plugins."computer-use@openai-bundled"]\n'
+            "enabled = true\n\n"
+            '[plugins."github@openai-curated"]\n'
+            "enabled = true\n\n"
+            "[marketplaces.openai-bundled]\n"
+            'source_type = "local"\n'
+            'source = "/tmp/openai-bundled"\n\n'
+            '[projects."/tmp/project"]\n'
+            'trust_level = "trusted"\n\n'
+            "[hooks.state]\n\n"
+            '[hooks.state."/tmp/hooks.json:pre_tool_use:0:0"]\n'
+            'trusted_hash = "sha256:test"\n\n'
+            "[desktop]\n"
+            "preventSleepWhileRunning = true\n\n"
+            "[memories]\n"
+            "generate_memories = true\n",
+        )
+
+        code, out, err = run(
+            [
+                str(SYNC),
+                "--repo-root",
+                str(ROOT),
+                "--codex-home",
+                str(codex_home),
+                "--skip-superpowers-sync",
+            ]
+        )
+        require(code == 0, f"sync failed: {err or out}")
+
+        rendered = (codex_home / "config.toml").read_text(encoding="utf-8")
+        for expected in [
+            'notify = ["/tmp/Codex Computer Use.app/client", "turn-ended"]',
+            "memories = true",
+            "chronicle = true",
+            "[mcp_servers.node_repl]",
+            "[mcp_servers.node_repl.env]",
+            '[plugins."browser@openai-bundled"]',
+            'install_source = "runtime"',
+            '[plugins."computer-use@openai-bundled"]',
+            '[plugins."github@openai-curated"]',
+            "[marketplaces.openai-bundled]",
+            '[projects."/tmp/project"]',
+            '[hooks.state."/tmp/hooks.json:pre_tool_use:0:0"]',
+            "[desktop]",
+            "[memories]",
+        ]:
+            require(expected in rendered, f"sync should preserve runtime config: {expected}")
+        require(
+            rendered.count('[plugins."browser-use@openai-bundled"]') == 1,
+            "template plugin blocks should not be duplicated",
+        )
+
+    print("[PASS] sync preserves runtime plugin state")
 
 
 def test_delivery_harness_framework_stays_generic():
@@ -2343,6 +2425,7 @@ def main():
     test_verify_supports_skip_check_argument()
     test_codex_version_policy_accepts_current_cli()
     test_sync_renders_template_and_copies_skills()
+    test_sync_preserves_runtime_plugin_state()
     test_delivery_harness_framework_stays_generic()
     test_delivery_harness_framework_routes_runtime_helpers()
     test_delivery_harness_framework_eval_matrix()
