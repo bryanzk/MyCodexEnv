@@ -1,0 +1,79 @@
+{
+  "skill_name": "tufte-viz",
+  "evals": [
+    {
+      "id": "routing-positive-chart-critique",
+      "name": "loads for chart integrity critique",
+      "prompt": "Critique this revenue chart for misleading axes, chartjunk, and whether the visual effect matches the underlying data.",
+      "expected_output": "The response uses Tufte-style graphical integrity, lie factor, chartjunk, and data-ink reasoning.",
+      "assertions": [
+        "The output evaluates whether visual effect is proportional to data effect.",
+        "The output identifies removable non-data ink or chartjunk.",
+        "The output gives specific before/after visualization changes."
+      ]
+    },
+    {
+      "id": "routing-positive-dense-dashboard",
+      "name": "loads for dense dashboard visualization design",
+      "prompt": "Design a compact operations dashboard with many time-series metrics. I want sparklines, small multiples, and a high data-ink ratio.",
+      "expected_output": "The response recommends dense, comparable visual structures and reads the analytical-design reference when needed.",
+      "assertions": [
+        "The output proposes sparklines or small multiples where appropriate.",
+        "The output explains how comparison is supported across metrics.",
+        "The output discusses layering, hierarchy, or micro/macro reading."
+      ]
+    },
+    {
+      "id": "routing-negative-product-dashboard-ux",
+      "name": "does not load for generic dashboard UX review",
+      "prompt": "Review this SaaS dashboard UX for navigation, onboarding clarity, and whether the main actions are easy to find.",
+      "expected_output": "The skill should not load because the request is product UX review rather than data visualization critique.",
+      "assertions": [
+        "The output focuses on product UX rather than Tufte visualization principles.",
+        "The output does not force chartjunk, lie factor, or data-ink framing onto the task."
+      ]
+    },
+    {
+      "id": "routing-negative-sql-metrics",
+      "name": "does not load for BI metric implementation",
+      "prompt": "Help me write SQL for the dashboard metrics and debug why the weekly active users number is wrong.",
+      "expected_output": "The skill should not load because the request is metric logic and SQL debugging, not visualization design.",
+      "assertions": [
+        "The output focuses on data logic, query validation, and metric definitions.",
+        "The output does not use visualization-specific Tufte terminology unless the user later asks for chart design."
+      ]
+    },
+    {
+      "id": "forbidden-load-report-writing",
+      "name": "forbidden load for generic report writing",
+      "prompt": "Rewrite this quarterly report so executives can understand the business results more clearly.",
+      "expected_output": "The skill should not load unless the report task includes charts, graphs, or visual evidence design.",
+      "assertions": [
+        "The output improves written communication without assuming a chart-design task.",
+        "The output does not recommend small multiples, sparklines, or data-ink changes without a visualization artifact."
+      ]
+    },
+    {
+      "id": "progressive-load-tufte-principles",
+      "name": "reads core principles for lie factor and chartjunk",
+      "prompt": "This bar chart uses a truncated y-axis and 3D shadows. Review it for graphical integrity and chartjunk.",
+      "expected_output": "The agent reads references/tufte-principles.md and applies lie factor, graphical integrity, and chartjunk checks.",
+      "assertions": [
+        "The output mentions proportional representation or lie factor.",
+        "The output flags 3D effects as non-data ink.",
+        "The output proposes a truthful baseline or scale correction."
+      ]
+    },
+    {
+      "id": "progressive-load-analytical-design",
+      "name": "reads analytical design for sparklines and dense displays",
+      "prompt": "I have 80 operational metrics and need a compact visual table that shows current value, trend, exceptions, and comparisons.",
+      "expected_output": "The agent reads references/analytical-design.md and applies sparklines, layering, comparison, and micro/macro design.",
+      "assertions": [
+        "The output proposes compact trend displays such as sparklines.",
+        "The output supports scanability across many rows or metrics.",
+        "The output distinguishes primary data, secondary context, and annotations."
+      ]
+    }
+  ]
+}
