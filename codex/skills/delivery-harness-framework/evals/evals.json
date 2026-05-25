@@ -28,6 +28,32 @@
       ]
     },
     {
+      "id": "routing-positive-mixed-dirty-worktree-ownership",
+      "category": "positive_routing",
+      "name": "classifies mixed dirty worktree ownership before edits",
+      "prompt": "接手一个复杂 repo，git status 里同时有用户改过的文件、当前任务要改的文件和可再生成的输出；先判断哪些能碰、哪些不能碰。",
+      "expected_load": true,
+      "expected_output": "The output classifies mixed dirty worktree ownership, protects user-owned files, scopes agent-owned edits, and avoids cleanup or staging of unrelated files.",
+      "assertions": [
+        "The output distinguishes user_owned, agent_owned, generated_disposable, and unknown_owner or equivalent ownership classes.",
+        "The output refuses to reset, delete, stage, or absorb unrelated user-owned changes.",
+        "The output states the allowed write scope before implementation."
+      ]
+    },
+    {
+      "id": "routing-positive-execution-lane",
+      "category": "positive_routing",
+      "name": "loads to classify execution lane before resumed external-facing work",
+      "prompt": "继续上周的复杂项目任务，先判断这是本地开发、操作者 live demo，还是客户/生产环境工作，并说清楚哪些外部系统不能碰。",
+      "expected_load": true,
+      "expected_output": "The output selects an execution lane, states allowed external systems, and names blocked actions before implementation.",
+      "assertions": [
+        "The output selects local_dev, operator_live_demo, customer_or_production, or an equivalent repo-specific mapped lane.",
+        "The output states the allowed external systems or confirms that none are allowed.",
+        "The output lists blocked remote, credential, deploy, or production actions before implementation."
+      ]
+    },
+    {
       "id": "routing-positive-committee-loop",
       "category": "positive_routing",
       "name": "routes explicit committee and revision worker loop",
@@ -39,6 +65,19 @@
         "The output identifies committee-review-loop as the required workflow.",
         "The output records the target rating as committee.rating >= 9.5/10.",
         "The output requires scoped revision worker write sets and fresh verification evidence."
+      ]
+    },
+    {
+      "id": "planning-positive-slice-contract",
+      "category": "positive_routing",
+      "name": "planning produces a complete slice contract",
+      "prompt": "把这个复杂改动拆成第一个可交付 slice，必须写清 lane、scope、first check、focused gate、full gate、docs/state update 和 handoff。",
+      "expected_load": true,
+      "expected_output": "The output creates a vertical slice contract with execution lane, scoped surfaces, first check, focused gate, full gate, docs or state update, and handoff expectations.",
+      "assertions": [
+        "The output names the execution lane and bounded scope for the slice.",
+        "The output includes first check, focused gate, and full gate before implementation.",
+        "The output includes docs or state update plus handoff and next safe task expectations."
       ]
     },
     {
@@ -153,6 +192,20 @@
       ]
     },
     {
+      "id": "progressive-state-snapshot",
+      "category": "progressive_loading",
+      "name": "append-only state requires header and latest snapshot",
+      "prompt": "这个 repo 的 state log 是 append-only，接手前帮我判断现在的 active lane、最新验证和 next safe task。",
+      "expected_load": true,
+      "expected_helper": "scripts/harness_recover.py",
+      "expected_output": "The output reads durable state, checks for a current snapshot, and falls back to header plus tail when needed.",
+      "assertions": [
+        "The output reads both the state header and latest tail when the state is append-only.",
+        "The output looks for active phase or lane, latest verification, next safe task, and blockers.",
+        "The output does not rely on chat history as the source of current state."
+      ]
+    },
+    {
       "id": "e2e-runtime-update",
       "category": "end_to_end",
       "name": "routes a complex runtime update end to end",
@@ -164,6 +217,32 @@
         "The output updates tests to prevent drift.",
         "The output syncs the skill to the runtime home.",
         "The final evidence includes command, exit_code, key_output, and timestamp."
+      ]
+    },
+    {
+      "id": "e2e-external-capture-promotion",
+      "category": "end_to_end",
+      "name": "keeps external provider capture temporary until promoted",
+      "prompt": "我跑了一批 live provider capture，帮我决定哪些可以入库成 fixture，哪些只能留在临时目录。",
+      "expected_load": true,
+      "expected_output": "The output uses temporary capture, contract validation, leak scan, review, sanitized fixture promotion, and durable evidence.",
+      "assertions": [
+        "The output keeps raw external captures in a temporary or local-only location until promoted.",
+        "The output requires contract validation and secret or private-data leak scanning before fixture promotion.",
+        "The output records a review or policy decision and fresh evidence before durable artifact updates."
+      ]
+    },
+    {
+      "id": "e2e-deployment-readiness",
+      "category": "end_to_end",
+      "name": "blocks customer or production deployment until readiness is explicit",
+      "prompt": "准备把这个本地 demo 接到客户拥有的云项目和真实登录流程，先给我执行路径。",
+      "expected_load": true,
+      "expected_output": "The output selects a customer_or_production lane and requires ownership, auth, IAM, secrets, data store, rollback, smoke, and approval before deploy.",
+      "assertions": [
+        "The output classifies the task as customer_or_production or an equivalent repo-specific live deployment lane.",
+        "The output requires owner or project, auth path, IAM, secrets, data store, rollback, smoke or canary, and approval.",
+        "The output blocks deploy or remote mutation until the readiness checklist is satisfied."
       ]
     }
   ]

@@ -1,6 +1,6 @@
 ---
 name: delivery-harness-framework
-description: Use when starting, resuming, or taking over a complex software project task where Codex must inspect durable repo state or handoff files, classify the lifecycle stage, choose between generic, repo-specific, gstack, and verification workflows, or preserve checkpoint evidence.
+description: Use when starting, resuming, or taking over complex software work that needs durable repo state, lifecycle routing, execution lane classification, dirty worktree ownership, append-only state handling, external capture promotion, deployment readiness, verification evidence, or handoff checkpoints.
 ---
 
 # Delivery Harness Framework
@@ -89,7 +89,9 @@ git status --short --branch
 
 3. Read the state and runtime files named by the repo index, especially
    append-only state logs and current handoff docs.
-4. If a helper is unavailable, run cheap manual probes:
+4. Classify dirty worktree ownership before editing. Treat untracked and
+   modified files as owned by the user unless you created them in this turn.
+5. If a helper is unavailable, run cheap manual probes:
 
 ```bash
 pwd
@@ -108,6 +110,21 @@ tail -n 220 PATH_TO_STATE_FILE
 
 Do not rely on chat history when durable state exists.
 
+## Dirty Worktree Gate
+
+Before development, review, ship, or handoff, classify status and protect
+mixed ownership:
+
+- `clean`: no modified or untracked files.
+- `user_owned`: existing modified or untracked files outside the current task.
+- `agent_owned`: files created or changed by the current task.
+- `generated_disposable`: regenerable local artifacts; commit only if promoted.
+- `unknown_owner`: unclear ownership; avoid overwrites and ask only if blocked.
+
+State the classification when it affects write, review, or ship scope. Never
+clean, reset, delete, stage, or fold unrelated files into the task to make the
+repo look tidy.
+
 ## Source Of Truth Order
 
 Prefer durable project surfaces in this order:
@@ -125,6 +142,15 @@ If sources conflict, preserve the conflict in the output and ask only when the
 choice affects architecture, data shape, public API, security, destructive
 operations, or release behavior.
 
+## State Snapshot Gate
+
+For append-only state files, prefer a short current snapshot near the top of the
+file when the repo provides one. A useful snapshot names active phase and
+execution lane, branch or commit, dirty-state note, latest state-log headlines,
+fresh verification, next safe task, and blockers. If absent or stale, read the
+stable header and latest tail, report the debt, and only append or update the
+repo-approved current snapshot area.
+
 ## Standard Runtime Stages
 
 Use these normalized phase names when a runtime policy or state file needs a
@@ -140,6 +166,22 @@ stable value:
 | `review` | Inspect diff, risks, behavior, and test gaps. | Read-only by default. | Findings or explicit no-issue statement. |
 | `ship` | Commit, push, PR, release, deploy, or production checks. | Requested release actions only. | Ship/deploy gates and rollback note. |
 | `handoff` | Preserve state for next session. | Docs/state updates only. | State log and next safe task. |
+
+## Execution Lane Gate
+
+Classify execution lane separately from lifecycle phase whenever external
+systems, credentials, customer data, provider captures, deploys, or demos are in
+scope. Repo-specific harnesses may refine lane names, but they should map back
+to:
+
+| Lane | Meaning | Default boundary |
+| --- | --- | --- |
+| `local_dev` | Local-only development with fixtures, fake providers, local services, or browser checks. | No live external calls, secret reads, remote mutations, deploys, or customer data writes. |
+| `operator_live_demo` | Temporary live demo or capture owned by the operator/developer. | Explicit opt-in, local secret source, temporary outputs, no production/customer authority. |
+| `customer_or_production` | Customer-owned, production, or deployment-facing infrastructure and auth paths. | Requires owner/project, auth, IAM, secrets, data store, rollback, smoke/canary, and approval before mutation. |
+
+At routing time, state the selected lane, allowed external systems, forbidden
+actions, and the gate that would move the task to a higher-risk lane.
 
 ## Stage Classifier
 
@@ -190,6 +232,17 @@ dependencies, and be marked `AFK` when an agent can implement it from durable
 context or `HITL` when human judgment, credentials, design approval, or external
 access is required.
 
+Each slice contract should capture:
+
+- execution lane
+- scope and allowed files, modules, or surfaces
+- out-of-scope actions
+- first failing test, feedback loop, or observable check
+- focused green gate
+- full or release gate
+- docs, state, or checkpoint update
+- handoff expectations and next safe task
+
 When planning module changes, prefer deep module opportunities: keep the public
 interface small, put meaningful behavior behind that interface, and treat the
 interface as the test surface. Use the repo's domain vocabulary when naming
@@ -217,6 +270,26 @@ source. If no runtime policy exists, use these conservative defaults:
 
 Secret paths, destructive commands, remote operations, and dynamic download
 execution require an explicit safety check regardless of phase.
+
+## External Capture Promotion Gate
+
+For live provider output, browser exports, API captures, model responses,
+customer files, or other external data, keep raw capture temporary until
+promoted. Promotion requires: local-only raw storage, contract/schema/count
+validation, secret and private-data leak scan, policy or human review, sanitized
+fixture/artifact promotion only, and fresh evidence of the decision. If any step
+fails, preserve useful local state, do not commit raw capture, and report the
+blocker.
+
+## Deployment Readiness Gate
+
+Before remote mutation, customer-owned infrastructure, production auth, OAuth
+install, database migration, deploy, or live cutover, require readiness for
+owner/project/environment, auth actor, minimum IAM, secret handling, data store
+and rollback, public/private and audit boundaries, smoke/canary check, and
+explicit approval or blocker. Missing readiness keeps the task in planning or
+local validation; never convert a local demo into a live deployment by
+implication.
 
 ## Agent Team Gate
 
@@ -315,15 +388,17 @@ gap.
 After routing, state:
 
 1. Lifecycle stage selected.
-2. State files, source-of-truth files, recovery output, and env probe output
+2. Execution lane selected, allowed external systems, and forbidden actions.
+3. Dirty worktree classification and any unrelated user-owned files.
+4. State snapshot status, state files, source-of-truth files, recovery output, and env probe output
    read.
-3. Existing repo-specific lifecycle harness or skill to delegate to, if any.
-4. Required gstack/skill/tool workflow for this stage.
-5. Required helper CLIs, probes, and verification gates.
-6. Failure modes that must be handled.
-7. Any user decision, credential, approval, or external dependency blocking safe
+5. Existing repo-specific lifecycle harness or skill to delegate to, if any.
+6. Required gstack/skill/tool workflow for this stage.
+7. Required helper CLIs, probes, and verification gates.
+8. Failure modes that must be handled.
+9. Any user decision, credential, approval, or external dependency blocking safe
    execution.
-8. For `committee-review-loop`, the three expert domains, target rating,
+10. For `committee-review-loop`, the three expert domains, target rating,
    revision worker scope, verification gate, and stopping condition.
 
 When gstack is the delegated specialist, also note which advanced posture is

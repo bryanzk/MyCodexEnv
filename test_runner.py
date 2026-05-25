@@ -430,6 +430,15 @@ def test_delivery_harness_framework_routes_runtime_helpers():
         "vertical slice",
         "AFK",
         "HITL",
+        "Execution Lane Gate",
+        "local_dev",
+        "operator_live_demo",
+        "customer_or_production",
+        "State Snapshot Gate",
+        "Dirty Worktree Gate",
+        "External Capture Promotion Gate",
+        "Deployment Readiness Gate",
+        "slice contract",
         "feedback loop",
         "throwaway prototype",
         "harness-agent-brief.md",
@@ -470,6 +479,34 @@ def test_delivery_harness_framework_eval_matrix():
     require(
         "scripts/harness_requirements.py" in progressive_helpers,
         "eval matrix should cover requirements helper progressive loading",
+    )
+    require(
+        "scripts/harness_recover.py" in progressive_helpers,
+        "eval matrix should cover append-only state snapshot recovery",
+    )
+
+    positive_ids = {case.get("id") for case in evals if case.get("category") == "positive_routing"}
+    require(
+        "routing-positive-mixed-dirty-worktree-ownership" in positive_ids,
+        "eval matrix should cover mixed dirty worktree ownership",
+    )
+    require(
+        "routing-positive-execution-lane" in positive_ids,
+        "eval matrix should cover execution lane routing",
+    )
+    require(
+        "planning-positive-slice-contract" in positive_ids,
+        "eval matrix should cover slice-contract planning",
+    )
+
+    end_to_end_ids = {case.get("id") for case in evals if case.get("category") == "end_to_end"}
+    require(
+        "e2e-external-capture-promotion" in end_to_end_ids,
+        "eval matrix should cover external capture promotion",
+    )
+    require(
+        "e2e-deployment-readiness" in end_to_end_ids,
+        "eval matrix should cover deployment readiness",
     )
 
     print("[PASS] delivery harness framework eval matrix")
