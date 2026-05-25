@@ -19,8 +19,8 @@ Stable rules belong in `AGENTS.md`, `README.md`, `docs/repo-index.md`, or
   - `python3 test_runner.py`
   - `git diff --check`
   - `./scripts/verify_codex_env.sh --repo-root "$(pwd)" --codex-home "$HOME/.codex" --claude-home "$HOME/.claude"`
-- latest_checkpoint: 2026-05-22T09:08:22-04:00 daily refresh synced gstack 1.43.3.0, expanded DHF routing for live-device iOS workflows, and fixed Codex 0.133.0 verification drift
-- latest_verification: 2026-05-22T09:08:22-04:00 command=python3 test_runner.py; exit_code=0; key_output=[PASS] all tests
+- latest_checkpoint: 2026-05-25T09:04:03-04:00 daily refresh confirmed gstack 1.44.0.0 remains aligned and recorded DHF no-op evaluation
+- latest_verification: 2026-05-25T09:04:03-04:00 command=python3 test_runner.py; exit_code=0; key_output=[PASS] all tests
 
 ## State Log
 
@@ -277,6 +277,25 @@ Stable rules belong in `AGENTS.md`, `README.md`, `docs/repo-index.md`, or
   - `scripts/install_prereqs.sh`
   - `test_runner.py`
   - `tasks/gstack-dhf-daily-refresh-2026-05-22.md`
+- verification:
+  - command: `python3 test_runner.py`
+  - exit_code: 0
+  - key_output: [PASS] all tests
+- blockers:
+  - none
+- next_safe_task: On the next daily refresh, rerun prepare first and then compare whether any new upstream specialized workflow needs explicit DHF routing boundaries.
+
+### 2026-05-25T09:04:03-04:00
+- phase: handoff
+- event: checkpoint
+- summary: daily refresh confirmed gstack 1.44.0.0 remains aligned and recorded DHF no-op evaluation
+- git:
+  - branch: main
+  - latest_commit: 19d9ab7
+  - dirty_status: dirty
+  - dirty_count: 1
+- changed_surfaces:
+  - `tasks/gstack-dhf-daily-refresh-2026-05-25.md`
 - verification:
   - command: `python3 test_runner.py`
   - exit_code: 0
