@@ -1,0 +1,62 @@
+{
+  "skill_name": "architecture",
+  "evals": [
+    {
+      "id": "routing-positive-layered-html-architecture",
+      "name": "loads for layered HTML architecture diagram",
+      "prompt": "Create a layered system architecture diagram in Markdown for a logistics SaaS: web app, API, quote engine, database, cache, external carrier APIs, and monitoring.",
+      "expected_output": "The output uses direct HTML/CSS in Markdown to create a layered architecture diagram.",
+      "assertions": [
+        "The output is a visual architecture artifact, not only a prose explanation.",
+        "The output embeds HTML directly rather than wrapping it in a code fence.",
+        "The diagram separates user, application, logic, data, infrastructure, or external service layers.",
+        "The output uses semantic color or layout choices."
+      ]
+    },
+    {
+      "id": "routing-negative-cloud-provider-icons",
+      "name": "does not load when cloud icon diagram is requested",
+      "prompt": "Draw an AWS architecture diagram with Lambda, API Gateway, S3, DynamoDB, CloudFront, and IAM icons using PlantUML.",
+      "expected_output": "The cloud diagram skill should win instead of the HTML architecture skill.",
+      "assertions": [
+        "The output uses cloud provider icon syntax or recommends the cloud skill.",
+        "The output does not embed a direct HTML architecture template.",
+        "The output honors the request for PlantUML."
+      ]
+    },
+    {
+      "id": "forbidden-load-general-architecture-advice",
+      "name": "forbidden load for general architecture advice",
+      "prompt": "Should we use Postgres or DynamoDB for this product? Give me tradeoffs and a recommendation.",
+      "expected_output": "The architecture diagram skill should not load because the user asks for a decision, not a diagram.",
+      "assertions": [
+        "The output gives a tradeoff analysis and recommendation.",
+        "The output does not create a visual diagram unless explicitly asked.",
+        "The output does not force Markdown Viewer HTML conventions."
+      ]
+    },
+    {
+      "id": "progressive-loading-layout-style",
+      "name": "loads layout and style references only when needed",
+      "prompt": "Create a three-column architecture diagram with an operations sidebar, core platform in the middle, and security/compliance on the right. Use a clean enterprise style.",
+      "expected_output": "The output should use or mirror the three-column layout and an enterprise style reference.",
+      "assertions": [
+        "The output has three visible regions matching the requested sidebars and core platform.",
+        "The output chooses a restrained enterprise visual style.",
+        "The output does not include unrelated style catalogs in the answer."
+      ]
+    },
+    {
+      "id": "e2e-direct-html-quality",
+      "name": "produces a complete direct-HTML architecture artifact",
+      "prompt": "Build a direct-HTML architecture diagram for a customer support AI system with chat UI, API gateway, orchestration service, model provider, vector database, CRM, and observability.",
+      "expected_output": "The output is a complete direct HTML/CSS diagram suitable for Markdown Viewer.",
+      "assertions": [
+        "The output includes style definitions and diagram markup.",
+        "The HTML is not fenced as ```html.",
+        "The diagram contains all requested components.",
+        "The output avoids empty lines inside the HTML diagram structure if using the skill's strict format."
+      ]
+    }
+  ]
+}

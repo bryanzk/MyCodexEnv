@@ -1,0 +1,4 @@
+interface:
+  display_name: "ShipQ Gmail Quote Workflow"
+  short_description: "ShipQ Gmail quote workflow routing."
+  default_prompt: "Use ShipQ Gmail quote workflow to classify the request, read durable ShipQ state, preserve local/live/remote boundaries, and select verification gates."

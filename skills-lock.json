@@ -6,6 +6,96 @@
       "sourceType": "github",
       "skillPath": "skills/use-ai-sdk/SKILL.md",
       "computedHash": "2249889eb47ef0f61c4dba4cf2afe01c1c8dd793bb4c24230347c1ab909bb7dd"
+    },
+    "archimate": {
+      "source": "markdown-viewer/skills",
+      "sourceType": "github",
+      "skillPath": "archimate/SKILL.md",
+      "computedHash": "c8a13f6f9419ca93fdb5713f8b72dba5ee677a4291d8cf4ee75dea6532031e5c"
+    },
+    "architecture": {
+      "source": "markdown-viewer/skills",
+      "sourceType": "github",
+      "skillPath": "architecture/SKILL.md",
+      "computedHash": "add5f37477735ade3275336c8959d5b4ae788dbcdb71582a38770b89c147c2d1"
+    },
+    "bpmn": {
+      "source": "markdown-viewer/skills",
+      "sourceType": "github",
+      "skillPath": "bpmn/SKILL.md",
+      "computedHash": "a916987175ef1a5804266fd1f64e931265ca0eec4b82f1737d7344623f1c73e8"
+    },
+    "canvas": {
+      "source": "markdown-viewer/skills",
+      "sourceType": "github",
+      "skillPath": "canvas/SKILL.md",
+      "computedHash": "f5ca58253932e70c56eab3eed82623a49ce9757fb0ef962cad6ce5595725b0d6"
+    },
+    "cloud": {
+      "source": "markdown-viewer/skills",
+      "sourceType": "github",
+      "skillPath": "cloud/SKILL.md",
+      "computedHash": "77e006346bde1ec7115134175c3ca9206b8b6782d4ea23c48d378b757431e2d8"
+    },
+    "data-analytics": {
+      "source": "markdown-viewer/skills",
+      "sourceType": "github",
+      "skillPath": "data-analytics/SKILL.md",
+      "computedHash": "effd16c1e5f8916e4d1e729c3b287f282cedc682afc7804d59c75e745ada2ba6"
+    },
+    "graphviz": {
+      "source": "markdown-viewer/skills",
+      "sourceType": "github",
+      "skillPath": "graphviz/SKILL.md",
+      "computedHash": "d1604f4121b365f403a3742a95d0845b049c12de22a2d40d24e8db52dacf89b8"
+    },
+    "infocard": {
+      "source": "markdown-viewer/skills",
+      "sourceType": "github",
+      "skillPath": "infocard/SKILL.md",
+      "computedHash": "55f1576745cd725b9e4640be4dac3e998bf54f5043990b4149530d2c19116abb"
+    },
+    "infographic": {
+      "source": "markdown-viewer/skills",
+      "sourceType": "github",
+      "skillPath": "infographic/SKILL.md",
+      "computedHash": "4d69297b63a8cf7fa9073e99a2358ecce0f4f7a6e270267a6d6361eeb2e3fff0"
+    },
+    "iot": {
+      "source": "markdown-viewer/skills",
+      "sourceType": "github",
+      "skillPath": "iot/SKILL.md",
+      "computedHash": "9ae8f370c4c9f72794dc9e5431cbc58c341389942f2e4906b19f1df4ea6764fd"
+    },
+    "mindmap": {
+      "source": "markdown-viewer/skills",
+      "sourceType": "github",
+      "skillPath": "mindmap/SKILL.md",
+      "computedHash": "3ad155148d53060ebe878d11feae61ec496ce0fc4bd738991eb37269cc43fda8"
+    },
+    "network": {
+      "source": "markdown-viewer/skills",
+      "sourceType": "github",
+      "skillPath": "network/SKILL.md",
+      "computedHash": "da0e492ee0d077cd25c2941e7146ebf9a2c86eb644cf9b1506b5c8c960045483"
+    },
+    "security": {
+      "source": "markdown-viewer/skills",
+      "sourceType": "github",
+      "skillPath": "security/SKILL.md",
+      "computedHash": "9ed1f8c5d8706e775138c454fc2b9f71268737206b6edbde1c0213a8c282bf6f"
+    },
+    "uml": {
+      "source": "markdown-viewer/skills",
+      "sourceType": "github",
+      "skillPath": "uml/SKILL.md",
+      "computedHash": "9f11e9e19eaad8d56ec914450fc945f652abcf6de944135fb195d2f5eae212d7"
+    },
+    "vega": {
+      "source": "markdown-viewer/skills",
+      "sourceType": "github",
+      "skillPath": "vega/SKILL.md",
+      "computedHash": "f3d804aa0cf4c1173895950a163c3eebfbb90af906109119a445fb0a0e25a8da"
     }
   }
 }

@@ -1,0 +1,4 @@
+interface:
+  display_name: "Codex Runtime Capability Repair"
+  short_description: "Repair Codex tool capability drift."
+  default_prompt: "Use Codex runtime capability repair to inspect config, plugin state, sync scripts, automation workspaces, and validate durable recovery."
