@@ -1,0 +1,62 @@
+{
+  "skill_name": "infocard",
+  "evals": [
+    {
+      "id": "routing-positive-editorial-card",
+      "name": "loads for single-topic editorial information card",
+      "prompt": "Create a polished information card in Markdown/HTML summarizing our Q2 support metrics: resolution time, CSAT, backlog, top incident, and next focus.",
+      "expected_output": "The output uses the infocard skill to create a single-card HTML/CSS visual summary.",
+      "assertions": [
+        "The output is a single-topic visual card, not a full dashboard or app.",
+        "The output embeds HTML/CSS suitable for Markdown.",
+        "The card includes the requested metrics and narrative hierarchy.",
+        "The output uses a polished editorial layout."
+      ]
+    },
+    {
+      "id": "routing-negative-frontend-app",
+      "name": "does not load for frontend app construction",
+      "prompt": "Build a React dashboard app for support managers with filters, drill-down charts, login, and persistent settings.",
+      "expected_output": "The infocard skill should not load because the user asked for an application, not a static card.",
+      "assertions": [
+        "The output plans or builds an app rather than a single HTML card.",
+        "The output does not constrain the result to Markdown Viewer card conventions.",
+        "The output considers interactive app state and persistence."
+      ]
+    },
+    {
+      "id": "forbidden-load-plain-summary",
+      "name": "forbidden load for plain text summary",
+      "prompt": "Summarize this meeting transcript into five concise bullet points.",
+      "expected_output": "The infocard skill should not load because the user requested plain bullets.",
+      "assertions": [
+        "The output is concise plain text.",
+        "The output does not create HTML/CSS.",
+        "The output does not ask the user to view a Markdown card."
+      ]
+    },
+    {
+      "id": "progressive-loading-layout-style",
+      "name": "loads card layout/style references only when requested",
+      "prompt": "Create a board-memo style infocard for an incident review with timeline, impact, root cause, remediation, and owner.",
+      "expected_output": "The output should select the board-memo or incident-review layout and an appropriate style reference.",
+      "assertions": [
+        "The output uses an incident or board memo structure.",
+        "The output includes timeline, impact, root cause, remediation, and owner.",
+        "The output does not expose the full layouts/styles catalog."
+      ]
+    },
+    {
+      "id": "e2e-infocard-quality",
+      "name": "produces a complete static information card",
+      "prompt": "Make a one-page information card for a partner launch: product name, launch date, three benefits, integration status, key metric, and contact.",
+      "expected_output": "The output is a complete static information card with clear hierarchy and no app scaffolding.",
+      "assertions": [
+        "The output contains all requested fields.",
+        "The output is visually structured as one card.",
+        "The output uses direct HTML/CSS or Markdown-compatible markup.",
+        "The output avoids unrelated multi-page website or app structure."
+      ]
+    }
+  ]
+}

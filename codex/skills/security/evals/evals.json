@@ -1,0 +1,62 @@
+{
+  "skill_name": "security",
+  "evals": [
+    {
+      "id": "routing-positive-zero-trust-diagram",
+      "name": "loads for a security architecture diagram request",
+      "prompt": "Create a zero-trust security architecture diagram for a SaaS app with SSO, policy enforcement, encrypted data stores, audit logging, and threat detection.",
+      "expected_output": "The output uses the security diagram skill to produce PlantUML for a security architecture diagram with trust boundaries and security service icons.",
+      "assertions": [
+        "The output is a diagram artifact, not a security audit report.",
+        "The output uses a plantuml or puml fenced block.",
+        "The diagram contains trust boundaries or security zones.",
+        "The diagram includes identity, encryption, logging, or threat detection elements."
+      ]
+    },
+    {
+      "id": "routing-negative-code-security-review",
+      "name": "does not load for code security review",
+      "prompt": "Review this Flask endpoint for authentication bypass and SQL injection risks.",
+      "expected_output": "The security diagram skill should not load; the response should use a code security review workflow instead.",
+      "assertions": [
+        "The output does not produce a PlantUML diagram.",
+        "The output focuses on code vulnerabilities and evidence.",
+        "The output does not mention Markdown Viewer diagram rendering."
+      ]
+    },
+    {
+      "id": "forbidden-load-incident-response",
+      "name": "forbidden load for live incident response",
+      "prompt": "Our production auth service may be compromised. Triage the incident and tell me what to do first.",
+      "expected_output": "The security diagram skill should not load because a diagram would delay incident response.",
+      "assertions": [
+        "The output prioritizes containment, evidence preservation, and escalation.",
+        "The output does not create a diagram as the primary deliverable.",
+        "The output avoids assuming AWS-specific diagram stencils."
+      ]
+    },
+    {
+      "id": "progressive-loading-security-example",
+      "name": "reads examples only when a concrete pattern is requested",
+      "prompt": "Create a security architecture diagram similar to a zero-trust reference pattern, with identity provider, policy engine, API gateway, services, and audit trail.",
+      "expected_output": "The output may use the zero-trust example or equivalent pattern only because the prompt asks for a concrete reference pattern.",
+      "assertions": [
+        "The output selects a zero-trust style architecture.",
+        "The output includes identity provider and policy enforcement.",
+        "The output keeps the final artifact concise rather than dumping the full example catalog."
+      ]
+    },
+    {
+      "id": "e2e-security-architecture-quality",
+      "name": "produces renderable security architecture",
+      "prompt": "Make a security architecture diagram for customer document upload: users authenticate with SSO, upload through an API, files are scanned, encrypted in object storage, and audit events go to SIEM.",
+      "expected_output": "The output is a renderable PlantUML diagram with security-specific elements and labeled flows.",
+      "assertions": [
+        "The diagram starts with @startuml and ends with @enduml.",
+        "The diagram contains labeled flows for authentication, upload, scanning, encryption, and audit events.",
+        "The output uses security zones or trust boundaries.",
+        "The output does not use a generic text fence."
+      ]
+    }
+  ]
+}

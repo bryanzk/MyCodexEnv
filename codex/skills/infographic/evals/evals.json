@@ -1,0 +1,62 @@
+{
+  "skill_name": "infographic",
+  "evals": [
+    {
+      "id": "routing-positive-template-infographic",
+      "name": "loads for template-based infographic",
+      "prompt": "Create a quick infographic for a product roadmap with now, next, later, risks, owners, and success metrics.",
+      "expected_output": "The output uses the infographic skill and emits template-style infographic content with quick visual impact.",
+      "assertions": [
+        "The output is an infographic artifact, not just prose.",
+        "The output uses the skill's template or key-value style rather than YAML.",
+        "The output includes roadmap stages, risks, owners, and success metrics.",
+        "The output is suitable for Markdown Viewer rendering."
+      ]
+    },
+    {
+      "id": "routing-negative-data-chart",
+      "name": "does not load for statistical chart request",
+      "prompt": "Create a Vega-Lite line chart showing monthly revenue, churn, and active users from this JSON dataset.",
+      "expected_output": "The Vega skill should win because the user asks for a statistical chart from data.",
+      "assertions": [
+        "The output uses Vega-Lite or recommends the Vega skill.",
+        "The output does not force an infographic template.",
+        "The output maps data fields to chart encodings."
+      ]
+    },
+    {
+      "id": "forbidden-load-visual-design-review",
+      "name": "forbidden load for reviewing existing design",
+      "prompt": "Review this landing page screenshot and tell me what visual hierarchy problems to fix.",
+      "expected_output": "The infographic skill should not load because the task is critique/review, not infographic generation.",
+      "assertions": [
+        "The output gives critique findings and fixes.",
+        "The output does not generate a new infographic as the main answer.",
+        "The output does not assume Markdown Viewer syntax."
+      ]
+    },
+    {
+      "id": "progressive-loading-template-reference",
+      "name": "loads templates only when a specific infographic type is requested",
+      "prompt": "Create a funnel infographic for activation: visit, signup, onboarding, first project, paid conversion, and drop-off notes.",
+      "expected_output": "The output should use a funnel template or equivalent structure.",
+      "assertions": [
+        "The output is organized as a funnel.",
+        "The output includes every requested stage.",
+        "The output does not dump unrelated infographic templates."
+      ]
+    },
+    {
+      "id": "e2e-infographic-quality",
+      "name": "produces a concise renderable infographic",
+      "prompt": "Make an infographic comparing three support plans: Starter, Growth, and Enterprise. Include price, best fit, SLA, channels, and upgrade trigger.",
+      "expected_output": "The output is a concise comparison infographic with the requested fields and correct syntax.",
+      "assertions": [
+        "The output compares all three plans.",
+        "The output includes price, best fit, SLA, channels, and upgrade trigger.",
+        "The output uses the skill's non-YAML key-value syntax or clearly renderable Markdown Viewer format.",
+        "The output avoids a plain prose-only comparison."
+      ]
+    }
+  ]
+}
