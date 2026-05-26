@@ -1,6 +1,6 @@
 ---
 name: delivery-harness-framework
-description: Use when starting, resuming, or taking over complex software work that needs durable repo state, lifecycle routing, execution lane classification, dirty worktree ownership, append-only state handling, external capture promotion, deployment readiness, verification evidence, or handoff checkpoints.
+description: Use when starting, resuming, or taking over complex software work that needs durable repo state, lifecycle routing, execution lane classification, architecture alignment checkpoints, dirty worktree ownership, append-only state handling, external capture promotion, deployment readiness, verification evidence, or handoff checkpoints.
 ---
 
 # Delivery Harness Framework
@@ -193,6 +193,7 @@ earliest stage that changes the decision.
 | Research | Unknown repo, stale handoff, unclear source ownership, missing context. | Read durable sources, run recovery/env probes, then classify again. |
 | Requirements | Goal, audience, success criteria, constraints, scope, domain terms, or acceptance criteria are unclear. | Capture requirements; read `CONTEXT.md`, `CONTEXT-MAP.md`, and relevant `docs/adr` files when present; use domain vocabulary and flag conflicts; validate artifacts with `scripts/harness_requirements.py validate PATH` when used. |
 | Product boundary | What to build, who it is for, positioning, pricing, demo scope, or product tradeoff. | Route to `gstack-plan-ceo-review` or `gstack-office-hours` when product judgment is the core work. Prefer `gstack-office-hours` when the problem statement, demand signal, or wedge is still fluid. |
+| Architecture alignment checkpoint | Durable sources disagree or appear stale; competing product surfaces or architecture branches exist; execution lane, deployment topology, or parallel slice boundaries conflict; current slices are blocked by unresolved business/application architecture decisions; or the user explicitly asks to establish a unified decision surface before implementation or subagent dispatch. Do not use this route for ordinary architecture planning when there is no durable-source conflict, stale state, branch conflict, lane ambiguity, blocked slice boundary, or explicit alignment-checkpoint request. | Read durable sources in source-of-truth order, preserve conflicts, capture a decision-focused ADR/checkpoint, create a stakeholder-readable architecture view when useful, recut vertical slices around business outcomes, run product/engineering/security review as needed, append checkpoint state, then validate any agent-team plan before dispatch. Keep repo-specific file names and commands in the repo harness or checkpoint artifact. |
 | Engineering plan | Architecture, data model, API contract, migration, runtime, cross-module workflow, exception taxonomy, or deep module shape. | Route to `gstack-plan-eng-review` or a repo engineering planning skill; for multi-step work, decompose into vertical slice units and mark each slice `AFK` or `HITL`. When the change introduces new artifacts or infrastructure, ensure the plan includes distribution/publish paths rather than code-only scope. |
 | Prototype | A data model, state machine, module interface, or UI direction needs fast learning before production work. | Build only a clearly marked throwaway prototype that answers one named question; delete it or capture the durable decision in an ADR, issue, checkpoint, or notes before handoff. |
 | Design plan | UX direction, information architecture, visual system, responsive behavior, or design acceptance. | Route to `gstack-plan-design-review` or a repo design skill. When visual UI is in scope and a design binary/mockup workflow exists, prefer mockup-first review over prose-only design critique. |
@@ -247,6 +248,53 @@ When planning module changes, prefer deep module opportunities: keep the public
 interface small, put meaningful behavior behind that interface, and treat the
 interface as the test surface. Use the repo's domain vocabulary when naming
 modules and seams.
+
+## Architecture Alignment Checkpoint Gate
+
+Use this gate before implementation or parallel dispatch when durable sources no
+longer provide one coherent decision surface. Common triggers include competing
+product surfaces, stale handoffs, architecture branches, unclear local/live lane
+boundaries, slices that mix technical layers instead of business outcomes, or a
+user asking to align business architecture and application architecture before
+cutting work.
+
+The checkpoint should be decision-focused, not a second long-form requirements
+document. Keep project-specific paths, file names, commands, customer names, and
+domain fixtures in the repo-specific harness or in the resulting checkpoint
+artifact, not in this generic skill.
+
+Minimum workflow:
+
+1. Read durable sources in the source-of-truth order: repo instructions, repo
+   index, state/handoff surfaces, requirements/contracts/ADRs, architecture and
+   slice plans, then source/tests only as needed.
+2. Run a conflict scan across product surface, business process, application
+   components, data ownership, execution lanes, deployment readiness, security
+   boundary, current slices, and latest handoff state.
+3. Capture the decision in an ADR or checkpoint: chosen path, rejected options,
+   open decisions, lane boundary, blockers, validation gate, and owner for the
+   next decision.
+4. Create a stakeholder-readable architecture view when the decision affects
+   product, business, engineering, security, or rollout coordination. This can be
+   a diagram, HTML explainer, slide, or concise document, depending on the repo.
+5. Recut work into vertical slices that begin with a user/business event and end
+   in an independently observable result. Avoid layer-only slices unless the
+   layer itself is the product of the checkpoint.
+6. Review the checkpoint from the necessary perspectives, typically product
+   boundary, engineering architecture, and security/privacy. Use a committee loop
+   only when the user explicitly asks for committee/subagent review or a target
+   score.
+7. Append or update the repo-approved state surface with the decision, fresh
+   verification or review evidence, dirty-state classification, next safe task,
+   blockers, and any agent-team dispatch rules.
+
+Do not treat the checkpoint as approval to mutate remote systems, read secrets,
+deploy, promote external captures, or write customer data. Those still require
+their own lane and readiness gates.
+
+Before subagent dispatch after an alignment checkpoint, validate that each worker
+has a durable task contract, disjoint write set, first feedback loop, green gate,
+and handoff expectations. The integrator should own the final state append.
 
 ## Debug Feedback Gate
 
@@ -312,6 +360,10 @@ When a worker needs a durable task contract, use
 team plan should capture category, summary, current behavior, desired behavior,
 key interfaces, acceptance criteria, and out of scope. Do not use line numbers
 or file-path-only instructions as the task contract.
+If the planned workers depend on an unresolved product surface, runtime topology,
+execution lane, or shared state file, run the Architecture Alignment Checkpoint
+Gate before validating the agent team. Do not use parallel workers to resolve an
+architecture conflict implicitly through competing implementations.
 
 ## Evidence And Report Gate
 
@@ -400,6 +452,10 @@ After routing, state:
    execution.
 10. For `committee-review-loop`, the three expert domains, target rating,
    revision worker scope, verification gate, and stopping condition.
+11. For `Architecture alignment checkpoint`, the durable sources compared,
+    conflicts found, decision artifact to create or update, stakeholder-readable
+    view requirement, vertical slice recut rule, review perspectives, state
+    append path, and agent-team dispatch gate.
 
 When gstack is the delegated specialist, also note which advanced posture is
 expected: product interrogation, mockup-first design review, fix-first review,
