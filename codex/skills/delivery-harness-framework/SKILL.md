@@ -25,10 +25,11 @@ project-only commands here.
   source-of-truth files, fixtures, deployment topology, and project-specific
   safety boundaries.
 - gstack owns specialized lifecycle workflows: product critique, engineering
-  plan review, design review and mockup generation, browser QA, security
-  review, fix-first diff review, ship, land/deploy, canary monitoring, release
-  documentation, documentation generation, context save/restore, retrospective
-  analytics, learning capture, and optional gbrain-backed repo memory.
+  plan review, backlog-ready spec or issue authoring, design review and mockup
+  generation, browser QA, security review, fix-first diff review, ship,
+  land/deploy, canary monitoring, release documentation, documentation
+  generation, context save/restore, retrospective analytics, learning capture,
+  and optional gbrain-backed repo memory.
 - `committee-review-loop` owns explicit expert-committee/subagent loops where a
   review committee rates an output and a revision worker iterates until a target
   score such as `9.5/10` is reached. Do not use it for ordinary one-off review,
@@ -192,6 +193,7 @@ earliest stage that changes the decision.
 | --- | --- | --- |
 | Research | Unknown repo, stale handoff, unclear source ownership, missing context. | Read durable sources, run recovery/env probes, then classify again. |
 | Requirements | Goal, audience, success criteria, constraints, scope, domain terms, or acceptance criteria are unclear. | Capture requirements; read `CONTEXT.md`, `CONTEXT-MAP.md`, and relevant `docs/adr` files when present; use domain vocabulary and flag conflicts; validate artifacts with `scripts/harness_requirements.py validate PATH` when used. |
+| Backlog/spec authoring | The user wants to turn a fuzzy request into a backlog-ready issue, ticket, or executable spec before implementation starts. | Route to vendored gstack `spec`; preserve DHF source-of-truth reads, execution-lane classification, and validation gates so the resulting issue or spec inherits the right boundaries. |
 | Product boundary | What to build, who it is for, positioning, pricing, demo scope, or product tradeoff. | Route to `gstack-plan-ceo-review` or `gstack-office-hours` when product judgment is the core work. Prefer `gstack-office-hours` when the problem statement, demand signal, or wedge is still fluid. |
 | Architecture alignment checkpoint | Durable sources disagree or appear stale; competing product surfaces or architecture branches exist; execution lane, deployment topology, or parallel slice boundaries conflict; current slices are blocked by unresolved business/application architecture decisions; or the user explicitly asks to establish a unified decision surface before implementation or subagent dispatch. Do not use this route for ordinary architecture planning when there is no durable-source conflict, stale state, branch conflict, lane ambiguity, blocked slice boundary, or explicit alignment-checkpoint request. | Read durable sources in source-of-truth order, preserve conflicts, capture a decision-focused ADR/checkpoint, create a stakeholder-readable architecture view when useful, recut vertical slices around business outcomes, run product/engineering/security review as needed, append checkpoint state, then validate any agent-team plan before dispatch. Keep repo-specific file names and commands in the repo harness or checkpoint artifact. |
 | Engineering plan | Architecture, data model, API contract, migration, runtime, cross-module workflow, exception taxonomy, or deep module shape. | Route to `gstack-plan-eng-review` or a repo engineering planning skill; for multi-step work, decompose into vertical slice units and mark each slice `AFK` or `HITL`. When the change introduces new artifacts or infrastructure, ensure the plan includes distribution/publish paths rather than code-only scope. |

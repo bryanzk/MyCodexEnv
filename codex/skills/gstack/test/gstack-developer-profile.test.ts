@@ -26,7 +26,6 @@ let tmpHome: string;
 beforeEach(() => {
   tmpHome = fs.mkdtempSync(path.join(os.tmpdir(), 'gstack-test-'));
 });
-
 afterEach(() => {
   fs.rmSync(tmpHome, { recursive: true, force: true });
 });
@@ -90,6 +89,7 @@ describe('gstack-developer-profile --read', () => {
     expect(r.stdout).toContain('TIER:');
   });
 });
+
 // -----------------------------------------------------------------------
 // --migrate (legacy jsonl → unified profile)
 // -----------------------------------------------------------------------

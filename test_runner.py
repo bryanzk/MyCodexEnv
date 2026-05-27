@@ -399,6 +399,7 @@ def test_delivery_harness_framework_routes_runtime_helpers():
     gstack_routes = [
         "gstack-plan-ceo-review",
         "gstack-plan-eng-review",
+        "vendored gstack `spec`",
         "gstack-plan-design-review",
         "gstack-qa",
         "gstack-ios-qa",
@@ -493,6 +494,10 @@ def test_delivery_harness_framework_eval_matrix():
     require(
         "routing-positive-execution-lane" in positive_ids,
         "eval matrix should cover execution lane routing",
+    )
+    require(
+        "routing-positive-backlog-spec-authoring" in positive_ids,
+        "eval matrix should cover backlog/spec authoring routing",
     )
     require(
         "planning-positive-slice-contract" in positive_ids,

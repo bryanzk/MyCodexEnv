@@ -323,3 +323,27 @@ Stable rules belong in `AGENTS.md`, `README.md`, `docs/repo-index.md`, or
 - blockers:
   - none
 - next_safe_task: On the next daily refresh, rerun prepare first and then compare whether any new upstream specialized workflow needs explicit DHF routing boundaries.
+
+### 2026-05-27T09:12:30-04:00
+- phase: handoff
+- event: checkpoint
+- summary: daily refresh synced gstack 1.48.0.0 and extended DHF routing for backlog/spec authoring
+- git:
+  - branch: main
+  - latest_commit: 208fe13
+  - dirty_status: dirty
+  - dirty_count: 123
+- changed_surfaces:
+  - `codex/skills/gstack`
+  - `codex/skills/delivery-harness-framework/SKILL.md`
+  - `codex/skills/delivery-harness-framework/evals/evals.json`
+  - `docs/LIFECYCLE_SKILL_ROUTING.md`
+  - `test_runner.py`
+  - `tasks/gstack-dhf-daily-refresh-2026-05-27.md`
+- verification:
+  - command: `python3 test_runner.py`
+  - exit_code: 0
+  - key_output: [PASS] all tests
+- blockers:
+  - none
+- next_safe_task: On the next daily refresh, rerun prepare first and then compare whether any newly added upstream specialized workflow requires an explicit generic DHF route or can stay a no-op.
