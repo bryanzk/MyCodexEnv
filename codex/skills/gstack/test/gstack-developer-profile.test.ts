@@ -10,7 +10,6 @@
  * - --vibe (archetype match from inferred)
  * - --check-mismatch (threshold behavior; requires 10+ samples)
  */
-
 import { describe, test, expect, beforeEach, afterEach } from 'bun:test';
 import * as fs from 'fs';
 import * as path from 'path';
@@ -26,6 +25,7 @@ let tmpHome: string;
 beforeEach(() => {
   tmpHome = fs.mkdtempSync(path.join(os.tmpdir(), 'gstack-test-'));
 });
+
 afterEach(() => {
   fs.rmSync(tmpHome, { recursive: true, force: true });
 });
