@@ -40,6 +40,7 @@ LIFECYCLE_SKILLS_EN_ARCHIVE_HTML = ROOT / "docs" / "project-lifecycle-harness-fl
 HARNESS_GUARD = ROOT / "codex" / "hooks" / "harness_guard.py"
 HARNESS_OBSERVER = ROOT / "codex" / "hooks" / "harness_observer.py"
 MODEL_ROUTER = ROOT / "codex" / "hooks" / "model_router.py"
+SHIPQ_DHF_PREPROMPT = ROOT / "codex" / "hooks" / "shipq_dhf_preprompt.py"
 
 
 def run(cmd, cwd=None):
@@ -564,6 +565,7 @@ def test_harness_runtime_surfaces_exist_and_parse():
         ROOT / "codex" / "hooks" / "harness_guard.py",
         ROOT / "codex" / "hooks" / "harness_observer.py",
         ROOT / "codex" / "hooks" / "model_router.py",
+        SHIPQ_DHF_PREPROMPT,
         HARNESS_EVIDENCE,
         HARNESS_REPORT,
         HARNESS_AGENT_TEAM,
@@ -596,6 +598,33 @@ def test_harness_runtime_surfaces_exist_and_parse():
         require(module in status_text, f"agent harness status missing module: {module}")
 
     print("[PASS] harness runtime surfaces exist and parse")
+
+
+def test_shipq_dhf_prompt_hook_auto_invokes_skill():
+    hooks = json.loads((ROOT / "codex" / "hooks.json").read_text(encoding="utf-8"))
+    prompt_hooks = hooks["hooks"]["UserPromptSubmit"][0]["hooks"]
+    commands = [hook.get("command", "") for hook in prompt_hooks]
+    model_router_command = "/usr/bin/python3 ~/.codex/hooks/model_router.py"
+    dhf_command = "/usr/bin/python3 ~/.codex/hooks/shipq_dhf_preprompt.py"
+    require(model_router_command in commands, "UserPromptSubmit should run model router")
+    require(dhf_command in commands, "UserPromptSubmit should run ShipQ DHF pre-prompt hook")
+    require(
+        commands.index(model_router_command) < commands.index(dhf_command),
+        "ShipQ DHF pre-prompt hook should run after model routing",
+    )
+
+    hook_text = SHIPQ_DHF_PREPROMPT.read_text(encoding="utf-8")
+    for term in [
+        "DHF_LOADER",
+        '"use-skill"',
+        "DHF_SKILL_NAME",
+        "load_dhf_context()",
+        "BEGIN AUTO-INVOKED delivery-harness-framework",
+        "DHF auto-invocation fallback",
+    ]:
+        require(term in hook_text, f"ShipQ DHF hook should include auto invocation term: {term}")
+
+    print("[PASS] ShipQ DHF prompt hook auto invocation")
 
 
 def test_harness_agent_brief_template():
@@ -2468,6 +2497,7 @@ def main():
     test_delivery_harness_framework_eval_matrix()
     test_sync_agents_only_copies_and_backs_up_agents()
     test_harness_runtime_surfaces_exist_and_parse()
+    test_shipq_dhf_prompt_hook_auto_invokes_skill()
     test_harness_agent_brief_template()
     test_lifecycle_skill_routing_doc_is_discoverable()
     test_sync_gstack_vendor_replaces_snapshot_from_git_source()
