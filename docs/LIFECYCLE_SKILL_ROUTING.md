@@ -87,10 +87,10 @@ adapter skills.
 | `delivery-harness-framework` | Generic startup/resume routing, durable state reads, phase classification, helper selection, evidence expectations. | Use first for complex or resumed work; delegate after phase selection. |
 | repo-specific lifecycle harnesses | Project paths, local commands, business fixtures, deployment topology, smoke matrices. | These adapters take over after the generic router identifies a repo-specific boundary. |
 | `gstack-plan-ceo-review` | Product framing, user value, scope, demo boundaries, strategic tradeoffs. | Use when product judgment is the work. |
-| `gstack-office-hours` | Founder-style pressure testing, market/user/business clarity. | Useful before committing to a product direction. |
 | vendored gstack `spec` | Backlog-ready GitHub issues, tickets, and executable specs with explicit acceptance criteria before implementation begins. | Use when the work needs a durable spec artifact rather than immediate coding. |
-| `gstack-plan-eng-review` | Architecture, data model, API contract, migration, performance, test strategy, and distribution/publish readiness for new artifacts. | Use before implementation on complex engineering plans; the current upstream workflow is explicitly search-aware and completeness-biased. |
-| `gstack-plan-design-review` | UX structure, visual direction, responsive behavior, design acceptance, and mockup-first plan refinement. | Use before UI implementation or major design changes. When a design binary/mockup path exists, prefer visual review over prose-only critique. |
+| `gstack-office-hours` | Founder-style pressure testing, market/user/business clarity. | Useful before committing to a product direction. In gstack `1.52.x`, it can use configured gbrain context during planning preflight. |
+| `gstack-plan-eng-review` | Architecture, data model, API contract, migration, performance, test strategy, and distribution/publish readiness for new artifacts. | Use before implementation on complex engineering plans; the current upstream workflow is explicitly search-aware, completeness-biased, and brain-aware when gbrain is configured. |
+| `gstack-plan-design-review` | UX structure, visual direction, responsive behavior, design acceptance, and mockup-first plan refinement. | Use before UI implementation or major design changes. When a design binary/mockup path exists, prefer visual review over prose-only critique; when gbrain is configured, let the planning skill consume it as specialist context. |
 | `gstack-qa` | Browser QA, screenshots, console/network checks, responsiveness, accessibility smoke, then iterative bug fixing with regression evidence. | Use for user-facing web behavior when fixes are allowed. |
 | `gstack-qa-only` | Report-only QA when fixes should not be applied automatically. | Keeps QA read-only. |
 | `gstack-ios-qa` | Real-device iOS QA on a live app via the embedded StateServer and agent loop. | Use for "test my iPhone app", device-only bug hunts, or live iOS smoke runs. |
@@ -113,6 +113,7 @@ adapter skills.
 | vendored gstack `context-save` / `context-restore` | User-facing save/resume of working context across sessions or Conductor workspaces. | Use alongside, not instead of, `scripts/harness_checkpoint.py`; the harness checkpoint remains the repo-local append-only state source. |
 | vendored gstack `scrape` / `skillify` | Read-only browser data extraction and codifying repeated scrape flows into browser-skills. | Use for extraction workflows; use `gstack-qa` for behavior testing and bug fixing. |
 | vendored gstack `setup-gbrain` / `sync-gbrain` | Configure or refresh optional gbrain-backed repo memory/search. | Use only when the user explicitly wants gbrain setup, refresh, or repo re-indexing. |
+| `gstack-plan-tune` | Tune repeated planning questions, developer profile preferences, and question-memory behavior. | Use only when the user asks to tune how gstack asks questions or to inspect/update developer profile signals; this is operator preference state, not repo lifecycle state. |
 | `doc-updater` | Targeted docs/codemap/README updates for feature, API, or structure changes. | Use for repo-local documentation maintenance. |
 | `verification-loop` | Build/static/test/coverage/security verification before completion. | Use when a full validation loop is required. |
 | `tdd-guide` | Test-first implementation for behavior changes and bug fixes. | Use before writing production code. |
@@ -163,7 +164,10 @@ adapter skills.
   for UI planning, fix-first `gstack-review` for near-landing diffs,
   coverage-aware `gstack-ship` for release readiness, and
   debt-aware `gstack-document-release` for post-ship docs. With gstack
-  `1.43.x`, also prefer `gstack-ios-qa` / `gstack-ios-design-review` /
+  `1.52.x`, planning skills may use configured gbrain digests as specialist
+  context, but DHF still owns repo state, lane, checkpoint, and validation
+  boundaries; use `gstack-plan-tune` only for explicit question/developer-profile
+  tuning. Also prefer `gstack-ios-qa` / `gstack-ios-design-review` /
   `gstack-ios-fix` for live-device iOS workflows, vendored `ios-sync` /
   `ios-clean` only for explicit iOS debug-bridge maintenance, vendored
   `context-save` / `context-restore` for user-facing session continuity,

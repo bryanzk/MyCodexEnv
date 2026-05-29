@@ -40,6 +40,7 @@
 - `scripts/harness_env_probe.py`: observable Codex runtime config probe.
 - `scripts/prepare_gstack_dhf_daily_refresh.py`: preflight the daily refresh automation, retry DNS probes for about two minutes, require a standalone clone, and return dry-run evidence before repo mutation.
 - `scripts/sync_gstack_vendor.py`: bulk-sync `codex/skills/gstack` from an upstream `garrytan/gstack` git snapshot.
+- `codex/skills/delivery-harness-framework/evals/evals.json`: routing and boundary evals for the generic lifecycle skill, including gstack brain-aware planning and question-tuning boundaries.
 - `scripts/verify_codex_env.sh`: runtime sync and environment verification.
 - `docs/LIFECYCLE_SKILL_ROUTING.md`: stage, workflow, skill, and helper usage guide.
 - `docs/index.html`: Chinese public docs landing page.

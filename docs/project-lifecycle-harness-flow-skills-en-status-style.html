@@ -568,14 +568,14 @@ flowchart TD
               <tr>
                 <td class="phase">Product / business judgment</td>
                 <td><span class="badge decision">gstack-plan-ceo-review</span><span class="badge decision">gstack-office-hours</span></td>
-                <td><code>scripts/harness_requirements.py validate PATH</code> when a requirement artifact exists</td>
-                <td>User value, scope, demo boundary, priority, or business tradeoffs need to be clarified.</td>
+                <td><code>scripts/harness_requirements.py validate PATH</code> when a requirement artifact exists<br>gstack planning skills run gbrain preflight when already configured</td>
+                <td>User value, scope, demo boundary, priority, or business tradeoffs need to be clarified; gbrain does not replace repo state.</td>
               </tr>
               <tr>
                 <td class="phase">Engineering / design planning</td>
-                <td><span class="badge decision">gstack-plan-eng-review</span><span class="badge decision">gstack-plan-design-review</span><span class="badge decision">planner</span></td>
+                <td><span class="badge decision">gstack-plan-eng-review</span><span class="badge decision">gstack-plan-design-review</span><span class="badge decision">gstack-plan-tune</span><span class="badge decision">planner</span></td>
                 <td><code>scripts/harness_agent_team.py validate PLAN.json</code> when parallel work is proposed<br><code>docs/templates/harness-agent-brief.md</code> when a worker needs a durable contract</td>
-                <td>Architecture, API, data flow, migration, visual structure, vertical slices, <code>AFK</code>/<code>HITL</code>, or multi-agent ownership must be decided.</td>
+                <td>Architecture, API, data flow, migration, visual structure, vertical slices, <code>AFK</code>/<code>HITL</code>, or multi-agent ownership must be decided; repeated question preferences route to plan-tune.</td>
               </tr>
               <tr>
                 <td class="phase">Development</td>

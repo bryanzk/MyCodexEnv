@@ -568,14 +568,14 @@ flowchart TD
               <tr>
                 <td class="phase">产品 / 业务判断</td>
                 <td><span class="badge decision">gstack-plan-ceo-review</span><span class="badge decision">gstack-office-hours</span></td>
-                <td>存在需求产物时运行 <code>scripts/harness_requirements.py validate PATH</code></td>
-                <td>需要澄清用户价值、范围、演示边界、优先级或业务取舍时。</td>
+                <td>存在需求产物时运行 <code>scripts/harness_requirements.py validate PATH</code><br>gbrain 已配置时由 gstack planning skill 自行 preflight</td>
+                <td>需要澄清用户价值、范围、演示边界、优先级或业务取舍时；gbrain 不能替代 repo state。</td>
               </tr>
               <tr>
                 <td class="phase">工程 / 设计规划</td>
-                <td><span class="badge decision">gstack-plan-eng-review</span><span class="badge decision">gstack-plan-design-review</span><span class="badge decision">planner</span></td>
+                <td><span class="badge decision">gstack-plan-eng-review</span><span class="badge decision">gstack-plan-design-review</span><span class="badge decision">gstack-plan-tune</span><span class="badge decision">planner</span></td>
                 <td>提出并行工作时运行 <code>scripts/harness_agent_team.py validate PLAN.json</code><br>需要 worker 合同时使用 <code>docs/templates/harness-agent-brief.md</code></td>
-                <td>需要决定架构、API、数据流、迁移、视觉结构、vertical slice、<code>AFK</code>/<code>HITL</code> 或多 agent 写入归属时。</td>
+                <td>需要决定架构、API、数据流、迁移、视觉结构、vertical slice、<code>AFK</code>/<code>HITL</code> 或多 agent 写入归属时；重复提问偏好才进入 plan-tune。</td>
               </tr>
               <tr>
                 <td class="phase">开发</td>

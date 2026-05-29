@@ -14,13 +14,13 @@ Stable rules belong in `AGENTS.md`, `README.md`, `docs/repo-index.md`, or
   - `codex/skills/delivery-harness-framework/SKILL.md`
 - blocked_sources: none
 - unsafe_inputs: none
-- next_safe_task: On the next daily refresh, rerun prepare first and then compare whether any newly added upstream specialized workflow requires an explicit generic DHF route or can stay a no-op.
+- next_safe_task: On the next gstack refresh, rerun prepare first and compare whether upstream changes introduce a new generic lifecycle boundary or remain specialized workflow internals.
 - required_commands:
   - `python3 test_runner.py`
   - `git diff --check`
   - `./scripts/verify_codex_env.sh --repo-root "$(pwd)" --codex-home "$HOME/.codex" --claude-home "$HOME/.claude"`
-- latest_checkpoint: 2026-05-29T09:04:06-04:00 daily refresh synced gstack 1.52.0.0 and recorded DHF no-op evaluation
-- latest_verification: 2026-05-29T09:04:06-04:00 command=python3 test_runner.py; exit_code=0; key_output=[PASS] all tests
+- latest_checkpoint: 2026-05-29T16:30:13-04:00 synced gstack 1.52.1.0 and updated DHF brain-aware planning boundaries
+- latest_verification: 2026-05-29T16:30:13-04:00 command=python3 test_runner.py; exit_code=0; key_output=[PASS] all tests
 
 ## State Log
 
@@ -387,3 +387,26 @@ Stable rules belong in `AGENTS.md`, `README.md`, `docs/repo-index.md`, or
 - blockers:
   - none
 - next_safe_task: On the next daily refresh, rerun prepare first and then compare whether any newly added upstream specialized workflow requires an explicit generic DHF route or can stay a no-op.
+
+### 2026-05-29T16:30:13-04:00
+- phase: handoff
+- event: checkpoint
+- summary: synced gstack 1.52.1.0 and updated DHF brain-aware planning boundaries
+- git:
+  - branch: main
+  - latest_commit: f0c2d63
+  - dirty_status: dirty
+  - dirty_count: 205
+- changed_surfaces:
+  - `codex/skills/gstack`
+  - `codex/skills/delivery-harness-framework/SKILL.md`
+  - `codex/skills/delivery-harness-framework/evals/evals.json`
+  - `docs/LIFECYCLE_SKILL_ROUTING.md`
+  - `tasks/gstack-dhf-daily-refresh-2026-05-29.md`
+- verification:
+  - command: `python3 test_runner.py`
+  - exit_code: 0
+  - key_output: [PASS] all tests
+- blockers:
+  - none
+- next_safe_task: On the next gstack refresh, rerun prepare first and compare whether upstream changes introduce a new generic lifecycle boundary or remain specialized workflow internals.

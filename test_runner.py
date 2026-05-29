@@ -476,6 +476,8 @@ def test_delivery_harness_framework_eval_matrix():
 
     negative_skills = {case.get("expected_skill") for case in evals if case.get("category") == "negative_routing"}
     require("gstack-ios-qa" in negative_skills, "eval matrix should route live-device iOS QA away from the generic harness")
+    require("gstack-plan-tune" in negative_skills, "eval matrix should route question tuning away from the generic harness")
+    require("gstack-setup-gbrain" in negative_skills, "eval matrix should route explicit gbrain setup away from the generic harness")
 
     progressive_helpers = {case.get("expected_helper") for case in evals if case.get("category") == "progressive_loading"}
     require(
@@ -503,6 +505,10 @@ def test_delivery_harness_framework_eval_matrix():
     require(
         "planning-positive-slice-contract" in positive_ids,
         "eval matrix should cover slice-contract planning",
+    )
+    require(
+        "planning-positive-brain-aware-boundary" in positive_ids,
+        "eval matrix should cover brain-aware planning delegation boundaries",
     )
 
     end_to_end_ids = {case.get("id") for case in evals if case.get("category") == "end_to_end"}

@@ -95,6 +95,20 @@
       ]
     },
     {
+      "id": "planning-positive-brain-aware-boundary",
+      "category": "positive_routing",
+      "name": "delegates brain-aware planning without taking over gbrain",
+      "prompt": "继续一个复杂工程计划；这个 repo 有 harness-state，gstack 也已经配置了 gbrain。先判断该用哪个 planning skill、哪些 repo 状态必须读、以及 gbrain 应该怎么参与。",
+      "expected_load": true,
+      "expected_skill": "gstack-plan-eng-review",
+      "expected_output": "The output routes through durable repo state recovery, delegates planning to gstack-plan-eng-review, allows the planning skill to use configured gbrain preflight, and keeps the generic harness from directly syncing or reading gbrain.",
+      "assertions": [
+        "The output reads repo instructions, repo index, state, or recovery output before planning.",
+        "The output delegates the engineering planning step to gstack-plan-eng-review or an equivalent repo planning skill.",
+        "The output says gbrain context is consumed by the delegated planning skill when already configured, not by the generic harness as a replacement for durable repo state."
+      ]
+    },
+    {
       "id": "routing-negative-single-file-fix",
       "category": "negative_routing",
       "name": "does not load for a simple bounded fix",
@@ -133,6 +147,34 @@
         "The output selects a live-device iOS QA workflow.",
         "The output does not use delivery-harness-framework as the primary executor.",
         "The output includes device-visible verification such as screenshots or interaction checks."
+      ]
+    },
+    {
+      "id": "routing-negative-plan-tune",
+      "category": "negative_routing",
+      "name": "question tuning stays with plan-tune",
+      "prompt": "stop asking me that; tune the repeated planning questions and show my developer profile.",
+      "expected_load": false,
+      "expected_skill": "gstack-plan-tune",
+      "expected_output": "The agent should route to gstack-plan-tune rather than lifecycle recovery or checkpoint routing.",
+      "assertions": [
+        "The output selects gstack-plan-tune or an equivalent question-tuning workflow.",
+        "The output does not run harness recovery or checkpoint helpers as the primary action.",
+        "The output treats developer profile and question preferences as operator preference state, not repo lifecycle state."
+      ]
+    },
+    {
+      "id": "routing-negative-gbrain-setup",
+      "category": "negative_routing",
+      "name": "explicit gbrain setup stays with setup-gbrain",
+      "prompt": "帮我给 gstack 配置 gbrain，并刷新 repo memory/search index。",
+      "expected_load": false,
+      "expected_skill": "gstack-setup-gbrain",
+      "expected_output": "The agent should route to the gstack gbrain setup or sync workflow, not the generic lifecycle harness.",
+      "assertions": [
+        "The output selects gstack-setup-gbrain, sync-gbrain, or an equivalent gbrain setup workflow.",
+        "The output does not treat gbrain setup as generic harness state recovery.",
+        "The output keeps repo harness checkpoint state separate from persistent gbrain configuration."
       ]
     },
     {

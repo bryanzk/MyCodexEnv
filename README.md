@@ -101,6 +101,8 @@ cd MyCodexEnv
 
 该 setup 只在 `~/.codex/skills/gstack` 内构建本地支持二进制，不会把 skill 迁移成指向 `/Users/kezheng/gstack` 的本机 symlink。早期短名 `browse` 也带 supporting files，首次使用前可在 `codex/skills/browse` 或同步后的 `~/.codex/skills/browse` 下执行一次 `./setup`。上游来源为 MIT License。
 
+当前 vendored gstack `1.52.x` 的 planning skills 支持配置后的 gbrain preflight：`office-hours`、`plan-ceo-review`、`plan-eng-review`、`plan-design-review`、`plan-devex-review` 可以读取缓存的产品、目标、developer persona、品牌、竞品、skill-run、user profile 和 take 摘要。`delivery-harness-framework` 仍只负责 repo state、lane、checkpoint 与 verification 边界；显式 gbrain 配置/刷新仍路由到 `setup-gbrain` / `sync-gbrain`，重复提问和 developer profile 偏好治理路由到 `gstack-plan-tune`。
+
 批量刷新仓库内 vendored gstack 快照时，使用：
 
 ```bash
