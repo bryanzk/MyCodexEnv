@@ -1,5 +1,322 @@
 # Changelog
 
+## [1.52.0.0] - 2026-05-27
+
+## **`/plan-tune` settings actually do something now. Hooks make capture deterministic, preferences binding, and free-text answers loop back as memory.**
+
+Before this release, plan-tune was a profile inspector with a hollow substrate. Every gstack skill told the agent "log this AskUserQuestion fire," and in weeks of dogfood, zero events ever landed. Preferences were agent-honored convention. Declared profile dimensions sat in a JSON file doing nothing. After this release: a PostToolUse hook captures every AUQ fire whether the agent remembers to log or not. A PreToolUse hook substitutes auto-decided answers when you've set `never-ask`. Free-text "Other" responses get dream-cycled through Claude into structured proposals you approve, then injected into future related questions as inline context. Codex sessions are backfilled by a structured-JSONL parser, not regex on transcript text.
+
+The cathedral lands behind one explicit consent prompt at `./setup` (with diff preview, backup, and one-command rollback) and stays on once installed.
+
+### The numbers that matter
+
+Measured against the existing v1.49 substrate. Reproduce with `bun test test/plan-tune-gates.test.ts test/question-log-hook.test.ts test/question-preference-hook.test.ts test/memory-cache-injection.test.ts test/distill-free-text.test.ts test/distill-apply.test.ts test/declared-annotation.test.ts test/gstack-codex-session-import.test.ts test/skill-e2e-plan-tune-cathedral.test.ts`.
+
+| Metric | Before (v1.49.0.0) | After (v1.52.0.0) | Δ |
+|---|---|---|---|
+| AUQ events captured per session | 0 (agent convention) | every fire (hook) | substrate works |
+| `never-ask` preferences enforced | 0% (agent convention) | 100% (hook + deny+reason) | actually binds |
+| Declared profile annotations | 0 / week | every signal_key match | profile renders |
+| Dream-cycle memory persistence | 0 (no mechanism) | per-project + gbrain mirror | cross-project recall |
+| Codex session backfill | none (regex idea) | structured JSONL parser | future-proof |
+| Per-PR test cost added | $0 | $0 (deterministic; no claude -p) | gate-tier safe |
+| Unit + E2E tests added | — | 96 tests / 8 new files | green |
+
+| Layer | What it does | Where it lives |
+|---|---|---|
+| 1 — Capture | PostToolUse hook → question-log.jsonl with dedup + async derive | hosts/claude/hooks/question-log-hook.ts |
+| 2 — Enforcement | PreToolUse hook → deny+reason with auto-decided option | hosts/claude/hooks/question-preference-hook.ts |
+| 3 — Annotation | declared profile → kebab signal_key → plain-English phrase | scripts/declared-annotation.ts |
+| 4 — Surfaces | host-aware Stats, Recent auto-decisions, Audit unmarked | plan-tune/SKILL.md.tmpl |
+| 5 — Discoverability | setup hook-install prompt + post-ship nudge | setup, ship/SKILL.md.tmpl |
+| 6 — Tests | 5 E2E scenarios, all gate tier, $0 cost | test/skill-e2e-plan-tune-cathedral.test.ts |
+| 7 — Installation | schema-aware bin: PreToolUse + PostToolUse, backup + rollback | bin/gstack-settings-hook |
+| 8 — Dream cycle | Anthropic SDK distill + gbrain put_page + memory injection | bin/gstack-distill-* + Layer 2 inject |
+
+Highest-impact number is the third row: declared profile annotations now render inline before every AUQ that matches a signal_key. Set `declared.scope_appetite = 0.85` once during /plan-tune setup, and every "should I bundle this fix?" question shows up with "(your profile leans complete-implementation)" on the recommended option. The same loop applies to verbose-vs-terse, consult-vs-delegate, and ship-now-vs-get-the-design-right.
+
+### What this means for solo builders
+
+The feature compounds now. Each AskUserQuestion you answer "Other" with free text gets captured by the hook, batched into proposals by `gstack-distill-free-text` (3/day cap, ~$0.01 per run), reviewed via `/plan-tune distill`, and applied as either a `never-ask` preference, a declared-profile nudge, or a reusable memory nugget that routes to your gbrain (when configured) and reappears as context the next time a related question fires. The dream cycle is the unlock — without it, every nuanced answer evaporated after one turn. Now they accumulate. Run `./setup` and accept the hook-install prompt to turn it on, then `/plan-tune` whenever you want to see what your profile knows about you.
+
+### Itemized changes
+
+**Added**
+- `hosts/claude/hooks/question-log-hook` — PostToolUse hook, matcher covers `AskUserQuestion` + `mcp__*__AskUserQuestion`. Captures every AUQ fire with marker-first question_id (D18), hash-fallback observed-only, source-tagged.
+- `hosts/claude/hooks/question-preference-hook` — PreToolUse hook with `(recommended)`-label parser, refuse-on-ambiguous (D2 safety), project-then-global preference precedence (D8), one-way safety override. Auto-decided events logged from the hook itself since deny prevents PostToolUse from firing.
+- `scripts/declared-annotation.ts` — `getDeclaredAnnotation(signal_key)` with kebab→underscore namespace mapping. Returns null in the middle band, plain-English phrase in strong bands (>= 0.7 or <= 0.3).
+- `bin/gstack-codex-session-import` — structured JSONL parser for `~/.codex/sessions/`. Marker-first recovery with pattern fallback, source-tagged `codex-import-marker` / `codex-import-pattern`.
+- `bin/gstack-distill-free-text` — Layer 8 dream cycle distiller. Anthropic SDK direct call (Haiku 4.5), 3/day rate cap per slug (D7), cumulative cost log, sync-or-background execution context (D14).
+- `bin/gstack-distill-apply` — applies one approved proposal to its surface (preference / declared-nudge / memory-nugget), with optional `--gbrain-published true` flag.
+- `setup` — interactive consent prompt for hook installation with diff preview, backup, one-command rollback. Marker-gated so users are asked at most once.
+- `ship/SKILL.md.tmpl` Step 21 — post-success plan-tune nudge, marker-gated for at-most-once.
+- `docs/spikes/claude-code-hook-mutation.md` + `docs/spikes/codex-session-format.md` — Phase 1 spike outputs that pinned protocol contracts before implementation.
+- 96 new tests across 8 files: STATE_ROOT honoring, v1.49 gates, settings-hook schema-aware ops, both hooks, declared-annotation, codex import, distill bin, distill apply, memory injection, 5 cathedral E2E scenarios.
+
+**Changed**
+- `bin/gstack-settings-hook` schema-aware rewrite: PreToolUse + PostToolUse registration with `_gstack_source` tag for dedup, `add-event` / `remove-source` / `diff-event` / `rollback` / `list-sources` subcommands. Legacy `add`/`remove` SessionStart shape preserved verbatim.
+- `bin/gstack-question-log` — accepts source, tool_use_id, free_text; composite dedup on (source, tool_use_id) across last 100 lines (D3); async-fires `gstack-developer-profile --derive` after every successful write (D17 — without this, sample_size stayed 0).
+- Three bins (`gstack-question-log`, `gstack-question-preference`, `gstack-developer-profile`) + `gstack-config` now honor `GSTACK_STATE_ROOT` env var as highest-priority override (D16 Codex correction — without this, isolation tests silently wrote to real ~/.gstack).
+- `scripts/resolvers/question-tuning.ts` preamble — added marker-embedding convention (`<gstack-qid:{id}>`) and `(recommended)` label convention. Hook enforcement gates on marker presence.
+- `scripts/question-registry.ts` — added `signal_key: 'decision-autonomy'` to `land-and-deploy-merge-confirm` and `land-and-deploy-rollback` so the autonomy dimension has a real signal source.
+- `scripts/psychographic-signals.ts` — added `decision-autonomy` signal map.
+- `plan-tune/SKILL.md.tmpl` — new sections (Recent auto-decisions, Audit unmarked, Dream cycle review, Dream cycle distill); host-aware Stats with source breakdown + MARKED %; Step 0 routing extended with dream-cycle gate.
+- `bin/gstack-uninstall` — also cleans up `plan-tune-cathedral`-tagged hooks during uninstall.
+
+**For contributors**
+- 4 cross-model tension resolutions during eng review locked in: project preferences win over global (D8), hash IDs are observed-only never preference keys (D18), AUQ matcher covers MCP variants (Codex correction), enforcement uses `permissionDecision: "deny"` + reason instead of `"allow"` + `updatedInput` until the AUQ input shape is verified against real Claude Code (T6 conservative path).
+- Plan-review preamble byte budget ratcheted 39000 → 40000 in `test/gen-skill-docs.test.ts` (~700 bytes added by the marker convention).
+- 9 Codex outside-voice findings folded directly without re-prompting (matcher correction, derive wiring, settings.json consent, signal_key namespace, etc.).
+
+## [1.51.0.0] - 2026-05-27
+
+## **Long-running browser sessions hold flat RSS on the Bun side. `$B memory` gives every future OOM receipts instead of a screenshot.** Four CDP-resource leak classes closed and pinned with tripwires; a structured diagnostic surfaces Bun heap + per-tab JS heap + Chromium process tree + bounded buffer sizes in real time.
+
+This release closes four leak classes in the browse server that compounded silently across long sidebar sessions: response-body materialization in the requestfinished listener (multi-GB/hour Buffer churn on media-heavy pages), three undetached CDP session call sites (cdp-bridge, write-commands archive, cdp-inspector), an unbounded modificationHistory array in the CSS inspector, and SSE subscriber cleanup that only fired on the abort edge — TCP-died-without-abort cases (Chromium MV3 service-worker suspend, intermediate proxy half-close) left subscribers in the Set forever holding the controller and any queued bytes. All four have invariant tests; a static-grep tripwire fails CI if a future refactor reintroduces direct `newCDPSession(...)` calls outside the helper module.
+
+Alongside the fixes, `$B memory` and `/memory` ship the diagnostic the original 160 GB OOM investigation was missing: Bun RSS + heap breakdown, per-tab JS heap via CDP `Performance.getMetrics`, Chromium process tree via `SystemInfo.getProcessInfo` (PID + type + CPU), and the bounded buffer sizes (modificationHistory, activity subscribers, inspector subscribers, console/network/dialog buffers, capture buffer bytes). The sidebar footer polls `/memory` every 30s with adaptive backoff (drops to 5min if response time exceeds 2s), and a tab-count guardrail fires soft-warn at 50 / hard-warn at 200 with a top-5-by-RAM toast offering one-click close. Single-tab JS heap above 4 GB triggers an immediate toast, catching the WebGL/video runaway case where one tab balloons without the count ever reaching 200.
+
+### The numbers that matter
+
+Source: this branch's 16 commits + the post-merge audit reports. Net diff: 23 files changed, +2251 / -143 = 2394 LOC across browse server (TypeScript), gstack extension (JS/HTML/CSS), and tests.
+
+| Capability | Before this PR | After this PR |
+|---|---|---|
+| `requestfinished` body handling | `await res.body()` on every response, allocates full body Buffer for one `.length` read | `req.sizes()` reads structured byte count from `Network.loadingFinished`, zero body materialization, accurate for chunked / gzip / streaming responses |
+| CDP session lifecycle (3 sites) | direct `newCDPSession`, detach missing or success-path-only | `withCdpSession` (try/finally detach) + `getOrCreateCdpSession` (cached + close-detach) helpers, all 3 sites migrated, static-grep tripwire prevents regression |
+| modificationHistory in CSS inspector | unbounded array, grew for every `$B css` edit across the session | bounded FIFO cap 200, evicted-count surfaced in the undo error so the user knows why their target index is gone |
+| SSE subscriber cleanup | abort-edge only; TCP-died-without-abort leaked subscriber + controller + queued bytes until process exit | `createSseEndpoint` helper with cleanup on abort + enqueue-throw + heartbeat-throw, idempotent (any edge fires once) |
+| Tab-count visibility | none — user could accumulate hundreds of tabs without warning | soft warn at 50 (activity entry), action toast at 200 (top 5 by RAM + Close-selected + Snooze), single-tab >4 GB triggers immediate toast |
+| Diagnostic command | not available | `$B memory` (text + `--json`), `/memory` endpoint (SSE-session-cookie gated), sidebar footer with adaptive backoff |
+| Net change in `server.ts` (SSE refactor) | 132 lines of inline ReadableStream wiring across two endpoints | 23 lines, both endpoints route through one helper |
+| Test pins for the leak class | none specific | 6 new test files, 45 new tests; static-grep tripwire fails CI on regression |
+
+### What this means for builders
+
+The next time you leave a gbrowser session running for days, the Bun side holds its RSS flat instead of churning on per-response Buffer allocations. If a tab does go rogue, the sidebar footer shows you in real time — `RSS: 5.6 GB · 12 tabs`, color-coded — and a 200-tab toast surfaces the top RAM consumers with one-click close before you hit the OS OOM killer. If the next OOM still fires, `$B memory` is there to give it receipts instead of theory: Activity Monitor says 160 GB; the diagnostic tells you which process tree, which tabs, and which in-memory structures are holding it. Every code path the diagnostic measures is also bounded — modificationHistory at 200, console/network/dialog buffers at 50K via the existing CircularBuffer, SSE subscribers via the new cleanup contract — so the bookkeeping itself can't leak.
+
+### Itemized changes
+
+#### Added
+- **`$B memory` command** in `browse/src/memory-command.ts` — text mode with sorted top-10 tabs + "and N more" tail; `--json` mode for programmatic consumers and the sidebar footer poll.
+- **`/memory` HTTP endpoint** in `browse/src/server.ts` — same SSE-session-cookie auth model as `/activity/stream`. Deliberately NOT extending `/health` (which already leaks AUTH_TOKEN in headed mode per TODOS.md "Audit /health token distribution").
+- **`BrowserManager.getMemorySnapshot()`** — collects Bun process memory + per-tab JS heap via `Performance.getMetrics` (lazy per tracked page, swallows target-died errors) + Chromium process tree via `Browser.newBrowserCDPSession()` + `SystemInfo.getProcessInfo`.
+- **`browse/src/memory-snapshot.ts`** — shared types (`MemorySnapshot`, `MemoryTabSnapshot`, `MemoryProcess`, `MemoryStructureStats`) plus `formatBytes()` renderer (4 tiers, 2 decimals at GB).
+- **`withCdpSession(page, fn)`** and **`getOrCreateCdpSession(page, cache)`** in `browse/src/cdp-bridge.ts` — lifecycle helpers for one-shot and cached CDP work. Every direct `newCDPSession` call site now routes through one of them.
+- **`createSseEndpoint(req, config)`** in `browse/src/sse-helpers.ts` — owns the SSE cleanup contract (abort + enqueue-throw + heartbeat-throw, all idempotent). Built-in lone-surrogate sanitization on every JSON.stringify.
+- **Sidebar footer RSS readout** in `extension/sidepanel.{html,js,css}` — polls `/memory` every 30s with 5-minute backoff if response time exceeds 2s. Color-coded thresholds: orange at 2 GB Bun RSS or 50 tabs, red at 8 GB or 200 tabs.
+- **Tab guardrail UX** in `extension/sidepanel.js` — top-5-by-RAM toast at 200 tabs OR any single tab over 4 GB JS heap, with checkboxes + Close-selected (via `$B closetab`) + Snooze persisted in `chrome.storage.session`. Snooze bumps the thresholds so the toast stays hidden until the user accumulates more tabs or one tab grows another 2 GB.
+- **Static-grep tripwire** (`browse/test/cdp-session-cleanup.test.ts`) — fails CI if any source file outside `cdp-bridge.ts` calls `newCDPSession(...)` directly.
+- **45 new tests across 6 files** pinning the leak-fix invariants: CDP session lifecycle (8), SSE cleanup contract (6), modificationHistory cap + evicted-aware error (7), tab guardrail fires-once + re-arms (6), body-materialization reproducer (1), `$B memory` formatter + byte renderer + JSON entry (17).
+- **4 follow-up entries in `TODOS.md`** (P2: MV3 SW memory profile, P2: native + GPU memory breakdown, P3: single-context CDP listener via `Target.setAutoAttach`, P3: real-Chromium peak-RSS reproducer for periodic tier).
+
+#### Changed
+- **`wirePageEvents.requestfinished` no longer materializes response bodies.** Pre-fix: `await res.body()` allocated a Bun `Buffer` of the full response on every fetch just to read `.length`. Post-fix: `req.sizes()` pulls the structured byte count from `Network.loadingFinished` without body fetch. Accurate for chunked transfer, gzip-encoded responses, and streaming media.
+- **`modificationHistory` capped at 200 entries with FIFO eviction.** `undoModification` error now reports `"No modification at index N. History has 200 entries (most recent 200 only — M earlier entries evicted at the cap)."` when the requested index is out of range AND the buffer has overflowed.
+- **`/activity/stream` and `/inspector/events` refactored through `createSseEndpoint`.** Both endpoints collapse from ~45 lines of inline `ReadableStream` wiring to ~8 lines of helper config; behavior preserved bit-for-bit.
+- **`memory` command classified under the `Server` category** in `COMMAND_DESCRIPTIONS` so it appears in the generated SKILL.md tables alongside `status` / `restart` / `handoff`.
+
+#### For contributors
+- Plan completion audit: 12 of 17 plan items DONE, 2 CHANGED (deliberate scope decisions documented in the relevant commits — `req.sizes()` swap simpler than a single-context CDP listener; tab guardrail action toast wired through `$B closetab` instead of a `chrome.tabs.remove` bridge), 1 deferred to periodic tier (UI E2E tests).
+- Coverage audit: 44% pre-diagnostic-tests → ~62% after adding the formatter coverage. Strong paths (CDP session lifecycle, body materialization, history cap, tab guardrail, SSE cleanup) all at 100% with invariant tests. Extension UI tests deferred (no extension test harness in this repo today).
+- The CDP-session cleanup tripwire is the most reusable artifact here — any future addition of CDP work should route through the two helpers. Trying to call `newCDPSession` outside `cdp-bridge.ts` fails CI immediately with a pointer to the right helper.
+
+## [1.49.0.0] - 2026-05-26
+
+## **`/plan-tune` learns to ask for consent before logging, and runs the 5-question setup automatically when your profile is empty.**
+
+Run `/plan-tune` the first time and you get an opt-in prompt. Accept and the 5-question wizard fills in your declared profile in about two minutes. Decline and `/plan-tune` never asks again. Contributors see a slightly different prompt explaining that local question-log data helps gstack calibrate, but the default is the same: off until you say yes.
+
+If you already opted in via `gstack-config set question_tuning true` and skipped the wizard, the next `/plan-tune` runs just the 5-question setup so your profile actually has values.
+
+Both flows write marker files in `~/.gstack/` so you're asked at most once per choice.
+
+### Itemized changes
+
+**Added**
+- `/plan-tune` consent prompt with contributor-specific copy. Honored by `~/.gstack/.question-tuning-prompted` marker.
+- `/plan-tune` setup gate. Catches `question_tuning: true` with empty `declared`. Honored by `~/.gstack/.declared-setup-prompted` marker.
+
+**Changed**
+- `TODOS.md` E1 dependency line aligned with the canonical 90-day gate in `docs/designs/PLAN_TUNING_V0.md`. The 7-day diversity gate is for displaying inferred values in `/plan-tune` output; the 90-day gate is for shipping behavior adaptation. Both gates documented inline in `plan-tune/SKILL.md.tmpl`.
+- `TODOS.md` E1 substrate constraint: E1 adaptations land as advisory annotations on AskUserQuestion recommendations, not as runtime AUTO_DECIDE on inferred profile alone.
+
+**For contributors**
+- `plan-tune/SKILL.md` size budget override (50,123 → 52,963 bytes, ×1.06 vs v1.44.1 baseline). Reason logged to audit trail.
+
+## [1.48.0.0] - 2026-05-26
+
+## **Agents stop dropping AskUserQuestion options when there are 5+.** A new canonical preamble rule + runtime gate makes Conductor's 4-option cap a split-or-batch decision, not a silent trim.
+
+The failure mode looked like this in real transcripts:
+
+> "I'm hitting Conductor's limit of 4 options in the AUQ, so I need to cut one. E4 is the biggest lift and probably beyond scope for v0.42 anyway. Trimming: E4. Moving to TODOs without asking. Re-firing with 4."
+
+The agent unilaterally cut an option from the user's decision set. This release names that as a bug and gives the agent two compliant shapes for any 5+ option scenario: batch into ≤4-groups when the options are coherent alternatives (version bumps, layout variants), or split into N sequential per-option calls when the options are independent scope items (which platforms to ship, which TODOs to land). Default-to-split when unsure. The inline preamble subsection is intentionally compressed; full reference with worked examples, Hold/dependency semantics, and final-summary validation lives in `docs/askuserquestion-split.md` — loaded on demand when N>4.
+
+A two-layer defense protects the option set from being silently auto-approved: per-option `question_id`s of shape `<skill>-split-<option-slug>` are unique per option (preferences can't leak across the chain), and the runtime checker `bin/gstack-question-preference --check` refuses `never-ask` on any `*-split-*` id with an explanatory note. The user's option set is sacred — the whole point of splitting is restoring user sovereignty over the decision space.
+
+### The numbers that matter
+
+Source: this branch's 4 commits + the post-merge regen against `main` at v1.47.0.0. Net diff: 57 files, ~2800 lines (most of it mechanical SKILL.md regen across all 41 tier-2+ skills, ~34 lines added per skill from the inline subsection injection).
+
+| Capability | Before this PR | After this PR |
+|---|---|---|
+| 5+ options for ONE decision | drop one to fit cap, hope user doesn't notice | split into N per-option calls OR batch into ≤4-groups, name the rule in the preamble |
+| Per-option call shape | n/a (couldn't reliably produce one) | `D<N>.k` header, Include / Defer / Cut / Hold buckets, kind-note (no completeness score), recommendation per option |
+| Hold semantics | undefined (chain might queue, might stop, agent-dependent) | stop chain immediately, resume on user "continue" |
+| Final summary | n/a | `D<N>.final` validates dependencies, reprompts conflicts, confirms assembled scope |
+| `D<N>.0` meta-question (N>6) | n/a | tool-call meta-question first: proceed / narrow / batch |
+| AUTO_DECIDE on split per-option calls | possible if user tuned the pattern via /plan-tune | runtime checker forces `ASK_NORMALLY` on any `*-split-*` id, with explanatory note |
+| Regression coverage | n/a | 6 inline-contract tests + 7 runtime-gate tests + 1 periodic-tier E2E behavior test (5-option scope fixture) |
+| Inline preamble bytes per SKILL.md | n/a | ~1.6 KB (vs ~4 KB if the full rule were inlined; deeper reference loaded on demand) |
+
+### What this means for builders
+
+Next time you give an agent a scope question with 5+ candidates, you'll see one of three shapes: a single batched AskUserQuestion with ≤4 buckets (if the options are coherent alternatives), N sequential per-option calls each with Include/Defer/Cut/Hold (if they're independent), or a `D<N>.0` meta-question first asking whether to proceed/narrow/batch (if N>6). You'll never see a silent trim. If you've ever wired up a /plan-tune `never-ask` preference, it now refuses to apply to split chains — the runtime check forces ASK_NORMALLY with a note explaining why.
+
+### Itemized changes
+
+#### Added
+- New canonical preamble subsection in `scripts/resolvers/preamble/generate-ask-user-format.ts`: "Handling 5+ options — split, never drop". Inline-compressed (~1.6 KB per tier-2+ skill); full reference at `docs/askuserquestion-split.md`.
+- `docs/askuserquestion-split.md`: ~200-line deep reference covering both compliant shapes (batched / split), per-option call mechanics with `D<N>.k` numbering, Hold-means-stop semantics, final-summary dependency validation with conflict reprompt, `D<N>.0` meta-question for N>6, `<skill>-split-<option-slug>` question_id format, and the two-layer AUTO_DECIDE defense.
+- Runtime AUTO_DECIDE gate in `bin/gstack-question-preference --check`: detects any `question_id` matching `*-split-*` and forces `ASK_NORMALLY` regardless of stored `never-ask` or `ask-only-for-one-way` preferences. Emits an explanatory note so the user knows their preference was bypassed and why.
+- `test/skill-e2e-plan-ceo-split-overflow.test.ts`: periodic-tier regression test using a 5-option chat-platform integration fixture. Floor 4 review-phase AUQs (N-1 tolerance). Catches the original drop-to-fit-4 failure mode.
+
+#### Changed
+- Test baseline anchor rebased v1.44.1 → v1.47.0.0 in `test/skill-size-budget.test.ts`. Main's v1.46 (catalog tokens) + v1.47 (/spec) growth pushed the v1.44.1 anchor past the 5% ratchet; rebasing absorbs that growth at HEAD. Historical `parity-baseline-v1.44.1.json` and `parity-baseline-v1.46.0.0.json` retained in `test/fixtures/` for reference.
+- 3 self-check items added to the AskUserQuestion preamble checklist (split-not-drop, dependency-check-before-chain, Hold-stops-immediately).
+- 41 tier-2+ skills regenerated to inherit the new subsection (~34 lines each via the preamble resolver).
+- 3 golden ship fixtures refreshed for the new preamble.
+
+#### Fixed
+- Orphan `12.` numbered-list prefix on the existing CJK rule in `generate-ask-user-format.ts` — refactoring artifact, no items 1-11 above it. Removed.
+- `docs/skills.md` missing `/spec` table row (pre-existing miss from PR #1698/#1733 that landed `/spec` to main without updating the doc inventory). Added.
+
+#### For contributors
+- 6 resolver tests pin the inline-subsection contract (4-option cap text, Include/Defer/Cut/Hold buckets, D-numbering shape, AUTO_DECIDE runtime gate reference, docs pointer, orphan-12 regression).
+- 7 runtime-gate tests in `test/gstack-question-preference.test.ts` cover the carve-out: no-pref baseline, never-ask override, explanatory note text, ask-only-for-one-way override, always-ask (no note), non-split id containing "split" word (negative regex specificity), multi-skill split id formats.
+- `parity-baseline-v1.47.0.0.json` captured via `bun run scripts/capture-baseline.ts --tag v1.47.0.0`.
+
+## [1.47.0.0] - 2026-05-26
+
+## **`/spec` ships: turn vague intent into a precise, executable spec in five phases.** Pipe the spec into a spawned Claude Code agent, dedupe against existing issues, archive locally for the team corpus, and let `/ship` close the source issue on merge.
+
+A precise spec collapses an agent's clarification roundtrips from N to zero. `/spec` is the verb that turns thoughts into commits: five strict phases (why, scope, technical with mandatory code-reading, draft, file), a codex quality gate before file, archive to `$GSTACK_STATE_ROOT/projects/$SLUG/specs/`, and optional pipeline-mode spawn into a fresh worktree. Plan-mode aware: in plan mode `/spec` files the issue and loads the spec into your active plan file; in execution mode it files the issue and spawns `claude -p` in a fresh worktree by default. `/ship` reads the archive frontmatter and auto-closes the source issue on full delivery. Adapted from a community-contributed `/issue` skill (PR #1698 by @jayzalowitz) with rename, race+security hardening, and DX polish.
+
+`/spec` is the first skill registered against the v1.46 eval-first floor (`test/skill-coverage-matrix.ts`), passing all six structural floor checks plus 37 deterministic invariant assertions specific to `/spec`'s contract. Skill catalog count: 51 → 52.
+
+### The numbers that matter
+
+Source: 1 contributor commit + 8 follow-on bundled fixes/expansions on this branch (`git log v1.46.0.0..HEAD --oneline`). Template at `spec/SKILL.md.tmpl` (404 → ~750 lines after expansions), 4 new test files (37 deterministic scenarios + 2 periodic-tier stubs).
+
+| Capability | Without `/spec` | With `/spec` |
+|---|---|---|
+| Author backlog-ready issue | freehand prose, sloppy AC, no file refs, 10-15 min per issue | 5-phase interrogation with hard-grep Phase 3, file-refs at `path:line`, quantified impact, ~4 min |
+| Spec → agent execution | copy-paste into new `claude -p` session, ~30s context-switch friction | `--execute` spawns automatically in fresh worktree `spec/<slug>-$$`, zero hand-off |
+| Catch ambiguity before file | none (you find out when the implementer asks) | codex quality gate scores 0-10, blocks below 7, lists ambiguities, up to 3 iterations |
+| Secret leakage to second-AI judge | possible if spec contains pasted secret | fail-closed redaction blocks dispatch on AWS/GitHub/Anthropic key patterns + private key blocks |
+| Concurrent `/spec` runs | branch/archive collisions on same second | unique `spec/<slug>-$$` branches, atomic `.tmp/mv` archive write, PID-suffixed filenames |
+| Linked issue closure | manual `Closes #N` in PR body | `/ship` auto-adds when archive present AND full spec delivered |
+
+### What this means for builders
+
+Type `/spec` on a vague bug; four minutes later you have a filed GitHub issue with file refs and a Claude Code agent already executing it in a fresh worktree. When `/ship` lands the PR, the source issue auto-closes. The corpus of past specs in `$GSTACK_STATE_ROOT/projects/$SLUG/specs/` is mineable by `gbrain` for cross-session pattern recall. `--no-gate`, `--no-execute`, `--file-only`, and `--plan-file <path>` are escape hatches when the defaults don't fit; `--audit` routes to the Audit/Cleanup template structure.
+
+### Itemized changes
+
+#### Added
+- `/spec` skill (renamed from contributor's `/issue`): five-phase interrogation producing backlog-ready specs. Lives at `spec/SKILL.md.tmpl`.
+- `--dedupe` flag (default ON): `gh issue list --search` before drafting, surfaces near-duplicates via AskUserQuestion; graceful skip on `gh` missing/unauthed/rate-limited.
+- `--execute` flag (default ON in execution mode): spawns `claude -p` in a fresh Conductor worktree on branch `spec/<slug>-$$`, with dirty-worktree gate, TOCTOU re-check after AskUserQuestion answer, SHA pin via `git rev-parse HEAD`, and mandatory final-confirm gate.
+- Quality-score gate (default ON): codex adversarial dispatch with hard `<<<USER_SPEC>>>` delimiter + instruction boundary, score 0-10, blocks at <7, up to 3 iterations, AskUserQuestion escape on persistent <7 (ship anyway / save draft / one more try).
+- Fail-closed redaction in quality gate: regex match against AWS access keys (`AKIA...`), GitHub tokens (`ghp_/gho_/ghs_`), Anthropic keys (`sk-ant-...`), OpenAI keys, `.env`-style `KEY=value`, and `-----BEGIN ... PRIVATE KEY-----` blocks → block dispatch entirely. Raw spec never persisted to archive or transcript on block.
+- `--audit` flag routes Phase 5 to the Audit/Cleanup template structure.
+- `--file-only` / `--no-execute` / `--plan-file <path>` overrides for plan-mode-aware Phase 5 default.
+- `--sync-archive` opt-in for cross-machine spec sync (archives stay local by default; `/specs/` excluded from artifacts-sync allowlist).
+- Spec archive: writes to `$GSTACK_STATE_ROOT/projects/$SLUG/specs/<datetime>-<pid>-<slug>.md` via existing `gstack-paths` resolver (handles `GSTACK_HOME`, `CLAUDE_PLUGIN_DATA`, Windows fallback). Atomic `.tmp/mv` write prevents collision on concurrent runs.
+- `GSTACK_PLAN_MODE` env var: emitted by `{{PREAMBLE}}` based on `CLAUDE_PLAN_FILE` presence. Skills can branch behavior on plan-mode state without parsing system reminders.
+- `/spec` entry in the gstack routing block injected into project CLAUDE.md.
+- `/ship` PR body integration: reads `spec_issue_number` from archive frontmatter and adds `Closes #N` when the spec is fully delivered per the existing plan-completion gate. Partial delivery emits a "Linked to #N (not auto-closing)" notice instead.
+- `/spec` entry in `test/skill-coverage-matrix.ts` (52nd skill, eval-first floor compliance per v1.46 contract).
+
+#### Tests
+- `test/spec-template-invariants.test.ts`: 35 deterministic invariants covering Phase 1 hard gate, Phase 3 hard-grep mandate, `--dedupe` graceful-skip paths, `--execute` race + security hardening (TOCTOU re-check, SHA pin, unique branch), quality-gate redaction patterns and BLOCKED path, archive atomic write + sync exclusion, plan-mode-aware Phase 5 dispatch.
+- `test/spec-template-sync.test.ts`: regenerates `spec/SKILL.md` and asserts byte-identical output (prevents template-vs-generated drift).
+- `test/skill-e2e-spec-execute.test.ts` (periodic-tier): full `/spec --execute` pipeline scaffold registered in `E2E_TIERS`.
+- `test/skill-llm-eval-spec.test.ts` (periodic-tier): authored-spec quality eval against the 14-Quality-Standards rubric.
+
+#### Fixed
+- Duplicate analytics block in `spec/SKILL.md.tmpl` (was bypassing the `_TEL != "off"` opt-out gate; `{{PREAMBLE}}` already emits the analytics write with the guard).
+
+#### For contributors
+- Community contribution: PR #1698 by @jayzalowitz (Jay Zalowitz) lands as the foundation commit with original authorship preserved. Contributor's 5 phases, 14 Quality Standards, and Standard/Epic/Audit templates carried forward intact; expansions are additive.
+- Plan reviewed across `/plan-ceo-review` (SCOPE EXPANSION, 5 of 6 expansions accepted), `/plan-eng-review` (race + security hardening), and `/plan-devex-review` (persona, magical moment, error-message Tier 1, plan-mode-aware Phase 5).
+- 28 codex adversarial findings across 3 review rounds, 23 accepted.
+
+## [1.46.0.0] - 2026-05-26
+
+## **gstack v2 foundation lands. Catalog tokens drop 56%, eval-first floor covers all 51 skills, hard token + dollar caps gate every PR.**
+
+The always-loaded skill catalog — what every Claude Code session pays for at startup before any real work begins — went from ~9,319 tokens to ~4,045 tokens. That's a 56.6% cut to the surface gstack has been criticized for (third-party review, May 2026: "10K+ tokens before any real code is written"). Heavyweight skills like `/ship`, `/plan-ceo-review`, `/office-hours` still ship their full content, but their frontmatter descriptions trim to one sentence each; the routing prose lives in a new "## When to invoke" body section, and a per-run `scripts/proactive-suggestions.json` registry holds the voice-trigger + proactive-suggest text so agents can pull guidance on demand instead of always-loaded.
+
+This is the v2 foundation release. The architectural break — `sections/*.md.tmpl` pattern, mechanical Read enforcement, eval-coverage annotations — lands in v2.0.0.0 as a coordinated launch. v1.46 absorbs every low-risk win, ships the eval-first floor every future skill must pass, and locks in the v1.44.1 reference baseline so reviewers can audit v1→v2 numbers against a real file (`test/fixtures/parity-baseline-v1.44.1.json`).
+
+### The numbers that matter
+
+Source: `bun run scripts/capture-baseline.ts --tag v1.46.0.0` vs the locked v1.44.1 baseline at `test/fixtures/parity-baseline-v1.44.1.json`. Reproduce locally with `bun test test/skill-size-budget.test.ts`.
+
+| Metric | v1.44.1 | v1.46.0.0 | Δ |
+|---|---|---|---|
+| Catalog tokens (always-loaded system prompt) | ~9,319 | ~4,045 | **−56.6%** |
+| Total SKILL.md corpus | 2,847 KB | 2,813 KB | −1.2% |
+| ship.md | 160 KB | 159 KB | −0.5% |
+| plan-ceo-review.md | 128 KB | 127 KB | −0.7% |
+| office-hours.md | 108 KB | 108 KB | −0.8% |
+| Skills with gate-tier eval coverage | 32 of 51 | **51 of 51** | floor achieved |
+| Cathedral parity invariants pinned | 0 | **10** | structural + content |
+| Token & dollar budget regressions caught at CI | (none) | **5 new test files** | per-skill, corpus, catalog, eval-cost gate, eval-cost periodic |
+
+The corpus barely moved because the catalog trim MOVES routing prose from frontmatter to a body section — it doesn't delete it. The always-loaded surface drops by more than half because catalog text is what Claude Code reads on every session start; body content only loads when the skill is invoked.
+
+### What this means for you
+
+If you use any gstack skill, every session starts ~5,000 tokens lighter before you type anything. Heavyweight invocations like `/ship` cost about the same as before, but session startup feels snappier. If you've been on the fence about installing gstack because of the "fat" reputation, this is the release that addresses it directly: the always-loaded surface is now competitive with stripped-down skill packs while every skill keeps its full body content.
+
+If you contribute skills, the eval-first floor means a new SKILL.md without an entry in `test/skill-coverage-matrix.ts` fails CI. The minimum entry is one line referencing `test/skill-coverage-floor.test.ts` (the free structural-compliance smoke test). Behavioral E2E coverage gets layered on top per skill.
+
+If you run gstack in CI, the new `EVALS_BUDGET_HARD_CAP=$30` cap (per-suite: gate $25 / periodic $70) stops runaway eval costs from a model price change or infinite-retry bug. Override path exists for legit-need-more cases: `EVALS_BUDGET_OVERRIDE_REASON="why this is OK"` logs to `~/.gstack/analytics/spend-overrides.jsonl` for audit.
+
+### Itemized changes
+
+**Added**
+- `scripts/capture-baseline.ts` + `test/helpers/capture-parity-baseline.ts` — captures per-skill SKILL.md sizes, token estimates, frontmatter description lengths, and eval coverage flags. Writes JSON snapshots used by the parity and size-budget gates. Locks `test/fixtures/parity-baseline-v1.44.1.json` as the v1→v2 reference.
+- `test/helpers/parity-harness.ts` + `test/parity-suite.test.ts` — cathedral parity-eval suite floor. `PARITY_INVARIANTS` registry pins must-preserve phrases per skill family (cso: OWASP/STRIDE; plan-ceo: SCOPE EXPANSION / HOLD SCOPE; ship: VERSION/CHANGELOG/PR) so future compression can't silently strip load-bearing prose.
+- `test/skill-coverage-matrix.ts` + `test/skill-coverage-matrix.test.ts` — single source of truth mapping each skill to gate + periodic tests; CI gate asserts every skill has at least one gate-tier entry. 51 skills, 51 entries.
+- `test/skill-coverage-floor.test.ts` — per-skill structural-compliance smoke test (file-IO, free). Verifies frontmatter shape, generated header, body non-trivial, no leaked `{{TEMPLATE}}` placeholders, catalog-trim contract on description. 309 assertions across 51 skills.
+- `test/skill-size-budget.test.ts` — per-skill SKILL.md byte budget (×1.05 default ratio), total corpus budget, catalog token budget (≤7000 for v1.46). Caught regressions get a per-skill breakdown + override path.
+- `test/cso-preserved.test.ts` — pins cso's must-not-strip security guidance phrases (OWASP, STRIDE, daily/comprehensive mode discipline, confidence scoring, active verification). Future compression that hits cso fails CI here.
+- `test/helpers/budget-override.ts` — audit-trail logger for `GSTACK_SIZE_BUDGET_OVERRIDE_REASON` and `EVALS_BUDGET_OVERRIDE_REASON`. Append-only JSONL at `~/.gstack/analytics/spend-overrides.jsonl` with timestamp + scope + reason + CI provenance.
+- `scripts/proactive-suggestions.json` — per-run registry of routing prose + voice triggers extracted from skill frontmatter during catalog trim. Agents pull on demand instead of paying for it always-loaded.
+- `--catalog-mode=full` build flag — restores v1.44 legacy multi-line catalog descriptions. Use when debugging routing regressions or when shipping skills to hosts that depend on the legacy fat catalog.
+- `--explain-level=terse` build flag — opt-in compression of `## Writing Style` + `## Completeness Principle` + `## Confusion Protocol` + `## Context Health` preamble sections. Default build keeps the runtime-conditional behavior intact (the model still skips when `EXPLAIN_LEVEL: terse` appears in the preamble echo); terse build makes the compression structural.
+- `EVALS_BUDGET_HARD_CAP` environment variable (umbrella $30 default) + per-suite `EVALS_BUDGET_HARD_CAP_GATE=$25`, `EVALS_BUDGET_HARD_CAP_PERIODIC=$70`. Build fails if a single run exceeds; `EVALS_BUDGET_OVERRIDE_REASON` env unblocks + audit-logs.
+
+**Changed**
+- Skill frontmatter `description:` blocks across 51 skills trimmed to a single lead sentence + `(gstack)` tag. Routing prose ("Use when asked to...", "Proactively suggest...") and voice triggers moved to a `## When to invoke` body section in each SKILL.md. Always-loaded catalog cost drops ~56%.
+- Jargon list (`scripts/jargon-list.json`, 80 terms) no longer inlined into every tier-2+ skill. `## Writing Style` now references the JSON path; agents Read it once per session on first jargon term encountered. Saves ~70 KB of duplicated text across the corpus.
+- `ResolverEntry` union type in `scripts/resolvers/types.ts` + `unwrapResolver` helper. Resolvers can now be either bare functions (current behavior) or `{ resolve, appliesTo? }` gated entries. `scripts/gen-skill-docs.ts:444` checks the gate before invocation. Infrastructure for future per-skill resolver gating; all current resolvers stay bare functions and work unchanged.
+- `TemplateContext` gains an optional `explainLevel: 'default' | 'terse'` field threaded from the `--explain-level` build flag.
+
+**Fixed**
+- Catalog descriptions no longer collide with adjacent YAML fields (initial implementation produced `description: ... (gstack)allowed-tools:` with no newline; fixed by appending `\n` to the replacement).
+
+**For contributors**
+- New skills require an entry in `test/skill-coverage-matrix.ts` — at minimum referencing `test/skill-coverage-floor.test.ts` in `gate[]`. The CI gate at `test/skill-coverage-matrix.test.ts` fails fast on missing entries.
+- New must-preserve invariants for a skill family go in `PARITY_INVARIANTS` in `test/helpers/parity-harness.ts`. Adding invariants is additive; removing one is a deliberate scope decision.
+- The `scripts/jargon-list.json` is the canonical glossary. Add terms there; gen-skill-docs picks them up automatically on next regen.
+- `test/fixtures/parity-baseline-v1.44.1.json` is the locked v1→v2 reference. Do not modify; capture new snapshots at later tags via `bun run scripts/capture-baseline.ts --tag <name>`.
+
 ## [1.45.0.0] - 2026-05-25
 
 ## **Design boards now live 24 hours, not 10 minutes. One daemon hosts every board, one tab survives the whole day.**

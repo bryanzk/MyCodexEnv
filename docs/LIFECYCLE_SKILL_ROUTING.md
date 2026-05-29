@@ -56,6 +56,7 @@ adapter skills.
 | Skill synchronization | Keep `codex/skills/*` as source of truth and copy managed skills into `~/.codex/skills/*`. | `scripts/sync_codex_home.sh` |
 | Harness lifecycle routing | Recover state, classify phase, choose generic/repo-specific/gstack workflow, define gates. | `delivery-harness-framework` |
 | Requirements and planning | Capture success criteria, scope, constraints, domain docs, ADR conflicts, vertical slices, risks, and validation gates before implementation. | `planner`, `req-to-dev`, `task-flow-orchestrator`, `scripts/harness_requirements.py` |
+| Backlog-ready issue/spec authoring | Turn vague implementation intent into a bounded issue or executable spec before coding starts. | vendored gstack `spec`, `delivery-harness-framework` |
 | Development execution | Make scoped repo changes, use tests first when behavior changes, preserve unrelated user work. | `tdd-guide`, `atdd-guide`, repo-local workflow |
 | Validation and evidence | Run fresh tests/checks and record `command`, `exit_code`, `key_output`, `timestamp`. | `verification-loop`, `scripts/harness_evidence.py`, `scripts/harness_report.py` |
 | Review and QA | Inspect diffs, browser behavior, security/privacy boundaries, and user-visible regressions. | `gstack-review`, `code-reviewer`, `gstack-qa`, `security-reviewer` |
@@ -70,6 +71,7 @@ adapter skills.
 | --- | --- | --- | --- | --- |
 | `research` | Unknown repo, stale handoff, unclear source ownership, missing context. | Read-only. | `delivery-harness-framework`, `scripts/harness_recover.py`, `scripts/harness_env_probe.py` | Read durable sources and recover the next safe task before acting. |
 | `requirements` | Goal, audience, acceptance criteria, scope, constraints, or domain language are unclear. | Read-only. | `planner`, `req-to-dev`, `scripts/harness_requirements.py` | Turn ambiguity into success criteria, read `CONTEXT.md` / `CONTEXT-MAP.md` and relevant ADRs when present, then validate requirements artifacts before treating them as source of truth. |
+| `planning` | The user wants a backlog-ready GitHub issue, ticket, or executable spec before implementation begins. | Read-only by default. | vendored gstack `spec`, `delivery-harness-framework` | Preserve runtime state, lane boundaries, and validation gates while turning vague intent into a bounded spec or issue. |
 | `planning` | Architecture, API shape, migration, runtime, data flow, cross-module decisions, or multi-step work breakdown. | Read-only by default. | `gstack-plan-eng-review`, `planner`, `task-flow-orchestrator` | Produce an implementation plan, vertical slice breakdown, risk list, and validation gate before edits. |
 | `development` | Acceptance criteria are clear and touched files/modules are bounded. | Scoped writes. | `tdd-guide`, `atdd-guide`, repo workflow, scoped worker agents | Implement the change with tests appropriate to the risk. |
 | `validation` | Work is implemented or docs/config changed and needs fresh evidence. | Tests/checks by default. | `verification-loop`, `scripts/harness_report.py`, `scripts/verify_codex_env.sh` | Prove the result with fresh command output and required evidence fields. |
@@ -86,6 +88,7 @@ adapter skills.
 | repo-specific lifecycle harnesses | Project paths, local commands, business fixtures, deployment topology, smoke matrices. | These adapters take over after the generic router identifies a repo-specific boundary. |
 | `gstack-plan-ceo-review` | Product framing, user value, scope, demo boundaries, strategic tradeoffs. | Use when product judgment is the work. |
 | `gstack-office-hours` | Founder-style pressure testing, market/user/business clarity. | Useful before committing to a product direction. |
+| vendored gstack `spec` | Backlog-ready GitHub issues, tickets, and executable specs with explicit acceptance criteria before implementation begins. | Use when the work needs a durable spec artifact rather than immediate coding. |
 | `gstack-plan-eng-review` | Architecture, data model, API contract, migration, performance, test strategy, and distribution/publish readiness for new artifacts. | Use before implementation on complex engineering plans; the current upstream workflow is explicitly search-aware and completeness-biased. |
 | `gstack-plan-design-review` | UX structure, visual direction, responsive behavior, design acceptance, and mockup-first plan refinement. | Use before UI implementation or major design changes. When a design binary/mockup path exists, prefer visual review over prose-only critique. |
 | `gstack-qa` | Browser QA, screenshots, console/network checks, responsiveness, accessibility smoke, then iterative bug fixing with regression evidence. | Use for user-facing web behavior when fixes are allowed. |
@@ -152,8 +155,9 @@ adapter skills.
 - Prefer repo-specific lifecycle harnesses when a known project adapter owns the
   business domain.
 - Prefer gstack skills when the task is product review, engineering review,
-  design review, browser QA, real-device iOS QA, security review, ship,
-  deploy, canary, release documentation, retro, or learning capture.
+  backlog/spec authoring, design review, browser QA, real-device iOS QA,
+  security review, ship, deploy, canary, release documentation, retro, or
+  learning capture.
 - Prefer the richer upstream gstack posture when available:
   `gstack-office-hours` for problem discovery, mockup-first `gstack-plan-design-review`
   for UI planning, fix-first `gstack-review` for near-landing diffs,

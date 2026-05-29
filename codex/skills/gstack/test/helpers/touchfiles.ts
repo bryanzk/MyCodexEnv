@@ -149,6 +149,7 @@ export const E2E_TOUCHFILES: Record<string, string[]> = {
   // confirm" plan write. runPlanSkillFloorCheck cannot detect that shape
   // (it exits on first AUQ); runPlanSkillCounting can.
   'plan-eng-multi-finding-batching': ['plan-eng-review/**', 'scripts/resolvers/preamble.ts', 'scripts/resolvers/preamble/generate-ask-user-format.ts', 'scripts/resolvers/preamble/generate-completion-status.ts', 'scripts/resolvers/review.ts', 'test/helpers/claude-pty-runner.ts', 'test/fixtures/forcing-finding-seeds.ts', 'test/skill-e2e-plan-eng-multi-finding-batching.test.ts'],
+  'plan-ceo-split-overflow': ['plan-ceo-review/**', 'scripts/resolvers/preamble.ts', 'scripts/resolvers/preamble/generate-ask-user-format.ts', 'bin/gstack-question-preference', 'test/helpers/claude-pty-runner.ts', 'test/fixtures/forcing-finding-seeds.ts', 'test/skill-e2e-plan-ceo-split-overflow.test.ts'],
   'brain-privacy-gate':           ['scripts/resolvers/preamble/generate-brain-sync-block.ts', 'scripts/resolvers/preamble.ts', 'bin/gstack-brain-sync', 'bin/gstack-artifacts-init', 'bin/gstack-config', 'test/helpers/agent-sdk-runner.ts'],
 
   // /setup-gbrain Path 4 (Remote MCP) — happy + bad-token end-to-end via
@@ -189,6 +190,13 @@ export const E2E_TOUCHFILES: Record<string, string[]> = {
 
   // /plan-tune (v1 observational)
   'plan-tune-inspect':         ['plan-tune/**', 'scripts/question-registry.ts', 'scripts/psychographic-signals.ts', 'scripts/one-way-doors.ts', 'bin/gstack-question-log', 'bin/gstack-question-preference', 'bin/gstack-developer-profile'],
+
+  // /plan-tune cathedral (T16 — 5 E2E scenarios, all gate per D12)
+  'plan-tune-hook-capture':      ['hosts/claude/hooks/**', 'bin/gstack-question-log', 'bin/gstack-developer-profile', 'plan-tune/**'],
+  'plan-tune-enforcement':       ['hosts/claude/hooks/**', 'bin/gstack-question-preference', 'scripts/question-registry.ts'],
+  'plan-tune-annotation':        ['hosts/claude/hooks/**', 'scripts/declared-annotation.ts', 'scripts/psychographic-signals.ts', 'scripts/question-registry.ts'],
+  'plan-tune-codex-import':      ['bin/gstack-codex-session-import', 'bin/gstack-question-log', 'docs/spikes/codex-session-format.md'],
+  'plan-tune-dream-cycle':       ['bin/gstack-distill-free-text', 'bin/gstack-distill-apply', 'hosts/claude/hooks/**', 'plan-tune/**'],
 
   // Codex offering verification
   'codex-offered-office-hours':  ['office-hours/**', 'scripts/gen-skill-docs.ts'],
@@ -373,6 +381,10 @@ export const E2E_TOUCHFILES: Record<string, string[]> = {
   // Real-device path — only runs with GSTACK_HAS_IOS_DEVICE=1 + a paired
   // iPhone. Validates the CoreDevice agent + iOS SDK toolchain. Periodic-tier.
   'ios-qa-device':    ['ios-qa/templates/**', 'test/fixtures/ios-qa/FixtureApp/**', 'test/skill-e2e-ios-device.test.ts'],
+
+  // /spec end-to-end via PTY — exercises the full Phase 1→5 pipeline
+  // including --execute spawn. Periodic-tier — paid + non-deterministic.
+  'spec-execute':     ['spec/**', 'test/skill-e2e-spec-execute.test.ts'],
 };
 
 /**
@@ -475,6 +487,7 @@ export const E2E_TIERS: Record<string, 'gate' | 'periodic'> = {
   'plan-design-finding-floor': 'gate',
   'plan-devex-finding-floor':  'gate',
   'plan-eng-multi-finding-batching': 'periodic',
+  'plan-ceo-split-overflow': 'periodic',
 
   // Privacy gate for gstack-brain-sync — periodic (non-deterministic LLM call,
   // costs ~$0.30-$0.50 per run, not needed on every commit)
@@ -521,6 +534,13 @@ export const E2E_TIERS: Record<string, 'gate' | 'periodic'> = {
 
   // /plan-tune — gate (core v1 DX promise: plain-English intent routing)
   'plan-tune-inspect': 'gate',
+
+  // /plan-tune cathedral (T16 per D12 — all gate)
+  'plan-tune-hook-capture': 'gate',
+  'plan-tune-enforcement': 'gate',
+  'plan-tune-annotation': 'gate',
+  'plan-tune-codex-import': 'gate',
+  'plan-tune-dream-cycle': 'gate',
 
   // Codex offering verification
   'codex-offered-office-hours': 'gate',
@@ -647,6 +667,8 @@ export const E2E_TIERS: Record<string, 'gate' | 'periodic'> = {
   'ios-qa-swift-build': 'periodic',
   // Requires a real connected + paired iPhone. Manual-trigger only.
   'ios-qa-device': 'periodic',
+  // /spec end-to-end PTY pipeline (paid, non-deterministic — periodic-tier).
+  'spec-execute': 'periodic',
 };
 
 /**
@@ -671,6 +693,9 @@ export const LLM_JUDGE_TOUCHFILES: Record<string, string[]> = {
   // Plan Reviews
   'plan-ceo-review/SKILL.md modes':       ['plan-ceo-review/SKILL.md', 'plan-ceo-review/SKILL.md.tmpl'],
   'plan-eng-review/SKILL.md sections':    ['plan-eng-review/SKILL.md', 'plan-eng-review/SKILL.md.tmpl'],
+
+  // /spec authored-spec quality (paid LLM-judge — periodic-tier).
+  'spec authored quality':                ['spec/SKILL.md', 'spec/SKILL.md.tmpl', 'test/fixtures/spec/**'],
   'plan-design-review/SKILL.md passes':   ['plan-design-review/SKILL.md', 'plan-design-review/SKILL.md.tmpl'],
 
   // Design skills

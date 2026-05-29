@@ -111,6 +111,7 @@ gstack/
 ├── land-and-deploy/ # /land-and-deploy skill (merge → deploy → canary verify)
 ├── office-hours/    # /office-hours skill (YC Office Hours — startup diagnostic + builder brainstorm)
 ├── investigate/     # /investigate skill (systematic root-cause debugging)
+├── spec/            # /spec skill (five-phase spec → GitHub issue, optional agent spawn, /ship auto-closes)
 ├── retro/           # Retrospective skill (includes /retro global cross-project mode)
 ├── bin/             # CLI utilities (gstack-repo-mode, gstack-slug, gstack-config, etc.)
 ├── document-release/ # /document-release skill (post-ship doc updates + Diataxis coverage map)
@@ -292,6 +293,26 @@ response in `server.ts`, read
 [ARCHITECTURE.md](ARCHITECTURE.md#unicode-sanitization-at-server-egress-v13800).
 `browse/test/server-sanitize-surrogates.test.ts` pins the wiring with invariant
 tests, so bypasses fail CI.
+
+**SSE endpoint helper** (v1.51.0.0+). New SSE endpoints in `server.ts` MUST route
+through `createSseEndpoint(req, config)` from `browse/src/sse-helpers.ts`. The
+helper owns the cleanup contract (abort + enqueue-throw + heartbeat-throw, all
+idempotent) and bakes in `sanitizeLoneSurrogates` on every JSON.stringify, so
+new subscribers can't accidentally regress either invariant. Inline
+`ReadableStream` wiring leaked subscribers when the TCP connection died without
+firing `req.signal.abort` (Chromium MV3 service-worker suspend, intermediate
+proxy half-close). `/activity/stream`, `/inspector/events`, and `/memory`
+(SSE-eligible) all route through it. `browse/test/sse-helpers.test.ts` pins the
+cleanup contract.
+
+**CDP session lifecycle** (v1.51.0.0+). Direct `page.context().newCDPSession(page)`
+calls outside `browse/src/cdp-bridge.ts` fail CI via the static-grep tripwire in
+`browse/test/cdp-session-cleanup.test.ts`. Use `withCdpSession(page, async (s) => {...})`
+for one-shot CDP work (try/finally detach) or `getOrCreateCdpSession(page, cache)`
+for cached sessions tied to a page's lifetime (close-detach via `Map<page, session>`).
+Three sites migrated: cdp-bridge frame events, write-commands archive capture,
+cdp-inspector. The helpers prevent the per-session leak class where successful-path
+detach happened but error-path detach was missed.
 
 **Setup symlink hardening** (v1.38.0.0+). Every link site in `setup` MUST route
 through the `_link_or_copy SRC DST` helper near the `IS_WINDOWS` detection. On

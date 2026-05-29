@@ -54,6 +54,20 @@
       ]
     },
     {
+      "id": "routing-positive-backlog-spec-authoring",
+      "category": "positive_routing",
+      "name": "routes backlog-ready issue or spec authoring to gstack spec",
+      "prompt": "把这个模糊需求整理成 backlog-ready GitHub issue，先确认边界和验收，再给出可执行 spec。",
+      "expected_load": true,
+      "expected_skill": "spec",
+      "expected_output": "The output routes through the lifecycle harness, reads durable state first, and then selects vendored gstack spec for backlog-ready issue or spec authoring.",
+      "assertions": [
+        "The output reads durable repo state or requirements context before drafting the spec.",
+        "The output routes to vendored gstack spec or an equivalent backlog-ready issue workflow.",
+        "The output preserves lifecycle boundaries such as execution lane, validation, or handoff gates before implementation starts."
+      ]
+    },
+    {
       "id": "routing-positive-committee-loop",
       "category": "positive_routing",
       "name": "routes explicit committee and revision worker loop",

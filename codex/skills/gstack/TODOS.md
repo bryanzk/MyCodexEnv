@@ -1,5 +1,140 @@
 # TODOS
 
+## gbrowser memory follow-ups (filed via /plan-eng-review + /codex on the v1.49 leak-fix PR)
+
+These four items came out of the memory-leak investigation that shipped
+the `$B memory` diagnostic + the four leak fixes. They were
+deliberately deferred from that PR (already 14 commits / ~12 files);
+each stands alone and any one could ship independently.
+
+### P2: MV3 extension service worker memory profile
+
+**What:** The `/memory` endpoint snapshot enumerates pages but does
+not enumerate the gstack baked-in extension's service-worker target.
+A long-running MV3 service worker can leak through retained DOM
+snapshots, message ports that never close, alarms that re-arm, and
+caches that grow without bound. The diagnostic should call
+`Target.getTargets` with a filter for `service_worker` and include
+each one in `tabs[]` (or a sibling `serviceWorkers[]` array) with the
+same `Performance.getMetrics` data.
+
+**Why:** Codex's outside-voice review on the eng-review surfaced this
+class of leak (the extension is part of the gbrowser process tree but
+invisible to today's snapshot). Until we surface it, a SW leak shows
+up only in the parent process RSS with no per-target attribution.
+
+**Pros:** Closes the per-target attribution gap for the
+single-most-likely future leak source (our own extension).
+**Cons:** Extension SW lifecycle is asymmetric vs page lifecycle;
+auto-attach + filter is one more piece of CDP plumbing.
+
+**Context:** Codex finding #4 on the eng-review outside voice. Not
+in scope of the v1.49 PR; deliberately deferred to keep the PR to
+the four highest-confidence leak fixes.
+
+**Priority:** P2. **Effort:** M.
+
+---
+
+### P2: Native + GPU memory breakdown in `$B memory`
+
+**What:** `$B memory` shows Bun RSS + per-tab JS heap + Chromium
+process tree (PIDs + types + CPU time) but the per-process RSS is
+absent — `SystemInfo.getProcessInfo` doesn't expose RSS and the eng
+review (D2 USE_CDP) explicitly chose CDP over shelling to `ps`. The
+honest next step is to surface what CDP DOES give for the other
+memory categories: `Memory.getDOMCounters` per target (node + listener
+counts), `SystemInfo.getInfo` for GPU memory, `Memory.getAllTimeSamplingProfile`
+for a sampled native estimate.
+
+**Why:** Codex's outside-voice review flagged that
+`Performance.getMetrics` misses native memory, GPU memory, video
+buffers, Skia, network cache, extension process RSS, and
+browser-process RSS — all the categories where a 160 GB leak would
+actually live. A diagnostic that misses the categories where the
+leak class lives undersells itself.
+
+**Pros:** Per-process category breakdown closes the gap between
+"Activity Monitor says 160 GB" and what the diagnostic shows.
+**Cons:** Each CDP method has its own quirks; this is a real
+implementation pass, not a one-line addition.
+
+**Context:** Codex finding #5 on the eng-review outside voice. Not
+in scope of the v1.49 PR; deliberately deferred.
+
+**Priority:** P2. **Effort:** M.
+
+---
+
+### P3: Single-context CDP listener for Network.loadingFinished
+
+**What:** `wirePageEvents` attaches a `page.on('requestfinished')`
+listener PER PAGE. The D10 fix removed the body-materialization leak
+inside that listener but kept the per-page listener architecture
+(7 listeners attached per tab — close, framenavigated, dialog,
+console, request, response, requestfinished). The stretch goal from
+D10 was to replace the per-page `requestfinished` listener with a
+single context-level CDP listener via
+`Target.setAutoAttach({autoAttach: true, waitForDebuggerOnStart: false,
+flatten: true})` and a browser-wide `Network.loadingFinished` event
+handler.
+
+**Why:** Going from N to 1 listener for the request-size capture is
+structurally the right architecture and removes one piece of per-tab
+memory pressure. The body-materialization fix already addressed the
+acute leak; this is the architectural cleanup that prevents similar
+leaks in the same class.
+
+**Pros:** One listener per browser instead of one per tab.
+**Cons:** `Target.setAutoAttach` plumbing is more code than the
+straight per-page listener; the marginal memory win is small on top
+of the body-fetch fix that already landed.
+
+**Context:** D10 stretch goal on the eng-review. The minimal-risk
+fix shipped in v1.49 (replaces `await res.body()` with
+`await req.sizes()`, preserving the per-page listener); this is the
+architectural follow-up.
+
+**Priority:** P3. **Effort:** M-L.
+
+---
+
+### P3: Real-Chromium peak-RSS reproducer (periodic tier)
+
+**What:** The gate-tier reproducer
+(`browse/test/memory-leak-reproducer.test.ts`) pins the invariant
+that `res.body()` is never called during a burst of
+`requestfinished` events. It uses a fake page; it does NOT spin up a
+real Chromium nor measure peak Bun RSS during a real concurrent fetch
+burst. A periodic-tier follow-up should: spin up a real headless
+Chromium, navigate to a fixture page that concurrently fetches 500
+mixed responses (small JSON, 100 KB images, 10 MB chunked,
+gzip-compressed 2 MB), sample `process.memoryUsage().heapUsed` every
+100 ms during the burst, assert `peak_heap < 200 MB above baseline`
+AND `post-gc_heap < 30 MB above baseline`. Also include a single-tab
+WebGL canvas variant that grows to >4 GB and asserts the per-tab RSS
+toast fires.
+
+**Why:** Codex flagged that the leak's real failure mode is transient
+amplification under concurrent burst, not retained leak — a steady-state
+heap test misses it. The fake-page gate-tier test catches the
+listener-architecture regression; the periodic real-browser test
+catches the actual peak-RSS class.
+
+**Pros:** Closes the "did we actually demonstrate the OOM is fixed"
+question with hard numbers. Feeds the ANGLE_B_NUMBERS CHANGELOG
+release-summary table.
+**Cons:** Periodic tier costs minutes of CI time and money per run;
+real-browser memory tests are inherently flaky.
+
+**Context:** Codex outside-voice finding on the eng-review; D7
+ANGLE_B_NUMBERS CHANGELOG framing needs this reproducer's numbers
+before /ship time.
+
+**Priority:** P3. **Effort:** M.
+
+---
+
 ## design daemon: follow-ups (filed v1.45.0.0 via /ship review army)
 
 ### ✅ DONE (v1.45.0.0): Tighten daemon test coverage
@@ -582,7 +717,24 @@ reads it yet.
 
 **Effort:** L (human: ~1 week / CC: ~4h)
 **Priority:** P0
-**Depends on:** 2+ weeks of v1 dogfood, profile diversity check passing.
+**Depends on:** **90+ days of v1 dogfood stable across 3+ skills** (per
+`docs/designs/PLAN_TUNING_V0.md` §"Deferred to v2" E1 acceptance criteria).
+Distinct from the lighter-weight diversity-display gate
+(`sample_size >= 20 AND skills_covered >= 3 AND question_ids_covered >= 8
+AND days_span >= 7`) used in /plan-tune to render the inferred column —
+display is a UI affordance, promotion to E1 needs a much higher bar
+because behavioral adaptation is consequential and hard to revert. Prior
+versions of this card cited "2+ weeks" which conflicted with V0 — V0 wins.
+
+**Substrate risk (Codex outside-voice, Phase A review 2026-05-26):** Generated
+skill prose is agent-compliance-based. Tests can verify templates contain the
+right reads of `~/.gstack/developer-profile.json` and the right decision
+points, but tests cannot prove agents obey them at runtime. E1 ships
+adaptations as **advisory annotations on AskUserQuestion recommendations**
+("Recommended via your profile: <choice>") until there's a hard runtime
+execution path. Do NOT gate any AUTO_DECIDE on inferred profile alone in v1
+of E1; explicit per-question preferences remain the only AUTO_DECIDE
+source.
 
 ### E3 — `/plan-tune narrative` + `/plan-tune vibe`
 
@@ -1767,6 +1919,49 @@ Shipped in v0.6.5. TemplateContext in gen-skill-docs.ts bakes skill name into pr
 **Effort:** XL (human: ~1 quarter / CC: ~2-3 weeks of focused work)
 **Priority:** P2
 **Depends on:** CDP patches proving the value of anti-bot stealth first
+
+## /spec follow-ups (deferred from v1.47.0.0 via /plan-ceo-review SCOPE EXPANSION)
+
+### P2: `/spec --epic` mode (parent issue + child issues + dependency graph)
+
+**Priority:** P2
+
+**What:** Add `--epic` flag that produces an Epic issue (parent) plus N child issues with explicit dependency graph and topological order. Emits multiple `gh issue create` calls with parent linkage in child bodies.
+
+**Why:** Multi-week initiatives often span 3-5 specs that share context but ship sequentially. Today `/spec --epic` would let users author the full initiative in one session and file all linked issues atomically. The Epic template already exists in `spec/SKILL.md.tmpl` (carried over from PR #1698); only the flag routing + multi-issue `gh` orchestration is missing.
+
+**Pros:**
+- Closes the multi-issue workflow gap that `/spec` v1 doesn't cover.
+- Parent + child linkage means project boards show the full initiative at-a-glance.
+- Composes cleanly with existing `--execute` (spawn an agent on the parent epic; agent files children as it works).
+
+**Cons:**
+- More gh API surface (one create per child, parent-link edit pass).
+- Dependency-graph rendering in markdown is fiddly across GitHub vs GitLab renderers.
+
+**Context:** Considered in `/plan-ceo-review` SCOPE EXPANSION (D5), deferred 2026-05-25 in favor of shipping the 5 critical-path expansions (--execute, --dedupe, archive, quality gate, --audit). Re-evaluate once v1.47 ships and we see how often users hit "this should be 3 issues" in real /spec sessions.
+
+**Depends on:** v1.47.0.0 `/spec` lands first; need real usage data to calibrate the multi-issue surface.
+
+### P3: `/spec --dedupe` semantic matching (LLM-based) for v1.1
+
+**Priority:** P3
+
+**What:** Upgrade `--dedupe`'s string match against `gh issue list --search` to LLM-based semantic similarity. Today's v1 picks string overlap on title keywords; semantic match would catch "the sidebar terminal flakes on reload" matching an existing issue titled "PTY reconnect fails after extension restart" where keyword overlap is zero.
+
+**Why:** String match has high precision but low recall — it misses near-duplicates with different vocabulary. LLM semantic match catches more dupes but costs ~$0.01-0.05 per spec dispatch and adds 5-10s latency.
+
+**Pros:**
+- Catches dupes string match misses.
+- One more reason `/spec` is more useful than freehand authoring.
+
+**Cons:**
+- Paid + slower. Most v1 users probably don't hit enough false-negatives to justify the cost.
+- Adds another LLM-judged decision to a skill that already has the quality gate.
+
+**Context:** Considered in `/plan-ceo-review` build-time decisions; chose string match for v1 to keep the dedupe path free + fast. Revisit if v1 produces a meaningful false-negative rate in real use.
+
+**Depends on:** v1.47.0.0 ships; gather real false-negative data from the v1 string matcher.
 
 ## Completed
 
