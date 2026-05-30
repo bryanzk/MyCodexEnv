@@ -37,8 +37,8 @@ const DRY_RUN = process.argv.includes('--dry-run');
 // Default (no flag): static suppressedResolvers honored as-is. Used by
 // `bun run gen:skill-docs` (CI + canonical checked-in SKILL.md files) so
 // the committed output is reproducible regardless of any developer's
-// local gbrain installation state. Use `bun run gen:skill-docs:user`
-// (which adds --respect-detection) for user-local installs.
+// local gbrain installation state. Use
+// `bun run gen:skill-docs --respect-detection` for user-local installs.
 const RESPECT_DETECTION = process.argv.includes('--respect-detection');
 
 function loadGbrainOverride(): { detected: boolean } {
