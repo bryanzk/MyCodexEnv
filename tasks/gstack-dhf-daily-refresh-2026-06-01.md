@@ -100,6 +100,20 @@
    - key_output: `Verification passed.`
    - timestamp: `2026-06-01T13:05:34Z`
 
+## 提交与推送
+
+1. `git fetch origin && git rebase origin/main`
+   - exit_code: `0`
+   - key_output: `Current branch main is up to date.`
+   - timestamp: `2026-06-01T13:07:16Z`
+2. `git push origin HEAD:main`
+   - exit_code: `0`
+   - key_output: `79f3d87..98a95d3  HEAD -> main`
+   - timestamp: `2026-06-01T13:07:26Z`
+
+- commit: `98a95d3`
+- push: `origin/main`
+
 ## 下一次最小自动动作
 
 - 下一轮仍先执行：
