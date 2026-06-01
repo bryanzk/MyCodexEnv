@@ -12,6 +12,10 @@ from typing import Any
 READ_ONLY_ROLES = {"planner", "reviewer", "security", "qa"}
 WRITE_ROLES = {"worker"}
 VALID_ROLES = READ_ONLY_ROLES | WRITE_ROLES
+TASK_DEMAND_LEVELS = {"low", "medium", "high"}
+TASK_DEMAND_FIELDS = ["level", "L", "H_tool", "S_state", "N_obs"]
+GREEN_GATE_SCOPES = {"worker", "integrator"}
+GREEN_GATE_REQUIRED_FIELDS = ["gate_scope", "command", "rationale"]
 BRIEF_STRING_FIELDS = [
     "category",
     "summary",
@@ -102,6 +106,116 @@ def validate_brief(agent: dict[str, Any], agent_id: str, errors: list[str]) -> d
     return normalized
 
 
+def non_empty_string(value: Any) -> str:
+    return value.strip() if isinstance(value, str) else ""
+
+
+def validate_task_demand(agent: dict[str, Any], agent_id: str, errors: list[str]) -> dict[str, str] | None:
+    demand = agent.get("task_demand")
+    if not isinstance(demand, dict):
+        errors.append(f"ERROR[task_demand_missing] agent={agent_id}: task_demand must be an object")
+        return None
+
+    normalized: dict[str, str] = {}
+    level = non_empty_string(demand.get("level"))
+    if level not in TASK_DEMAND_LEVELS:
+        errors.append(
+            f"ERROR[task_demand_level] agent={agent_id}: task_demand.level must be one of "
+            f"{', '.join(sorted(TASK_DEMAND_LEVELS))}"
+        )
+    elif level:
+        normalized["level"] = level
+
+    for field in TASK_DEMAND_FIELDS:
+        if field == "level":
+            continue
+        value = non_empty_string(demand.get(field))
+        if not value:
+            errors.append(f"ERROR[task_demand_{field}] agent={agent_id}: task_demand.{field} is required")
+        else:
+            normalized[field] = value
+
+    return normalized
+
+
+def require_gate_field(gate: dict[str, Any], field: str, agent_id: str, code: str, errors: list[str]) -> str:
+    value = non_empty_string(gate.get(field))
+    if not value:
+        errors.append(f"ERROR[{code}] agent={agent_id}: green_gate.{field} is required")
+    return value
+
+
+def validate_green_gate(
+    agent: dict[str, Any],
+    agent_id: str,
+    demand: dict[str, str] | None,
+    verification: str,
+    errors: list[str],
+) -> dict[str, str] | None:
+    gate = agent.get("green_gate")
+    if not isinstance(gate, dict):
+        errors.append(f"ERROR[green_gate_missing] agent={agent_id}: green_gate must be an object")
+        return None
+
+    normalized: dict[str, str] = {}
+    for field in GREEN_GATE_REQUIRED_FIELDS:
+        value = require_gate_field(gate, field, agent_id, f"green_gate_{field}", errors)
+        if value:
+            normalized[field] = value
+
+    gate_scope = normalized.get("gate_scope", "")
+    if gate_scope and gate_scope not in GREEN_GATE_SCOPES:
+        errors.append(
+            f"ERROR[green_gate_scope] agent={agent_id}: green_gate.gate_scope must be one of "
+            f"{', '.join(sorted(GREEN_GATE_SCOPES))}"
+        )
+
+    level = (demand or {}).get("level", "")
+    focused = non_empty_string(gate.get("focused_gate_command"))
+    if level in {"medium", "high"} and not focused:
+        errors.append(
+            f"ERROR[green_gate_{level}_focused_gate] agent={agent_id}: "
+            "green_gate.focused_gate_command is required"
+        )
+    if focused:
+        normalized["focused_gate_command"] = focused
+
+    full_gate = non_empty_string(gate.get("full_gate_command"))
+    new_probe = non_empty_string(gate.get("new_probe"))
+    if level == "high":
+        if not full_gate:
+            errors.append(f"ERROR[green_gate_high_full_gate] agent={agent_id}: green_gate.full_gate_command is required")
+        if not new_probe:
+            errors.append(f"ERROR[green_gate_high_new_probe] agent={agent_id}: green_gate.new_probe is required")
+    if full_gate:
+        normalized["full_gate_command"] = full_gate
+    if new_probe:
+        normalized["new_probe"] = new_probe
+
+    integrator_gate = non_empty_string(gate.get("integrator_gate_command"))
+    if gate_scope == "worker":
+        if verification and normalized.get("command") and verification != normalized["command"]:
+            errors.append(
+                f"ERROR[green_gate_command_mismatch] agent={agent_id}: "
+                "verification_command must equal green_gate.command when gate_scope=worker"
+            )
+    elif gate_scope == "integrator":
+        if not integrator_gate:
+            errors.append(
+                f"ERROR[green_gate_integrator_command] agent={agent_id}: "
+                "green_gate.integrator_gate_command is required when gate_scope=integrator"
+            )
+        elif verification and verification != integrator_gate:
+            errors.append(
+                f"ERROR[green_gate_integrator_mismatch] agent={agent_id}: "
+                "verification_command must equal green_gate.integrator_gate_command when gate_scope=integrator"
+            )
+    if integrator_gate:
+        normalized["integrator_gate_command"] = integrator_gate
+
+    return normalized
+
+
 def validate_plan(plan: dict[str, Any], repo_root: Path) -> tuple[list[str], list[dict[str, Any]]]:
     errors: list[str] = []
     summary: list[dict[str, Any]] = []
@@ -148,9 +262,15 @@ def validate_plan(plan: dict[str, Any], repo_root: Path) -> tuple[list[str], lis
 
         if role in READ_ONLY_ROLES and normalized:
             errors.append(f"ERROR[read_only_write_set] agent={agent_id}: {role} must use an empty write_set")
+        if role in READ_ONLY_ROLES and ("task_demand" in agent or "green_gate" in agent):
+            errors.append(f"ERROR[read_only_demand_gate] agent={agent_id}: {role} must not define task_demand or green_gate")
         if role == "worker" and not normalized:
             errors.append(f"ERROR[worker_write_set] agent={agent_id}: worker must own a non-empty write_set")
+        demand = None
+        green_gate = None
         if role == "worker":
+            demand = validate_task_demand(agent, agent_id, errors)
+            green_gate = validate_green_gate(agent, agent_id, demand, verification, errors)
             for path in normalized:
                 worker_paths.append((agent_id, path))
         brief = validate_brief(agent, agent_id, errors)
@@ -163,6 +283,8 @@ def validate_plan(plan: dict[str, Any], repo_root: Path) -> tuple[list[str], lis
                 "write_set": sorted(set(normalized)),
                 "verification_command": verification,
                 "brief": brief,
+                "task_demand": demand,
+                "green_gate": green_gate,
             }
         )
 
@@ -197,10 +319,16 @@ def cmd_validate(args: argparse.Namespace) -> int:
     for agent in summary:
         owned = ", ".join(agent["write_set"]) if agent["write_set"] else "read-only"
         brief_status = " brief=yes" if agent.get("brief") else ""
+        demand = agent.get("task_demand") or {}
+        green_gate = agent.get("green_gate") or {}
+        demand_status = f" demand={demand['level']}" if demand.get("level") else ""
+        gate_scope_status = f" gate_scope={green_gate['gate_scope']}" if green_gate.get("gate_scope") else ""
+        green_gate_status = f" green_gate={green_gate['command']}" if green_gate.get("command") else ""
         print(
             "- "
             f"{agent['id']} role={agent['role']} scope={agent['scope']} "
-            f"write_set={owned} verification={agent['verification_command']}{brief_status}"
+            f"write_set={owned} verification={agent['verification_command']}"
+            f"{demand_status}{gate_scope_status}{green_gate_status}{brief_status}"
         )
     return 0
 

@@ -24,6 +24,22 @@ error states.
 ## Acceptance Criteria
 - [ ] Specific, testable criterion.
 
+## Task Demand
+- level:
+- L:
+- H_tool:
+- S_state:
+- N_obs:
+
+## Green Gate
+- gate_scope:
+- command:
+- rationale:
+- focused_gate_command:
+- integrator_gate_command:
+- full_gate_command:
+- new_probe:
+
 ## Out Of Scope
 - Adjacent behavior the worker must not change.
 
@@ -32,3 +48,5 @@ error states.
 - Avoid file-path-only instructions; paths may help orientation, but behavior,
   interfaces, and acceptance criteria define done.
 - Keep implementation details out unless they are stable public contracts.
+- The JSON agent team plan is the validator input. This markdown brief is only a
+  human-readable companion and should stay consistent with the JSON fields.

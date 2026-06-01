@@ -181,6 +181,22 @@ current behavior, desired behavior, key interfaces, acceptance criteria, and out
 of scope. Use behavior and interfaces as the task contract; line numbers and
 file-path-only instructions are not durable enough.
 
+Worker JSON plans must include `task_demand` and `green_gate` objects:
+- `task_demand`: `level` (`low`, `medium`, or `high`), `L`, `H_tool`,
+  `S_state`, and `N_obs`.
+- `green_gate`: `gate_scope` (`worker` or `integrator`), `command`, and
+  `rationale`.
+- medium and high demand require `focused_gate_command`.
+- high demand also requires `full_gate_command` and `new_probe`.
+- when `gate_scope=worker`, `verification_command` must match
+  `green_gate.command`.
+- when `gate_scope=integrator`, `integrator_gate_command` must match
+  `verification_command`.
+
+Read-only roles must not carry `task_demand` or `green_gate`; demand gates are
+for scoped workers only. Demand gates do not replace disjoint write-set checks
+or the required `verification_command`.
+
 Default permissions:
 - planner: read-only;
 - worker: scoped writes only;
@@ -195,6 +211,9 @@ Agent team validator:
   `verification_command`.
 - optional worker `brief` objects are validated when present and are backward
   compatible when omitted.
+- worker roles require `task_demand` and `green_gate`; the gate must match the
+  declared demand level.
+- read-only roles reject `task_demand` and `green_gate`.
 - planner, reviewer, security, and qa roles must have an empty `write_set`.
 - worker roles must have a non-empty `write_set` and verification command.
 - worker write sets are normalized to repo-relative paths and must be disjoint.

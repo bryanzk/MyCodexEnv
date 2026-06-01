@@ -1590,6 +1590,49 @@ def test_harness_agent_team_validator():
         tmp_path = Path(tmp)
         plan_path = tmp_path / "plan.json"
 
+        def demand(level: str = "medium") -> dict[str, str]:
+            return {
+                "level": level,
+                "L": "Adds one validator behavior with tests.",
+                "H_tool": "Known Python CLI and test runner.",
+                "S_state": "Touches validator, docs, and tests.",
+                "N_obs": "Local deterministic JSON.",
+            }
+
+        def gate(level: str = "medium", scope: str = "worker", command: str = "python3 test_runner.py") -> dict[str, str]:
+            value = {
+                "gate_scope": scope,
+                "command": command,
+                "rationale": "Full local runner covers validator behavior and existing contracts.",
+            }
+            if level in {"medium", "high"}:
+                value["focused_gate_command"] = command
+            if level == "high":
+                value["full_gate_command"] = "python3 test_runner.py"
+                value["new_probe"] = "high-demand missing full gate regression"
+            if scope == "integrator":
+                value["integrator_gate_command"] = "python3 test_runner.py"
+            return value
+
+        def worker_agent(
+            agent_id: str = "worker",
+            *,
+            write_set: list[str] | None = None,
+            verification_command: str = "python3 test_runner.py",
+            level: str = "medium",
+            gate_scope: str = "worker",
+            gate_command: str = "python3 test_runner.py",
+        ) -> dict[str, Any]:
+            return {
+                "id": agent_id,
+                "role": "worker",
+                "scope": "validator behavior",
+                "write_set": write_set or ["scripts/harness_agent_team.py"],
+                "verification_command": verification_command,
+                "task_demand": demand(level),
+                "green_gate": gate(level, gate_scope, gate_command),
+            }
+
         valid_plan = {
             "agents": [
                 {
@@ -1598,6 +1641,8 @@ def test_harness_agent_team_validator():
                     "scope": "runtime report CLI",
                     "write_set": ["scripts/harness_report.py"],
                     "verification_command": "python3 test_runner.py",
+                    "task_demand": demand("medium"),
+                    "green_gate": gate("medium"),
                     "brief": {
                         "category": "enhancement",
                         "summary": "Add runtime report behavior.",
@@ -1614,6 +1659,8 @@ def test_harness_agent_team_validator():
                     "scope": "runtime docs",
                     "write_set": ["docs/HARNESS_RUNTIME.md"],
                     "verification_command": "python3 test_runner.py",
+                    "task_demand": demand("low"),
+                    "green_gate": gate("low"),
                 },
                 {
                     "id": "qa",
@@ -1628,28 +1675,72 @@ def test_harness_agent_team_validator():
         code, out, err = run([sys.executable, str(HARNESS_AGENT_TEAM), "validate", str(plan_path), "--repo-root", str(ROOT)])
         require(code == 0, f"valid agent team should pass: {err or out}")
         require("Agent team valid" in out and "worker-runtime" in out, "valid summary should be handoff-ready")
+        require("demand=medium" in out and "green_gate=python3 test_runner.py" in out, "valid summary should include demand gate")
 
         overlap_plan = {
             "agents": [
-                {
-                    "id": "w1",
-                    "role": "worker",
-                    "scope": "scripts",
-                    "write_set": ["scripts"],
-                    "verification_command": "python3 test_runner.py",
-                },
-                {
-                    "id": "w2",
-                    "role": "worker",
-                    "scope": "report",
-                    "write_set": ["scripts/harness_report.py"],
-                    "verification_command": "python3 test_runner.py",
-                },
+                worker_agent("w1", write_set=["scripts"]),
+                worker_agent("w2", write_set=["scripts/harness_report.py"]),
             ]
         }
         write(plan_path, json.dumps(overlap_plan))
         code, out, err = run([sys.executable, str(HARNESS_AGENT_TEAM), "validate", str(plan_path), "--repo-root", str(ROOT)])
         require(code != 0 and "write_set_overlap" in err, "overlapping workers should fail with conflict detail")
+
+        missing_demand_plan = {"agents": [worker_agent("worker")]}
+        missing_demand_plan["agents"][0].pop("task_demand")
+        write(plan_path, json.dumps(missing_demand_plan))
+        code, out, err = run([sys.executable, str(HARNESS_AGENT_TEAM), "validate", str(plan_path), "--repo-root", str(ROOT)])
+        require(code != 0 and "task_demand_missing" in err and "agent=worker" in err, "missing demand should fail")
+
+        invalid_level_plan = {"agents": [worker_agent("worker", level="extreme")]}
+        write(plan_path, json.dumps(invalid_level_plan))
+        code, out, err = run([sys.executable, str(HARNESS_AGENT_TEAM), "validate", str(plan_path), "--repo-root", str(ROOT)])
+        require(code != 0 and "task_demand_level" in err and "agent=worker" in err, "invalid demand level should fail")
+
+        high_missing_gate_plan = {"agents": [worker_agent("worker", level="high")]}
+        high_missing_gate_plan["agents"][0]["green_gate"].pop("full_gate_command")
+        high_missing_gate_plan["agents"][0]["green_gate"].pop("new_probe")
+        write(plan_path, json.dumps(high_missing_gate_plan))
+        code, out, err = run([sys.executable, str(HARNESS_AGENT_TEAM), "validate", str(plan_path), "--repo-root", str(ROOT)])
+        require(
+            code != 0 and "green_gate_high_full_gate" in err and "green_gate_high_new_probe" in err,
+            "high demand should require full gate and new probe",
+        )
+
+        medium_missing_focused_plan = {"agents": [worker_agent("worker")]}
+        medium_missing_focused_plan["agents"][0]["green_gate"].pop("focused_gate_command")
+        write(plan_path, json.dumps(medium_missing_focused_plan))
+        code, out, err = run([sys.executable, str(HARNESS_AGENT_TEAM), "validate", str(plan_path), "--repo-root", str(ROOT)])
+        require(code != 0 and "green_gate_medium_focused_gate" in err, "medium demand should require focused gate")
+
+        mismatched_worker_gate_plan = {
+            "agents": [
+                worker_agent(
+                    "worker",
+                    verification_command="python3 test_runner.py",
+                    gate_scope="worker",
+                    gate_command="python3 -m pytest focused",
+                )
+            ]
+        }
+        write(plan_path, json.dumps(mismatched_worker_gate_plan))
+        code, out, err = run([sys.executable, str(HARNESS_AGENT_TEAM), "validate", str(plan_path), "--repo-root", str(ROOT)])
+        require(code != 0 and "green_gate_command_mismatch" in err, "worker gate should match verification command")
+
+        integrator_gate_plan = {
+            "agents": [
+                worker_agent(
+                    "worker",
+                    verification_command="python3 test_runner.py",
+                    gate_scope="integrator",
+                    gate_command="python3 -m pytest focused",
+                )
+            ]
+        }
+        write(plan_path, json.dumps(integrator_gate_plan))
+        code, out, err = run([sys.executable, str(HARNESS_AGENT_TEAM), "validate", str(plan_path), "--repo-root", str(ROOT)])
+        require(code == 0 and "gate_scope=integrator" in out, f"integrator gate should be valid: {err or out}")
 
         read_only_plan = {
             "agents": [
@@ -1666,6 +1757,38 @@ def test_harness_agent_team_validator():
         code, out, err = run([sys.executable, str(HARNESS_AGENT_TEAM), "validate", str(plan_path), "--repo-root", str(ROOT)])
         require(code != 0 and "read_only_write_set" in err, "read-only role with write_set should fail")
 
+        read_only_demand_plan = {
+            "agents": [
+                {
+                    "id": "reviewer",
+                    "role": "reviewer",
+                    "scope": "review docs",
+                    "write_set": [],
+                    "verification_command": "python3 test_runner.py",
+                    "task_demand": demand("low"),
+                }
+            ]
+        }
+        write(plan_path, json.dumps(read_only_demand_plan))
+        code, out, err = run([sys.executable, str(HARNESS_AGENT_TEAM), "validate", str(plan_path), "--repo-root", str(ROOT)])
+        require(code != 0 and "read_only_demand_gate" in err, "read-only demand should fail")
+
+        read_only_gate_plan = {
+            "agents": [
+                {
+                    "id": "reviewer",
+                    "role": "reviewer",
+                    "scope": "review docs",
+                    "write_set": [],
+                    "verification_command": "python3 test_runner.py",
+                    "green_gate": gate("low"),
+                }
+            ]
+        }
+        write(plan_path, json.dumps(read_only_gate_plan))
+        code, out, err = run([sys.executable, str(HARNESS_AGENT_TEAM), "validate", str(plan_path), "--repo-root", str(ROOT)])
+        require(code != 0 and "read_only_demand_gate" in err, "read-only green gate should fail")
+
         missing_brief_field_plan = {
             "agents": [
                 {
@@ -1674,6 +1797,8 @@ def test_harness_agent_team_validator():
                     "scope": "brief validation",
                     "write_set": ["scripts/harness_agent_team.py"],
                     "verification_command": "python3 test_runner.py",
+                    "task_demand": demand("medium"),
+                    "green_gate": gate("medium"),
                     "brief": {
                         "category": "enhancement",
                         "summary": "Validate durable briefs.",
@@ -1697,6 +1822,8 @@ def test_harness_agent_team_validator():
                     "scope": "brief validation",
                     "write_set": ["scripts/harness_agent_team.py"],
                     "verification_command": "python3 test_runner.py",
+                    "task_demand": demand("medium"),
+                    "green_gate": gate("medium"),
                     "brief": {
                         "category": "enhancement",
                         "summary": "Validate durable briefs.",
@@ -1715,13 +1842,7 @@ def test_harness_agent_team_validator():
 
         outside_plan = {
             "agents": [
-                {
-                    "id": "worker",
-                    "role": "worker",
-                    "scope": "bad path",
-                    "write_set": [str(tmp_path / "outside.txt")],
-                    "verification_command": "python3 test_runner.py",
-                }
+                worker_agent("worker", write_set=[str(tmp_path / "outside.txt")])
             ]
         }
         write(plan_path, json.dumps(outside_plan))
