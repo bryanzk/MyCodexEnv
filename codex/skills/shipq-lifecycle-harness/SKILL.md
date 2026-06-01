@@ -71,16 +71,19 @@ For workbook/runtime/demo work, preserve these boundaries from
 ## Verification Routing
 
 Before claiming completion, run the narrowest relevant gate and include
-`command`, `exit_code`, `key_output`, and `timestamp`:
+`command`, `exit_code`, `key_output`, and `timestamp`. The demand-scaled gate
+refines the work-type gate; it does not replace ShipQ hard gates. Record the
+selected `task_demand` in the handoff or final output.
 
-| Work type | Minimum gate |
-| --- | --- |
-| Any repo change | `git diff --check` |
-| Code/runtime/import/API | `PATH=.venv/bin:$PATH pytest -q` |
-| Workbook/runtime harness | `PATH=.venv/bin:$PATH python scripts/verify_harness.py` |
-| Internal quote API | `PATH=.venv/bin:$PATH pytest -q tests/test_internal_quote_api.py` |
-| Browser demo | Start `scripts/run_internal_quote_server.py` with `SHIPQ_INTERNAL_DEMO_TOKEN`, then use gstack browser/QA to check public, internal FCL, internal LCL, `prototype.html`, and `prototype-en.html`. |
-| Docs/config only | Check referenced paths and run `git diff --check`; run tests if docs affect commands, scripts, or behavior. |
+| Work type | Minimum gate | Demand-scaled gate |
+| --- | --- | --- |
+| Any repo change | `git diff --check` | Apply the row below that matches the actual task demand. |
+| `low`: docs/config only | Check referenced paths and run `git diff --check`; run tests if docs affect commands, scripts, or behavior. | `git diff --check` plus path/link/command consistency checks. Add a focused test only when the doc/config change affects commands, scripts, behavior, contracts, or public output. |
+| `medium`: single-module code/runtime/import/API | `PATH=.venv/bin:$PATH pytest -q` | `git diff --check` plus `PATH=.venv/bin:$PATH pytest -q <focused test file>` or the focused existing harness command for the touched behavior. |
+| `high`: core or cross-module runtime/demo/security boundary | Focused gate plus full `PATH=.venv/bin:$PATH pytest -q`. | Use this for `quote_engine.py`, `pricing_branch.py`, workbook-to-runtime changes, internal/public demo boundary changes, extension/API auth or security boundary changes, public/private data boundary changes, and cross-module importer/facade changes. Run focused gate plus full `PATH=.venv/bin:$PATH pytest -q` plus at least one new probe targeting the slice's active subgoal. |
+| Workbook/runtime harness | `PATH=.venv/bin:$PATH python scripts/verify_harness.py` | If the task is medium or high, pair this with the matching focused/full pytest demand gate. |
+| Internal quote API | `PATH=.venv/bin:$PATH pytest -q tests/test_internal_quote_api.py` | Treat as medium by default; upgrade to high when auth, public/private output, or cross-module runtime behavior changes. |
+| Browser demo | Start `scripts/run_internal_quote_server.py` with `SHIPQ_INTERNAL_DEMO_TOKEN`, then use gstack browser/QA to check public, internal FCL, internal LCL, `prototype.html`, and `prototype-en.html`. | Treat as high when public/private output, auth, extension/API, or owner-demo boundaries change. |
 
 ## Output Contract
 
