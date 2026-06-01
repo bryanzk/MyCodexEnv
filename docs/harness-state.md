@@ -14,13 +14,13 @@ Stable rules belong in `AGENTS.md`, `README.md`, `docs/repo-index.md`, or
   - `codex/skills/delivery-harness-framework/SKILL.md`
 - blocked_sources: none
 - unsafe_inputs: none
-- next_safe_task: On the next gstack refresh, rerun prepare first and compare whether upstream changes introduce a new generic lifecycle boundary or remain specialized workflow internals.
+- next_safe_task: Start Improvement 3 conversion-health from clean main after committing this checkpoint; do not start Improvement 5 until Improvement 3 is merged.
 - required_commands:
   - `python3 test_runner.py`
   - `git diff --check`
   - `./scripts/verify_codex_env.sh --repo-root "$(pwd)" --codex-home "$HOME/.codex" --claude-home "$HOME/.claude"`
-- latest_checkpoint: 2026-05-29T16:30:13-04:00 synced gstack 1.52.1.0 and updated DHF brain-aware planning boundaries
-- latest_verification: 2026-05-29T16:30:13-04:00 command=python3 test_runner.py; exit_code=0; key_output=[PASS] all tests
+- latest_checkpoint: 2026-06-01T19:57:51-04:00 Improvement 4 agent demand gates merged to main and post-merge gate passed
+- latest_verification: 2026-06-01T19:57:51-04:00 command=python3 test_runner.py; exit_code=0; key_output=[PASS] all tests
 
 ## State Log
 
@@ -410,3 +410,27 @@ Stable rules belong in `AGENTS.md`, `README.md`, `docs/repo-index.md`, or
 - blockers:
   - none
 - next_safe_task: On the next gstack refresh, rerun prepare first and compare whether upstream changes introduce a new generic lifecycle boundary or remain specialized workflow internals.
+
+### 2026-06-01T19:57:51-04:00
+- phase: handoff
+- event: checkpoint
+- summary: Improvement 4 agent demand gates merged to main and post-merge gate passed
+- git:
+  - branch: main
+  - latest_commit: de42412
+  - dirty_status: clean
+  - dirty_count: 0
+- changed_surfaces:
+  - `scripts/harness_agent_team.py`
+  - `test_runner.py`
+  - `docs/HARNESS_RUNTIME.md`
+  - `docs/templates/harness-agent-brief.md`
+  - `docs/repo-index.md`
+  - `docs/harness-state.md`
+- verification:
+  - command: `python3 test_runner.py`
+  - exit_code: 0
+  - key_output: [PASS] all tests
+- blockers:
+  - none
+- next_safe_task: Start Improvement 3 conversion-health from clean main after committing this checkpoint; do not start Improvement 5 until Improvement 3 is merged.
