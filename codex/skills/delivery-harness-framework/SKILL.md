@@ -238,6 +238,11 @@ access is required.
 
 Each slice contract should capture:
 
+- `task_demand`: `low | medium | high`, justified by:
+  - `L` - estimated minimum reasoning/action steps
+  - `H_tool` - tool-selection ambiguity
+  - `S_state` - cross-module state-tracking demand
+  - `N_obs` - observation or external-noise demand
 - execution lane
 - scope and allowed files, modules, or surfaces
 - out-of-scope actions
@@ -246,6 +251,10 @@ Each slice contract should capture:
 - full or release gate
 - docs, state, or checkpoint update
 - handoff expectations and next safe task
+
+The minimum gate and chosen next-safe-task should scale with `task_demand`: low
+demand must not be forced through an unnecessary full regression, while high
+demand requires more than the default gate.
 
 When planning module changes, prefer deep module opportunities: keep the public
 interface small, put meaningful behavior behind that interface, and treat the
@@ -374,6 +383,24 @@ Before claiming completion, identify the narrowest fresh gate and include
 verification evidence with `command`, `exit_code`, `key_output`, and
 `timestamp`. Do not reuse stale verification as fresh evidence.
 
+Effective-feedback check: before claiming completion, the feedback loops spent
+on the task must be classifiable as informative, valid, non-redundant, and
+retained. Any segment that consumed budget without producing retained,
+task-relevant feedback, such as re-running an already-green gate or repeating
+information already present in the trajectory, must be flagged as
+low-conversion in the handoff.
+
+Use this stable shape:
+
+```text
+effective_feedback_check:
+- informative:
+- valid:
+- non_redundant:
+- retained:
+- low_conversion_segments:
+```
+
 Use the report helper when local evidence can inform validation or handoff:
 
 ```bash
@@ -459,6 +486,8 @@ After routing, state:
     conflicts found, decision artifact to create or update, stakeholder-readable
     view requirement, vertical slice recut rule, review perspectives, state
     append path, and agent-team dispatch gate.
+12. Selected `task_demand`, demand-matched gate actually used, and the result of
+    `effective_feedback_check`, including any `low_conversion_segments`.
 
 When gstack is the delegated specialist, also note which advanced posture is
 expected: product interrogation, mockup-first design review, fix-first review,

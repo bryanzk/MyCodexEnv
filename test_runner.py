@@ -150,8 +150,8 @@ def test_codex_version_policy_accepts_current_cli():
     ]:
         require("ACCEPTED_CODEX_VERSION_PREFIXES" in script_text, f"{script_name} should declare accepted Codex versions")
         require(
-            '"0.104.0" "0.130.0" "0.131.0" "0.133.0"' in script_text,
-            f"{script_name} should accept current codex-cli 0.133.0",
+            '"0.104.0" "0.130.0" "0.131.0" "0.133.0" "0.135.0" "0.136.0"' in script_text,
+            f"{script_name} should accept current codex-cli 0.136.0",
         )
         require("codex_version_ok" in script_text, f"{script_name} should evaluate version prefixes explicitly")
 

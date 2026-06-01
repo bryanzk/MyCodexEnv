@@ -18,6 +18,13 @@ Define the concrete outcome this Harness Runtime slice must deliver.
 - Do not commit local evidence logs, credentials, auth files, or transcripts.
 - Preserve append-only state and unrelated user changes.
 
+## Task Demand (D_task)
+- estimated_level: low | medium | high
+- L (reasoning/action steps):
+- H_tool (tool-selection ambiguity):
+- S_state (cross-module state tracking):
+- N_obs (observation/external noise):
+
 ## Source Of Truth
 - `AGENTS.md`
 - `docs/repo-index.md`
