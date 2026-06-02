@@ -12,12 +12,24 @@ REQUIRED_HEADINGS = [
     "Scope",
     "Non-Goals",
     "Constraints",
+    "Task Demand (D_task)",
     "Source Of Truth",
     "Acceptance Criteria",
     "Verification Gate",
     "Risks",
     "Handoff Notes",
 ]
+
+
+TASK_DEMAND_FIELDS = {
+    "estimated_level": "estimated_level",
+    "L (reasoning/action steps)": "L",
+    "H_tool (tool-selection ambiguity)": "H_tool",
+    "S_state (cross-module state tracking)": "S_state",
+    "N_obs (observation/external noise)": "N_obs",
+}
+TASK_DEMAND_REQUIRED = ["estimated_level", "L", "H_tool", "S_state", "N_obs"]
+TASK_DEMAND_LEVELS = {"low", "medium", "high"}
 
 
 def parse_sections(text: str) -> dict[str, list[str]]:
@@ -37,6 +49,37 @@ def meaningful_lines(lines: list[str]) -> list[str]:
     return [line.strip() for line in lines if line.strip() and not line.strip().startswith("<!--")]
 
 
+def validate_task_demand(lines: list[str]) -> list[str]:
+    meaningful = meaningful_lines(lines)
+    if not meaningful:
+        return ["task demand must be non-empty"]
+
+    values: dict[str, str] = {}
+    present: set[str] = set()
+    for raw_line in meaningful:
+        line = raw_line.removeprefix("- ").strip()
+        if ":" not in line:
+            continue
+        label, value = line.split(":", 1)
+        field = TASK_DEMAND_FIELDS.get(label.strip())
+        if field is None:
+            continue
+        present.add(field)
+        values[field] = value.strip()
+
+    errors: list[str] = []
+    for field in TASK_DEMAND_REQUIRED:
+        if field not in present:
+            errors.append(f"task demand field is required: {field}")
+        elif not values.get(field):
+            errors.append(f"task demand field must be non-empty: {field}")
+
+    level = values.get("estimated_level")
+    if level and level not in TASK_DEMAND_LEVELS:
+        errors.append("task demand estimated_level must be one of: low, medium, high")
+    return errors
+
+
 def validate_requirements(path: Path) -> list[str]:
     try:
         sections = parse_sections(path.read_text(encoding="utf-8"))
@@ -53,6 +96,8 @@ def validate_requirements(path: Path) -> list[str]:
 
     if not meaningful_lines(sections["Goal"]):
         errors.append("goal must be non-empty")
+
+    errors.extend(validate_task_demand(sections["Task Demand (D_task)"]))
 
     acceptance = [
         line

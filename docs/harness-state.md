@@ -5,7 +5,7 @@ Stable rules belong in `AGENTS.md`, `README.md`, `docs/repo-index.md`, or
 `docs/HARNESS_RUNTIME.md`; session facts and phase transitions are appended here.
 
 ## Current Snapshot
-- phase: handoff
+- phase: validation
 - source_of_truth:
   - `AGENTS.md`
   - `docs/repo-index.md`
@@ -14,13 +14,13 @@ Stable rules belong in `AGENTS.md`, `README.md`, `docs/repo-index.md`, or
   - `codex/skills/delivery-harness-framework/SKILL.md`
 - blocked_sources: none
 - unsafe_inputs: none
-- next_safe_task: Start Improvement 6 enforce Task Demand heading from clean main; first read docs/handoffs/2026-06-01-efc-harness-patch-plan.md and add a focused failing test for scripts/harness_requirements.py before editing.
+- next_safe_task: Review Improvement 6 diff, then stage/commit/push and open or merge per ship flow.
 - required_commands:
   - `python3 test_runner.py`
   - `git diff --check`
   - `./scripts/verify_codex_env.sh --repo-root "$(pwd)" --codex-home "$HOME/.codex" --claude-home "$HOME/.claude"`
-- latest_checkpoint: 2026-06-01T21:27:45-04:00 Improvement 5 evidence schema split merged to main and post-merge refresh passed
-- latest_verification: 2026-06-01T21:27:45-04:00 command=python3 test_runner.py; exit_code=0; key_output=[PASS] all tests
+- latest_checkpoint: 2026-06-01T21:58:16-04:00 Improvement 6 Task Demand requirements enforcement implemented and verified
+- latest_verification: 2026-06-01T21:58:16-04:00 command=python3 test_runner.py; exit_code=0; key_output=[PASS] all tests
 
 ## State Log
 
@@ -545,3 +545,27 @@ Stable rules belong in `AGENTS.md`, `README.md`, `docs/repo-index.md`, or
 - blockers:
   - none
 - next_safe_task: Start Improvement 6 enforce Task Demand heading from clean main; first read docs/handoffs/2026-06-01-efc-harness-patch-plan.md and add a focused failing test for scripts/harness_requirements.py before editing.
+
+### 2026-06-01T21:58:16-04:00
+- phase: validation
+- event: checkpoint
+- summary: Improvement 6 Task Demand requirements enforcement implemented and verified
+- git:
+  - branch: codex/mce-20260601-efc-impr6-task-demand-enforcement
+  - latest_commit: 0834661
+  - dirty_status: dirty
+  - dirty_count: 5
+- changed_surfaces:
+  - `docs/plans/2026-06-01-efc-improvement-6-task-demand-enforcement.md`
+  - `scripts/harness_requirements.py`
+  - `test_runner.py`
+  - `docs/templates/harness-requirements.md`
+  - `docs/HARNESS_RUNTIME.md`
+  - `docs/harness-state.md`
+- verification:
+  - command: `python3 test_runner.py`
+  - exit_code: 0
+  - key_output: [PASS] all tests
+- blockers:
+  - none
+- next_safe_task: Review Improvement 6 diff, then stage/commit/push and open or merge per ship flow.

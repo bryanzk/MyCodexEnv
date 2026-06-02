@@ -19,11 +19,11 @@ Define the concrete outcome this Harness Runtime slice must deliver.
 - Preserve append-only state and unrelated user changes.
 
 ## Task Demand (D_task)
-- estimated_level: low | medium | high
-- L (reasoning/action steps):
-- H_tool (tool-selection ambiguity):
-- S_state (cross-module state tracking):
-- N_obs (observation/external noise):
+- estimated_level: medium
+- L (reasoning/action steps): Estimate the concrete reasoning and action steps required.
+- H_tool (tool-selection ambiguity): Describe tool choice uncertainty.
+- S_state (cross-module state tracking): Describe state or cross-surface coordination demand.
+- N_obs (observation/external noise): Describe external observation or noise demand.
 
 ## Source Of Truth
 - `AGENTS.md`
