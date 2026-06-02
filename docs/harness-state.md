@@ -5,7 +5,7 @@ Stable rules belong in `AGENTS.md`, `README.md`, `docs/repo-index.md`, or
 `docs/HARNESS_RUNTIME.md`; session facts and phase transitions are appended here.
 
 ## Current Snapshot
-- phase: handoff
+- phase: validation
 - source_of_truth:
   - `AGENTS.md`
   - `docs/repo-index.md`
@@ -14,13 +14,13 @@ Stable rules belong in `AGENTS.md`, `README.md`, `docs/repo-index.md`, or
   - `codex/skills/delivery-harness-framework/SKILL.md`
 - blocked_sources: none
 - unsafe_inputs: none
-- next_safe_task: Start Improvement 3 conversion-health from clean main after committing this checkpoint; do not start Improvement 5 until Improvement 3 is merged.
+- next_safe_task: Merge Improvement 3 to main, then start Improvement 5 evidence schema split from clean main.
 - required_commands:
   - `python3 test_runner.py`
   - `git diff --check`
   - `./scripts/verify_codex_env.sh --repo-root "$(pwd)" --codex-home "$HOME/.codex" --claude-home "$HOME/.claude"`
-- latest_checkpoint: 2026-06-01T19:57:51-04:00 Improvement 4 agent demand gates merged to main and post-merge gate passed
-- latest_verification: 2026-06-01T19:57:51-04:00 command=python3 test_runner.py; exit_code=0; key_output=[PASS] all tests
+- latest_checkpoint: 2026-06-01T20:15:58-04:00 Improvement 3 conversion health signal implemented and verified
+- latest_verification: 2026-06-01T20:15:58-04:00 command=python3 test_runner.py; exit_code=0; key_output=[PASS] all tests
 
 ## State Log
 
@@ -434,3 +434,29 @@ Stable rules belong in `AGENTS.md`, `README.md`, `docs/repo-index.md`, or
 - blockers:
   - none
 - next_safe_task: Start Improvement 3 conversion-health from clean main after committing this checkpoint; do not start Improvement 5 until Improvement 3 is merged.
+
+### 2026-06-01T20:15:58-04:00
+- phase: validation
+- event: checkpoint
+- summary: Improvement 3 conversion health signal implemented and verified
+- git:
+  - branch: codex/mce-20260601-efc-impr3-conversion-health
+  - latest_commit: cfabb6c
+  - dirty_status: clean
+  - dirty_count: 0
+- changed_surfaces:
+  - `scripts/harness_feedback.py`
+  - `scripts/harness_report.py`
+  - `scripts/harness_recover.py`
+  - `test_runner.py`
+  - `docs/HARNESS_RUNTIME.md`
+  - `docs/repo-index.md`
+  - `codex/skills/delivery-harness-framework/SKILL.md`
+  - `docs/harness-state.md`
+- verification:
+  - command: `python3 test_runner.py`
+  - exit_code: 0
+  - key_output: [PASS] all tests
+- blockers:
+  - none
+- next_safe_task: Merge Improvement 3 to main, then start Improvement 5 evidence schema split from clean main.
