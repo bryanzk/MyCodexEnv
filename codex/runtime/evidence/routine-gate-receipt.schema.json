@@ -1,10 +1,10 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://example.local/codex/harness/evidence.schema.json",
-  "title": "Codex Harness Evidence Event",
+  "$id": "https://example.local/codex/harness/evidence/routine-gate-receipt.schema.json",
+  "title": "Codex Harness Routine Gate Receipt Event",
   "type": "object",
   "additionalProperties": false,
-  "required": ["schema_version", "timestamp", "event_type", "cwd", "phase"],
+  "required": ["schema_version", "timestamp", "event_type", "cwd", "phase", "evidence_kind"],
   "properties": {
     "schema_version": {
       "type": "integer",
@@ -27,23 +27,11 @@
     },
     "event_type": {
       "type": "string",
-      "enum": [
-        "startup_probe",
-        "tool_call",
-        "approval_request",
-        "sandbox_failure",
-        "verification_result",
-        "browser_smoke",
-        "subagent_report",
-        "checkpoint",
-        "handoff",
-        "guardrail_decision"
-      ]
+      "enum": ["startup_probe", "tool_call", "verification_result", "browser_smoke", "subagent_report"]
     },
     "evidence_kind": {
       "type": "string",
-      "enum": ["decision", "routine", "unknown"],
-      "description": "New appenders write decision or routine. Unknown is reserved for legacy read normalization. Decision and routine split schemas live under codex/runtime/evidence/."
+      "const": "routine"
     },
     "tool_name": {
       "type": "string"

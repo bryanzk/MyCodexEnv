@@ -190,6 +190,14 @@ def test_sync_renders_template_and_copies_skills():
         require((codex_home / "remote-hosts.md").exists(), "remote hosts registry should be copied")
         require((codex_home / "runtime" / "tool-policy.json").exists(), "harness tool policy should be copied")
         require((codex_home / "runtime" / "evidence.schema.json").exists(), "harness evidence schema should be copied")
+        require(
+            (codex_home / "runtime" / "evidence" / "decision-evidence.schema.json").exists(),
+            "decision schema should be copied",
+        )
+        require(
+            (codex_home / "runtime" / "evidence" / "routine-gate-receipt.schema.json").exists(),
+            "routine schema should be copied",
+        )
         require((codex_home / "hooks" / "harness_guard.py").exists(), "harness guard hook should be copied")
         require((codex_home / "hooks" / "harness_observer.py").exists(), "harness observer hook should be copied")
         require((codex_home / "hooks" / "model_router.py").exists(), "model router hook should be copied")
@@ -547,6 +555,15 @@ def test_sync_agents_only_copies_and_backs_up_agents():
         require((codex_home / "remote-access.md").exists(), "remote-access.md should be copied in sync-agents-only mode")
         require((codex_home / "remote-hosts.md").exists(), "remote-hosts.md should be copied in sync-agents-only mode")
         require((codex_home / "runtime" / "tool-policy.json").exists(), "tool-policy should be copied in sync-agents-only mode")
+        require((codex_home / "runtime" / "evidence.schema.json").exists(), "evidence schema should be copied in sync-agents-only mode")
+        require(
+            (codex_home / "runtime" / "evidence" / "decision-evidence.schema.json").exists(),
+            "decision schema should be copied",
+        )
+        require(
+            (codex_home / "runtime" / "evidence" / "routine-gate-receipt.schema.json").exists(),
+            "routine schema should be copied",
+        )
         require((codex_home / "hooks" / "harness_guard.py").exists(), "harness guard should be copied in sync-agents-only mode")
         require((codex_home / "hooks" / "model_router.py").exists(), "model router should be copied in sync-agents-only mode")
         require(
@@ -573,6 +590,8 @@ def test_harness_runtime_surfaces_exist_and_parse():
         ROOT / "docs" / "AGENT_HARNESS_STATUS.md",
         ROOT / "codex" / "runtime" / "tool-policy.json",
         ROOT / "codex" / "runtime" / "evidence.schema.json",
+        ROOT / "codex" / "runtime" / "evidence" / "decision-evidence.schema.json",
+        ROOT / "codex" / "runtime" / "evidence" / "routine-gate-receipt.schema.json",
         ROOT / "codex" / "hooks" / "harness_guard.py",
         ROOT / "codex" / "hooks" / "harness_observer.py",
         ROOT / "codex" / "hooks" / "model_router.py",
@@ -599,6 +618,9 @@ def test_harness_runtime_surfaces_exist_and_parse():
 
     schema = json.loads((ROOT / "codex" / "runtime" / "evidence.schema.json").read_text(encoding="utf-8"))
     require("verification_result" in schema["properties"]["event_type"]["enum"], "evidence schema should include verification events")
+    require("evidence_kind" in schema["properties"], "compat evidence schema should include evidence_kind")
+    json.loads((ROOT / "codex" / "runtime" / "evidence" / "decision-evidence.schema.json").read_text(encoding="utf-8"))
+    json.loads((ROOT / "codex" / "runtime" / "evidence" / "routine-gate-receipt.schema.json").read_text(encoding="utf-8"))
 
     hooks = json.loads((ROOT / "codex" / "hooks.json").read_text(encoding="utf-8"))
     require("UserPromptSubmit" in hooks["hooks"], "hooks config should include UserPromptSubmit")
@@ -1459,6 +1481,77 @@ def test_harness_evidence_append_and_observer_failure_mode():
         require(evidence_file.exists(), "evidence file should be written")
         event = json.loads(evidence_file.read_text(encoding="utf-8").strip())
         require(event["event_type"] == "verification_result", "evidence event type mismatch")
+        require(event["evidence_kind"] == "routine", "verification evidence should include routine evidence kind")
+
+        code, out, err = run(
+            [
+                sys.executable,
+                str(HARNESS_EVIDENCE),
+                "append",
+                "--codex-home",
+                str(codex_home),
+                "--event-type",
+                "checkpoint",
+                "--phase",
+                "handoff",
+                "--cwd",
+                str(ROOT),
+                "--message",
+                "decision checkpoint",
+            ]
+        )
+        require(code == 0, f"checkpoint evidence append failed: {err or out}")
+        checkpoint_events = [
+            json.loads(line)
+            for line in evidence_file.read_text(encoding="utf-8").splitlines()
+            if line.strip()
+        ]
+        require(
+            checkpoint_events[-1]["evidence_kind"] == "decision",
+            "checkpoint evidence should include decision evidence kind",
+        )
+
+        code, out, err = run(
+            [
+                sys.executable,
+                str(HARNESS_EVIDENCE),
+                "append",
+                "--codex-home",
+                str(codex_home),
+                "--event-type",
+                "verification_result",
+                "--phase",
+                "validation",
+                "--command",
+                "python3 test_runner.py",
+                "--exit-code",
+                "0",
+                "--key-output",
+                "[PASS] all tests",
+                "--evidence-kind",
+                "decision",
+            ]
+        )
+        require(code != 0, "mismatched evidence kind should fail")
+        require("invalid evidence_kind" in err, "mismatched evidence kind should explain invalid evidence_kind")
+
+        code, out, err = run(
+            [
+                sys.executable,
+                str(HARNESS_EVIDENCE),
+                "append",
+                "--codex-home",
+                str(codex_home),
+                "--event-type",
+                "checkpoint",
+                "--phase",
+                "handoff",
+                "--evidence-kind",
+                "unknown",
+            ]
+        )
+        require(code != 0, "explicit unknown evidence kind should fail for new appends")
+        require("invalid evidence_kind" in err, "unknown evidence kind should explain invalid evidence_kind")
 
         code, out, err = run(
             [
@@ -1580,6 +1673,15 @@ def test_harness_report_cli_summarizes_evidence():
         )
         require(code == 0, f"guardrail evidence append failed: {err or out}")
         with evidence_file.open("a", encoding="utf-8") as handle:
+            legacy_event = {
+                "schema_version": 1,
+                "timestamp": "2000-01-01T00:00:00+00:00",
+                "event_type": "checkpoint",
+                "cwd": str(ROOT),
+                "phase": "handoff",
+                "message": "legacy checkpoint without evidence kind",
+            }
+            handle.write(json.dumps(legacy_event, ensure_ascii=False, sort_keys=True) + "\n")
             handle.write("{bad json\n")
 
         code, out, err = run(
@@ -1600,6 +1702,8 @@ def test_harness_report_cli_summarizes_evidence():
         require(summary["total_events"] == 1, f"expected one validation event, got {summary['total_events']}")
         require(summary["malformed_count"] == 1, "malformed JSONL line should be counted")
         require(summary["phase_counts"]["validation"] == 1, "validation phase should be counted")
+        require("evidence_kind_counts" in summary, "report JSON should include evidence kind counts")
+        require(summary["evidence_kind_counts"]["routine"] >= 1, "verification receipt should count as routine evidence")
         require("conversion_health" in summary, "report JSON should include conversion health")
         require(
             summary["conversion_health"]["status"] in {"healthy", "watch", "stalled", "insufficient_evidence"},
@@ -1609,6 +1713,60 @@ def test_harness_report_cli_summarizes_evidence():
             summary["recent_verifications"][0]["command"] == "python3 test_runner.py",
             "recent verification should include command",
         )
+
+        code, out, err = run(
+            [
+                sys.executable,
+                str(HARNESS_REPORT),
+                "--codex-home",
+                str(codex_home),
+                "--evidence-kind",
+                "routine",
+                "--json",
+            ]
+        )
+        require(code == 0, f"routine evidence report should succeed: {err or out}")
+        routine_summary = json.loads(out)
+        require(routine_summary["total_events"] == 1, "routine report should only include routine evidence")
+        require(
+            routine_summary["event_type_counts"]["verification_result"] == 1,
+            "routine report should include verification receipt",
+        )
+
+        code, out, err = run(
+            [
+                sys.executable,
+                str(HARNESS_REPORT),
+                "--codex-home",
+                str(codex_home),
+                "--evidence-kind",
+                "decision",
+                "--json",
+            ]
+        )
+        require(code == 0, f"decision evidence report should succeed: {err or out}")
+        decision_summary = json.loads(out)
+        require(decision_summary["total_events"] == 1, "decision report should only include decision evidence")
+        require(
+            decision_summary["event_type_counts"]["guardrail_decision"] == 1,
+            "decision report should include guardrail decision",
+        )
+
+        code, out, err = run(
+            [
+                sys.executable,
+                str(HARNESS_REPORT),
+                "--codex-home",
+                str(codex_home),
+                "--evidence-kind",
+                "unknown",
+                "--json",
+            ]
+        )
+        require(code == 0, f"unknown evidence report should succeed: {err or out}")
+        unknown_summary = json.loads(out)
+        require(unknown_summary["total_events"] == 1, "unknown report should include only legacy evidence")
+        require(unknown_summary["evidence_kind_counts"]["unknown"] == 1, "legacy evidence should count as unknown")
 
         code, out, err = run(
             [
@@ -2257,6 +2415,35 @@ def test_harness_recovery_smoke():
         code, out, err = run(
             [
                 sys.executable,
+                str(HARNESS_EVIDENCE),
+                "append",
+                "--codex-home",
+                str(codex_home),
+                "--event-type",
+                "checkpoint",
+                "--phase",
+                "handoff",
+                "--cwd",
+                str(repo),
+                "--message",
+                "decision checkpoint",
+            ]
+        )
+        require(code == 0, f"decision checkpoint append failed: {err or out}")
+        legacy_event = {
+            "schema_version": 1,
+            "timestamp": "2000-01-01T00:00:00+00:00",
+            "event_type": "handoff",
+            "cwd": str(repo),
+            "phase": "handoff",
+            "message": "legacy handoff without evidence kind",
+        }
+        with evidence_file.open("a", encoding="utf-8") as handle:
+            handle.write(json.dumps(legacy_event, ensure_ascii=False, sort_keys=True) + "\n")
+
+        code, out, err = run(
+            [
+                sys.executable,
                 str(HARNESS_RECOVER),
                 "--repo-root",
                 str(repo),
@@ -2269,6 +2456,13 @@ def test_harness_recovery_smoke():
         payload = json.loads(out)
         require(payload["evidence_status"] == "present", "evidence status should be present")
         require(payload["latest_verification"]["command"] == "python3 test_runner.py", "latest verification command should be reported")
+        require(payload["evidence_kind_counts"]["routine"] >= 1, "recovery should count routine evidence")
+        require(payload["evidence_kind_counts"]["decision"] >= 1, "recovery should count decision evidence")
+        require(payload["evidence_kind_counts"]["unknown"] >= 1, "recovery should count legacy unknown evidence")
+        require(
+            payload["latest_decision_evidence"]["event_type"] == "checkpoint",
+            "recovery should surface the latest decision evidence",
+        )
         require(
             payload["conversion_health"]["status"] in {"healthy", "watch"},
             "verification evidence should recover from stalled status",
@@ -2335,6 +2529,21 @@ def test_harness_env_probe():
         codex_home = tmp_path / ".codex"
         runtime_dir = codex_home / "runtime"
         runtime_dir.mkdir(parents=True)
+
+        def write_runtime_schemas(target_runtime: Path) -> None:
+            write(
+                target_runtime / "evidence.schema.json",
+                (ROOT / "codex" / "runtime" / "evidence.schema.json").read_text(encoding="utf-8"),
+            )
+            write(
+                target_runtime / "evidence" / "decision-evidence.schema.json",
+                (ROOT / "codex" / "runtime" / "evidence" / "decision-evidence.schema.json").read_text(encoding="utf-8"),
+            )
+            write(
+                target_runtime / "evidence" / "routine-gate-receipt.schema.json",
+                (ROOT / "codex" / "runtime" / "evidence" / "routine-gate-receipt.schema.json").read_text(encoding="utf-8"),
+            )
+
         write(
             codex_home / "config.toml",
             'model = "gpt-5.4"\n'
@@ -2348,7 +2557,7 @@ def test_harness_env_probe():
             json.dumps({"hooks": {"SessionStart": [], "PreToolUse": [], "PostToolUse": []}}),
         )
         write(runtime_dir / "tool-policy.json", (ROOT / "codex" / "runtime" / "tool-policy.json").read_text(encoding="utf-8"))
-        write(runtime_dir / "evidence.schema.json", (ROOT / "codex" / "runtime" / "evidence.schema.json").read_text(encoding="utf-8"))
+        write_runtime_schemas(runtime_dir)
 
         code, out, err = run([sys.executable, str(HARNESS_ENV_PROBE), "--codex-home", str(codex_home), "--json"])
         require(code == 0, f"env probe should pass: {err or out}")
@@ -2357,6 +2566,8 @@ def test_harness_env_probe():
         require(payload["config"]["sandbox_mode"] == "workspace-write", "sandbox_mode should be reported")
         require(payload["hooks"]["enabled"] is True, "hooks should be reported enabled")
         require(payload["runtime"]["policy_phases_present"] is True, "policy phases should be present")
+        require(payload["runtime"]["decision_evidence_schema"] is True, "decision evidence schema should be reported")
+        require(payload["runtime"]["routine_gate_receipt_schema"] is True, "routine gate receipt schema should be reported")
 
         no_sandbox_home = tmp_path / ".codex-no-sandbox"
         no_sandbox_runtime = no_sandbox_home / "runtime"
@@ -2364,7 +2575,7 @@ def test_harness_env_probe():
         write(no_sandbox_home / "config.toml", 'model = "gpt-5.4"\n[features]\ncodex_hooks = true\n')
         write(no_sandbox_home / "hooks.json", json.dumps({"hooks": {"PreToolUse": [], "PostToolUse": []}}))
         write(no_sandbox_runtime / "tool-policy.json", (ROOT / "codex" / "runtime" / "tool-policy.json").read_text(encoding="utf-8"))
-        write(no_sandbox_runtime / "evidence.schema.json", (ROOT / "codex" / "runtime" / "evidence.schema.json").read_text(encoding="utf-8"))
+        write_runtime_schemas(no_sandbox_runtime)
         code, out, err = run([sys.executable, str(HARNESS_ENV_PROBE), "--codex-home", str(no_sandbox_home), "--json"])
         require(code == 0, f"env probe without sandbox fields should still pass: {err or out}")
         payload = json.loads(out)

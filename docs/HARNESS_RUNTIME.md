@@ -62,7 +62,22 @@ For the current project workflow and skill routing map, read
 
 ## Evidence Contract
 Evidence events are JSON objects that match `codex/runtime/evidence.schema.json`.
+That file remains the compatibility entrypoint. Focused schemas live under
+`codex/runtime/evidence/`:
+- `decision-evidence.schema.json`
+- `routine-gate-receipt.schema.json`
+
 Runtime events are written to local files under `~/.codex/harness/evidence`.
+Local logs are not migrated when the schema evolves. Old events that do not
+carry `evidence_kind` are read as `unknown`.
+
+Evidence kinds:
+- `decision`: state, handoff, approvals, guardrails, sandbox failures, and
+  durable recovery decisions.
+- `routine`: test receipts, browser smoke, startup probes, ordinary tool calls,
+  and non-decision subagent reports.
+- `unknown`: legacy read-only normalization for old local JSONL events; new
+  appends must use or infer `decision` or `routine`.
 
 Required verification evidence fields:
 - `command`
@@ -76,7 +91,8 @@ Evidence helper behavior:
 - partial write risk: validate before append.
 - observer hook failure: warn and continue so observability does not block normal work.
 - report view: `scripts/harness_report.py` summarizes local JSONL evidence with
-  `--cwd`, `--since`, `--phase`, `--event-type`, `--limit`, and `--json`.
+  `--cwd`, `--since`, `--phase`, `--event-type`, `--evidence-kind`, `--limit`,
+  and `--json`.
 - conversion health: `scripts/harness_feedback.py` computes a local advisory
   `conversion_health` signal from already-filtered evidence events; report and
   recover outputs include status, reason, productive event counts, repeated
@@ -86,6 +102,8 @@ Evidence helper behavior:
 - empty evidence: report exits 0 with an explicit empty summary.
 - malformed JSONL lines: report continues, increments `malformed_count`, and
   lists file and line.
+- state logs should promote compact decision evidence summaries instead of
+  copying every routine gate receipt into handoff state.
 
 ## Recovery Contract
 Fresh sessions should be able to recover the next safe task without chat
@@ -96,17 +114,25 @@ Recovery behavior:
 - missing repo index or harness state: fail non-zero and print the missing path.
 - no matching local evidence: exit 0 with `evidence_status=empty`.
 - dirty repo: report `dirty_status=dirty` and `dirty_count`.
+- evidence kind summary: JSON and markdown output include counts for
+  `decision`, `routine`, and `unknown` evidence matching the repo cwd.
+- latest decision evidence: JSON and markdown output include a compact
+  `latest_decision_evidence` summary so routine receipts do not bury durable
+  handoff and guardrail decisions.
 - conversion health: JSON and markdown output include the advisory
   `conversion_health` status and reason for matching local evidence.
 - JSON output: use `--json` for automation and visual reports.
 
 ## Environment Probe Contract
 `scripts/harness_env_probe.py` reports what the repo can observe about the local
-Codex runtime: config, hooks, tool policy, evidence schema, sandbox fields, and
-approval fields.
+Codex runtime: config, hooks, tool policy, compatibility evidence schema, split
+evidence schemas, sandbox fields, and approval fields.
 
 Probe behavior:
 - missing required runtime files: fail non-zero and name each missing file.
+- split evidence schemas must exist at
+  `runtime/evidence/decision-evidence.schema.json` and
+  `runtime/evidence/routine-gate-receipt.schema.json`.
 - sandbox fields absent from config: do not infer; report `observable=false`.
 - global Desktop sandbox is outside repo control; the probe reports observable
   config only.

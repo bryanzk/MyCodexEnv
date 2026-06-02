@@ -34,6 +34,21 @@ EVENT_TYPES = {
     "handoff",
     "guardrail_decision",
 }
+EVIDENCE_KINDS = {"decision", "routine", "unknown"}
+APPENDABLE_EVIDENCE_KINDS = {"decision", "routine"}
+DECISION_EVENT_TYPES = {
+    "approval_request",
+    "sandbox_failure",
+    "checkpoint",
+    "handoff",
+    "guardrail_decision",
+}
+ROUTINE_EVENT_TYPES = {
+    "startup_probe",
+    "tool_call",
+    "verification_result",
+    "browser_smoke",
+}
 
 APPROVAL_STATES = {"not_required", "required", "approved", "denied", "blocked", "unknown"}
 FAILURE_CLASSES = {
@@ -68,12 +83,35 @@ def evidence_path(home: Path, timestamp: str) -> Path:
     return home / "harness" / "evidence" / f"{date}.jsonl"
 
 
+def infer_evidence_kind(event: dict[str, Any]) -> str:
+    event_type = event.get("event_type")
+    if event_type in DECISION_EVENT_TYPES:
+        return "decision"
+    if event_type in ROUTINE_EVENT_TYPES:
+        return "routine"
+    if event_type == "subagent_report":
+        metadata = event.get("metadata")
+        if isinstance(metadata, dict) and metadata.get("decision") is True:
+            return "decision"
+        return "routine"
+    return "unknown"
+
+
 def validate_event(event: dict[str, Any]) -> None:
     missing = [key for key in ("schema_version", "timestamp", "event_type", "cwd", "phase") if key not in event]
     if missing:
         raise ValueError(f"missing required fields: {', '.join(missing)}")
     if event["schema_version"] != 1:
         raise ValueError("schema_version must be 1")
+    if "evidence_kind" in event:
+        kind = event["evidence_kind"]
+        if kind not in EVIDENCE_KINDS:
+            raise ValueError(f"invalid evidence_kind: {kind}")
+        if kind not in APPENDABLE_EVIDENCE_KINDS:
+            raise ValueError(f"invalid evidence_kind: {kind}")
+        inferred = infer_evidence_kind(event)
+        if kind != inferred:
+            raise ValueError(f"invalid evidence_kind: {kind} conflicts with inferred {inferred}")
     if event["event_type"] not in EVENT_TYPES:
         raise ValueError(f"invalid event_type: {event['event_type']}")
     if event["phase"] not in PHASES:
@@ -123,6 +161,10 @@ def build_event(args: argparse.Namespace) -> dict[str, Any]:
     for key, value in optional.items():
         if value is not None:
             event[key] = value
+    if args.evidence_kind is not None:
+        event["evidence_kind"] = args.evidence_kind
+    else:
+        event["evidence_kind"] = infer_evidence_kind(event)
     return event
 
 
@@ -163,6 +205,7 @@ def main() -> int:
     append_parser.add_argument("--command")
     append_parser.add_argument("--exit-code", type=int)
     append_parser.add_argument("--key-output")
+    append_parser.add_argument("--evidence-kind")
     append_parser.add_argument("--approval-state", default="not_required", choices=sorted(APPROVAL_STATES))
     append_parser.add_argument("--failure-class", default="none", choices=sorted(FAILURE_CLASSES))
     append_parser.add_argument("--message")

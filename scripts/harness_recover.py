@@ -6,6 +6,7 @@ import json
 import os
 import subprocess
 import sys
+from collections import Counter
 from pathlib import Path
 from typing import Any
 
@@ -39,6 +40,11 @@ def parse_state_value(text: str, key: str) -> str:
     return "unknown"
 
 
+def compact_decision_event(event: dict[str, Any]) -> dict[str, Any]:
+    keys = ["timestamp", "event_type", "phase", "message", "key_output", "failure_class"]
+    return {key: event[key] for key in keys if key in event}
+
+
 def latest_evidence(codex: Path, repo_root: Path) -> tuple[str, dict[str, Any] | None, int, list[dict[str, Any]]]:
     evidence_dir = codex / "harness" / "evidence"
     if not evidence_dir.exists():
@@ -64,6 +70,8 @@ def latest_evidence(codex: Path, repo_root: Path) -> tuple[str, dict[str, Any] |
             if not isinstance(event, dict):
                 malformed_count += 1
                 continue
+            if "evidence_kind" not in event:
+                event["evidence_kind"] = "unknown"
             if normalize_path(str(event.get("cwd", ""))) == repo_cwd:
                 events.append(event)
 
@@ -91,6 +99,13 @@ def build_recovery(args: argparse.Namespace) -> tuple[int, dict[str, Any] | None
         compute_conversion_health(evidence_events),
         malformed_count,
     )
+    evidence_kind_counter = Counter(str(event.get("evidence_kind", "unknown")) for event in evidence_events)
+    evidence_kind_counts = {
+        "decision": evidence_kind_counter.get("decision", 0),
+        "routine": evidence_kind_counter.get("routine", 0),
+        "unknown": evidence_kind_counter.get("unknown", 0),
+    }
+    decision_events = [event for event in evidence_events if event.get("evidence_kind") == "decision"]
     payload = {
         "repo_root": str(repo_root),
         "phase": parse_state_value(state_text, "phase"),
@@ -104,6 +119,8 @@ def build_recovery(args: argparse.Namespace) -> tuple[int, dict[str, Any] | None
         "evidence_malformed_count": malformed_count,
         "conversion_health": conversion_health,
         "latest_verification": latest or {},
+        "evidence_kind_counts": evidence_kind_counts,
+        "latest_decision_evidence": compact_decision_event(decision_events[0]) if decision_events else {},
     }
     return 0, payload, None
 
@@ -119,11 +136,30 @@ def render_markdown(payload: dict[str, Any]) -> str:
         f"- latest_commit: `{payload['latest_commit']}`",
         f"- evidence_status: `{payload['evidence_status']}`",
         f"- evidence_malformed_count: {payload['evidence_malformed_count']}",
+        "- evidence_kind_counts: "
+        + ", ".join(f"{kind}={count}" for kind, count in payload["evidence_kind_counts"].items()),
         f"- conversion_health: `{payload['conversion_health']['status']}` - {payload['conversion_health']['reason']}",
         f"- blocked_sources: {payload['blocked_sources']}",
         f"- next_safe_task: {payload['next_safe_task']}",
         f"- latest_verification_state: {payload['latest_verification_state']}",
     ]
+    decision = payload.get("latest_decision_evidence") or {}
+    if decision:
+        lines.extend(
+            [
+                "",
+                "## Latest Decision Evidence",
+                f"- event_type: `{decision.get('event_type', 'unknown')}`",
+                f"- phase: `{decision.get('phase', 'unknown')}`",
+                f"- timestamp: {decision.get('timestamp', 'unknown')}",
+            ]
+        )
+        if "message" in decision:
+            lines.append(f"- message: {decision['message']}")
+        if "failure_class" in decision:
+            lines.append(f"- failure_class: {decision['failure_class']}")
+        if "key_output" in decision:
+            lines.append(f"- key_output: {decision['key_output']}")
     latest = payload.get("latest_verification") or {}
     if latest:
         lines.extend(

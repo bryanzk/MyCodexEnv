@@ -21,7 +21,7 @@
 - `chrome-devtools-mcp` is rendered into `~/.codex/config.toml` with `--no-usage-statistics` and `--no-performance-crux`
 - EigenPhi MCP server is kept as a commented template block and is disabled by default.
 - If Google Chrome is missing, bootstrap installs `google-chrome`
-- Harness runtime policy and evidence schema are synced into `~/.codex/runtime/*`; local evidence logs are written under `~/.codex/harness/evidence/*` and are not committed.
+- Harness runtime policy, compatibility evidence schema, and split evidence schemas are synced into `~/.codex/runtime/*`; local evidence logs are written under `~/.codex/harness/evidence/*` and are not committed.
 - `codex/hooks/model_router.py` is synced as the prompt/subtask model router. It emits a non-blocking JSON recommendation for `gpt-5.4-mini`, `gpt-5.4`, or `gpt-5.5` based on complexity and quality-floor signals; runtimes or wrapper scripts that can switch models may consume the recommendation directly.
 
 ## Skills Source of Truth
@@ -101,11 +101,19 @@ python3 scripts/harness_evidence.py append \
   --key-output "[PASS] all tests"
 ```
 
+New evidence appends include `evidence_kind`. Decision evidence covers state,
+handoff, approvals, guardrails, sandbox failures, and durable recovery. Routine
+gate receipts cover tests, browser smoke, startup probes, ordinary tool calls,
+and non-decision subagent reports. Existing local logs are not migrated; old
+events without `evidence_kind` report as `unknown`.
+
 Harness runtime report and checkpoint helpers:
 
 ```bash
 python3 scripts/harness_report.py --phase validation
 python3 scripts/harness_report.py --json --limit 20
+python3 scripts/harness_report.py --evidence-kind decision --json
+python3 scripts/harness_report.py --evidence-kind routine --json
 python3 scripts/harness_agent_team.py validate PLAN.json
 python3 scripts/harness_requirements.py validate docs/templates/harness-requirements.md
 python3 scripts/harness_recover.py --repo-root "$(pwd)" --codex-home "$HOME/.codex"
@@ -119,6 +127,11 @@ python3 scripts/harness_checkpoint.py append \
   --verification-key-output "[PASS] all tests" \
   --next-safe-task "continue with handoff"
 ```
+
+Recovery output includes evidence-kind counts and compact latest decision
+evidence so routine receipts do not bury handoff, approval, or guardrail
+signals. State logs should promote decision evidence summaries rather than copy
+every routine gate receipt.
 
 ## Idempotency
 - Running `bootstrap.sh` multiple times is supported.

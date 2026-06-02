@@ -56,6 +56,8 @@ def read_events(evidence_dir: Path) -> tuple[list[dict[str, Any]], list[dict[str
             if not isinstance(event, dict):
                 malformed.append({"file": str(path), "line": line_no, "error": "event is not an object"})
                 continue
+            if "evidence_kind" not in event:
+                event["evidence_kind"] = "unknown"
             event["_source_file"] = str(path)
             event["_source_line"] = line_no
             events.append(event)
@@ -75,6 +77,8 @@ def event_matches(event: dict[str, Any], args: argparse.Namespace) -> bool:
         return False
     if args.event_type and event.get("event_type") != args.event_type:
         return False
+    if args.evidence_kind and event.get("evidence_kind", "unknown") != args.evidence_kind:
+        return False
     return True
 
 
@@ -91,6 +95,7 @@ def compact_event(event: dict[str, Any]) -> dict[str, Any]:
         "approval_state",
         "failure_class",
         "message",
+        "evidence_kind",
     ]
     return {key: event[key] for key in keys if key in event}
 
@@ -118,6 +123,7 @@ def summarize(events: list[dict[str, Any]], malformed: list[dict[str, Any]], arg
             "since": args.since,
             "phase": args.phase,
             "event_type": args.event_type,
+            "evidence_kind": args.evidence_kind,
             "limit": args.limit,
         },
         "total_events": len(filtered),
@@ -127,6 +133,7 @@ def summarize(events: list[dict[str, Any]], malformed: list[dict[str, Any]], arg
         "conversion_health": conversion_health,
         "phase_counts": dict(Counter(str(event.get("phase", "unknown")) for event in filtered)),
         "event_type_counts": dict(Counter(str(event.get("event_type", "unknown")) for event in filtered)),
+        "evidence_kind_counts": dict(Counter(str(event.get("evidence_kind", "unknown")) for event in filtered)),
         "failure_class_counts": dict(
             Counter(str(event.get("failure_class", "none")) for event in filtered if event.get("failure_class") not in (None, ""))
         ),
@@ -185,6 +192,8 @@ def render_markdown(summary: dict[str, Any]) -> str:
     lines.append("")
     lines.extend(render_counter("Event Type Distribution", summary["event_type_counts"]))
     lines.append("")
+    lines.extend(render_counter("Evidence Kind Distribution", summary["evidence_kind_counts"]))
+    lines.append("")
     lines.extend(render_counter("Failure Class Summary", summary["failure_class_counts"]))
     lines.append("")
     lines.extend(
@@ -217,6 +226,7 @@ def main() -> int:
     parser.add_argument("--since", type=parse_date, help="Filter events on or after YYYY-MM-DD")
     parser.add_argument("--phase", help="Filter to one lifecycle phase")
     parser.add_argument("--event-type", help="Filter to one evidence event_type")
+    parser.add_argument("--evidence-kind", choices=["decision", "routine", "unknown"], help="Filter to one evidence kind")
     parser.add_argument("--limit", type=int, default=50, help="Maximum matching events to summarize")
     parser.add_argument("--json", action="store_true", dest="json_output", help="Emit structured JSON")
     args = parser.parse_args()
