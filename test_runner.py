@@ -2219,10 +2219,125 @@ def test_harness_checkpoint_helper():
 def test_harness_requirements_validator():
     with tempfile.TemporaryDirectory() as tmp:
         tmp_path = Path(tmp)
+        template_text = HARNESS_REQUIREMENTS_TEMPLATE.read_text(encoding="utf-8")
+
+        def replace_task_demand_section(markdown: str, replacement: str) -> str:
+            start = markdown.index("## Task Demand (D_task)")
+            end = markdown.index("## Source Of Truth")
+            return markdown[:start] + replacement + markdown[end:]
 
         code, out, err = run([sys.executable, str(HARNESS_REQUIREMENTS), "validate", str(HARNESS_REQUIREMENTS_TEMPLATE)])
         require(code == 0, f"requirements template should validate: {err or out}")
         require("valid" in out, "requirements validator should print valid on success")
+
+        invalid_missing_task_demand = tmp_path / "missing-task-demand.md"
+        invalid_missing_task_demand.write_text(replace_task_demand_section(template_text, ""), encoding="utf-8")
+        code, out, err = run([sys.executable, str(HARNESS_REQUIREMENTS), "validate", str(invalid_missing_task_demand)])
+        require(code != 0 and "missing heading: ## Task Demand (D_task)" in err, "missing task demand heading should fail")
+
+        invalid_empty_task_demand = tmp_path / "empty-task-demand.md"
+        invalid_empty_task_demand.write_text(
+            replace_task_demand_section(template_text, "## Task Demand (D_task)\n\n"),
+            encoding="utf-8",
+        )
+        code, out, err = run([sys.executable, str(HARNESS_REQUIREMENTS), "validate", str(invalid_empty_task_demand)])
+        require(code != 0 and "task demand must be non-empty" in err, "empty task demand should fail")
+
+        valid_task_demand = (
+            "## Task Demand (D_task)\n"
+            "- estimated_level: medium\n"
+            "- L (reasoning/action steps): 10-14 focused implementation and verification steps.\n"
+            "- H_tool (tool-selection ambiguity): low because existing helper and tests are known.\n"
+            "- S_state (cross-module state tracking): medium because docs, validator, tests, and state must stay aligned.\n"
+            "- N_obs (observation/external noise): low because checks are local and deterministic.\n\n"
+        )
+
+        invalid_placeholder_level = tmp_path / "placeholder-task-demand-level.md"
+        invalid_placeholder_level.write_text(
+            replace_task_demand_section(
+                template_text,
+                "## Task Demand (D_task)\n"
+                "- estimated_level: low | medium | high\n"
+                "- L (reasoning/action steps): enough steps to justify medium\n"
+                "- H_tool (tool-selection ambiguity): low\n"
+                "- S_state (cross-module state tracking): medium\n"
+                "- N_obs (observation/external noise): low\n\n",
+            ),
+            encoding="utf-8",
+        )
+        code, out, err = run([sys.executable, str(HARNESS_REQUIREMENTS), "validate", str(invalid_placeholder_level)])
+        require(
+            code != 0 and "task demand estimated_level must be one of: low, medium, high" in err,
+            "placeholder task demand level should fail",
+        )
+
+        invalid_missing_estimated_level = tmp_path / "missing-estimated-level.md"
+        invalid_missing_estimated_level.write_text(
+            replace_task_demand_section(
+                template_text,
+                valid_task_demand.replace("- estimated_level: medium\n", ""),
+            ),
+            encoding="utf-8",
+        )
+        code, out, err = run([sys.executable, str(HARNESS_REQUIREMENTS), "validate", str(invalid_missing_estimated_level)])
+        require(
+            code != 0 and "task demand field is required: estimated_level" in err,
+            "missing task demand estimated_level should fail",
+        )
+
+        invalid_blank_estimated_level = tmp_path / "blank-estimated-level.md"
+        invalid_blank_estimated_level.write_text(
+            replace_task_demand_section(
+                template_text,
+                valid_task_demand.replace("- estimated_level: medium", "- estimated_level:"),
+            ),
+            encoding="utf-8",
+        )
+        code, out, err = run([sys.executable, str(HARNESS_REQUIREMENTS), "validate", str(invalid_blank_estimated_level)])
+        require(
+            code != 0 and "task demand field must be non-empty: estimated_level" in err,
+            "blank task demand estimated_level should fail",
+        )
+
+        field_lines = {
+            "L": "- L (reasoning/action steps): 10-14 focused implementation and verification steps.\n",
+            "H_tool": "- H_tool (tool-selection ambiguity): low because existing helper and tests are known.\n",
+            "S_state": "- S_state (cross-module state tracking): medium because docs, validator, tests, and state must stay aligned.\n",
+            "N_obs": "- N_obs (observation/external noise): low because checks are local and deterministic.\n",
+        }
+        for field, line in field_lines.items():
+            invalid_missing_field = tmp_path / f"missing-task-demand-{field}.md"
+            invalid_missing_field.write_text(
+                replace_task_demand_section(template_text, valid_task_demand.replace(line, "")),
+                encoding="utf-8",
+            )
+            code, out, err = run([sys.executable, str(HARNESS_REQUIREMENTS), "validate", str(invalid_missing_field)])
+            require(
+                code != 0 and f"task demand field is required: {field}" in err,
+                f"missing task demand field should fail: {field}",
+            )
+
+        invalid_blank_component = tmp_path / "blank-task-demand-component.md"
+        invalid_blank_component.write_text(
+            replace_task_demand_section(
+                template_text,
+                valid_task_demand.replace(
+                    "- L (reasoning/action steps): 10-14 focused implementation and verification steps.",
+                    "- L (reasoning/action steps):",
+                ),
+            ),
+            encoding="utf-8",
+        )
+        code, out, err = run([sys.executable, str(HARNESS_REQUIREMENTS), "validate", str(invalid_blank_component)])
+        require(code != 0 and "task demand field must be non-empty: L" in err, "blank task demand field should fail")
+
+        valid_populated_task_demand = tmp_path / "populated-task-demand.md"
+        valid_populated_task_demand.write_text(
+            replace_task_demand_section(template_text, valid_task_demand),
+            encoding="utf-8",
+        )
+        code, out, err = run([sys.executable, str(HARNESS_REQUIREMENTS), "validate", str(valid_populated_task_demand)])
+        require(code == 0 and "valid" in out, f"populated task demand should validate: {err or out}")
 
         invalid_missing_heading = tmp_path / "missing-heading.md"
         invalid_missing_heading.write_text(

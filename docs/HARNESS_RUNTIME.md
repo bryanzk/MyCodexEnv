@@ -27,6 +27,13 @@ Requirements artifacts use `docs/templates/harness-requirements.md`. Validate
 them with `scripts/harness_requirements.py validate PATH` before treating them
 as source of truth.
 
+Validated requirements artifacts must include `## Task Demand (D_task)`.
+The validator requires `estimated_level` to be exactly `low`, `medium`, or
+`high`, and requires non-empty `L`, `H_tool`, `S_state`, and `N_obs` fields.
+It does not score, infer, or deeply validate the semantic quality of those
+values; they remain operator or agent estimates that can be refined in later
+planning.
+
 When a repo has domain docs, use `CONTEXT.md`, `CONTEXT-MAP.md`, and relevant
 ADRs as planning inputs. They sharpen domain vocabulary, surface ADR conflicts,
 and keep plans from inventing inconsistent terms.
