@@ -63,7 +63,9 @@ def build_probe(home: Path) -> tuple[int, dict[str, Any] | None, list[str]]:
     hooks_path = home / "hooks.json"
     policy_path = home / "runtime" / "tool-policy.json"
     schema_path = home / "runtime" / "evidence.schema.json"
-    required_files = [config_path, hooks_path, policy_path, schema_path]
+    decision_schema_path = home / "runtime" / "evidence" / "decision-evidence.schema.json"
+    routine_schema_path = home / "runtime" / "evidence" / "routine-gate-receipt.schema.json"
+    required_files = [config_path, hooks_path, policy_path, schema_path, decision_schema_path, routine_schema_path]
     missing = [str(path) for path in required_files if not path.exists()]
     if missing:
         return 1, None, [f"missing required runtime file: {path}" for path in missing]
@@ -73,6 +75,8 @@ def build_probe(home: Path) -> tuple[int, dict[str, Any] | None, list[str]]:
         hooks = load_json(hooks_path)
         policy = load_json(policy_path)
         schema = load_json(schema_path)
+        load_json(decision_schema_path)
+        load_json(routine_schema_path)
     except (OSError, ValueError, json.JSONDecodeError) as exc:
         return 1, None, [str(exc)]
 
@@ -109,6 +113,11 @@ def build_probe(home: Path) -> tuple[int, dict[str, Any] | None, list[str]]:
         "runtime": {
             "tool_policy": str(policy_path),
             "evidence_schema": str(schema_path),
+            "decision_evidence_schema": True,
+            "decision_evidence_schema_path": str(decision_schema_path),
+            "routine_gate_receipt_schema": True,
+            "routine_gate_receipt_schema_path": str(routine_schema_path),
+            "split_evidence_schemas_present": True,
             "policy_phases_present": all(phase in policy_phases for phase in REQUIRED_PHASES),
             "evidence_verification_event_present": "verification_result" in schema_event_types,
         },
@@ -131,6 +140,9 @@ def render_markdown(payload: dict[str, Any]) -> str:
             f"- post_tool_use: `{payload['hooks']['post_tool_use']}`",
             f"- policy_phases_present: `{payload['runtime']['policy_phases_present']}`",
             f"- evidence_verification_event_present: `{payload['runtime']['evidence_verification_event_present']}`",
+            f"- split_evidence_schemas_present: `{payload['runtime']['split_evidence_schemas_present']}`",
+            f"- decision_evidence_schema: `{payload['runtime']['decision_evidence_schema_path']}`",
+            f"- routine_gate_receipt_schema: `{payload['runtime']['routine_gate_receipt_schema_path']}`",
         ]
     )
 

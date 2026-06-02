@@ -5,7 +5,7 @@ Stable rules belong in `AGENTS.md`, `README.md`, `docs/repo-index.md`, or
 `docs/HARNESS_RUNTIME.md`; session facts and phase transitions are appended here.
 
 ## Current Snapshot
-- phase: handoff
+- phase: validation
 - source_of_truth:
   - `AGENTS.md`
   - `docs/repo-index.md`
@@ -14,13 +14,13 @@ Stable rules belong in `AGENTS.md`, `README.md`, `docs/repo-index.md`, or
   - `codex/skills/delivery-harness-framework/SKILL.md`
 - blocked_sources: none
 - unsafe_inputs: none
-- next_safe_task: Start Improvement 5 evidence schema split from clean main; Improvement 3 conversion-health precondition is now satisfied.
+- next_safe_task: Review Improvement 5 diff, then stage/commit/push and open or merge per ship flow.
 - required_commands:
   - `python3 test_runner.py`
   - `git diff --check`
   - `./scripts/verify_codex_env.sh --repo-root "$(pwd)" --codex-home "$HOME/.codex" --claude-home "$HOME/.claude"`
-- latest_checkpoint: 2026-06-01T20:17:25-04:00 Improvement 3 conversion health merged to main and post-merge gate passed
-- latest_verification: 2026-06-01T20:17:25-04:00 command=python3 test_runner.py; exit_code=0; key_output=[PASS] all tests
+- latest_checkpoint: 2026-06-01T21:16:53-04:00 implemented Improvement 5 evidence schema split and synced runtime
+- latest_verification: 2026-06-01T21:16:53-04:00 command=python3 test_runner.py; exit_code=0; key_output=[PASS] all tests
 
 ## State Log
 
@@ -486,3 +486,32 @@ Stable rules belong in `AGENTS.md`, `README.md`, `docs/repo-index.md`, or
 - blockers:
   - none
 - next_safe_task: Start Improvement 5 evidence schema split from clean main; Improvement 3 conversion-health precondition is now satisfied.
+
+### 2026-06-01T21:16:53-04:00
+- phase: validation
+- event: checkpoint
+- summary: implemented Improvement 5 evidence schema split and synced runtime
+- git:
+  - branch: codex/mce-20260601-efc-impr5-evidence-schema-split
+  - latest_commit: 92b8247
+  - dirty_status: dirty
+  - dirty_count: 10
+- changed_surfaces:
+  - `codex/runtime/evidence.schema.json`
+  - `codex/runtime/evidence/decision-evidence.schema.json`
+  - `codex/runtime/evidence/routine-gate-receipt.schema.json`
+  - `scripts/harness_evidence.py`
+  - `scripts/harness_report.py`
+  - `scripts/harness_recover.py`
+  - `scripts/harness_env_probe.py`
+  - `test_runner.py`
+  - `docs/HARNESS_RUNTIME.md`
+  - `docs/repo-index.md`
+  - `docs/CODEX_ENV_REPRODUCTION.md`
+- verification:
+  - command: `python3 test_runner.py`
+  - exit_code: 0
+  - key_output: [PASS] all tests
+- blockers:
+  - none
+- next_safe_task: Review Improvement 5 diff, then stage/commit/push and open or merge per ship flow.

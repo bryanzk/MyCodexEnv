@@ -26,19 +26,21 @@
 - `codex/skills/delivery-harness-framework/`: lifecycle router skill.
 - `codex/skills/committee-review-loop/`: explicit expert-committee review and revision loop skill.
 - `codex/runtime/tool-policy.json`: stage-aware tool and permission policy.
-- `codex/runtime/evidence.schema.json`: local evidence JSONL event contract.
+- `codex/runtime/evidence.schema.json`: compatibility local evidence JSONL event contract.
+- `codex/runtime/evidence/decision-evidence.schema.json`: focused schema for state, handoff, approval, guardrail, sandbox, and durable recovery evidence.
+- `codex/runtime/evidence/routine-gate-receipt.schema.json`: focused schema for test receipts, browser smoke, startup probes, ordinary tool calls, and routine subagent reports.
 - `codex/hooks/`: Codex lifecycle hooks copied to `~/.codex/hooks/`.
 - `codex/hooks/model_router.py`: prompt/subtask complexity router for cheapest quality-safe model recommendations.
-- `scripts/harness_evidence.py`: evidence validation and append helper.
+- `scripts/harness_evidence.py`: evidence validation, kind inference, and append helper.
 - `scripts/harness_feedback.py`: conversion-health helper for local evidence reports and recovery.
-- `scripts/harness_report.py`: local evidence summary CLI.
+- `scripts/harness_report.py`: local evidence summary CLI with evidence-kind counts and filters.
 - `scripts/harness_agent_team.py`: agent team, write-set, worker task demand, demand-matched green gate, and optional durable brief validator.
 - `scripts/harness_checkpoint.py`: append-only state checkpoint helper.
 - `docs/templates/harness-requirements.md`: task requirements artifact template.
 - `docs/templates/harness-agent-brief.md`: worker durable brief template with optional Task Demand and Green Gate companion fields.
 - `scripts/harness_requirements.py`: requirements artifact validator.
-- `scripts/harness_recover.py`: fresh-session recovery smoke check.
-- `scripts/harness_env_probe.py`: observable Codex runtime config probe.
+- `scripts/harness_recover.py`: fresh-session recovery smoke check with evidence-kind counts and compact latest decision evidence.
+- `scripts/harness_env_probe.py`: observable Codex runtime config and split evidence schema probe.
 - `scripts/prepare_gstack_dhf_daily_refresh.py`: preflight the daily refresh automation, retry DNS probes for about two minutes, require a standalone clone, and return dry-run evidence before repo mutation.
 - `scripts/sync_gstack_vendor.py`: bulk-sync `codex/skills/gstack` from an upstream `garrytan/gstack` git snapshot.
 - `codex/skills/delivery-harness-framework/evals/evals.json`: routing and boundary evals for the generic lifecycle skill, including gstack brain-aware planning and question-tuning boundaries.
@@ -97,7 +99,7 @@
 - Session State: `docs/harness-state.md` plus local evidence JSONL.
 - Permissions: `codex/runtime/tool-policy.json` and guard hooks.
 - Hooks: `codex/hooks.json` and `codex/hooks/*`.
-- Observability: `scripts/harness_evidence.py`, `scripts/harness_feedback.py`, `scripts/harness_report.py`, and local evidence files.
+- Observability: `scripts/harness_evidence.py`, `scripts/harness_feedback.py`, `scripts/harness_report.py`, split evidence schemas, and local evidence files. Decision evidence is promoted into state and handoff summaries; routine gate receipts remain available for audit without burying recovery signals.
 - Tool Router: lifecycle stage policy in `tool-policy.json`.
 - Model Router: `model_router.py` recommends `gpt-5.4-mini`, `gpt-5.4`, or `gpt-5.5` per prompt/subtask and can be re-run at complex task phase boundaries.
 - Checkpoints: `docs/HARNESS_RUNTIME.md` contract, `scripts/harness_checkpoint.py`, and `docs/harness-state.md` log.
