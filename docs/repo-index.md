@@ -30,6 +30,7 @@
 - `codex/hooks/`: Codex lifecycle hooks copied to `~/.codex/hooks/`.
 - `codex/hooks/model_router.py`: prompt/subtask complexity router for cheapest quality-safe model recommendations.
 - `scripts/harness_evidence.py`: evidence validation and append helper.
+- `scripts/harness_feedback.py`: conversion-health helper for local evidence reports and recovery.
 - `scripts/harness_report.py`: local evidence summary CLI.
 - `scripts/harness_agent_team.py`: agent team, write-set, worker task demand, demand-matched green gate, and optional durable brief validator.
 - `scripts/harness_checkpoint.py`: append-only state checkpoint helper.
@@ -96,7 +97,7 @@
 - Session State: `docs/harness-state.md` plus local evidence JSONL.
 - Permissions: `codex/runtime/tool-policy.json` and guard hooks.
 - Hooks: `codex/hooks.json` and `codex/hooks/*`.
-- Observability: `scripts/harness_evidence.py`, `scripts/harness_report.py`, and local evidence files.
+- Observability: `scripts/harness_evidence.py`, `scripts/harness_feedback.py`, `scripts/harness_report.py`, and local evidence files.
 - Tool Router: lifecycle stage policy in `tool-policy.json`.
 - Model Router: `model_router.py` recommends `gpt-5.4-mini`, `gpt-5.4`, or `gpt-5.5` per prompt/subtask and can be re-run at complex task phase boundaries.
 - Checkpoints: `docs/HARNESS_RUNTIME.md` contract, `scripts/harness_checkpoint.py`, and `docs/harness-state.md` log.

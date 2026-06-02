@@ -10,6 +10,8 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any
 
+from harness_feedback import compute_conversion_health, with_malformed_evidence_signal
+
 
 def codex_home(value: str | None) -> Path:
     if value:
@@ -94,8 +96,10 @@ def compact_event(event: dict[str, Any]) -> dict[str, Any]:
 
 
 def summarize(events: list[dict[str, Any]], malformed: list[dict[str, Any]], args: argparse.Namespace) -> dict[str, Any]:
-    filtered = [event for event in events if event_matches(event, args)]
-    filtered.sort(key=event_timestamp, reverse=True)
+    matching = [event for event in events if event_matches(event, args)]
+    matching.sort(key=event_timestamp, reverse=True)
+    conversion_health = with_malformed_evidence_signal(compute_conversion_health(matching), len(malformed))
+    filtered = matching
     if args.limit is not None:
         filtered = filtered[: args.limit]
 
@@ -120,6 +124,7 @@ def summarize(events: list[dict[str, Any]], malformed: list[dict[str, Any]], arg
         "scanned_events": len(events),
         "malformed_count": len(malformed),
         "malformed_lines": malformed,
+        "conversion_health": conversion_health,
         "phase_counts": dict(Counter(str(event.get("phase", "unknown")) for event in filtered)),
         "event_type_counts": dict(Counter(str(event.get("event_type", "unknown")) for event in filtered)),
         "failure_class_counts": dict(
@@ -164,6 +169,7 @@ def render_event_list(title: str, values: list[dict[str, Any]]) -> list[str]:
 
 
 def render_markdown(summary: dict[str, Any]) -> str:
+    conversion_health = summary["conversion_health"]
     lines = [
         "# Harness Evidence Report",
         "",
@@ -180,6 +186,17 @@ def render_markdown(summary: dict[str, Any]) -> str:
     lines.extend(render_counter("Event Type Distribution", summary["event_type_counts"]))
     lines.append("")
     lines.extend(render_counter("Failure Class Summary", summary["failure_class_counts"]))
+    lines.append("")
+    lines.extend(
+        [
+            "## Conversion Health",
+            f"- status: `{conversion_health['status']}`",
+            f"- reason: {conversion_health['reason']}",
+            f"- productive_event_count: {conversion_health['productive_event_count']}",
+            "- low_conversion_signals: "
+            + (", ".join(f"`{signal}`" for signal in conversion_health["low_conversion_signals"]) or "none"),
+        ]
+    )
     lines.append("")
     lines.extend(render_event_list("Recent Verification", summary["recent_verifications"]))
     lines.append("")

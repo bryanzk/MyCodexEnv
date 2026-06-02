@@ -408,6 +408,11 @@ python3 scripts/harness_report.py --limit 20
 python3 scripts/harness_report.py --phase validation --json
 ```
 
+When local evidence exists, use `scripts/harness_report.py --json` or
+`scripts/harness_recover.py --json` to surface `conversion_health.status` and
+its reason in handoff or final routing output. Treat `stalled` as a
+planning/recovery warning, not an automatic failure.
+
 Common gates:
 
 | Work type | Minimum gate |
@@ -488,6 +493,8 @@ After routing, state:
     append path, and agent-team dispatch gate.
 12. Selected `task_demand`, demand-matched gate actually used, and the result of
     `effective_feedback_check`, including any `low_conversion_segments`.
+13. `conversion_health` status and whether any stall or low-conversion signals
+    are present when local evidence exists.
 
 When gstack is the delegated specialist, also note which advanced posture is
 expected: product interrogation, mockup-first design review, fix-first review,

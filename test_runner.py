@@ -578,6 +578,7 @@ def test_harness_runtime_surfaces_exist_and_parse():
         ROOT / "codex" / "hooks" / "model_router.py",
         SHIPQ_DHF_PREPROMPT,
         HARNESS_EVIDENCE,
+        ROOT / "scripts" / "harness_feedback.py",
         HARNESS_REPORT,
         HARNESS_AGENT_TEAM,
         HARNESS_CHECKPOINT,
@@ -1488,6 +1489,42 @@ def test_harness_evidence_append_and_observer_failure_mode():
     print("[PASS] harness evidence append and observer failure mode")
 
 
+def test_harness_feedback_conversion_health():
+    from scripts.harness_feedback import compute_conversion_health
+
+    healthy = [
+        {
+            "timestamp": "2026-06-01T00:00:03",
+            "event_type": "verification_result",
+            "command": "python3 test_runner.py",
+            "exit_code": 0,
+            "key_output": "[PASS]",
+        },
+        {"timestamp": "2026-06-01T00:00:02", "event_type": "tool_call", "command": "python3 test_runner.py"},
+        {"timestamp": "2026-06-01T00:00:01", "event_type": "tool_call", "command": "rg foo"},
+    ]
+    require(compute_conversion_health(healthy)["status"] == "healthy", "verification should be productive")
+
+    stalled = [
+        {"timestamp": f"2026-06-01T00:00:0{i}", "event_type": "tool_call", "command": "pytest -q"}
+        for i in range(6)
+    ]
+    result = compute_conversion_health(stalled)
+    require(result["status"] == "stalled", "repeated unproductive tool calls should be stalled")
+    require(
+        "many_tool_calls_without_productive_feedback" in result["low_conversion_signals"],
+        "stall signal should be named",
+    )
+
+    insufficient = [{"timestamp": "2026-06-01T00:00:01", "event_type": "tool_call", "command": "pwd"}]
+    require(
+        compute_conversion_health(insufficient)["status"] == "insufficient_evidence",
+        "small windows should be explicit",
+    )
+
+    print("[PASS] harness feedback conversion health")
+
+
 def test_harness_report_cli_summarizes_evidence():
     with tempfile.TemporaryDirectory() as tmp:
         codex_home = Path(tmp) / ".codex"
@@ -1563,6 +1600,11 @@ def test_harness_report_cli_summarizes_evidence():
         require(summary["total_events"] == 1, f"expected one validation event, got {summary['total_events']}")
         require(summary["malformed_count"] == 1, "malformed JSONL line should be counted")
         require(summary["phase_counts"]["validation"] == 1, "validation phase should be counted")
+        require("conversion_health" in summary, "report JSON should include conversion health")
+        require(
+            summary["conversion_health"]["status"] in {"healthy", "watch", "stalled", "insufficient_evidence"},
+            "conversion status should be valid",
+        )
         require(
             summary["recent_verifications"][0]["command"] == "python3 test_runner.py",
             "recent verification should include command",
@@ -1579,8 +1621,29 @@ def test_harness_report_cli_summarizes_evidence():
             ]
         )
         require(code == 0, f"markdown report should succeed: {err or out}")
+        require("Conversion Health" in out, "markdown report should include conversion health section")
         require("Recent Guardrail Or Sandbox Failure" in out, "markdown report should include failure section")
         require("dynamic execution denied" in out, "markdown report should include guardrail message")
+
+        code, out, err = run(
+            [
+                sys.executable,
+                str(HARNESS_REPORT),
+                "--codex-home",
+                str(codex_home),
+                "--cwd",
+                str(ROOT),
+                "--limit",
+                "1",
+                "--json",
+            ]
+        )
+        require(code == 0, f"limited report should succeed: {err or out}")
+        limited_summary = json.loads(out)
+        require(
+            limited_summary["conversion_health"]["window_event_count"] >= 2,
+            "conversion health should use post-filter pre-limit events",
+        )
 
     print("[PASS] harness report CLI summarizes evidence")
 
@@ -2085,6 +2148,10 @@ def test_harness_recovery_smoke():
         require(empty_payload["evidence_status"] == "empty", "empty evidence should be explicit")
         require(empty_payload["next_safe_task"] == "run recovery smoke", "recovery should parse next safe task")
         require(empty_payload["latest_verification"] == {}, "empty evidence should not invent latest verification")
+        require(
+            empty_payload["conversion_health"]["status"] == "insufficient_evidence",
+            "empty recovery evidence should report insufficient conversion evidence",
+        )
 
         code, out, err = run(
             [
@@ -2106,6 +2173,7 @@ def test_harness_recovery_smoke():
             ]
         )
         require(code == 0, f"tool-call evidence append failed: {err or out}")
+        evidence_file = Path(out)
         code, out, err = run(
             [
                 sys.executable,
@@ -2121,6 +2189,47 @@ def test_harness_recovery_smoke():
         tool_only_payload = json.loads(out)
         require(tool_only_payload["evidence_status"] == "present", "tool-call evidence should mark evidence present")
         require(tool_only_payload["latest_verification"] == {}, "tool-call evidence should not masquerade as verification")
+        require(
+            tool_only_payload["conversion_health"]["status"] == "insufficient_evidence",
+            "single tool-call recovery should still be insufficient evidence",
+        )
+
+        for _ in range(5):
+            code, out, err = run(
+                [
+                    sys.executable,
+                    str(HARNESS_EVIDENCE),
+                    "append",
+                    "--codex-home",
+                    str(codex_home),
+                    "--event-type",
+                    "tool_call",
+                    "--phase",
+                    "development",
+                    "--cwd",
+                    str(repo),
+                    "--tool-name",
+                    "exec_command",
+                    "--command",
+                    "pytest -q",
+                ]
+            )
+            require(code == 0, f"repeated tool-call evidence append failed: {err or out}")
+
+        code, out, err = run(
+            [
+                sys.executable,
+                str(HARNESS_RECOVER),
+                "--repo-root",
+                str(repo),
+                "--codex-home",
+                str(codex_home),
+                "--json",
+            ]
+        )
+        require(code == 0, f"stalled recovery should succeed: {err or out}")
+        stalled_payload = json.loads(out)
+        require(stalled_payload["conversion_health"]["status"] == "stalled", "repeated tool calls should report stalled")
 
         code, out, err = run(
             [
@@ -2160,6 +2269,47 @@ def test_harness_recovery_smoke():
         payload = json.loads(out)
         require(payload["evidence_status"] == "present", "evidence status should be present")
         require(payload["latest_verification"]["command"] == "python3 test_runner.py", "latest verification command should be reported")
+        require(
+            payload["conversion_health"]["status"] in {"healthy", "watch"},
+            "verification evidence should recover from stalled status",
+        )
+
+        with evidence_file.open("a", encoding="utf-8") as handle:
+            handle.write("{bad json\n")
+        code, out, err = run(
+            [
+                sys.executable,
+                str(HARNESS_RECOVER),
+                "--repo-root",
+                str(repo),
+                "--codex-home",
+                str(codex_home),
+                "--json",
+            ]
+        )
+        require(code == 0, f"malformed recovery should succeed: {err or out}")
+        malformed_payload = json.loads(out)
+        require(
+            "malformed_evidence_present" in malformed_payload["conversion_health"]["low_conversion_signals"],
+            "malformed recovery should surface conversion signal",
+        )
+        require(
+            malformed_payload["conversion_health"]["status"] in {"watch", "stalled"},
+            "malformed recovery should be at least watch unless already stalled",
+        )
+
+        code, out, err = run(
+            [
+                sys.executable,
+                str(HARNESS_RECOVER),
+                "--repo-root",
+                str(repo),
+                "--codex-home",
+                str(codex_home),
+            ]
+        )
+        require(code == 0, f"markdown recovery should succeed: {err or out}")
+        require("conversion_health:" in out, "markdown recovery should include conversion health")
 
         missing_state_repo = tmp_path / "missing-state"
         missing_state_repo.mkdir()
@@ -2642,6 +2792,7 @@ def main():
     test_harness_guard_policy_decisions()
     test_model_router_prompt_complexity_decisions()
     test_harness_evidence_append_and_observer_failure_mode()
+    test_harness_feedback_conversion_health()
     test_harness_report_cli_summarizes_evidence()
     test_harness_agent_team_validator()
     test_harness_checkpoint_helper()

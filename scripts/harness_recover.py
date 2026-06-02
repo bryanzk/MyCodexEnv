@@ -9,6 +9,8 @@ import sys
 from pathlib import Path
 from typing import Any
 
+from harness_feedback import compute_conversion_health, with_malformed_evidence_signal
+
 
 def codex_home(value: str | None) -> Path:
     if value:
@@ -37,10 +39,10 @@ def parse_state_value(text: str, key: str) -> str:
     return "unknown"
 
 
-def latest_evidence(codex: Path, repo_root: Path) -> tuple[str, dict[str, Any] | None, int]:
+def latest_evidence(codex: Path, repo_root: Path) -> tuple[str, dict[str, Any] | None, int, list[dict[str, Any]]]:
     evidence_dir = codex / "harness" / "evidence"
     if not evidence_dir.exists():
-        return "empty", None, 0
+        return "empty", None, 0, []
 
     events: list[dict[str, Any]] = []
     malformed_count = 0
@@ -66,10 +68,10 @@ def latest_evidence(codex: Path, repo_root: Path) -> tuple[str, dict[str, Any] |
                 events.append(event)
 
     if not events:
-        return "empty", None, malformed_count
+        return "empty", None, malformed_count, []
     events.sort(key=lambda event: str(event.get("timestamp", "")), reverse=True)
     verifications = [event for event in events if event.get("event_type") == "verification_result"]
-    return "present", (verifications[0] if verifications else None), malformed_count
+    return "present", (verifications[0] if verifications else None), malformed_count, events
 
 
 def build_recovery(args: argparse.Namespace) -> tuple[int, dict[str, Any] | None, str | None]:
@@ -84,7 +86,11 @@ def build_recovery(args: argparse.Namespace) -> tuple[int, dict[str, Any] | None
     state_text = state_file.read_text(encoding="utf-8")
     git_status = run_git(repo_root, ["status", "--short"], empty_value="")
     dirty_lines = [line for line in git_status.splitlines() if line.strip()] if git_status != "unknown" else []
-    evidence_status, latest, malformed_count = latest_evidence(codex_home(args.codex_home), repo_root)
+    evidence_status, latest, malformed_count, evidence_events = latest_evidence(codex_home(args.codex_home), repo_root)
+    conversion_health = with_malformed_evidence_signal(
+        compute_conversion_health(evidence_events),
+        malformed_count,
+    )
     payload = {
         "repo_root": str(repo_root),
         "phase": parse_state_value(state_text, "phase"),
@@ -96,6 +102,7 @@ def build_recovery(args: argparse.Namespace) -> tuple[int, dict[str, Any] | None
         "latest_commit": run_git(repo_root, ["log", "--max-count=1", "--pretty=format:%h %ad %s", "--date=short"]),
         "evidence_status": evidence_status,
         "evidence_malformed_count": malformed_count,
+        "conversion_health": conversion_health,
         "latest_verification": latest or {},
     }
     return 0, payload, None
@@ -112,6 +119,7 @@ def render_markdown(payload: dict[str, Any]) -> str:
         f"- latest_commit: `{payload['latest_commit']}`",
         f"- evidence_status: `{payload['evidence_status']}`",
         f"- evidence_malformed_count: {payload['evidence_malformed_count']}",
+        f"- conversion_health: `{payload['conversion_health']['status']}` - {payload['conversion_health']['reason']}",
         f"- blocked_sources: {payload['blocked_sources']}",
         f"- next_safe_task: {payload['next_safe_task']}",
         f"- latest_verification_state: {payload['latest_verification_state']}",

@@ -77,6 +77,12 @@ Evidence helper behavior:
 - observer hook failure: warn and continue so observability does not block normal work.
 - report view: `scripts/harness_report.py` summarizes local JSONL evidence with
   `--cwd`, `--since`, `--phase`, `--event-type`, `--limit`, and `--json`.
+- conversion health: `scripts/harness_feedback.py` computes a local advisory
+  `conversion_health` signal from already-filtered evidence events; report and
+  recover outputs include status, reason, productive event counts, repeated
+  command counts, and low-conversion signals.
+- stalled conversion health is advisory for planning and recovery, not an
+  automatic failure gate.
 - empty evidence: report exits 0 with an explicit empty summary.
 - malformed JSONL lines: report continues, increments `malformed_count`, and
   lists file and line.
@@ -90,6 +96,8 @@ Recovery behavior:
 - missing repo index or harness state: fail non-zero and print the missing path.
 - no matching local evidence: exit 0 with `evidence_status=empty`.
 - dirty repo: report `dirty_status=dirty` and `dirty_count`.
+- conversion health: JSON and markdown output include the advisory
+  `conversion_health` status and reason for matching local evidence.
 - JSON output: use `--json` for automation and visual reports.
 
 ## Environment Probe Contract
