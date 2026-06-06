@@ -1235,6 +1235,13 @@ def test_prepare_gstack_daily_refresh_creates_standalone_clone():
         require(payload["dry_run"]["dry_run"] is True, "prepare should include dry-run payload")
         require(payload["dry_run"]["needs_update"] is True, "prepare should report vendor update need when versions differ")
         require(payload["local_version"] == "0.1.0.0", "prepare should report current local vendor version")
+        require(
+            payload["automation_branch"] == "automation/gstack-dhf-daily-refresh",
+            "prepare should return the dedicated automation branch",
+        )
+        code, branch, err = run(["git", "branch", "--show-current"], cwd=clone_root)
+        require(code == 0, f"git branch should work in automation clone: {err or branch}")
+        require(branch == "automation/gstack-dhf-daily-refresh", "prepare should check out the dedicated automation branch")
 
     print("[PASS] prepare gstack daily refresh creates standalone clone")
 

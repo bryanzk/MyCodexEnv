@@ -15,6 +15,7 @@ from urllib.parse import urlparse
 
 DEFAULT_AUTOMATION_ID = "gstack-dhf-daily-refresh"
 DEFAULT_GSTACK_SOURCE = "https://github.com/garrytan/gstack.git"
+DEFAULT_AUTOMATION_BRANCH = "automation/gstack-dhf-daily-refresh"
 DNS_RESOLVE_ATTEMPTS = 25
 DNS_RESOLVE_RETRY_SECONDS = 5.0
 
@@ -89,6 +90,11 @@ def is_standalone_clone(path: Path) -> bool:
     return (path / ".git").is_dir()
 
 
+def ref_exists(repo_root: Path, ref: str) -> bool:
+    code, _, _ = run(["git", "rev-parse", "--verify", "--quiet", ref], cwd=repo_root)
+    return code == 0
+
+
 def make_payload(status: str, **extra: object) -> dict[str, object]:
     payload: dict[str, object] = {"status": status}
     payload.update(extra)
@@ -102,6 +108,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--clone-root", default="", help="Standalone clone path used by the automation. Defaults to $CODEX_HOME/automations/<id>/repo.")
     parser.add_argument("--memory-file", default="", help="Automation memory file. Defaults to $CODEX_HOME/automations/<id>/memory.md.")
     parser.add_argument("--gstack-source", default=DEFAULT_GSTACK_SOURCE)
+    parser.add_argument("--automation-branch", default=DEFAULT_AUTOMATION_BRANCH, help="Dedicated branch for automation commits; main is only used as the rebase base.")
     parser.add_argument("--json", action="store_true", help="Emit machine-readable JSON.")
     return parser.parse_args()
 
@@ -179,11 +186,7 @@ def main() -> int:
             print(json.dumps(payload, ensure_ascii=False, sort_keys=True))
             return 1
 
-    commands = [
-        ["git", "fetch", "origin"],
-        ["git", "switch", "main"],
-        ["git", "pull", "--ff-only"],
-    ]
+    commands = [["git", "fetch", "origin"]]
     for cmd in commands:
         code, out, err = retry_run(cmd, cwd=clone_root)
         if code != 0:
@@ -196,6 +199,62 @@ def main() -> int:
                 clone_root=str(clone_root),
                 memory_file=str(memory_file),
                 repo_origin=repo_origin,
+            )
+            print(json.dumps(payload, ensure_ascii=False, sort_keys=True))
+            return 1
+
+    code, out, err = run(["git", "status", "--porcelain"], cwd=clone_root)
+    if code != 0:
+        payload = make_payload(
+            "blocked",
+            reason="git_status_failed",
+            command="git status --porcelain",
+            detail=err or out,
+            controller_repo_root=str(controller_repo_root),
+            clone_root=str(clone_root),
+            memory_file=str(memory_file),
+            repo_origin=repo_origin,
+            automation_branch=args.automation_branch,
+        )
+        print(json.dumps(payload, ensure_ascii=False, sort_keys=True))
+        return 1
+
+    if out.strip():
+        payload = make_payload(
+            "blocked",
+            reason="clone_dirty",
+            command="git status --porcelain",
+            detail=out,
+            controller_repo_root=str(controller_repo_root),
+            clone_root=str(clone_root),
+            memory_file=str(memory_file),
+            repo_origin=repo_origin,
+            automation_branch=args.automation_branch,
+        )
+        print(json.dumps(payload, ensure_ascii=False, sort_keys=True))
+        return 1
+
+    remote_branch_ref = f"refs/remotes/origin/{args.automation_branch}"
+    start_point = f"origin/{args.automation_branch}" if ref_exists(clone_root, remote_branch_ref) else "origin/main"
+    branch_commands = [
+        ["git", "switch", "--no-track", "-C", args.automation_branch, start_point],
+    ]
+    if start_point != "origin/main":
+        branch_commands.append(["git", "rebase", "origin/main"])
+
+    for cmd in branch_commands:
+        code, out, err = retry_run(cmd, cwd=clone_root)
+        if code != 0:
+            payload = make_payload(
+                "blocked",
+                reason="git_sync_failed",
+                command=" ".join(cmd),
+                detail=err or out,
+                controller_repo_root=str(controller_repo_root),
+                clone_root=str(clone_root),
+                memory_file=str(memory_file),
+                repo_origin=repo_origin,
+                automation_branch=args.automation_branch,
             )
             print(json.dumps(payload, ensure_ascii=False, sort_keys=True))
             return 1
@@ -238,6 +297,7 @@ def main() -> int:
         memory_file=str(memory_file),
         repo_origin=repo_origin,
         gstack_source=args.gstack_source,
+        automation_branch=args.automation_branch,
         local_version=local_version,
         dry_run=dry_run_payload,
     )
