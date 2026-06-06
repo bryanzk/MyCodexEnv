@@ -14,13 +14,13 @@ Stable rules belong in `AGENTS.md`, `README.md`, `docs/repo-index.md`, or
   - `codex/skills/delivery-harness-framework/SKILL.md`
 - blocked_sources: none
 - unsafe_inputs: none
-- next_safe_task: No active Improvement 7 is selected; choose the next explicit backlog item from repo docs or run the next scheduled DHF refresh preflight before opening a branch.
+- next_safe_task: On the next scheduled refresh, rerun prepare first; if status=deferred and reason=dns_unreachable, update only automation memory and keep repo untouched.
 - required_commands:
   - `python3 test_runner.py`
   - `git diff --check`
   - `./scripts/verify_codex_env.sh --repo-root "$(pwd)" --codex-home "$HOME/.codex" --claude-home "$HOME/.claude"`
-- latest_checkpoint: 2026-06-01T22:03:55-04:00 Improvement 6 Task Demand requirements enforcement merged to main and post-merge refresh passed
-- latest_verification: 2026-06-01T22:03:55-04:00 command=python3 test_runner.py; exit_code=0; key_output=[PASS] all tests
+- latest_checkpoint: 2026-06-06T09:04:47-04:00 completed 2026-06-06 gstack daily refresh with DHF no-op and runtime sync recovery
+- latest_verification: 2026-06-06T09:04:47-04:00 command=python3 test_runner.py; exit_code=0; key_output=[PASS] all tests
 
 ## State Log
 
@@ -593,3 +593,22 @@ Stable rules belong in `AGENTS.md`, `README.md`, `docs/repo-index.md`, or
 - blockers:
   - none
 - next_safe_task: No active Improvement 7 is selected; choose the next explicit backlog item from repo docs or run the next scheduled DHF refresh preflight before opening a branch.
+
+### 2026-06-06T09:04:47-04:00
+- phase: handoff
+- event: checkpoint
+- summary: completed 2026-06-06 gstack daily refresh with DHF no-op and runtime sync recovery
+- git:
+  - branch: main
+  - latest_commit: bec0a6f
+  - dirty_status: dirty
+  - dirty_count: 1
+- changed_surfaces:
+  - `tasks/gstack-dhf-daily-refresh-2026-06-06.md`
+- verification:
+  - command: `python3 test_runner.py`
+  - exit_code: 0
+  - key_output: [PASS] all tests
+- blockers:
+  - none
+- next_safe_task: On the next scheduled refresh, rerun prepare first; if status=deferred and reason=dns_unreachable, update only automation memory and keep repo untouched.
