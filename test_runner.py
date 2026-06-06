@@ -26,6 +26,7 @@ HEADROOM_FILTER = ROOT / "scripts" / "headroom_filter.py"
 SYNC_GSTACK_VENDOR = ROOT / "scripts" / "sync_gstack_vendor.py"
 PREPARE_GSTACK_DAILY_REFRESH = ROOT / "scripts" / "prepare_gstack_dhf_daily_refresh.py"
 MERGE_GSTACK_DAILY_REFRESH = ROOT / "scripts" / "merge_gstack_refresh_if_safe.py"
+SYNC_LOCAL_MAIN_IF_SAFE = ROOT / "scripts" / "sync_local_main_if_safe.py"
 HARNESS_REQUIREMENTS_TEMPLATE = ROOT / "docs" / "templates" / "harness-requirements.md"
 HARNESS_AGENT_BRIEF_TEMPLATE = ROOT / "docs" / "templates" / "harness-agent-brief.md"
 LIFECYCLE_SKILL_ROUTING_DOC = ROOT / "docs" / "LIFECYCLE_SKILL_ROUTING.md"
@@ -1453,6 +1454,95 @@ def test_merge_gstack_daily_refresh_skips_diverged_branch():
         require(main_after == main_before, "skipped merge should not push origin/main")
 
     print("[PASS] merge gstack daily refresh skips diverged branch")
+
+
+def test_sync_local_main_fast_forwards_when_clean_and_behind_only():
+    with tempfile.TemporaryDirectory() as tmp:
+        tmp_path = Path(tmp)
+        seed = make_real_git_repo(tmp_path / "seed")
+        write(seed / "README.md", "seed\n")
+        code, out, err = run(["git", "add", "."], cwd=seed)
+        require(code == 0, f"git add should work: {err or out}")
+        code, out, err = run(["git", "commit", "-m", "seed main"], cwd=seed)
+        require(code == 0, f"git commit should work: {err or out}")
+        origin = make_bare_origin_from(seed, tmp_path / "origin.git")
+
+        local_repo = tmp_path / "local"
+        code, out, err = run(["git", "clone", str(origin), str(local_repo)])
+        require(code == 0, f"git clone local should work: {err or out}")
+        updater = tmp_path / "updater"
+        code, out, err = run(["git", "clone", str(origin), str(updater)])
+        require(code == 0, f"git clone updater should work: {err or out}")
+        run(["git", "config", "user.email", "test@example.com"], cwd=updater)
+        run(["git", "config", "user.name", "Test User"], cwd=updater)
+        write(updater / "remote.txt", "remote\n")
+        code, out, err = run(["git", "add", "."], cwd=updater)
+        require(code == 0, f"git add should work: {err or out}")
+        code, out, err = run(["git", "commit", "-m", "advance main"], cwd=updater)
+        require(code == 0, f"git commit should work: {err or out}")
+        code, out, err = run(["git", "push", "origin", "main"], cwd=updater)
+        require(code == 0, f"git push main should work: {err or out}")
+
+        code, out, err = run(
+            [
+                sys.executable,
+                str(SYNC_LOCAL_MAIN_IF_SAFE),
+                "--repo-root",
+                str(local_repo),
+                "--apply",
+                "--json",
+            ]
+        )
+        require(code == 0, f"local main sync should succeed: {err or out}")
+        payload = json.loads(out)
+        require(payload["status"] == "updated", "behind-only local main should be updated")
+        require(payload["counts"] == {"local_only": 0, "remote_only": 1}, "payload should report behind-only counts")
+        code, local_head, err = run(["git", "rev-parse", "main"], cwd=local_repo)
+        require(code == 0, f"local rev-parse should work: {err or local_head}")
+        code, origin_head, err = run(["git", "rev-parse", "refs/heads/main"], cwd=origin)
+        require(code == 0, f"origin rev-parse should work: {err or origin_head}")
+        require(local_head == origin_head, "local main should fast-forward to origin main")
+
+    print("[PASS] sync local main fast-forwards clean behind-only repo")
+
+
+def test_sync_local_main_skips_dirty_worktree():
+    with tempfile.TemporaryDirectory() as tmp:
+        tmp_path = Path(tmp)
+        seed = make_real_git_repo(tmp_path / "seed")
+        write(seed / "README.md", "seed\n")
+        code, out, err = run(["git", "add", "."], cwd=seed)
+        require(code == 0, f"git add should work: {err or out}")
+        code, out, err = run(["git", "commit", "-m", "seed main"], cwd=seed)
+        require(code == 0, f"git commit should work: {err or out}")
+        origin = make_bare_origin_from(seed, tmp_path / "origin.git")
+
+        local_repo = tmp_path / "local"
+        code, out, err = run(["git", "clone", str(origin), str(local_repo)])
+        require(code == 0, f"git clone local should work: {err or out}")
+        code, before_head, err = run(["git", "rev-parse", "main"], cwd=local_repo)
+        require(code == 0, f"local rev-parse should work: {err or before_head}")
+        write(local_repo / "dirty.txt", "dirty\n")
+
+        code, out, err = run(
+            [
+                sys.executable,
+                str(SYNC_LOCAL_MAIN_IF_SAFE),
+                "--repo-root",
+                str(local_repo),
+                "--apply",
+                "--json",
+            ]
+        )
+        require(code == 0, f"dirty local main sync should skip without failing: {err or out}")
+        payload = json.loads(out)
+        require(payload["status"] == "skipped", "dirty worktree should skip sync")
+        require(payload["reason"] == "dirty_worktree", "skip reason should explain dirty worktree")
+        code, after_head, err = run(["git", "rev-parse", "main"], cwd=local_repo)
+        require(code == 0, f"local rev-parse should work: {err or after_head}")
+        require(after_head == before_head, "dirty local main should not move")
+
+    print("[PASS] sync local main skips dirty worktree")
 
 
 def test_harness_guard_policy_decisions():
@@ -3299,6 +3389,7 @@ def main():
     require(HEADROOM_FILTER.exists(), f"missing headroom filter helper: {HEADROOM_FILTER}")
     require(PREPARE_GSTACK_DAILY_REFRESH.exists(), f"missing daily refresh prepare helper: {PREPARE_GSTACK_DAILY_REFRESH}")
     require(MERGE_GSTACK_DAILY_REFRESH.exists(), f"missing daily refresh merge helper: {MERGE_GSTACK_DAILY_REFRESH}")
+    require(SYNC_LOCAL_MAIN_IF_SAFE.exists(), f"missing local main sync helper: {SYNC_LOCAL_MAIN_IF_SAFE}")
     require(HARNESS_REQUIREMENTS_TEMPLATE.exists(), f"missing harness requirements template: {HARNESS_REQUIREMENTS_TEMPLATE}")
     require(HARNESS_AGENT_BRIEF_TEMPLATE.exists(), f"missing harness agent brief template: {HARNESS_AGENT_BRIEF_TEMPLATE}")
     require(HARNESS_GUARD.exists(), f"missing harness guard hook: {HARNESS_GUARD}")
@@ -3328,6 +3419,8 @@ def main():
     test_prepare_gstack_daily_refresh_resolves_duplicate_dns_hosts_once()
     test_merge_gstack_daily_refresh_fast_forwards_main_when_ahead_only()
     test_merge_gstack_daily_refresh_skips_diverged_branch()
+    test_sync_local_main_fast_forwards_when_clean_and_behind_only()
+    test_sync_local_main_skips_dirty_worktree()
     test_harness_guard_policy_decisions()
     test_model_router_prompt_complexity_decisions()
     test_harness_evidence_append_and_observer_failure_mode()

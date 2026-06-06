@@ -44,6 +44,7 @@
 - `scripts/headroom_filter.py`: optional stdin filter for compressing large command outputs with Headroom before sending them into agent context.
 - `scripts/prepare_gstack_dhf_daily_refresh.py`: preflight the daily refresh automation, retry DNS probes for about two minutes, require a standalone clone, check out the dedicated `automation/gstack-dhf-daily-refresh` branch rebased on `origin/main`, and return dry-run evidence before repo mutation.
 - `scripts/merge_gstack_refresh_if_safe.py`: unattended merge gate for gstack daily refresh; only `--verified` ahead-only automation branches can fast-forward `main`.
+- `scripts/sync_local_main_if_safe.py`: optional post-merge local sync gate; only clean local worktrees already on `main` and behind-only relative to `origin/main` are fast-forwarded.
 - `scripts/sync_gstack_vendor.py`: bulk-sync `codex/skills/gstack` from an upstream `garrytan/gstack` git snapshot.
 - `codex/skills/delivery-harness-framework/evals/evals.json`: routing and boundary evals for the generic lifecycle skill, including gstack brain-aware planning and question-tuning boundaries.
 - `scripts/verify_codex_env.sh`: runtime sync and environment verification.
@@ -79,7 +80,7 @@
 - Runtime sync: `./scripts/verify_codex_env.sh --repo-root "$(pwd)" --codex-home "$HOME/.codex" --claude-home "$HOME/.claude"`.
 - Automation-safe runtime sync: `./scripts/verify_codex_env.sh --repo-root "$(pwd)" --codex-home "$HOME/.codex" --claude-home "$HOME/.claude" --skip-check app_google_chrome`.
 - Formatting: `git diff --check`.
-- Gstack vendor refresh: `python3 scripts/prepare_gstack_dhf_daily_refresh.py --json`, then in the returned standalone clone and automation branch run `python3 scripts/sync_gstack_vendor.py --repo-root "$(pwd)" --dry-run --json`; only rerun without `--dry-run` when `needs_update=true`. Scheduled automation pushes `automation/gstack-dhf-daily-refresh` first, then may run `python3 scripts/merge_gstack_refresh_if_safe.py --apply --verified --json` to fast-forward `main` only when the branch is ahead-only and verification has passed.
+- Gstack vendor refresh: `python3 scripts/prepare_gstack_dhf_daily_refresh.py --json`, then in the returned standalone clone and automation branch run `python3 scripts/sync_gstack_vendor.py --repo-root "$(pwd)" --dry-run --json`; only rerun without `--dry-run` when `needs_update=true`. Scheduled automation pushes `automation/gstack-dhf-daily-refresh` first, then may run `python3 scripts/merge_gstack_refresh_if_safe.py --apply --verified --json` to fast-forward `main` only when the branch is ahead-only and verification has passed. If `main` is updated, it may then run `python3 scripts/sync_local_main_if_safe.py --repo-root /Users/kezheng/Codes/CursorDeveloper/MyCodexEnv --apply --json` to fast-forward the local checkout only when it is clean, on `main`, and behind-only.
 - Repo-local docs/config changes must keep README, docs, tests, and sync behavior consistent.
 
 ## High-Risk Areas
