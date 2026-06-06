@@ -25,6 +25,7 @@ HARNESS_ENV_PROBE = ROOT / "scripts" / "harness_env_probe.py"
 HEADROOM_FILTER = ROOT / "scripts" / "headroom_filter.py"
 SYNC_GSTACK_VENDOR = ROOT / "scripts" / "sync_gstack_vendor.py"
 PREPARE_GSTACK_DAILY_REFRESH = ROOT / "scripts" / "prepare_gstack_dhf_daily_refresh.py"
+MERGE_GSTACK_DAILY_REFRESH = ROOT / "scripts" / "merge_gstack_refresh_if_safe.py"
 HARNESS_REQUIREMENTS_TEMPLATE = ROOT / "docs" / "templates" / "harness-requirements.md"
 HARNESS_AGENT_BRIEF_TEMPLATE = ROOT / "docs" / "templates" / "harness-agent-brief.md"
 LIFECYCLE_SKILL_ROUTING_DOC = ROOT / "docs" / "LIFECYCLE_SKILL_ROUTING.md"
@@ -94,6 +95,12 @@ def make_real_git_repo(path: Path) -> Path:
     run(["git", "config", "user.email", "test@example.com"], cwd=path)
     run(["git", "config", "user.name", "Test User"], cwd=path)
     return path
+
+
+def make_bare_origin_from(source: Path, bare_path: Path) -> Path:
+    code, out, err = run(["git", "clone", "--bare", str(source), str(bare_path)])
+    require(code == 0, f"git clone --bare should work: {err or out}")
+    return bare_path
 
 
 def run_manage_agents(*args):
@@ -1332,6 +1339,120 @@ def test_prepare_gstack_daily_refresh_resolves_duplicate_dns_hosts_once():
     require(all(item["resolved"] is True for item in resolution), "cached host resolution should apply to both sources")
 
     print("[PASS] prepare gstack daily refresh resolves duplicate DNS hosts once")
+
+
+def test_merge_gstack_daily_refresh_fast_forwards_main_when_ahead_only():
+    with tempfile.TemporaryDirectory() as tmp:
+        tmp_path = Path(tmp)
+        seed = make_real_git_repo(tmp_path / "seed")
+        write(seed / "README.md", "seed\n")
+        code, out, err = run(["git", "add", "."], cwd=seed)
+        require(code == 0, f"git add should work: {err or out}")
+        code, out, err = run(["git", "commit", "-m", "seed main"], cwd=seed)
+        require(code == 0, f"git commit should work: {err or out}")
+        origin = make_bare_origin_from(seed, tmp_path / "origin.git")
+
+        work = tmp_path / "work"
+        code, out, err = run(["git", "clone", str(origin), str(work)])
+        require(code == 0, f"git clone should work: {err or out}")
+        run(["git", "config", "user.email", "test@example.com"], cwd=work)
+        run(["git", "config", "user.name", "Test User"], cwd=work)
+        code, out, err = run(["git", "switch", "-c", "automation/gstack-dhf-daily-refresh"], cwd=work)
+        require(code == 0, f"git switch automation branch should work: {err or out}")
+        write(work / "codex" / "skills" / "gstack" / "VERSION", "9.0.0.0\n")
+        code, out, err = run(["git", "add", "."], cwd=work)
+        require(code == 0, f"git add should work: {err or out}")
+        code, out, err = run(["git", "commit", "-m", "refresh gstack"], cwd=work)
+        require(code == 0, f"git commit should work: {err or out}")
+        code, out, err = run(["git", "push", "origin", "HEAD:refs/heads/automation/gstack-dhf-daily-refresh"], cwd=work)
+        require(code == 0, f"git push automation branch should work: {err or out}")
+
+        code, out, err = run(
+            [
+                sys.executable,
+                str(MERGE_GSTACK_DAILY_REFRESH),
+                "--repo-root",
+                str(work),
+                "--apply",
+                "--verified",
+                "--json",
+            ]
+        )
+        require(code == 0, f"safe merge should succeed: {err or out}")
+        payload = json.loads(out)
+        require(payload["status"] == "merged", "ahead-only automation branch should merge")
+        require(payload["counts"] == {"main_only": 0, "automation_only": 1}, "payload should report ahead-only counts")
+        code, main_head, err = run(["git", "rev-parse", "refs/heads/main"], cwd=origin)
+        require(code == 0, f"bare origin main rev-parse should work: {err or main_head}")
+        code, automation_head, err = run(["git", "rev-parse", "refs/heads/automation/gstack-dhf-daily-refresh"], cwd=origin)
+        require(code == 0, f"bare origin automation rev-parse should work: {err or automation_head}")
+        require(main_head == automation_head, "safe merge should fast-forward origin/main to automation head")
+
+    print("[PASS] merge gstack daily refresh fast-forwards ahead-only branch")
+
+
+def test_merge_gstack_daily_refresh_skips_diverged_branch():
+    with tempfile.TemporaryDirectory() as tmp:
+        tmp_path = Path(tmp)
+        seed = make_real_git_repo(tmp_path / "seed")
+        write(seed / "README.md", "seed\n")
+        code, out, err = run(["git", "add", "."], cwd=seed)
+        require(code == 0, f"git add should work: {err or out}")
+        code, out, err = run(["git", "commit", "-m", "seed main"], cwd=seed)
+        require(code == 0, f"git commit should work: {err or out}")
+        origin = make_bare_origin_from(seed, tmp_path / "origin.git")
+
+        automation_work = tmp_path / "automation-work"
+        code, out, err = run(["git", "clone", str(origin), str(automation_work)])
+        require(code == 0, f"git clone should work: {err or out}")
+        run(["git", "config", "user.email", "test@example.com"], cwd=automation_work)
+        run(["git", "config", "user.name", "Test User"], cwd=automation_work)
+        code, out, err = run(["git", "switch", "-c", "automation/gstack-dhf-daily-refresh"], cwd=automation_work)
+        require(code == 0, f"git switch automation branch should work: {err or out}")
+        write(automation_work / "automation.txt", "automation\n")
+        code, out, err = run(["git", "add", "."], cwd=automation_work)
+        require(code == 0, f"git add should work: {err or out}")
+        code, out, err = run(["git", "commit", "-m", "automation change"], cwd=automation_work)
+        require(code == 0, f"git commit should work: {err or out}")
+        code, out, err = run(["git", "push", "origin", "HEAD:refs/heads/automation/gstack-dhf-daily-refresh"], cwd=automation_work)
+        require(code == 0, f"git push automation branch should work: {err or out}")
+
+        main_work = tmp_path / "main-work"
+        code, out, err = run(["git", "clone", str(origin), str(main_work)])
+        require(code == 0, f"git clone should work: {err or out}")
+        run(["git", "config", "user.email", "test@example.com"], cwd=main_work)
+        run(["git", "config", "user.name", "Test User"], cwd=main_work)
+        write(main_work / "main.txt", "main\n")
+        code, out, err = run(["git", "add", "."], cwd=main_work)
+        require(code == 0, f"git add should work: {err or out}")
+        code, out, err = run(["git", "commit", "-m", "main change"], cwd=main_work)
+        require(code == 0, f"git commit should work: {err or out}")
+        code, out, err = run(["git", "push", "origin", "main"], cwd=main_work)
+        require(code == 0, f"git push main should work: {err or out}")
+        code, main_before, err = run(["git", "rev-parse", "refs/heads/main"], cwd=origin)
+        require(code == 0, f"bare origin main rev-parse should work: {err or main_before}")
+
+        code, out, err = run(
+            [
+                sys.executable,
+                str(MERGE_GSTACK_DAILY_REFRESH),
+                "--repo-root",
+                str(automation_work),
+                "--apply",
+                "--verified",
+                "--json",
+            ]
+        )
+        require(code == 0, f"diverged branch should be skipped without failing: {err or out}")
+        payload = json.loads(out)
+        require(payload["status"] == "skipped", "diverged automation branch should skip merge")
+        require(payload["reason"] == "not_ahead_only", "skip reason should explain non-ahead-only branch")
+        require(payload["counts"] == {"main_only": 1, "automation_only": 1}, "payload should report diverged counts")
+        code, main_after, err = run(["git", "rev-parse", "refs/heads/main"], cwd=origin)
+        require(code == 0, f"bare origin main rev-parse should work: {err or main_after}")
+        require(main_after == main_before, "skipped merge should not push origin/main")
+
+    print("[PASS] merge gstack daily refresh skips diverged branch")
 
 
 def test_harness_guard_policy_decisions():
@@ -3177,6 +3298,7 @@ def main():
     require(HARNESS_ENV_PROBE.exists(), f"missing harness env probe helper: {HARNESS_ENV_PROBE}")
     require(HEADROOM_FILTER.exists(), f"missing headroom filter helper: {HEADROOM_FILTER}")
     require(PREPARE_GSTACK_DAILY_REFRESH.exists(), f"missing daily refresh prepare helper: {PREPARE_GSTACK_DAILY_REFRESH}")
+    require(MERGE_GSTACK_DAILY_REFRESH.exists(), f"missing daily refresh merge helper: {MERGE_GSTACK_DAILY_REFRESH}")
     require(HARNESS_REQUIREMENTS_TEMPLATE.exists(), f"missing harness requirements template: {HARNESS_REQUIREMENTS_TEMPLATE}")
     require(HARNESS_AGENT_BRIEF_TEMPLATE.exists(), f"missing harness agent brief template: {HARNESS_AGENT_BRIEF_TEMPLATE}")
     require(HARNESS_GUARD.exists(), f"missing harness guard hook: {HARNESS_GUARD}")
@@ -3204,6 +3326,8 @@ def main():
     test_prepare_gstack_daily_refresh_retries_transient_dns_failures()
     test_prepare_gstack_daily_refresh_dns_defaults_cover_slow_startup()
     test_prepare_gstack_daily_refresh_resolves_duplicate_dns_hosts_once()
+    test_merge_gstack_daily_refresh_fast_forwards_main_when_ahead_only()
+    test_merge_gstack_daily_refresh_skips_diverged_branch()
     test_harness_guard_policy_decisions()
     test_model_router_prompt_complexity_decisions()
     test_harness_evidence_append_and_observer_failure_mode()
