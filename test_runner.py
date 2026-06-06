@@ -22,6 +22,7 @@ HARNESS_CHECKPOINT = ROOT / "scripts" / "harness_checkpoint.py"
 HARNESS_REQUIREMENTS = ROOT / "scripts" / "harness_requirements.py"
 HARNESS_RECOVER = ROOT / "scripts" / "harness_recover.py"
 HARNESS_ENV_PROBE = ROOT / "scripts" / "harness_env_probe.py"
+HEADROOM_FILTER = ROOT / "scripts" / "headroom_filter.py"
 SYNC_GSTACK_VENDOR = ROOT / "scripts" / "sync_gstack_vendor.py"
 PREPARE_GSTACK_DAILY_REFRESH = ROOT / "scripts" / "prepare_gstack_dhf_daily_refresh.py"
 HARNESS_REQUIREMENTS_TEMPLATE = ROOT / "docs" / "templates" / "harness-requirements.md"
@@ -2867,6 +2868,86 @@ def test_capture_text_auto_classifies_input_types():
     print("[PASS] capture_text auto classification and persistence")
 
 
+def test_headroom_filter_detects_modes_and_reports_stats():
+    code, out, err = run_with_input(
+        [sys.executable, str(HEADROOM_FILTER), "--detect-only"],
+        "src/foo.py:12:def quote():\nsrc/bar.py:7:class Quote:\n",
+    )
+    require(code == 0, f"headroom detect failed: {err or out}")
+    require(out == "search", f"expected search mode, got {out}")
+
+    code, out, err = run([sys.executable, str(HEADROOM_FILTER), "--install-hint"])
+    require(code == 0, f"install hint failed: {err or out}")
+    require("python3.12" in out and "headroom-ai" in out, "install hint should mention Python 3.12 and headroom-ai")
+
+    with tempfile.TemporaryDirectory() as tmp:
+        fake_root = Path(tmp)
+        package = fake_root / "headroom"
+        package.mkdir()
+        write(
+            package / "__init__.py",
+            """
+class _CrushResult:
+    compressed = "JSON_COMPRESSED"
+    strategy = "fake"
+    was_modified = True
+
+class SmartCrusher:
+    def crush(self, text, query=""):
+        return _CrushResult()
+""",
+        )
+        write(
+            package / "transforms.py",
+            """
+class _SearchResult:
+    compressed = "SEARCH_COMPRESSED"
+    original_match_count = 2
+    compressed_match_count = 1
+    files_affected = 2
+
+class _LogResult:
+    compressed = "LOG_COMPRESSED"
+    original_line_count = 3
+    compressed_line_count = 1
+    format_detected = "fake"
+    stats = {"errors": 0}
+
+class _DiffResult:
+    compressed = "DIFF_COMPRESSED"
+    original_line_count = 4
+    compressed_line_count = 2
+    files_affected = 1
+
+class SearchCompressor:
+    def compress(self, text, context="", bias=1.0):
+        return _SearchResult()
+
+class LogCompressor:
+    def compress(self, text, context="", bias=1.0):
+        return _LogResult()
+
+class DiffCompressor:
+    def compress(self, text, context=""):
+        return _DiffResult()
+""",
+        )
+        env = os.environ.copy()
+        env["PYTHONPATH"] = str(fake_root)
+        code, out, err = run_with_input(
+            [sys.executable, str(HEADROOM_FILTER), "--mode", "search", "--stats"],
+            "src/foo.py:12:def quote():\nsrc/bar.py:7:class Quote:\n",
+            env=env,
+        )
+        require(code == 0, f"headroom fake compression failed: {err or out}")
+        require(out == "SEARCH_COMPRESSED", f"unexpected compressed output: {out}")
+        receipt = json.loads(err)
+        require(receipt["mode"] == "search", "stats should record selected mode")
+        require(receipt["detail"]["original_matches"] == 2, "stats should include compressor detail")
+
+    print("[PASS] headroom filter mode detection and stats")
+
+
 def test_manage_agents_scan_backup_generate_restore():
     with tempfile.TemporaryDirectory() as tmp:
         tmp_path = Path(tmp)
@@ -3087,6 +3168,7 @@ def main():
     require(HARNESS_REQUIREMENTS.exists(), f"missing harness requirements helper: {HARNESS_REQUIREMENTS}")
     require(HARNESS_RECOVER.exists(), f"missing harness recover helper: {HARNESS_RECOVER}")
     require(HARNESS_ENV_PROBE.exists(), f"missing harness env probe helper: {HARNESS_ENV_PROBE}")
+    require(HEADROOM_FILTER.exists(), f"missing headroom filter helper: {HEADROOM_FILTER}")
     require(PREPARE_GSTACK_DAILY_REFRESH.exists(), f"missing daily refresh prepare helper: {PREPARE_GSTACK_DAILY_REFRESH}")
     require(HARNESS_REQUIREMENTS_TEMPLATE.exists(), f"missing harness requirements template: {HARNESS_REQUIREMENTS_TEMPLATE}")
     require(HARNESS_AGENT_BRIEF_TEMPLATE.exists(), f"missing harness agent brief template: {HARNESS_AGENT_BRIEF_TEMPLATE}")
@@ -3128,6 +3210,7 @@ def main():
     test_sync_claude_injects_integration_block()
     test_verify_after_full_sync()
     test_capture_text_auto_classifies_input_types()
+    test_headroom_filter_detects_modes_and_reports_stats()
     test_manage_agents_scan_backup_generate_restore()
     print("[PASS] all tests")
 

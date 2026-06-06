@@ -60,6 +60,7 @@ cd MyCodexEnv
 - `scripts/harness_requirements.py`：校验需求 artifact 的字段、验收标准和验证命令
 - `scripts/harness_recover.py`：从 repo index、state、git 和 evidence 恢复 next safe task
 - `scripts/harness_env_probe.py`：观测本机 Codex runtime 配置、hooks、policy 和 schema 状态
+- `scripts/headroom_filter.py`：可选 Headroom stdin 过滤器，用于在把大型 `rg` 输出、测试日志、JSON 工具结果送入 agent context 前先做本地压缩
 - `codex/hooks/model_router.py`：`UserPromptSubmit` prompt 复杂度路由器，按 simple/medium/complex 和质量地板选择 `gpt-5.4-mini`、`gpt-5.4` 或 `gpt-5.5`，复杂任务可在阶段或 subtask 边界重复调用以自动下探或升级；当 hook payload 或环境变量提供 token / 5 小时 limit 字段时，同步输出 telemetry，缺失时显式写 `unavailable`
 - `codex/hooks/harness_guard.py`：`PreToolUse` guardrail，处理 destructive、secret、remote、dynamic execution 和越阶段写入
 - `codex/hooks/harness_observer.py`：`PostToolUse` observer，非阻塞记录工具事件
@@ -169,3 +170,16 @@ python3 scripts/codex_subconscious.py publish-inbox --limit 3 --dedupe-hours 8
 ```
 
 背景说明与 automation 接法见：`docs/CODEX_SUBCONSCIOUS.md`
+
+## Headroom 输出压缩
+
+如果命令输出太长，先用可选 Headroom 过滤器压缩再贴给 agent：
+
+```bash
+/opt/homebrew/bin/python3.12 -m venv /tmp/headroom
+/tmp/headroom/bin/pip install headroom-ai
+rg -n "gmail|quote|extract" src tests docs \
+  | /tmp/headroom/bin/python scripts/headroom_filter.py --mode auto --stats
+```
+
+详细工作流见 `docs/HEADROOM_WORKFLOW.md`。

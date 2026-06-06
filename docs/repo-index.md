@@ -41,6 +41,7 @@
 - `scripts/harness_requirements.py`: requirements artifact validator.
 - `scripts/harness_recover.py`: fresh-session recovery smoke check with evidence-kind counts and compact latest decision evidence.
 - `scripts/harness_env_probe.py`: observable Codex runtime config and split evidence schema probe.
+- `scripts/headroom_filter.py`: optional stdin filter for compressing large command outputs with Headroom before sending them into agent context.
 - `scripts/prepare_gstack_dhf_daily_refresh.py`: preflight the daily refresh automation, retry DNS probes for about two minutes, require a standalone clone, and return dry-run evidence before repo mutation.
 - `scripts/sync_gstack_vendor.py`: bulk-sync `codex/skills/gstack` from an upstream `garrytan/gstack` git snapshot.
 - `codex/skills/delivery-harness-framework/evals/evals.json`: routing and boundary evals for the generic lifecycle skill, including gstack brain-aware planning and question-tuning boundaries.
@@ -59,6 +60,7 @@
 - `README.md`: top-level quick start and Harness Runtime overview.
 - `docs/HARNESS_RUNTIME.md`: lifecycle, evidence, checkpoint, permission, and subagent contracts.
 - `docs/MODEL_ROUTER_EVAL_MATRIX.md`: model routing existence, positive/negative, progressive-switching, and end-to-end evals.
+- `docs/HEADROOM_WORKFLOW.md`: optional Headroom command-output compression workflow and ShipQ examples.
 - `docs/AGENT_HARNESS_STATUS.md`: Agent Harness workflow/infra status map.
 - `docs/CODEX_ENV_REPRODUCTION.md`: Codex + Claude environment reproduction guide.
 - `docs/LIFECYCLE_SKILL_ROUTING.md`: lifecycle stage, workflow, skill, and helper routing.
