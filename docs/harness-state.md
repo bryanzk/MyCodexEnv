@@ -14,13 +14,13 @@ Stable rules belong in `AGENTS.md`, `README.md`, `docs/repo-index.md`, or
   - `codex/skills/delivery-harness-framework/SKILL.md`
 - blocked_sources: none
 - unsafe_inputs: none
-- next_safe_task: Review and merge PR #6; then decide the freeze-review policy before any skill removal, archive, rename, or runtime sync.
+- next_safe_task: Create the freeze-review policy before any skill removal, archive, rename, or runtime sync; first classify the two untracked docs/plans files as keep/update/delete.
 - required_commands:
   - `python3 test_runner.py`
   - `git diff --check`
   - `./scripts/verify_codex_env.sh --repo-root "$(pwd)" --codex-home "$HOME/.codex" --claude-home "$HOME/.claude"`
-- latest_checkpoint: 2026-06-08T17:03:51-04:00 Pushed skill-governance deprecation simulation branch and opened GitHub PR #6.
-- latest_verification: 2026-06-08T17:03:51-04:00 command=gh pr view 6 --json number,url,state,headRefName,baseRefName,title; exit_code=0; key_output=PR #6 OPEN; head=codex/mce-20260608-skill-governance-deprecation-sim; base=main; url=https://github.com/bryanzk/MyCodexEnv/pull/6
+- latest_checkpoint: 2026-06-08T17:10:45-04:00 Merged GitHub PR #6 for report-only skill deprecation simulation; remote main now points at merge commit f8aa1a4.
+- latest_verification: 2026-06-08T17:10:45-04:00 command=gh pr view 6 --json number,url,state,mergedAt,mergeCommit,headRefName,baseRefName,title; exit_code=0; key_output=PR #6 MERGED; merge_commit=f8aa1a4607332582c9fcd36c97aef7a9afccbcdb; mergedAt=2026-06-08T21:09:32Z
 
 ## State Log
 
@@ -887,3 +887,22 @@ Stable rules belong in `AGENTS.md`, `README.md`, `docs/repo-index.md`, or
 - blockers:
   - none
 - next_safe_task: Review and merge PR #6; then decide the freeze-review policy before any skill removal, archive, rename, or runtime sync.
+
+### 2026-06-08T17:10:45-04:00
+- phase: handoff
+- event: checkpoint
+- summary: Merged GitHub PR #6 for report-only skill deprecation simulation; remote main now points at merge commit f8aa1a4.
+- git:
+  - branch: codex/mce-20260608-freeze-review-policy
+  - latest_commit: f8aa1a4
+  - dirty_status: dirty
+  - dirty_count: 2
+- changed_surfaces:
+  - `https://github.com/bryanzk/MyCodexEnv/pull/6`
+- verification:
+  - command: `gh pr view 6 --json number,url,state,mergedAt,mergeCommit,headRefName,baseRefName,title`
+  - exit_code: 0
+  - key_output: PR #6 MERGED; merge_commit=f8aa1a4607332582c9fcd36c97aef7a9afccbcdb; mergedAt=2026-06-08T21:09:32Z
+- blockers:
+  - none
+- next_safe_task: Create the freeze-review policy before any skill removal, archive, rename, or runtime sync; first classify the two untracked docs/plans files as keep/update/delete.
