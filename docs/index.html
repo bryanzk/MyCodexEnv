@@ -346,7 +346,43 @@
       <a class="tag" href="./LIFECYCLE_SKILL_ROUTING.md">文字规范</a>
     </nav>
 
-    <section class="section-block" aria-labelledby="learn-heading" style="--i:2">
+    <section class="section-block" aria-labelledby="latest-heading" style="--i:2">
+      <div class="section-heading">
+        <div>
+          <div class="label">Current Routing Contract</div>
+          <h2 id="latest-heading">DHF 先路由决策，再开始工作</h2>
+        </div>
+        <p>公开说明现在覆盖当前 skill 合同：恢复状态、分类执行 lane、处理架构冲突、选择专用 route，并以 fresh evidence 收尾。</p>
+      </div>
+      <div class="card-row three">
+        <div class="card">
+          <div>
+            <div class="label">Lane Gate</div>
+            <h2>本地、演示或生产</h2>
+            <p>DHF 区分 local development、operator live demo、customer/production 三类路径，外部系统、密钥、部署和客户数据默认需要显式门禁。</p>
+          </div>
+          <div class="meta">execution lane first</div>
+        </div>
+        <div class="card">
+          <div>
+            <div class="label">Alignment Gate</div>
+            <h2>架构对齐 checkpoint</h2>
+            <p>当 durable sources 不一致时，DHF 先记录 decision checkpoint，按业务结果重切 vertical slices，再验证 agent-team write set。</p>
+          </div>
+          <div class="meta">decision surface before edits</div>
+        </div>
+        <div class="card">
+          <div>
+            <div class="label">Review Boundary</div>
+            <h2>委员会循环必须显式触发</h2>
+            <p>普通 review、QA、安全和设计检查继续走专用 route；只有用户要求 committee、revision worker 和目标评分时，才进入 committee-review-loop。</p>
+          </div>
+          <div class="meta">committee-review-loop</div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section-block" aria-labelledby="learn-heading" style="--i:3">
       <div class="section-heading">
         <div>
           <div class="label">Start Here</div>
@@ -404,7 +440,7 @@
       </div>
     </section>
 
-    <section class="section-block" aria-labelledby="reference-heading" style="--i:3">
+    <section class="section-block" aria-labelledby="reference-heading" style="--i:4">
       <div class="section-heading">
         <div>
           <div class="label">Reference</div>

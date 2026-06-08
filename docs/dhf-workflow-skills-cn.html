@@ -125,7 +125,7 @@
     }
 
     .step-number { color: var(--amber); font-size: 11px; font-weight: 700; }
-    .stage-head h3 { margin: 0; font-size: 26px; line-height: 1.02; }
+    .stage-head h3 { margin: 0; font-size: 26px; line-height: 1.02; overflow-wrap: anywhere; }
     .stage-head p { margin: 0; color: var(--dim); line-height: 1.45; font-size: 14px; }
 
     .skills {
@@ -187,7 +187,7 @@
     <section class="panel">
       <div class="label">How to read this</div>
       <h2>DHF 先路由，再委托给专用 Skill。</h2>
-      <p>生命周期路由器负责恢复持久状态、判断阶段、选择专用工作流。Helper scripts 负责验证证据或 agent plan；本页聚焦 Skill，因为它们定义每个阶段中 agent 应该怎样行动。</p>
+      <p>生命周期路由器负责恢复持久状态、判断阶段和 execution lane、选择专用工作流。Helper scripts 负责验证 requirements、agent plan、evidence 和 checkpoint；本页聚焦 Skill，因为它们定义每个阶段中 agent 应该怎样行动。</p>
     </section>
 
     <section class="stage-list" aria-label="DHF 工作流程 Skill 矩阵">
@@ -212,6 +212,7 @@
         <div class="skills">
           <div class="skill"><strong>planner</strong><p>分析复杂需求、架构上下文、任务拆解与风险，在改代码前把问题边界理清。</p><a class="source-link" href="https://github.com/bryanzk/MyCodexEnv/blob/main/codex/skills/planner/SKILL.md">GitHub 源码</a></div>
           <div class="skill"><strong>req-to-dev</strong><p>把需求或原则文档转成可执行开发包，包括计划、安全网、契约、验收测试和 owner 分工。</p><a class="source-link" href="https://github.com/bryanzk/MyCodexEnv/blob/main/codex/skills/req-to-dev/SKILL.md">GitHub 源码</a></div>
+          <div class="skill"><strong>vendored gstack spec</strong><p>把模糊实现意图转成 backlog-ready issue、ticket 或 executable spec，同时保留 DHF 的 source-of-truth、lane 和验证边界。</p><a class="source-link" href="https://github.com/bryanzk/MyCodexEnv/tree/main/codex/skills/gstack">GitHub 源码</a></div>
         </div>
       </article>
 
@@ -222,11 +223,13 @@
           <p>在进入实现前锁定产品、工程、设计和执行顺序。</p>
         </div>
         <div class="skills">
+          <div class="skill"><strong>delivery-harness-framework</strong><p>当 durable sources 冲突时，DHF 拥有 architecture alignment checkpoint：先比较产品、流程、组件、数据归属、lane、安全、切片和 handoff state，再进入编辑。</p><a class="source-link" href="https://github.com/bryanzk/MyCodexEnv/blob/main/codex/skills/delivery-harness-framework/SKILL.md">GitHub 源码</a></div>
           <div class="skill"><strong>gstack-plan-eng-review</strong><p>审查架构、数据流、边界情况、测试覆盖、性能和运维风险；gbrain 已配置时可读取结构化规划上下文。</p><a class="source-link" href="https://github.com/bryanzk/MyCodexEnv/blob/main/codex/skills/gstack-plan-eng-review/SKILL.md">GitHub 源码</a></div>
           <div class="skill"><strong>gstack-plan-ceo-review</strong><p>从产品与创始人视角压力测试定位、范围、用户价值和战略取舍。</p><a class="source-link" href="https://github.com/bryanzk/MyCodexEnv/blob/main/codex/skills/gstack-plan-ceo-review/SKILL.md">GitHub 源码</a></div>
           <div class="skill"><strong>gstack-office-hours</strong><p>以 founder 或 builder office hours 方式暴露需求真实性、最窄切入点和产品想法是否值得继续；可使用 gbrain preflight。</p><a class="source-link" href="https://github.com/bryanzk/MyCodexEnv/blob/main/codex/skills/gstack-office-hours/SKILL.md">GitHub 源码</a></div>
           <div class="skill"><strong>gstack-plan-design-review</strong><p>在 UI 实现前审查 UX 结构、视觉方向、响应式行为和设计验收标准；gbrain 只作为专用规划上下文，不替代 repo state。</p><a class="source-link" href="https://github.com/bryanzk/MyCodexEnv/blob/main/codex/skills/gstack-plan-design-review/SKILL.md">GitHub 源码</a></div>
           <div class="skill"><strong>task-flow-orchestrator</strong><p>为复杂任务安排执行顺序，把 Karpathy 思考、规划、TDD 和验证组合成可执行流程。</p><a class="source-link" href="https://github.com/bryanzk/MyCodexEnv/blob/main/codex/skills/task-flow-orchestrator/SKILL.md">GitHub 源码</a></div>
+          <div class="skill"><strong>planner / prototype route</strong><p>throwaway prototype 只用于回答一个明确的数据模型、状态机、模块接口或 UI 问题；结束后删除原型或把结论写入 durable decision。</p><a class="source-link" href="https://github.com/bryanzk/MyCodexEnv/blob/main/codex/skills/planner/SKILL.md">GitHub 源码</a></div>
         </div>
       </article>
 
@@ -239,6 +242,7 @@
         <div class="skills">
           <div class="skill"><strong>tdd-guide</strong><p>对功能、bug 修复、重构和核心业务逻辑执行 RED -> GREEN -> REFACTOR。</p><a class="source-link" href="https://github.com/bryanzk/MyCodexEnv/blob/main/codex/skills/tdd-guide/SKILL.md">GitHub 源码</a></div>
           <div class="skill"><strong>atdd-guide</strong><p>从业务可读的验收场景开始，用可执行规格驱动实现和生产级验证。</p><a class="source-link" href="https://github.com/bryanzk/MyCodexEnv/blob/main/codex/skills/atdd-guide/SKILL.md">GitHub 源码</a></div>
+          <div class="skill"><strong>gstack-investigate</strong><p>遇到 bug、错误输出、断裂 UI flow 或 root cause 不明时，先建立可运行 feedback loop，再基于证据修复。</p><a class="source-link" href="https://github.com/bryanzk/MyCodexEnv/blob/main/codex/skills/gstack-investigate/SKILL.md">GitHub 源码</a></div>
         </div>
       </article>
 
@@ -250,6 +254,7 @@
         </div>
         <div class="skills">
           <div class="skill"><strong>verification-loop</strong><p>交付前执行构建、静态检查、测试、覆盖率和安全扫描等全量验证流程。</p><a class="source-link" href="https://github.com/bryanzk/MyCodexEnv/blob/main/codex/skills/verification-loop/SKILL.md">GitHub 源码</a></div>
+          <div class="skill"><strong>delivery-harness-framework</strong><p>完成结论必须带 command、exit code、key output、timestamp、匹配 task demand 的验证门、effective feedback check，以及本地 evidence 存在时的 conversion health。</p><a class="source-link" href="https://github.com/bryanzk/MyCodexEnv/blob/main/codex/skills/delivery-harness-framework/SKILL.md">GitHub 源码</a></div>
         </div>
       </article>
 
@@ -267,6 +272,7 @@
           <div class="skill"><strong>security-reviewer</strong><p>检查输入校验、认证授权、密钥泄漏、注入和错误信息泄露风险。</p><a class="source-link" href="https://github.com/bryanzk/MyCodexEnv/blob/main/codex/skills/security-reviewer/SKILL.md">GitHub 源码</a></div>
           <div class="skill"><strong>gstack-qa</strong><p>系统化浏览器 QA，包含截图、console/network 检查、响应式检查和 bug 回归验证。</p><a class="source-link" href="https://github.com/bryanzk/MyCodexEnv/blob/main/codex/skills/gstack-qa/SKILL.md">GitHub 源码</a></div>
           <div class="skill"><strong>gstack-qa-only</strong><p>当用户只要报告而不要自动修复时，执行只读浏览器 QA、截图、风险记录和 findings 汇总。</p><a class="source-link" href="https://github.com/bryanzk/MyCodexEnv/blob/main/codex/skills/gstack-qa-only/SKILL.md">GitHub 源码</a></div>
+          <div class="skill"><strong>committee-review-loop</strong><p>只有明确要求 committee、expert panel、reviewer/worker、rating loop 或目标评分时才路由到这里；普通 review 保持专用 route。</p><a class="source-link" href="https://github.com/bryanzk/MyCodexEnv/blob/main/codex/skills/committee-review-loop/SKILL.md">GitHub 源码</a></div>
         </div>
       </article>
 

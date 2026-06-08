@@ -125,7 +125,7 @@
     }
 
     .step-number { color: var(--amber); font-size: 11px; font-weight: 700; }
-    .stage-head h3 { margin: 0; font-size: 26px; line-height: 1.02; }
+    .stage-head h3 { margin: 0; font-size: 26px; line-height: 1.02; overflow-wrap: anywhere; }
     .stage-head p { margin: 0; color: var(--dim); line-height: 1.45; font-size: 14px; }
 
     .skills {
@@ -187,7 +187,7 @@
     <section class="panel">
       <div class="label">How to read this</div>
       <h2>DHF starts with routing, then delegates.</h2>
-      <p>The lifecycle router recovers durable state, classifies the stage, and chooses a specialist workflow. Helper scripts may validate evidence or agent plans, but this matrix focuses on skills because they define the agent behavior at each step.</p>
+      <p>The lifecycle router recovers durable state, classifies the stage and execution lane, and chooses a specialist workflow. Helper scripts validate requirements, agent plans, evidence, and checkpoints; this matrix focuses on skills because they define the agent behavior at each step.</p>
     </section>
 
     <section class="stage-list" aria-label="DHF workflow skill matrix">
@@ -212,6 +212,7 @@
         <div class="skills">
           <div class="skill"><strong>planner</strong><p>Analyzes complex requirements, architecture context, task decomposition, and implementation risks before code changes.</p><a class="source-link" href="https://github.com/bryanzk/MyCodexEnv/blob/main/codex/skills/planner/SKILL.md">GitHub source</a></div>
           <div class="skill"><strong>req-to-dev</strong><p>Converts requirements or principles into an executable development package with plans, safety net, contracts, acceptance tests, and owner handoffs.</p><a class="source-link" href="https://github.com/bryanzk/MyCodexEnv/blob/main/codex/skills/req-to-dev/SKILL.md">GitHub source</a></div>
+          <div class="skill"><strong>vendored gstack spec</strong><p>Turns fuzzy implementation intent into a backlog-ready issue, ticket, or executable spec while preserving DHF source-of-truth, lane, and verification boundaries.</p><a class="source-link" href="https://github.com/bryanzk/MyCodexEnv/tree/main/codex/skills/gstack">GitHub source</a></div>
         </div>
       </article>
 
@@ -222,11 +223,13 @@
           <p>Lock product, engineering, design, and execution decisions before scoped implementation.</p>
         </div>
         <div class="skills">
+          <div class="skill"><strong>delivery-harness-framework</strong><p>Owns the architecture alignment checkpoint when durable sources conflict: compare product, process, components, data ownership, lane, security, slices, and handoff state before edits.</p><a class="source-link" href="https://github.com/bryanzk/MyCodexEnv/blob/main/codex/skills/delivery-harness-framework/SKILL.md">GitHub source</a></div>
           <div class="skill"><strong>gstack-plan-eng-review</strong><p>Reviews architecture, data flow, edge cases, test coverage, performance, and operational risks; can use structured planning context when gbrain is configured.</p><a class="source-link" href="https://github.com/bryanzk/MyCodexEnv/blob/main/codex/skills/gstack-plan-eng-review/SKILL.md">GitHub source</a></div>
           <div class="skill"><strong>gstack-plan-ceo-review</strong><p>Pressure-tests product framing, scope, user value, strategy, and whether the plan should expand, hold, or reduce scope.</p><a class="source-link" href="https://github.com/bryanzk/MyCodexEnv/blob/main/codex/skills/gstack-plan-ceo-review/SKILL.md">GitHub source</a></div>
           <div class="skill"><strong>gstack-office-hours</strong><p>Runs founder-style or builder-style office hours to expose demand reality, narrow the wedge, and clarify the product idea; can use gbrain preflight when configured.</p><a class="source-link" href="https://github.com/bryanzk/MyCodexEnv/blob/main/codex/skills/gstack-office-hours/SKILL.md">GitHub source</a></div>
           <div class="skill"><strong>gstack-plan-design-review</strong><p>Reviews UX structure, visual direction, responsive behavior, and design acceptance criteria; gbrain context is specialist planning input, not a substitute for repo state.</p><a class="source-link" href="https://github.com/bryanzk/MyCodexEnv/blob/main/codex/skills/gstack-plan-design-review/SKILL.md">GitHub source</a></div>
           <div class="skill"><strong>task-flow-orchestrator</strong><p>Orders the execution workflow across Karpathy-style thinking, planning, TDD, and verification for complex work.</p><a class="source-link" href="https://github.com/bryanzk/MyCodexEnv/blob/main/codex/skills/task-flow-orchestrator/SKILL.md">GitHub source</a></div>
+          <div class="skill"><strong>planner / prototype route</strong><p>Use throwaway prototypes only to answer one named data model, state machine, module interface, or UI question, then delete the prototype or capture the durable decision.</p><a class="source-link" href="https://github.com/bryanzk/MyCodexEnv/blob/main/codex/skills/planner/SKILL.md">GitHub source</a></div>
         </div>
       </article>
 
@@ -239,6 +242,7 @@
         <div class="skills">
           <div class="skill"><strong>tdd-guide</strong><p>Enforces a RED -> GREEN -> REFACTOR loop for feature work, bug fixes, refactors, and core business logic.</p><a class="source-link" href="https://github.com/bryanzk/MyCodexEnv/blob/main/codex/skills/tdd-guide/SKILL.md">GitHub source</a></div>
           <div class="skill"><strong>atdd-guide</strong><p>Starts from business-facing acceptance scenarios, then drives implementation through executable specifications and production-like checks.</p><a class="source-link" href="https://github.com/bryanzk/MyCodexEnv/blob/main/codex/skills/atdd-guide/SKILL.md">GitHub source</a></div>
+          <div class="skill"><strong>gstack-investigate</strong><p>For bugs, wrong output, broken UI flows, or unclear root cause, establish a runnable feedback loop before patching from inspection.</p><a class="source-link" href="https://github.com/bryanzk/MyCodexEnv/blob/main/codex/skills/gstack-investigate/SKILL.md">GitHub source</a></div>
         </div>
       </article>
 
@@ -250,6 +254,7 @@
         </div>
         <div class="skills">
           <div class="skill"><strong>verification-loop</strong><p>Runs the delivery verification pass across build, static checks, tests, coverage, and security scan where applicable.</p><a class="source-link" href="https://github.com/bryanzk/MyCodexEnv/blob/main/codex/skills/verification-loop/SKILL.md">GitHub source</a></div>
+          <div class="skill"><strong>delivery-harness-framework</strong><p>Requires completion evidence with command, exit code, key output, timestamp, demand-matched gate selection, effective feedback check, and conversion health status when local evidence exists.</p><a class="source-link" href="https://github.com/bryanzk/MyCodexEnv/blob/main/codex/skills/delivery-harness-framework/SKILL.md">GitHub source</a></div>
         </div>
       </article>
 
@@ -267,6 +272,7 @@
           <div class="skill"><strong>security-reviewer</strong><p>Checks input validation, authentication, authorization, secret leakage, injection, and error disclosure risks.</p><a class="source-link" href="https://github.com/bryanzk/MyCodexEnv/blob/main/codex/skills/security-reviewer/SKILL.md">GitHub source</a></div>
           <div class="skill"><strong>gstack-qa</strong><p>Runs systematic browser QA, screenshots, console/network checks, responsive checks, and iterative bug verification.</p><a class="source-link" href="https://github.com/bryanzk/MyCodexEnv/blob/main/codex/skills/gstack-qa/SKILL.md">GitHub source</a></div>
           <div class="skill"><strong>gstack-qa-only</strong><p>Runs report-only browser QA when the user wants findings, screenshots, and risk notes without automatic fixes.</p><a class="source-link" href="https://github.com/bryanzk/MyCodexEnv/blob/main/codex/skills/gstack-qa-only/SKILL.md">GitHub source</a></div>
+          <div class="skill"><strong>committee-review-loop</strong><p>Only explicit committee, expert panel, reviewer/worker, rating loop, or target-score requests route here; ordinary reviews keep their specialist route.</p><a class="source-link" href="https://github.com/bryanzk/MyCodexEnv/blob/main/codex/skills/committee-review-loop/SKILL.md">GitHub source</a></div>
         </div>
       </article>
 

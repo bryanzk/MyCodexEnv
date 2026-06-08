@@ -348,35 +348,35 @@
     <section class="section-block" aria-labelledby="latest-heading" style="--i:2">
       <div class="section-heading">
         <div>
-          <div class="label">Latest Routing Update</div>
-          <h2 id="latest-heading">Committee review loops are now explicit</h2>
+          <div class="label">Current Routing Contract</div>
+          <h2 id="latest-heading">DHF routes decisions before work starts</h2>
         </div>
-        <p>DHF now separates ordinary review from explicit expert-committee loops, where a committee rates the output and a revision worker iterates toward a target score.</p>
+        <p>The public guide now reflects the current skill contract: recover state, classify execution lane, resolve architecture conflicts, choose the specialist route, and finish with fresh evidence.</p>
       </div>
       <div class="card-row three">
         <div class="card">
           <div>
-            <div class="label">New Skill</div>
-            <h2>Committee Review Loop</h2>
-            <p>Use this route only when the user explicitly asks for a committee, subagents, reviewer/worker split, rating loop, or a target such as 9.5/10.</p>
+            <div class="label">Lane Gate</div>
+            <h2>Local, demo, or production</h2>
+            <p>DHF separates local development, operator live demo work, and customer or production paths so external systems, secrets, deploys, and customer data stay approval-gated.</p>
+          </div>
+          <div class="meta">execution lane first</div>
+        </div>
+        <div class="card">
+          <div>
+            <div class="label">Alignment Gate</div>
+            <h2>Architecture checkpoint</h2>
+            <p>When durable sources disagree, DHF captures a decision-focused checkpoint, recuts vertical slices around outcomes, and validates agent-team write sets before dispatch.</p>
+          </div>
+          <div class="meta">decision surface before edits</div>
+        </div>
+        <div class="card">
+          <div>
+            <div class="label">Review Boundary</div>
+            <h2>Committee loops are explicit</h2>
+            <p>Ordinary review, QA, security, and design routes stay specialized. Committee loops run only when the user asks for reviewers, a revision worker, and a target score.</p>
           </div>
           <div class="meta">committee-review-loop</div>
-        </div>
-        <div class="card">
-          <div>
-            <div class="label">DHF Boundary</div>
-            <h2>Specialized Reviews Stay Specialized</h2>
-            <p>One-off design review, code review, browser QA, security review, and read-only review swarms keep their existing specialist routes.</p>
-          </div>
-          <div class="meta">avoids off-target routing</div>
-        </div>
-        <div class="card">
-          <div>
-            <div class="label">Agent Gate</div>
-            <h2>Worker Scope Still Matters</h2>
-            <p>Reviewer committees stay read-only by default, while revision workers need bounded write sets, verification gates, and clear stopping conditions.</p>
-          </div>
-          <div class="meta">agent-team safe path</div>
         </div>
       </div>
     </section>
