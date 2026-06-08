@@ -14,13 +14,13 @@ Stable rules belong in `AGENTS.md`, `README.md`, `docs/repo-index.md`, or
   - `codex/skills/delivery-harness-framework/SKILL.md`
 - blocked_sources: none
 - unsafe_inputs: none
-- next_safe_task: Create the freeze-review policy before any skill removal, archive, rename, or runtime sync; first classify the two untracked docs/plans files as keep/update/delete.
+- next_safe_task: Implement observer phase parity from docs/plans/runtime-effect-and-state-truth-slice.md; keep runtime sync deferred until freeze-review policy and observer parity are handled.
 - required_commands:
   - `python3 test_runner.py`
   - `git diff --check`
   - `./scripts/verify_codex_env.sh --repo-root "$(pwd)" --codex-home "$HOME/.codex" --claude-home "$HOME/.claude"`
-- latest_checkpoint: 2026-06-08T17:10:45-04:00 Merged GitHub PR #6 for report-only skill deprecation simulation; remote main now points at merge commit f8aa1a4.
-- latest_verification: 2026-06-08T17:10:45-04:00 command=gh pr view 6 --json number,url,state,mergedAt,mergeCommit,headRefName,baseRefName,title; exit_code=0; key_output=PR #6 MERGED; merge_commit=f8aa1a4607332582c9fcd36c97aef7a9afccbcdb; mergedAt=2026-06-08T21:09:32Z
+- latest_checkpoint: 2026-06-08T17:53:13-04:00 Committed DHF residual follow-up plans for agent-dispatch legacy-event regression and observer phase parity.
+- latest_verification: 2026-06-08T17:53:13-04:00 command=python3 scripts/harness_requirements.py validate docs/plans/agent-dispatch-verification-slice.md && python3 scripts/harness_requirements.py validate docs/plans/runtime-effect-and-state-truth-slice.md && ! rg -n stale-keywords docs/plans/agent-dispatch-verification-slice.md docs/plans/runtime-effect-and-state-truth-slice.md && python3 test_runner.py && ./scripts/verify_codex_env.sh --repo-root "/Users/kezheng/Codes/CursorDeveloper/MyCodexEnv" --codex-home "/Users/kezheng/.codex" --claude-home "/Users/kezheng/.claude" --skip-check app_google_chrome && git diff --check; exit_code=0; key_output=valid; valid; ran=51 passed=51 failed=0; [PASS] all tests; Verification passed.
 
 ## State Log
 
@@ -906,3 +906,22 @@ Stable rules belong in `AGENTS.md`, `README.md`, `docs/repo-index.md`, or
 - blockers:
   - none
 - next_safe_task: Create the freeze-review policy before any skill removal, archive, rename, or runtime sync; first classify the two untracked docs/plans files as keep/update/delete.
+
+### 2026-06-08T17:53:13-04:00
+- phase: handoff
+- event: checkpoint
+- summary: Committed DHF residual follow-up plans for agent-dispatch legacy-event regression and observer phase parity.
+- git:
+  - branch: codex/mce-20260608-freeze-review-policy
+  - latest_commit: 924da9b
+  - dirty_status: clean
+  - dirty_count: 0
+- changed_surfaces:
+  - `docs/plans/agent-dispatch-verification-slice.md; docs/plans/runtime-effect-and-state-truth-slice.md`
+- verification:
+  - command: `python3 scripts/harness_requirements.py validate docs/plans/agent-dispatch-verification-slice.md && python3 scripts/harness_requirements.py validate docs/plans/runtime-effect-and-state-truth-slice.md && ! rg -n stale-keywords docs/plans/agent-dispatch-verification-slice.md docs/plans/runtime-effect-and-state-truth-slice.md && python3 test_runner.py && ./scripts/verify_codex_env.sh --repo-root "/Users/kezheng/Codes/CursorDeveloper/MyCodexEnv" --codex-home "/Users/kezheng/.codex" --claude-home "/Users/kezheng/.claude" --skip-check app_google_chrome && git diff --check`
+  - exit_code: 0
+  - key_output: valid; valid; ran=51 passed=51 failed=0; [PASS] all tests; Verification passed.
+- blockers:
+  - none
+- next_safe_task: Implement observer phase parity from docs/plans/runtime-effect-and-state-truth-slice.md; keep runtime sync deferred until freeze-review policy and observer parity are handled.
