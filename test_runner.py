@@ -70,10 +70,15 @@ def require(condition, message):
         sys.exit(1)
 
 
+class SkipTest(Exception):
+    pass
+
+
 class TestRunResult:
-    def __init__(self, ran_names: list[str], failures: list[tuple[str, str]]) -> None:
+    def __init__(self, ran_names: list[str], failures: list[tuple[str, str]], skipped_names: list[str] | None = None) -> None:
         self.ran_names = ran_names
         self.failures = failures
+        self.skipped_names = skipped_names or []
 
     @property
     def ran(self) -> int:
@@ -83,6 +88,14 @@ class TestRunResult:
     def failed(self) -> int:
         return len(self.failures)
 
+    @property
+    def skipped(self) -> int:
+        return len(self.skipped_names)
+
+    @property
+    def passed(self) -> int:
+        return self.ran - self.failed - self.skipped
+
 
 def run_all(tests: list, *, fail_output=None) -> TestRunResult:
     if fail_output is None:
@@ -90,6 +103,7 @@ def run_all(tests: list, *, fail_output=None) -> TestRunResult:
 
     ran_names: list[str] = []
     failures: list[tuple[str, str]] = []
+    skipped_names: list[str] = []
     for fn in tests:
         name = getattr(fn, "__name__", repr(fn))
         ran_names.append(name)
@@ -97,6 +111,9 @@ def run_all(tests: list, *, fail_output=None) -> TestRunResult:
             fn()
         except KeyboardInterrupt:
             raise
+        except SkipTest as exc:
+            skipped_names.append(name)
+            print(f"[SKIP] {name}: {exc}", file=fail_output)
         except (Exception, SystemExit) as exc:
             failures.append(
                 (
@@ -105,7 +122,7 @@ def run_all(tests: list, *, fail_output=None) -> TestRunResult:
                 )
             )
             print(f"[FAIL] {name}: {exc}", file=fail_output)
-    return TestRunResult(ran_names, failures)
+    return TestRunResult(ran_names, failures, skipped_names)
 
 
 def run_registered_tests(tests: list, *, output=None, error_output=None) -> int:
@@ -115,7 +132,7 @@ def run_registered_tests(tests: list, *, output=None, error_output=None) -> int:
         error_output = sys.stderr
 
     result = run_all(tests, fail_output=output)
-    print(f"ran={result.ran} passed={result.ran - result.failed} failed={result.failed}", file=output)
+    print(f"ran={result.ran} passed={result.passed} skipped={result.skipped} failed={result.failed}", file=output)
     if result.failed or result.ran != len(tests):
         for name, tb in result.failures:
             print(f"\n----- {name} -----\n{tb}", file=error_output)
@@ -3665,6 +3682,8 @@ def test_sync_claude_injects_integration_block():
 
 
 def test_verify_after_full_sync():
+    if run(["bash", "-lc", "command -v codex"])[0] != 0:
+        raise SkipTest("codex CLI not installed")
     with tempfile.TemporaryDirectory() as tmp:
         tmp_path = Path(tmp)
         codex_home = tmp_path / ".codex"
@@ -3707,6 +3726,151 @@ def test_verify_after_full_sync():
         require("Verification passed." in out, "verify success message missing")
 
     print("[PASS] full sync + verify")
+
+
+def test_verify_missing_codex_reports_failures_without_early_exit():
+    with tempfile.TemporaryDirectory() as tmp:
+        tmp_path = Path(tmp)
+        codex_home = tmp_path / ".codex"
+        claude_home = tmp_path / ".claude"
+        bin_dir = tmp_path / "bin"
+        bin_dir.mkdir()
+        for tool in ["rg", "git", "node", "npm", "npx", "go"]:
+            code, out, err = run(["bash", "-lc", f"command -v {tool}"])
+            require(code == 0, f"test setup missing tool {tool}: {err or out}")
+            os.symlink(out, bin_dir / tool)
+
+        code, out, err = run(
+            [
+                str(SYNC),
+                "--repo-root",
+                str(ROOT),
+                "--codex-home",
+                str(codex_home),
+                "--skip-superpowers-sync",
+            ]
+        )
+        require(code == 0, f"codex sync should succeed before missing-codex verify test: {err or out}")
+        code, out, err = run(
+            [
+                str(SYNC_CLAUDE),
+                "--repo-root",
+                str(ROOT),
+                "--claude-home",
+                str(claude_home),
+            ]
+        )
+        require(code == 0, f"claude sync should succeed before missing-codex verify test: {err or out}")
+
+        env = os.environ.copy()
+        env["PATH"] = f"{bin_dir}:/usr/bin:/bin:/usr/sbin:/sbin"
+        proc = subprocess.run(
+            [
+                str(VERIFY),
+                "--repo-root",
+                str(ROOT),
+                "--codex-home",
+                str(codex_home),
+                "--claude-home",
+                str(claude_home),
+                "--skip-check",
+                "app_google_chrome",
+                "--skip-check",
+                "codex_superpowers_git",
+                "--skip-check",
+                "codex_superpowers_commit",
+            ],
+            capture_output=True,
+            text=True,
+            check=False,
+            env=env,
+        )
+        text = f"{proc.stdout}\n{proc.stderr}"
+        require(proc.returncode != 0, "verify should fail when codex CLI is unavailable and not skipped")
+        require("FAIL:cmd_codex" in text, "verify should report missing codex as a named check failure")
+        require("FAIL:codex_version" in text, "verify should report codex version as unavailable without early exit")
+        require("codex: command not found" not in text, "verify should not leak shell command-not-found from direct codex call")
+        require("Verification failed with" in text, "verify should still print its normal failure summary")
+
+    print("[PASS] verify missing codex reports failures without early exit")
+
+
+def test_verify_detects_enforcement_script_drift():
+    if run(["bash", "-lc", "command -v codex"])[0] != 0:
+        raise SkipTest("verify drift test requires codex CLI until verify is skip-safe")
+    with tempfile.TemporaryDirectory() as tmp:
+        tmp_path = Path(tmp)
+        codex_home = tmp_path / ".codex"
+        claude_home = tmp_path / ".claude"
+
+        code, out, err = run(
+            [
+                str(SYNC),
+                "--repo-root",
+                str(ROOT),
+                "--codex-home",
+                str(codex_home),
+                "--skip-superpowers-sync",
+            ]
+        )
+        require(code == 0, f"codex sync should succeed before drift test: {err or out}")
+
+        code, out, err = run(
+            [
+                str(SYNC_CLAUDE),
+                "--repo-root",
+                str(ROOT),
+                "--claude-home",
+                str(claude_home),
+            ]
+        )
+        require(code == 0, f"claude sync should succeed before drift test: {err or out}")
+
+        code, out, err = run(
+            [
+                str(VERIFY),
+                "--repo-root",
+                str(ROOT),
+                "--codex-home",
+                str(codex_home),
+                "--claude-home",
+                str(claude_home),
+                "--skip-check",
+                "app_google_chrome",
+                "--skip-check",
+                "codex_superpowers_git",
+                "--skip-check",
+                "codex_superpowers_commit",
+            ]
+        )
+        require(code == 0, f"freshly synced temp runtime should verify clean: {err or out}")
+
+        (codex_home / "hooks" / "harness_guard.py").write_text("# drifted\n", encoding="utf-8")
+        code, out, err = run(
+            [
+                str(VERIFY),
+                "--repo-root",
+                str(ROOT),
+                "--codex-home",
+                str(codex_home),
+                "--claude-home",
+                str(claude_home),
+                "--skip-check",
+                "app_google_chrome",
+                "--skip-check",
+                "codex_superpowers_git",
+                "--skip-check",
+                "codex_superpowers_commit",
+            ]
+        )
+        text = f"{out}\n{err}"
+        require(code != 0, "verify must fail when a live enforcement script drifts")
+        require(
+            "FAIL:codex_hook_harness_guard_runtime_matches_source" in text,
+            "verify must identify the hook content mismatch check",
+        )
+
+    print("[PASS] verify detects enforcement script drift")
 
 
 def run_capture_script(capture_args):
@@ -4182,12 +4346,39 @@ def test_runner_main_failure_contract():
 
     require(code == 1, "failed registry run should return non-zero")
     require(calls == ["good", "bad", "after"], "failed registry run must continue through later tests")
-    require("ran=3 passed=2 failed=1" in stdout_text, "failed registry run should print summary")
+    require("ran=3 passed=2 skipped=0 failed=1" in stdout_text, "failed registry run should print summary")
     require("[PASS] all tests" not in stdout_text, "failed registry run must not print pass sentinel")
     require("----- bad -----" in stderr_text, "failed registry run should print traceback header to stderr")
     require("AssertionError: boom" in stderr_text, "failed registry run should retain traceback text")
 
     print("[PASS] test runner main failure contract")
+
+
+def test_runner_reports_skips_distinctly():
+    output = io.StringIO()
+
+    def good():
+        return None
+
+    def skipper():
+        raise SkipTest("codex CLI unavailable")
+
+    result = run_all([good, skipper], fail_output=output)
+    text = output.getvalue()
+    require(result.ran == 2, "runner should count invoked tests")
+    require(result.failed == 0, "skipped tests should not count as failed")
+    require(result.skipped == 1, "skipped tests should be counted separately")
+    require("[SKIP] skipper: codex CLI unavailable" in text, "runner should print skip reason")
+
+    registered_output = io.StringIO()
+    code = run_registered_tests([good, skipper], output=registered_output, error_output=io.StringIO())
+    require(code == 0, "skipped tests should not make the registered runner fail")
+    require(
+        "ran=2 passed=1 skipped=1 failed=0" in registered_output.getvalue(),
+        "registered runner should print skipped count in summary",
+    )
+
+    print("[PASS] runner reports skips distinctly")
 
 
 def test_runner_registry_complete():
@@ -4209,6 +4400,7 @@ TESTS = [
     test_runner_harness_isolation,
     test_runner_harness_catches_system_exit,
     test_runner_main_failure_contract,
+    test_runner_reports_skips_distinctly,
     test_bootstrap_eigenphi_argument_is_optional,
     test_sync_ignores_legacy_eigenphi_argument,
     test_verify_supports_skip_check_argument,
@@ -4253,6 +4445,8 @@ TESTS = [
     test_harness_env_probe,
     test_sync_claude_injects_integration_block,
     test_verify_after_full_sync,
+    test_verify_missing_codex_reports_failures_without_early_exit,
+    test_verify_detects_enforcement_script_drift,
     test_capture_text_auto_classifies_input_types,
     test_headroom_filter_detects_modes_and_reports_stats,
     test_manage_agents_scan_backup_generate_restore,
