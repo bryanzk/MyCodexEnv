@@ -14,13 +14,13 @@ Stable rules belong in `AGENTS.md`, `README.md`, `docs/repo-index.md`, or
   - `codex/skills/delivery-harness-framework/SKILL.md`
 - blocked_sources: none
 - unsafe_inputs: none
-- next_safe_task: Review and land codex/mce-20260608-runtime-activation; then, only with explicit operator approval, run Stage 3 sync_codex_home.sh plus strengthened verify against real ~/.codex.
+- next_safe_task: Decide whether to approve Stage 3 runtime activation: run scripts/sync_codex_home.sh against real ~/.codex, then run strengthened verify; if not approved, keep runtime sync deferred.
 - required_commands:
   - `python3 test_runner.py`
   - `git diff --check`
   - `./scripts/verify_codex_env.sh --repo-root "$(pwd)" --codex-home "$HOME/.codex" --claude-home "$HOME/.claude"`
-- latest_checkpoint: 2026-06-08T18:45:53-04:00 Runtime activation Stages 1-2 implemented: verify content-checks hook/schema drift, runner counts explicit skips, and missing codex no longer causes early verify exit; Stage 3 runtime sync not run.
-- latest_verification: 2026-06-08T18:45:53-04:00 command=python3 test_runner.py; exit_code=0; key_output=ran=55 passed=55 skipped=0 failed=0; [PASS] all tests
+- latest_checkpoint: 2026-06-08T18:55:14-04:00 PR #8 merged: runtime activation Stages 1-2 landed on main; strengthened verify and skip-counted runner are repo-current; Stage 3 real ~/.codex sync not run.
+- latest_verification: 2026-06-08T18:55:14-04:00 command=gh pr view 8 --json number,url,state,mergedAt,mergeCommit,headRefName,baseRefName,title && git pull --ff-only origin main && python3 scripts/harness_requirements.py validate docs/plans/runtime-activation-combined-slice.md && python3 scripts/check_surfaces.py --repo-root "/Users/kezheng/Codes/CursorDeveloper/MyCodexEnv" --check-public-nav && python3 test_runner.py; exit_code=0; key_output=PR #8 MERGED; main fast-forwarded; valid; surfaces manifest consistent; ran=55 passed=55 skipped=0 failed=0; [PASS] all tests
 
 ## State Log
 
@@ -1005,3 +1005,22 @@ Stable rules belong in `AGENTS.md`, `README.md`, `docs/repo-index.md`, or
 - blockers:
   - none
 - next_safe_task: Review and land codex/mce-20260608-runtime-activation; then, only with explicit operator approval, run Stage 3 sync_codex_home.sh plus strengthened verify against real ~/.codex.
+
+### 2026-06-08T18:55:14-04:00
+- phase: handoff
+- event: checkpoint
+- summary: PR #8 merged: runtime activation Stages 1-2 landed on main; strengthened verify and skip-counted runner are repo-current; Stage 3 real ~/.codex sync not run.
+- git:
+  - branch: main
+  - latest_commit: f00dc14
+  - dirty_status: clean
+  - dirty_count: 0
+- changed_surfaces:
+  - `docs/harness-state.md`
+- verification:
+  - command: `gh pr view 8 --json number,url,state,mergedAt,mergeCommit,headRefName,baseRefName,title && git pull --ff-only origin main && python3 scripts/harness_requirements.py validate docs/plans/runtime-activation-combined-slice.md && python3 scripts/check_surfaces.py --repo-root "/Users/kezheng/Codes/CursorDeveloper/MyCodexEnv" --check-public-nav && python3 test_runner.py`
+  - exit_code: 0
+  - key_output: PR #8 MERGED; main fast-forwarded; valid; surfaces manifest consistent; ran=55 passed=55 skipped=0 failed=0; [PASS] all tests
+- blockers:
+  - none
+- next_safe_task: Decide whether to approve Stage 3 runtime activation: run scripts/sync_codex_home.sh against real ~/.codex, then run strengthened verify; if not approved, keep runtime sync deferred.
