@@ -364,6 +364,13 @@ Each agent needs role, scope, write set, verification command, and report
 expectations. Planner, reviewer, security, and QA roles are read-only by
 default. Worker write sets must be non-empty, repo-relative, and disjoint.
 Overlapping worker write sets block dispatch until the task is split again.
+Delegated workers must not include the repo's global harness state file
+(`docs/harness-state.md`) or a parent path such as `docs/` in their write set.
+Worker handoff should be reported or written to slice-local artifacts; the
+integrating main agent appends the consolidated harness checkpoint after merge
+or integration and fresh verification. Single-line tasks executed directly by
+the main agent are not worker plans and may still use
+`scripts/harness_checkpoint.py append` after validation.
 If the requested agent team is a review committee plus a revision worker with a
 numeric rating target, route to `committee-review-loop` after validating the
 team shape and write-set boundaries.

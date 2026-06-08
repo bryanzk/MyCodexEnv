@@ -142,7 +142,7 @@ adapter skills.
 | `scripts/harness_recover.py` | `research`, `handoff` | Read repo index, harness state, git status/log, and local evidence summary to recover current phase and next safe task. |
 | `scripts/harness_env_probe.py` | `research`, `validation` | Report observable Codex runtime config, hooks, tool policy, evidence schema, sandbox fields, and approval fields. |
 | `scripts/harness_requirements.py` | `requirements` | Validate requirements artifacts before planning or development treats them as source of truth. |
-| `scripts/harness_agent_team.py` | `planning`, `development` | Validate agent role, scope, write set, verification command, and optional durable worker brief before parallel worker dispatch. |
+| `scripts/harness_agent_team.py` | `planning`, `development` | Validate agent role, scope, write set, verification command, protected harness-state boundaries, and optional durable worker brief before parallel worker dispatch. |
 | `scripts/harness_evidence.py` | `validation` | Validate and append structured local evidence events. |
 | `scripts/harness_report.py` | `validation`, `review`, `handoff` | Summarize local JSONL evidence by phase, event type, time window, or JSON output. |
 | `scripts/harness_checkpoint.py` | `handoff`, phase transitions | Append checkpoint entries to `docs/harness-state.md` with changed surfaces, verification, blockers, and next safe task. |
@@ -177,6 +177,10 @@ adapter skills.
 - Prefer deterministic helper scripts when the runtime already provides one;
   do not reimplement their parsing or validation manually.
 - Use `verification-loop` or repo-native commands before any completion claim.
+- Keep `docs/harness-state.md` as an integrator-owned checkpoint surface for
+  delegated worker plans; workers should report or write slice-local handoff
+  artifacts instead. Single-line main-agent tasks may still append verified
+  checkpoints directly.
 - Use `harness_checkpoint.py append` before ending long-running work, after a
   meaningful validated slice, or before risky remote/release actions.
 

@@ -16,6 +16,7 @@ TASK_DEMAND_LEVELS = {"low", "medium", "high"}
 TASK_DEMAND_FIELDS = ["level", "L", "H_tool", "S_state", "N_obs"]
 GREEN_GATE_SCOPES = {"worker", "integrator"}
 GREEN_GATE_REQUIRED_FIELDS = ["gate_scope", "command", "rationale"]
+PROTECTED_INTEGRATOR_SURFACES = {"docs/harness-state.md"}
 BRIEF_STRING_FIELDS = [
     "category",
     "summary",
@@ -272,6 +273,13 @@ def validate_plan(plan: dict[str, Any], repo_root: Path) -> tuple[list[str], lis
             demand = validate_task_demand(agent, agent_id, errors)
             green_gate = validate_green_gate(agent, agent_id, demand, verification, errors)
             for path in normalized:
+                for protected in PROTECTED_INTEGRATOR_SURFACES:
+                    if paths_overlap(path, protected):
+                        errors.append(
+                            "ERROR[protected_integrator_surface] "
+                            f"agent={agent_id} path={path} protected={protected}: "
+                            "protected integrator state must be updated by the main agent after integration"
+                        )
                 worker_paths.append((agent_id, path))
         brief = validate_brief(agent, agent_id, errors)
 

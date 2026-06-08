@@ -42,6 +42,7 @@
 - `scripts/harness_recover.py`: fresh-session recovery smoke check with evidence-kind counts and compact latest decision evidence.
 - `scripts/harness_env_probe.py`: observable Codex runtime config and split evidence schema probe.
 - `scripts/headroom_filter.py`: optional stdin filter for compressing large command outputs with Headroom before sending them into agent context.
+- `scripts/audit_skills.py`: report-only skill governance audit for repo/global/.agents skill sources and local usage traces.
 - `scripts/prepare_gstack_dhf_daily_refresh.py`: preflight the daily refresh automation, retry DNS probes for about two minutes, require a standalone clone, check out the dedicated `automation/gstack-dhf-daily-refresh` branch rebased on `origin/main`, and return dry-run evidence before repo mutation.
 - `scripts/merge_gstack_refresh_if_safe.py`: unattended merge gate for gstack daily refresh; only `--verified` ahead-only automation branches can fast-forward `main`.
 - `scripts/sync_local_main_if_safe.py`: optional post-merge local sync gate; only clean local worktrees already on `main` and behind-only relative to `origin/main` are fast-forwarded.
@@ -63,6 +64,7 @@
 - `docs/HARNESS_RUNTIME.md`: lifecycle, evidence, checkpoint, permission, and subagent contracts.
 - `docs/MODEL_ROUTER_EVAL_MATRIX.md`: model routing existence, positive/negative, progressive-switching, and end-to-end evals.
 - `docs/HEADROOM_WORKFLOW.md`: optional Headroom command-output compression workflow and ShipQ examples.
+- `docs/skill-governance-20260608.md`: first read-only skill governance baseline and cleanup policy notes.
 - `docs/AGENT_HARNESS_STATUS.md`: Agent Harness workflow/infra status map.
 - `docs/CODEX_ENV_REPRODUCTION.md`: Codex + Claude environment reproduction guide.
 - `docs/LIFECYCLE_SKILL_ROUTING.md`: lifecycle stage, workflow, skill, and helper routing.

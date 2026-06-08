@@ -625,7 +625,7 @@ flowchart TD
           </div>
           <div class="card accent-build">
             <b>3. 没有验证器，不允许并行写入</b>
-            <small>任何 worker 团队都必须通过 <code>harness_agent_team.py validate</code>，证明写入集合不重叠；需要长期交接时补 durable brief。</small>
+            <small>任何 worker 团队都必须通过 <code>harness_agent_team.py validate</code>，证明写入集合不重叠，且不抢写 <code>docs/harness-state.md</code>；该全局 checkpoint 由 integrator 验证后追加，单线主 agent 任务不受此 worker 规则限制。</small>
           </div>
           <div class="card accent-verify">
             <b>4. 完成声明必须有新鲜证据</b>
