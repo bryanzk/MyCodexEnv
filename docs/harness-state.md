@@ -19,8 +19,8 @@ Stable rules belong in `AGENTS.md`, `README.md`, `docs/repo-index.md`, or
   - `python3 test_runner.py`
   - `git diff --check`
   - `./scripts/verify_codex_env.sh --repo-root "$(pwd)" --codex-home "$HOME/.codex" --claude-home "$HOME/.claude"`
-- latest_checkpoint: 2026-06-07T09:05:04-04:00 completed 2026-06-07 gstack daily refresh with DHF no-op and clean vendor baseline
-- latest_verification: 2026-06-07T09:05:04-04:00 command=python3 test_runner.py; exit_code=0; key_output=[PASS] all tests
+- latest_checkpoint: 2026-06-08T09:10:16-04:00 completed 2026-06-08 gstack daily refresh with gstack 1.57.4.0 update, DHF no-op, and runtime setup repair
+- latest_verification: 2026-06-08T09:10:16-04:00 command=python3 test_runner.py; exit_code=0; key_output=[PASS] all tests
 
 ## State Log
 
@@ -624,6 +624,26 @@ Stable rules belong in `AGENTS.md`, `README.md`, `docs/repo-index.md`, or
   - dirty_count: 1
 - changed_surfaces:
   - `tasks/gstack-dhf-daily-refresh-2026-06-07.md`
+- verification:
+  - command: `python3 test_runner.py`
+  - exit_code: 0
+  - key_output: [PASS] all tests
+- blockers:
+  - none
+- next_safe_task: On the next scheduled refresh, rerun prepare first; if status=deferred and reason=dns_unreachable, update only automation memory and keep repo untouched.
+
+### 2026-06-08T09:10:16-04:00
+- phase: handoff
+- event: checkpoint
+- summary: completed 2026-06-08 gstack daily refresh with gstack 1.57.4.0 update, DHF no-op, and runtime setup repair
+- git:
+  - branch: automation/gstack-dhf-daily-refresh
+  - latest_commit: 68f9e5b
+  - dirty_status: dirty
+  - dirty_count: 115
+- changed_surfaces:
+  - `codex/skills/gstack`
+  - `tasks/gstack-dhf-daily-refresh-2026-06-08.md`
 - verification:
   - command: `python3 test_runner.py`
   - exit_code: 0
