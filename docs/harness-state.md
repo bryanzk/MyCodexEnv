@@ -5,7 +5,7 @@ Stable rules belong in `AGENTS.md`, `README.md`, `docs/repo-index.md`, or
 `docs/HARNESS_RUNTIME.md`; session facts and phase transitions are appended here.
 
 ## Current Snapshot
-- phase: handoff
+- phase: validation
 - source_of_truth:
   - `AGENTS.md`
   - `docs/repo-index.md`
@@ -14,13 +14,13 @@ Stable rules belong in `AGENTS.md`, `README.md`, `docs/repo-index.md`, or
   - `codex/skills/delivery-harness-framework/SKILL.md`
 - blocked_sources: none
 - unsafe_inputs: none
-- next_safe_task: Implement observer phase parity from docs/plans/runtime-effect-and-state-truth-slice.md; keep runtime sync deferred until freeze-review policy and observer parity are handled.
+- next_safe_task: Create freeze-review policy before any skill removal/archive/rename or broad runtime sync; keep dispatch legacy-event regression as optional low-priority follow-up.
 - required_commands:
   - `python3 test_runner.py`
   - `git diff --check`
   - `./scripts/verify_codex_env.sh --repo-root "$(pwd)" --codex-home "$HOME/.codex" --claude-home "$HOME/.claude"`
-- latest_checkpoint: 2026-06-08T17:53:13-04:00 Committed DHF residual follow-up plans for agent-dispatch legacy-event regression and observer phase parity.
-- latest_verification: 2026-06-08T17:53:13-04:00 command=python3 scripts/harness_requirements.py validate docs/plans/agent-dispatch-verification-slice.md && python3 scripts/harness_requirements.py validate docs/plans/runtime-effect-and-state-truth-slice.md && ! rg -n stale-keywords docs/plans/agent-dispatch-verification-slice.md docs/plans/runtime-effect-and-state-truth-slice.md && python3 test_runner.py && ./scripts/verify_codex_env.sh --repo-root "/Users/kezheng/Codes/CursorDeveloper/MyCodexEnv" --codex-home "/Users/kezheng/.codex" --claude-home "/Users/kezheng/.claude" --skip-check app_google_chrome && git diff --check; exit_code=0; key_output=valid; valid; ran=51 passed=51 failed=0; [PASS] all tests; Verification passed.
+- latest_checkpoint: 2026-06-08T17:58:17-04:00 implemented observer phase parity with guard resolver
+- latest_verification: 2026-06-08T17:58:17-04:00 command=python3 scripts/harness_requirements.py validate docs/plans/runtime-effect-and-state-truth-slice.md && python3 test_runner.py && python3 scripts/check_surfaces.py --repo-root "/Users/kezheng/Codes/CursorDeveloper/MyCodexEnv" --check-public-nav && ./scripts/verify_codex_env.sh --repo-root "/Users/kezheng/Codes/CursorDeveloper/MyCodexEnv" --codex-home "/Users/kezheng/.codex" --claude-home "/Users/kezheng/.claude" && git diff --check; exit_code=0; key_output=valid; ran=52 passed=52 failed=0; surfaces manifest consistent; Verification passed.; git diff --check clean
 
 ## State Log
 
@@ -925,3 +925,23 @@ Stable rules belong in `AGENTS.md`, `README.md`, `docs/repo-index.md`, or
 - blockers:
   - none
 - next_safe_task: Implement observer phase parity from docs/plans/runtime-effect-and-state-truth-slice.md; keep runtime sync deferred until freeze-review policy and observer parity are handled.
+
+### 2026-06-08T17:58:17-04:00
+- phase: validation
+- event: checkpoint
+- summary: implemented observer phase parity with guard resolver
+- git:
+  - branch: codex/mce-20260608-freeze-review-policy
+  - latest_commit: 0767dd9
+  - dirty_status: dirty
+  - dirty_count: 2
+- changed_surfaces:
+  - `codex/hooks/harness_observer.py`
+  - `test_runner.py`
+- verification:
+  - command: `python3 scripts/harness_requirements.py validate docs/plans/runtime-effect-and-state-truth-slice.md && python3 test_runner.py && python3 scripts/check_surfaces.py --repo-root "/Users/kezheng/Codes/CursorDeveloper/MyCodexEnv" --check-public-nav && ./scripts/verify_codex_env.sh --repo-root "/Users/kezheng/Codes/CursorDeveloper/MyCodexEnv" --codex-home "/Users/kezheng/.codex" --claude-home "/Users/kezheng/.claude" && git diff --check`
+  - exit_code: 0
+  - key_output: valid; ran=52 passed=52 failed=0; surfaces manifest consistent; Verification passed.; git diff --check clean
+- blockers:
+  - none
+- next_safe_task: Create freeze-review policy before any skill removal/archive/rename or broad runtime sync; keep dispatch legacy-event regression as optional low-priority follow-up.
