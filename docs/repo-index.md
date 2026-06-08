@@ -17,24 +17,37 @@
 - `docs/dhf-workflow-skills-cn.html`: Chinese DHF workflow skill inventory with GitHub source links.
 - `docs/dhf-workflow-skills-en.html`: English DHF workflow skill inventory with GitHub source links.
 - `docs/delivery-harness-beginner-guide-cn.html`: Chinese beginner guide for agentic engineering readers.
+- `docs/delivery-harness-beginner-guide-en.html`: English beginner guide for agentic engineering readers.
 - `docs/project-lifecycle-harness-flow-cn.html`: Chinese vertical lifecycle flow visual guide.
+- `docs/project-lifecycle-harness-flow-en.html`: English vertical lifecycle flow visual guide.
 - `docs/project-lifecycle-harness-flow-skills.html`: Chinese skill/helper routing visual guide.
 - `docs/project-lifecycle-harness-flow-skills-zh-status-style.html`: current styled Chinese Delivery Harness Framework skill/helper routing guide.
+- `docs/project-lifecycle-harness-flow-skills-en-status-style.html`: current styled English Delivery Harness Framework skill/helper routing guide.
+- `docs/project-lifecycle-harness-flow-skills-en.html`: archived English Delivery Harness Framework skill/helper routing guide.
 - `codex/AGENTS.md`: global Codex rules source copied into `~/.codex/AGENTS.md`.
 
 ## Runtime Surfaces
+- `docs/surfaces.json`: canonical machine-readable runtime surface inventory; edit this first when adding, renaming, or retiring runtime surfaces.
+- `scripts/check_surfaces.py`: validates `docs/surfaces.json` against files on disk, this Runtime Surfaces mirror, and opt-in public landing nav links.
+- `docs/repo-index.md`: low-token repo navigation and checked runtime surface mirror.
+- `docs/harness-state.md`: append-only harness state, checkpoint, and next-safe-task log.
+- `docs/HARNESS_RUNTIME.md`: runtime workflow, evidence, permission, checkpoint, and agent-team contract.
+- `docs/AGENT_HARNESS_STATUS.md`: Agent Harness workflow and runtime governance status map.
 - `codex/skills/delivery-harness-framework/`: lifecycle router skill.
 - `codex/skills/committee-review-loop/`: explicit expert-committee review and revision loop skill.
-- `codex/runtime/tool-policy.json`: stage-aware tool and permission policy.
-- `codex/runtime/evidence.schema.json`: compatibility local evidence JSONL event contract.
-- `codex/runtime/evidence/decision-evidence.schema.json`: focused schema for state, handoff, approval, guardrail, sandbox, and durable recovery evidence.
+- `codex/runtime/tool-policy.json`: stage-aware tool and permission policy, including unknown-phase read-only fallback, handoff repo-write ask-gate, and configured agent-dispatch tool patterns.
+- `codex/runtime/evidence.schema.json`: compatibility local evidence JSONL event contract, including `agent_team_validated` receipts.
+- `codex/runtime/evidence/decision-evidence.schema.json`: focused schema for state, handoff, approval, guardrail, sandbox, agent-team validation, and durable recovery evidence.
 - `codex/runtime/evidence/routine-gate-receipt.schema.json`: focused schema for test receipts, browser smoke, startup probes, ordinary tool calls, and routine subagent reports.
 - `codex/hooks/`: Codex lifecycle hooks copied to `~/.codex/hooks/`.
+- `codex/hooks/harness_guard.py`: PreToolUse permission and guardrail hook.
+- `codex/hooks/harness_observer.py`: PostToolUse evidence observer hook.
 - `codex/hooks/model_router.py`: prompt/subtask complexity router for cheapest quality-safe model recommendations.
+- `codex/hooks/shipq_dhf_preprompt.py`: repo-owned ShipQ DHF preprompt hook surface.
 - `scripts/harness_evidence.py`: evidence validation, kind inference, and append helper.
 - `scripts/harness_feedback.py`: conversion-health helper for local evidence reports and recovery.
 - `scripts/harness_report.py`: local evidence summary CLI with evidence-kind counts and filters.
-- `scripts/harness_agent_team.py`: agent team, write-set, worker task demand, demand-matched green gate, and optional durable brief validator.
+- `scripts/harness_agent_team.py`: agent team, write-set, worker task demand, demand-matched green gate, optional durable brief validator, and `--emit-evidence` validation receipt helper.
 - `scripts/harness_checkpoint.py`: append-only state checkpoint helper.
 - `docs/templates/harness-requirements.md`: task requirements artifact template.
 - `docs/templates/harness-agent-brief.md`: worker durable brief template with optional Task Demand and Green Gate companion fields.
@@ -43,6 +56,7 @@
 - `scripts/harness_env_probe.py`: observable Codex runtime config and split evidence schema probe.
 - `scripts/headroom_filter.py`: optional stdin filter for compressing large command outputs with Headroom before sending them into agent context.
 - `scripts/audit_skills.py`: report-only skill governance audit for repo/global/.agents skill sources and local usage traces.
+- `docs/skill-governance-20260608.md`: skill governance baseline and cleanup policy notes.
 - `scripts/prepare_gstack_dhf_daily_refresh.py`: preflight the daily refresh automation, retry DNS probes for about two minutes, require a standalone clone, check out the dedicated `automation/gstack-dhf-daily-refresh` branch rebased on `origin/main`, and return dry-run evidence before repo mutation.
 - `scripts/merge_gstack_refresh_if_safe.py`: unattended merge gate for gstack daily refresh; only `--verified` ahead-only automation branches can fast-forward `main`.
 - `scripts/sync_local_main_if_safe.py`: optional post-merge local sync gate; only clean local worktrees already on `main` and behind-only relative to `origin/main` are fast-forwarded.
@@ -55,9 +69,13 @@
 - `docs/dhf-workflow-skills-cn.html`: Chinese workflow skill inventory with GitHub links.
 - `docs/dhf-workflow-skills-en.html`: English workflow skill inventory with GitHub links.
 - `docs/delivery-harness-beginner-guide-cn.html`: beginner-oriented Delivery Harness Framework explanation.
+- `docs/delivery-harness-beginner-guide-en.html`: English beginner-oriented Delivery Harness Framework explanation.
 - `docs/project-lifecycle-harness-flow-cn.html`: visual vertical lifecycle flow.
+- `docs/project-lifecycle-harness-flow-en.html`: English visual vertical lifecycle flow.
 - `docs/project-lifecycle-harness-flow-skills.html`: visual skill/helper routing map.
 - `docs/project-lifecycle-harness-flow-skills-zh-status-style.html`: current status-style skill/helper routing map.
+- `docs/project-lifecycle-harness-flow-skills-en-status-style.html`: current English status-style skill/helper routing map.
+- `docs/project-lifecycle-harness-flow-skills-en.html`: archived English skill/helper routing map.
 
 ## Related Documentation
 - `README.md`: top-level quick start and Harness Runtime overview.
@@ -73,9 +91,13 @@
 - `docs/dhf-workflow-skills-cn.html`: GitHub Pages Chinese DHF workflow skill inventory.
 - `docs/dhf-workflow-skills-en.html`: GitHub Pages English DHF workflow skill inventory.
 - `docs/delivery-harness-beginner-guide-cn.html`: beginner guide explaining what Delivery Harness Framework does.
+- `docs/delivery-harness-beginner-guide-en.html`: English beginner guide explaining what Delivery Harness Framework does.
 - `docs/project-lifecycle-harness-flow-cn.html`: Chinese vertical lifecycle flow.
+- `docs/project-lifecycle-harness-flow-en.html`: English vertical lifecycle flow.
 - `docs/project-lifecycle-harness-flow-skills.html`: Chinese lifecycle skill/helper routing visual guide.
 - `docs/project-lifecycle-harness-flow-skills-zh-status-style.html`: current styled Chinese Delivery Harness Framework visual guide.
+- `docs/project-lifecycle-harness-flow-skills-en-status-style.html`: current styled English Delivery Harness Framework visual guide.
+- `docs/project-lifecycle-harness-flow-skills-en.html`: archived English Delivery Harness Framework visual guide.
 
 ## Verification
 - Primary: `python3 test_runner.py`.

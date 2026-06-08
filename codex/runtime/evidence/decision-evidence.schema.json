@@ -27,7 +27,7 @@
     },
     "event_type": {
       "type": "string",
-      "enum": ["approval_request", "sandbox_failure", "checkpoint", "handoff", "guardrail_decision", "subagent_report"]
+      "enum": ["approval_request", "sandbox_failure", "checkpoint", "handoff", "guardrail_decision", "subagent_report", "agent_team_validated"]
     },
     "evidence_kind": {
       "type": "string",
