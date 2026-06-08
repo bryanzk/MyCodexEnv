@@ -14,13 +14,13 @@ Stable rules belong in `AGENTS.md`, `README.md`, `docs/repo-index.md`, or
   - `codex/skills/delivery-harness-framework/SKILL.md`
 - blocked_sources: none
 - unsafe_inputs: none
-- next_safe_task: Decide whether to approve Stage 3 runtime activation: run scripts/sync_codex_home.sh against real ~/.codex, then run strengthened verify; if not approved, keep runtime sync deferred.
+- next_safe_task: Monitor next Codex session for activated guard/observer behavior; if stable, consider pruning old local branch codex/mce-20260608-freeze-review-policy or leave it explicitly deferred.
 - required_commands:
   - `python3 test_runner.py`
   - `git diff --check`
   - `./scripts/verify_codex_env.sh --repo-root "$(pwd)" --codex-home "$HOME/.codex" --claude-home "$HOME/.claude"`
-- latest_checkpoint: 2026-06-08T18:55:14-04:00 PR #8 merged: runtime activation Stages 1-2 landed on main; strengthened verify and skip-counted runner are repo-current; Stage 3 real ~/.codex sync not run.
-- latest_verification: 2026-06-08T18:55:14-04:00 command=gh pr view 8 --json number,url,state,mergedAt,mergeCommit,headRefName,baseRefName,title && git pull --ff-only origin main && python3 scripts/harness_requirements.py validate docs/plans/runtime-activation-combined-slice.md && python3 scripts/check_surfaces.py --repo-root "/Users/kezheng/Codes/CursorDeveloper/MyCodexEnv" --check-public-nav && python3 test_runner.py; exit_code=0; key_output=PR #8 MERGED; main fast-forwarded; valid; surfaces manifest consistent; ran=55 passed=55 skipped=0 failed=0; [PASS] all tests
+- latest_checkpoint: 2026-06-08T19:04:21-04:00 Stage 3 runtime activation completed: real ~/.codex synced from repo and strengthened verify proves live hook/schema runtime matches source.
+- latest_verification: 2026-06-08T19:04:21-04:00 command=./scripts/sync_codex_home.sh --repo-root "/Users/kezheng/Codes/CursorDeveloper/MyCodexEnv" --codex-home "/Users/kezheng/.codex" --skip-superpowers-sync && ./scripts/verify_codex_env.sh --repo-root "/Users/kezheng/Codes/CursorDeveloper/MyCodexEnv" --codex-home "/Users/kezheng/.codex" --claude-home "/Users/kezheng/.claude" --skip-check app_google_chrome; exit_code=0; key_output=pre-sync drift: harness_guard and harness_observer mismatch; sync completed with backups; post-sync Verification passed; hook/schema runtime_matches_source all PASS
 
 ## State Log
 
@@ -1024,3 +1024,22 @@ Stable rules belong in `AGENTS.md`, `README.md`, `docs/repo-index.md`, or
 - blockers:
   - none
 - next_safe_task: Decide whether to approve Stage 3 runtime activation: run scripts/sync_codex_home.sh against real ~/.codex, then run strengthened verify; if not approved, keep runtime sync deferred.
+
+### 2026-06-08T19:04:21-04:00
+- phase: handoff
+- event: checkpoint
+- summary: Stage 3 runtime activation completed: real ~/.codex synced from repo and strengthened verify proves live hook/schema runtime matches source.
+- git:
+  - branch: main
+  - latest_commit: c202717
+  - dirty_status: clean
+  - dirty_count: 0
+- changed_surfaces:
+  - `docs/harness-state.md`
+- verification:
+  - command: `./scripts/sync_codex_home.sh --repo-root "/Users/kezheng/Codes/CursorDeveloper/MyCodexEnv" --codex-home "/Users/kezheng/.codex" --skip-superpowers-sync && ./scripts/verify_codex_env.sh --repo-root "/Users/kezheng/Codes/CursorDeveloper/MyCodexEnv" --codex-home "/Users/kezheng/.codex" --claude-home "/Users/kezheng/.claude" --skip-check app_google_chrome`
+  - exit_code: 0
+  - key_output: pre-sync drift: harness_guard and harness_observer mismatch; sync completed with backups; post-sync Verification passed; hook/schema runtime_matches_source all PASS
+- blockers:
+  - none
+- next_safe_task: Monitor next Codex session for activated guard/observer behavior; if stable, consider pruning old local branch codex/mce-20260608-freeze-review-policy or leave it explicitly deferred.
