@@ -841,9 +841,15 @@ def test_skill_governance_audit_cli():
         duplicate_content = "---\nname: duplicate-skill\ndescription: duplicate\n---\n"
         write(repo / "codex" / "skills" / "duplicate-skill" / "SKILL.md", duplicate_content)
         write(repo / ".agents" / "skills" / "duplicate-skill" / "SKILL.md", duplicate_content)
+        write(repo / "codex" / "skills" / "gstack-review" / "SKILL.md", "---\nname: gstack-review\ndescription: alias\n---\n")
+        write(repo / "codex" / "skills" / "review" / "SKILL.md", "---\nname: review\ndescription: base\n---\n")
+        write(repo / "codex" / "skills" / "router-skill" / "SKILL.md", "---\nname: router-skill\ndescription: routes duplicate-skill and gstack-review\n---\n")
+        for index in range(4):
+            write(repo / "docs" / f"legacy-{index}.md", "duplicate-skill\n")
         write(codex_home / "skills" / "unused-skill" / "SKILL.md", "---\nname: unused-skill\ndescription: unused\n---\n")
         write(codex_home / "skills" / "used-skill" / "SKILL.md", "---\nname: used-skill\ndescription: used\n---\n")
         write(codex_home / "skills" / "duplicate-skill" / "SKILL.md", duplicate_content)
+        write(codex_home / "skills" / "runtime-only-skill" / "SKILL.md", "---\nname: runtime-only-skill\ndescription: runtime\n---\n")
         write(codex_home / "sessions" / "2026" / "06" / "08" / "rollout.jsonl", "superpowers-codex use-skill used-skill\n")
         write(repo / "docs" / "skill-governance-20260608.md", "`unused-skill` should not inflate repo refs\n")
 
@@ -871,6 +877,56 @@ def test_skill_governance_audit_cli():
         unused = next(item for item in summary["repo_unused"]["low_ref"] if item["name"] == "unused-skill")
         require(unused["repo_refs"] == 0, "generated skill governance docs should not count as repo refs")
 
+        targets_file = tmp_path / "targets.txt"
+        write(targets_file, "\n".join(["unused-skill", "duplicate-skill", "# ignored", "runtime-only-skill"]))
+        code, out, err = run(
+            [
+                sys.executable,
+                str(AUDIT_SKILLS),
+                "--repo-root",
+                str(repo),
+                "--codex-home",
+                str(codex_home),
+                "--simulate-deprecation",
+                "gstack-review",
+                "--simulate-deprecation-file",
+                str(targets_file),
+                "--json",
+            ]
+        )
+        require(code == 0, f"deprecation simulation should emit json: {err or out}")
+        simulation = json.loads(out)["deprecation_simulation"]
+        by_name = {item["name"]: item for item in simulation["targets"]}
+
+        require(simulation["mode"] == "report_only", "simulation should be report-only")
+        require(all(item["safe_to_remove"] is False for item in by_name.values()), "simulation should default safe_to_remove=false")
+        require("manual_review_required" in by_name["unused-skill"]["blockers"], "unused skill still requires manual review")
+        require("agents_duplicate_present" in by_name["duplicate-skill"]["blockers"], "duplicate skill should report agents duplication")
+        require(
+            "referenced_by_other_skill_or_router" in by_name["duplicate-skill"]["blockers"],
+            "skill mentions from another skill should block direct removal",
+        )
+        require(
+            "codex/skills/router-skill/SKILL.md" in by_name["duplicate-skill"]["router_or_skill_ref_files"],
+            "router or neighboring skill refs should not be truncated by generic repo refs",
+        )
+        require("runtime_only_skill" in by_name["runtime-only-skill"]["blockers"], "runtime-only target should be explicit")
+        require("alias_relationship_present" in by_name["gstack-review"]["blockers"], "gstack alias should require alias policy review")
+
+        code, out, err = run(
+            [
+                sys.executable,
+                str(AUDIT_SKILLS),
+                "--repo-root",
+                str(repo),
+                "--codex-home",
+                str(codex_home),
+                "--simulate-deprecation-file",
+                str(tmp_path / "missing-targets.txt"),
+            ]
+        )
+        require(code != 0, "missing simulation target file should fail")
+        require("ERROR[simulate_deprecation_file]" in err, "missing simulation target file should name the failure")
 
     print("[PASS] skill governance audit CLI")
 
