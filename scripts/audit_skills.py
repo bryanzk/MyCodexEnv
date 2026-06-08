@@ -35,6 +35,7 @@ class SkillRecord:
     last_seen: str | None = None
     repo_refs: int = 0
     repo_ref_files: list[str] = field(default_factory=list)
+    router_or_skill_ref_files: list[str] = field(default_factory=list)
 
     @property
     def strong_signal(self) -> int:
@@ -52,6 +53,8 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--json", action="store_true", help="Emit JSON instead of Markdown.")
     parser.add_argument("--include-mentions", action="store_true", help="Treat [$skill] user mentions as usage signal.")
     parser.add_argument("--max-candidates", type=int, default=80, help="Maximum candidates per rendered section.")
+    parser.add_argument("--simulate-deprecation", action="append", default=[], metavar="SKILL", help="Report-only deprecation simulation target. May be repeated.")
+    parser.add_argument("--simulate-deprecation-file", action="append", default=[], metavar="PATH", help="Read report-only deprecation simulation targets from a newline-delimited file.")
     return parser.parse_args()
 
 
@@ -158,8 +161,8 @@ def apply_repo_references(records: dict[str, SkillRecord], repo_root: Path) -> N
         if rel_parts & DEFAULT_EXCLUDED_REPO_REF_DIRS:
             dirnames[:] = []
             continue
-        dirnames[:] = [name for name in dirnames if name not in DEFAULT_EXCLUDED_REPO_REF_DIRS]
-        for filename in filenames:
+        dirnames[:] = sorted(name for name in dirnames if name not in DEFAULT_EXCLUDED_REPO_REF_DIRS)
+        for filename in sorted(filenames):
             path = Path(dirpath) / filename
             if path.suffix not in REPO_REF_SUFFIXES:
                 continue
@@ -181,6 +184,8 @@ def apply_repo_references(records: dict[str, SkillRecord], repo_root: Path) -> N
                 record.repo_refs += count
                 if count and len(record.repo_ref_files) < 3:
                     record.repo_ref_files.append(rel_path)
+                if count and is_router_or_other_skill_ref(rel_path) and rel_path not in record.router_or_skill_ref_files:
+                    record.router_or_skill_ref_files.append(rel_path)
 
 
 def record_json(record: SkillRecord) -> dict[str, Any]:
@@ -194,11 +199,122 @@ def record_json(record: SkillRecord) -> dict[str, Any]:
         "total_signal": record.total_signal,
         "repo_refs": record.repo_refs,
         "repo_ref_files": record.repo_ref_files,
+        "router_or_skill_ref_files": record.router_or_skill_ref_files,
         "first_seen": record.first_seen,
         "last_seen": record.last_seen,
         "description": record.description,
         "hashes": {key: value[:12] for key, value in sorted(record.hashes.items())},
     }
+
+
+def load_simulation_targets(args: argparse.Namespace) -> tuple[list[str], str | None]:
+    targets: list[str] = []
+
+    def add_target(raw: str) -> None:
+        value = raw.strip()
+        if value and value not in targets:
+            targets.append(value)
+
+    for name in args.simulate_deprecation:
+        add_target(name)
+    for raw_path in args.simulate_deprecation_file:
+        path = Path(raw_path).expanduser()
+        try:
+            lines = read_text(path).splitlines()
+        except OSError as exc:
+            return [], f"ERROR[simulate_deprecation_file]: {exc}"
+        for line in lines:
+            stripped = line.strip()
+            if not stripped or stripped.startswith("#"):
+                continue
+            add_target(stripped)
+    return targets, None
+
+
+def alias_relationships_for(name: str, records: dict[str, SkillRecord]) -> list[dict[str, str]]:
+    relationships: list[dict[str, str]] = []
+    if name.startswith("gstack-"):
+        base = name.removeprefix("gstack-")
+        if base in records:
+            relationships.append({"type": "gstack_alias", "alias": name, "base": base})
+    alias = f"gstack-{name}"
+    if alias in records:
+        relationships.append({"type": "gstack_alias", "alias": alias, "base": name})
+    return relationships
+
+
+def is_router_or_other_skill_ref(path: str) -> bool:
+    return (
+        (path.startswith("codex/skills/") and path.endswith(f"/{SKILL_FILENAME}"))
+        or "router" in path.lower()
+        or "LIFECYCLE_SKILL_ROUTING" in path
+    )
+
+
+def simulate_deprecations(records: dict[str, SkillRecord], targets: list[str]) -> dict[str, Any]:
+    simulations: list[dict[str, Any]] = []
+    for name in targets:
+        record = records.get(name)
+        blockers = ["manual_review_required"]
+        required_manual_review = [
+            "confirm the skill is not intentionally reserved",
+            "decide whether repo, global runtime, or imported source owns this skill",
+            "run full verification before any removal or sync",
+        ]
+        alias_relationships = alias_relationships_for(name, records)
+        referenced_by_other_skill_or_router = False
+
+        if record is None:
+            blockers.append("skill_not_found")
+            required_manual_review.append("verify the requested skill name or source path")
+            sources: list[str] = []
+            repo_ref_files: list[str] = []
+            router_or_skill_ref_files: list[str] = []
+            repo_refs = 0
+            strong_signal = 0
+            explicit_mentions = 0
+        else:
+            sources = sorted(record.sources)
+            repo_ref_files = record.repo_ref_files
+            router_or_skill_ref_files = record.router_or_skill_ref_files
+            repo_refs = record.repo_refs
+            strong_signal = record.strong_signal
+            explicit_mentions = record.explicit_mentions
+            if "repo" not in record.sources and "global" in record.sources:
+                blockers.append("runtime_only_skill")
+                required_manual_review.append("choose whether runtime-only skills should be promoted, retained, or removed")
+            if "agents" in record.sources and ({"repo", "global"} & record.sources):
+                blockers.append("agents_duplicate_present")
+                required_manual_review.append("choose a .agents imported-source policy before removing duplicates")
+            if record.repo_refs:
+                blockers.append("repo_references_present")
+                required_manual_review.append("inspect repo references and update routing/docs/tests first")
+            referenced_by_other_skill_or_router = bool(router_or_skill_ref_files)
+            if referenced_by_other_skill_or_router:
+                blockers.append("referenced_by_other_skill_or_router")
+                required_manual_review.append("review router or neighboring skill references before removal")
+
+        if alias_relationships:
+            blockers.append("alias_relationship_present")
+            required_manual_review.append("choose canonical alias behavior before removing either side")
+
+        simulations.append(
+            {
+                "name": name,
+                "safe_to_remove": False,
+                "sources": sources,
+                "strong_signal": strong_signal,
+                "explicit_mentions": explicit_mentions,
+                "repo_refs": repo_refs,
+                "repo_ref_files": repo_ref_files,
+                "router_or_skill_ref_files": router_or_skill_ref_files,
+                "alias_relationships": alias_relationships,
+                "referenced_by_other_skill_or_router": referenced_by_other_skill_or_router,
+                "blockers": sorted(set(blockers)),
+                "required_manual_review": sorted(set(required_manual_review)),
+            }
+        )
+    return {"mode": "report_only", "targets": simulations}
 
 
 def build_summary(records: dict[str, SkillRecord], history_files_scanned: int, include_mentions: bool) -> dict[str, Any]:
@@ -328,6 +444,18 @@ def render_markdown(summary: dict[str, Any], max_candidates: int) -> str:
             "",
         ]
     )
+    simulation = summary.get("deprecation_simulation")
+    if simulation:
+        lines.extend(["## Deprecation Simulation", "", f"- mode: `{simulation['mode']}`"])
+        for target in simulation["targets"][:max_candidates]:
+            lines.append(
+                f"- `{target['name']}`: safe_to_remove={str(target['safe_to_remove']).lower()}; "
+                f"blockers={','.join(target['blockers'])}; sources={','.join(target['sources']) or 'none'}; "
+                f"repo_refs={target['repo_refs']}; router_or_skill_refs={len(target['router_or_skill_ref_files'])}"
+            )
+        if len(simulation["targets"]) > max_candidates:
+            lines.append(f"- ... {len(simulation['targets']) - max_candidates} more")
+        lines.append("")
     return "\n".join(lines)
 
 
@@ -339,6 +467,12 @@ def main() -> int:
     history_count = apply_history_signals(records, codex_home)
     apply_repo_references(records, repo_root)
     summary = build_summary(records, history_count, args.include_mentions)
+    simulation_targets, simulation_error = load_simulation_targets(args)
+    if simulation_error:
+        print(simulation_error, file=sys.stderr)
+        return 1
+    if simulation_targets:
+        summary["deprecation_simulation"] = simulate_deprecations(records, simulation_targets)
     if args.json:
         print(json.dumps(summary, ensure_ascii=False, indent=2, sort_keys=True))
     else:

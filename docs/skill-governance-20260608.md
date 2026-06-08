@@ -32,6 +32,20 @@ Optional JSON form:
 python3 scripts/audit_skills.py --repo-root "$(pwd)" --codex-home "$HOME/.codex" --json
 ```
 
+Report-only deprecation simulation for one or more skills:
+
+```bash
+python3 scripts/audit_skills.py --repo-root "$(pwd)" --codex-home "$HOME/.codex" --simulate-deprecation bolder --simulate-deprecation gstack-review
+```
+
+Report-only deprecation simulation from a newline-delimited target file:
+
+```bash
+python3 scripts/audit_skills.py --repo-root "$(pwd)" --codex-home "$HOME/.codex" --simulate-deprecation-file /tmp/skill-targets.txt --json
+```
+
+Simulation output is intentionally conservative: every target reports `safe_to_remove=false` until a human reviews blockers such as repo references, alias relationships, `.agents` duplication, runtime-only status, and references from another skill or router.
+
 ## Usage Signal Definition
 - `strong_signal`: explicit `superpowers-codex use-skill NAME` or `Loading ... skill: NAME` traces.
 - `explicit_mentions`: user-facing `[$NAME]` mentions.
@@ -80,6 +94,20 @@ These are the safest candidates for a freeze/deprecation review because they hav
 
 Recommended handling: mark as `freeze-review` first, then run a removal simulation that checks docs, tests, routing descriptions, and runtime sync impact.
 
+## 2026-06-08 First-Pass Simulation Result
+- command: `python3 scripts/audit_skills.py --repo-root "$(pwd)" --codex-home "$HOME/.codex" --json` with one report-only `--simulate-deprecation NAME` argument per first-pass candidate above
+- exit_code: `0`
+- timestamp: `2026-06-08T17:00:58-04:00`
+- key_output: `targets=25`; every target reported `safe_to_remove=false`
+- blocker counts: `manual_review_required=25`, `repo_references_present=18`, `alias_relationship_present=13`, `agents_duplicate_present=2`
+
+Initial grouping:
+
+- manual-review only: `chronicle-behavior-analysis`, `code-simplifier`, `colorize`, `find-skills`, `ljg-roundtable`, `teach-impeccable`, `transreader-chrome-store-release`
+- repo-reference only: `bolder`, `frontend-skill`, `tufte-viz`
+- `.agents` duplicate plus repo references: `data-analytics`, `graphviz`
+- gstack alias plus repo references: `gstack-autoplan`, `gstack-benchmark`, `gstack-careful`, `gstack-design-html`, `gstack-design-shotgun`, `gstack-devex-review`, `gstack-guard`, `gstack-health`, `gstack-open-gstack-browser`, `gstack-pair-agent`, `gstack-setup-browser-cookies`, `gstack-setup-deploy`, `gstack-unfreeze`
+
 ## Do Not Delete Directly
 These categories need routing or source policy decisions before cleanup:
 
@@ -108,9 +136,10 @@ Recommended handling: choose one canonical user-facing name per pair, then keep 
 Do not delete `.agents/skills` duplicates until the chosen policy is reflected in README, `docs/repo-index.md`, tests, and sync behavior.
 
 ## Next Safe Slice
-Implement a deprecation simulation mode in `scripts/audit_skills.py`:
+Choose and document a `freeze-review` policy before any removal, archive, rename, or runtime sync:
 
-- input: a skill name or file containing skill names
-- checks: repo references, alias relationship, `.agents` duplication, runtime-only status, and whether the skill is mentioned by another skill description or router
-- output: `safe_to_remove=false` by default with blockers and required manual review
-- verification: temporary fixture test in `test_runner.py`, then `python3 test_runner.py` and `git diff --check`
+- define what `freeze-review` changes in docs, prompts, sync behavior, and user-facing skill availability
+- start with the seven manual-review-only candidates if a reversible pilot is needed
+- keep gstack aliases as a bundle until canonical alias behavior is decided
+- keep `.agents` duplicates untouched until imported-source policy is decided
+- verification: policy doc update, `python3 test_runner.py`, and `git diff --check`

@@ -14,13 +14,13 @@ Stable rules belong in `AGENTS.md`, `README.md`, `docs/repo-index.md`, or
   - `codex/skills/delivery-harness-framework/SKILL.md`
 - blocked_sources: none
 - unsafe_inputs: none
-- next_safe_task: Stage the runner-hardening hunks with the staged DHF/runtime/docs slice, then commit or open a PR; keep docs/skill-governance-20260608.md and scripts/audit_skills.py separate unless explicitly included.
+- next_safe_task: Review and merge PR #6; then decide the freeze-review policy before any skill removal, archive, rename, or runtime sync.
 - required_commands:
   - `python3 test_runner.py`
   - `git diff --check`
   - `./scripts/verify_codex_env.sh --repo-root "$(pwd)" --codex-home "$HOME/.codex" --claude-home "$HOME/.claude"`
-- latest_checkpoint: 2026-06-08T16:42:23-04:00 Hardened test_runner.py so registered tests run through per-test failures, SystemExit is reported, registry completeness is asserted, and the pass sentinel only prints after a full clean run.
-- latest_verification: 2026-06-08T16:42:23-04:00 command=python3 scripts/check_surfaces.py --repo-root "/Users/kezheng/Codes/CursorDeveloper/MyCodexEnv" --check-public-nav && python3 test_runner.py && ./scripts/verify_codex_env.sh --repo-root "/Users/kezheng/Codes/CursorDeveloper/MyCodexEnv" --codex-home "/Users/kezheng/.codex" --claude-home "/Users/kezheng/.claude" --skip-check app_google_chrome && git diff --check && git diff --cached --check; exit_code=0; key_output=surfaces manifest consistent; ran=51 passed=51 failed=0; [PASS] all tests; Verification passed.; no whitespace errors
+- latest_checkpoint: 2026-06-08T17:03:51-04:00 Pushed skill-governance deprecation simulation branch and opened GitHub PR #6.
+- latest_verification: 2026-06-08T17:03:51-04:00 command=gh pr view 6 --json number,url,state,headRefName,baseRefName,title; exit_code=0; key_output=PR #6 OPEN; head=codex/mce-20260608-skill-governance-deprecation-sim; base=main; url=https://github.com/bryanzk/MyCodexEnv/pull/6
 
 ## State Log
 
@@ -693,6 +693,49 @@ Stable rules belong in `AGENTS.md`, `README.md`, `docs/repo-index.md`, or
   - none
 - next_safe_task: Run a deprecation simulation slice for the first-pass candidates before removing or syncing any skill.
 
+### 2026-06-08T10:24:45-04:00
+- phase: handoff
+- event: checkpoint
+- summary: implemented report-only skill deprecation simulation mode
+- git:
+  - branch: codex/mce-20260608-skill-deprecation-sim
+  - latest_commit: 71783ec
+  - dirty_status: dirty
+  - dirty_count: 3
+- changed_surfaces:
+  - `scripts/audit_skills.py`
+  - `test_runner.py`
+  - `docs/skill-governance-20260608.md`
+- verification:
+  - command: `python3 test_runner.py`
+  - exit_code: 0
+  - key_output: [PASS] all tests
+- blockers:
+  - none
+- next_safe_task: Run report-only deprecation simulation for the 25 first-pass candidates, review blockers, and document a freeze-review policy before any skill removal or runtime sync.
+
+### 2026-06-08T10:28:18-04:00
+- phase: handoff
+- event: checkpoint
+- summary: ran report-only deprecation simulation for all 25 first-pass skill candidates
+- git:
+  - branch: codex/mce-20260608-skill-deprecation-sim
+  - latest_commit: 71783ec
+  - dirty_status: dirty
+  - dirty_count: 4
+- changed_surfaces:
+  - `scripts/audit_skills.py`
+  - `test_runner.py`
+  - `docs/skill-governance-20260608.md`
+  - `docs/harness-state.md`
+- verification:
+  - command: `python3 test_runner.py`
+  - exit_code: 0
+  - key_output: [PASS] all tests
+- blockers:
+  - none
+- next_safe_task: Choose and document a freeze-review policy before any skill removal, archive, rename, or runtime sync.
+
 ### 2026-06-08T15:06:39-04:00
 - phase: development
 - event: checkpoint
@@ -787,3 +830,60 @@ Stable rules belong in `AGENTS.md`, `README.md`, `docs/repo-index.md`, or
 - blockers:
   - none
 - next_safe_task: Stage the runner-hardening hunks with the staged DHF/runtime/docs slice, then commit or open a PR; keep docs/skill-governance-20260608.md and scripts/audit_skills.py separate unless explicitly included.
+
+### 2026-06-08T16:55:15-04:00
+- phase: handoff
+- event: checkpoint
+- summary: Pushed branch codex/mce-20260608-skill-deprecation-sim and opened GitHub PR #5 for the DHF runtime gates slice.
+- git:
+  - branch: codex/mce-20260608-skill-deprecation-sim
+  - latest_commit: 71df52d
+  - dirty_status: dirty
+  - dirty_count: 4
+- changed_surfaces:
+  - `https://github.com/bryanzk/MyCodexEnv/pull/5`
+- verification:
+  - command: `gh pr view 5 --json number,url,state,headRefName,baseRefName,title`
+  - exit_code: 0
+  - key_output: PR #5 OPEN; head=codex/mce-20260608-skill-deprecation-sim; base=main; url=https://github.com/bryanzk/MyCodexEnv/pull/5
+- blockers:
+  - none
+- next_safe_task: Review and merge PR #5; after that, handle the remaining local skill-governance deprecation simulation follow-up as a separate slice.
+
+### 2026-06-08T17:01:55-04:00
+- phase: handoff
+- event: checkpoint
+- summary: Implemented report-only skill deprecation simulation in audit_skills.py with conservative blockers, docs, and regression coverage.
+- git:
+  - branch: codex/mce-20260608-skill-governance-deprecation-sim
+  - latest_commit: 3078060
+  - dirty_status: dirty
+  - dirty_count: 4
+- changed_surfaces:
+  - `scripts/audit_skills.py; test_runner.py; docs/skill-governance-20260608.md; docs/harness-state.md`
+- verification:
+  - command: `python3 scripts/check_surfaces.py --repo-root "/Users/kezheng/Codes/CursorDeveloper/MyCodexEnv" --check-public-nav && python3 test_runner.py && ./scripts/verify_codex_env.sh --repo-root "/Users/kezheng/Codes/CursorDeveloper/MyCodexEnv" --codex-home "/Users/kezheng/.codex" --claude-home "/Users/kezheng/.claude" --skip-check app_google_chrome && git diff --check && git diff --cached --check`
+  - exit_code: 0
+  - key_output: surfaces manifest consistent; ran=51 passed=51 failed=0; [PASS] all tests; Verification passed.; no whitespace errors
+- blockers:
+  - none
+- next_safe_task: Push this skill-governance deprecation simulation branch and open a separate PR; then decide the freeze-review policy before any skill removal, archive, rename, or runtime sync.
+
+### 2026-06-08T17:03:51-04:00
+- phase: handoff
+- event: checkpoint
+- summary: Pushed skill-governance deprecation simulation branch and opened GitHub PR #6.
+- git:
+  - branch: codex/mce-20260608-skill-governance-deprecation-sim
+  - latest_commit: 1df40ba
+  - dirty_status: clean
+  - dirty_count: 0
+- changed_surfaces:
+  - `https://github.com/bryanzk/MyCodexEnv/pull/6`
+- verification:
+  - command: `gh pr view 6 --json number,url,state,headRefName,baseRefName,title`
+  - exit_code: 0
+  - key_output: PR #6 OPEN; head=codex/mce-20260608-skill-governance-deprecation-sim; base=main; url=https://github.com/bryanzk/MyCodexEnv/pull/6
+- blockers:
+  - none
+- next_safe_task: Review and merge PR #6; then decide the freeze-review policy before any skill removal, archive, rename, or runtime sync.
