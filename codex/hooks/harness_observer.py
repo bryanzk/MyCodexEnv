@@ -8,6 +8,13 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any
 
+try:
+    from harness_guard import current_phase, git_root, load_policy
+except Exception:  # Observer must keep logging best-effort if guard imports fail.
+    current_phase = None
+    git_root = None
+    load_policy = None
+
 
 def load_payload() -> dict[str, Any]:
     try:
@@ -43,6 +50,26 @@ def command_text(payload: dict[str, Any]) -> str | None:
     return None
 
 
+def cwd_text(payload: dict[str, Any]) -> str:
+    return str(payload.get("cwd") or tool_input(payload).get("cwd") or os.getcwd())
+
+
+def fallback_phase(payload: dict[str, Any]) -> str:
+    return str(payload.get("phase") or tool_input(payload).get("phase") or os.environ.get("CODEX_HARNESS_PHASE") or "unknown")
+
+
+def resolved_phase(payload: dict[str, Any], cwd: str) -> str:
+    if current_phase is None or git_root is None or load_policy is None:
+        return fallback_phase(payload)
+    try:
+        policy = load_policy()
+        if not policy:
+            return fallback_phase(payload)
+        return current_phase(payload, policy, git_root(cwd))
+    except Exception:
+        return fallback_phase(payload)
+
+
 def append_event(event: dict[str, Any]) -> None:
     target_dir = Path(os.environ.get("CODEX_HARNESS_EVIDENCE_DIR", str(codex_home() / "harness" / "evidence"))).expanduser()
     target_dir.mkdir(parents=True, exist_ok=True)
@@ -53,13 +80,14 @@ def append_event(event: dict[str, Any]) -> None:
 
 def build_event(payload: dict[str, Any]) -> dict[str, Any]:
     timestamp = now_iso()
+    cwd = cwd_text(payload)
     return {
         "schema_version": 1,
         "timestamp": timestamp,
         "session_id": str(payload.get("session_id") or os.environ.get("CODEX_SESSION_ID") or ""),
         "event_type": "tool_call",
-        "cwd": str(payload.get("cwd") or tool_input(payload).get("cwd") or os.getcwd()),
-        "phase": str(payload.get("phase") or tool_input(payload).get("phase") or os.environ.get("CODEX_HARNESS_PHASE") or "unknown"),
+        "cwd": cwd,
+        "phase": resolved_phase(payload, cwd),
         "tool_name": str(payload.get("tool_name") or payload.get("tool") or payload.get("name") or "unknown"),
         "command": command_text(payload) or "",
         "exit_code": int(payload.get("exit_code")) if isinstance(payload.get("exit_code"), int) else 0,

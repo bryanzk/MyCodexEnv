@@ -1945,6 +1945,66 @@ def test_harness_guard_phase_resolution():
     print("[PASS] harness guard phase resolution")
 
 
+def test_harness_observer_phase_matches_guard_resolution():
+    with tempfile.TemporaryDirectory() as tmp:
+        tmp_path = Path(tmp)
+        git_probe = subprocess.run(["git", "--version"], capture_output=True, text=True, check=False)
+        if git_probe.returncode != 0:
+            print("[SKIP] harness observer phase resolution requires git for snapshot repo setup")
+            return
+
+        runtime_dir = tmp_path / ".codex" / "runtime"
+        runtime_dir.mkdir(parents=True)
+        (runtime_dir / "tool-policy.json").write_text(
+            (ROOT / "codex" / "runtime" / "tool-policy.json").read_text(encoding="utf-8"),
+            encoding="utf-8",
+        )
+
+        repo = tmp_path / "repo"
+        (repo / "docs").mkdir(parents=True)
+        subprocess.run(["git", "init", "-q", str(repo)], check=True)
+        (repo / "docs" / "harness-state.md").write_text(
+            "# Harness State\n\n## Current Snapshot\n- phase: planning\n",
+            encoding="utf-8",
+        )
+
+        env = os.environ.copy()
+        env["CODEX_HOME"] = str(tmp_path / ".codex")
+        env["CODEX_HARNESS_EVIDENCE_DIR"] = str(tmp_path / "evidence")
+        env.pop("CODEX_HARNESS_PHASE", None)
+        payload = json.dumps({"tool_name": "exec_command", "tool_input": {"cmd": "pwd", "cwd": str(repo)}})
+        code, out, err = run_with_input([sys.executable, str(HARNESS_OBSERVER)], payload, env=env)
+        require(code == 0, f"observer phase-resolution run failed: {err or out}")
+        require(json.loads(out) == {}, "observer should return empty hook response")
+
+        events = []
+        for path in sorted(Path(env["CODEX_HARNESS_EVIDENCE_DIR"]).glob("*.jsonl")):
+            events.extend(json.loads(line) for line in path.read_text(encoding="utf-8").splitlines() if line.strip())
+        require(events, "observer should write one evidence event")
+        require(
+            events[-1].get("phase") == "planning",
+            "observer must resolve phase from repo snapshot through the guard resolver",
+        )
+
+        non_repo = tmp_path / "not-a-repo"
+        non_repo.mkdir()
+        fallback_env = env.copy()
+        fallback_env["CODEX_HARNESS_EVIDENCE_DIR"] = str(tmp_path / "fallback-evidence")
+        fallback_payload = json.dumps(
+            {"tool_name": "exec_command", "tool_input": {"cmd": "pwd", "cwd": str(non_repo)}}
+        )
+        code, out, err = run_with_input([sys.executable, str(HARNESS_OBSERVER)], fallback_payload, env=fallback_env)
+        require(code == 0, f"observer unknown-phase run failed: {err or out}")
+        fallback_events = []
+        for path in sorted(Path(fallback_env["CODEX_HARNESS_EVIDENCE_DIR"]).glob("*.jsonl")):
+            fallback_events.extend(
+                json.loads(line) for line in path.read_text(encoding="utf-8").splitlines() if line.strip()
+            )
+        require(fallback_events[-1].get("phase") == "unknown", "observer must keep non-blocking unknown fallback")
+
+    print("[PASS] harness observer phase matches guard resolution")
+
+
 def test_model_router_prompt_complexity_decisions():
     simple_payload = json.dumps({"prompt": "把这段话翻译成英文：你好"})
     code, out, err = run_with_input([sys.executable, str(MODEL_ROUTER)], simple_payload)
@@ -2894,6 +2954,28 @@ def test_agent_dispatch_gate():
         code, out, err = run_with_input([sys.executable, str(HARNESS_GUARD)], malformed_payload, env=env)
         require(code == 0, f"guard malformed evidence run failed: {err or out}")
         require(json.loads(out).get("permissionDecision") == "ask", "malformed JSONL must not allow dispatch")
+
+        legacy_event = {
+            "schema_version": 1,
+            "timestamp": receipt["timestamp"],
+            "event_type": "agent_team_validated",
+            "cwd": str(repo),
+            "phase": "handoff",
+            "message": "legacy agent-team event without evidence kind or metadata",
+        }
+        write(evdir / "legacy-agent-team.jsonl", json.dumps(legacy_event) + "\n")
+        legacy_payload = json.dumps(
+            {
+                "tool_name": "spawn_agent",
+                "tool_input": {"plan_sha256": "legacyhash", "worker_count": 1, "cwd": str(repo)},
+            }
+        )
+        code, out, err = run_with_input([sys.executable, str(HARNESS_GUARD)], legacy_payload, env=env)
+        require(code == 0, f"guard legacy evidence run failed: {err or out}")
+        require(
+            json.loads(out).get("permissionDecision") == "ask",
+            "legacy agent-team evidence without evidence_kind or metadata must not allow dispatch",
+        )
 
         blocked_home = tmp_path / "blocked-codex-home"
         blocked_home.write_text("not a directory", encoding="utf-8")
@@ -4158,6 +4240,7 @@ TESTS = [
     test_sync_local_main_skips_dirty_worktree,
     test_harness_guard_policy_decisions,
     test_harness_guard_phase_resolution,
+    test_harness_observer_phase_matches_guard_resolution,
     test_model_router_prompt_complexity_decisions,
     test_harness_evidence_append_and_observer_failure_mode,
     test_harness_feedback_conversion_health,
