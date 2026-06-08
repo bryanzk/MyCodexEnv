@@ -14,13 +14,13 @@ Stable rules belong in `AGENTS.md`, `README.md`, `docs/repo-index.md`, or
   - `codex/skills/delivery-harness-framework/SKILL.md`
 - blocked_sources: none
 - unsafe_inputs: none
-- next_safe_task: On the next scheduled refresh, rerun prepare first; if status=deferred and reason=dns_unreachable, update only automation memory and keep repo untouched.
+- next_safe_task: Run a deprecation simulation slice for the first-pass candidates before removing or syncing any skill.
 - required_commands:
   - `python3 test_runner.py`
   - `git diff --check`
   - `./scripts/verify_codex_env.sh --repo-root "$(pwd)" --codex-home "$HOME/.codex" --claude-home "$HOME/.claude"`
-- latest_checkpoint: 2026-06-08T09:12:36-04:00 finalized 2026-06-08 gstack daily refresh after push, main auto-merge, and local safe-sync check
-- latest_verification: 2026-06-08T09:12:36-04:00 command=git ls-remote origin refs/heads/automation/gstack-dhf-daily-refresh refs/heads/main; exit_code=0; key_output=automation/main both at 6cbad02
+- latest_checkpoint: 2026-06-08T09:58:55-04:00 added report-only skill governance audit script and 2026-06-08 baseline doc
+- latest_verification: 2026-06-08T09:58:55-04:00 command=python3 test_runner.py; exit_code=0; key_output=[PASS] all tests
 
 ## State Log
 
@@ -670,3 +670,25 @@ Stable rules belong in `AGENTS.md`, `README.md`, `docs/repo-index.md`, or
 - blockers:
   - none
 - next_safe_task: On the next scheduled refresh, rerun prepare first; if status=deferred and reason=dns_unreachable, update only automation memory and keep repo untouched.
+
+### 2026-06-08T09:58:55-04:00
+- phase: handoff
+- event: checkpoint
+- summary: added report-only skill governance audit script and 2026-06-08 baseline doc
+- git:
+  - branch: codex/mce-20260608-harness-state-single-writer
+  - latest_commit: 236e7f1
+  - dirty_status: dirty
+  - dirty_count: 4
+- changed_surfaces:
+  - `scripts/audit_skills.py`
+  - `docs/skill-governance-20260608.md`
+  - `docs/repo-index.md`
+  - `test_runner.py`
+- verification:
+  - command: `python3 test_runner.py`
+  - exit_code: 0
+  - key_output: [PASS] all tests
+- blockers:
+  - none
+- next_safe_task: Run a deprecation simulation slice for the first-pass candidates before removing or syncing any skill.

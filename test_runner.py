@@ -23,12 +23,14 @@ HARNESS_REQUIREMENTS = ROOT / "scripts" / "harness_requirements.py"
 HARNESS_RECOVER = ROOT / "scripts" / "harness_recover.py"
 HARNESS_ENV_PROBE = ROOT / "scripts" / "harness_env_probe.py"
 HEADROOM_FILTER = ROOT / "scripts" / "headroom_filter.py"
+AUDIT_SKILLS = ROOT / "scripts" / "audit_skills.py"
 SYNC_GSTACK_VENDOR = ROOT / "scripts" / "sync_gstack_vendor.py"
 PREPARE_GSTACK_DAILY_REFRESH = ROOT / "scripts" / "prepare_gstack_dhf_daily_refresh.py"
 MERGE_GSTACK_DAILY_REFRESH = ROOT / "scripts" / "merge_gstack_refresh_if_safe.py"
 SYNC_LOCAL_MAIN_IF_SAFE = ROOT / "scripts" / "sync_local_main_if_safe.py"
 HARNESS_REQUIREMENTS_TEMPLATE = ROOT / "docs" / "templates" / "harness-requirements.md"
 HARNESS_AGENT_BRIEF_TEMPLATE = ROOT / "docs" / "templates" / "harness-agent-brief.md"
+SKILL_GOVERNANCE_DOC = ROOT / "docs" / "skill-governance-20260608.md"
 LIFECYCLE_SKILL_ROUTING_DOC = ROOT / "docs" / "LIFECYCLE_SKILL_ROUTING.md"
 PUBLIC_INDEX_HTML = ROOT / "docs" / "index.html"
 PUBLIC_INDEX_EN_HTML = ROOT / "docs" / "index-en.html"
@@ -613,8 +615,10 @@ def test_harness_runtime_surfaces_exist_and_parse():
         HARNESS_REQUIREMENTS,
         HARNESS_RECOVER,
         HARNESS_ENV_PROBE,
+        AUDIT_SKILLS,
         HARNESS_REQUIREMENTS_TEMPLATE,
         HARNESS_AGENT_BRIEF_TEMPLATE,
+        SKILL_GOVERNANCE_DOC,
     ]
     for path in required_paths:
         require(path.exists(), f"missing harness runtime surface: {path}")
@@ -641,6 +645,50 @@ def test_harness_runtime_surfaces_exist_and_parse():
         require(module in status_text, f"agent harness status missing module: {module}")
 
     print("[PASS] harness runtime surfaces exist and parse")
+
+
+def test_skill_governance_audit_cli():
+    with tempfile.TemporaryDirectory() as tmp:
+        tmp_path = Path(tmp)
+        repo = tmp_path / "repo"
+        codex_home = tmp_path / ".codex"
+
+        write(repo / "codex" / "skills" / "unused-skill" / "SKILL.md", "---\nname: unused-skill\ndescription: unused\n---\n")
+        write(repo / "codex" / "skills" / "used-skill" / "SKILL.md", "---\nname: used-skill\ndescription: used\n---\n")
+        duplicate_content = "---\nname: duplicate-skill\ndescription: duplicate\n---\n"
+        write(repo / "codex" / "skills" / "duplicate-skill" / "SKILL.md", duplicate_content)
+        write(repo / ".agents" / "skills" / "duplicate-skill" / "SKILL.md", duplicate_content)
+        write(codex_home / "skills" / "unused-skill" / "SKILL.md", "---\nname: unused-skill\ndescription: unused\n---\n")
+        write(codex_home / "skills" / "used-skill" / "SKILL.md", "---\nname: used-skill\ndescription: used\n---\n")
+        write(codex_home / "skills" / "duplicate-skill" / "SKILL.md", duplicate_content)
+        write(codex_home / "sessions" / "2026" / "06" / "08" / "rollout.jsonl", "superpowers-codex use-skill used-skill\n")
+        write(repo / "docs" / "skill-governance-20260608.md", "`unused-skill` should not inflate repo refs\n")
+
+        code, out, err = run(
+            [
+                sys.executable,
+                str(AUDIT_SKILLS),
+                "--repo-root",
+                str(repo),
+                "--codex-home",
+                str(codex_home),
+                "--json",
+            ]
+        )
+        require(code == 0, f"audit_skills should emit json: {err or out}")
+        summary = json.loads(out)
+        low_ref_names = {item["name"] for item in summary["repo_unused"]["low_ref"]}
+        top_used_names = {item["name"] for item in summary["top_used"]}
+        duplicate_names = {item["name"] for item in summary["agent_duplicates"]}
+
+        require("unused-skill" in low_ref_names, "unused repo skill should be a low-ref candidate")
+        require("used-skill" not in low_ref_names, "used skill should not be an unused candidate")
+        require("used-skill" in top_used_names, "used skill should appear in top used results")
+        require("duplicate-skill" in duplicate_names, ".agents duplicate should be reported")
+        unused = next(item for item in summary["repo_unused"]["low_ref"] if item["name"] == "unused-skill")
+        require(unused["repo_refs"] == 0, "generated skill governance docs should not count as repo refs")
+
+    print("[PASS] skill governance audit CLI")
 
 
 def test_shipq_dhf_prompt_hook_auto_invokes_skill():
@@ -2289,6 +2337,39 @@ def test_harness_agent_team_validator():
         code, out, err = run([sys.executable, str(HARNESS_AGENT_TEAM), "validate", str(plan_path), "--repo-root", str(ROOT)])
         require(code != 0 and "path_outside_repo" in err, "repo-outside absolute path should fail")
 
+        protected_state_plan = {
+            "agents": [
+                worker_agent("worker", write_set=["docs/harness-state.md"])
+            ]
+        }
+        write(plan_path, json.dumps(protected_state_plan))
+        code, out, err = run([sys.executable, str(HARNESS_AGENT_TEAM), "validate", str(plan_path), "--repo-root", str(ROOT)])
+        require(
+            code != 0 and "protected_integrator_surface" in err and "docs/harness-state.md" in err,
+            "worker-owned harness state should fail as protected integrator state",
+        )
+
+        protected_parent_plan = {
+            "agents": [
+                worker_agent("worker", write_set=["docs"])
+            ]
+        }
+        write(plan_path, json.dumps(protected_parent_plan))
+        code, out, err = run([sys.executable, str(HARNESS_AGENT_TEAM), "validate", str(plan_path), "--repo-root", str(ROOT)])
+        require(
+            code != 0 and "protected_integrator_surface" in err and "docs/harness-state.md" in err,
+            "worker-owned docs directory should fail because it covers protected harness state",
+        )
+
+        slice_local_handoff_plan = {
+            "agents": [
+                worker_agent("worker", write_set=["docs/handoffs/parallel-worker.md"])
+            ]
+        }
+        write(plan_path, json.dumps(slice_local_handoff_plan))
+        code, out, err = run([sys.executable, str(HARNESS_AGENT_TEAM), "validate", str(plan_path), "--repo-root", str(ROOT)])
+        require(code == 0, f"slice-local handoff write set should remain valid: {err or out}")
+
     print("[PASS] harness agent team validator")
 
 
@@ -3387,11 +3468,13 @@ def main():
     require(HARNESS_RECOVER.exists(), f"missing harness recover helper: {HARNESS_RECOVER}")
     require(HARNESS_ENV_PROBE.exists(), f"missing harness env probe helper: {HARNESS_ENV_PROBE}")
     require(HEADROOM_FILTER.exists(), f"missing headroom filter helper: {HEADROOM_FILTER}")
+    require(AUDIT_SKILLS.exists(), f"missing skill governance audit helper: {AUDIT_SKILLS}")
     require(PREPARE_GSTACK_DAILY_REFRESH.exists(), f"missing daily refresh prepare helper: {PREPARE_GSTACK_DAILY_REFRESH}")
     require(MERGE_GSTACK_DAILY_REFRESH.exists(), f"missing daily refresh merge helper: {MERGE_GSTACK_DAILY_REFRESH}")
     require(SYNC_LOCAL_MAIN_IF_SAFE.exists(), f"missing local main sync helper: {SYNC_LOCAL_MAIN_IF_SAFE}")
     require(HARNESS_REQUIREMENTS_TEMPLATE.exists(), f"missing harness requirements template: {HARNESS_REQUIREMENTS_TEMPLATE}")
     require(HARNESS_AGENT_BRIEF_TEMPLATE.exists(), f"missing harness agent brief template: {HARNESS_AGENT_BRIEF_TEMPLATE}")
+    require(SKILL_GOVERNANCE_DOC.exists(), f"missing skill governance doc: {SKILL_GOVERNANCE_DOC}")
     require(HARNESS_GUARD.exists(), f"missing harness guard hook: {HARNESS_GUARD}")
     require(HARNESS_OBSERVER.exists(), f"missing harness observer hook: {HARNESS_OBSERVER}")
     require(MODEL_ROUTER.exists(), f"missing model router hook: {MODEL_ROUTER}")
@@ -3407,6 +3490,7 @@ def main():
     test_delivery_harness_framework_eval_matrix()
     test_sync_agents_only_copies_and_backs_up_agents()
     test_harness_runtime_surfaces_exist_and_parse()
+    test_skill_governance_audit_cli()
     test_shipq_dhf_prompt_hook_auto_invokes_skill()
     test_harness_agent_brief_template()
     test_lifecycle_skill_routing_doc_is_discoverable()

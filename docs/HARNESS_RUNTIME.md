@@ -212,7 +212,8 @@ Checkpoint helper:
 Each delegated agent must receive:
 - role: planner, worker, reviewer, security, or qa;
 - scope: exact task and owned files or modules;
-- write set: empty for read-only roles, disjoint for workers;
+- write set: empty for read-only roles, disjoint for workers, and no protected
+  integrator state surfaces such as `docs/harness-state.md`;
 - verification command;
 - report schema: changes, evidence, blockers, and risks.
 
@@ -242,9 +243,15 @@ Default permissions:
 - planner: read-only;
 - worker: scoped writes only;
 - reviewer/security/qa: read-only;
-- main agent: integration and final judgment.
+- main agent: integration, final judgment, and verified checkpoint updates.
 
 Overlapping worker write sets block dispatch until the task is split again.
+Delegated workers must not claim `docs/harness-state.md`, or a parent path such
+as `docs/`, in their write set. Worker handoff belongs in a slice-local artifact
+or report; the main agent appends the consolidated harness checkpoint after
+integration and fresh verification. Single-line tasks executed directly by the
+main agent are not worker plans and may still use `scripts/harness_checkpoint.py
+append` after the usual verification gate.
 
 Agent team validator:
 - `scripts/harness_agent_team.py validate PLAN.json` validates `agents[]`.
@@ -258,6 +265,8 @@ Agent team validator:
 - planner, reviewer, security, and qa roles must have an empty `write_set`.
 - worker roles must have a non-empty `write_set` and verification command.
 - worker write sets are normalized to repo-relative paths and must be disjoint.
+- worker write sets must not overlap protected integrator state surfaces,
+  currently `docs/harness-state.md`.
 - empty paths, `..` traversal, and absolute paths outside the repo fail.
 
 ## Failure Modes

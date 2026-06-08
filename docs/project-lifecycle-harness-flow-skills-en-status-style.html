@@ -625,7 +625,7 @@ flowchart TD
           </div>
           <div class="card accent-build">
             <b>3. No parallel writes without a validator</b>
-            <small>Any worker team must pass <code>harness_agent_team.py validate</code> to prove write sets do not overlap; add a durable brief when the task must survive handoff.</small>
+            <small>Any worker team must pass <code>harness_agent_team.py validate</code> to prove write sets do not overlap and do not claim <code>docs/harness-state.md</code>; that global checkpoint is appended by the integrator after verification, while single-line main-agent tasks are outside this worker rule.</small>
           </div>
           <div class="card accent-verify">
             <b>4. Completion claims require fresh evidence</b>
