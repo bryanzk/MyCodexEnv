@@ -2955,6 +2955,28 @@ def test_agent_dispatch_gate():
         require(code == 0, f"guard malformed evidence run failed: {err or out}")
         require(json.loads(out).get("permissionDecision") == "ask", "malformed JSONL must not allow dispatch")
 
+        legacy_event = {
+            "schema_version": 1,
+            "timestamp": receipt["timestamp"],
+            "event_type": "agent_team_validated",
+            "cwd": str(repo),
+            "phase": "handoff",
+            "message": "legacy agent-team event without evidence kind or metadata",
+        }
+        write(evdir / "legacy-agent-team.jsonl", json.dumps(legacy_event) + "\n")
+        legacy_payload = json.dumps(
+            {
+                "tool_name": "spawn_agent",
+                "tool_input": {"plan_sha256": "legacyhash", "worker_count": 1, "cwd": str(repo)},
+            }
+        )
+        code, out, err = run_with_input([sys.executable, str(HARNESS_GUARD)], legacy_payload, env=env)
+        require(code == 0, f"guard legacy evidence run failed: {err or out}")
+        require(
+            json.loads(out).get("permissionDecision") == "ask",
+            "legacy agent-team evidence without evidence_kind or metadata must not allow dispatch",
+        )
+
         blocked_home = tmp_path / "blocked-codex-home"
         blocked_home.write_text("not a directory", encoding="utf-8")
         blocked_env = env.copy()
