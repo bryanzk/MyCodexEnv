@@ -19,8 +19,8 @@ Stable rules belong in `AGENTS.md`, `README.md`, `docs/repo-index.md`, or
   - `python3 test_runner.py`
   - `git diff --check`
   - `./scripts/verify_codex_env.sh --repo-root "$(pwd)" --codex-home "$HOME/.codex" --claude-home "$HOME/.claude"`
-- latest_checkpoint: 2026-06-08T09:10:16-04:00 completed 2026-06-08 gstack daily refresh with gstack 1.57.4.0 update, DHF no-op, and runtime setup repair
-- latest_verification: 2026-06-08T09:10:16-04:00 command=python3 test_runner.py; exit_code=0; key_output=[PASS] all tests
+- latest_checkpoint: 2026-06-08T09:12:36-04:00 finalized 2026-06-08 gstack daily refresh after push, main auto-merge, and local safe-sync check
+- latest_verification: 2026-06-08T09:12:36-04:00 command=git ls-remote origin refs/heads/automation/gstack-dhf-daily-refresh refs/heads/main; exit_code=0; key_output=automation/main both at 6cbad02
 
 ## State Log
 
@@ -648,6 +648,25 @@ Stable rules belong in `AGENTS.md`, `README.md`, `docs/repo-index.md`, or
   - command: `python3 test_runner.py`
   - exit_code: 0
   - key_output: [PASS] all tests
+- blockers:
+  - none
+- next_safe_task: On the next scheduled refresh, rerun prepare first; if status=deferred and reason=dns_unreachable, update only automation memory and keep repo untouched.
+
+### 2026-06-08T09:12:36-04:00
+- phase: handoff
+- event: checkpoint
+- summary: finalized 2026-06-08 gstack daily refresh after push, main auto-merge, and local safe-sync check
+- git:
+  - branch: automation/gstack-dhf-daily-refresh
+  - latest_commit: 6cbad02
+  - dirty_status: dirty
+  - dirty_count: 1
+- changed_surfaces:
+  - `tasks/gstack-dhf-daily-refresh-2026-06-08.md`
+- verification:
+  - command: `git ls-remote origin refs/heads/automation/gstack-dhf-daily-refresh refs/heads/main`
+  - exit_code: 0
+  - key_output: automation/main both at 6cbad02
 - blockers:
   - none
 - next_safe_task: On the next scheduled refresh, rerun prepare first; if status=deferred and reason=dns_unreachable, update only automation memory and keep repo untouched.

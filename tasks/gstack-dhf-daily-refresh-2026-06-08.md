@@ -113,18 +113,27 @@
 
 ## 提交与后续自动化
 
-- 当前预期净 diff：
-  - `codex/skills/gstack/**`
-  - `docs/harness-state.md`
-  - `tasks/gstack-dhf-daily-refresh-2026-06-08.md`
-- 将在 standalone clone 中执行：
-  - `git add`
-  - `git commit`
-  - `git fetch origin && git rebase origin/main`
-  - `git push --force-with-lease origin HEAD:refs/heads/automation/gstack-dhf-daily-refresh`
-  - `python3 scripts/merge_gstack_refresh_if_safe.py --repo-root "$(pwd)" --apply --verified --json`
-- 若 helper 返回 `merged`，继续：
-  - `python3 scripts/sync_local_main_if_safe.py --repo-root /Users/kezheng/Codes/CursorDeveloper/MyCodexEnv --apply --json`
+- commit：
+  - 初始 commit：`14fc492` `chore: refresh gstack vendor to 1.57.4.0`
+  - rebase 后最终 commit：`6cbad02` `chore: refresh gstack vendor to 1.57.4.0`
+- automation branch push：
+  - status：success
+  - remote ref：`refs/heads/automation/gstack-dhf-daily-refresh`
+  - remote SHA：`6cbad02`
+- `main` auto-merge：
+  - helper：`python3 scripts/merge_gstack_refresh_if_safe.py --repo-root "$(pwd)" --apply --verified --json`
+  - status：`merged`
+  - `main_before`：`9fb82ec`
+  - `main_after`：`6cbad02`
+- 本地 `main` safe-sync：
+  - helper：`python3 scripts/sync_local_main_if_safe.py --repo-root /Users/kezheng/Codes/CursorDeveloper/MyCodexEnv --apply --json`
+  - status：`skipped`
+  - reason：`dirty_worktree`
+  - detail：
+    - `M docs/dhf-workflow-skills-cn.html`
+    - `M docs/dhf-workflow-skills-en.html`
+    - `M docs/index-en.html`
+    - `M docs/index.html`
 
 ## 下一次最小自动动作
 
