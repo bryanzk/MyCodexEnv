@@ -6,6 +6,7 @@ import os
 import re
 import subprocess
 import sys
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any
 
@@ -64,16 +65,54 @@ def candidate_paths(payload: dict[str, Any]) -> list[str]:
     return paths
 
 
-def current_phase(payload: dict[str, Any], policy: dict[str, Any]) -> str:
+def phase_from_state_snapshot(root: Path | None) -> str | None:
+    if root is None:
+        return None
+    state = root / "docs" / "harness-state.md"
+    try:
+        text = state.read_text(encoding="utf-8")
+    except OSError:
+        return None
+
+    in_snapshot = False
+    for line in text.splitlines():
+        stripped = line.strip()
+        if stripped.lower().startswith("## current snapshot"):
+            in_snapshot = True
+            continue
+        if in_snapshot:
+            if stripped.startswith("## "):
+                break
+            match = re.match(r"\s*-\s*phase:\s*([A-Za-z_]+)\s*$", line)
+            if match:
+                return match.group(1)
+    return None
+
+
+def current_phase(payload: dict[str, Any], policy: dict[str, Any], root: Path | None) -> str:
     value = (
         payload.get("phase")
         or tool_input(payload).get("phase")
         or os.environ.get("CODEX_HARNESS_PHASE")
-        or policy.get("default_phase")
-        or "development"
+        or phase_from_state_snapshot(root)
+        or "unknown"
     )
     phase = str(value)
     return phase if phase in policy.get("phases", {}) else "unknown"
+
+
+def unknown_phase_policy(policy: dict[str, Any]) -> dict[str, Any]:
+    if policy.get("unknown_phase_behavior") == "default_phase":
+        default_phase = str(policy.get("default_phase") or "")
+        default_policy = policy.get("phases", {}).get(default_phase)
+        if isinstance(default_policy, dict):
+            return default_policy
+    return {
+        "allow_repo_write": False,
+        "allow_network": False,
+        "allow_remote": False,
+        "require_approval": ["repo_write", "network", "remote", "secret", "destructive", "dynamic_exec"],
+    }
 
 
 def match_any(patterns: list[str], text: str) -> str | None:
@@ -81,6 +120,104 @@ def match_any(patterns: list[str], text: str) -> str | None:
         if re.search(pattern, text, flags=re.IGNORECASE):
             return pattern
     return None
+
+
+def configured_evidence_dir(policy: dict[str, Any]) -> Path:
+    override = os.environ.get("CODEX_HARNESS_EVIDENCE_DIR")
+    if override:
+        return Path(override).expanduser()
+    raw = str(policy.get("evidence_dir") or "")
+    if raw == "~/.codex":
+        return codex_home()
+    if raw.startswith("~/.codex/"):
+        return codex_home() / raw.removeprefix("~/.codex/")
+    if raw:
+        return Path(raw).expanduser()
+    return codex_home() / "harness" / "evidence"
+
+
+def payload_value(payload: dict[str, Any], key: str) -> Any:
+    data = tool_input(payload)
+    if key in data:
+        return data[key]
+    return payload.get(key)
+
+
+def parse_timestamp(value: Any) -> datetime | None:
+    if not isinstance(value, str) or not value.strip():
+        return None
+    try:
+        parsed = datetime.fromisoformat(value.replace("Z", "+00:00"))
+    except ValueError:
+        return None
+    if parsed.tzinfo is None:
+        return parsed.replace(tzinfo=timezone.utc)
+    return parsed
+
+
+def int_or_none(value: Any) -> int | None:
+    if isinstance(value, bool):
+        return None
+    if isinstance(value, int):
+        return value
+    if isinstance(value, str) and value.strip().isdigit():
+        return int(value.strip())
+    return None
+
+
+def receipt_is_fresh(event: dict[str, Any], now: datetime) -> bool:
+    timestamp = parse_timestamp(event.get("timestamp"))
+    if timestamp is None:
+        return False
+    age = now - timestamp.astimezone(timezone.utc)
+    return timedelta(0) <= age <= timedelta(minutes=10)
+
+
+def has_fresh_validation_receipt(payload: dict[str, Any], policy: dict[str, Any], root: Path | None) -> bool:
+    plan_hash = payload_value(payload, "plan_sha256")
+    if not isinstance(plan_hash, str) or not plan_hash.strip() or root is None:
+        return False
+    expected_root = root.resolve(strict=False)
+    expected_worker_count = int_or_none(payload_value(payload, "worker_count"))
+    evidence_dir = configured_evidence_dir(policy)
+    if not evidence_dir.exists() or not evidence_dir.is_dir():
+        return False
+
+    now = datetime.now(timezone.utc)
+    try:
+        paths = sorted(evidence_dir.glob("*.jsonl"))
+    except OSError:
+        return False
+
+    for path in paths:
+        try:
+            lines = path.read_text(encoding="utf-8").splitlines()
+        except OSError:
+            continue
+        for line in lines:
+            if not line.strip():
+                continue
+            try:
+                event = json.loads(line)
+            except json.JSONDecodeError:
+                continue
+            if event.get("event_type") != "agent_team_validated" or event.get("evidence_kind") != "decision":
+                continue
+            metadata = event.get("metadata")
+            if not isinstance(metadata, dict):
+                continue
+            if metadata.get("plan_sha256") != plan_hash.strip():
+                continue
+            receipt_root = metadata.get("repo_root")
+            if not isinstance(receipt_root, str):
+                continue
+            if Path(receipt_root).expanduser().resolve(strict=False) != expected_root:
+                continue
+            if expected_worker_count is not None and int_or_none(metadata.get("worker_count")) != expected_worker_count:
+                continue
+            if receipt_is_fresh(event, now):
+                return True
+    return False
 
 
 def classify(payload: dict[str, Any], policy: dict[str, Any]) -> tuple[str, str | None]:
@@ -97,6 +234,9 @@ def classify(payload: dict[str, Any], policy: dict[str, Any]) -> tuple[str, str 
         return "remote", "remote or infrastructure command"
     if match_any(policy.get("network_command_patterns", []), cmd):
         return "network", "network command pattern"
+    agent_dispatch_names = {str(item).lower() for item in policy.get("agent_dispatch_tool_names", [])}
+    if name in agent_dispatch_names or match_any(policy.get("agent_dispatch_command_patterns", []), cmd):
+        return "agent_dispatch", "multi-agent dispatch"
     if name in {"apply_patch", "write", "edit", "multi_edit"} or match_any(policy.get("repo_write_command_patterns", []), cmd):
         return "repo_write", "repo write pattern"
     return "read", None
@@ -120,12 +260,22 @@ def git_root(cwd: str) -> Path | None:
 def decision(payload: dict[str, Any], policy: dict[str, Any]) -> dict[str, Any]:
     if not policy:
         return {}
-    phase = current_phase(payload, policy)
+    data = tool_input(payload)
+    cwd = data.get("cwd") or payload.get("cwd") or os.getcwd()
+    root = git_root(str(cwd))
+    phase = current_phase(payload, policy, root)
     phase_policy = policy.get("phases", {}).get(phase)
     if phase_policy is None:
-        phase_policy = {"allow_repo_write": False, "allow_network": False, "allow_remote": False, "require_approval": ["repo_write", "network", "remote", "secret", "destructive", "dynamic_exec"]}
+        phase_policy = unknown_phase_policy(policy)
 
     category, reason = classify(payload, policy)
+    if category == "agent_dispatch":
+        if has_fresh_validation_receipt(payload, policy, root):
+            return {}
+        return {
+            "permissionDecision": "ask",
+            "message": "[harness] validate the worker plan with scripts/harness_agent_team.py validate --emit-evidence before dispatch.",
+        }
     if category == "read":
         return {}
 

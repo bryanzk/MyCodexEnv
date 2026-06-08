@@ -33,6 +33,7 @@ EVENT_TYPES = {
     "checkpoint",
     "handoff",
     "guardrail_decision",
+    "agent_team_validated",
 }
 EVIDENCE_KINDS = {"decision", "routine", "unknown"}
 APPENDABLE_EVIDENCE_KINDS = {"decision", "routine"}
@@ -42,6 +43,7 @@ DECISION_EVENT_TYPES = {
     "checkpoint",
     "handoff",
     "guardrail_decision",
+    "agent_team_validated",
 }
 ROUTINE_EVENT_TYPES = {
     "startup_probe",

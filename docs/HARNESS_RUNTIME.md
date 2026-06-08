@@ -18,7 +18,7 @@ The lifecycle router uses these stages:
 | `validation` | no repo edits by default | browser/test-only if needed | optional review/qa | fresh verification evidence |
 | `review` | no by default | no by default | optional read-only reviewers | findings or no-issue statement |
 | `ship` | yes, only requested release actions | yes if release requires it | optional | ship/deploy gates |
-| `handoff` | docs/state only | no | no | state log and next safe task |
+| `handoff` | ask-gated docs/state only | no | no | state log and next safe task |
 
 Memory is a hint. Before acting, Codex must verify against repo files, git state,
 tests, or runtime evidence.
@@ -44,28 +44,34 @@ For the current project workflow and skill routing map, read
 ## Related Documentation
 - `README.md`: top-level quick start and Harness Runtime overview.
 - `docs/repo-index.md`: low-token repo navigation and runtime surface index.
+- `docs/surfaces.json`: canonical machine-readable runtime surface inventory.
 - `docs/LIFECYCLE_SKILL_ROUTING.md`: lifecycle stage, workflow, skill, and helper routing.
 - `docs/MODEL_ROUTER_EVAL_MATRIX.md`: prompt/subtask model router eval matrix.
-- `docs/index.html`: public Delivery Harness Framework docs entry for GitHub Pages.
+- `docs/index.html`: Chinese public Delivery Harness Framework docs entry for GitHub Pages.
+- `docs/index-en.html`: English public Delivery Harness Framework docs entry for GitHub Pages.
 - `docs/delivery-harness-beginner-guide-cn.html`: beginner-oriented Chinese explanation of what Delivery Harness Framework does.
+- `docs/delivery-harness-beginner-guide-en.html`: beginner-oriented English explanation of what Delivery Harness Framework does.
 - `docs/AGENT_HARNESS_STATUS.md`: Agent Harness workflow/infra status map.
 - `docs/CODEX_ENV_REPRODUCTION.md`: Codex + Claude environment reproduction guide.
 - `docs/project-lifecycle-harness-flow-cn.html`: Chinese vertical lifecycle flow.
+- `docs/project-lifecycle-harness-flow-en.html`: English vertical lifecycle flow.
 - `docs/project-lifecycle-harness-flow-skills.html`: Chinese lifecycle skill/helper routing visual guide.
 - `docs/project-lifecycle-harness-flow-skills-zh-status-style.html`: current styled Chinese Delivery Harness Framework skill/helper routing visual guide.
+- `docs/project-lifecycle-harness-flow-skills-en-status-style.html`: current styled English Delivery Harness Framework skill/helper routing visual guide.
 
 ## Infra Contract
 - `Sandbox`: Codex sandboxing and approval rules remain the primary technical boundary; `scripts/harness_env_probe.py` reports the observable runtime configuration.
 - `Memory`: `docs/harness-state.md` is the repo-visible memory surface; `scripts/harness_recover.py` proves recovery from state, git, and local evidence.
 - `Skills`: `codex/skills/*` is the source copied into runtime `~/.codex/skills/*`.
 - `Session State`: `docs/harness-state.md` records durable phase and handoff facts.
-- `Permissions`: `codex/runtime/tool-policy.json` declares stage-level tool permissions.
+- `Permissions`: `codex/runtime/tool-policy.json` declares stage-level tool permissions; unknown phases fall back to read-only, and `handoff` repo writes require approval because the guard is category-level, not path-scoped.
 - `Hooks`: `codex/hooks/*` implements thin objective guardrails, prompt model routing recommendations, and evidence plumbing.
 - `Observability`: local JSONL evidence records lifecycle and verification events.
-- `Tool Router`: lifecycle stage determines allowed read/write/network/remote behavior.
+- `Surface Inventory`: `docs/surfaces.json` is the canonical runtime surface inventory; `scripts/check_surfaces.py` keeps it consistent with files on disk, the `docs/repo-index.md` `## Runtime Surfaces` mirror, and opt-in public landing nav links declared with `public_nav`.
+- `Tool Router`: lifecycle stage determines allowed read/write/network/remote behavior. The guard resolves phase in order from top-level payload, `tool_input.phase`, `CODEX_HARNESS_PHASE`, `docs/harness-state.md` `## Current Snapshot`, then `unknown`.
 - `Model Router`: `codex/hooks/model_router.py` classifies each prompt or subtask as `simple`, `medium`, or `complex` and recommends the cheapest quality-safe model tier. It intentionally stays non-blocking; runtimes or wrapper scripts that can switch models may consume the JSON `routing` object, while plain Codex hooks inject the recommendation and response telemetry requirement as additional context.
 - `Checkpoints`: use git commits, state log entries, and handoff docs as recovery points.
-- `Guardrails`: destructive, secret, remote, and dynamic-execution actions are blocked or require approval.
+- `Guardrails`: repo-write phase violations, destructive commands, secret access, remote operations, and dynamic-execution actions are blocked or require approval.
 
 ## Evidence Contract
 Evidence events are JSON objects that match `codex/runtime/evidence.schema.json`.
@@ -79,8 +85,8 @@ Local logs are not migrated when the schema evolves. Old events that do not
 carry `evidence_kind` are read as `unknown`.
 
 Evidence kinds:
-- `decision`: state, handoff, approvals, guardrails, sandbox failures, and
-  durable recovery decisions.
+- `decision`: state, handoff, approvals, guardrails, sandbox failures, agent-team
+  validation receipts, and durable recovery decisions.
 - `routine`: test receipts, browser smoke, startup probes, ordinary tool calls,
   and non-decision subagent reports.
 - `unknown`: legacy read-only normalization for old local JSONL events; new
@@ -255,6 +261,9 @@ append` after the usual verification gate.
 
 Agent team validator:
 - `scripts/harness_agent_team.py validate PLAN.json` validates `agents[]`.
+- `scripts/harness_agent_team.py validate PLAN.json --emit-evidence` also appends
+  one local `agent_team_validated` decision receipt on success, with
+  `metadata.plan_sha256`, `agent_count`, `worker_count`, and `repo_root`.
 - every agent requires `id`, `role`, `scope`, `write_set`, and
   `verification_command`.
 - optional worker `brief` objects are validated when present and are backward
@@ -268,11 +277,20 @@ Agent team validator:
 - worker write sets must not overlap protected integrator state surfaces,
   currently `docs/harness-state.md`.
 - empty paths, `..` traversal, and absolute paths outside the repo fail.
+- configured dispatch tool names and command patterns are ask-gated by
+  `codex/hooks/harness_guard.py` unless the payload includes `plan_sha256` and a
+  matching local receipt less than 10 minutes old.
+- this is an honest configured-shape gate: runtime dispatch paths not exposed to
+  `PreToolUse` or not named in `tool-policy.json` cannot be intercepted by this
+  repo hook.
 
 ## Failure Modes
 - missing state file: fail or warn at startup, then read repo AGENTS and README before acting.
 - unknown lifecycle stage: default to restrictive read-only behavior.
+- missing or malformed `## Current Snapshot` phase: treat the phase as unknown and require approval for repo writes.
 - secret path access: deny unless the user explicitly requests and approves safe handling.
 - remote operation: require `~/.codex/remote-access.md` review and approval.
 - dynamic download execution: deny or require explicit approval.
 - evidence write failure in observer hook: print a warning and allow the original tool result.
+- missing, stale, cross-repo, worker-count-mismatched, or malformed agent-team
+  validation receipt: ask before configured multi-agent dispatch.

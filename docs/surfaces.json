@@ -1,0 +1,263 @@
+{
+  "version": 1,
+  "surfaces": [
+    {
+      "path": "docs/surfaces.json",
+      "role": "canonical machine-readable runtime surface inventory",
+      "audience": ["codex", "human"]
+    },
+    {
+      "path": "scripts/check_surfaces.py",
+      "role": "runtime surface manifest and repo-index drift checker",
+      "audience": ["codex", "human"]
+    },
+    {
+      "path": "docs/repo-index.md",
+      "role": "low-token repo navigation and checked runtime surface mirror",
+      "audience": ["codex", "human"]
+    },
+    {
+      "path": "docs/harness-state.md",
+      "role": "append-only harness state, checkpoint, and next-safe-task log",
+      "audience": ["codex", "human"]
+    },
+    {
+      "path": "docs/HARNESS_RUNTIME.md",
+      "role": "runtime workflow, evidence, permission, checkpoint, and agent-team contract",
+      "audience": ["codex", "human"],
+      "public_nav": ["docs/index-en.html"]
+    },
+    {
+      "path": "docs/AGENT_HARNESS_STATUS.md",
+      "role": "Agent Harness workflow and runtime governance status map",
+      "audience": ["codex", "human"]
+    },
+    {
+      "path": "codex/skills/delivery-harness-framework",
+      "role": "generic lifecycle router skill source",
+      "audience": ["codex", "human"]
+    },
+    {
+      "path": "codex/skills/committee-review-loop",
+      "role": "expert committee review and revision loop skill source",
+      "audience": ["codex", "human"]
+    },
+    {
+      "path": "codex/skills/delivery-harness-framework/evals/evals.json",
+      "role": "routing and boundary evals for the delivery harness skill",
+      "audience": ["codex", "human"]
+    },
+    {
+      "path": "codex/runtime/tool-policy.json",
+      "role": "stage-aware tool and permission policy",
+      "audience": ["runtime", "codex"]
+    },
+    {
+      "path": "codex/runtime/evidence.schema.json",
+      "role": "compatibility local evidence JSONL event contract",
+      "audience": ["runtime", "codex"]
+    },
+    {
+      "path": "codex/runtime/evidence/decision-evidence.schema.json",
+      "role": "focused decision evidence schema",
+      "audience": ["runtime", "codex"]
+    },
+    {
+      "path": "codex/runtime/evidence/routine-gate-receipt.schema.json",
+      "role": "focused routine gate receipt evidence schema",
+      "audience": ["runtime", "codex"]
+    },
+    {
+      "path": "codex/hooks",
+      "role": "Codex lifecycle hook source directory copied into runtime",
+      "audience": ["runtime", "codex"]
+    },
+    {
+      "path": "codex/hooks/harness_guard.py",
+      "role": "PreToolUse permission and guardrail hook",
+      "audience": ["runtime", "codex"]
+    },
+    {
+      "path": "codex/hooks/harness_observer.py",
+      "role": "PostToolUse evidence observer hook",
+      "audience": ["runtime", "codex"]
+    },
+    {
+      "path": "codex/hooks/model_router.py",
+      "role": "prompt and subtask model recommendation hook",
+      "audience": ["runtime", "codex"]
+    },
+    {
+      "path": "codex/hooks/shipq_dhf_preprompt.py",
+      "role": "repo-owned ShipQ DHF preprompt hook surface",
+      "audience": ["runtime", "codex"]
+    },
+    {
+      "path": "scripts/harness_evidence.py",
+      "role": "evidence validation, kind inference, and append helper",
+      "audience": ["codex", "human"]
+    },
+    {
+      "path": "scripts/harness_feedback.py",
+      "role": "conversion-health helper for local evidence reports and recovery",
+      "audience": ["codex", "human"]
+    },
+    {
+      "path": "scripts/harness_report.py",
+      "role": "local evidence summary CLI",
+      "audience": ["codex", "human"]
+    },
+    {
+      "path": "scripts/harness_agent_team.py",
+      "role": "agent team validation and validation-receipt helper",
+      "audience": ["codex", "human"]
+    },
+    {
+      "path": "scripts/harness_checkpoint.py",
+      "role": "append-only state checkpoint helper",
+      "audience": ["codex", "human"]
+    },
+    {
+      "path": "scripts/harness_requirements.py",
+      "role": "requirements artifact validator",
+      "audience": ["codex", "human"]
+    },
+    {
+      "path": "scripts/harness_recover.py",
+      "role": "fresh-session recovery smoke helper",
+      "audience": ["codex", "human"]
+    },
+    {
+      "path": "scripts/harness_env_probe.py",
+      "role": "observable Codex runtime configuration probe",
+      "audience": ["codex", "human"]
+    },
+    {
+      "path": "scripts/headroom_filter.py",
+      "role": "optional stdin filter for large command-output compression",
+      "audience": ["codex", "human"]
+    },
+    {
+      "path": "scripts/audit_skills.py",
+      "role": "report-only skill governance audit helper",
+      "audience": ["codex", "human"]
+    },
+    {
+      "path": "scripts/prepare_gstack_dhf_daily_refresh.py",
+      "role": "daily refresh automation preflight and dry-run helper",
+      "audience": ["codex", "human"]
+    },
+    {
+      "path": "scripts/merge_gstack_refresh_if_safe.py",
+      "role": "unattended merge gate for verified gstack refresh branches",
+      "audience": ["codex", "human"]
+    },
+    {
+      "path": "scripts/sync_local_main_if_safe.py",
+      "role": "optional post-merge local main fast-forward gate",
+      "audience": ["codex", "human"]
+    },
+    {
+      "path": "scripts/sync_gstack_vendor.py",
+      "role": "gstack vendor skill snapshot sync helper",
+      "audience": ["codex", "human"]
+    },
+    {
+      "path": "scripts/verify_codex_env.sh",
+      "role": "runtime sync and environment verification helper",
+      "audience": ["codex", "human"]
+    },
+    {
+      "path": "docs/templates/harness-requirements.md",
+      "role": "task requirements artifact template",
+      "audience": ["codex", "human"]
+    },
+    {
+      "path": "docs/templates/harness-agent-brief.md",
+      "role": "durable worker brief template",
+      "audience": ["codex", "human"]
+    },
+    {
+      "path": "docs/skill-governance-20260608.md",
+      "role": "skill governance baseline and cleanup policy notes",
+      "audience": ["codex", "human"]
+    },
+    {
+      "path": "docs/LIFECYCLE_SKILL_ROUTING.md",
+      "role": "stage, workflow, skill, and helper usage guide",
+      "audience": ["codex", "human"],
+      "public_nav": ["docs/index.html", "docs/index-en.html"]
+    },
+    {
+      "path": "docs/index.html",
+      "role": "Chinese public docs landing page",
+      "audience": ["human"],
+      "public_nav": ["docs/index-en.html"]
+    },
+    {
+      "path": "docs/index-en.html",
+      "role": "English public docs landing page",
+      "audience": ["human"],
+      "public_nav": ["docs/index.html"]
+    },
+    {
+      "path": "docs/dhf-workflow-skills-cn.html",
+      "role": "Chinese workflow skill inventory page",
+      "audience": ["human"],
+      "public_nav": ["docs/index.html"]
+    },
+    {
+      "path": "docs/dhf-workflow-skills-en.html",
+      "role": "English workflow skill inventory page",
+      "audience": ["human"],
+      "public_nav": ["docs/index-en.html"]
+    },
+    {
+      "path": "docs/delivery-harness-beginner-guide-cn.html",
+      "role": "beginner-oriented Delivery Harness Framework explanation",
+      "audience": ["human"],
+      "public_nav": ["docs/index.html"]
+    },
+    {
+      "path": "docs/delivery-harness-beginner-guide-en.html",
+      "role": "English beginner-oriented Delivery Harness Framework explanation",
+      "audience": ["human"],
+      "public_nav": ["docs/index-en.html"]
+    },
+    {
+      "path": "docs/project-lifecycle-harness-flow-cn.html",
+      "role": "visual vertical lifecycle flow",
+      "audience": ["human"],
+      "public_nav": ["docs/index.html"]
+    },
+    {
+      "path": "docs/project-lifecycle-harness-flow-en.html",
+      "role": "English visual vertical lifecycle flow",
+      "audience": ["human"],
+      "public_nav": ["docs/index-en.html"]
+    },
+    {
+      "path": "docs/project-lifecycle-harness-flow-skills.html",
+      "role": "visual skill and helper routing map",
+      "audience": ["human"]
+    },
+    {
+      "path": "docs/project-lifecycle-harness-flow-skills-zh-status-style.html",
+      "role": "current status-style skill and helper routing map",
+      "audience": ["human"],
+      "public_nav": ["docs/index.html"]
+    },
+    {
+      "path": "docs/project-lifecycle-harness-flow-skills-en-status-style.html",
+      "role": "current English status-style skill and helper routing map",
+      "audience": ["human"],
+      "public_nav": ["docs/index-en.html"]
+    },
+    {
+      "path": "docs/project-lifecycle-harness-flow-skills-en.html",
+      "role": "archived English skill and helper routing map",
+      "audience": ["human"],
+      "public_nav": ["docs/index-en.html"]
+    }
+  ]
+}

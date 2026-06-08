@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import subprocess
 import sys
@@ -306,6 +307,53 @@ def validate_plan(plan: dict[str, Any], repo_root: Path) -> tuple[list[str], lis
     return errors, summary
 
 
+def plan_sha256(plan: dict[str, Any]) -> str:
+    canonical = json.dumps(plan, ensure_ascii=False, sort_keys=True, separators=(",", ":")).encode("utf-8")
+    return hashlib.sha256(canonical).hexdigest()
+
+
+def emit_validation_evidence(repo_root: Path, plan_hash: str, summary: list[dict[str, Any]]) -> tuple[int, str, str]:
+    helper = Path(__file__).with_name("harness_evidence.py")
+    worker_count = sum(1 for agent in summary if agent.get("role") == "worker")
+    metadata = {
+        "plan_sha256": plan_hash,
+        "agent_count": len(summary),
+        "worker_count": worker_count,
+        "repo_root": str(repo_root),
+    }
+    proc = subprocess.run(
+        [
+            sys.executable,
+            str(helper),
+            "append",
+            "--event-type",
+            "agent_team_validated",
+            "--phase",
+            "handoff",
+            "--cwd",
+            str(repo_root),
+            "--tool-name",
+            "harness_agent_team.py",
+            "--command",
+            "harness_agent_team.py validate",
+            "--exit-code",
+            "0",
+            "--key-output",
+            "agent team valid",
+            "--evidence-kind",
+            "decision",
+            "--message",
+            "agent team validation receipt",
+            "--metadata",
+            json.dumps(metadata, ensure_ascii=False, sort_keys=True),
+        ],
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    return proc.returncode, proc.stdout.strip(), proc.stderr.strip()
+
+
 def cmd_validate(args: argparse.Namespace) -> int:
     repo_root = Path(args.repo_root).expanduser().resolve() if args.repo_root else git_root()
     try:
@@ -322,8 +370,20 @@ def cmd_validate(args: argparse.Namespace) -> int:
         print("\n".join(errors), file=sys.stderr)
         return 1
 
+    plan_hash = plan_sha256(plan)
+    evidence_path = ""
+    if args.emit_evidence:
+        code, out, err = emit_validation_evidence(repo_root, plan_hash, summary)
+        if code != 0:
+            print(f"ERROR[evidence_append]: {err or out}", file=sys.stderr)
+            return code or 1
+        evidence_path = out
+
     print("Agent team valid")
     print(f"repo_root: {repo_root}")
+    if args.emit_evidence:
+        print(f"plan_sha256: {plan_hash}")
+        print(f"evidence: {evidence_path}")
     for agent in summary:
         owned = ", ".join(agent["write_set"]) if agent["write_set"] else "read-only"
         brief_status = " brief=yes" if agent.get("brief") else ""
@@ -348,6 +408,7 @@ def main() -> int:
     validate_parser = subparsers.add_parser("validate", help="Validate PLAN.json")
     validate_parser.add_argument("plan")
     validate_parser.add_argument("--repo-root", help="Repository root for write_set normalization")
+    validate_parser.add_argument("--emit-evidence", action="store_true", help="Append a decision receipt on success")
     validate_parser.set_defaults(func=cmd_validate)
 
     args = parser.parse_args()

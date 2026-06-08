@@ -1,4 +1,7 @@
 #!/usr/bin/env python3
+from __future__ import annotations
+
+import io
 import subprocess
 import importlib.util
 import json
@@ -7,6 +10,7 @@ import tempfile
 from datetime import datetime
 from pathlib import Path
 import os
+import traceback
 
 
 ROOT = Path(__file__).resolve().parent
@@ -30,6 +34,8 @@ MERGE_GSTACK_DAILY_REFRESH = ROOT / "scripts" / "merge_gstack_refresh_if_safe.py
 SYNC_LOCAL_MAIN_IF_SAFE = ROOT / "scripts" / "sync_local_main_if_safe.py"
 HARNESS_REQUIREMENTS_TEMPLATE = ROOT / "docs" / "templates" / "harness-requirements.md"
 HARNESS_AGENT_BRIEF_TEMPLATE = ROOT / "docs" / "templates" / "harness-agent-brief.md"
+SURFACES_MANIFEST = ROOT / "docs" / "surfaces.json"
+CHECK_SURFACES = ROOT / "scripts" / "check_surfaces.py"
 SKILL_GOVERNANCE_DOC = ROOT / "docs" / "skill-governance-20260608.md"
 LIFECYCLE_SKILL_ROUTING_DOC = ROOT / "docs" / "LIFECYCLE_SKILL_ROUTING.md"
 PUBLIC_INDEX_HTML = ROOT / "docs" / "index.html"
@@ -62,6 +68,63 @@ def require(condition, message):
     if not condition:
         print(f"[FAIL] {message}")
         sys.exit(1)
+
+
+class TestRunResult:
+    def __init__(self, ran_names: list[str], failures: list[tuple[str, str]]) -> None:
+        self.ran_names = ran_names
+        self.failures = failures
+
+    @property
+    def ran(self) -> int:
+        return len(self.ran_names)
+
+    @property
+    def failed(self) -> int:
+        return len(self.failures)
+
+
+def run_all(tests: list, *, fail_output=None) -> TestRunResult:
+    if fail_output is None:
+        fail_output = sys.stdout
+
+    ran_names: list[str] = []
+    failures: list[tuple[str, str]] = []
+    for fn in tests:
+        name = getattr(fn, "__name__", repr(fn))
+        ran_names.append(name)
+        try:
+            fn()
+        except KeyboardInterrupt:
+            raise
+        except (Exception, SystemExit) as exc:
+            failures.append(
+                (
+                    name,
+                    "".join(traceback.format_exception(type(exc), exc, exc.__traceback__)),
+                )
+            )
+            print(f"[FAIL] {name}: {exc}", file=fail_output)
+    return TestRunResult(ran_names, failures)
+
+
+def run_registered_tests(tests: list, *, output=None, error_output=None) -> int:
+    if output is None:
+        output = sys.stdout
+    if error_output is None:
+        error_output = sys.stderr
+
+    result = run_all(tests, fail_output=output)
+    print(f"ran={result.ran} passed={result.ran - result.failed} failed={result.failed}", file=output)
+    if result.failed or result.ran != len(tests):
+        for name, tb in result.failures:
+            print(f"\n----- {name} -----\n{tb}", file=error_output)
+        if result.ran != len(tests):
+            print(f"expected={len(tests)} ran={result.ran}", file=error_output)
+        return 1
+
+    print("[PASS] all tests", file=output)
+    return 0
 
 
 def count_top_dirs(path: Path) -> int:
@@ -594,33 +657,11 @@ def test_sync_agents_only_copies_and_backs_up_agents():
 
 
 def test_harness_runtime_surfaces_exist_and_parse():
-    required_paths = [
-        ROOT / "docs" / "repo-index.md",
-        ROOT / "docs" / "harness-state.md",
-        ROOT / "docs" / "HARNESS_RUNTIME.md",
-        ROOT / "docs" / "AGENT_HARNESS_STATUS.md",
-        ROOT / "codex" / "runtime" / "tool-policy.json",
-        ROOT / "codex" / "runtime" / "evidence.schema.json",
-        ROOT / "codex" / "runtime" / "evidence" / "decision-evidence.schema.json",
-        ROOT / "codex" / "runtime" / "evidence" / "routine-gate-receipt.schema.json",
-        ROOT / "codex" / "hooks" / "harness_guard.py",
-        ROOT / "codex" / "hooks" / "harness_observer.py",
-        ROOT / "codex" / "hooks" / "model_router.py",
-        SHIPQ_DHF_PREPROMPT,
-        HARNESS_EVIDENCE,
-        ROOT / "scripts" / "harness_feedback.py",
-        HARNESS_REPORT,
-        HARNESS_AGENT_TEAM,
-        HARNESS_CHECKPOINT,
-        HARNESS_REQUIREMENTS,
-        HARNESS_RECOVER,
-        HARNESS_ENV_PROBE,
-        AUDIT_SKILLS,
-        HARNESS_REQUIREMENTS_TEMPLATE,
-        HARNESS_AGENT_BRIEF_TEMPLATE,
-        SKILL_GOVERNANCE_DOC,
-    ]
-    for path in required_paths:
+    manifest = json.loads(SURFACES_MANIFEST.read_text(encoding="utf-8"))
+    surfaces = manifest.get("surfaces")
+    require(isinstance(surfaces, list) and surfaces, "surfaces manifest should contain surfaces")
+    for item in surfaces:
+        path = ROOT / item["path"]
         require(path.exists(), f"missing harness runtime surface: {path}")
 
     policy = json.loads((ROOT / "codex" / "runtime" / "tool-policy.json").read_text(encoding="utf-8"))
@@ -645,6 +686,148 @@ def test_harness_runtime_surfaces_exist_and_parse():
         require(module in status_text, f"agent harness status missing module: {module}")
 
     print("[PASS] harness runtime surfaces exist and parse")
+
+
+def test_surfaces_manifest_no_orphans():
+    require(SURFACES_MANIFEST.exists(), "docs/surfaces.json manifest must exist")
+    require(CHECK_SURFACES.exists(), "scripts/check_surfaces.py must exist")
+
+    data = json.loads(SURFACES_MANIFEST.read_text(encoding="utf-8"))
+    surfaces = data.get("surfaces")
+    require(isinstance(surfaces, list) and surfaces, "docs/surfaces.json must contain at least one surface")
+    listed = set()
+    for item in surfaces:
+        require(isinstance(item, dict), f"surface item must be an object: {item}")
+        path = item.get("path")
+        require(isinstance(path, str) and path, f"surface item missing path: {item}")
+        require(path not in listed, f"duplicate surface path: {path}")
+        listed.add(path)
+        require(item.get("role"), f"surface item missing role: {item}")
+        require(
+            isinstance(item.get("audience"), list) and item["audience"],
+            f"surface item missing audience: {item}",
+        )
+        require(not path.startswith("./"), f"surface path must be repo-relative without ./: {path}")
+        require(not path.endswith("/"), f"surface directory path must not use trailing slash: {path}")
+        require((ROOT / path).exists(), f"manifest path does not exist on disk: {path}")
+
+    code, out, err = run([sys.executable, str(CHECK_SURFACES), "--repo-root", str(ROOT)])
+    require(code == 0, f"check_surfaces reported drift: {err or out}")
+    require("surfaces manifest consistent" in out, "check_surfaces should print a success summary")
+
+    code, out, err = run([sys.executable, str(CHECK_SURFACES), "--repo-root", str(ROOT), "--json"])
+    require(code == 0, f"check_surfaces --json reported drift: {err or out}")
+    payload = json.loads(out)
+    require(payload.get("ok") is True, "check_surfaces --json should report ok=true")
+    require(payload.get("manifest_count") == len(listed), "check_surfaces --json should report manifest_count")
+    require(payload.get("errors") == [], "check_surfaces --json should report no errors")
+
+    print("[PASS] surfaces manifest no orphans")
+
+
+def test_check_surfaces_reports_drift():
+    with tempfile.TemporaryDirectory() as tmp:
+        repo = Path(tmp) / "repo"
+        write(repo / "docs" / "repo-index.md", "")
+        write(repo / "docs" / "surface.md", "surface\n")
+        write(repo / "codex" / "hooks" / "guard.py", "hook\n")
+        write(repo / "scripts" / "tool.py", "tool\n")
+
+        def write_manifest(paths: list[str]) -> None:
+            write(
+                repo / "docs" / "surfaces.json",
+                json.dumps(
+                    {
+                        "version": 1,
+                        "surfaces": [
+                            {"path": path, "role": f"{path} role", "audience": ["codex"]}
+                            for path in paths
+                        ],
+                    }
+                ),
+            )
+
+        def write_index(paths: list[str]) -> None:
+            bullets = [
+                f"- `{path}`: surface. Runtime copy may mention `~/.codex/hooks/`, `origin/main`, and `garrytan/gstack`."
+                for path in paths
+            ]
+            write(repo / "docs" / "repo-index.md", "# Repo\n\n## Runtime Surfaces\n" + "\n".join(bullets) + "\n")
+
+        write_manifest(["docs/surface.md", "codex/hooks", "scripts/tool.py"])
+        write_index(["docs/surface.md", "codex/hooks/", "scripts/tool.py"])
+        code, out, err = run([sys.executable, str(CHECK_SURFACES), "--repo-root", str(repo), "--json"])
+        require(code == 0, f"consistent temp surfaces should pass: {err or out}")
+        require(json.loads(out)["ok"] is True, "consistent temp surfaces should report ok")
+
+        write_manifest(["docs/surface.md", "codex/hooks", "scripts/tool.py", "docs/missing.md"])
+        code, out, err = run([sys.executable, str(CHECK_SURFACES), "--repo-root", str(repo)])
+        require(code != 0 and "ERROR[missing_on_disk] docs/missing.md" in err, "missing manifest path should be named")
+
+        write_manifest(["docs/surface.md", "codex/hooks"])
+        write_index(["docs/surface.md", "codex/hooks/", "scripts/tool.py"])
+        code, out, err = run([sys.executable, str(CHECK_SURFACES), "--repo-root", str(repo)])
+        require(code != 0 and "ERROR[in_index_not_manifest] scripts/tool.py" in err, "index orphan should be named")
+
+        write_manifest(["docs/surface.md", "codex/hooks", "scripts/tool.py"])
+        write_index(["docs/surface.md", "codex/hooks/"])
+        code, out, err = run([sys.executable, str(CHECK_SURFACES), "--repo-root", str(repo)])
+        require(code != 0 and "ERROR[in_manifest_not_index] scripts/tool.py" in err, "manifest orphan should be named")
+
+    print("[PASS] check surfaces reports drift")
+
+
+def test_check_surfaces_validates_public_nav():
+    code, out, err = run(
+        [sys.executable, str(CHECK_SURFACES), "--repo-root", str(ROOT), "--check-public-nav", "--json"]
+    )
+    require(code == 0, f"current public nav surfaces should pass: {err or out}")
+    payload = json.loads(out)
+    require(payload.get("ok") is True, "public nav check should report ok=true")
+    require(payload.get("public_nav_count", 0) >= 10, "public nav check should cover both landing pages")
+
+    with tempfile.TemporaryDirectory() as tmp:
+        repo = Path(tmp) / "repo"
+        write(repo / "docs" / "index.html", '<a href="./other.html">Other</a>\n')
+        write(repo / "docs" / "guide.html", "guide\n")
+        write(
+            repo / "docs" / "repo-index.md",
+            "# Repo\n\n## Runtime Surfaces\n"
+            "- `docs/index.html`: landing.\n"
+            "- `docs/guide.html`: public guide.\n",
+        )
+        write(
+            repo / "docs" / "surfaces.json",
+            json.dumps(
+                {
+                    "version": 1,
+                    "surfaces": [
+                        {"path": "docs/index.html", "role": "landing", "audience": ["human"]},
+                        {
+                            "path": "docs/guide.html",
+                            "role": "public guide",
+                            "audience": ["human"],
+                            "public_nav": ["docs/index.html"],
+                        },
+                    ],
+                }
+            ),
+        )
+
+        code, out, err = run([sys.executable, str(CHECK_SURFACES), "--repo-root", str(repo), "--check-public-nav"])
+        require(
+            code != 0 and "ERROR[public_nav_missing] docs/index.html -> docs/guide.html" in err,
+            "missing public nav href should be named",
+        )
+
+        write(repo / "docs" / "index.html", '<a href="./guide.html">Guide</a>\n')
+        code, out, err = run(
+            [sys.executable, str(CHECK_SURFACES), "--repo-root", str(repo), "--check-public-nav", "--json"]
+        )
+        require(code == 0, f"public nav href should satisfy checker: {err or out}")
+        require(json.loads(out).get("public_nav_count") == 1, "public nav count should include temp guide link")
+
+    print("[PASS] check surfaces validates public nav")
 
 
 def test_skill_governance_audit_cli():
@@ -687,6 +870,7 @@ def test_skill_governance_audit_cli():
         require("duplicate-skill" in duplicate_names, ".agents duplicate should be reported")
         unused = next(item for item in summary["repo_unused"]["low_ref"] if item["name"] == "unused-skill")
         require(unused["repo_refs"] == 0, "generated skill governance docs should not count as repo refs")
+
 
     print("[PASS] skill governance audit CLI")
 
@@ -1631,6 +1815,80 @@ def test_harness_guard_policy_decisions():
     print("[PASS] harness guard policy decisions")
 
 
+def test_harness_guard_phase_resolution():
+    with tempfile.TemporaryDirectory() as tmp:
+        tmp_path = Path(tmp)
+        git_probe = subprocess.run(["git", "--version"], capture_output=True, text=True, check=False)
+        if git_probe.returncode != 0:
+            print("[SKIP] harness guard phase resolution requires git for snapshot repo setup")
+            return
+
+        runtime_dir = tmp_path / ".codex" / "runtime"
+        runtime_dir.mkdir(parents=True)
+        (runtime_dir / "tool-policy.json").write_text(
+            (ROOT / "codex" / "runtime" / "tool-policy.json").read_text(encoding="utf-8"),
+            encoding="utf-8",
+        )
+
+        repo = tmp_path / "repo"
+        (repo / "docs").mkdir(parents=True)
+        subprocess.run(["git", "init", "-q", str(repo)], check=True)
+        (repo / "docs" / "harness-state.md").write_text(
+            "# Harness State\n\n## Current Snapshot\n- phase: planning\n",
+            encoding="utf-8",
+        )
+        env = os.environ.copy()
+        env["CODEX_HOME"] = str(tmp_path / ".codex")
+        env.pop("CODEX_HARNESS_PHASE", None)
+
+        write_payload = json.dumps(
+            {
+                "tool_name": "apply_patch",
+                "tool_input": {"file_path": str(repo / "docs" / "x.md"), "cwd": str(repo)},
+            }
+        )
+        code, out, err = run_with_input([sys.executable, str(HARNESS_GUARD)], write_payload, env=env)
+        require(code == 0, f"guard phase-resolution run failed: {err or out}")
+        require(
+            json.loads(out).get("permissionDecision") == "ask",
+            "write during snapshot phase=planning must require approval, not silently pass as development",
+        )
+
+        (repo / "docs" / "harness-state.md").write_text("# Harness State\n", encoding="utf-8")
+        code, out, err = run_with_input([sys.executable, str(HARNESS_GUARD)], write_payload, env=env)
+        require(code == 0, f"guard unknown-phase run failed: {err or out}")
+        require(
+            json.loads(out).get("permissionDecision") == "ask",
+            "write with no resolvable phase must fall back to read_only, not development",
+        )
+
+        (repo / "docs" / "harness-state.md").write_text(
+            "# Harness State\n\n## Current Snapshot\n- phase: handoff\n",
+            encoding="utf-8",
+        )
+        code, out, err = run_with_input([sys.executable, str(HARNESS_GUARD)], write_payload, env=env)
+        require(code == 0, f"guard handoff-phase run failed: {err or out}")
+        require(
+            json.loads(out).get("permissionDecision") == "ask",
+            "write during snapshot phase=handoff must require approval because handoff is docs/state-only",
+        )
+
+        non_repo_payload = json.dumps(
+            {
+                "tool_name": "apply_patch",
+                "tool_input": {"file_path": str(tmp_path / "not-a-repo" / "x.md"), "cwd": str(tmp_path)},
+            }
+        )
+        code, out, err = run_with_input([sys.executable, str(HARNESS_GUARD)], non_repo_payload, env=env)
+        require(code == 0, f"guard non-repo unknown-phase run failed: {err or out}")
+        require(
+            json.loads(out).get("permissionDecision") == "ask",
+            "write outside a git repo with no phase must fall back to read_only",
+        )
+
+    print("[PASS] harness guard phase resolution")
+
+
 def test_model_router_prompt_complexity_decisions():
     simple_payload = json.dumps({"prompt": "把这段话翻译成英文：你好"})
     code, out, err = run_with_input([sys.executable, str(MODEL_ROUTER)], simple_payload)
@@ -2371,6 +2629,238 @@ def test_harness_agent_team_validator():
         require(code == 0, f"slice-local handoff write set should remain valid: {err or out}")
 
     print("[PASS] harness agent team validator")
+
+
+def test_agent_dispatch_gate():
+    with tempfile.TemporaryDirectory() as tmp:
+        tmp_path = Path(tmp)
+        git_probe = subprocess.run(["git", "--version"], capture_output=True, text=True, check=False)
+        if git_probe.returncode != 0:
+            print("[SKIP] agent dispatch gate requires git for repo-root matching")
+            return
+
+        codex_home = tmp_path / ".codex"
+        runtime_dir = codex_home / "runtime"
+        runtime_dir.mkdir(parents=True)
+        (runtime_dir / "tool-policy.json").write_text(
+            (ROOT / "codex" / "runtime" / "tool-policy.json").read_text(encoding="utf-8"),
+            encoding="utf-8",
+        )
+        env = os.environ.copy()
+        env["CODEX_HOME"] = str(codex_home)
+
+        repo = tmp_path / "repo"
+        (repo / "docs").mkdir(parents=True)
+        subprocess.run(["git", "init", "-q", str(repo)], check=True)
+
+        dispatch_payload = json.dumps(
+            {
+                "tool_name": "spawn_agent",
+                "tool_input": {"plan_sha256": "deadbeef", "worker_count": 1, "cwd": str(repo)},
+            }
+        )
+        code, out, err = run_with_input([sys.executable, str(HARNESS_GUARD)], dispatch_payload, env=env)
+        require(code == 0, f"guard dispatch run failed: {err or out}")
+        require(
+            json.loads(out).get("permissionDecision") == "ask",
+            "multi-agent dispatch without a validation receipt must require approval",
+        )
+
+        invalid_plan = tmp_path / "invalid-plan.json"
+        write(invalid_plan, json.dumps({"agents": []}))
+        proc = subprocess.run(
+            [
+                sys.executable,
+                str(HARNESS_AGENT_TEAM),
+                "validate",
+                str(invalid_plan),
+                "--repo-root",
+                str(repo),
+                "--emit-evidence",
+            ],
+            capture_output=True,
+            text=True,
+            check=False,
+            env=env,
+        )
+        require(proc.returncode != 0, "invalid plan with --emit-evidence should fail")
+        evdir = codex_home / "harness" / "evidence"
+        require(not evdir.exists() or not list(evdir.glob("*.jsonl")), "failed validation must not emit evidence")
+
+        plan = tmp_path / "plan.json"
+        write(
+            plan,
+            json.dumps(
+                {
+                    "agents": [
+                        {
+                            "id": "w1",
+                            "role": "worker",
+                            "scope": "edit module a",
+                            "write_set": ["src/a.py"],
+                            "verification_command": "pytest -k a",
+                            "task_demand": {
+                                "level": "low",
+                                "L": "2",
+                                "H_tool": "low",
+                                "S_state": "low",
+                                "N_obs": "low",
+                            },
+                            "green_gate": {
+                                "gate_scope": "worker",
+                                "command": "pytest -k a",
+                                "rationale": "touched a",
+                            },
+                        }
+                    ]
+                }
+            ),
+        )
+        proc = subprocess.run(
+            [
+                sys.executable,
+                str(HARNESS_AGENT_TEAM),
+                "validate",
+                str(plan),
+                "--repo-root",
+                str(repo),
+                "--emit-evidence",
+            ],
+            capture_output=True,
+            text=True,
+            check=False,
+            env=env,
+        )
+        code, out, err = proc.returncode, proc.stdout.strip(), proc.stderr.strip()
+        require(code == 0, f"validate --emit-evidence failed: {err or out}")
+        receipts = list(evdir.glob("*.jsonl")) if evdir.exists() else []
+        joined = "\n".join(path.read_text(encoding="utf-8") for path in receipts)
+        require("agent_team_validated" in joined, "validate --emit-evidence must append a decision receipt")
+        events = [json.loads(line) for line in joined.splitlines() if line.strip()]
+        agent_team_events = [event for event in events if event.get("event_type") == "agent_team_validated"]
+        require(len(agent_team_events) == 1, "validate --emit-evidence should append exactly one agent-team receipt")
+        receipt = agent_team_events[0]
+        metadata = receipt.get("metadata") or {}
+        plan_hash = metadata.get("plan_sha256")
+        require(plan_hash, "receipt metadata must include plan_sha256")
+        require(metadata.get("agent_count") == 1, "receipt metadata must include agent_count")
+        require(metadata.get("worker_count") == 1, "receipt metadata must include worker_count")
+        require(Path(metadata.get("repo_root", "")).resolve() == repo.resolve(), "receipt repo_root must match")
+        require(receipt.get("evidence_kind") == "decision", "receipt should be decision evidence")
+        require(receipt.get("command") == "harness_agent_team.py validate", "receipt command should identify validator")
+        require(receipt.get("exit_code") == 0, "receipt exit_code should be 0")
+        require(receipt.get("key_output") == "agent team valid", "receipt key_output should summarize validation")
+        require(receipt.get("timestamp"), "receipt timestamp should be present")
+        require(receipt.get("phase") in {"handoff", "unknown"}, "receipt phase should be schema-safe")
+
+        receipt_file = tmp_path / "receipt.json"
+        write(receipt_file, json.dumps(receipt))
+        code, out, err = run([sys.executable, str(HARNESS_EVIDENCE), "validate", str(receipt_file)])
+        require(code == 0, f"agent_team_validated receipt must validate through harness_evidence.py: {err or out}")
+
+        allowed_payload = json.dumps(
+            {
+                "tool_name": "spawn_agent",
+                "tool_input": {"plan_sha256": plan_hash, "worker_count": 1, "cwd": str(repo)},
+            }
+        )
+        code, out, err = run_with_input([sys.executable, str(HARNESS_GUARD)], allowed_payload, env=env)
+        require(code == 0, f"guard matching receipt run failed: {err or out}")
+        require(json.loads(out) == {}, "matching fresh agent_team_validated receipt should allow dispatch")
+
+        mismatch_payload = json.dumps(
+            {
+                "tool_name": "spawn_agent",
+                "tool_input": {"plan_sha256": plan_hash, "worker_count": 2, "cwd": str(repo)},
+            }
+        )
+        code, out, err = run_with_input([sys.executable, str(HARNESS_GUARD)], mismatch_payload, env=env)
+        require(code == 0, f"guard worker-count mismatch run failed: {err or out}")
+        require(json.loads(out).get("permissionDecision") == "ask", "worker-count mismatch must ask")
+
+        cross_repo = dict(receipt)
+        cross_repo["metadata"] = dict(metadata)
+        cross_repo["metadata"]["plan_sha256"] = "crossrepohash"
+        cross_repo["metadata"]["repo_root"] = str(tmp_path / "other-repo")
+        write(evdir / "cross-repo.jsonl", json.dumps(cross_repo) + "\n")
+        cross_repo_payload = json.dumps(
+            {
+                "tool_name": "spawn_agent",
+                "tool_input": {"plan_sha256": "crossrepohash", "worker_count": 1, "cwd": str(repo)},
+            }
+        )
+        code, out, err = run_with_input([sys.executable, str(HARNESS_GUARD)], cross_repo_payload, env=env)
+        require(code == 0, f"guard cross-repo receipt run failed: {err or out}")
+        require(json.loads(out).get("permissionDecision") == "ask", "cross-repo receipt must ask")
+
+        missing_hash_payload = json.dumps({"tool_name": "spawn_agent", "tool_input": {"cwd": str(repo)}})
+        code, out, err = run_with_input([sys.executable, str(HARNESS_GUARD)], missing_hash_payload, env=env)
+        require(code == 0, f"guard missing-hash run failed: {err or out}")
+        require(json.loads(out).get("permissionDecision") == "ask", "dispatch without plan_sha256 must ask")
+
+        stale = dict(receipt)
+        stale["timestamp"] = "2000-01-01T00:00:00+00:00"
+        stale["metadata"] = dict(metadata)
+        stale["metadata"]["plan_sha256"] = "stalehash"
+        write(evdir / "stale.jsonl", json.dumps(stale) + "\n")
+        stale_payload = json.dumps(
+            {
+                "tool_name": "spawn_agent",
+                "tool_input": {"plan_sha256": "stalehash", "worker_count": 1, "cwd": str(repo)},
+            }
+        )
+        code, out, err = run_with_input([sys.executable, str(HARNESS_GUARD)], stale_payload, env=env)
+        require(code == 0, f"guard stale receipt run failed: {err or out}")
+        require(json.loads(out).get("permissionDecision") == "ask", "stale receipt must ask")
+
+        future = dict(receipt)
+        future["timestamp"] = "2999-01-01T00:00:00+00:00"
+        future["metadata"] = dict(metadata)
+        future["metadata"]["plan_sha256"] = "futurehash"
+        write(evdir / "future.jsonl", json.dumps(future) + "\n")
+        future_payload = json.dumps(
+            {
+                "tool_name": "spawn_agent",
+                "tool_input": {"plan_sha256": "futurehash", "worker_count": 1, "cwd": str(repo)},
+            }
+        )
+        code, out, err = run_with_input([sys.executable, str(HARNESS_GUARD)], future_payload, env=env)
+        require(code == 0, f"guard future receipt run failed: {err or out}")
+        require(json.loads(out).get("permissionDecision") == "ask", "future-dated receipt must ask")
+
+        write(evdir / "malformed.jsonl", "{not-json}\n")
+        malformed_payload = json.dumps(
+            {
+                "tool_name": "spawn_agent",
+                "tool_input": {"plan_sha256": "malformedhash", "worker_count": 1, "cwd": str(repo)},
+            }
+        )
+        code, out, err = run_with_input([sys.executable, str(HARNESS_GUARD)], malformed_payload, env=env)
+        require(code == 0, f"guard malformed evidence run failed: {err or out}")
+        require(json.loads(out).get("permissionDecision") == "ask", "malformed JSONL must not allow dispatch")
+
+        blocked_home = tmp_path / "blocked-codex-home"
+        blocked_home.write_text("not a directory", encoding="utf-8")
+        blocked_env = env.copy()
+        blocked_env["CODEX_HOME"] = str(blocked_home)
+        proc = subprocess.run(
+            [
+                sys.executable,
+                str(HARNESS_AGENT_TEAM),
+                "validate",
+                str(plan),
+                "--repo-root",
+                str(repo),
+                "--emit-evidence",
+            ],
+            capture_output=True,
+            text=True,
+            check=False,
+            env=blocked_env,
+        )
+        require(proc.returncode != 0, "evidence append failure under --emit-evidence should fail validation")
+
+    print("[PASS] agent dispatch gate")
 
 
 def test_harness_checkpoint_helper():
@@ -3454,7 +3944,15 @@ def test_manage_agents_scan_backup_generate_restore():
     print("[PASS] manage_agents scan/backup/generate/restore")
 
 
-def main():
+def defined_test_names() -> list[str]:
+    return [
+        name
+        for name, value in globals().items()
+        if name.startswith("test_") and callable(value)
+    ]
+
+
+def test_runner_preflight():
     require(BOOTSTRAP.exists(), f"missing bootstrap: {BOOTSTRAP}")
     require(SYNC.exists(), f"missing sync script: {SYNC}")
     require(SYNC_CLAUDE.exists(), f"missing sync script: {SYNC_CLAUDE}")
@@ -3479,48 +3977,154 @@ def main():
     require(HARNESS_OBSERVER.exists(), f"missing harness observer hook: {HARNESS_OBSERVER}")
     require(MODEL_ROUTER.exists(), f"missing model router hook: {MODEL_ROUTER}")
 
-    test_bootstrap_eigenphi_argument_is_optional()
-    test_sync_ignores_legacy_eigenphi_argument()
-    test_verify_supports_skip_check_argument()
-    test_codex_version_policy_accepts_current_cli()
-    test_sync_renders_template_and_copies_skills()
-    test_sync_preserves_runtime_plugin_state()
-    test_delivery_harness_framework_stays_generic()
-    test_delivery_harness_framework_routes_runtime_helpers()
-    test_delivery_harness_framework_eval_matrix()
-    test_sync_agents_only_copies_and_backs_up_agents()
-    test_harness_runtime_surfaces_exist_and_parse()
-    test_skill_governance_audit_cli()
-    test_shipq_dhf_prompt_hook_auto_invokes_skill()
-    test_harness_agent_brief_template()
-    test_lifecycle_skill_routing_doc_is_discoverable()
-    test_sync_gstack_vendor_replaces_snapshot_from_git_source()
-    test_sync_gstack_vendor_dry_run_leaves_vendor_unchanged()
-    test_sync_gstack_vendor_dry_run_reports_no_update_when_snapshot_matches()
-    test_prepare_gstack_daily_refresh_creates_standalone_clone()
-    test_prepare_gstack_daily_refresh_retries_transient_dns_failures()
-    test_prepare_gstack_daily_refresh_dns_defaults_cover_slow_startup()
-    test_prepare_gstack_daily_refresh_resolves_duplicate_dns_hosts_once()
-    test_merge_gstack_daily_refresh_fast_forwards_main_when_ahead_only()
-    test_merge_gstack_daily_refresh_skips_diverged_branch()
-    test_sync_local_main_fast_forwards_when_clean_and_behind_only()
-    test_sync_local_main_skips_dirty_worktree()
-    test_harness_guard_policy_decisions()
-    test_model_router_prompt_complexity_decisions()
-    test_harness_evidence_append_and_observer_failure_mode()
-    test_harness_feedback_conversion_health()
-    test_harness_report_cli_summarizes_evidence()
-    test_harness_agent_team_validator()
-    test_harness_checkpoint_helper()
-    test_harness_requirements_validator()
-    test_harness_recovery_smoke()
-    test_harness_env_probe()
-    test_sync_claude_injects_integration_block()
-    test_verify_after_full_sync()
-    test_capture_text_auto_classifies_input_types()
-    test_headroom_filter_detects_modes_and_reports_stats()
-    test_manage_agents_scan_backup_generate_restore()
-    print("[PASS] all tests")
+    print("[PASS] test runner preflight")
+
+
+def test_runner_harness_isolation():
+    calls: list[str] = []
+
+    def good_a():
+        calls.append("a")
+
+    def bad():
+        calls.append("b")
+        raise AssertionError("boom")
+
+    def good_c():
+        calls.append("c")
+
+    output = io.StringIO()
+    result = run_all([good_a, bad, good_c], fail_output=output)
+    require(calls == ["a", "b", "c"], "every registered test must run despite a mid-list failure")
+    require(result.ran_names == ["good_a", "bad", "good_c"], "run_all should record actually attempted tests")
+    require(len(result.failures) == 1 and result.failures[0][0] == "bad", "failing test must be reported by name")
+    require("[FAIL] bad: boom" in output.getvalue(), "run_all should print immediate per-test failure")
+
+    print("[PASS] test runner harness isolation")
+
+
+def test_runner_harness_catches_system_exit():
+    calls: list[str] = []
+
+    def exits():
+        calls.append("exit")
+        raise SystemExit(7)
+
+    def after():
+        calls.append("after")
+
+    output = io.StringIO()
+    result = run_all([exits, after], fail_output=output)
+    require(calls == ["exit", "after"], "SystemExit from a test must not truncate the runner")
+    require(result.ran == 2, "SystemExit case should still count all attempted tests")
+    require(len(result.failures) == 1 and result.failures[0][0] == "exits", "SystemExit failure should be named")
+    require("SystemExit: 7" in result.failures[0][1], "SystemExit traceback should be retained")
+
+    print("[PASS] test runner catches SystemExit")
+
+
+def test_runner_main_failure_contract():
+    calls: list[str] = []
+
+    def good():
+        calls.append("good")
+
+    def bad():
+        calls.append("bad")
+        raise AssertionError("boom")
+
+    def after():
+        calls.append("after")
+
+    output = io.StringIO()
+    error_output = io.StringIO()
+    code = run_registered_tests([good, bad, after], output=output, error_output=error_output)
+    stdout_text = output.getvalue()
+    stderr_text = error_output.getvalue()
+
+    require(code == 1, "failed registry run should return non-zero")
+    require(calls == ["good", "bad", "after"], "failed registry run must continue through later tests")
+    require("ran=3 passed=2 failed=1" in stdout_text, "failed registry run should print summary")
+    require("[PASS] all tests" not in stdout_text, "failed registry run must not print pass sentinel")
+    require("----- bad -----" in stderr_text, "failed registry run should print traceback header to stderr")
+    require("AssertionError: boom" in stderr_text, "failed registry run should retain traceback text")
+
+    print("[PASS] test runner main failure contract")
+
+
+def test_runner_registry_complete():
+    registered = [fn.__name__ for fn in TESTS]
+    defined = defined_test_names()
+    missing = [name for name in defined if name not in registered]
+    extra = [name for name in registered if name not in defined]
+    duplicates = sorted({name for name in registered if registered.count(name) > 1})
+
+    require(not missing, f"TESTS registry missing test functions: {missing}")
+    require(not extra, f"TESTS registry contains unknown functions: {extra}")
+    require(not duplicates, f"TESTS registry contains duplicate functions: {duplicates}")
+
+    print("[PASS] test runner registry complete")
+
+
+TESTS = [
+    test_runner_preflight,
+    test_runner_harness_isolation,
+    test_runner_harness_catches_system_exit,
+    test_runner_main_failure_contract,
+    test_bootstrap_eigenphi_argument_is_optional,
+    test_sync_ignores_legacy_eigenphi_argument,
+    test_verify_supports_skip_check_argument,
+    test_codex_version_policy_accepts_current_cli,
+    test_sync_renders_template_and_copies_skills,
+    test_sync_preserves_runtime_plugin_state,
+    test_delivery_harness_framework_stays_generic,
+    test_delivery_harness_framework_routes_runtime_helpers,
+    test_delivery_harness_framework_eval_matrix,
+    test_sync_agents_only_copies_and_backs_up_agents,
+    test_harness_runtime_surfaces_exist_and_parse,
+    test_surfaces_manifest_no_orphans,
+    test_check_surfaces_reports_drift,
+    test_check_surfaces_validates_public_nav,
+    test_skill_governance_audit_cli,
+    test_shipq_dhf_prompt_hook_auto_invokes_skill,
+    test_harness_agent_brief_template,
+    test_lifecycle_skill_routing_doc_is_discoverable,
+    test_sync_gstack_vendor_replaces_snapshot_from_git_source,
+    test_sync_gstack_vendor_dry_run_leaves_vendor_unchanged,
+    test_sync_gstack_vendor_dry_run_reports_no_update_when_snapshot_matches,
+    test_prepare_gstack_daily_refresh_creates_standalone_clone,
+    test_prepare_gstack_daily_refresh_retries_transient_dns_failures,
+    test_prepare_gstack_daily_refresh_dns_defaults_cover_slow_startup,
+    test_prepare_gstack_daily_refresh_resolves_duplicate_dns_hosts_once,
+    test_merge_gstack_daily_refresh_fast_forwards_main_when_ahead_only,
+    test_merge_gstack_daily_refresh_skips_diverged_branch,
+    test_sync_local_main_fast_forwards_when_clean_and_behind_only,
+    test_sync_local_main_skips_dirty_worktree,
+    test_harness_guard_policy_decisions,
+    test_harness_guard_phase_resolution,
+    test_model_router_prompt_complexity_decisions,
+    test_harness_evidence_append_and_observer_failure_mode,
+    test_harness_feedback_conversion_health,
+    test_harness_report_cli_summarizes_evidence,
+    test_harness_agent_team_validator,
+    test_agent_dispatch_gate,
+    test_harness_checkpoint_helper,
+    test_harness_requirements_validator,
+    test_harness_recovery_smoke,
+    test_harness_env_probe,
+    test_sync_claude_injects_integration_block,
+    test_verify_after_full_sync,
+    test_capture_text_auto_classifies_input_types,
+    test_headroom_filter_detects_modes_and_reports_stats,
+    test_manage_agents_scan_backup_generate_restore,
+    test_runner_registry_complete,
+]
+
+
+def main():
+    exit_code = run_registered_tests(TESTS)
+    if exit_code:
+        sys.exit(exit_code)
 
 
 if __name__ == "__main__":

@@ -37,7 +37,8 @@
         "subagent_report",
         "checkpoint",
         "handoff",
-        "guardrail_decision"
+        "guardrail_decision",
+        "agent_team_validated"
       ]
     },
     "evidence_kind": {
