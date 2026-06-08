@@ -14,13 +14,13 @@ Stable rules belong in `AGENTS.md`, `README.md`, `docs/repo-index.md`, or
   - `codex/skills/delivery-harness-framework/SKILL.md`
 - blocked_sources: none
 - unsafe_inputs: none
-- next_safe_task: Decide whether to delete or keep local branch codex/mce-20260608-freeze-review-policy; keep skill-governance follow-up out of scope unless explicitly re-enabled.
+- next_safe_task: Review and land codex/mce-20260608-runtime-activation; then, only with explicit operator approval, run Stage 3 sync_codex_home.sh plus strengthened verify against real ~/.codex.
 - required_commands:
   - `python3 test_runner.py`
   - `git diff --check`
   - `./scripts/verify_codex_env.sh --repo-root "$(pwd)" --codex-home "$HOME/.codex" --claude-home "$HOME/.claude"`
-- latest_checkpoint: 2026-06-08T18:22:07-04:00 merged DHF residual PR and pruned merged remote branch
-- latest_verification: 2026-06-08T18:22:07-04:00 command=gh pr view 7 --json number,url,state,mergedAt,mergeCommit,headRefName,baseRefName,title && git fetch --prune origin && git status --short --branch; exit_code=0; key_output=PR #7 MERGED; merge_commit=ddeb7fa82327512cce2639fcea54aa8063c66297; pruned origin/codex/mce-20260608-dhf-residuals; main clean
+- latest_checkpoint: 2026-06-08T18:45:53-04:00 Runtime activation Stages 1-2 implemented: verify content-checks hook/schema drift, runner counts explicit skips, and missing codex no longer causes early verify exit; Stage 3 runtime sync not run.
+- latest_verification: 2026-06-08T18:45:53-04:00 command=python3 test_runner.py; exit_code=0; key_output=ran=55 passed=55 skipped=0 failed=0; [PASS] all tests
 
 ## State Log
 
@@ -983,3 +983,25 @@ Stable rules belong in `AGENTS.md`, `README.md`, `docs/repo-index.md`, or
 - blockers:
   - none
 - next_safe_task: Decide whether to delete or keep local branch codex/mce-20260608-freeze-review-policy; keep skill-governance follow-up out of scope unless explicitly re-enabled.
+
+### 2026-06-08T18:45:53-04:00
+- phase: handoff
+- event: checkpoint
+- summary: Runtime activation Stages 1-2 implemented: verify content-checks hook/schema drift, runner counts explicit skips, and missing codex no longer causes early verify exit; Stage 3 runtime sync not run.
+- git:
+  - branch: codex/mce-20260608-runtime-activation
+  - latest_commit: bf80f40
+  - dirty_status: dirty
+  - dirty_count: 4
+- changed_surfaces:
+  - `scripts/verify_codex_env.sh`
+  - `test_runner.py`
+  - `docs/AGENT_HARNESS_STATUS.md`
+  - `docs/plans/runtime-activation-combined-slice.md`
+- verification:
+  - command: `python3 test_runner.py`
+  - exit_code: 0
+  - key_output: ran=55 passed=55 skipped=0 failed=0; [PASS] all tests
+- blockers:
+  - none
+- next_safe_task: Review and land codex/mce-20260608-runtime-activation; then, only with explicit operator approval, run Stage 3 sync_codex_home.sh plus strengthened verify against real ~/.codex.

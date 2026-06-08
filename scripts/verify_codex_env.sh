@@ -91,7 +91,8 @@ check() {
 results=()
 results+=("$(check os_darwin '[[ "$(uname -s)" == "Darwin" ]]')")
 results+=("$(check arch_arm64 '[[ "$(uname -m)" == "arm64" ]]')")
-results+=("$(check cmd_codex 'command -v codex')")
+cmd_codex_result="$(check cmd_codex 'command -v codex')"
+results+=("${cmd_codex_result}")
 results+=("$(check cmd_go 'command -v go')")
 results+=("$(check cmd_node 'command -v node && command -v npx')")
 results+=("$(check chrome_devtools_mcp_bin_exists '[[ -x "$(npm prefix -g)/bin/chrome-devtools-mcp" ]]')")
@@ -111,8 +112,11 @@ results+=("$(check codex_hook_script_exists '[[ -f "'"${CODEX_HOME}"'"/hooks/ses
 results+=("$(check codex_harness_guard_hook_exists '[[ -f "'"${CODEX_HOME}"'"/hooks/harness_guard.py ]]')")
 results+=("$(check codex_harness_observer_hook_exists '[[ -f "'"${CODEX_HOME}"'"/hooks/harness_observer.py ]]')")
 results+=("$(check codex_model_router_hook_exists '[[ -f "'"${CODEX_HOME}"'"/hooks/model_router.py ]]')")
+results+=("$(check codex_shipq_dhf_preprompt_hook_exists '[[ -f "'"${CODEX_HOME}"'"/hooks/shipq_dhf_preprompt.py ]]')")
 results+=("$(check codex_runtime_tool_policy_exists '[[ -f "'"${CODEX_HOME}"'"/runtime/tool-policy.json ]]')")
 results+=("$(check codex_runtime_evidence_schema_exists '[[ -f "'"${CODEX_HOME}"'"/runtime/evidence.schema.json ]]')")
+results+=("$(check codex_runtime_decision_evidence_schema_exists '[[ -f "'"${CODEX_HOME}"'"/runtime/evidence/decision-evidence.schema.json ]]')")
+results+=("$(check codex_runtime_routine_gate_receipt_schema_exists '[[ -f "'"${CODEX_HOME}"'"/runtime/evidence/routine-gate-receipt.schema.json ]]')")
 results+=("$(check codex_zsh_title_hook_exists '[[ -f "'"${CODEX_HOME}"'"/zsh/codex-session-title.zsh ]]')")
 results+=("$(check codex_config_eigenphi_mcp_disabled '! rg -n "^[[:space:]]*\[mcp_servers\.\"eigenphi-blockchain\"\]" "'"${CODEX_HOME}"'"/config.toml')")
 results+=("$(check codex_config_has_chrome_devtools_mcp 'rg -n "\[mcp_servers\.\"chrome-devtools\"\]" "'"${CODEX_HOME}"'"/config.toml')")
@@ -134,8 +138,15 @@ results+=("$(check codex_agents_runtime_matches_source 'cmp -s "'"${REPO_ROOT}"'
 results+=("$(check codex_remote_access_runtime_matches_source 'cmp -s "'"${REPO_ROOT}"'"/codex/remote-access.md "'"${CODEX_HOME}"'"/remote-access.md' )")
 results+=("$(check codex_remote_hosts_runtime_matches_source 'cmp -s "'"${REPO_ROOT}"'"/codex/remote-hosts.md "'"${CODEX_HOME}"'"/remote-hosts.md' )")
 results+=("$(check codex_hooks_runtime_matches_source 'cmp -s "'"${REPO_ROOT}"'"/codex/hooks.json "'"${CODEX_HOME}"'"/hooks.json' )")
+results+=("$(check codex_hook_session_start_runtime_matches_source 'cmp -s "'"${REPO_ROOT}"'"/codex/hooks/session_start_require_naming.py "'"${CODEX_HOME}"'"/hooks/session_start_require_naming.py' )")
+results+=("$(check codex_hook_harness_guard_runtime_matches_source 'cmp -s "'"${REPO_ROOT}"'"/codex/hooks/harness_guard.py "'"${CODEX_HOME}"'"/hooks/harness_guard.py' )")
+results+=("$(check codex_hook_harness_observer_runtime_matches_source 'cmp -s "'"${REPO_ROOT}"'"/codex/hooks/harness_observer.py "'"${CODEX_HOME}"'"/hooks/harness_observer.py' )")
+results+=("$(check codex_hook_model_router_runtime_matches_source 'cmp -s "'"${REPO_ROOT}"'"/codex/hooks/model_router.py "'"${CODEX_HOME}"'"/hooks/model_router.py' )")
+results+=("$(check codex_hook_shipq_dhf_preprompt_runtime_matches_source 'cmp -s "'"${REPO_ROOT}"'"/codex/hooks/shipq_dhf_preprompt.py "'"${CODEX_HOME}"'"/hooks/shipq_dhf_preprompt.py' )")
 results+=("$(check codex_runtime_tool_policy_matches_source 'cmp -s "'"${REPO_ROOT}"'"/codex/runtime/tool-policy.json "'"${CODEX_HOME}"'"/runtime/tool-policy.json' )")
 results+=("$(check codex_runtime_evidence_schema_matches_source 'cmp -s "'"${REPO_ROOT}"'"/codex/runtime/evidence.schema.json "'"${CODEX_HOME}"'"/runtime/evidence.schema.json' )")
+results+=("$(check codex_runtime_decision_evidence_schema_matches_source 'cmp -s "'"${REPO_ROOT}"'"/codex/runtime/evidence/decision-evidence.schema.json "'"${CODEX_HOME}"'"/runtime/evidence/decision-evidence.schema.json' )")
+results+=("$(check codex_runtime_routine_gate_receipt_schema_matches_source 'cmp -s "'"${REPO_ROOT}"'"/codex/runtime/evidence/routine-gate-receipt.schema.json "'"${CODEX_HOME}"'"/runtime/evidence/routine-gate-receipt.schema.json' )")
 results+=("$(check codex_zsh_title_runtime_matches_source 'cmp -s "'"${REPO_ROOT}"'"/codex/zsh/codex-session-title.zsh "'"${CODEX_HOME}"'"/zsh/codex-session-title.zsh' )")
 results+=("$(check codex_security_scan_script '[[ -x "'"${CODEX_HOME}"'"/workflow/scripts/scan_skill_security.sh ]]')")
 
@@ -165,24 +176,39 @@ else
   results+=("FAIL:skills_managed_present")
 fi
 
-codex_version="$(codex --version | awk '{print $2}')"
-codex_version_ok="false"
-for accepted_prefix in "${ACCEPTED_CODEX_VERSION_PREFIXES[@]}"; do
-  if [[ "${codex_version}" == "${accepted_prefix}"* ]]; then
-    codex_version_ok="true"
-    break
+codex_version="unavailable"
+if should_skip "codex_version"; then
+  results+=("SKIP:codex_version")
+elif [[ "${cmd_codex_result}" == PASS:* ]]; then
+  if codex_version_output="$(codex --version 2>/dev/null | awk '{print $2}')" && [[ -n "${codex_version_output}" ]]; then
+    codex_version="${codex_version_output}"
+    codex_version_ok="false"
+    for accepted_prefix in "${ACCEPTED_CODEX_VERSION_PREFIXES[@]}"; do
+      if [[ "${codex_version}" == "${accepted_prefix}"* ]]; then
+        codex_version_ok="true"
+        break
+      fi
+    done
+    if [[ "${codex_version_ok}" == "true" ]]; then
+      results+=("PASS:codex_version")
+    else
+      results+=("FAIL:codex_version")
+    fi
+  else
+    results+=("FAIL:codex_version")
   fi
-done
-if [[ "${codex_version_ok}" == "true" ]]; then
-  results+=("PASS:codex_version")
+elif [[ "${cmd_codex_result}" == SKIP:* ]]; then
+  results+=("SKIP:codex_version")
 else
   results+=("FAIL:codex_version")
 fi
 
-if codex login status >/dev/null 2>&1; then
+if [[ "${cmd_codex_result}" == PASS:* ]] && codex login status >/dev/null 2>&1; then
   login_status="authenticated"
-else
+elif [[ "${cmd_codex_result}" == PASS:* ]]; then
   login_status="not_authenticated"
+else
+  login_status="unavailable"
 fi
 
 failed=0
