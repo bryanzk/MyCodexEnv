@@ -5,7 +5,7 @@ Stable rules belong in `AGENTS.md`, `README.md`, `docs/repo-index.md`, or
 `docs/HARNESS_RUNTIME.md`; session facts and phase transitions are appended here.
 
 ## Current Snapshot
-- phase: validation
+- phase: handoff
 - source_of_truth:
   - `AGENTS.md`
   - `docs/repo-index.md`
@@ -14,13 +14,13 @@ Stable rules belong in `AGENTS.md`, `README.md`, `docs/repo-index.md`, or
   - `codex/skills/delivery-harness-framework/SKILL.md`
 - blocked_sources: none
 - unsafe_inputs: none
-- next_safe_task: Review the dhf-residuals branch diff, then push/open PR for the completed observer parity and agent-dispatch residual slices; skill governance follow-up remains optional and out of scope unless re-enabled.
+- next_safe_task: Decide whether to delete or keep local branch codex/mce-20260608-freeze-review-policy; keep skill-governance follow-up out of scope unless explicitly re-enabled.
 - required_commands:
   - `python3 test_runner.py`
   - `git diff --check`
   - `./scripts/verify_codex_env.sh --repo-root "$(pwd)" --codex-home "$HOME/.codex" --claude-home "$HOME/.claude"`
-- latest_checkpoint: 2026-06-08T18:13:16-04:00 closed agent-dispatch legacy evidence residual
-- latest_verification: 2026-06-08T18:13:16-04:00 command=python3 -c 'import test_runner as t; t.test_agent_dispatch_gate()' && python3 scripts/harness_requirements.py validate docs/plans/agent-dispatch-verification-slice.md && python3 scripts/harness_requirements.py validate docs/plans/runtime-effect-and-state-truth-slice.md && python3 test_runner.py && python3 scripts/check_surfaces.py --repo-root "/Users/kezheng/Codes/CursorDeveloper/MyCodexEnv" --check-public-nav && ./scripts/verify_codex_env.sh --repo-root "/Users/kezheng/Codes/CursorDeveloper/MyCodexEnv" --codex-home "/Users/kezheng/.codex" --claude-home "/Users/kezheng/.claude" && git diff --check; exit_code=0; key_output=[PASS] agent dispatch gate; valid; valid; ran=53 passed=53 failed=0; surfaces manifest consistent; Verification passed.; git diff --check clean
+- latest_checkpoint: 2026-06-08T18:22:07-04:00 merged DHF residual PR and pruned merged remote branch
+- latest_verification: 2026-06-08T18:22:07-04:00 command=gh pr view 7 --json number,url,state,mergedAt,mergeCommit,headRefName,baseRefName,title && git fetch --prune origin && git status --short --branch; exit_code=0; key_output=PR #7 MERGED; merge_commit=ddeb7fa82327512cce2639fcea54aa8063c66297; pruned origin/codex/mce-20260608-dhf-residuals; main clean
 
 ## State Log
 
@@ -964,3 +964,22 @@ Stable rules belong in `AGENTS.md`, `README.md`, `docs/repo-index.md`, or
 - blockers:
   - none
 - next_safe_task: Review the freeze-review-policy branch diff, then push/open PR for the completed observer parity and agent-dispatch residual slices; skill governance follow-up remains optional and out of scope unless re-enabled.
+
+### 2026-06-08T18:22:07-04:00
+- phase: handoff
+- event: checkpoint
+- summary: merged DHF residual PR and pruned merged remote branch
+- git:
+  - branch: main
+  - latest_commit: ddeb7fa
+  - dirty_status: clean
+  - dirty_count: 0
+- changed_surfaces:
+  - `https://github.com/bryanzk/MyCodexEnv/pull/7`
+- verification:
+  - command: `gh pr view 7 --json number,url,state,mergedAt,mergeCommit,headRefName,baseRefName,title && git fetch --prune origin && git status --short --branch`
+  - exit_code: 0
+  - key_output: PR #7 MERGED; merge_commit=ddeb7fa82327512cce2639fcea54aa8063c66297; pruned origin/codex/mce-20260608-dhf-residuals; main clean
+- blockers:
+  - none
+- next_safe_task: Decide whether to delete or keep local branch codex/mce-20260608-freeze-review-policy; keep skill-governance follow-up out of scope unless explicitly re-enabled.
