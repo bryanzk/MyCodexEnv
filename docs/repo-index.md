@@ -101,6 +101,7 @@
 
 ## Verification
 - Primary: `python3 test_runner.py`.
+- CI gate: `.github/workflows/ci.yml` runs `python3 test_runner.py`, `git diff --check`, and `python3 scripts/check_surfaces.py --repo-root "$(pwd)" --check-public-nav` on `push` to `main`, `pull_request`, and manual dispatch.
 - Runtime sync: `./scripts/verify_codex_env.sh --repo-root "$(pwd)" --codex-home "$HOME/.codex" --claude-home "$HOME/.claude"`.
 - Automation-safe runtime sync: `./scripts/verify_codex_env.sh --repo-root "$(pwd)" --codex-home "$HOME/.codex" --claude-home "$HOME/.claude" --skip-check app_google_chrome`.
 - Formatting: `git diff --check`.

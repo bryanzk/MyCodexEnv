@@ -38,6 +38,7 @@ SURFACES_MANIFEST = ROOT / "docs" / "surfaces.json"
 CHECK_SURFACES = ROOT / "scripts" / "check_surfaces.py"
 SKILL_GOVERNANCE_DOC = ROOT / "docs" / "skill-governance-20260608.md"
 LIFECYCLE_SKILL_ROUTING_DOC = ROOT / "docs" / "LIFECYCLE_SKILL_ROUTING.md"
+CI_WORKFLOW = ROOT / ".github" / "workflows" / "ci.yml"
 PUBLIC_INDEX_HTML = ROOT / "docs" / "index.html"
 PUBLIC_INDEX_EN_HTML = ROOT / "docs" / "index-en.html"
 LIFECYCLE_FLOW_HTML = ROOT / "docs" / "project-lifecycle-harness-flow-cn.html"
@@ -852,6 +853,16 @@ def test_check_surfaces_validates_public_nav():
         require(json.loads(out).get("public_nav_count") == 1, "public nav count should include temp guide link")
 
     print("[PASS] check surfaces validates public nav")
+
+
+def test_ci_workflow_runs_green_gate():
+    require(CI_WORKFLOW.exists(), "missing .github/workflows/ci.yml CI gate workflow")
+    text = CI_WORKFLOW.read_text(encoding="utf-8")
+    require("pull_request" in text, "CI workflow must run on pull_request")
+    require("python3 test_runner.py" in text, "CI workflow must run the canonical test suite")
+    require("git diff --check" in text, "CI workflow must run the formatting gate")
+    require("check_surfaces.py" in text, "CI workflow must run the runtime surfaces check")
+    print("[PASS] ci workflow runs green gate")
 
 
 def test_skill_governance_audit_cli():
@@ -4453,6 +4464,7 @@ TESTS = [
     test_surfaces_manifest_no_orphans,
     test_check_surfaces_reports_drift,
     test_check_surfaces_validates_public_nav,
+    test_ci_workflow_runs_green_gate,
     test_skill_governance_audit_cli,
     test_shipq_dhf_prompt_hook_auto_invokes_skill,
     test_harness_agent_brief_template,

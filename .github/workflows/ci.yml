@@ -1,0 +1,42 @@
+name: CI
+
+# Runs the repo's portable green gate on every push to main and every pull
+# request. This is the automated consumer of the reproducible-green work: the
+# suite is designed to pass with explicit SKIPs on machines without the codex
+# CLI (CI included), so a red here is a real regression, not an environment gap.
+# The codex-CLI-dependent runtime sync check (verify_codex_env.sh) is covered by
+# skip-aware tests inside test_runner.py and is intentionally not run here.
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  gate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.x"
+
+      - name: Run test suite (per-test isolation; codex/git-dependent checks SKIP)
+        run: python3 test_runner.py
+
+      - name: Check formatting (whitespace/conflict markers)
+        run: git diff --check
+
+      - name: Validate runtime surfaces manifest and public nav
+        run: python3 scripts/check_surfaces.py --repo-root "$(pwd)" --check-public-nav

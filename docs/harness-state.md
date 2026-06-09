@@ -14,13 +14,13 @@ Stable rules belong in `AGENTS.md`, `README.md`, `docs/repo-index.md`, or
   - `codex/skills/delivery-harness-framework/SKILL.md`
 - blocked_sources: none
 - unsafe_inputs: none
-- next_safe_task: Observe activated guard/observer behavior in normal Codex sessions; if stable, decide whether to prune old local branch codex/mce-20260608-freeze-review-policy or leave it explicitly deferred. Keep scheduled daily refresh route unchanged: rerun prepare first; if dns_unreachable, update only automation memory and keep repo untouched.
+- next_safe_task: Push CI gate to main and observe the first GitHub Actions run. If CI is green, return to branch governance cleanup: delete merged stale local branches first, keep automation/gstack-dhf-daily-refresh and preserve codex/mce-20260608-freeze-review-policy until explicitly decided.
 - required_commands:
   - `python3 test_runner.py`
   - `git diff --check`
   - `./scripts/verify_codex_env.sh --repo-root "$(pwd)" --codex-home "$HOME/.codex" --claude-home "$HOME/.claude"`
-- latest_checkpoint: 2026-06-09T10:27:10-04:00 PR #9 merged: Stage 2 residual is closed on main; missing setup helper tools now count as SkipTest, git-dependent skips use runner skip accounting, and live runtime guard ask/deny smoke is covered.
-- latest_verification: 2026-06-09T10:27:10-04:00 command=gh pr view 9 --json state,mergedAt,mergeCommit && git pull --ff-only origin main && python3 test_runner.py && ./scripts/verify_codex_env.sh --repo-root "/Users/kezheng/Codes/CursorDeveloper/MyCodexEnv" --codex-home "/Users/kezheng/.codex" --claude-home "/Users/kezheng/.claude" --skip-check app_google_chrome && git diff --check; exit_code=0; key_output=PR #9 MERGED at 2026-06-09T14:24:01Z; main fast-forwarded to f2ae340; ran=56 passed=56 skipped=0 failed=0; Verification passed.; git diff --check clean
+- latest_checkpoint: 2026-06-09T10:44:23-04:00 CI gate landed: GitHub Actions now runs the portable repo green gate on main pushes, pull requests, and manual dispatch; test_runner locks the workflow contract.
+- latest_verification: 2026-06-09T10:44:23-04:00 command=python3 -c 'import test_runner as t; t.test_ci_workflow_runs_green_gate(); t.test_runner_registry_complete()' && python3 scripts/check_surfaces.py --repo-root "/Users/kezheng/Codes/CursorDeveloper/MyCodexEnv" --check-public-nav && git diff --check && python3 test_runner.py; exit_code=0; key_output=focused CI workflow contract PASS; surfaces manifest consistent; git diff --check clean; ran=57 passed=57 skipped=0 failed=0; [PASS] all tests
 
 ## State Log
 
@@ -1104,3 +1104,26 @@ Stable rules belong in `AGENTS.md`, `README.md`, `docs/repo-index.md`, or
 - blockers:
   - none
 - next_safe_task: Observe activated guard/observer behavior in normal Codex sessions; if stable, decide whether to prune old local branch codex/mce-20260608-freeze-review-policy or leave it explicitly deferred. Keep scheduled daily refresh route unchanged: rerun prepare first; if dns_unreachable, update only automation memory and keep repo untouched.
+
+### 2026-06-09T10:44:23-04:00
+- phase: handoff
+- event: checkpoint
+- summary: CI gate landed: GitHub Actions now runs the portable repo green gate on main pushes, pull requests, and manual dispatch; test_runner locks the workflow contract.
+- git:
+  - branch: main
+  - latest_commit: 41d1f14
+  - dirty_status: dirty
+  - dirty_count: 4
+- changed_surfaces:
+  - `.github/workflows/ci.yml`
+  - `test_runner.py`
+  - `README.md`
+  - `docs/repo-index.md`
+  - `docs/harness-state.md`
+- verification:
+  - command: `python3 -c 'import test_runner as t; t.test_ci_workflow_runs_green_gate(); t.test_runner_registry_complete()' && python3 scripts/check_surfaces.py --repo-root "/Users/kezheng/Codes/CursorDeveloper/MyCodexEnv" --check-public-nav && git diff --check && python3 test_runner.py`
+  - exit_code: 0
+  - key_output: focused CI workflow contract PASS; surfaces manifest consistent; git diff --check clean; ran=57 passed=57 skipped=0 failed=0; [PASS] all tests
+- blockers:
+  - none
+- next_safe_task: Push CI gate to main and observe the first GitHub Actions run. If CI is green, return to branch governance cleanup: delete merged stale local branches first, keep automation/gstack-dhf-daily-refresh and preserve codex/mce-20260608-freeze-review-policy until explicitly decided.

@@ -67,6 +67,8 @@ cd MyCodexEnv
 
 运行态证据默认保存在 `~/.codex/harness/evidence/`，不进入 Git。`docs/harness-state.md` 只保存可公开的阶段、验证与 handoff 事实。Memory / subconscious 只能作为提示，行动前必须回查 repo 文件、git 状态或 fresh verification。
 
+GitHub Actions CI 入口为 `.github/workflows/ci.yml`。它在 `push` 到 `main`、`pull_request` 和手动 `workflow_dispatch` 时运行 portable green gate：`python3 test_runner.py`、`git diff --check` 和 `python3 scripts/check_surfaces.py --repo-root "$(pwd)" --check-public-nav`。本机 Codex runtime sync 验证仍通过 `test_runner.py` 里的 skip-aware 场景覆盖，不在 CI 中直接执行。
+
 生命周期阶段、覆盖流程、对应 skill 和 helper 用途见 `docs/LIFECYCLE_SKILL_ROUTING.md`。中文公开页面入口见 `docs/index.html`，英文公开页面入口见 `docs/index-en.html`；面向 agentic engineering beginner 的中文入门说明见 `docs/delivery-harness-beginner-guide-cn.html`；中文可视化说明见 `docs/project-lifecycle-harness-flow-cn.html` 和 `docs/project-lifecycle-harness-flow-skills-zh-status-style.html`。
 
 相关文档互链入口：
