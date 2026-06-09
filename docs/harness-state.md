@@ -14,13 +14,13 @@ Stable rules belong in `AGENTS.md`, `README.md`, `docs/repo-index.md`, or
   - `codex/skills/delivery-harness-framework/SKILL.md`
 - blocked_sources: none
 - unsafe_inputs: none
-- next_safe_task: Push CI gate to main and observe the first GitHub Actions run. If CI is green, return to branch governance cleanup: delete merged stale local branches first, keep automation/gstack-dhf-daily-refresh and preserve codex/mce-20260608-freeze-review-policy until explicitly decided.
+- next_safe_task: Return to branch governance cleanup: delete merged stale local branches first; keep automation/gstack-dhf-daily-refresh and preserve codex/mce-20260608-freeze-review-policy until explicitly decided.
 - required_commands:
   - `python3 test_runner.py`
   - `git diff --check`
   - `./scripts/verify_codex_env.sh --repo-root "$(pwd)" --codex-home "$HOME/.codex" --claude-home "$HOME/.claude"`
-- latest_checkpoint: 2026-06-09T10:44:23-04:00 CI gate landed: GitHub Actions now runs the portable repo green gate on main pushes, pull requests, and manual dispatch; test_runner locks the workflow contract.
-- latest_verification: 2026-06-09T10:44:23-04:00 command=python3 -c 'import test_runner as t; t.test_ci_workflow_runs_green_gate(); t.test_runner_registry_complete()' && python3 scripts/check_surfaces.py --repo-root "/Users/kezheng/Codes/CursorDeveloper/MyCodexEnv" --check-public-nav && git diff --check && python3 test_runner.py; exit_code=0; key_output=focused CI workflow contract PASS; surfaces manifest consistent; git diff --check clean; ran=57 passed=57 skipped=0 failed=0; [PASS] all tests
+- latest_checkpoint: 2026-06-09T10:45:41-04:00 Remote CI smoke completed: first GitHub Actions run for the new CI green gate passed on main.
+- latest_verification: 2026-06-09T10:45:41-04:00 command=gh run watch 27214279208 --exit-status; exit_code=0; key_output=CI run 27214279208 gate completed in 22s; test suite, git diff --check, and check_surfaces steps all passed
 
 ## State Log
 
@@ -1127,3 +1127,22 @@ Stable rules belong in `AGENTS.md`, `README.md`, `docs/repo-index.md`, or
 - blockers:
   - none
 - next_safe_task: Push CI gate to main and observe the first GitHub Actions run. If CI is green, return to branch governance cleanup: delete merged stale local branches first, keep automation/gstack-dhf-daily-refresh and preserve codex/mce-20260608-freeze-review-policy until explicitly decided.
+
+### 2026-06-09T10:45:41-04:00
+- phase: handoff
+- event: checkpoint
+- summary: Remote CI smoke completed: first GitHub Actions run for the new CI green gate passed on main.
+- git:
+  - branch: main
+  - latest_commit: 10414db
+  - dirty_status: clean
+  - dirty_count: 0
+- changed_surfaces:
+  - `docs/harness-state.md`
+- verification:
+  - command: `gh run watch 27214279208 --exit-status`
+  - exit_code: 0
+  - key_output: CI run 27214279208 gate completed in 22s; test suite, git diff --check, and check_surfaces steps all passed
+- blockers:
+  - none
+- next_safe_task: Return to branch governance cleanup: delete merged stale local branches first; keep automation/gstack-dhf-daily-refresh and preserve codex/mce-20260608-freeze-review-policy until explicitly decided.
