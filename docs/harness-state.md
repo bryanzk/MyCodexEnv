@@ -14,13 +14,13 @@ Stable rules belong in `AGENTS.md`, `README.md`, `docs/repo-index.md`, or
   - `codex/skills/delivery-harness-framework/SKILL.md`
 - blocked_sources: none
 - unsafe_inputs: none
-- next_safe_task: Return to branch governance cleanup: delete merged stale local branches first; keep automation/gstack-dhf-daily-refresh and preserve codex/mce-20260608-freeze-review-policy until explicitly decided.
+- next_safe_task: Continue expanding docs/delivery-harness-framework-manual-cn.md chapters 9-14: verification evidence, multi-agent coordination, checkpoint/handoff, complete examples, adoption guide, and appendix.
 - required_commands:
   - `python3 test_runner.py`
   - `git diff --check`
   - `./scripts/verify_codex_env.sh --repo-root "$(pwd)" --codex-home "$HOME/.codex" --claude-home "$HOME/.claude"`
-- latest_checkpoint: 2026-06-09T10:45:41-04:00 Remote CI smoke completed: first GitHub Actions run for the new CI green gate passed on main.
-- latest_verification: 2026-06-09T10:45:41-04:00 command=gh run watch 27214279208 --exit-status; exit_code=0; key_output=CI run 27214279208 gate completed in 22s; test suite, git diff --check, and check_surfaces steps all passed
+- latest_checkpoint: 2026-06-09T11:01:36-04:00 Expanded the PM-facing DHF manual through chapters 4-8, covering lifecycle stages, execution lanes, component matrix, fuzzy-request delivery flow, and skill routing.
+- latest_verification: 2026-06-09T11:01:36-04:00 command=python3 scripts/check_surfaces.py --repo-root "/Users/kezheng/Codes/CursorDeveloper/MyCodexEnv" --check-public-nav && python3 - <<'PY' ...manual structure/reference check... PY && git diff --check && python3 test_runner.py; exit_code=0; key_output=surfaces manifest consistent; manual structure and references present; git diff --check clean; ran=57 passed=57 skipped=0 failed=0; [PASS] all tests
 
 ## State Log
 
@@ -1146,3 +1146,48 @@ Stable rules belong in `AGENTS.md`, `README.md`, `docs/repo-index.md`, or
 - blockers:
   - none
 - next_safe_task: Return to branch governance cleanup: delete merged stale local branches first; keep automation/gstack-dhf-daily-refresh and preserve codex/mce-20260608-freeze-review-policy until explicitly decided.
+
+### 2026-06-09T10:52:55-04:00
+- phase: handoff
+- event: checkpoint
+- summary: Drafted PM-facing DHF manual chapters 1-3 and registered it in docs navigation.
+- git:
+  - branch: main
+  - latest_commit: a97c303
+  - dirty_status: dirty
+  - dirty_count: 4
+- changed_surfaces:
+  - `docs/delivery-harness-framework-manual-cn.md`
+  - `README.md`
+  - `docs/repo-index.md`
+  - `docs/surfaces.json`
+- verification:
+  - command: `python3 test_runner.py`
+  - exit_code: 0
+  - key_output: ran=57 passed=57 skipped=0 failed=0; [PASS] all tests
+- blockers:
+  - none
+- next_safe_task: Continue expanding docs/delivery-harness-framework-manual-cn.md chapters 4-8: lifecycle stages, execution lanes, component matrix, and skill routing.
+
+### 2026-06-09T11:01:36-04:00
+- phase: handoff
+- event: checkpoint
+- summary: Expanded the PM-facing DHF manual through chapters 4-8, covering lifecycle stages, execution lanes, component matrix, fuzzy-request delivery flow, and skill routing.
+- git:
+  - branch: main
+  - latest_commit: a97c303
+  - dirty_status: dirty
+  - dirty_count: 5
+- changed_surfaces:
+  - `docs/delivery-harness-framework-manual-cn.md`
+  - `README.md`
+  - `docs/repo-index.md`
+  - `docs/surfaces.json`
+  - `docs/harness-state.md`
+- verification:
+  - command: `python3 scripts/check_surfaces.py --repo-root "/Users/kezheng/Codes/CursorDeveloper/MyCodexEnv" --check-public-nav && python3 - <<'PY' ...manual structure/reference check... PY && git diff --check && python3 test_runner.py`
+  - exit_code: 0
+  - key_output: surfaces manifest consistent; manual structure and references present; git diff --check clean; ran=57 passed=57 skipped=0 failed=0; [PASS] all tests
+- blockers:
+  - none
+- next_safe_task: Continue expanding docs/delivery-harness-framework-manual-cn.md chapters 9-14: verification evidence, multi-agent coordination, checkpoint/handoff, complete examples, adoption guide, and appendix.

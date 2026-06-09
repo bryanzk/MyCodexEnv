@@ -14,6 +14,7 @@
 - `docs/MODEL_ROUTER_EVAL_MATRIX.md`: prompt/subtask model router eval matrix and routing assertions.
 - `docs/index.html`: Chinese public Delivery Harness Framework docs landing page for GitHub Pages.
 - `docs/index-en.html`: English public Delivery Harness Framework docs landing page for GitHub Pages.
+- `docs/delivery-harness-framework-manual-cn.md`: Chinese PM-facing Delivery Harness Framework manual draft.
 - `docs/dhf-workflow-skills-cn.html`: Chinese DHF workflow skill inventory with GitHub source links.
 - `docs/dhf-workflow-skills-en.html`: English DHF workflow skill inventory with GitHub source links.
 - `docs/delivery-harness-beginner-guide-cn.html`: Chinese beginner guide for agentic engineering readers.
@@ -66,6 +67,7 @@
 - `docs/LIFECYCLE_SKILL_ROUTING.md`: stage, workflow, skill, and helper usage guide.
 - `docs/index.html`: Chinese public docs landing page.
 - `docs/index-en.html`: English public docs landing page.
+- `docs/delivery-harness-framework-manual-cn.md`: Chinese PM-facing Delivery Harness Framework manual draft.
 - `docs/dhf-workflow-skills-cn.html`: Chinese workflow skill inventory with GitHub links.
 - `docs/dhf-workflow-skills-en.html`: English workflow skill inventory with GitHub links.
 - `docs/delivery-harness-beginner-guide-cn.html`: beginner-oriented Delivery Harness Framework explanation.
@@ -88,6 +90,7 @@
 - `docs/LIFECYCLE_SKILL_ROUTING.md`: lifecycle stage, workflow, skill, and helper routing.
 - `docs/index.html`: GitHub Pages Chinese public entry for Delivery Harness Framework guides.
 - `docs/index-en.html`: GitHub Pages English public entry for Delivery Harness Framework guides.
+- `docs/delivery-harness-framework-manual-cn.md`: Chinese PM-facing Delivery Harness Framework manual draft organized around why / what / how.
 - `docs/dhf-workflow-skills-cn.html`: GitHub Pages Chinese DHF workflow skill inventory.
 - `docs/dhf-workflow-skills-en.html`: GitHub Pages English DHF workflow skill inventory.
 - `docs/delivery-harness-beginner-guide-cn.html`: beginner guide explaining what Delivery Harness Framework does.

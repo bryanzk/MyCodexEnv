@@ -225,6 +225,11 @@
       "public_nav": ["docs/index-en.html"]
     },
     {
+      "path": "docs/delivery-harness-framework-manual-cn.md",
+      "role": "Chinese PM-facing Delivery Harness Framework manual draft",
+      "audience": ["human"]
+    },
+    {
       "path": "docs/project-lifecycle-harness-flow-cn.html",
       "role": "visual vertical lifecycle flow",
       "audience": ["human"],
