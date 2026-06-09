@@ -14,13 +14,13 @@ Stable rules belong in `AGENTS.md`, `README.md`, `docs/repo-index.md`, or
   - `codex/skills/delivery-harness-framework/SKILL.md`
 - blocked_sources: none
 - unsafe_inputs: none
-- next_safe_task: Observe activated guard/observer behavior in normal Codex sessions; if stable, decide whether to prune old local branch codex/mce-20260608-freeze-review-policy or leave it explicitly deferred.
+- next_safe_task: Observe activated guard/observer behavior in normal Codex sessions; if stable, decide whether to prune old local branch codex/mce-20260608-freeze-review-policy or leave it explicitly deferred. Keep scheduled daily refresh route unchanged: rerun prepare first; if dns_unreachable, update only automation memory and keep repo untouched.
 - required_commands:
   - `python3 test_runner.py`
   - `git diff --check`
   - `./scripts/verify_codex_env.sh --repo-root "$(pwd)" --codex-home "$HOME/.codex" --claude-home "$HOME/.claude"`
-- latest_checkpoint: 2026-06-09T10:15:54-04:00 Stage 2 residual closed: missing setup helper tools now count as SkipTest, git-dependent skips use runner skip accounting, and live runtime guard behavior smoke covers ask/deny after activation.
-- latest_verification: 2026-06-09T10:15:54-04:00 command=tmp fake PATH without go -> run_registered_tests([test_verify_missing_codex_reports_failures_without_early_exit]) && python3 -c 'import test_runner as t; t.test_verify_missing_codex_reports_failures_without_early_exit(); t.test_live_runtime_harness_guard_smoke(); t.test_runner_registry_complete()' && ./scripts/verify_codex_env.sh --repo-root "/Users/kezheng/.config/superpowers/worktrees/MyCodexEnv/codex-mce-20260609-stage2-residual-smoke" --codex-home "/Users/kezheng/.codex" --claude-home "/Users/kezheng/.claude" --skip-check app_google_chrome && python3 test_runner.py; exit_code=0; key_output=fake PATH missing go: ran=1 passed=0 skipped=1 failed=0; focused PASS; Verification passed.; ran=56 passed=56 skipped=0 failed=0; [PASS] all tests
+- latest_checkpoint: 2026-06-09T10:27:10-04:00 PR #9 merged: Stage 2 residual is closed on main; missing setup helper tools now count as SkipTest, git-dependent skips use runner skip accounting, and live runtime guard ask/deny smoke is covered.
+- latest_verification: 2026-06-09T10:27:10-04:00 command=gh pr view 9 --json state,mergedAt,mergeCommit && git pull --ff-only origin main && python3 test_runner.py && ./scripts/verify_codex_env.sh --repo-root "/Users/kezheng/Codes/CursorDeveloper/MyCodexEnv" --codex-home "/Users/kezheng/.codex" --claude-home "/Users/kezheng/.claude" --skip-check app_google_chrome && git diff --check; exit_code=0; key_output=PR #9 MERGED at 2026-06-09T14:24:01Z; main fast-forwarded to f2ae340; ran=56 passed=56 skipped=0 failed=0; Verification passed.; git diff --check clean
 
 ## State Log
 
@@ -1084,3 +1084,23 @@ Stable rules belong in `AGENTS.md`, `README.md`, `docs/repo-index.md`, or
 - blockers:
   - none
 - next_safe_task: Observe activated guard/observer behavior in normal Codex sessions; if stable, decide whether to prune old local branch codex/mce-20260608-freeze-review-policy or leave it explicitly deferred.
+
+### 2026-06-09T10:27:10-04:00
+- phase: handoff
+- event: checkpoint
+- summary: PR #9 merged: Stage 2 residual is closed on main; missing setup helper tools now count as SkipTest, git-dependent skips use runner skip accounting, and live runtime guard ask/deny smoke is covered.
+- git:
+  - branch: main
+  - latest_commit: f2ae340
+  - dirty_status: clean
+  - dirty_count: 0
+- changed_surfaces:
+  - `test_runner.py`
+  - `docs/harness-state.md`
+- verification:
+  - command: `gh pr view 9 --json state,mergedAt,mergeCommit && git pull --ff-only origin main && python3 test_runner.py && ./scripts/verify_codex_env.sh --repo-root "/Users/kezheng/Codes/CursorDeveloper/MyCodexEnv" --codex-home "/Users/kezheng/.codex" --claude-home "/Users/kezheng/.claude" --skip-check app_google_chrome && git diff --check`
+  - exit_code: 0
+  - key_output: PR #9 MERGED at 2026-06-09T14:24:01Z; main fast-forwarded to f2ae340; ran=56 passed=56 skipped=0 failed=0; Verification passed.; git diff --check clean
+- blockers:
+  - none
+- next_safe_task: Observe activated guard/observer behavior in normal Codex sessions; if stable, decide whether to prune old local branch codex/mce-20260608-freeze-review-policy or leave it explicitly deferred. Keep scheduled daily refresh route unchanged: rerun prepare first; if dns_unreachable, update only automation memory and keep repo untouched.
