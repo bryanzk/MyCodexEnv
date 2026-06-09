@@ -14,13 +14,13 @@ Stable rules belong in `AGENTS.md`, `README.md`, `docs/repo-index.md`, or
   - `codex/skills/delivery-harness-framework/SKILL.md`
 - blocked_sources: none
 - unsafe_inputs: none
-- next_safe_task: On the next scheduled refresh, rerun prepare first; if status=deferred and reason=dns_unreachable, update only automation memory and keep repo untouched.
+- next_safe_task: Observe activated guard/observer behavior in normal Codex sessions; if stable, decide whether to prune old local branch codex/mce-20260608-freeze-review-policy or leave it explicitly deferred.
 - required_commands:
   - `python3 test_runner.py`
   - `git diff --check`
   - `./scripts/verify_codex_env.sh --repo-root "$(pwd)" --codex-home "$HOME/.codex" --claude-home "$HOME/.claude"`
-- latest_checkpoint: 2026-06-09T09:03:59-04:00 completed 2026-06-09 gstack daily refresh vendor sync, helper merge, and local main safe-sync
-- latest_verification: 2026-06-09T09:03:59-04:00 command=git ls-remote origin refs/heads/automation/gstack-dhf-daily-refresh refs/heads/main; exit_code=0; key_output=automation/main both at 95c9715
+- latest_checkpoint: 2026-06-09T10:15:54-04:00 Stage 2 residual closed: missing setup helper tools now count as SkipTest, git-dependent skips use runner skip accounting, and live runtime guard behavior smoke covers ask/deny after activation.
+- latest_verification: 2026-06-09T10:15:54-04:00 command=tmp fake PATH without go -> run_registered_tests([test_verify_missing_codex_reports_failures_without_early_exit]) && python3 -c 'import test_runner as t; t.test_verify_missing_codex_reports_failures_without_early_exit(); t.test_live_runtime_harness_guard_smoke(); t.test_runner_registry_complete()' && ./scripts/verify_codex_env.sh --repo-root "/Users/kezheng/.config/superpowers/worktrees/MyCodexEnv/codex-mce-20260609-stage2-residual-smoke" --codex-home "/Users/kezheng/.codex" --claude-home "/Users/kezheng/.claude" --skip-check app_google_chrome && python3 test_runner.py; exit_code=0; key_output=fake PATH missing go: ran=1 passed=0 skipped=1 failed=0; focused PASS; Verification passed.; ran=56 passed=56 skipped=0 failed=0; [PASS] all tests
 
 ## State Log
 
@@ -1064,3 +1064,23 @@ Stable rules belong in `AGENTS.md`, `README.md`, `docs/repo-index.md`, or
 - blockers:
   - none
 - next_safe_task: next unattended run should start from `python3 scripts/prepare_gstack_dhf_daily_refresh.py --json`; if it returns `status=deferred` and `reason=dns_unreachable`, update only automation memory and leave repo untouched.
+
+### 2026-06-09T10:15:54-04:00
+- phase: handoff
+- event: checkpoint
+- summary: Stage 2 residual closed: missing setup helper tools now count as SkipTest, git-dependent skips use runner skip accounting, and live runtime guard behavior smoke covers ask/deny after activation.
+- git:
+  - branch: codex/mce-20260609-stage2-residual-smoke
+  - latest_commit: f43d558
+  - dirty_status: dirty
+  - dirty_count: 1
+- changed_surfaces:
+  - `test_runner.py`
+  - `docs/harness-state.md`
+- verification:
+  - command: `tmp fake PATH without go -> run_registered_tests([test_verify_missing_codex_reports_failures_without_early_exit]) && python3 -c 'import test_runner as t; t.test_verify_missing_codex_reports_failures_without_early_exit(); t.test_live_runtime_harness_guard_smoke(); t.test_runner_registry_complete()' && ./scripts/verify_codex_env.sh --repo-root "/Users/kezheng/.config/superpowers/worktrees/MyCodexEnv/codex-mce-20260609-stage2-residual-smoke" --codex-home "/Users/kezheng/.codex" --claude-home "/Users/kezheng/.claude" --skip-check app_google_chrome && python3 test_runner.py`
+  - exit_code: 0
+  - key_output: fake PATH missing go: ran=1 passed=0 skipped=1 failed=0; focused PASS; Verification passed.; ran=56 passed=56 skipped=0 failed=0; [PASS] all tests
+- blockers:
+  - none
+- next_safe_task: Observe activated guard/observer behavior in normal Codex sessions; if stable, decide whether to prune old local branch codex/mce-20260608-freeze-review-policy or leave it explicitly deferred.
