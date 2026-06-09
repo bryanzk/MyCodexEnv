@@ -14,13 +14,13 @@ Stable rules belong in `AGENTS.md`, `README.md`, `docs/repo-index.md`, or
   - `codex/skills/delivery-harness-framework/SKILL.md`
 - blocked_sources: none
 - unsafe_inputs: none
-- next_safe_task: Monitor next Codex session for activated guard/observer behavior; if stable, consider pruning old local branch codex/mce-20260608-freeze-review-policy or leave it explicitly deferred.
+- next_safe_task: On the next scheduled refresh, rerun prepare first; if status=deferred and reason=dns_unreachable, update only automation memory and keep repo untouched.
 - required_commands:
   - `python3 test_runner.py`
   - `git diff --check`
   - `./scripts/verify_codex_env.sh --repo-root "$(pwd)" --codex-home "$HOME/.codex" --claude-home "$HOME/.claude"`
-- latest_checkpoint: 2026-06-08T19:04:21-04:00 Stage 3 runtime activation completed: real ~/.codex synced from repo and strengthened verify proves live hook/schema runtime matches source.
-- latest_verification: 2026-06-08T19:04:21-04:00 command=./scripts/sync_codex_home.sh --repo-root "/Users/kezheng/Codes/CursorDeveloper/MyCodexEnv" --codex-home "/Users/kezheng/.codex" --skip-superpowers-sync && ./scripts/verify_codex_env.sh --repo-root "/Users/kezheng/Codes/CursorDeveloper/MyCodexEnv" --codex-home "/Users/kezheng/.codex" --claude-home "/Users/kezheng/.claude" --skip-check app_google_chrome; exit_code=0; key_output=pre-sync drift: harness_guard and harness_observer mismatch; sync completed with backups; post-sync Verification passed; hook/schema runtime_matches_source all PASS
+- latest_checkpoint: 2026-06-09T09:03:59-04:00 completed 2026-06-09 gstack daily refresh vendor sync, helper merge, and local main safe-sync
+- latest_verification: 2026-06-09T09:03:59-04:00 command=git ls-remote origin refs/heads/automation/gstack-dhf-daily-refresh refs/heads/main; exit_code=0; key_output=automation/main both at 95c9715
 
 ## State Log
 
@@ -1043,3 +1043,24 @@ Stable rules belong in `AGENTS.md`, `README.md`, `docs/repo-index.md`, or
 - blockers:
   - none
 - next_safe_task: Monitor next Codex session for activated guard/observer behavior; if stable, consider pruning old local branch codex/mce-20260608-freeze-review-policy or leave it explicitly deferred.
+
+### 2026-06-09T09:03:59-04:00
+- phase: handoff
+- event: checkpoint
+- summary: completed scheduled 2026-06-09 gstack daily refresh in standalone clone; vendored gstack moved to 1.57.7.0, DHF stayed no-op, helper fast-forwarded remote and local main safely.
+- git:
+  - branch: automation/gstack-dhf-daily-refresh
+  - latest_commit: 95c9715
+  - dirty_status: dirty
+  - dirty_count: 2
+- changed_surfaces:
+  - `codex/skills/gstack/**`
+  - `tasks/gstack-dhf-daily-refresh-2026-06-09.md`
+  - `docs/harness-state.md`
+- verification:
+  - command: `python3 test_runner.py && git diff --check && ./scripts/verify_codex_env.sh --repo-root "$(pwd)" --codex-home "$HOME/.codex" --claude-home "$HOME/.claude" --skip-check app_google_chrome && git push --force-with-lease origin HEAD:refs/heads/automation/gstack-dhf-daily-refresh && python3 scripts/merge_gstack_refresh_if_safe.py --repo-root "$(pwd)" --apply --verified --json && python3 scripts/sync_local_main_if_safe.py --repo-root /Users/kezheng/Codes/CursorDeveloper/MyCodexEnv --apply --json && git ls-remote origin refs/heads/automation/gstack-dhf-daily-refresh refs/heads/main`
+  - exit_code: 0
+  - key_output: ran=55 passed=55 skipped=0 failed=0; Verification passed; automation/main both at 95c9715; local main updated to 95c9715
+- blockers:
+  - none
+- next_safe_task: next unattended run should start from `python3 scripts/prepare_gstack_dhf_daily_refresh.py --json`; if it returns `status=deferred` and `reason=dns_unreachable`, update only automation memory and leave repo untouched.
