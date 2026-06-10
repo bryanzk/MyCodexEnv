@@ -14,13 +14,13 @@ Stable rules belong in `AGENTS.md`, `README.md`, `docs/repo-index.md`, or
   - `codex/skills/delivery-harness-framework/SKILL.md`
 - blocked_sources: none
 - unsafe_inputs: none
-- next_safe_task: Continue expanding docs/delivery-harness-framework-manual-cn.md chapters 9-14: verification evidence, multi-agent coordination, checkpoint/handoff, complete examples, adoption guide, and appendix.
+- next_safe_task: next scheduled run should start from python3 scripts/prepare_gstack_dhf_daily_refresh.py --json and treat dns_unreachable as deferred/no-op
 - required_commands:
   - `python3 test_runner.py`
   - `git diff --check`
   - `./scripts/verify_codex_env.sh --repo-root "$(pwd)" --codex-home "$HOME/.codex" --claude-home "$HOME/.claude"`
-- latest_checkpoint: 2026-06-09T11:01:36-04:00 Expanded the PM-facing DHF manual through chapters 4-8, covering lifecycle stages, execution lanes, component matrix, fuzzy-request delivery flow, and skill routing.
-- latest_verification: 2026-06-09T11:01:36-04:00 command=python3 scripts/check_surfaces.py --repo-root "/Users/kezheng/Codes/CursorDeveloper/MyCodexEnv" --check-public-nav && python3 - <<'PY' ...manual structure/reference check... PY && git diff --check && python3 test_runner.py; exit_code=0; key_output=surfaces manifest consistent; manual structure and references present; git diff --check clean; ran=57 passed=57 skipped=0 failed=0; [PASS] all tests
+- latest_checkpoint: 2026-06-10T09:11:56-04:00 daily refresh synced gstack 1.57.9.0, kept DHF no-op, and widened verify Codex version acceptance to 0.138.x
+- latest_verification: 2026-06-10T09:11:56-04:00 command=python3 test_runner.py; exit_code=0; key_output=ran=57 passed=57 skipped=0 failed=0; [PASS] all tests
 
 ## State Log
 
@@ -1191,3 +1191,24 @@ Stable rules belong in `AGENTS.md`, `README.md`, `docs/repo-index.md`, or
 - blockers:
   - none
 - next_safe_task: Continue expanding docs/delivery-harness-framework-manual-cn.md chapters 9-14: verification evidence, multi-agent coordination, checkpoint/handoff, complete examples, adoption guide, and appendix.
+
+### 2026-06-10T09:11:56-04:00
+- phase: handoff
+- event: checkpoint
+- summary: daily refresh synced gstack 1.57.9.0, kept DHF no-op, and widened verify Codex version acceptance to 0.138.x
+- git:
+  - branch: automation/gstack-dhf-daily-refresh
+  - latest_commit: 00e5377
+  - dirty_status: dirty
+  - dirty_count: 30
+- changed_surfaces:
+  - `codex/skills/gstack`
+  - `scripts/verify_codex_env.sh`
+  - `tasks/gstack-dhf-daily-refresh-2026-06-10.md`
+- verification:
+  - command: `python3 test_runner.py`
+  - exit_code: 0
+  - key_output: ran=57 passed=57 skipped=0 failed=0; [PASS] all tests
+- blockers:
+  - none
+- next_safe_task: next scheduled run should start from python3 scripts/prepare_gstack_dhf_daily_refresh.py --json and treat dns_unreachable as deferred/no-op
