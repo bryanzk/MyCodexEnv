@@ -85,19 +85,29 @@
 
 ## 提交与自动化状态
 
-- vendor refresh commit：`PENDING_COMMIT_SHA`
+- final commit：`a1e307a` `chore: refresh gstack vendor to 1.57.9.0`
 - automation branch push：
-  - status：`PENDING`
+  - status：`success`
   - remote ref：`refs/heads/automation/gstack-dhf-daily-refresh`
-  - remote SHA：`PENDING_REMOTE_SHA`
+  - remote SHA：`a1e307a`
 - `main` auto-merge：
   - helper：`python3 scripts/merge_gstack_refresh_if_safe.py --repo-root "$(pwd)" --apply --verified --json`
-  - status：`PENDING`
-  - detail：`PENDING`
+  - status：`merged`
+  - `main_before`：`00e5377`
+  - `main_after`：`a1e307a`
+  - reason：`ahead_only`
 - 本地 `main` safe-sync：
   - helper：`python3 scripts/sync_local_main_if_safe.py --repo-root /Users/kezheng/Codes/CursorDeveloper/MyCodexEnv --apply --json`
-  - status：`PENDING`
-  - detail：`PENDING`
+  - status：`skipped`
+  - reason：`dirty_worktree`
+  - detail：`M docs/delivery-harness-framework-manual-cn.md; M docs/harness-state.md; ?? docs/agentic-delivery-handbook-cn.md`
+
+## 最终 refs 证据
+
+- `git ls-remote origin refs/heads/automation/gstack-dhf-daily-refresh refs/heads/main`
+  - exit_code: `0`
+  - key_output: `automation/main both at a1e307a52337d66506c9849604a8fd4ef4ba42c9`
+  - timestamp: `2026-06-10T13:14:32Z`
 
 ## 下一次最小自动动作
 
