@@ -19,7 +19,7 @@ Stable rules belong in `AGENTS.md`, `README.md`, `docs/repo-index.md`, or
   - `python3 test_runner.py`
   - `git diff --check`
   - `./scripts/verify_codex_env.sh --repo-root "$(pwd)" --codex-home "$HOME/.codex" --claude-home "$HOME/.claude"`
-- latest_checkpoint: 2026-06-11T09:12:53-04:00 daily refresh synced gstack 1.57.10.0, kept DHF no-op, pushed automation branch, auto-merged remote main, and ff-synced local main
+- latest_checkpoint: 2026-06-11T09:16:59-04:00 daily refresh synced gstack 1.57.10.0, kept DHF no-op, pushed automation branch, auto-merged remote main, and skipped final local safe-sync because the local repo turned dirty
 - latest_verification: 2026-06-11T09:09:31-04:00 command=python3 test_runner.py; exit_code=0; key_output=ran=57 passed=57 skipped=0 failed=0; [PASS] all tests
 
 ## State Log
@@ -1251,13 +1251,13 @@ Stable rules belong in `AGENTS.md`, `README.md`, `docs/repo-index.md`, or
   - none
 - next_safe_task: next scheduled run should start from python3 scripts/prepare_gstack_dhf_daily_refresh.py --json and treat dns_unreachable as deferred/no-op
 
-### 2026-06-11T09:12:53-04:00
+### 2026-06-11T09:16:59-04:00
 - phase: handoff
 - event: checkpoint
-- summary: daily refresh synced gstack 1.57.10.0, kept DHF no-op, and completed automation push plus remote/local main fast-forward
+- summary: daily refresh synced gstack 1.57.10.0, kept DHF no-op, completed automation push plus remote main fast-forward, and skipped final local safe-sync because `/Users/kezheng/Codes/CursorDeveloper/MyCodexEnv` became dirty
 - git:
   - branch: automation/gstack-dhf-daily-refresh
-  - latest_commit: f6fb516
+  - latest_commit: e4815cd
   - dirty_status: dirty
   - dirty_count: 2
 - changed_surfaces:
@@ -1270,4 +1270,4 @@ Stable rules belong in `AGENTS.md`, `README.md`, `docs/repo-index.md`, or
   - key_output: ran=57 passed=57 skipped=0 failed=0; [PASS] all tests
 - blockers:
   - none
-- next_safe_task: next scheduled run should start from python3 scripts/prepare_gstack_dhf_daily_refresh.py --json and treat dns_unreachable as deferred/no-op
+- next_safe_task: next scheduled run should start from python3 scripts/prepare_gstack_dhf_daily_refresh.py --json and treat dns_unreachable as deferred/no-op; local `/Users/kezheng/Codes/CursorDeveloper/MyCodexEnv` safe-sync remains blocked until `?? codex/skills/x-made-easy-skill/` is resolved

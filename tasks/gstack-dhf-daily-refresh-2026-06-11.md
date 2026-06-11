@@ -10,12 +10,13 @@
 - gstack 同步：已按要求执行实际同步；`dry_run.needs_update=true`，实际 sync 后引入 `1.57.10.0` vendor 更新
 - DHF skill 调整：不需要；按 `skill-evaluator` 做 manual paired review，结论保持 no-op
 - runtime 同步：`./scripts/sync_codex_home.sh --skip-superpowers-sync` 成功；`~/.codex/skills/gstack/setup` 成功
+- runtime repair：finalize 阶段曾短暂命中 `verify_codex_env.sh` 的 `skills_managed_present` 失败；按 repo skill 指引从 clone_root 重跑 `sync_codex_home.sh` 后恢复为 pass
 - vendor hygiene：同步后命中 2 处稳定 whitespace 漂移，已做最小修正并重新通过 `git diff --check`
 - 当前验证：`python3 test_runner.py`、`git diff --check`、`./scripts/verify_codex_env.sh --skip-check app_google_chrome` 全部 fresh pass
-- final commit：`f6fb516` `chore: refresh gstack vendor to 1.57.10.0`
-- automation branch push：成功，`refs/heads/automation/gstack-dhf-daily-refresh` 已更新到 `f6fb516`
-- `main` auto-merge：`scripts/merge_gstack_refresh_if_safe.py --apply --verified --json` 返回 `status=merged`，远端 `main` 已 fast-forward 到 `f6fb516`
-- 本地 `main` safe-sync：`scripts/sync_local_main_if_safe.py --apply --json` 返回 `status=updated`，本地 `/Users/kezheng/Codes/CursorDeveloper/MyCodexEnv` 已 ff-only 更新到 `f6fb516`
+- final commit：`e4815cd` `docs: finalize 2026-06-11 daily refresh status`
+- automation branch push：成功，`refs/heads/automation/gstack-dhf-daily-refresh` 已更新到 `e4815cd`
+- `main` auto-merge：`scripts/merge_gstack_refresh_if_safe.py --apply --verified --json` 返回 `status=merged`，远端 `main` 已 fast-forward 到 `e4815cd`
+- 本地 `main` safe-sync：第一次 helper 将本地 `main` 从 `f058dc4` 更新到 `f6fb516`；第二次 helper 因 `?? codex/skills/x-made-easy-skill/` 触发 `dirty_worktree`，最终 `status=skipped`，本地 repo 停在 `f6fb516`
 
 ## prepare 结论
 
@@ -67,36 +68,36 @@
 1. `python3 test_runner.py`
    - exit_code: `0`
    - key_output: `ran=57 passed=57 skipped=0 failed=0; [PASS] all tests`
-   - timestamp: `2026-06-11T13:09:31Z`
+   - timestamp: `2026-06-11T13:22:11Z`
 2. `git diff --check`
    - exit_code: `0`
    - key_output: `无输出`
-   - timestamp: `2026-06-11T13:07:54Z`
+   - timestamp: `2026-06-11T13:21:00Z`
 3. `./scripts/verify_codex_env.sh --repo-root "$(pwd)" --codex-home "$HOME/.codex" --claude-home "$HOME/.claude" --skip-check app_google_chrome`
    - exit_code: `0`
    - key_output: `Verification passed.`
-   - timestamp: `2026-06-11T13:07:57Z`
+   - timestamp: `2026-06-11T13:20:29Z`
 
 ## 提交与自动化状态
 
 1. `git fetch origin && git rebase origin/main && git push --force-with-lease origin HEAD:refs/heads/automation/gstack-dhf-daily-refresh`
    - exit_code: `0`
-   - key_output: `8863217..f6fb516  HEAD -> automation/gstack-dhf-daily-refresh`
-   - timestamp: `2026-06-11T13:11:17Z`
+   - key_output: `f6fb516..e4815cd  HEAD -> automation/gstack-dhf-daily-refresh`
+   - timestamp: `2026-06-11T13:16:12Z`
 2. `python3 scripts/merge_gstack_refresh_if_safe.py --repo-root "$(pwd)" --apply --verified --json`
    - exit_code: `0`
-   - key_output: `{"status":"merged","main_before":"f058dc4...","main_after":"f6fb516...","reason":"ahead_only"}`
-   - timestamp: `2026-06-11T13:12:53Z`
+   - key_output: `{"status":"merged","main_before":"f6fb516...","main_after":"e4815cd...","reason":"ahead_only"}`
+   - timestamp: `2026-06-11T13:16:59Z`
 3. `python3 scripts/sync_local_main_if_safe.py --repo-root /Users/kezheng/Codes/CursorDeveloper/MyCodexEnv --apply --json`
    - exit_code: `0`
-   - key_output: `{"status":"updated","local_before":"f058dc4...","local_after":"f6fb516...","reason":"behind_only"}`
-   - timestamp: `2026-06-11T13:12:53Z`
+   - key_output: `{"status":"skipped","reason":"dirty_worktree","detail":"?? codex/skills/x-made-easy-skill/"}`
+   - timestamp: `2026-06-11T13:16:59Z`
 
 ## 最终状态
 
-- 当前 standalone clone `HEAD`：`f6fb516`
-- 当前 `origin/automation/gstack-dhf-daily-refresh`：`f6fb516`
-- 当前 `origin/main`：`f6fb516`
+- 当前 standalone clone `HEAD`：`e4815cd`
+- 当前 `origin/automation/gstack-dhf-daily-refresh`：`e4815cd`
+- 当前 `origin/main`：`e4815cd`
 - 本地 `/Users/kezheng/Codes/CursorDeveloper/MyCodexEnv` `main`：`f6fb516`
 
 ## 下一次最小自动动作
