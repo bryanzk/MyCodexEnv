@@ -19,8 +19,8 @@ Stable rules belong in `AGENTS.md`, `README.md`, `docs/repo-index.md`, or
   - `python3 test_runner.py`
   - `git diff --check`
   - `./scripts/verify_codex_env.sh --repo-root "$(pwd)" --codex-home "$HOME/.codex" --claude-home "$HOME/.claude"`
-- latest_checkpoint: 2026-06-10T09:11:56-04:00 daily refresh synced gstack 1.57.9.0, kept DHF no-op, and widened verify Codex version acceptance to 0.138.x
-- latest_verification: 2026-06-10T09:11:56-04:00 command=python3 test_runner.py; exit_code=0; key_output=ran=57 passed=57 skipped=0 failed=0; [PASS] all tests
+- latest_checkpoint: 2026-06-11T09:12:53-04:00 daily refresh synced gstack 1.57.10.0, kept DHF no-op, pushed automation branch, auto-merged remote main, and ff-synced local main
+- latest_verification: 2026-06-11T09:09:31-04:00 command=python3 test_runner.py; exit_code=0; key_output=ran=57 passed=57 skipped=0 failed=0; [PASS] all tests
 
 ## State Log
 
@@ -1243,6 +1243,27 @@ Stable rules belong in `AGENTS.md`, `README.md`, `docs/repo-index.md`, or
   - `codex/skills/gstack`
   - `scripts/verify_codex_env.sh`
   - `tasks/gstack-dhf-daily-refresh-2026-06-10.md`
+- verification:
+  - command: `python3 test_runner.py`
+  - exit_code: 0
+  - key_output: ran=57 passed=57 skipped=0 failed=0; [PASS] all tests
+- blockers:
+  - none
+- next_safe_task: next scheduled run should start from python3 scripts/prepare_gstack_dhf_daily_refresh.py --json and treat dns_unreachable as deferred/no-op
+
+### 2026-06-11T09:12:53-04:00
+- phase: handoff
+- event: checkpoint
+- summary: daily refresh synced gstack 1.57.10.0, kept DHF no-op, and completed automation push plus remote/local main fast-forward
+- git:
+  - branch: automation/gstack-dhf-daily-refresh
+  - latest_commit: f6fb516
+  - dirty_status: dirty
+  - dirty_count: 2
+- changed_surfaces:
+  - `codex/skills/gstack`
+  - `docs/harness-state.md`
+  - `tasks/gstack-dhf-daily-refresh-2026-06-11.md`
 - verification:
   - command: `python3 test_runner.py`
   - exit_code: 0

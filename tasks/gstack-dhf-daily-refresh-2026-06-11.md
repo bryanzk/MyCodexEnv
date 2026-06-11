@@ -12,7 +12,10 @@
 - runtime 同步：`./scripts/sync_codex_home.sh --skip-superpowers-sync` 成功；`~/.codex/skills/gstack/setup` 成功
 - vendor hygiene：同步后命中 2 处稳定 whitespace 漂移，已做最小修正并重新通过 `git diff --check`
 - 当前验证：`python3 test_runner.py`、`git diff --check`、`./scripts/verify_codex_env.sh --skip-check app_google_chrome` 全部 fresh pass
-- 提交 / push / helper merge：待本文件首次提交后在本轮继续完成，并在下一个 finalize 提交中回填终态
+- final commit：`f6fb516` `chore: refresh gstack vendor to 1.57.10.0`
+- automation branch push：成功，`refs/heads/automation/gstack-dhf-daily-refresh` 已更新到 `f6fb516`
+- `main` auto-merge：`scripts/merge_gstack_refresh_if_safe.py --apply --verified --json` 返回 `status=merged`，远端 `main` 已 fast-forward 到 `f6fb516`
+- 本地 `main` safe-sync：`scripts/sync_local_main_if_safe.py --apply --json` 返回 `status=updated`，本地 `/Users/kezheng/Codes/CursorDeveloper/MyCodexEnv` 已 ff-only 更新到 `f6fb516`
 
 ## prepare 结论
 
@@ -73,6 +76,28 @@
    - exit_code: `0`
    - key_output: `Verification passed.`
    - timestamp: `2026-06-11T13:07:57Z`
+
+## 提交与自动化状态
+
+1. `git fetch origin && git rebase origin/main && git push --force-with-lease origin HEAD:refs/heads/automation/gstack-dhf-daily-refresh`
+   - exit_code: `0`
+   - key_output: `8863217..f6fb516  HEAD -> automation/gstack-dhf-daily-refresh`
+   - timestamp: `2026-06-11T13:11:17Z`
+2. `python3 scripts/merge_gstack_refresh_if_safe.py --repo-root "$(pwd)" --apply --verified --json`
+   - exit_code: `0`
+   - key_output: `{"status":"merged","main_before":"f058dc4...","main_after":"f6fb516...","reason":"ahead_only"}`
+   - timestamp: `2026-06-11T13:12:53Z`
+3. `python3 scripts/sync_local_main_if_safe.py --repo-root /Users/kezheng/Codes/CursorDeveloper/MyCodexEnv --apply --json`
+   - exit_code: `0`
+   - key_output: `{"status":"updated","local_before":"f058dc4...","local_after":"f6fb516...","reason":"behind_only"}`
+   - timestamp: `2026-06-11T13:12:53Z`
+
+## 最终状态
+
+- 当前 standalone clone `HEAD`：`f6fb516`
+- 当前 `origin/automation/gstack-dhf-daily-refresh`：`f6fb516`
+- 当前 `origin/main`：`f6fb516`
+- 本地 `/Users/kezheng/Codes/CursorDeveloper/MyCodexEnv` `main`：`f6fb516`
 
 ## 下一次最小自动动作
 
