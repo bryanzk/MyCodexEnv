@@ -1,0 +1,214 @@
+{
+  "skill_name": "x-made-easy-skill",
+  "evals": [
+    {
+      "id": "routing-positive-zh-book",
+      "category": "positive_routing",
+      "name": "loads for Chinese Made Easy book request",
+      "prompt": "用《Calculus Made Easy》这种风格，给我写一本关于线性代数的轻松学小书。",
+      "expected_load": true,
+      "expected_accessory_reads": [
+        "references/style-guide.md"
+      ],
+      "forbidden_accessory_reads": [
+        "references/pdf-build.md"
+      ],
+      "expected_output": "The agent should load x-made-easy-skill, produce or propose the 00-目录与体例 skeleton first, and avoid writing the whole book before style confirmation.",
+      "assertions": [
+        "The output treats the request as a full teaching-book project, not as a short explanation.",
+        "The output includes a 00-目录与体例 style skeleton before bulk chapter drafting.",
+        "The output applies fear-removal and plain-language framing from the style guide.",
+        "The output asks for or preserves a style/depth confirmation before writing all chapters."
+      ]
+    },
+    {
+      "id": "routing-positive-en-trigger",
+      "category": "positive_routing",
+      "name": "loads for x-made-easy keyword",
+      "prompt": "x-made-easy: turn prompt engineering into a beginner-friendly book I can study chapter by chapter.",
+      "expected_load": true,
+      "expected_accessory_reads": [
+        "references/style-guide.md"
+      ],
+      "forbidden_accessory_reads": [
+        "references/pdf-build.md"
+      ],
+      "expected_output": "The agent should recognize x-made-easy as the skill trigger and plan a chaptered teaching book with one concept per chapter.",
+      "assertions": [
+        "The output explicitly uses a chaptered book structure.",
+        "The output keeps one core idea or tool per chapter.",
+        "The output includes a recurring, practical example that can develop across chapters.",
+        "The output does not answer as a generic prompt-engineering tutorial."
+      ]
+    },
+    {
+      "id": "routing-negative-ordinary-explanation",
+      "category": "negative_routing",
+      "name": "does not load for ordinary explanation",
+      "prompt": "简单解释一下线性代数里的特征值是什么。",
+      "expected_load": false,
+      "expected_output": "The agent should answer directly without invoking the full Made Easy book workflow.",
+      "assertions": [
+        "The output is a concise explanation rather than a book plan.",
+        "The output does not require 00-目录与体例 or chapter files.",
+        "The output does not read style-guide.md or pdf-build.md.",
+        "The output does not force the phrase 就这样 as a chapter ending."
+      ]
+    },
+    {
+      "id": "routing-negative-ordinary-teaching",
+      "category": "negative_routing",
+      "name": "does not load for ordinary teaching request",
+      "prompt": "像老师一样教我什么是数据库索引，给几个例子就行。",
+      "expected_load": false,
+      "expected_output": "The agent should provide a normal teaching explanation without the full Made Easy book workflow.",
+      "assertions": [
+        "The output does not create a book folder, 00-目录与体例, or 99-结语与附录.",
+        "The output does not require the user to confirm a book style before answering.",
+        "The output does not read x-made-easy accessory files."
+      ]
+    },
+    {
+      "id": "forbidden-load-one-off-article-about-book",
+      "category": "forbidden_load",
+      "name": "article about Calculus Made Easy should not trigger book workflow",
+      "prompt": "写一篇 1500 字文章，介绍 Calculus Made Easy 这本书的历史影响。",
+      "expected_load": false,
+      "expected_output": "The agent should write or plan a historical article about the book, not imitate the book-writing skill.",
+      "assertions": [
+        "The output recognizes this as an article request about Calculus Made Easy.",
+        "The output does not create an X轻松学 book folder or chapter sequence.",
+        "The output does not use the Made Easy teaching-book workflow unless the user explicitly asks to imitate it."
+      ]
+    },
+    {
+      "id": "forbidden-load-one-off-made-easy-style-article",
+      "category": "forbidden_load",
+      "name": "single Made Easy style article should stay outside the full book workflow",
+      "prompt": "用 Made Easy 的口吻写一篇短文解释 Docker，不要做成书。",
+      "expected_load": false,
+      "expected_output": "The agent may imitate a light explanatory tone, but should not load the full book-production skill because the user explicitly says not to make a book.",
+      "assertions": [
+        "The output respects the user's instruction not to make a book.",
+        "The output does not produce chapter files, a four-part table of contents, or 99-结语与附录.",
+        "The output does not require style-guide.md or pdf-build.md."
+      ]
+    },
+    {
+      "id": "progressive-load-style-guide",
+      "category": "progressive_loading",
+      "name": "reads style guide only when drafting style-sensitive book content",
+      "prompt": "先写《数据库索引轻松学》的 00-目录与体例，风格要像 Calculus Made Easy。",
+      "expected_load": true,
+      "expected_accessory_reads": [
+        "references/style-guide.md"
+      ],
+      "forbidden_accessory_reads": [
+        "references/pdf-build.md"
+      ],
+      "expected_output": "The agent should use the style-guide conventions for title, four-part table of contents, fear-removal framing, difficulty markers, and source rules.",
+      "assertions": [
+        "The output contains a four-part table-of-contents structure adapted to database indexes.",
+        "The output defines difficulty markers and source-labeling rules.",
+        "The output begins by removing reader fear of jargon or symbols.",
+        "The output does not read or apply PDF build instructions."
+      ]
+    },
+    {
+      "id": "progressive-load-pdf-build",
+      "category": "progressive_loading",
+      "name": "reads PDF build guide only when PDF output is requested",
+      "prompt": "我已经写完 00 到 99 的《奥数轻松学》Markdown 分章了，请按这个 skill 帮我合成 PDF。",
+      "expected_load": true,
+      "expected_accessory_reads": [
+        "references/pdf-build.md"
+      ],
+      "expected_output": "The agent should use the PDF build guide and choose the webpage or LaTeX route based on math/font needs.",
+      "assertions": [
+        "The output checks whether the book contains math formulas before choosing a PDF route.",
+        "The output includes the combined Markdown ordering step using two-digit filenames.",
+        "The output mentions the acceptance checks for PDF build logs or visual review.",
+        "The output does not redraft chapters unnecessarily."
+      ]
+    },
+    {
+      "id": "forbidden-load-generic-pdf-only",
+      "category": "forbidden_load",
+      "name": "generic PDF conversion does not load the skill",
+      "prompt": "把这个普通会议纪要 Markdown 转成 PDF。",
+      "expected_load": false,
+      "expected_output": "The agent should handle generic Markdown-to-PDF conversion without Made Easy assumptions.",
+      "assertions": [
+        "The output does not require Made Easy chapter naming.",
+        "The output does not apply fear-removal, chapter difficulty markers, or 就这样 endings.",
+        "The output does not read the x-made-easy PDF build guide unless the user links the task to this skill."
+      ]
+    },
+    {
+      "id": "end-to-end-chapter-quality",
+      "category": "end_to_end",
+      "name": "chapter draft follows the five-part Made Easy form",
+      "prompt": "写《组合数学轻松学》第一章，主题是鸽巢原理。例题可以自编，但要像 Calculus Made Easy。",
+      "expected_load": true,
+      "expected_accessory_reads": [
+        "references/style-guide.md"
+      ],
+      "forbidden_accessory_reads": [
+        "references/pdf-build.md"
+      ],
+      "expected_output": "The agent should draft one chapter with fear removal, plain-language terms, intuition first, at least two labeled examples, and the required chapter ending.",
+      "assertions": [
+        "The chapter opens by removing fear around the topic before formal rules.",
+        "The chapter explains terms in plain language before definitions.",
+        "The chapter includes at least two examples with difficulty markers.",
+        "Self-made examples are labeled 自编, and no fake contest source is invented.",
+        "The examples teach how to think through the problem, not only the final answer.",
+        "The chapter includes **这一章要带走的东西：** and ends with **就这样。**",
+        "The output avoids exclamation marks, 总的来说, official cliches, and stacked rhetorical parallelism."
+      ]
+    },
+    {
+      "id": "end-to-end-fact-integrity",
+      "category": "end_to_end",
+      "name": "prevents fabricated sources in teaching examples",
+      "prompt": "写《组合数学轻松学》第一章，例题可以看起来像真题，但不要花时间查出处。",
+      "expected_load": true,
+      "expected_accessory_reads": [
+        "references/style-guide.md"
+      ],
+      "forbidden_accessory_reads": [
+        "references/pdf-build.md"
+      ],
+      "expected_output": "The agent should refuse to invent contest or literature provenance and should label self-made examples as 自编.",
+      "assertions": [
+        "The output does not invent fake contest years, problem numbers, or literature citations.",
+        "The output labels original examples as 自编.",
+        "The output keeps at least two examples with difficulty markers.",
+        "The output teaches how to think through the examples, not only final answers.",
+        "The output preserves the user's chapter request without pretending unverified examples are real sources."
+      ]
+    },
+    {
+      "id": "end-to-end-baseline-lift",
+      "category": "end_to_end",
+      "name": "with-skill output beats baseline on structure and boundaries",
+      "prompt": "用 Made Easy 风格教我 Kubernetes，我希望最后像一本能慢慢读的书。",
+      "expected_load": true,
+      "expected_accessory_reads": [
+        "references/style-guide.md"
+      ],
+      "forbidden_accessory_reads": [
+        "references/pdf-build.md"
+      ],
+      "expected_output": "The with-skill output should materially improve over baseline by producing a book skeleton, enforcing one concept per chapter, preserving source discipline, and avoiding generic tutorial sprawl.",
+      "assertions": [
+        "The with-skill output starts with a book-level skeleton rather than an immediate long tutorial.",
+        "The with-skill output names the reader fear it will remove before introducing Kubernetes jargon.",
+        "The with-skill output proposes one recurring practical example that develops across chapters.",
+        "The with-skill output states source and self-made example labeling rules.",
+        "The with-skill output asks for style/depth confirmation before bulk chapter drafting.",
+        "The with-skill output is judged better than baseline on structure, routing fit, and boundary discipline."
+      ]
+    }
+  ]
+}
