@@ -63,7 +63,7 @@ adapter skills.
 | Committee review loop | Run an explicit expert-committee scoring loop with a separate revision worker until a target rating is met. | `committee-review-loop` |
 | Ship and deployment | Commit/PR/release/deploy/canary only when explicitly requested and verified. | `gstack-ship`, `gstack-land-and-deploy`, `gstack-canary` |
 | Handoff and recovery | Append state, preserve next safe task, recover without chat history, and optionally save/restore user-facing gstack context. | `scripts/harness_checkpoint.py`, `scripts/harness_recover.py`, vendored gstack `context-save` / `context-restore` |
-| Documentation release | Keep README/docs aligned with shipped behavior and skill/runtime changes; generate missing docs or polished artifacts when requested. | `gstack-document-release`, vendored gstack `document-generate`, vendored gstack `make-pdf`, `doc-updater` |
+| Documentation release | Keep README/docs aligned with shipped behavior and skill/runtime changes; generate missing docs, polished artifacts, or source-backed diagrams when requested. | `gstack-document-release`, vendored gstack `document-generate`, vendored gstack `make-pdf`, vendored gstack `diagram`, `doc-updater` |
 
 ## Lifecycle Stage Map
 
@@ -109,6 +109,7 @@ adapter skills.
 | `gstack-document-release` | Post-ship documentation update across README/docs/CHANGELOG/TODOS/VERSION, with coverage-map and documentation-debt checks. | Use when docs must reflect shipped behavior. |
 | vendored gstack `document-generate` | Missing tutorials, how-to docs, reference pages, or explanatory docs for a feature/module/project. | Use when documentation must be created from scratch rather than just updated after release. |
 | vendored gstack `make-pdf` | Convert Markdown into a polished PDF artifact. | Use for publication-quality exports, not routine repo docs. |
+| vendored gstack `diagram` | Turn an English description or mermaid source into a diagram triplet (`.mmd`, editable `.excalidraw`, rendered SVG/PNG). | Use for offline source-backed diagrams that may later be embedded into docs or exported through `make-pdf`. |
 | vendored gstack `landing-report` | Read-only version queue and PR landing visibility before ship. | Use when asking what version slot or landing order comes next. |
 | vendored gstack `context-save` / `context-restore` | User-facing save/resume of working context across sessions or Conductor workspaces. | Use alongside, not instead of, `scripts/harness_checkpoint.py`; the harness checkpoint remains the repo-local append-only state source. |
 | vendored gstack `scrape` / `skillify` | Read-only browser data extraction and codifying repeated scrape flows into browser-skills. | Use for extraction workflows; use `gstack-qa` for behavior testing and bug fixing. |
@@ -172,7 +173,7 @@ adapter skills.
   `ios-clean` only for explicit iOS debug-bridge maintenance, vendored
   `context-save` / `context-restore` for user-facing session continuity,
   `landing-report` for version queue visibility, `document-generate` /
-  `make-pdf` for generated docs and artifacts, and `setup-gbrain` /
+  `make-pdf` / `diagram` for generated docs and artifacts, and `setup-gbrain` /
   `sync-gbrain` only for explicit persistent memory setup.
 - Prefer deterministic helper scripts when the runtime already provides one;
   do not reimplement their parsing or validation manually.

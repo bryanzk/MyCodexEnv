@@ -14,13 +14,13 @@ Stable rules belong in `AGENTS.md`, `README.md`, `docs/repo-index.md`, or
   - `codex/skills/delivery-harness-framework/SKILL.md`
 - blocked_sources: none
 - unsafe_inputs: none
-- next_safe_task: next scheduled run should start from python3 scripts/prepare_gstack_dhf_daily_refresh.py --json and treat dns_unreachable as deferred/no-op; if codex CLI advances again, compare codex --version against the accepted prefix list before changing runtime sync
+- next_safe_task: next scheduled run should start from python3 scripts/prepare_gstack_dhf_daily_refresh.py --json and treat dns_unreachable as deferred/no-op; if future gstack refreshes add more specialist artifact skills, first decide whether only docs routing needs updating before touching generic DHF
 - required_commands:
   - `python3 test_runner.py`
   - `git diff --check`
   - `./scripts/verify_codex_env.sh --repo-root "$(pwd)" --codex-home "$HOME/.codex" --claude-home "$HOME/.claude"`
-- latest_checkpoint: 2026-06-12T09:06:35-04:00 daily refresh confirmed gstack net no-op and widened Codex version acceptance to 0.140.x
-- latest_verification: 2026-06-12T09:06:35-04:00 command=python3 test_runner.py; exit_code=0; key_output=ran=57 passed=57 skipped=0 failed=0; [PASS] all tests
+- latest_checkpoint: 2026-06-13T09:04:13-04:00 daily refresh synced gstack 1.58.0.0, kept DHF no-op, and updated lifecycle routing docs for vendored diagram artifacts
+- latest_verification: 2026-06-13T09:04:13-04:00 command=python3 test_runner.py; exit_code=0; key_output=ran=57 passed=57 skipped=0 failed=0; [PASS] all tests
 
 ## State Log
 
@@ -1292,3 +1292,23 @@ Stable rules belong in `AGENTS.md`, `README.md`, `docs/repo-index.md`, or
 - blockers:
   - none
 - next_safe_task: next scheduled run should start from python3 scripts/prepare_gstack_dhf_daily_refresh.py --json and treat dns_unreachable as deferred/no-op; if codex CLI advances again, compare codex --version against the accepted prefix list before changing runtime sync
+
+### 2026-06-13T09:04:13-04:00
+- phase: handoff
+- event: checkpoint
+- summary: daily refresh synced gstack 1.58.0.0, kept delivery-harness-framework no-op, and updated lifecycle routing docs for vendored diagram artifacts
+- git:
+  - branch: automation/gstack-dhf-daily-refresh
+  - latest_commit: 274531b
+  - dirty_status: dirty
+- changed_surfaces:
+  - `codex/skills/gstack`
+  - `docs/LIFECYCLE_SKILL_ROUTING.md`
+  - `tasks/gstack-dhf-daily-refresh-2026-06-13.md`
+- verification:
+  - command: `python3 test_runner.py`
+  - exit_code: 0
+  - key_output: ran=57 passed=57 skipped=0 failed=0; [PASS] all tests
+- blockers:
+  - none
+- next_safe_task: next scheduled run should start from python3 scripts/prepare_gstack_dhf_daily_refresh.py --json and treat dns_unreachable as deferred/no-op; if future gstack refreshes add more specialist artifact skills, decide whether only route docs need a small update before changing generic DHF
