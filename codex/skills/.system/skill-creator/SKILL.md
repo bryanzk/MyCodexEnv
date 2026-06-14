@@ -53,6 +53,21 @@ When using subagents for validation, treat that as an evaluation surface. The go
 
 Prefer raw artifacts such as example prompts, outputs, diffs, logs, or traces. Give the minimum task-local context needed to perform the validation. Avoid passing the intended answer, suspected bug, intended fix, or your prior conclusions unless the validation explicitly requires them.
 
+### Committee Review Escalation
+
+Automatically use `committee-review-loop` during skill creation or updates when the user asks for a committee, subagents, iterative review, a target rating, or a perfect score such as `10/10`. Also use it when the current task policy explicitly authorizes committee-style subagent validation for a complex or high-risk skill revision.
+
+Invoke it after Step 4 edits and before Step 5 validation, or immediately after a failed forward-test/eval that needs structured revision. Define:
+
+- `output`: the current skill folder, `SKILL.md`, eval plan, or proposed diff under review.
+- `scope`: only the target skill folder and directly related eval/reference/script files.
+- `target`: `committee.rating >= 10/10` unless the user sets another score.
+- `verification`: `quick_validate.py`, relevant skill evals or paired tests, and any repo gate required by the local project.
+
+Do not send ordinary QA, one-off review, or simple polish through `committee-review-loop`. If subagents are unavailable or the current approval boundary does not allow them, record the limitation and continue with a manual `skill-evaluator`-style review.
+
+When designing a new skill, decide whether that skill itself needs a conditional `committee-review-loop` escalation. Add the cross-reference only if future uses of the new skill naturally include committee/subagent/rating-target review or high-risk multi-perspective validation; do not embed committee review into every generated skill by default.
+
 ### Anatomy of a Skill
 
 Every skill consists of a required SKILL.md file and optional bundled resources:
@@ -229,7 +244,7 @@ Skill creation involves these steps:
 3. Initialize the skill (run init_skill.py)
 4. Edit the skill (implement resources and write SKILL.md)
 5. Validate the skill (run quick_validate.py)
-6. Iterate based on real usage and forward-test complex skills.
+6. Iterate based on real usage, forward-test complex skills, and run `committee-review-loop` when the escalation criteria apply.
 
 Follow these steps in order, skipping only if there is a clear reason why they are not applicable.
 
@@ -374,6 +389,8 @@ The validation script checks YAML frontmatter format, required fields, and namin
 After testing the skill, you may detect the skill is complex enough that it requires forward-testing; or users may request improvements.
 
 User testing often this happens right after using the skill, with fresh context of how the skill performed.
+
+If the request or risk profile triggers committee escalation, load `committee-review-loop` before the next revision pass. Give the committee the current output, bounded write scope, target score, and verification gate; apply only the resulting `revision_brief`, then rerun validation before asking for another committee score.
 
 **Forward-testing and iteration workflow:**
 

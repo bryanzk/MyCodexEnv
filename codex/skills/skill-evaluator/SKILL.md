@@ -30,9 +30,24 @@ description: Use when creating, reviewing, or refining an agent skill and you ne
 5. 运行评估并产出证据
    - 用 `references/eval-matrix.md` 设计完整评估。
    - 用 `references/agent-skills-eval.md` 跑 `with_skill / without_skill` 对比，或在无法跑 CLI 时做手工 paired test。
+   - 若目标 skill 应该触发 `committee-review-loop`，把 committee 触发、非触发和 forbidden load 都纳入 routing / progressive-loading eval。
 6. 追加式迭代
    - agent 失败一次，就补一个 gotcha 或一个负例。
    - 若修改 `description`，必须同步补路由评估，避免 action at a distance。
+
+## Committee Review Gate
+
+评估或修订 skill 时，若用户要求 committee、subagents、迭代评分、目标分数或 `10/10`，自动加载并执行 `committee-review-loop`。若评估会驱动高风险改动，例如重写 `description`、改变 routing 边界、移动大块正文到 references、或新增复杂 eval，也应在当前任务策略允许 subagent committee validation 时使用它。
+
+调用前先定义：
+
+- `output`：待审的 `SKILL.md`、eval matrix、paired-test 结果、或当前 diff。
+- `scope`：只允许修改目标 skill 目录及其直接相关 eval/reference/script 文件。
+- `target`：默认 `committee.rating >= 10/10`，除非用户指定其他标准。
+- `domains`：至少覆盖 routing precision、progressive-loading/eval design、end-to-end task lift；第三个领域可替换为目标 skill 的专业域。
+- `verification`：`quick_validate.py`、相关 eval 或手工 paired test，以及仓库要求的 gate。
+
+把 committee 输出的 `revision_brief` 作为下一轮最小修改输入；修改后重新跑验证，再把新输出交回同一个 committee 评分。不要把普通单次 review、QA 或文案润色路由到 `committee-review-loop`。
 
 ## 输出要求
 
@@ -42,6 +57,8 @@ description: Use when creating, reviewing, or refining an agent skill and you ne
 - `Routing review`：`name` / `description` 是否容易误触发、漏触发，是否与邻近 skill 冲突。
 - `Eval plan`：给出正例、负例、forbidden load、渐进加载、端到端用例。
 - `Evidence summary`：说明当前 skill 预计提升点、baseline 风险、下一轮最小修改。
+
+若本轮使用了 `committee-review-loop`，在输出中追加最终 `committee.rating`、三个专家领域、主要修订点、changed files 与 fresh verification evidence。
 
 ## 快速检查
 
