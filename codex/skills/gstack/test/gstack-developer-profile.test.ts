@@ -89,7 +89,6 @@ describe('gstack-developer-profile --read', () => {
     expect(r.stdout).toContain('TIER:');
   });
 });
-
 // -----------------------------------------------------------------------
 // --migrate (legacy jsonl → unified profile)
 // -----------------------------------------------------------------------

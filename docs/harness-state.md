@@ -14,13 +14,13 @@ Stable rules belong in `AGENTS.md`, `README.md`, `docs/repo-index.md`, or
   - `codex/skills/delivery-harness-framework/SKILL.md`
 - blocked_sources: none
 - unsafe_inputs: none
-- next_safe_task: next scheduled run should start from python3 scripts/prepare_gstack_dhf_daily_refresh.py --json and treat dns_unreachable as deferred/no-op; if future gstack refreshes add more specialist artifact skills, first decide whether only docs routing needs updating before touching generic DHF
+- next_safe_task: next scheduled run should start from python3 scripts/prepare_gstack_dhf_daily_refresh.py --json and treat dns_unreachable as deferred/no-op; if future refreshes again produce whitespace-only vendor drift, keep DHF no-op unless generic lifecycle boundaries change
 - required_commands:
   - `python3 test_runner.py`
   - `git diff --check`
   - `./scripts/verify_codex_env.sh --repo-root "$(pwd)" --codex-home "$HOME/.codex" --claude-home "$HOME/.claude"`
-- latest_checkpoint: 2026-06-13T09:04:13-04:00 daily refresh synced gstack 1.58.0.0, kept DHF no-op, and updated lifecycle routing docs for vendored diagram artifacts
-- latest_verification: 2026-06-13T09:04:13-04:00 command=python3 test_runner.py; exit_code=0; key_output=ran=57 passed=57 skipped=0 failed=0; [PASS] all tests
+- latest_checkpoint: 2026-06-14T09:03:32-04:00 daily refresh synced gstack 1.58.0.0 with vendor whitespace-only cleanup and kept DHF no-op
+- latest_verification: 2026-06-14T09:03:32-04:00 command=python3 test_runner.py; exit_code=0; key_output=ran=57 passed=57 skipped=0 failed=0; [PASS] all tests
 
 ## State Log
 
@@ -1312,3 +1312,24 @@ Stable rules belong in `AGENTS.md`, `README.md`, `docs/repo-index.md`, or
 - blockers:
   - none
 - next_safe_task: next scheduled run should start from python3 scripts/prepare_gstack_dhf_daily_refresh.py --json and treat dns_unreachable as deferred/no-op; if future gstack refreshes add more specialist artifact skills, decide whether only route docs need a small update before changing generic DHF
+
+### 2026-06-14T09:03:32-04:00
+- phase: handoff
+- event: checkpoint
+- summary: daily refresh synced gstack 1.58.0.0 with vendor whitespace-only cleanup and kept DHF no-op
+- git:
+  - branch: automation/gstack-dhf-daily-refresh
+  - latest_commit: 1d8cc5e
+  - dirty_status: dirty
+  - dirty_count: 2
+- changed_surfaces:
+  - `codex/skills/gstack/plan-tune/SKILL.md`
+  - `codex/skills/gstack/test/gstack-developer-profile.test.ts`
+  - `tasks/gstack-dhf-daily-refresh-2026-06-14.md`
+- verification:
+  - command: `python3 test_runner.py`
+  - exit_code: 0
+  - key_output: ran=57 passed=57 skipped=0 failed=0; [PASS] all tests
+- blockers:
+  - none
+- next_safe_task: next scheduled run should start from python3 scripts/prepare_gstack_dhf_daily_refresh.py --json and treat dns_unreachable as deferred/no-op; if future refreshes again produce whitespace-only vendor drift, keep DHF no-op unless generic lifecycle boundaries change
