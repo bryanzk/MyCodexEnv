@@ -193,11 +193,11 @@
       "skillPath": "network/SKILL.md",
       "computedHash": "da0e492ee0d077cd25c2941e7146ebf9a2c86eb644cf9b1506b5c8c960045483"
     },
-    "qiaomu-goal-meta-skill": {
+    "codex-goalsmith": {
       "source": "joeseesun/qiaomu-goal-meta-skill",
       "sourceType": "github",
       "skillPath": "SKILL.md",
-      "computedHash": "869e6348e7668a67836b2b2eba606a4321ba281055ccf7ed60f07450fcf2ebbd"
+      "computedHash": "908c1f33446dee0ab6b5eb797d88733b53154b382ca27b80c1735533e9b5fe0f"
     },
     "redesign-existing-projects": {
       "source": "Leonxlnx/taste-skill",

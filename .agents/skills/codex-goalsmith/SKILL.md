@@ -1,10 +1,10 @@
 ---
-name: qiaomu-goal-meta-skill
+name: codex-goalsmith
 description: |
-  Turn vague or complex Codex tasks into strong `/goal` commands with outcome, verification, constraints, boundaries, iteration policy, completion evidence, and pause/block conditions. Use when the user asks for Codex goal instructions, Goal 指令, 目标指令, `/goal` prompts, 中文 Goal 模板, plan-to-goal interviews, success criteria, verification commands, or bounded agent work definitions.
+  Use when the user asks to turn a vague task into a Codex `/goal` command, Goal 指令, 目标指令, 中文 Goal 模板, or plan-to-goal interview. Do not load for ordinary project planning, code review, test execution, translation, simple rewrites, or generic success-criteria discussion unless the user wants an executable `/goal`.
 ---
 
-# Qiaomu Goal Meta Skill
+# Codex Goalsmith
 
 把一个模糊任务，收敛成 Codex 可以持续执行、可以验证、知道何时停止和何时暂停的 `/goal` 指令。
 
@@ -44,10 +44,11 @@ Default assumptions:
    - iteration policy
    - completion evidence
    - blocked stop conditions, human decisions, or budget caps
-5. If the task is under-specified, prefer numbered multiple-choice adjustments with defaults. Use `references/interview-checklist.md`.
-6. For Chinese-first users, produce the Chinese recommended execution goal first, then an English-compatible mirror that preserves the same meaning and keeps English field labels.
-7. Check the command against `references/goal-command-playbook.md`.
-8. For file deliverables, run `python3 scripts/lint_goal_command.py <file>` before calling the goal done.
+5. If the task is under-specified but low-risk, choose conservative defaults using `references/default-goal-strategy.md` and continue without an interview.
+6. Use `references/interview-checklist.md` only when the user explicitly asks for an interview, says not to draft yet, or when missing information materially changes cost, risk, ownership, product direction, verification, or allowed writes.
+7. For Chinese-first users, produce the Chinese recommended execution goal first, then an English-compatible mirror that preserves the same meaning and keeps English field labels.
+8. Check the command against `references/goal-command-playbook.md`.
+9. For file deliverables, run `python3 scripts/lint_goal_command.py <file>` before calling the goal done.
 
 ## Output Contract
 
@@ -115,3 +116,5 @@ Reject or revise a goal that:
 - `references/default-goal-strategy.md`: lazy-user defaults, unknown-domain discovery, risk classification, and direct-copy output rules.
 - `references/interview-checklist.md`: question bank for turning vague tasks into strong goals.
 - `scripts/lint_goal_command.py`: lightweight checker for required `/goal` labels and unresolved placeholders.
+- `scripts/validate_evals.py`: lightweight schema and coverage checker for `evals/evals.json`.
+- `evals/evals.json`: routing, progressive-loading, and end-to-end regression cases for the skill.

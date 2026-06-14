@@ -1,7 +1,7 @@
-# qiaomu-goal-meta-skill
+# codex-goalsmith
 
 > 你只想说一句“帮我做个 App”，但 Codex 真正需要的是一个能执行、能验证、知道边界、知道何时停下来的目标。
-> qiaomu-goal-meta-skill turns vague work into a copy-ready Codex `/goal` command with defaults, verification, boundaries, and pause conditions.
+> codex-goalsmith turns vague work into a copy-ready Codex `/goal` command with defaults, verification, boundaries, and pause conditions.
 
 <p align="center">
   <a href="https://github.com/joeseesun/qiaomu-goal-meta-skill/stargazers"><img alt="Stars" src="https://img.shields.io/github/stars/joeseesun/qiaomu-goal-meta-skill?style=for-the-badge&logo=github" /></a>
@@ -108,12 +108,16 @@ npx skills add joeseesun/qiaomu-goal-meta-skill
 安装后确认：
 
 ```bash
-test -f ~/.agents/skills/qiaomu-goal-meta-skill/SKILL.md
+# 以安装器输出路径为准。常见路径：
+test -f ~/.agents/skills/codex-goalsmith/SKILL.md
+test -f .agents/skills/codex-goalsmith/SKILL.md
 ```
+
+不同 agent 运行时可能把 skill 安装到不同位置。以安装器输出的路径为准；在 Codex workspace install 中，路径也可能是当前仓库下的 `.agents/skills/codex-goalsmith/SKILL.md`。
 
 ## 你可以这样说
 
-- “用 qiaomu-goal-meta-skill 帮我把这个需求写成 Codex /goal。”
+- “用 codex-goalsmith 帮我把这个需求写成 Codex /goal。”
 - “我要开发一个 iOS 提词器，帮我写 goal。”
 - “我要做一个 GTA 网页游戏，帮我写一个安全可执行的 goal。”
 - “这个任务太模糊，先给推荐执行版，再给我几个可选调整。”
@@ -186,7 +190,9 @@ meta skill 不假装懂所有专业领域。
 这个仓库带了一个轻量 linter：
 
 ```bash
-python3 ~/.agents/skills/qiaomu-goal-meta-skill/scripts/lint_goal_command.py goal.txt
+# 使用安装器输出的 skill 路径；例如：
+python3 ~/.agents/skills/codex-goalsmith/scripts/lint_goal_command.py goal.txt
+python3 .agents/skills/codex-goalsmith/scripts/lint_goal_command.py goal.txt
 ```
 
 它会拦住：
@@ -199,17 +205,26 @@ python3 ~/.agents/skills/qiaomu-goal-meta-skill/scripts/lint_goal_command.py goa
 - `keep trying`
 - 缺少具体证据的验证条件
 
+eval 套件也带有轻量结构检查：
+
+```bash
+python3 ~/.agents/skills/codex-goalsmith/scripts/validate_evals.py ~/.agents/skills/codex-goalsmith/evals/evals.json
+python3 .agents/skills/codex-goalsmith/scripts/validate_evals.py .agents/skills/codex-goalsmith/evals/evals.json
+```
+
+它会检查 `category`、`expected_load`、必需的正例/负例/forbidden/progressive/end-to-end 覆盖、重复 `id`、断言和 progressive-loading 的附件读取字段。
+
 ## 前置要求
 
 - [ ] 已安装支持 Agent Skills 的运行环境，例如 Codex、Claude Code 或兼容工具。
 - [ ] 已安装 Node.js 和 `npx`，用于执行 `npx skills add`。
-- [ ] 运行环境能读取 `~/.agents/skills`。
+- [ ] 运行环境能读取安装器输出的 skills 路径，例如 `~/.agents/skills` 或当前仓库 `.agents/skills`。
 
 ## Troubleshooting
 
 | 问题 | 原因 | 解决方法 |
 |---|---|---|
-| 没有触发这个 skill | 运行环境未加载本地 skills，或安装路径不对 | 运行 `test -f ~/.agents/skills/qiaomu-goal-meta-skill/SKILL.md`，确认安装位置 |
+| 没有触发这个 skill | 运行环境未加载本地 skills，或安装路径不对 | 以安装器输出路径为准，检查 `~/.agents/skills/codex-goalsmith/SKILL.md` 或当前仓库 `.agents/skills/codex-goalsmith/SKILL.md` 是否存在 |
 | 输出还是 `/目标` | 使用了中文别名而不是 Codex 可执行命令 | 要求它“命令前缀必须保持 `/goal`，正文可以中文” |
 | 输出像模板，有占位符 | 没有按推荐执行版生成 | 要求“不要输出 `[Outcome]` 等占位符，给可直接复制版” |
 | 验证太空 | 目标里只有“确认可用” | 要求补充命令、日志、截图、浏览器/模拟器检查或产物路径 |
@@ -233,7 +248,7 @@ GitHub: https://github.com/joeseesun/
 <a name="english"></a>
 ## English
 
-qiaomu-goal-meta-skill turns vague work into a copy-ready Codex `/goal` command.
+codex-goalsmith turns vague work into a copy-ready Codex `/goal` command.
 
 It is built for people who do not want to fill out a planning form.
 
@@ -247,7 +262,7 @@ npx skills add joeseesun/qiaomu-goal-meta-skill
 
 Use it like this:
 
-- "Use qiaomu-goal-meta-skill to turn this vague app idea into a Codex goal."
+- "Use codex-goalsmith to turn this vague app idea into a Codex goal."
 - "Write a goal for an iOS teleprompter MVP."
 - "Write a safe goal for a GTA-like browser game without copyrighted IP."
 - "This domain is unfamiliar. Make the goal discovery-first."

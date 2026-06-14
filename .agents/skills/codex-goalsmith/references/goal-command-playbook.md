@@ -179,9 +179,9 @@ Pause if: the design requires removing a primary command, adding a new design sy
 
 ```text
 /goal Create a local agent skill named qiaomu-example-skill that packages the provided workflow into a reusable SKILL.md, README.md, agents/interface.yaml, references, and a lightweight validation script.
-Verification: inspect the generated files, run YAML/JSON syntax checks if present, run the validation script on a sample output, and confirm the skill directory exists under ~/.agents/skills/qiaomu-example-skill.
+Verification: inspect the generated files, run YAML/JSON syntax checks if present, run the validation script on a sample output, and confirm the skill directory exists at the installer-reported path, such as ~/.agents/skills/qiaomu-example-skill or a repo-local .agents/skills/qiaomu-example-skill.
 Constraints: keep the skill concise, Chinese-first when appropriate, and include 向阳乔木 copyright/contact metadata; do not publish to GitHub unless explicitly requested.
-Boundaries: write only under ~/.agents/skills/qiaomu-example-skill and any explicitly requested temporary verification files; do not modify existing unrelated skills.
+Boundaries: write only under the installer-reported qiaomu-example-skill directory and any explicitly requested temporary verification files; do not modify existing unrelated skills.
 Iteration policy: create the minimal package first, validate structure, then add only references or scripts that improve reliability.
 Stop when: all required files exist, validation passes, and the README explains usage, boundaries, and local checks.
 Pause if: the workflow requires private credentials, external publishing, unclear ownership, or a naming change from the user.

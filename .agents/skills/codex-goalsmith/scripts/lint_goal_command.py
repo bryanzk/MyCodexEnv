@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Lightweight validation for qiaomu-goal-meta-skill outputs."""
+"""Lightweight validation for codex-goalsmith outputs."""
 
 from __future__ import annotations
 
