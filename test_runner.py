@@ -631,6 +631,81 @@ def test_delivery_harness_framework_eval_matrix():
     print("[PASS] delivery harness framework eval matrix")
 
 
+def test_dual_committee_review_loop_skill_contract():
+    skill_root = ROOT / "codex" / "skills" / "dual-committee-review-loop"
+    skill_path = skill_root / "SKILL.md"
+    eval_path = skill_root / "evals" / "evals.json"
+    protocol_path = skill_root / "references" / "claude-cli-protocol.md"
+
+    require(skill_path.exists(), "dual committee review loop skill should exist")
+    skill_text = skill_path.read_text(encoding="utf-8")
+    protocol_text = protocol_path.read_text(encoding="utf-8")
+
+    required_skill_terms = [
+        "name: dual-committee-review-loop",
+        "Use when",
+        "Codex",
+        "Claude CLI",
+        "committee-review-loop",
+        "Codex review phase",
+        "Claude review phase",
+        "Codex re-review phase",
+        "max_rounds",
+        "stop",
+        "command",
+        "exit_code",
+        "key_output",
+        "timestamp",
+        "Do not send secrets",
+        "Do not modify Claude global config",
+    ]
+    for term in required_skill_terms:
+        require(term in skill_text, f"dual committee review loop skill missing term: {term}")
+    require("双向复审" in skill_text, "dual skill description should include Chinese dual-review trigger")
+    require(
+        "/Users/kezheng" not in protocol_text,
+        "dual skill Claude protocol should not hardcode a personal home directory",
+    )
+
+    require(eval_path.exists(), "dual committee review loop eval matrix should exist")
+    data = json.loads(eval_path.read_text(encoding="utf-8"))
+    require(data.get("skill_name") == "dual-committee-review-loop", "eval matrix should target dual skill")
+    evals = data.get("evals")
+    require(isinstance(evals, list) and evals, "dual skill eval matrix should contain evals")
+
+    required_categories = {"positive_routing", "negative_routing", "forbidden_load", "progressive_loading", "end_to_end"}
+    categories = {case.get("category") for case in evals}
+    missing_categories = required_categories - categories
+    require(not missing_categories, f"dual skill eval matrix missing categories: {sorted(missing_categories)}")
+
+    for case in evals:
+        for key in ["id", "category", "name", "prompt", "expected_load", "expected_output", "assertions"]:
+            require(key in case, f"dual skill eval case missing {key}: {case}")
+        require(isinstance(case["assertions"], list) and case["assertions"], f"dual skill eval case should have assertions: {case['id']}")
+
+    end_to_end_cases = [case for case in evals if case.get("category") == "end_to_end"]
+    require(
+        any("Codex -> Claude CLI -> Codex" in case.get("expected_output", "") for case in end_to_end_cases),
+        "dual skill eval matrix should cover real Codex -> Claude CLI -> Codex round trip",
+    )
+    positive_ids = {case.get("id") for case in evals if case.get("category") == "positive_routing"}
+    require(
+        "routing-positive-chinese-dual-review" in positive_ids,
+        "dual skill eval matrix should cover Chinese dual-review routing",
+    )
+    require(
+        any("committee_skill_access" in " ".join(case.get("assertions", [])) for case in end_to_end_cases),
+        "dual skill eval matrix should assert Claude reports committee_skill_access",
+    )
+    loop_control_text = "\n".join(
+        f"{case.get('prompt', '')}\n{case.get('expected_output', '')}\n{' '.join(case.get('assertions', []))}"
+        for case in evals
+    )
+    require("max_rounds" in loop_control_text, "dual skill eval matrix should cover max_rounds termination")
+
+    print("[PASS] dual committee review loop skill contract")
+
+
 def test_sync_agents_only_copies_and_backs_up_agents():
     with tempfile.TemporaryDirectory() as tmp:
         tmp_path = Path(tmp)
@@ -4459,6 +4534,7 @@ TESTS = [
     test_delivery_harness_framework_stays_generic,
     test_delivery_harness_framework_routes_runtime_helpers,
     test_delivery_harness_framework_eval_matrix,
+    test_dual_committee_review_loop_skill_contract,
     test_sync_agents_only_copies_and_backs_up_agents,
     test_harness_runtime_surfaces_exist_and_parse,
     test_surfaces_manifest_no_orphans,

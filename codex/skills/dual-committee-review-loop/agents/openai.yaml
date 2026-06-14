@@ -1,0 +1,4 @@
+interface:
+  display_name: "Dual Committee Review Loop"
+  short_description: "Run Codex and Claude review loops"
+  default_prompt: "Use $dual-committee-review-loop to coordinate a bounded Codex and Claude CLI committee-review-loop on a local, non-sensitive artifact."
