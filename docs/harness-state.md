@@ -14,13 +14,13 @@ Stable rules belong in `AGENTS.md`, `README.md`, `docs/repo-index.md`, or
   - `codex/skills/delivery-harness-framework/SKILL.md`
 - blocked_sources: none
 - unsafe_inputs: none
-- next_safe_task: next scheduled run should start from python3 scripts/prepare_gstack_dhf_daily_refresh.py --json and treat dns_unreachable as deferred/no-op; if future refreshes again produce whitespace-only vendor drift, keep DHF no-op unless generic lifecycle boundaries change
+- next_safe_task: next scheduled run should start from python3 scripts/prepare_gstack_dhf_daily_refresh.py --json and treat dns_unreachable as deferred/no-op; only update delivery-harness-framework if future gstack refreshes change generic lifecycle phase, lane, helper, or verification contracts
 - required_commands:
   - `python3 test_runner.py`
   - `git diff --check`
   - `./scripts/verify_codex_env.sh --repo-root "$(pwd)" --codex-home "$HOME/.codex" --claude-home "$HOME/.claude"`
-- latest_checkpoint: 2026-06-14T09:03:32-04:00 daily refresh synced gstack 1.58.0.0 with vendor whitespace-only cleanup and kept DHF no-op
-- latest_verification: 2026-06-14T09:03:32-04:00 command=python3 test_runner.py; exit_code=0; key_output=ran=57 passed=57 skipped=0 failed=0; [PASS] all tests
+- latest_checkpoint: 2026-06-15T09:06:42-04:00 daily refresh synced gstack 1.58.1.0, kept delivery-harness-framework no-op, repaired bun PATH for gstack setup, and cleared upstream whitespace noise
+- latest_verification: 2026-06-15T09:06:42-04:00 command=python3 test_runner.py; exit_code=0; key_output=ran=58 passed=58 skipped=0 failed=0; [PASS] all tests
 
 ## State Log
 
@@ -1333,3 +1333,23 @@ Stable rules belong in `AGENTS.md`, `README.md`, `docs/repo-index.md`, or
 - blockers:
   - none
 - next_safe_task: next scheduled run should start from python3 scripts/prepare_gstack_dhf_daily_refresh.py --json and treat dns_unreachable as deferred/no-op; if future refreshes again produce whitespace-only vendor drift, keep DHF no-op unless generic lifecycle boundaries change
+
+### 2026-06-15T09:06:42-04:00
+- phase: handoff
+- event: checkpoint
+- summary: daily refresh synced gstack 1.58.1.0, kept delivery-harness-framework no-op, repaired bun PATH for gstack setup, and cleared upstream whitespace noise
+- git:
+  - branch: automation/gstack-dhf-daily-refresh
+  - latest_commit: 4d66034
+  - dirty_status: dirty
+  - dirty_count: 91
+- changed_surfaces:
+  - `codex/skills/gstack`
+  - `tasks/gstack-dhf-daily-refresh-2026-06-15.md`
+- verification:
+  - command: `python3 test_runner.py`
+  - exit_code: 0
+  - key_output: ran=58 passed=58 skipped=0 failed=0; [PASS] all tests
+- blockers:
+  - none
+- next_safe_task: next scheduled run should start from python3 scripts/prepare_gstack_dhf_daily_refresh.py --json and treat dns_unreachable as deferred/no-op; only update delivery-harness-framework if future gstack refreshes change generic lifecycle phase, lane, helper, or verification contracts
