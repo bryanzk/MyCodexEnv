@@ -14,13 +14,13 @@ Stable rules belong in `AGENTS.md`, `README.md`, `docs/repo-index.md`, or
   - `codex/skills/delivery-harness-framework/SKILL.md`
 - blocked_sources: none
 - unsafe_inputs: none
-- next_safe_task: Investigate the real source of truth for the codex-goalsmith thread: check whether it lives in another repo, runtime skill path, or external plugin workspace before deciding if that chat is archive-ready
+- next_safe_task: Next scheduled run should start from python3 scripts/prepare_gstack_dhf_daily_refresh.py --json; if dry-run again resolves to whitespace-only vendor noise, keep DHF no-op unless a generic lifecycle contract actually drifts
 - required_commands:
   - `python3 test_runner.py`
   - `git diff --check`
   - `./scripts/verify_codex_env.sh --repo-root "$(pwd)" --codex-home "$HOME/.codex" --claude-home "$HOME/.claude"`
-- latest_checkpoint: 2026-06-15T10:54:19-04:00 created a parent ShipQ handoff that absorbs the three 2026-06-11 review subthreads, so maintenance no longer needs to preserve those child chats individually
-- latest_verification: 2026-06-15T10:54:19-04:00 command=git diff --check; exit_code=0; key_output=No whitespace errors after adding ShipQ parent handoff, updating backlog collapse status, and appending checkpoint
+- latest_checkpoint: 2026-06-16T09:05:13-04:00 completed 2026-06-16 gstack daily refresh with vendor whitespace hygiene only; delivery-harness-framework stayed no-op after skill-evaluator review
+- latest_verification: 2026-06-16T09:05:13-04:00 command=python3 test_runner.py; exit_code=0; key_output=ran=61 passed=61 skipped=0 failed=0; [PASS] all tests
 
 ## State Log
 
@@ -1540,3 +1540,24 @@ Stable rules belong in `AGENTS.md`, `README.md`, `docs/repo-index.md`, or
 - blockers:
   - none
 - next_safe_task: Continue backlog triage with `MCE-20260609-dhf-manual-outline` and the 2026-06-09 DHF manual review threads before any manual Codex state apply; only do manual apply after all important handoffs are confirmed and Codex is fully closed
+
+### 2026-06-16T09:05:13-04:00
+- phase: handoff
+- event: checkpoint
+- summary: completed 2026-06-16 gstack daily refresh with vendor whitespace hygiene only; delivery-harness-framework stayed no-op after skill-evaluator review
+- git:
+  - branch: automation/gstack-dhf-daily-refresh
+  - latest_commit: 4cf3a39
+  - dirty_status: dirty
+  - dirty_count: 1
+- changed_surfaces:
+  - `codex/skills/gstack/plan-tune/SKILL.md`
+  - `codex/skills/gstack/test/gstack-developer-profile.test.ts`
+  - `tasks/gstack-dhf-daily-refresh-2026-06-16.md`
+- verification:
+  - command: `python3 test_runner.py`
+  - exit_code: 0
+  - key_output: ran=61 passed=61 skipped=0 failed=0; [PASS] all tests
+- blockers:
+  - none
+- next_safe_task: Next scheduled run should start from python3 scripts/prepare_gstack_dhf_daily_refresh.py --json; if dry-run again resolves to whitespace-only vendor noise, keep DHF no-op unless a generic lifecycle contract actually drifts
