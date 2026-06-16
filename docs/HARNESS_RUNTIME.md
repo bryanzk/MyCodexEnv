@@ -118,6 +118,18 @@ Evidence helper behavior:
 - state logs should promote compact decision evidence summaries instead of
   copying every routine gate receipt into handoff state.
 
+## DHF Packet Contract
+`codex/runtime/dhf-packet.schema.json` is the incubation contract for future DHF
+extraction. It defines the smallest portable packet a consumer can exchange
+without inheriting all of `MyCodexEnv`.
+
+The packet carries phase, execution lane, state path, source-of-truth files,
+verification evidence, next safe task, blockers, and consumer adapter metadata.
+It explicitly excludes secrets, raw local evidence, customer data, and
+machine-specific auth paths. First-stage incubation validates the schema and
+examples only; helpers may add `--emit-dhf-packet` later without changing the
+current runtime path.
+
 ## Recovery Contract
 Fresh sessions should be able to recover the next safe task without chat
 history. `scripts/harness_recover.py` reads repo index, harness state, git

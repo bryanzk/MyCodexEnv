@@ -53,6 +53,11 @@
       "audience": ["runtime", "codex"]
     },
     {
+      "path": "codex/runtime/dhf-packet.schema.json",
+      "role": "portable DHF packet schema for incubation and future extraction",
+      "audience": ["runtime", "codex", "human"]
+    },
+    {
       "path": "codex/runtime/evidence.schema.json",
       "role": "compatibility local evidence JSONL event contract",
       "audience": ["runtime", "codex"]
@@ -130,6 +135,21 @@
     {
       "path": "scripts/harness_env_probe.py",
       "role": "observable Codex runtime configuration probe",
+      "audience": ["codex", "human"]
+    },
+    {
+      "path": "scripts/check_dhf_consumer_compatibility.py",
+      "role": "read-only DHF consumer compatibility and drift checker",
+      "audience": ["codex", "human"]
+    },
+    {
+      "path": "docs/dhf-consumer-compatibility.json",
+      "role": "machine-readable DHF consumer compatibility matrix",
+      "audience": ["codex", "human"]
+    },
+    {
+      "path": "docs/plans/2026-06-15-dhf-incubation-plan.md",
+      "role": "controlled DHF incubation boundary and extraction trigger plan",
       "audience": ["codex", "human"]
     },
     {

@@ -1,0 +1,63 @@
+{
+  "version": 1,
+  "baseline_consumer": "MyCodexEnv",
+  "core": {
+    "name": "delivery-harness-framework",
+    "incubation_mode": true,
+    "contract_surfaces": [
+      "codex/skills/delivery-harness-framework/SKILL.md",
+      "codex/runtime/dhf-packet.schema.json",
+      "codex/runtime/evidence.schema.json",
+      "docs/HARNESS_RUNTIME.md"
+    ],
+    "non_goals": [
+      "Codex or Claude home sync",
+      "gstack vendor ownership",
+      "project-specific fixtures",
+      "live provider or customer data policy"
+    ]
+  },
+  "helpers": [
+    "harness_recover.py",
+    "harness_env_probe.py",
+    "harness_checkpoint.py",
+    "harness_requirements.py",
+    "harness_agent_team.py",
+    "harness_report.py"
+  ],
+  "consumers": [
+    {
+      "name": "MyCodexEnv",
+      "root": ".",
+      "state_path": "docs/harness-state.md",
+      "verification_commands": [
+        "python3 test_runner.py",
+        "python3 scripts/check_surfaces.py --repo-root \"$(pwd)\"",
+        "git diff --check"
+      ],
+      "helper_policy": "same",
+      "status": "same",
+      "adapter_fields": [],
+      "notes": "Incubation source of truth and baseline consumer."
+    },
+    {
+      "name": "ShipQ",
+      "root": "../ShipQ",
+      "optional": true,
+      "state_path": "docs/designs/harness-state.md",
+      "verification_commands": [
+        "PATH=.venv/bin:$PATH pytest -q",
+        "PATH=.venv/bin:$PATH python scripts/verify_harness.py"
+      ],
+      "helper_policy": "intentional_adapter",
+      "status": "intentional_adapter",
+      "adapter_fields": [
+        "ShipQ durable state path",
+        "quote workflow fixtures",
+        "workbook and demo safety gates",
+        "project-specific verification command"
+      ],
+      "notes": "ShipQ helper differences are intentional until a focused drift review says otherwise."
+    }
+  ]
+}

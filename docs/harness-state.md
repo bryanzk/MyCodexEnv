@@ -14,13 +14,13 @@ Stable rules belong in `AGENTS.md`, `README.md`, `docs/repo-index.md`, or
   - `codex/skills/delivery-harness-framework/SKILL.md`
 - blocked_sources: none
 - unsafe_inputs: none
-- next_safe_task: next scheduled run should start from python3 scripts/prepare_gstack_dhf_daily_refresh.py --json and treat dns_unreachable as deferred/no-op; only update delivery-harness-framework if future gstack refreshes change generic lifecycle phase, lane, helper, or verification contracts
+- next_safe_task: Investigate the real source of truth for the codex-goalsmith thread: check whether it lives in another repo, runtime skill path, or external plugin workspace before deciding if that chat is archive-ready
 - required_commands:
   - `python3 test_runner.py`
   - `git diff --check`
   - `./scripts/verify_codex_env.sh --repo-root "$(pwd)" --codex-home "$HOME/.codex" --claude-home "$HOME/.claude"`
-- latest_checkpoint: 2026-06-15T09:06:42-04:00 daily refresh synced gstack 1.58.1.0, kept delivery-harness-framework no-op, repaired bun PATH for gstack setup, and cleared upstream whitespace noise
-- latest_verification: 2026-06-15T09:06:42-04:00 command=python3 test_runner.py; exit_code=0; key_output=ran=58 passed=58 skipped=0 failed=0; [PASS] all tests
+- latest_checkpoint: 2026-06-15T10:54:19-04:00 created a parent ShipQ handoff that absorbs the three 2026-06-11 review subthreads, so maintenance no longer needs to preserve those child chats individually
+- latest_verification: 2026-06-15T10:54:19-04:00 command=git diff --check; exit_code=0; key_output=No whitespace errors after adding ShipQ parent handoff, updating backlog collapse status, and appending checkpoint
 
 ## State Log
 
@@ -1353,3 +1353,190 @@ Stable rules belong in `AGENTS.md`, `README.md`, `docs/repo-index.md`, or
 - blockers:
   - none
 - next_safe_task: next scheduled run should start from python3 scripts/prepare_gstack_dhf_daily_refresh.py --json and treat dns_unreachable as deferred/no-op; only update delivery-harness-framework if future gstack refreshes change generic lifecycle phase, lane, helper, or verification contracts
+
+### 2026-06-15T10:40:43-04:00
+- phase: handoff
+- event: checkpoint
+- summary: completed report-only codex local state diagnosis for weekly maintenance; confirmed active-session bloat and detached worktree candidates without mutating local Codex state
+- git:
+  - branch: main
+  - latest_commit: 8424af0
+  - dirty_status: clean
+  - dirty_count: 0
+- changed_surfaces:
+  - `docs/harness-state.md`
+- verification:
+  - command: `git diff --check`
+  - exit_code: 0
+  - key_output: No whitespace errors after appending weekly maintenance checkpoint
+- blockers:
+  - none
+- next_safe_task: Before any manual Codex state apply, create comprehensive handoff docs and reactivation prompts for active repo chats, then review the largest old active sessions and detached ~/.codex/worktrees candidates with Codex fully closed before any archive/prune action
+
+### 2026-06-15T10:46:54-04:00
+- phase: handoff
+- event: checkpoint
+- summary: created repo-native codex maintenance handoff and reactivation prompt so future manual apply can review active sessions and detached worktrees without relying on chat history
+- git:
+  - branch: main
+  - latest_commit: 8424af0
+  - dirty_status: dirty
+  - dirty_count: 2
+- changed_surfaces:
+  - `docs/handoffs/2026-06-15-codex-maintenance-manual-apply-prep.md`
+  - `docs/harness-state.md`
+- verification:
+  - command: `git diff --check`
+  - exit_code: 0
+  - key_output: No whitespace errors after adding codex maintenance handoff document and checkpoint
+- blockers:
+  - none
+- next_safe_task: Use docs/handoffs/2026-06-15-codex-maintenance-manual-apply-prep.md as the restart surface; next prepare comprehensive handoff docs for active repo chats, then review large active sessions and detached ~/.codex/worktrees candidates with Codex fully closed before any manual apply
+
+### 2026-06-15T10:49:31-04:00
+- phase: handoff
+- event: checkpoint
+- summary: created active repo chat handoff backlog from local session index so future manual codex maintenance can triage per-chat handoff coverage before any archive/prune step
+- git:
+  - branch: main
+  - latest_commit: 8424af0
+  - dirty_status: dirty
+  - dirty_count: 3
+- changed_surfaces:
+  - `docs/handoffs/2026-06-15-codex-maintenance-active-chat-handoff-backlog.md`
+  - `docs/handoffs/2026-06-15-codex-maintenance-manual-apply-prep.md`
+  - `docs/harness-state.md`
+- verification:
+  - command: `git diff --check`
+  - exit_code: 0
+  - key_output: No whitespace errors after adding active chat handoff backlog and checkpoint
+- blockers:
+  - none
+- next_safe_task: Use docs/handoffs/2026-06-15-codex-maintenance-active-chat-handoff-backlog.md to triage the first five high-priority chats, then create one repo-native handoff doc per still-valuable chat before any manual Codex state apply
+
+### 2026-06-15T10:52:21-04:00
+- phase: handoff
+- event: checkpoint
+- summary: triaged the first five high-priority chats for codex maintenance; collapsed three ShipQ review subthreads into one future parent handoff, confirmed committee-skill-integration is recoverable from repo state, and isolated codex-goalsmith as the remaining missing-source thread
+- git:
+  - branch: main
+  - latest_commit: 8424af0
+  - dirty_status: dirty
+  - dirty_count: 4
+- changed_surfaces:
+  - `docs/handoffs/2026-06-15-codex-maintenance-first-five-triage.md`
+  - `docs/handoffs/2026-06-15-codex-maintenance-active-chat-handoff-backlog.md`
+  - `docs/harness-state.md`
+- verification:
+  - command: `git diff --check`
+  - exit_code: 0
+  - key_output: No whitespace errors after adding first-five triage doc, updating backlog statuses, and appending checkpoint
+- blockers:
+  - none
+- next_safe_task: Create one parent ShipQ planning handoff that absorbs the three 2026-06-11 review subthreads, then investigate the real source of truth for the codex-goalsmith thread before deciding whether it is archive-ready
+
+### 2026-06-15T10:54:19-04:00
+- phase: handoff
+- event: checkpoint
+- summary: created a parent ShipQ handoff that absorbs the three 2026-06-11 review subthreads, so maintenance no longer needs to preserve those child chats individually
+- git:
+  - branch: main
+  - latest_commit: 8424af0
+  - dirty_status: dirty
+  - dirty_count: 5
+- changed_surfaces:
+  - `docs/handoffs/2026-06-15-shipq-parent-handoff-for-2026-06-11-review-subthreads.md`
+  - `docs/handoffs/2026-06-15-codex-maintenance-active-chat-handoff-backlog.md`
+  - `docs/harness-state.md`
+- verification:
+  - command: `git diff --check`
+  - exit_code: 0
+  - key_output: No whitespace errors after adding ShipQ parent handoff, updating backlog collapse status, and appending checkpoint
+- blockers:
+  - none
+- next_safe_task: Investigate the real source of truth for the codex-goalsmith thread: check whether it lives in another repo, runtime skill path, or external plugin workspace before deciding if that chat is archive-ready
+
+### 2026-06-15T11:06:12-04:00
+- phase: handoff
+- event: checkpoint
+- summary: corrected the codex-goalsmith source-of-truth route to the repo-local `.agents/skills/codex-goalsmith` skill plus archived/raw memory anchors, so the first five maintenance-priority chats now all have durable continuation surfaces
+- git:
+  - branch: main
+  - latest_commit: 8424af0
+  - dirty_status: dirty
+  - dirty_count: 6
+- changed_surfaces:
+  - `docs/handoffs/2026-06-15-codex-goalsmith-source-of-truth.md`
+  - `docs/handoffs/2026-06-15-codex-maintenance-first-five-triage.md`
+  - `docs/handoffs/2026-06-15-codex-maintenance-active-chat-handoff-backlog.md`
+  - `docs/harness-state.md`
+- verification:
+  - command: `git diff --check`
+  - exit_code: 0
+  - key_output: No whitespace errors after codex-goalsmith source-of-truth correction and first-five triage update
+- blockers:
+  - none
+- next_safe_task: With the first five high-priority chats covered, continue the backlog by preparing the next missing repo-native handoff for any remaining active `needs_handoff` or `pending_review` chats; only consider any manual apply after those handoffs are confirmed and Codex is fully closed
+
+### 2026-06-15T11:14:40-04:00
+- phase: handoff
+- event: checkpoint
+- summary: collapsed the dual-committee workflow family into one parent handoff, covering the dual-committee skill thread, the committee-review goal thread, and the overlapping Chinese cross-model review-skill thread
+- git:
+  - branch: main
+  - latest_commit: 8424af0
+  - dirty_status: dirty
+  - dirty_count: 7
+- changed_surfaces:
+  - `docs/handoffs/2026-06-15-dual-committee-parent-handoff.md`
+  - `docs/handoffs/2026-06-15-codex-maintenance-active-chat-handoff-backlog.md`
+  - `docs/harness-state.md`
+- verification:
+  - command: `git diff --check`
+  - exit_code: 0
+  - key_output: No whitespace errors after adding the dual-committee parent handoff and updating backlog statuses
+- blockers:
+  - none
+- next_safe_task: Continue the active-chat backlog with the next unresolved maintenance candidate, preferring `Review qiaomu-goal-meta-skill` or the x-made-easy threads before any manual Codex state apply; only do manual apply after all important handoffs are confirmed and Codex is fully closed
+
+### 2026-06-15T11:22:18-04:00
+- phase: handoff
+- event: checkpoint
+- summary: resolved `Review qiaomu-goal-meta-skill` as an earlier evaluator/review phase within the same codex-goalsmith install/hardening/rename lifecycle, so it no longer needs separate active-chat preservation
+- git:
+  - branch: main
+  - latest_commit: 8424af0
+  - dirty_status: dirty
+  - dirty_count: 7
+- changed_surfaces:
+  - `docs/handoffs/2026-06-15-codex-goalsmith-source-of-truth.md`
+  - `docs/handoffs/2026-06-15-codex-maintenance-active-chat-handoff-backlog.md`
+  - `docs/harness-state.md`
+- verification:
+  - command: `git diff --check`
+  - exit_code: 0
+  - key_output: No whitespace errors after collapsing Review qiaomu-goal-meta-skill into the codex-goalsmith handoff and updating backlog status
+- blockers:
+  - none
+- next_safe_task: Continue backlog triage with the x-made-easy threads, starting from `Review x-made-easy skill evals`, then `MCE-20260611-install-x-made-easy-skill`, before any manual Codex state apply; only do manual apply after all important handoffs are confirmed and Codex is fully closed
+
+### 2026-06-15T11:27:44-04:00
+- phase: handoff
+- event: checkpoint
+- summary: collapsed the x-made-easy skill eval and install/publish recovery chats into one parent handoff backed by the repo-managed skill directory, rollout summary, and raw session anchor
+- git:
+  - branch: main
+  - latest_commit: 8424af0
+  - dirty_status: dirty
+  - dirty_count: 8
+- changed_surfaces:
+  - `docs/handoffs/2026-06-15-x-made-easy-parent-handoff.md`
+  - `docs/handoffs/2026-06-15-codex-maintenance-active-chat-handoff-backlog.md`
+  - `docs/harness-state.md`
+- verification:
+  - command: `git diff --check`
+  - exit_code: 0
+  - key_output: No whitespace errors after adding the x-made-easy parent handoff and updating backlog statuses
+- blockers:
+  - none
+- next_safe_task: Continue backlog triage with `MCE-20260609-dhf-manual-outline` and the 2026-06-09 DHF manual review threads before any manual Codex state apply; only do manual apply after all important handoffs are confirmed and Codex is fully closed

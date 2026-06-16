@@ -26,6 +26,7 @@ HARNESS_CHECKPOINT = ROOT / "scripts" / "harness_checkpoint.py"
 HARNESS_REQUIREMENTS = ROOT / "scripts" / "harness_requirements.py"
 HARNESS_RECOVER = ROOT / "scripts" / "harness_recover.py"
 HARNESS_ENV_PROBE = ROOT / "scripts" / "harness_env_probe.py"
+CHECK_DHF_CONSUMER_COMPATIBILITY = ROOT / "scripts" / "check_dhf_consumer_compatibility.py"
 HEADROOM_FILTER = ROOT / "scripts" / "headroom_filter.py"
 AUDIT_SKILLS = ROOT / "scripts" / "audit_skills.py"
 SYNC_GSTACK_VENDOR = ROOT / "scripts" / "sync_gstack_vendor.py"
@@ -34,6 +35,9 @@ MERGE_GSTACK_DAILY_REFRESH = ROOT / "scripts" / "merge_gstack_refresh_if_safe.py
 SYNC_LOCAL_MAIN_IF_SAFE = ROOT / "scripts" / "sync_local_main_if_safe.py"
 HARNESS_REQUIREMENTS_TEMPLATE = ROOT / "docs" / "templates" / "harness-requirements.md"
 HARNESS_AGENT_BRIEF_TEMPLATE = ROOT / "docs" / "templates" / "harness-agent-brief.md"
+DHF_CONSUMER_COMPATIBILITY = ROOT / "docs" / "dhf-consumer-compatibility.json"
+DHF_INCUBATION_PLAN = ROOT / "docs" / "plans" / "2026-06-15-dhf-incubation-plan.md"
+DHF_PACKET_SCHEMA = ROOT / "codex" / "runtime" / "dhf-packet.schema.json"
 SURFACES_MANIFEST = ROOT / "docs" / "surfaces.json"
 CHECK_SURFACES = ROOT / "scripts" / "check_surfaces.py"
 SKILL_GOVERNANCE_DOC = ROOT / "docs" / "skill-governance-20260608.md"
@@ -928,6 +932,171 @@ def test_check_surfaces_validates_public_nav():
         require(json.loads(out).get("public_nav_count") == 1, "public nav count should include temp guide link")
 
     print("[PASS] check surfaces validates public nav")
+
+
+def test_dhf_incubation_artifacts_exist_and_parse():
+    require(DHF_INCUBATION_PLAN.exists(), f"missing DHF incubation plan: {DHF_INCUBATION_PLAN}")
+    plan_text = DHF_INCUBATION_PLAN.read_text(encoding="utf-8")
+    for term in [
+        "Incubation Boundary",
+        "DHF core",
+        "MyCodexEnv local runtime",
+        "ShipQ adapter",
+        "Extraction Triggers",
+    ]:
+        require(term in plan_text, f"DHF incubation plan missing term: {term}")
+
+    matrix = json.loads(DHF_CONSUMER_COMPATIBILITY.read_text(encoding="utf-8"))
+    require(matrix.get("version") == 1, "DHF consumer matrix should be versioned")
+    helpers = matrix.get("helpers")
+    require(isinstance(helpers, list) and helpers, "DHF consumer matrix should list helpers")
+    for helper in [
+        "harness_recover.py",
+        "harness_env_probe.py",
+        "harness_checkpoint.py",
+        "harness_requirements.py",
+        "harness_agent_team.py",
+        "harness_report.py",
+    ]:
+        require(helper in helpers, f"DHF consumer matrix missing helper: {helper}")
+
+    consumers = {item["name"]: item for item in matrix.get("consumers", [])}
+    require({"MyCodexEnv", "ShipQ"}.issubset(consumers), "matrix should cover MyCodexEnv and ShipQ")
+    require(consumers["MyCodexEnv"]["state_path"] == "docs/harness-state.md", "MyCodexEnv state path should be explicit")
+    require(consumers["ShipQ"]["state_path"] == "docs/designs/harness-state.md", "ShipQ adapter state path should be explicit")
+    allowed_statuses = {"same", "intentional_adapter", "drift_needs_review"}
+    for item in consumers.values():
+        require(item.get("status") in allowed_statuses, f"unexpected compatibility status: {item}")
+        require(item.get("verification_commands"), f"consumer missing verification commands: {item}")
+
+    schema = json.loads(DHF_PACKET_SCHEMA.read_text(encoding="utf-8"))
+    require(schema.get("title") == "Delivery Harness Framework Packet", "DHF packet schema title should be stable")
+    required = set(schema.get("required", []))
+    for field in ["schema_version", "phase", "execution_lane", "state_path", "source_of_truth", "verification", "next_safe_task", "consumer"]:
+        require(field in required, f"DHF packet schema missing required field: {field}")
+    forbidden = schema.get("properties", {}).get("forbidden_payload_fields", {}).get("items", {}).get("enum", [])
+    for field in ["secret", "raw_local_evidence", "customer_data", "machine_specific_auth_path"]:
+        require(field in forbidden, f"DHF packet schema should forbid payload class: {field}")
+
+    print("[PASS] DHF incubation artifacts exist and parse")
+
+
+def test_dhf_consumer_compatibility_checker():
+    with tempfile.TemporaryDirectory() as tmp:
+        tmp_path = Path(tmp)
+        baseline = tmp_path / "baseline"
+        consumer = tmp_path / "consumer"
+        for root in [baseline, consumer]:
+            write(root / "scripts" / "harness_recover.py", "print('same')\n")
+            write(root / "docs" / "harness-state.md", "# state\n")
+        write(consumer / "docs" / "designs" / "harness-state.md", "# shipq state\n")
+
+        matrix_path = tmp_path / "matrix.json"
+
+        def write_matrix(policy: str, root: str | None = None, status: str | None = None) -> None:
+            write(
+                matrix_path,
+                json.dumps(
+                    {
+                        "version": 1,
+                        "baseline_consumer": "Baseline",
+                        "helpers": ["harness_recover.py"],
+                        "consumers": [
+                            {
+                                "name": "Baseline",
+                                "root": str(baseline),
+                                "state_path": "docs/harness-state.md",
+                                "verification_commands": ["python3 test_runner.py"],
+                                "helper_policy": "same",
+                                "status": "same",
+                            },
+                            {
+                                "name": "Consumer",
+                                "root": root or str(consumer),
+                                "state_path": "docs/designs/harness-state.md",
+                                "verification_commands": ["pytest -q"],
+                                "helper_policy": policy,
+                                "status": status or policy,
+                            },
+                        ],
+                    },
+                    ensure_ascii=False,
+                ),
+            )
+
+        write_matrix("same", status="same")
+        code, out, err = run([sys.executable, str(CHECK_DHF_CONSUMER_COMPATIBILITY), "--matrix", str(matrix_path), "--json"])
+        require(code == 0, f"same helpers should pass: {err or out}")
+        payload = json.loads(out)
+        require(payload["ok"] is True, "same helpers should report ok")
+        require(payload["summary"]["same"] == 2, "same summary should count both consumers")
+
+        before_text = (consumer / "scripts" / "harness_recover.py").read_text(encoding="utf-8")
+        write(consumer / "scripts" / "harness_recover.py", "print('adapter')\n")
+        write_matrix("same", status="same")
+        code, out, err = run([sys.executable, str(CHECK_DHF_CONSUMER_COMPATIBILITY), "--matrix", str(matrix_path), "--json"])
+        require(code != 0, "unexpected helper drift should fail")
+        drift_payload = json.loads(out)
+        require(drift_payload["ok"] is False, "unexpected drift should report ok=false")
+        require(
+            drift_payload["consumers"][1]["compatibility_status"] == "drift_needs_review",
+            "unexpected drift should be classified",
+        )
+
+        write_matrix("intentional_adapter")
+        code, out, err = run(
+            [
+                sys.executable,
+                str(CHECK_DHF_CONSUMER_COMPATIBILITY),
+                "--matrix",
+                str(matrix_path),
+                "--consumer",
+                "Consumer",
+                "--consumer-root",
+                str(consumer),
+                "--json",
+            ]
+        )
+        require(code == 0, f"intentional adapter drift should pass: {err or out}")
+        adapter_payload = json.loads(out)
+        require(adapter_payload["summary"]["intentional_adapter"] == 1, "intentional drift should be counted")
+        require((consumer / "scripts" / "harness_recover.py").read_text(encoding="utf-8") != before_text, "test setup should have changed consumer helper")
+        require(
+            (consumer / "scripts" / "harness_recover.py").read_text(encoding="utf-8") == "print('adapter')\n",
+            "checker must not rewrite consumer helper",
+        )
+
+        write_matrix("intentional_adapter", root=str(tmp_path / "missing-consumer"))
+        code, out, err = run([sys.executable, str(CHECK_DHF_CONSUMER_COMPATIBILITY), "--matrix", str(matrix_path), "--json"])
+        require(code == 0, f"missing optional external consumer should not fail: {err or out}")
+        missing_payload = json.loads(out)
+        require(missing_payload["summary"]["root_unavailable"] == 1, "missing external consumer should be explicit")
+
+    print("[PASS] DHF consumer compatibility checker")
+
+
+def test_dhf_packet_schema_examples():
+    schema = json.loads(DHF_PACKET_SCHEMA.read_text(encoding="utf-8"))
+    examples = schema.get("examples")
+    require(isinstance(examples, list) and examples, "DHF packet schema should include examples")
+    required = schema["required"]
+    phase_enum = schema["properties"]["phase"]["enum"]
+    lane_enum = schema["properties"]["execution_lane"]["enum"]
+    forbidden_text = json.dumps(examples, ensure_ascii=False).lower()
+    for forbidden in ["secret", "token", "password", "raw_local_evidence", "customer_data"]:
+        require(forbidden not in forbidden_text, f"DHF packet examples must not include forbidden payload: {forbidden}")
+    for example in examples:
+        for field in required:
+            require(field in example, f"DHF packet example missing required field: {field}")
+        require(example["phase"] in phase_enum, "DHF packet example phase should be valid")
+        require(example["execution_lane"] in lane_enum, "DHF packet example lane should be valid")
+        verification = example["verification"]
+        for field in ["command", "exit_code", "key_output", "timestamp"]:
+            require(field in verification, f"DHF packet example verification missing field: {field}")
+        require(isinstance(example["source_of_truth"], list) and example["source_of_truth"], "source_of_truth should be non-empty")
+        require(example["next_safe_task"], "next_safe_task should be non-empty")
+
+    print("[PASS] DHF packet schema examples")
 
 
 def test_ci_workflow_runs_green_gate():
@@ -4391,6 +4560,7 @@ def test_runner_preflight():
     require(HARNESS_REQUIREMENTS.exists(), f"missing harness requirements helper: {HARNESS_REQUIREMENTS}")
     require(HARNESS_RECOVER.exists(), f"missing harness recover helper: {HARNESS_RECOVER}")
     require(HARNESS_ENV_PROBE.exists(), f"missing harness env probe helper: {HARNESS_ENV_PROBE}")
+    require(CHECK_DHF_CONSUMER_COMPATIBILITY.exists(), f"missing DHF compatibility checker: {CHECK_DHF_CONSUMER_COMPATIBILITY}")
     require(HEADROOM_FILTER.exists(), f"missing headroom filter helper: {HEADROOM_FILTER}")
     require(AUDIT_SKILLS.exists(), f"missing skill governance audit helper: {AUDIT_SKILLS}")
     require(PREPARE_GSTACK_DAILY_REFRESH.exists(), f"missing daily refresh prepare helper: {PREPARE_GSTACK_DAILY_REFRESH}")
@@ -4398,6 +4568,9 @@ def test_runner_preflight():
     require(SYNC_LOCAL_MAIN_IF_SAFE.exists(), f"missing local main sync helper: {SYNC_LOCAL_MAIN_IF_SAFE}")
     require(HARNESS_REQUIREMENTS_TEMPLATE.exists(), f"missing harness requirements template: {HARNESS_REQUIREMENTS_TEMPLATE}")
     require(HARNESS_AGENT_BRIEF_TEMPLATE.exists(), f"missing harness agent brief template: {HARNESS_AGENT_BRIEF_TEMPLATE}")
+    require(DHF_CONSUMER_COMPATIBILITY.exists(), f"missing DHF consumer compatibility matrix: {DHF_CONSUMER_COMPATIBILITY}")
+    require(DHF_INCUBATION_PLAN.exists(), f"missing DHF incubation plan: {DHF_INCUBATION_PLAN}")
+    require(DHF_PACKET_SCHEMA.exists(), f"missing DHF packet schema: {DHF_PACKET_SCHEMA}")
     require(SKILL_GOVERNANCE_DOC.exists(), f"missing skill governance doc: {SKILL_GOVERNANCE_DOC}")
     require(HARNESS_GUARD.exists(), f"missing harness guard hook: {HARNESS_GUARD}")
     require(HARNESS_OBSERVER.exists(), f"missing harness observer hook: {HARNESS_OBSERVER}")
@@ -4540,6 +4713,9 @@ TESTS = [
     test_surfaces_manifest_no_orphans,
     test_check_surfaces_reports_drift,
     test_check_surfaces_validates_public_nav,
+    test_dhf_incubation_artifacts_exist_and_parse,
+    test_dhf_consumer_compatibility_checker,
+    test_dhf_packet_schema_examples,
     test_ci_workflow_runs_green_gate,
     test_skill_governance_audit_cli,
     test_shipq_dhf_prompt_hook_auto_invokes_skill,
