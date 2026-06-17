@@ -14,13 +14,13 @@ Stable rules belong in `AGENTS.md`, `README.md`, `docs/repo-index.md`, or
   - `codex/skills/delivery-harness-framework/SKILL.md`
 - blocked_sources: none
 - unsafe_inputs: none
-- next_safe_task: Next scheduled run should start from python3 scripts/prepare_gstack_dhf_daily_refresh.py --json; if dry-run again resolves to whitespace-only vendor noise, keep DHF no-op unless a generic lifecycle contract actually drifts
+- next_safe_task: After validation, push automation/gstack-dhf-daily-refresh, run merge_gstack_refresh_if_safe.py --apply --verified --json, then sync local main only if helper returns merged
 - required_commands:
   - `python3 test_runner.py`
   - `git diff --check`
   - `./scripts/verify_codex_env.sh --repo-root "$(pwd)" --codex-home "$HOME/.codex" --claude-home "$HOME/.claude"`
-- latest_checkpoint: 2026-06-16T09:05:13-04:00 completed 2026-06-16 gstack daily refresh with vendor whitespace hygiene only; delivery-harness-framework stayed no-op after skill-evaluator review
-- latest_verification: 2026-06-16T09:05:13-04:00 command=python3 test_runner.py; exit_code=0; key_output=ran=61 passed=61 skipped=0 failed=0; [PASS] all tests
+- latest_checkpoint: 2026-06-17T09:04:29-04:00 completed 2026-06-17 gstack daily refresh with vendor whitespace hygiene only; delivery-harness-framework stayed no-op after skill-evaluator review
+- latest_verification: 2026-06-17T09:04:29-04:00 command=python3 test_runner.py; exit_code=0; key_output=ran=61 passed=61 skipped=0 failed=0; [PASS] all tests
 
 ## State Log
 
@@ -1561,3 +1561,24 @@ Stable rules belong in `AGENTS.md`, `README.md`, `docs/repo-index.md`, or
 - blockers:
   - none
 - next_safe_task: Next scheduled run should start from python3 scripts/prepare_gstack_dhf_daily_refresh.py --json; if dry-run again resolves to whitespace-only vendor noise, keep DHF no-op unless a generic lifecycle contract actually drifts
+
+### 2026-06-17T09:04:29-04:00
+- phase: handoff
+- event: checkpoint
+- summary: completed 2026-06-17 gstack daily refresh with vendor whitespace hygiene only; delivery-harness-framework stayed no-op after skill-evaluator review
+- git:
+  - branch: automation/gstack-dhf-daily-refresh
+  - latest_commit: dd8c6f8
+  - dirty_status: dirty
+  - dirty_count: 1
+- changed_surfaces:
+  - `codex/skills/gstack/plan-tune/SKILL.md`
+  - `codex/skills/gstack/test/gstack-developer-profile.test.ts`
+  - `tasks/gstack-dhf-daily-refresh-2026-06-17.md`
+- verification:
+  - command: `python3 test_runner.py`
+  - exit_code: 0
+  - key_output: ran=61 passed=61 skipped=0 failed=0; [PASS] all tests
+- blockers:
+  - none
+- next_safe_task: After validation, push automation/gstack-dhf-daily-refresh, run merge_gstack_refresh_if_safe.py --apply --verified --json, then sync local main only if helper returns merged
