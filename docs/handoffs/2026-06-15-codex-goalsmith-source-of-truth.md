@@ -7,6 +7,8 @@ This note resolves the remaining maintenance question around the
 
 ## Confirmed Source Of Truth
 
+- 2026-06-17 update: `codex-goalsmith` was promoted into the repo-managed global
+  skill tree at [`codex/skills/codex-goalsmith/SKILL.md`](/Users/kezheng/Codes/CursorDeveloper/MyCodexEnv/codex/skills/codex-goalsmith/SKILL.md), which syncs to `~/.codex/skills/codex-goalsmith/`.
 - Repo-local skill path:
   - [`.agents/skills/codex-goalsmith/SKILL.md`](/Users/kezheng/Codes/CursorDeveloper/MyCodexEnv/.agents/skills/codex-goalsmith/SKILL.md)
 - Supporting repo-local surfaces:
@@ -61,6 +63,6 @@ Read:
 If deeper historical rationale is needed, consult:
 - ~/.codex/memories/rollout_summaries/2026-06-14T01-49-14-xEEZ-rename_and_harden_goal_skill_to_codex_goalsmith.md
 
-Do not assume codex-goalsmith belongs under codex/skills/.
-Treat the repo-local .agents path as the source of truth for this skill.
+Treat codex/skills/codex-goalsmith as the global runtime source of truth.
+Use .agents/skills/codex-goalsmith only as the original imported source snapshot.
 ```

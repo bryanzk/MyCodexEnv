@@ -70,8 +70,9 @@ dedicated handoff before any future manual Codex state apply.
 
 - Decision: `handoff_exists_via_repo_local_skill`
 - Why:
-  - The actual source of truth is repo-local under
-    `.agents/skills/codex-goalsmith/`, not under `codex/skills/`.
+  - 2026-06-17 update: the global runtime source of truth was promoted to
+    `codex/skills/codex-goalsmith/`; `.agents/skills/codex-goalsmith/` remains
+    the original imported source snapshot.
   - `skills-lock.json` still references `codex-goalsmith`, and the repo-local
     skill directory includes `SKILL.md`, README, manifest, evals, and helper
     files that make the outcome recoverable from current workspace state.

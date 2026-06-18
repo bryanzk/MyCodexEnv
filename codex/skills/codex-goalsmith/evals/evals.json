@@ -1,0 +1,192 @@
+{
+  "skill_name": "codex-goalsmith",
+  "evals": [
+    {
+      "id": "routing-positive-zh-goal-command",
+      "category": "positive_routing",
+      "name": "loads for Chinese Codex goal request",
+      "prompt": "帮我把这个模糊需求写成 Codex /goal，先给推荐执行版，再给几个可选调整。",
+      "expected_load": true,
+      "expected_accessory_reads": [
+        "references/default-goal-strategy.md",
+        "references/goal-command-playbook.md"
+      ],
+      "forbidden_accessory_reads": [
+        "references/interview-checklist.md"
+      ],
+      "expected_output": "The agent should produce a Chinese direct-copy /goal command, a short default reason, numbered optional adjustments, and an English-compatible mirror.",
+      "assertions": [
+        "The output begins with a copy-ready Chinese /goal command rather than a blank template.",
+        "The executable command prefix is /goal, not /目标.",
+        "The output includes 验证, 约束, 边界, 迭代策略, 完成条件, and 暂停条件.",
+        "The output includes a concise 默认选择理由.",
+        "The output includes numbered 可选调整 with defaults.",
+        "The output includes a faithful Goal Draft (English-compatible) mirror."
+      ]
+    },
+    {
+      "id": "routing-positive-plan-to-goal",
+      "category": "positive_routing",
+      "name": "loads for plan-to-goal interview",
+      "prompt": "这个任务还很乱，先 interview 我，然后把结果收敛成一个可执行的 Goal 指令。",
+      "expected_load": true,
+      "expected_accessory_reads": [
+        "references/interview-checklist.md",
+        "references/goal-command-playbook.md"
+      ],
+      "expected_output": "The agent should ask only high-impact, numbered questions and preserve the final output as an executable /goal command.",
+      "assertions": [
+        "The output asks concise numbered choices instead of a long open-ended questionnaire.",
+        "The choices cover success criteria, verification, constraints, boundaries, iteration, and pause conditions.",
+        "The output tells the user they can answer with defaults or compact option codes.",
+        "The output keeps /goal as the eventual executable command format."
+      ]
+    },
+    {
+      "id": "routing-negative-project-plan",
+      "category": "negative_routing",
+      "name": "does not load for ordinary project planning",
+      "prompt": "给这个功能做一个项目计划，拆成里程碑和任务，不需要 /goal。",
+      "expected_load": false,
+      "expected_output": "The agent should provide an ordinary project plan without forcing the /goal contract.",
+      "assertions": [
+        "The output does not invoke the codex-goalsmith workflow.",
+        "The output does not force a /goal command after the user says it is not needed.",
+        "The output stays focused on milestones and tasks."
+      ]
+    },
+    {
+      "id": "routing-negative-code-review",
+      "category": "negative_routing",
+      "name": "does not load for code review",
+      "prompt": "review 这个 PR，重点找 bug、回归风险和缺失测试。",
+      "expected_load": false,
+      "expected_output": "The agent should use code-review behavior, not generate a goal instruction.",
+      "assertions": [
+        "The output leads with findings rather than a /goal draft.",
+        "The output does not ask the user to turn the review into a Goal 指令.",
+        "The output does not read goal-specific reference files."
+      ]
+    },
+    {
+      "id": "forbidden-load-simple-translation",
+      "category": "forbidden_load",
+      "name": "simple translation should not load the skill",
+      "prompt": "把这句话翻译成英文：今天下午三点开会。",
+      "expected_load": false,
+      "expected_output": "The agent should answer with a direct translation.",
+      "assertions": [
+        "The output is a direct translation.",
+        "The output does not create a /goal command.",
+        "The output does not mention verification, boundaries, or pause conditions."
+      ]
+    },
+    {
+      "id": "forbidden-load-generic-success-criteria",
+      "category": "forbidden_load",
+      "name": "generic success criteria should not trigger unless /goal is requested",
+      "prompt": "帮我写一下这个营销页面的成功标准，给 PM 看就行。",
+      "expected_load": false,
+      "expected_output": "The agent should write PM-facing success criteria without forcing an executable /goal.",
+      "assertions": [
+        "The output does not force the /goal template.",
+        "The output does not read goal-command-playbook.md.",
+        "The output stays in success-criteria language appropriate for PM review."
+      ]
+    },
+    {
+      "id": "progressive-load-default-strategy",
+      "category": "progressive_loading",
+      "name": "reads default strategy for vague low-risk app idea",
+      "prompt": "我要做一个 iOS 提词器 App，帮我写一个可直接复制的 goal。",
+      "expected_load": true,
+      "expected_accessory_reads": [
+        "references/default-goal-strategy.md",
+        "references/goal-command-playbook.md"
+      ],
+      "forbidden_accessory_reads": [
+        "references/interview-checklist.md"
+      ],
+      "expected_output": "The agent should choose conservative local MVP defaults and produce a copy-ready /goal without over-interviewing.",
+      "assertions": [
+        "The output chooses a first-version MVP rather than a complete production app.",
+        "The output avoids accounts, paid services, publishing, and backend scope unless requested.",
+        "The output includes local verification through build/run checks or simulator/device evidence.",
+        "The output does not ask a long questionnaire before giving the recommended goal."
+      ]
+    },
+    {
+      "id": "progressive-load-interview-checklist",
+      "category": "progressive_loading",
+      "name": "reads interview checklist for explicit interview request",
+      "prompt": "先不要直接写 goal，先问我最少的问题，把这个复杂发布任务收敛清楚。",
+      "expected_load": true,
+      "expected_accessory_reads": [
+        "references/interview-checklist.md"
+      ],
+      "expected_output": "The agent should ask only the minimum high-impact questions needed to draft the final goal.",
+      "assertions": [
+        "The output asks short numbered questions with recommended defaults where possible.",
+        "The questions cover deployment risk, verification evidence, allowed writes, and pause conditions.",
+        "The output avoids starting the release task itself.",
+        "The output keeps the final deliverable framed as a /goal command."
+      ]
+    },
+    {
+      "id": "end-to-end-unknown-domain-discovery",
+      "category": "end_to_end",
+      "name": "unknown regulated domain becomes discovery-first goal",
+      "prompt": "帮我写一个 goal：开发医疗影像标注工具，最好能自动判断病灶。",
+      "expected_load": true,
+      "expected_accessory_reads": [
+        "references/default-goal-strategy.md",
+        "references/goal-command-playbook.md"
+      ],
+      "expected_output": "The agent should generate a discovery-first /goal and pause before medical judgment or unsupported claims.",
+      "assertions": [
+        "The goal requires inspecting authoritative project docs, sample data, or official references before implementation.",
+        "The constraints forbid inventing medical conclusions, compliance claims, or unsupported data semantics.",
+        "The pause conditions include medical judgment, real patient data, compliance approval, production deployment, and destructive migration.",
+        "The verification uses sample data or documented assumptions with logs, screenshots, files, or command output."
+      ]
+    },
+    {
+      "id": "end-to-end-copyrighted-game-boundary",
+      "category": "end_to_end",
+      "name": "copyrighted game idea becomes original bounded MVP",
+      "prompt": "帮我写一个 goal，做一个类似 GTA 的网页游戏，越像越好。",
+      "expected_load": true,
+      "expected_accessory_reads": [
+        "references/default-goal-strategy.md",
+        "references/goal-command-playbook.md"
+      ],
+      "expected_output": "The agent should preserve the gameplay aspiration while excluding copyrighted IP, assets, names, and unsafe scope expansion.",
+      "assertions": [
+        "The goal describes an original MVP rather than copying GTA, Rockstar, maps, characters, logos, music, or art assets.",
+        "The constraints forbid copyrighted IP and unsupported real-game assets.",
+        "The boundaries limit writes to the new project or directly related game files.",
+        "The verification includes local browser playthrough evidence and desktop/mobile layout checks.",
+        "The pause conditions include copyrighted assets, official IP use, online services, payments, publishing, and major scope expansion."
+      ]
+    },
+    {
+      "id": "end-to-end-baseline-lift",
+      "category": "end_to_end",
+      "name": "with-skill output beats baseline on boundaries and proof",
+      "prompt": "把“修一下这个问题”变成一个适合 Codex 持续执行的 goal。",
+      "expected_load": true,
+      "expected_accessory_reads": [
+        "references/goal-command-playbook.md",
+        "references/default-goal-strategy.md"
+      ],
+      "expected_output": "The with-skill output should improve over baseline by forcing a concrete outcome, verification, constraints, boundaries, iteration policy, stop condition, and pause condition.",
+      "assertions": [
+        "The output does not accept the vague phrase 修一下这个问题 as the whole goal.",
+        "The output names the missing problem context and either makes a conservative discovery-first assumption or asks a compact clarifying choice.",
+        "The output includes concrete verification evidence rather than make sure it works.",
+        "The output protects unrelated files, secrets, production data, and destructive operations.",
+        "The output is judged better than baseline on actionability, safety boundaries, and completion proof."
+      ]
+    }
+  ]
+}
