@@ -19,8 +19,8 @@ Stable rules belong in `AGENTS.md`, `README.md`, `docs/repo-index.md`, or
   - `python3 test_runner.py`
   - `git diff --check`
   - `./scripts/verify_codex_env.sh --repo-root "$(pwd)" --codex-home "$HOME/.codex" --claude-home "$HOME/.claude"`
-- latest_checkpoint: 2026-06-19T09:05:01-04:00 completed 2026-06-19 gstack daily refresh with gstack 1.58.3.0 browse stealth sync, DHF no-op, and codex 0.142.x verify gate widen
-- latest_verification: 2026-06-19T09:05:01-04:00 command=python3 test_runner.py; exit_code=0; key_output=ran=61 passed=61 skipped=0 failed=0; [PASS] all tests
+- latest_checkpoint: 2026-06-20T09:04:18-04:00 completed 2026-06-20 gstack daily refresh with vendor-noise cleanup only; delivery-harness-framework stayed no-op after skill-evaluator review
+- latest_verification: 2026-06-20T09:04:18-04:00 command=python3 test_runner.py; exit_code=0; key_output=ran=61 passed=61 skipped=0 failed=0; [PASS] all tests
 
 ## State Log
 
@@ -1615,6 +1615,25 @@ Stable rules belong in `AGENTS.md`, `README.md`, `docs/repo-index.md`, or
   - `codex/skills/gstack`
   - `scripts/verify_codex_env.sh`
   - `tasks/gstack-dhf-daily-refresh-2026-06-19.md`
+- verification:
+  - command: `python3 test_runner.py`
+  - exit_code: 0
+  - key_output: ran=61 passed=61 skipped=0 failed=0; [PASS] all tests
+- blockers:
+  - none
+- next_safe_task: Next scheduled run should start from python3 scripts/prepare_gstack_dhf_daily_refresh.py --json; if prepare returns deferred/dns_unreachable, update only automation memory; otherwise stay on automation/gstack-dhf-daily-refresh and let the helper gates decide main merge and local safe-sync.
+
+### 2026-06-20T09:04:18-04:00
+- phase: handoff
+- event: checkpoint
+- summary: completed 2026-06-20 gstack daily refresh with vendor-noise cleanup only; delivery-harness-framework stayed no-op after skill-evaluator review
+- git:
+  - branch: automation/gstack-dhf-daily-refresh
+  - latest_commit: b785d61
+  - dirty_status: dirty
+  - dirty_count: 1
+- changed_surfaces:
+  - `tasks/gstack-dhf-daily-refresh-2026-06-20.md`
 - verification:
   - command: `python3 test_runner.py`
   - exit_code: 0
