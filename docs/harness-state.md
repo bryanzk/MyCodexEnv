@@ -19,8 +19,8 @@ Stable rules belong in `AGENTS.md`, `README.md`, `docs/repo-index.md`, or
   - `python3 test_runner.py`
   - `git diff --check`
   - `./scripts/verify_codex_env.sh --repo-root "$(pwd)" --codex-home "$HOME/.codex" --claude-home "$HOME/.claude"`
-- latest_checkpoint: 2026-06-20T09:06:11-04:00 finalized 2026-06-20 gstack daily refresh after automation push and helper merge; local main safe-sync skipped on dirty worktree
-- latest_verification: 2026-06-20T09:06:11-04:00 command=python3 scripts/merge_gstack_refresh_if_safe.py --repo-root "/Users/kezheng/.codex/automations/gstack-dhf-daily-refresh/repo" --apply --verified --json; exit_code=0; key_output={"status":"merged","main_before":"b785d61...","main_after":"6457c9d...","reason":"ahead_only"}
+- latest_checkpoint: 2026-06-20T09:07:09-04:00 corrected final 2026-06-20 daily refresh report SHA after confirmed remote main=automation parity at 5e6cd18
+- latest_verification: 2026-06-20T09:07:09-04:00 command=git ls-remote origin refs/heads/automation/gstack-dhf-daily-refresh refs/heads/main; exit_code=0; key_output=5e6cd18 refs/heads/automation/gstack-dhf-daily-refresh; 5e6cd18 refs/heads/main
 
 ## State Log
 
@@ -1657,6 +1657,25 @@ Stable rules belong in `AGENTS.md`, `README.md`, `docs/repo-index.md`, or
   - command: `python3 scripts/merge_gstack_refresh_if_safe.py --repo-root "/Users/kezheng/.codex/automations/gstack-dhf-daily-refresh/repo" --apply --verified --json`
   - exit_code: 0
   - key_output: {"status":"merged","main_before":"b785d61...","main_after":"6457c9d...","reason":"ahead_only"}
+- blockers:
+  - none
+- next_safe_task: Next scheduled run should start from python3 scripts/prepare_gstack_dhf_daily_refresh.py --json; if prepare returns deferred/dns_unreachable, update only automation memory; otherwise stay on automation/gstack-dhf-daily-refresh and let the helper gates decide main merge and local safe-sync.
+
+### 2026-06-20T09:07:09-04:00
+- phase: handoff
+- event: checkpoint
+- summary: corrected final 2026-06-20 daily refresh report SHA after confirmed remote main=automation parity at 5e6cd18
+- git:
+  - branch: automation/gstack-dhf-daily-refresh
+  - latest_commit: 5e6cd18
+  - dirty_status: dirty
+  - dirty_count: 1
+- changed_surfaces:
+  - `tasks/gstack-dhf-daily-refresh-2026-06-20.md`
+- verification:
+  - command: `git ls-remote origin refs/heads/automation/gstack-dhf-daily-refresh refs/heads/main`
+  - exit_code: 0
+  - key_output: 5e6cd18 refs/heads/automation/gstack-dhf-daily-refresh; 5e6cd18 refs/heads/main
 - blockers:
   - none
 - next_safe_task: Next scheduled run should start from python3 scripts/prepare_gstack_dhf_daily_refresh.py --json; if prepare returns deferred/dns_unreachable, update only automation memory; otherwise stay on automation/gstack-dhf-daily-refresh and let the helper gates decide main merge and local safe-sync.

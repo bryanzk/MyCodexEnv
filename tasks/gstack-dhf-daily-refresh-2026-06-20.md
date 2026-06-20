@@ -12,7 +12,7 @@
 - 本轮 repo 改动：不保留任何净 vendor 代码差异；仅新增今日日报与 harness checkpoint
 - DHF skill 调整：不需要；按 `skill-evaluator` 做 manual paired review，generic lifecycle contract 保持 no-op
 - runtime 同步：不需要；本轮 repo source 未产生需要同步到 `$HOME/.codex` 的净 runtime 变更
-- 提交结果：`6457c9d` → `f64bf6c`
+- 提交结果：`6457c9d` → `5e6cd18`
 
 ## prepare 结论
 
@@ -56,8 +56,8 @@
 
 ## Push / Merge 状态
 
-- automation branch push：已成功推送到 `automation/gstack-dhf-daily-refresh`，remote SHA `f64bf6c`
-- main auto-merge：`merged`；`scripts/merge_gstack_refresh_if_safe.py --repo-root "$(pwd)" --apply --verified --json` 已将 `origin/main` 从 `6457c9d` 推进到 `f64bf6c`
+- automation branch push：已成功推送到 `automation/gstack-dhf-daily-refresh`，remote SHA `5e6cd18`
+- main auto-merge：`merged`；`scripts/merge_gstack_refresh_if_safe.py --repo-root "$(pwd)" --apply --verified --json` 已将 `origin/main` 从 `6457c9d` 推进到 `5e6cd18`
 - 本地 main safe-sync：`skipped`；`scripts/sync_local_main_if_safe.py --repo-root /Users/kezheng/Codes/CursorDeveloper/MyCodexEnv --apply --json` 检测到 `dirty_worktree`，详情 `?? .understand-anything/`
 
 ## 下一次最小自动动作
