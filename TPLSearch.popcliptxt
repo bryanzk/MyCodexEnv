@@ -1,0 +1,6 @@
+#popclip
+name: TPL Search
+icon: search filled TPL
+requirements: [text]
+url: "https://tpl.bibliocommons.com/v2/search?query=***&searchType=smart"
+clean query: true
