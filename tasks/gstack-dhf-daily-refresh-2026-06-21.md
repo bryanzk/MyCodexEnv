@@ -12,9 +12,8 @@
 - 本轮 repo 改动：不保留任何净 vendor 代码差异；仅新增今日日报与 harness checkpoint
 - DHF skill 调整：不需要；按 `skill-evaluator` 做 manual paired review，generic lifecycle contract 保持 no-op
 - runtime 同步：不需要；本轮 repo source 未产生需要同步到 `$HOME/.codex` 的净 runtime 变更
-- 提交结果：`1d427b1`
-- automation branch push：成功；远端 `refs/heads/automation/gstack-dhf-daily-refresh` 已到 `1d427b1`
-- main auto-merge：`merged`；远端 `refs/heads/main` 已由 helper 快进到 `1d427b1`
+- automation branch push：成功；远端 `refs/heads/automation/gstack-dhf-daily-refresh` 已更新到本轮最终 refresh 提交
+- main auto-merge：`merged`；远端 `refs/heads/main` 已由 helper 快进到与 automation branch 一致
 - 本地 main safe-sync：`skipped`；helper 返回 `reason=not_behind_only`，当前本地 `main` 为 `ahead 1, behind 7`
 
 ## prepare 结论
