@@ -14,13 +14,13 @@ Stable rules belong in `AGENTS.md`, `README.md`, `docs/repo-index.md`, or
   - `codex/skills/delivery-harness-framework/SKILL.md`
 - blocked_sources: none
 - unsafe_inputs: none
-- next_safe_task: After validation, push automation/gstack-dhf-daily-refresh, run merge_gstack_refresh_if_safe.py --apply --verified --json, then sync local main only if helper returns merged
+- next_safe_task: Next scheduled run should start from python3 scripts/prepare_gstack_dhf_daily_refresh.py --json; if prepare returns deferred/dns_unreachable, update only automation memory; otherwise stay on automation/gstack-dhf-daily-refresh and let the helper gates decide main merge and local safe-sync.
 - required_commands:
   - `python3 test_runner.py`
   - `git diff --check`
   - `./scripts/verify_codex_env.sh --repo-root "$(pwd)" --codex-home "$HOME/.codex" --claude-home "$HOME/.claude"`
-- latest_checkpoint: 2026-06-21T09:04:52-04:00 completed 2026-06-21 gstack daily refresh with vendor-noise cleanup only; delivery-harness-framework stayed no-op after skill-evaluator review
-- latest_verification: 2026-06-21T09:04:52-04:00 command=python3 test_runner.py; exit_code=0; key_output=ran=61 passed=61 skipped=0 failed=0; [PASS] all tests
+- latest_checkpoint: 2026-06-21T09:06:16-04:00 finalized 2026-06-21 gstack daily refresh after automation push and helper merge; local main safe-sync skipped because local repo is not behind-only
+- latest_verification: 2026-06-21T09:06:16-04:00 command=git ls-remote origin refs/heads/automation/gstack-dhf-daily-refresh refs/heads/main; exit_code=0; key_output=1d427b1 refs/heads/automation/gstack-dhf-daily-refresh; 1d427b1 refs/heads/main
 
 ## State Log
 
@@ -1698,3 +1698,22 @@ Stable rules belong in `AGENTS.md`, `README.md`, `docs/repo-index.md`, or
 - blockers:
   - none
 - next_safe_task: After validation, push automation/gstack-dhf-daily-refresh, run merge_gstack_refresh_if_safe.py --apply --verified --json, then sync local main only if helper returns merged
+
+### 2026-06-21T09:06:16-04:00
+- phase: handoff
+- event: checkpoint
+- summary: finalized 2026-06-21 gstack daily refresh after automation push and helper merge; local main safe-sync skipped because local repo is not behind-only
+- git:
+  - branch: automation/gstack-dhf-daily-refresh
+  - latest_commit: 1d427b1
+  - dirty_status: dirty
+  - dirty_count: 1
+- changed_surfaces:
+  - `tasks/gstack-dhf-daily-refresh-2026-06-21.md`
+- verification:
+  - command: `git ls-remote origin refs/heads/automation/gstack-dhf-daily-refresh refs/heads/main`
+  - exit_code: 0
+  - key_output: 1d427b1 refs/heads/automation/gstack-dhf-daily-refresh; 1d427b1 refs/heads/main
+- blockers:
+  - none
+- next_safe_task: Next scheduled run should start from python3 scripts/prepare_gstack_dhf_daily_refresh.py --json; if prepare returns deferred/dns_unreachable, update only automation memory; otherwise stay on automation/gstack-dhf-daily-refresh and let the helper gates decide main merge and local safe-sync.
