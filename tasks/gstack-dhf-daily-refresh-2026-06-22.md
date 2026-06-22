@@ -11,9 +11,9 @@
 - gstack 同步：已按要求执行实际 sync，vendor 快照已更新到 `1.58.4.0`
 - DHF skill 调整：不需要；本轮上游变化没有新增 generic lifecycle phase、execution lane、runtime helper、handoff surface 或 verification contract
 - runtime 同步：本轮 `verify_codex_env.sh` 直接通过，无需额外运行 `~/.codex/skills/gstack/setup`
-- automation branch push：`pending`
-- main auto-merge：`pending`
-- 本地 main safe-sync：`pending`
+- automation branch push：成功；`refs/heads/automation/gstack-dhf-daily-refresh` 已推到 `d16b6d2`
+- main auto-merge：`merged`；helper 已将远端 `main` 从 `d45cc48` 快进到 `d16b6d2`
+- 本地 main safe-sync：`updated`；helper 已将本地 `/Users/kezheng/Codes/CursorDeveloper/MyCodexEnv` 的 `main` 从 `d45cc48` 快进到 `d16b6d2`
 
 ## prepare 结论
 
@@ -61,12 +61,24 @@
    - exit_code: `0`
    - key_output: `Verification passed.`
 
-## 待回填
+## 提交与 helper 结果
 
-- `git commit` SHA
-- automation branch push 结果
-- `merge_gstack_refresh_if_safe.py` 结果
-- `sync_local_main_if_safe.py` 结果
+- refresh commit：`d16b6d2` (`chore: refresh gstack vendor to 1.58.4.0`)
+- push：
+  - 命令：`git fetch origin && git rebase origin/main && git push --force-with-lease origin HEAD:refs/heads/automation/gstack-dhf-daily-refresh`
+  - 结果：`14e87c0..d16b6d2  HEAD -> automation/gstack-dhf-daily-refresh`
+- main auto-merge helper：
+  - 命令：`python3 scripts/merge_gstack_refresh_if_safe.py --repo-root "$(pwd)" --apply --verified --json`
+  - 结果：`status=merged`
+  - `main_before=d45cc48`
+  - `main_after=d16b6d2`
+  - `reason=ahead_only`
+- 本地 main safe-sync helper：
+  - 命令：`python3 scripts/sync_local_main_if_safe.py --repo-root /Users/kezheng/Codes/CursorDeveloper/MyCodexEnv --apply --json`
+  - 结果：`status=updated`
+  - `local_before=d45cc48`
+  - `local_after=d16b6d2`
+  - `reason=behind_only`
 
 ## 下一次最小自动动作
 
