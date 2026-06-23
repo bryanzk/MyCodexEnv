@@ -8,12 +8,12 @@
 - prepare 本地版本：`1.58.4.0`
 - 上游 gstack 版本：`1.58.4.0`
 - dry-run 结论：`needs_update=true`，`changed_files=1193`，`diff_files=2`
-- gstack 同步：已按要求执行实际 sync；净 diff 为 2 个上游文件
-- DHF skill 调整：不需要；本轮上游变化只涉及 `plan-tune` 文案尾随空格与 `gstack-developer-profile` 测试空行，不触及 generic lifecycle contract
+- gstack 同步：已按要求执行实际 sync；dry-run 曾提示 2 个上游文件，清理 vendor 格式噪音后最终仅保留 1 个净 vendor diff
+- DHF skill 调整：不需要；本轮上游变化最终只保留 `gstack-developer-profile` 测试空行调整，不触及 generic lifecycle contract
 - runtime 同步：已通过 clone_root 内 `./scripts/sync_codex_home.sh --repo-root "$(pwd)" --sync-agents-only` 补齐 `$HOME/.codex/config.toml` 中 verifier 需要的 `codex_hooks = true`；本轮无需运行 `~/.codex/skills/gstack/setup`
-- automation branch push：待执行
-- main auto-merge：待执行
-- 本地 main safe-sync：待执行
+- automation branch push：已成功完成第一轮 push；为让本报告自身进入远端 refs，后续还有一次 report-only push
+- main auto-merge：第一轮 helper 已 `merged`
+- 本地 main safe-sync：第一轮 helper 已 `updated`
 
 ## prepare 结论
 
@@ -31,12 +31,12 @@
 
 ## 上游差异与 DHF 结论
 
-- `python3 scripts/sync_gstack_vendor.py --repo-root "$(pwd)" --source https://github.com/garrytan/gstack.git --json` 执行后，净 diff 只有：
+- `python3 scripts/sync_gstack_vendor.py --repo-root "$(pwd)" --source https://github.com/garrytan/gstack.git --json` 执行后，dry-run 对应净 diff 一度涉及：
   - `codex/skills/gstack/plan-tune/SKILL.md`
   - `codex/skills/gstack/test/gstack-developer-profile.test.ts`
 - 具体差异：
-  - `plan-tune/SKILL.md` 仅修正一处尾随空格
-  - `gstack-developer-profile.test.ts` 仅补 2 处空行
+  - `plan-tune/SKILL.md` 仅修正一处尾随空格，清理后未保留最终 diff
+  - `gstack-developer-profile.test.ts` 保留 1 处上游测试空行调整
 - `delivery-harness-framework` 保持 no-op：
   - 没有新增 generic lifecycle phase / execution lane
   - 没有新增 DHF 必须感知的 helper CLI / handoff surface
@@ -68,16 +68,26 @@
 
 ## 提交与 helper 结果
 
-- refresh commit：待执行
+- refresh commit：`4736739` (`chore: refresh gstack daily snapshot`)
 - push：
   - 命令：`git fetch origin && git rebase origin/main && git push --force-with-lease origin HEAD:refs/heads/automation/gstack-dhf-daily-refresh`
-  - 结果：待执行
+  - 第一轮结果：成功，`fd9f845..4736739  HEAD -> automation/gstack-dhf-daily-refresh`
 - main auto-merge helper：
   - 命令：`python3 scripts/merge_gstack_refresh_if_safe.py --repo-root "$(pwd)" --apply --verified --json`
-  - 结果：待执行
+  - 第一轮结果：`status=merged`
+  - `reason=ahead_only`
+  - `main_before=4eb4b5d`
+  - `main_after=4736739`
 - 本地 main safe-sync helper：
   - 命令：`python3 scripts/sync_local_main_if_safe.py --repo-root /Users/kezheng/Codes/CursorDeveloper/MyCodexEnv --apply --json`
-  - 结果：待执行
+  - 第一轮结果：`status=updated`
+  - `reason=behind_only`
+  - `local_before=4eb4b5d`
+  - `local_after=4736739`
+- report-only follow-up：
+  - 本报告写入后还会产生一个 automation-only 收尾提交
+  - 该收尾提交将再次执行同一组 push / merge helper / local safe-sync
+  - 最终 converged SHA 与 fresh helper 证据记入 automation memory
 
 ## 下一次最小自动动作
 
