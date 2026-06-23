@@ -26,7 +26,6 @@ let tmpHome: string;
 beforeEach(() => {
   tmpHome = fs.mkdtempSync(path.join(os.tmpdir(), 'gstack-test-'));
 });
-
 afterEach(() => {
   fs.rmSync(tmpHome, { recursive: true, force: true });
 });
@@ -43,6 +42,7 @@ function runDev(...args: string[]): { stdout: string; stderr: string; status: nu
     status: res.status ?? -1,
   };
 }
+
 function logQuestion(payload: Record<string, unknown>): number {
   const res = spawnSync(BIN_LOG, [JSON.stringify(payload)], {
     env: { ...process.env, GSTACK_HOME: tmpHome },
