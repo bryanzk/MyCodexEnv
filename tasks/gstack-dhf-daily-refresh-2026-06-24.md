@@ -11,9 +11,9 @@
 - gstack 同步：已按要求执行实际 sync；dry-run 命中的 2 处差异都属于格式噪音，清理后未保留任何 vendor 净 diff
 - DHF skill 调整：不需要；本轮没有 generic lifecycle contract 漂移
 - runtime 同步：已在 clone_root 内执行 `./scripts/sync_codex_home.sh --repo-root "$(pwd)" --codex-home "$HOME/.codex" --skip-superpowers-sync`，补齐 `$HOME/.codex/skills/.system`
-- automation branch push：待本报告提交后执行
-- main auto-merge：待 push 后执行 helper
-- 本地 main safe-sync：待 main auto-merge 结果确定后执行 helper
+- automation branch push：已成功推送到 `automation/gstack-dhf-daily-refresh`，当前远端 SHA `13ef6d1`
+- main auto-merge：helper 已 `merged`，远端 `main` 已快进到 `13ef6d1`
+- 本地 main safe-sync：helper 已 `updated`，本地 `/Users/kezheng/Codes/CursorDeveloper/MyCodexEnv` 的 `main` 已快进到 `13ef6d1`
 
 ## prepare 结论
 
@@ -70,14 +70,41 @@
 
 ## 提交与 helper 结果
 
-- 本报告提交后将执行：
-  - `git add tasks/gstack-dhf-daily-refresh-2026-06-24.md`
-  - `git commit -m "chore: record gstack dhf daily refresh report"`
-  - `git fetch origin && git rebase origin/main`
-  - `git push --force-with-lease origin HEAD:refs/heads/automation/gstack-dhf-daily-refresh`
-  - `python3 scripts/merge_gstack_refresh_if_safe.py --repo-root "$(pwd)" --apply --verified --json`
-  - 若 helper 返回 `merged`，再执行 `python3 scripts/sync_local_main_if_safe.py --repo-root /Users/kezheng/Codes/CursorDeveloper/MyCodexEnv --apply --json`
-- 最终 commit SHA、push 状态、main auto-merge 状态和 local main safe-sync 状态将在本轮收尾提交中回填
+- report commit：`13ef6d1` (`chore: record gstack dhf daily refresh report`)
+- push：
+  - 命令：`git fetch origin && git rebase origin/main && git push --force-with-lease origin HEAD:refs/heads/automation/gstack-dhf-daily-refresh`
+  - 结果：成功，`ef5d763..13ef6d1  HEAD -> automation/gstack-dhf-daily-refresh`
+- main auto-merge helper：
+  - 命令：`python3 scripts/merge_gstack_refresh_if_safe.py --repo-root "$(pwd)" --apply --verified --json`
+  - 结果：`status=merged`
+  - `reason=ahead_only`
+  - `main_before=ef5d763`
+  - `main_after=13ef6d1`
+- 本地 main safe-sync helper：
+  - 命令：`python3 scripts/sync_local_main_if_safe.py --repo-root /Users/kezheng/Codes/CursorDeveloper/MyCodexEnv --apply --json`
+  - 结果：`status=updated`
+  - `reason=behind_only`
+  - `local_before=ef5d763`
+  - `local_after=13ef6d1`
+- 收敛状态：
+  - `refs/heads/automation/gstack-dhf-daily-refresh = 13ef6d1`
+  - `refs/heads/main = 13ef6d1`
+  - `local /Users/kezheng/Codes/CursorDeveloper/MyCodexEnv main = 13ef6d1`
+
+## 收尾证据
+
+1. `git ls-remote origin refs/heads/automation/gstack-dhf-daily-refresh refs/heads/main`
+   - exit_code: `0`
+   - key_output: `13ef6d1 refs/heads/automation/gstack-dhf-daily-refresh; 13ef6d1 refs/heads/main`
+   - timestamp: `2026-06-24T13:05:11Z`
+2. `git status --short --branch && git rev-parse HEAD`
+   - exit_code: `0`
+   - key_output: `## automation/gstack-dhf-daily-refresh; CLONE_HEAD=13ef6d1`
+   - timestamp: `2026-06-24T13:05:11Z`
+3. `git -C /Users/kezheng/Codes/CursorDeveloper/MyCodexEnv status --short --branch && git -C /Users/kezheng/Codes/CursorDeveloper/MyCodexEnv rev-parse main`
+   - exit_code: `0`
+   - key_output: `## main...origin/main; LOCAL_HEAD=13ef6d1`
+   - timestamp: `2026-06-24T13:05:11Z`
 
 ## 下一次最小自动动作
 
