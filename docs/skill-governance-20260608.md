@@ -112,7 +112,6 @@ Initial grouping:
 These categories need routing or source policy decisions before cleanup:
 
 - `gstack-*` alias wrappers: keep until a canonical gstack naming policy is selected.
-- `arscontexta-*` child skills: most child skills have no direct strong signal, but the parent/router skills are active enough that this should be reviewed as a bundle.
 - `.agents/skills` duplicates: 29 skills have identical copies under `.agents/skills`, repo, and global runtime. This is source duplication, not proof the skills are obsolete.
 - `codex-retrospective`: current strong signal is low, but it is intentionally repo-managed and connected to previous skill maintenance work.
 

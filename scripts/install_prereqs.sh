@@ -4,7 +4,7 @@ set -euo pipefail
 # 安装并验证 bootstrap 依赖。
 NON_INTERACTIVE="false"
 CHROME_DEVTOOLS_MCP_VERSION="0.20.0"
-ACCEPTED_CODEX_VERSION_PREFIXES=("0.104.0" "0.130.0" "0.131.0" "0.133.0" "0.135.0" "0.136.0" "0.137.0" "0.138.0" "0.140.0" "0.142.0")
+ACCEPTED_CODEX_VERSION_PREFIXES=("0.104.0" "0.130.0" "0.131.0" "0.133.0" "0.135.0" "0.136.0" "0.137.0" "0.138.0" "0.140.0" "0.142.")
 
 while [[ $# -gt 0 ]]; do
   case "$1" in

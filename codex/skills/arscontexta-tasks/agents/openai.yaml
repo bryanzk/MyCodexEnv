@@ -1,4 +1,0 @@
-interface:
-  display_name: "Ars Tasks"
-  short_description: "Manage queue state and task transitions"
-  default_prompt: "Use $arscontexta-tasks to reprioritize and update the current queue safely."
