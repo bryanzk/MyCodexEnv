@@ -10,10 +10,10 @@
 - dry-run 结论：`needs_update=true`，`changed_files=1193`，`diff_files=2`
 - gstack 同步：已按要求执行实际 sync；dry-run 命中的 2 处差异都属于格式噪音，清理后未保留任何 vendor 净 diff
 - DHF skill 调整：不需要；本轮没有 generic lifecycle contract 漂移
-- runtime 同步：待验证；仅在 `verify_codex_env.sh` 失败时按仓库脚本最小修复
-- automation branch push：待执行
-- main auto-merge：待执行
-- 本地 main safe-sync：待执行
+- runtime 同步：无需额外同步；`verify_codex_env.sh` 直接通过
+- automation branch push：已成功推送到 `automation/gstack-dhf-daily-refresh`，当前远端 SHA `dc14f21`
+- main auto-merge：helper 已 `merged`，远端 `main` 已快进到 `dc14f21`
+- 本地 main safe-sync：helper 已 `updated`，本地 `/Users/kezheng/Codes/CursorDeveloper/MyCodexEnv` 的 `main` 已快进到 `dc14f21`
 
 ## prepare 结论
 
@@ -70,7 +70,41 @@
 
 ## 提交与 helper 结果
 
-待补充本轮 commit / push / merge helper / local main safe-sync 结果。
+- report commit：`dc14f21` (`chore: record gstack dhf daily refresh report`)
+- push：
+  - 命令：`git fetch origin && git rebase origin/main && git push --force-with-lease origin HEAD:refs/heads/automation/gstack-dhf-daily-refresh`
+  - 结果：成功，`ba8f97a..dc14f21  HEAD -> automation/gstack-dhf-daily-refresh`
+- main auto-merge helper：
+  - 命令：`python3 scripts/merge_gstack_refresh_if_safe.py --repo-root "$(pwd)" --apply --verified --json`
+  - 结果：`status=merged`
+  - `reason=ahead_only`
+  - `main_before=ba8f97a`
+  - `main_after=dc14f21`
+- 本地 main safe-sync helper：
+  - 命令：`python3 scripts/sync_local_main_if_safe.py --repo-root /Users/kezheng/Codes/CursorDeveloper/MyCodexEnv --apply --json`
+  - 结果：`status=updated`
+  - `reason=behind_only`
+  - `local_before=ba8f97a`
+  - `local_after=dc14f21`
+- 收敛状态：
+  - `refs/heads/automation/gstack-dhf-daily-refresh = dc14f21`
+  - `refs/heads/main = dc14f21`
+  - `local /Users/kezheng/Codes/CursorDeveloper/MyCodexEnv main = dc14f21`
+
+## 收尾证据
+
+1. `git ls-remote origin refs/heads/automation/gstack-dhf-daily-refresh refs/heads/main`
+   - exit_code: `0`
+   - key_output: `dc14f21 refs/heads/automation/gstack-dhf-daily-refresh; dc14f21 refs/heads/main`
+   - timestamp: `2026-06-25T13:04:53Z`
+2. `git status --short --branch && git rev-parse --short=7 HEAD`
+   - exit_code: `0`
+   - key_output: `CLONE_STATUS=## automation/gstack-dhf-daily-refresh; CLONE_HEAD=dc14f21`
+   - timestamp: `2026-06-25T13:04:52Z`
+3. `git -C /Users/kezheng/Codes/CursorDeveloper/MyCodexEnv status --short --branch && git -C /Users/kezheng/Codes/CursorDeveloper/MyCodexEnv rev-parse --short=7 main`
+   - exit_code: `0`
+   - key_output: `LOCAL_STATUS=## main...origin/main; LOCAL_HEAD=dc14f21`
+   - timestamp: `2026-06-25T13:04:52Z`
 
 ## 下一次最小自动动作
 
