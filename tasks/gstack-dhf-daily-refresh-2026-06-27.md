@@ -11,7 +11,7 @@
 - gstack 同步：已执行实际 sync；净 diff 仅剩 2 处 vendor 格式噪音，已最小清理，未保留 vendor 实质更新
 - DHF skill 调整：不需要；本轮没有 generic lifecycle contract 漂移
 - runtime 同步：无需额外同步；`verify_codex_env.sh` 直接通过
-- report 首次提交：`f6d5ca2` (`chore: record gstack dhf daily refresh report`)
+- report 提交：先提交 `f6d5ca2` 记录初稿，再提交 `3fb7b96` 回写 helper 最终状态
 - automation branch push：已成功
 - main auto-merge：helper 已 `merged`
 - 本地 main safe-sync：helper 已 `updated`
@@ -88,20 +88,44 @@
   - `local_after=f6d5ca20dd6fe4c635ec0312a8a92546923d9849`
   - timestamp: `2026-06-27T13:04:37Z`
 
-## 收敛检查
+## 第二轮 report-only 收口
+
+- report 最终状态回写提交：`3fb7b96`
+- 第二次 push：
+  - 命令：`git fetch origin && git rebase origin/main && git push --force-with-lease origin HEAD:refs/heads/automation/gstack-dhf-daily-refresh`
+  - 结果：成功，`f6d5ca2..3fb7b96  HEAD -> automation/gstack-dhf-daily-refresh`
+  - timestamp: `2026-06-27T13:05:39Z`
+- helper 首次重跑：
+  - `merge_gstack_refresh_if_safe.py` 先返回 `status=synced` / `reason=already_equal`
+  - 原因：helper 读取的是尚未刷新的 local `origin/automation/gstack-dhf-daily-refresh`，`automation_head` 仍停在 `f6d5ca2`
+  - 处置：在 clone 内补跑 `git fetch origin`，随后顺序重跑 helper
+- `git fetch origin`
+  - 结果：成功
+  - timestamp: `2026-06-27T13:05:53Z`
+- fetch 后重跑 main auto-merge helper：
+  - 命令：`python3 scripts/merge_gstack_refresh_if_safe.py --repo-root "$(pwd)" --apply --verified --json`
+  - 结果：`status=merged`
+  - `reason=ahead_only`
+  - timestamp: `2026-06-27T13:06:01Z`
+- fetch 后顺序重跑本地 main safe-sync helper：
+  - 命令：`python3 scripts/sync_local_main_if_safe.py --repo-root /Users/kezheng/Codes/CursorDeveloper/MyCodexEnv --apply --json`
+  - 结果：`status=updated`
+  - `reason=behind_only`
+  - timestamp: `2026-06-27T13:06:10Z`
+
+## 最终收敛检查
 
 - 远端 refs：
-  - `refs/heads/automation/gstack-dhf-daily-refresh=f6d5ca20dd6fe4c635ec0312a8a92546923d9849`
-  - `refs/heads/main=f6d5ca20dd6fe4c635ec0312a8a92546923d9849`
-  - timestamp: `2026-06-27T13:04:51Z`
+  - `refs/heads/automation/gstack-dhf-daily-refresh` 与 `refs/heads/main` 已收敛到同一最终 report commit
+  - timestamp: `2026-06-27T13:06:21Z`
 - standalone clone：
   - `git status --short --branch` => `## automation/gstack-dhf-daily-refresh`
-  - `git rev-parse --short=7 HEAD` => `f6d5ca2`
-  - timestamp: `2026-06-27T13:04:51Z`
+  - `git rev-parse --short=7 HEAD` => 最新 report commit
+  - timestamp: `2026-06-27T13:06:21Z`
 - 本地 repo：
   - `git -C /Users/kezheng/Codes/CursorDeveloper/MyCodexEnv status --short --branch` => `## main...origin/main`
-  - `git -C /Users/kezheng/Codes/CursorDeveloper/MyCodexEnv rev-parse --short=7 main` => `f6d5ca2`
-  - timestamp: `2026-06-27T13:04:51Z`
+  - `git -C /Users/kezheng/Codes/CursorDeveloper/MyCodexEnv rev-parse --short=7 main` => 最新 report commit
+  - timestamp: `2026-06-27T13:06:21Z`
 
 ## 下一次最小自动动作
 
