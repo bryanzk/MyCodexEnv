@@ -11,9 +11,10 @@
 - gstack 同步：已执行实际 sync；净 diff 仅剩 2 处 vendor 格式噪音，已最小清理，未保留 vendor 实质更新
 - DHF skill 调整：不需要；本轮没有 generic lifecycle contract 漂移
 - runtime 同步：无需额外同步；`verify_codex_env.sh` 直接通过
-- automation branch push：待执行
-- main auto-merge：待执行
-- 本地 main safe-sync：待执行
+- report 首次提交：`f6d5ca2` (`chore: record gstack dhf daily refresh report`)
+- automation branch push：已成功
+- main auto-merge：helper 已 `merged`
+- 本地 main safe-sync：helper 已 `updated`
 
 ## prepare 结论
 
@@ -64,6 +65,43 @@
    - exit_code: `0`
    - key_output: `Verification passed.`
    - timestamp: `2026-06-27T13:03:31Z`
+
+## 第一轮提交与 helper 结果
+
+- report 初始提交：`f6d5ca2`
+- push：
+  - 命令：`git fetch origin && git rebase origin/main && git push --force-with-lease origin HEAD:refs/heads/automation/gstack-dhf-daily-refresh`
+  - 结果：成功，`8326e40..f6d5ca2  HEAD -> automation/gstack-dhf-daily-refresh`
+  - timestamp: `2026-06-27T13:04:23Z`
+- main auto-merge helper：
+  - 命令：`python3 scripts/merge_gstack_refresh_if_safe.py --repo-root "$(pwd)" --apply --verified --json`
+  - 结果：`status=merged`
+  - `reason=ahead_only`
+  - `main_before=8326e40970f18c5bd32b48f18f657885879c8a28`
+  - `main_after=f6d5ca20dd6fe4c635ec0312a8a92546923d9849`
+  - timestamp: `2026-06-27T13:04:30Z`
+- 本地 main safe-sync helper：
+  - 命令：`python3 scripts/sync_local_main_if_safe.py --repo-root /Users/kezheng/Codes/CursorDeveloper/MyCodexEnv --apply --json`
+  - 结果：`status=updated`
+  - `reason=behind_only`
+  - `local_before=8326e40970f18c5bd32b48f18f657885879c8a28`
+  - `local_after=f6d5ca20dd6fe4c635ec0312a8a92546923d9849`
+  - timestamp: `2026-06-27T13:04:37Z`
+
+## 收敛检查
+
+- 远端 refs：
+  - `refs/heads/automation/gstack-dhf-daily-refresh=f6d5ca20dd6fe4c635ec0312a8a92546923d9849`
+  - `refs/heads/main=f6d5ca20dd6fe4c635ec0312a8a92546923d9849`
+  - timestamp: `2026-06-27T13:04:51Z`
+- standalone clone：
+  - `git status --short --branch` => `## automation/gstack-dhf-daily-refresh`
+  - `git rev-parse --short=7 HEAD` => `f6d5ca2`
+  - timestamp: `2026-06-27T13:04:51Z`
+- 本地 repo：
+  - `git -C /Users/kezheng/Codes/CursorDeveloper/MyCodexEnv status --short --branch` => `## main...origin/main`
+  - `git -C /Users/kezheng/Codes/CursorDeveloper/MyCodexEnv rev-parse --short=7 main` => `f6d5ca2`
+  - timestamp: `2026-06-27T13:04:51Z`
 
 ## 下一次最小自动动作
 
