@@ -11,10 +11,10 @@
 - gstack 同步：已执行实际 sync；净 diff 仅剩 2 处 vendor 格式噪音，已最小清理，未保留 vendor 实质更新
 - DHF skill 调整：不需要；本轮没有 generic lifecycle contract 漂移
 - runtime 同步：无需额外同步；`verify_codex_env.sh` 直接通过
-- report 提交：待回写
-- automation branch push：待回写
-- main auto-merge：待回写
-- 本地 main safe-sync：待回写
+- report 提交：已先提交 `2ded99e` 初稿；随后执行一次 report-only closeout，将 helper 结果落回远端
+- automation branch push：已完成初次 push；closeout push 待执行
+- main auto-merge：初次 helper 已 `merged`
+- 本地 main safe-sync：初次 helper 已 `updated`
 
 ## prepare 结论
 
@@ -70,9 +70,32 @@
    - key_output: `Verification passed.`
    - timestamp: `2026-06-28T13:03:41Z`
 
-## 待回写状态
+## 第一轮提交与 helper 结果
 
-- 提交、push、`merge_gstack_refresh_if_safe.py` 与 `sync_local_main_if_safe.py` 结果将在验证后的同一轮 automation 流程中回写到本文件
+- report 初始提交：`2ded99e`
+- push：
+  - 命令：`git fetch origin && git rebase origin/main && git push --force-with-lease origin HEAD:refs/heads/automation/gstack-dhf-daily-refresh`
+  - 结果：成功，`b8c561e..2ded99e  HEAD -> automation/gstack-dhf-daily-refresh`
+  - timestamp: `2026-06-28T13:04:51Z`
+- main auto-merge helper：
+  - 命令：`python3 scripts/merge_gstack_refresh_if_safe.py --repo-root "$(pwd)" --apply --verified --json`
+  - 结果：`status=merged`
+  - `reason=ahead_only`
+  - `main_before=b8c561eecc88d1cc4e595a575b9d1d8e0edaddc0`
+  - `main_after=2ded99ed7193e674bbb0755b60ae9ec354db062c`
+  - timestamp: `2026-06-28T13:05:00Z`
+- 本地 main safe-sync helper：
+  - 命令：`python3 scripts/sync_local_main_if_safe.py --repo-root /Users/kezheng/Codes/CursorDeveloper/MyCodexEnv --apply --json`
+  - 结果：`status=updated`
+  - `reason=behind_only`
+  - `local_before=b8c561eecc88d1cc4e595a575b9d1d8e0edaddc0`
+  - `local_after=2ded99ed7193e674bbb0755b60ae9ec354db062c`
+  - timestamp: `2026-06-28T13:05:10Z`
+
+## Report-only Closeout
+
+- 为把上面的 helper 结果落回 repo，紧接着会再做一次 report-only commit / push / helper merge
+- 最终 automation branch、remote main 与本地 `MyCodexEnv/main` 的收敛状态，见本轮 automation memory 和交付总结
 
 ## 下一次最小自动动作
 
