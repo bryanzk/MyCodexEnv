@@ -11,10 +11,10 @@
 - gstack 同步：已执行实际 sync；净 diff 仅剩 2 处 vendor 格式噪音，已最小清理，未保留 vendor 实质更新
 - DHF skill 调整：不需要；本轮没有 generic lifecycle contract 漂移
 - runtime 同步：已执行 `./scripts/sync_codex_home.sh --repo-root "$(pwd)" --codex-home "$HOME/.codex" --skip-superpowers-sync` 与 `export PATH="$HOME/.bun/bin:$PATH" && ~/.codex/skills/gstack/setup`
-- report 提交：待执行
-- automation branch push：待执行
-- main auto-merge：待执行
-- 本地 main safe-sync：待执行
+- report 提交：已先提交 `df64210` 初稿；随后执行一次 report-only closeout，将 helper 结果落回远端
+- automation branch push：已完成初次 push；closeout push 待执行
+- main auto-merge：初次 helper 已 `merged`
+- 本地 main safe-sync：初次 helper 已 `updated`
 
 ## prepare 结论
 
@@ -70,13 +70,32 @@
    - key_output: `PASS:codex_version ; Verification passed.`
    - timestamp: `2026-06-29T13:05:22Z`
 
+## 第一轮提交与 helper 结果
+
+- report 初始提交：`df64210`
+- push：
+  - 命令：`git fetch origin && git rebase origin/main && git push --force-with-lease origin HEAD:refs/heads/automation/gstack-dhf-daily-refresh`
+  - 结果：成功，`fa12664..df64210  HEAD -> automation/gstack-dhf-daily-refresh`
+  - timestamp: `2026-06-29T13:07:03Z`
+- main auto-merge helper：
+  - 命令：`python3 scripts/merge_gstack_refresh_if_safe.py --repo-root "$(pwd)" --apply --verified --json`
+  - 结果：`status=merged`
+  - `reason=ahead_only`
+  - `main_before=fa126643ef1009488021a90ae4d82c05ff3a5f63`
+  - `main_after=df642107d0b18ad79fad14e2514115743196fe8a`
+  - timestamp: `2026-06-29T13:07:13Z`
+- 本地 main safe-sync helper：
+  - 命令：`python3 scripts/sync_local_main_if_safe.py --repo-root /Users/kezheng/Codes/CursorDeveloper/MyCodexEnv --apply --json`
+  - 结果：`status=updated`
+  - `reason=behind_only`
+  - `local_before=fa126643ef1009488021a90ae4d82c05ff3a5f63`
+  - `local_after=df642107d0b18ad79fad14e2514115743196fe8a`
+  - timestamp: `2026-06-29T13:07:25Z`
+
 ## Report-only Closeout
 
-- 下一步将执行非交互式 `git add` / `git commit`
-- push 目标固定为 `refs/heads/automation/gstack-dhf-daily-refresh`
-- 验证完成后只允许通过 `python3 scripts/merge_gstack_refresh_if_safe.py --repo-root "$(pwd)" --apply --verified --json` 推进 `main`
-- 如果 helper 返回 `status=merged`，随后执行 `python3 scripts/sync_local_main_if_safe.py --repo-root /Users/kezheng/Codes/CursorDeveloper/MyCodexEnv --apply --json`
-- closeout 结果会回写到本文件和 automation memory
+- 为把上面的 helper 结果落回 repo，紧接着会再做一次 report-only commit / push / helper merge
+- 最终 automation branch、remote main 与本地 `MyCodexEnv/main` 的收敛状态，见本轮 automation memory 和交付总结
 
 ## 下一次最小自动动作
 
