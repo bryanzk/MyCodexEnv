@@ -65,6 +65,8 @@
       "expected_helper": "references/claude-cli-protocol.md",
       "expected_output": "The agent should read the Claude CLI protocol reference before constructing the command.",
       "assertions": [
+        "The output pins Claude CLI to claude-sonnet-5.",
+        "The output uses high effort for Claude CLI.",
         "The output uses no-session-persistence.",
         "The output uses read-only tools by default.",
         "The output records command, exit_code, key_output, and timestamp."

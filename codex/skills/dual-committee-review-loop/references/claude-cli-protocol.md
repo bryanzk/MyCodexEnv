@@ -9,13 +9,15 @@ Run and record:
 ```bash
 command -v claude
 claude --version
-claude -p "Return exactly CLAUDE_READY and nothing else." --output-format text --no-session-persistence --tools ""
+claude -p "Return exactly CLAUDE_READY and nothing else." --model claude-sonnet-5 --effort high --output-format text --no-session-persistence --tools ""
 ```
 
 Confirm Claude can access `committee-review-loop` without modifying global Claude config. Prefer an explicit local path:
 
 ```bash
 claude -p "Use the Read tool to read $HOME/.claude/skills/committee-review-loop/SKILL.md. Return COMMITTEE_SKILL_NAME=<name>." \
+  --model claude-sonnet-5 \
+  --effort high \
   --output-format text \
   --no-session-persistence \
   --tools Read \
@@ -70,6 +72,8 @@ Use print mode and avoid session persistence:
 
 ```bash
 claude -p "$PROMPT" \
+  --model claude-sonnet-5 \
+  --effort high \
   --output-format text \
   --no-session-persistence \
   --max-budget-usd 1.00 \
