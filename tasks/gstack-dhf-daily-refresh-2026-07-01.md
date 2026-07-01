@@ -28,23 +28,23 @@
 - changed_files:
   - `tasks/gstack-dhf-daily-refresh-2026-07-01.md`
 - commits:
-  - report_initial: `pending`
+  - report_initial: `41aa517`
   - final_status: `pending`
 
 ## Status
 - automation_branch_push:
-  - status: `pending`
-  - sha: `pending`
+  - status: `pushed`
+  - sha: `41aa517`
 - main_auto_merge:
-  - status: `pending`
-  - reason: `pending`
-  - main_before: `pending`
-  - main_after: `pending`
+  - status: `merged`
+  - reason: `ahead_only`
+  - main_before: `336632b872366448289cbedb3663ee450646f1db`
+  - main_after: `41aa517b3b5492ed1a43d26990ab4eaf8febd40b`
 - local_main_safe_sync:
-  - status: `pending`
-  - reason: `pending`
-  - local_before: `pending`
-  - local_after: `pending`
+  - status: `updated`
+  - reason: `behind_only`
+  - local_before: `336632b872366448289cbedb3663ee450646f1db`
+  - local_after: `41aa517b3b5492ed1a43d26990ab4eaf8febd40b`
 
 ## Verification Evidence
 - command: `python3 scripts/prepare_gstack_dhf_daily_refresh.py --json`
@@ -72,17 +72,17 @@
   key_output: `PASS:codex_version ; Verification passed.`
   timestamp: `2026-07-01T13:02:26Z`
 - command: `git fetch origin && git rebase origin/main && git push --force-with-lease origin HEAD:refs/heads/automation/gstack-dhf-daily-refresh`
-  exit_code: `pending`
-  key_output: `pending`
-  timestamp: `pending`
+  exit_code: `0`
+  key_output: `601ba41..41aa517  HEAD -> automation/gstack-dhf-daily-refresh`
+  timestamp: `2026-07-01T13:03:47Z`
 - command: `python3 scripts/merge_gstack_refresh_if_safe.py --repo-root "$(pwd)" --apply --verified --json`
-  exit_code: `pending`
-  key_output: `pending`
-  timestamp: `pending`
+  exit_code: `0`
+  key_output: `{"status":"merged","reason":"ahead_only","main_before":"336632b872366448289cbedb3663ee450646f1db","main_after":"41aa517b3b5492ed1a43d26990ab4eaf8febd40b"}`
+  timestamp: `2026-07-01T13:03:54Z`
 - command: `python3 scripts/sync_local_main_if_safe.py --repo-root /Users/kezheng/Codes/CursorDeveloper/MyCodexEnv --apply --json`
-  exit_code: `pending`
-  key_output: `pending`
-  timestamp: `pending`
+  exit_code: `0`
+  key_output: `{"status":"updated","reason":"behind_only","local_before":"336632b872366448289cbedb3663ee450646f1db","local_after":"41aa517b3b5492ed1a43d26990ab4eaf8febd40b"}`
+  timestamp: `2026-07-01T13:04:02Z`
 
 ## Next Auto Retry
 - minimal_action: 下一轮仍从 `python3 scripts/prepare_gstack_dhf_daily_refresh.py --json` 开始；若 prepare 返回 `deferred/dns_unreachable`，只更新 automation memory；若 future refresh 引入 generic lifecycle contract 漂移，再调整 `delivery-harness-framework`
