@@ -65,7 +65,8 @@
       "expected_helper": "references/claude-cli-protocol.md",
       "expected_output": "The agent should read the Claude CLI protocol reference before constructing the command.",
       "assertions": [
-        "The output pins Claude CLI to claude-sonnet-5.",
+        "The output uses claude-fable-5 as the primary Claude CLI model.",
+        "The output uses claude-sonnet-5 as the Claude CLI fallback model.",
         "The output uses high effort for Claude CLI.",
         "The output uses no-session-persistence.",
         "The output uses read-only tools by default.",
