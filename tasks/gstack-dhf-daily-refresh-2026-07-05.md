@@ -33,17 +33,23 @@
 - changed_files:
   - `tasks/gstack-dhf-daily-refresh-2026-07-05.md`
 - commits:
-  - report_initial: `pending`
+  - report_initial: `eb0a57c`
   - final_status: `pending`
 
 ## Status
 - automation_branch_push:
-  - status: `pending`
-  - sha: `pending`
+  - status: `pushed`
+  - sha: `eb0a57c`
 - main_auto_merge:
-  - status: `pending`
+  - status: `merged`
+  - reason: `ahead_only`
+  - main_before: `4acd8a7a4126ee011069579e5ad91b569fc57010`
+  - main_after: `eb0a57c2487d244d9452b1845be3e07100610822`
 - local_main_safe_sync:
-  - status: `pending`
+  - status: `updated`
+  - reason: `behind_only`
+  - local_before: `4acd8a7a4126ee011069579e5ad91b569fc57010`
+  - local_after: `eb0a57c2487d244d9452b1845be3e07100610822`
 
 ## Verification Evidence
 - command: `python3 scripts/prepare_gstack_dhf_daily_refresh.py --json`
@@ -75,21 +81,21 @@
   key_output: `PASS:codex_hook_shipq_dhf_preprompt_runtime_matches_source ; Verification passed.`
   timestamp: `2026-07-05T13:04:01Z`
 - command: `git fetch origin && git rebase origin/main && git push --force-with-lease origin HEAD:refs/heads/automation/gstack-dhf-daily-refresh`
-  exit_code: `pending`
-  key_output: `pending`
-  timestamp: `pending`
+  exit_code: `0`
+  key_output: `3d061ef..eb0a57c  HEAD -> automation/gstack-dhf-daily-refresh`
+  timestamp: `2026-07-05T13:05:07Z`
 - command: `python3 scripts/merge_gstack_refresh_if_safe.py --repo-root /Users/kezheng/.codex/automations/gstack-dhf-daily-refresh/repo --apply --verified --json`
-  exit_code: `pending`
-  key_output: `pending`
-  timestamp: `pending`
+  exit_code: `0`
+  key_output: `{"status":"merged","reason":"ahead_only","main_before":"4acd8a7a4126ee011069579e5ad91b569fc57010","main_after":"eb0a57c2487d244d9452b1845be3e07100610822"}`
+  timestamp: `2026-07-05T13:05:14Z`
 - command: `python3 scripts/sync_local_main_if_safe.py --repo-root /Users/kezheng/Codes/CursorDeveloper/MyCodexEnv --apply --json`
-  exit_code: `pending`
-  key_output: `pending`
-  timestamp: `pending`
+  exit_code: `0`
+  key_output: `{"status":"updated","reason":"behind_only","local_before":"4acd8a7a4126ee011069579e5ad91b569fc57010","local_after":"eb0a57c2487d244d9452b1845be3e07100610822"}`
+  timestamp: `2026-07-05T13:05:22Z`
 - command: `git ls-remote origin refs/heads/automation/gstack-dhf-daily-refresh refs/heads/main`
-  exit_code: `pending`
-  key_output: `pending`
-  timestamp: `pending`
+  exit_code: `0`
+  key_output: `eb0a57c refs/heads/automation/gstack-dhf-daily-refresh; eb0a57c refs/heads/main`
+  timestamp: `2026-07-05T13:05:39Z`
 
 ## Next Auto Retry
 - minimal_action: 下一轮仍从 `python3 scripts/prepare_gstack_dhf_daily_refresh.py --json` 开始；若 prepare 返回 `deferred/dns_unreachable`，只更新 automation memory；若 future refresh 引入 generic lifecycle contract 漂移，再调整 `delivery-harness-framework`
