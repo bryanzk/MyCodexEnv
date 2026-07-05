@@ -14,7 +14,7 @@ cd MyCodexEnv
 
 - 目标平台：macOS ARM（Apple Silicon）
 - 认证不随仓库迁移；新机器执行 `codex login`
-- superpowers 固定版本见 `locks/superpowers.lock`
+- superpowers 固定版本见 `locks/superpowers.lock`；同步后通过本地 marketplace `superpowers-dev` 安装 `superpowers@superpowers-dev`
 - bootstrap 会安装固定版本 `chrome-devtools-mcp@0.20.0`；默认关闭 usage statistics 与 performance CrUX URL 查询
 - EigenPhi MCP server 默认禁用；`--eigenphi-backend-root` 仅作为兼容旧命令的可选参数保留
 - 若本机缺少 Google Chrome，bootstrap 会补装 `google-chrome`
@@ -104,6 +104,16 @@ GitHub Actions CI 入口为 `.github/workflows/ci.yml`。它在 `push` 到 `main
 ```
 
 该 setup 只在 `~/.codex/skills/gstack` 内构建本地支持二进制，不会把 skill 迁移成指向 `/Users/kezheng/gstack` 的本机 symlink。早期短名 `browse` 也带 supporting files，首次使用前可在 `codex/skills/browse` 或同步后的 `~/.codex/skills/browse` 下执行一次 `./setup`。上游来源为 MIT License。
+
+Superpowers startup uses the Codex plugin path on current pins:
+
+```bash
+./scripts/sync_codex_home.sh --repo-root "$(pwd)" --codex-home "$HOME/.codex"
+codex plugin marketplace list --json
+codex plugin list
+```
+
+Then restart/open a new Codex session and use the session-exposed `superpowers:*` skills. Older checkouts may still expose `~/.codex/superpowers/.codex/superpowers-codex`; treat that binary only as a conditional fallback when it exists.
 
 当前 vendored gstack `1.52.x` 的 planning skills 支持配置后的 gbrain preflight：`office-hours`、`plan-ceo-review`、`plan-eng-review`、`plan-design-review`、`plan-devex-review` 可以读取缓存的产品、目标、developer persona、品牌、竞品、skill-run、user profile 和 take 摘要。`delivery-harness-framework` 仍只负责 repo state、lane、checkpoint 与 verification 边界；显式 gbrain 配置/刷新仍路由到 `setup-gbrain` / `sync-gbrain`，重复提问和 developer profile 偏好治理路由到 `gstack-plan-tune`。
 

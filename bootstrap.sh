@@ -81,10 +81,10 @@ echo "[3/5] Syncing Claude workflow content..."
 
 SUPERPOWERS_BIN="${CODEX_HOME}/superpowers/.codex/superpowers-codex"
 if [[ -x "${SUPERPOWERS_BIN}" ]]; then
-  echo "[4/5] Running superpowers bootstrap..."
+  echo "[4/5] Running legacy superpowers bootstrap fallback..."
   "${SUPERPOWERS_BIN}" bootstrap >/dev/null
 else
-  echo "[WARN] superpowers bootstrap binary not found at ${SUPERPOWERS_BIN}" >&2
+  echo "[4/5] Superpowers plugin startup handled by sync."
 fi
 
 echo "[5/5] Verifying environment..."

@@ -165,6 +165,11 @@ def write(path: Path, content: str) -> None:
     path.write_text(content, encoding="utf-8")
 
 
+def write_executable(path: Path, content: str) -> None:
+    write(path, content)
+    path.chmod(0o755)
+
+
 def require_in_order(text: str, terms: list[str], message: str) -> None:
     cursor = -1
     for term in terms:
@@ -175,6 +180,70 @@ def require_in_order(text: str, terms: list[str], message: str) -> None:
 
 def active_toml_lines(text: str) -> str:
     return "\n".join(line for line in text.splitlines() if not line.lstrip().startswith("#"))
+
+
+SUPERPOWERS_V6_SHA = "d884ae04edebef577e82ff7c4e143debd0bbec99"
+
+
+def seed_superpowers_plugin_checkout(codex_home: Path) -> Path:
+    superpowers_dir = codex_home / "superpowers"
+    (superpowers_dir / ".git").mkdir(parents=True, exist_ok=True)
+    write(
+        superpowers_dir / ".codex-plugin" / "plugin.json",
+        json.dumps({"name": "superpowers", "version": "6.1.1", "skills": "./skills/"}),
+    )
+    write(
+        superpowers_dir / ".agents" / "plugins" / "marketplace.json",
+        json.dumps(
+            {
+                "name": "superpowers-dev",
+                "plugins": [
+                    {
+                        "name": "superpowers",
+                        "source": {"source": "url", "url": "./"},
+                    }
+                ],
+            }
+        ),
+    )
+    return superpowers_dir
+
+
+def write_git_stub(bin_dir: Path, expected_sha: str = SUPERPOWERS_V6_SHA) -> None:
+    real_git = require_tool_or_skip("git")
+    write_executable(
+        bin_dir / "git",
+        f"""#!/usr/bin/env bash
+if [[ "$1" == "-C" ]]; then
+  shift
+  repo="$1"
+  shift
+  case "$1" in
+    status)
+      for arg in "$@"; do
+        if [[ "$arg" == "--untracked-files=no" ]]; then
+          exit 0
+        fi
+      done
+      echo "?? .DS_Store"
+      exit 0
+      ;;
+    fetch|checkout)
+      exit 0
+      ;;
+    rev-parse)
+      echo "{expected_sha}"
+      exit 0
+      ;;
+    describe)
+      echo "v6.1.1"
+      exit 0
+      ;;
+  esac
+fi
+exec {real_git} "$@"
+""",
+    )
 
 
 def make_git_repo(path: Path) -> Path:
@@ -455,6 +524,65 @@ def test_sync_preserves_runtime_plugin_state():
         )
 
     print("[PASS] sync preserves runtime plugin state")
+
+
+def test_sync_registers_and_installs_superpowers_plugin():
+    with tempfile.TemporaryDirectory() as tmp:
+        tmp_path = Path(tmp)
+        codex_home = tmp_path / ".codex"
+        bin_dir = tmp_path / "bin"
+        log_path = tmp_path / "codex-commands.log"
+        bin_dir.mkdir()
+        seed_superpowers_plugin_checkout(codex_home)
+        write_git_stub(bin_dir)
+        write_executable(
+            bin_dir / "codex",
+            f"""#!/usr/bin/env bash
+echo "CODEX_HOME=${{CODEX_HOME:-}}|$*" >> "{log_path}"
+if [[ "$1 $2 $3" == "plugin marketplace list" ]]; then
+  echo '{{"marketplaces":[]}}'
+  exit 0
+fi
+if [[ "$1 $2 $3" == "plugin marketplace add" ]]; then
+  echo '{{"ok":true}}'
+  exit 0
+fi
+if [[ "$1 $2" == "plugin list" ]]; then
+  echo '{{"installed":[],"available":[]}}'
+  exit 0
+fi
+if [[ "$1 $2 $3" == "plugin add superpowers@superpowers-dev" ]]; then
+  echo '{{"ok":true}}'
+  exit 0
+fi
+echo "unexpected codex args: $*" >&2
+exit 2
+""",
+        )
+
+        env = os.environ.copy()
+        env["PATH"] = f"{bin_dir}:{env['PATH']}"
+        proc = subprocess.run(
+            [
+                str(SYNC),
+                "--repo-root",
+                str(ROOT),
+                "--codex-home",
+                str(codex_home),
+            ],
+            capture_output=True,
+            text=True,
+            check=False,
+            env=env,
+        )
+        require(proc.returncode == 0, f"sync should install plugin after marketplace registration: {proc.stderr or proc.stdout}")
+        commands = log_path.read_text(encoding="utf-8")
+        require(f"CODEX_HOME={codex_home}|plugin marketplace add {codex_home / 'superpowers'} --json" in commands,
+                "sync should register the local superpowers-dev marketplace with the target CODEX_HOME")
+        require(f"CODEX_HOME={codex_home}|plugin add superpowers@superpowers-dev --json" in commands,
+                "sync should install the plugin after marketplace registration")
+
+    print("[PASS] sync registers and installs superpowers plugin")
 
 
 def test_delivery_harness_framework_stays_generic():
@@ -4088,6 +4216,87 @@ def test_verify_missing_codex_reports_failures_without_early_exit():
     print("[PASS] verify missing codex reports failures without early exit")
 
 
+def test_verify_requires_superpowers_plugin_install_not_only_marketplace():
+    with tempfile.TemporaryDirectory() as tmp:
+        tmp_path = Path(tmp)
+        codex_home = tmp_path / ".codex"
+        claude_home = tmp_path / ".claude"
+        bin_dir = tmp_path / "bin"
+        bin_dir.mkdir()
+
+        code, out, err = run(
+            [
+                str(SYNC),
+                "--repo-root",
+                str(ROOT),
+                "--codex-home",
+                str(codex_home),
+                "--skip-superpowers-sync",
+            ]
+        )
+        require(code == 0, f"codex sync should succeed before plugin verify test: {err or out}")
+        code, out, err = run(
+            [
+                str(SYNC_CLAUDE),
+                "--repo-root",
+                str(ROOT),
+                "--claude-home",
+                str(claude_home),
+            ]
+        )
+        require(code == 0, f"claude sync should succeed before plugin verify test: {err or out}")
+        seed_superpowers_plugin_checkout(codex_home)
+        write_git_stub(bin_dir)
+        write_executable(
+            bin_dir / "codex",
+            f"""#!/usr/bin/env bash
+if [[ "$1" == "--version" ]]; then
+  echo "codex 0.142.0"
+  exit 0
+fi
+if [[ "$1 $2" == "login status" ]]; then
+  exit 0
+fi
+if [[ "$1 $2 $3" == "plugin marketplace list" ]]; then
+  echo '{{"marketplaces":[{{"name":"superpowers-dev","root":"{codex_home / 'superpowers'}"}}]}}'
+  exit 0
+fi
+if [[ "$1 $2" == "plugin list" ]]; then
+  echo '{{"installed":[],"available":[]}}'
+  exit 0
+fi
+echo "unexpected codex args: $*" >&2
+exit 2
+""",
+        )
+
+        env = os.environ.copy()
+        env["PATH"] = f"{bin_dir}:{env['PATH']}"
+        proc = subprocess.run(
+            [
+                str(VERIFY),
+                "--repo-root",
+                str(ROOT),
+                "--codex-home",
+                str(codex_home),
+                "--claude-home",
+                str(claude_home),
+                "--skip-check",
+                "app_google_chrome",
+            ],
+            capture_output=True,
+            text=True,
+            check=False,
+            env=env,
+        )
+        text = f"{proc.stdout}\n{proc.stderr}"
+        require(proc.returncode != 0, "verify should fail when superpowers marketplace exists but plugin is not installed")
+        require("PASS:codex_superpowers_marketplace_registered" in text, "verify should separately report marketplace registration")
+        require("FAIL:codex_superpowers_plugin_installed" in text, "verify should require plugin installation")
+
+    print("[PASS] verify requires superpowers plugin install, not only marketplace")
+
+
 def test_verify_detects_enforcement_script_drift():
     if run(["bash", "-lc", "command -v codex"])[0] != 0:
         raise SkipTest("verify drift test requires codex CLI until verify is skip-safe")
@@ -4134,6 +4343,12 @@ def test_verify_detects_enforcement_script_drift():
                 "codex_superpowers_git",
                 "--skip-check",
                 "codex_superpowers_commit",
+                "--skip-check",
+                "codex_superpowers_plugin_manifest_version",
+                "--skip-check",
+                "codex_superpowers_marketplace_registered",
+                "--skip-check",
+                "codex_superpowers_plugin_installed",
             ]
         )
         require(code == 0, f"freshly synced temp runtime should verify clean: {err or out}")
@@ -4154,6 +4369,12 @@ def test_verify_detects_enforcement_script_drift():
                 "codex_superpowers_git",
                 "--skip-check",
                 "codex_superpowers_commit",
+                "--skip-check",
+                "codex_superpowers_plugin_manifest_version",
+                "--skip-check",
+                "codex_superpowers_marketplace_registered",
+                "--skip-check",
+                "codex_superpowers_plugin_installed",
             ]
         )
         text = f"{out}\n{err}"
@@ -4704,6 +4925,7 @@ TESTS = [
     test_codex_version_policy_accepts_current_cli,
     test_sync_renders_template_and_copies_skills,
     test_sync_preserves_runtime_plugin_state,
+    test_sync_registers_and_installs_superpowers_plugin,
     test_delivery_harness_framework_stays_generic,
     test_delivery_harness_framework_routes_runtime_helpers,
     test_delivery_harness_framework_eval_matrix,
@@ -4749,6 +4971,7 @@ TESTS = [
     test_sync_claude_injects_integration_block,
     test_verify_after_full_sync,
     test_verify_missing_codex_reports_failures_without_early_exit,
+    test_verify_requires_superpowers_plugin_install_not_only_marketplace,
     test_verify_detects_enforcement_script_drift,
     test_capture_text_auto_classifies_input_types,
     test_headroom_filter_detects_modes_and_reports_stats,

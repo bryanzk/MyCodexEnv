@@ -16,7 +16,7 @@
 - `codex/workflow/*` -> `~/.codex/workflow/*`（排除 `workflow/memory/`）
 - `claude/workflow/*` -> `~/.claude/workflow/*`（排除 `workflow/memory/`）
 - `claude/CLAUDE_INTEGRATION_BLOCK.md` -> 注入 `~/.claude/CLAUDE.md`（不覆盖既有内容）
-- `~/.codex/superpowers` pinned by `locks/superpowers.lock`
+- `~/.codex/superpowers` pinned by `locks/superpowers.lock`, then registered as marketplace `superpowers-dev` and installed as `superpowers@superpowers-dev`
 - `scripts/install_prereqs.sh` installs pinned `chrome-devtools-mcp@0.20.0` globally via npm
 - `chrome-devtools-mcp` is rendered into `~/.codex/config.toml` with `--no-usage-statistics` and `--no-performance-crux`
 - EigenPhi MCP server is kept as a commented template block and is disabled by default.
@@ -27,6 +27,7 @@
 ## Skills Source of Truth
 - Repository source of truth is `codex/skills/*`.
 - Bootstrap/sync scripts only read `codex/skills/*` when populating `~/.codex/skills/*`.
+- Superpowers uses the plugin-first startup path on current pins: `scripts/sync_codex_home.sh` checks out the locked `~/.codex/superpowers`, registers the local `superpowers-dev` marketplace, installs `superpowers@superpowers-dev`, and new Codex sessions should use exposed `superpowers:*` skills. The legacy `~/.codex/superpowers/.codex/superpowers-codex` binary is only a conditional fallback when an older checkout still contains it.
 - Claude workflow source of truth is `claude/workflow/*`.
 - `delivery-harness-framework` is a generic lifecycle router; repo-specific lifecycle skills should stay as adapters that add project paths, commands, safety boundaries, and smoke matrices.
 - The repository includes Codex-adapted short-name imports of selected `gstack` skills: `plan-ceo-review`, `plan-eng-review`, `review`, `ship`, `retro`, `browse`, `qa`, and `setup-browser-cookies`.

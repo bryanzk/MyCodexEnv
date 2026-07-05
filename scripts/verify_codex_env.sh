@@ -88,6 +88,44 @@ check() {
   fi
 }
 
+run_check() {
+  local name="$1"
+  shift
+  if should_skip "${name}"; then
+    echo "SKIP:${name}"
+    return 0
+  fi
+  if "$@" >/dev/null 2>&1; then
+    echo "PASS:${name}"
+  else
+    echo "FAIL:${name}"
+  fi
+}
+
+superpowers_plugin_manifest_version_ok() {
+  python3 - "${CODEX_HOME}/superpowers/.codex-plugin/plugin.json" <<'PY'
+import json
+import sys
+from pathlib import Path
+
+path = Path(sys.argv[1])
+if not path.is_file():
+    raise SystemExit(1)
+payload = json.loads(path.read_text(encoding="utf-8"))
+raise SystemExit(0 if payload.get("name") == "superpowers" and payload.get("version") == "6.1.1" else 1)
+PY
+}
+
+superpowers_marketplace_registered_ok() {
+  CODEX_HOME="${CODEX_HOME}" codex plugin marketplace list --json |
+    python3 -c 'import json, os, sys; expected = os.path.realpath(sys.argv[1]); data = json.load(sys.stdin); sys.exit(0 if any(m.get("name") == "superpowers-dev" and os.path.realpath(m.get("root", "")) == expected for m in data.get("marketplaces", [])) else 1)' "${CODEX_HOME}/superpowers"
+}
+
+superpowers_plugin_installed_ok() {
+  CODEX_HOME="${CODEX_HOME}" codex plugin list --json |
+    python3 -c 'import json, sys; data = json.load(sys.stdin); sys.exit(0 if any(p.get("pluginId") == "superpowers@superpowers-dev" and p.get("installed") is True and p.get("enabled") is True and p.get("version") == "6.1.1" for p in data.get("installed", [])) else 1)'
+}
+
 results=()
 results+=("$(check os_darwin '[[ "$(uname -s)" == "Darwin" ]]')")
 results+=("$(check arch_arm64 '[[ "$(uname -m)" == "arm64" ]]')")
@@ -125,7 +163,10 @@ results+=("$(check codex_config_chrome_devtools_no_performance_crux 'rg -n -- "-
 results+=("$(check codex_config_hooks_enabled 'rg -n "^codex_hooks = true$" "'"${CODEX_HOME}"'"/config.toml')")
 results+=("$(check codex_config_placeholder_resolved '! rg -n "\$\{[A-Z0-9_]+\}" "'"${CODEX_HOME}"'"/config.toml')")
 results+=("$(check codex_superpowers_git '[[ -d "'"${CODEX_HOME}"'"/superpowers/.git ]]')")
-results+=("$(check codex_superpowers_commit '[[ "$(git -C "'"${CODEX_HOME}"'"/superpowers rev-parse --short HEAD)" == "'"${expected_commit}"'"* ]]')")
+results+=("$(check codex_superpowers_commit '[[ "$(git -C "'"${CODEX_HOME}"'"/superpowers rev-parse HEAD)" == "'"${expected_commit}"'" ]]')")
+results+=("$(run_check codex_superpowers_plugin_manifest_version superpowers_plugin_manifest_version_ok)")
+results+=("$(run_check codex_superpowers_marketplace_registered superpowers_marketplace_registered_ok)")
+results+=("$(run_check codex_superpowers_plugin_installed superpowers_plugin_installed_ok)")
 results+=("$(check codex_workflow_exists '[[ -d "'"${CODEX_HOME}"'"/workflow ]]')")
 results+=("$(check codex_workflow_rules '[[ -f "'"${CODEX_HOME}"'"/workflow/rules/behaviors.md ]]')")
 results+=("$(check codex_agents_has_gate 'rg -n "P0 强制验证门禁|Verification Gate" "'"${CODEX_HOME}"'"/AGENTS.md')")

@@ -88,6 +88,8 @@ claude -p "$PROMPT" \
 
 Treat this as a pattern, not a timeless API contract. Confirm the exact flags against the current `claude --help` output during preflight before relying on them.
 
+`--fallback-model` covers primary model overload, unavailability, or no access. It is not a replacement for `Exceeded USD budget` handling.
+
 Use `--tools ""` when Claude does not need local file reads. Increase `--max-budget-usd` only when the previous run failed solely due to budget and the prompt is already minimized.
 
 ## Response Intake
@@ -110,7 +112,7 @@ If any field is missing, ask Claude once for a structured retry. If the retry fa
 ## Failure Recovery
 
 - `Not logged in`: stop and ask the user to authenticate Claude CLI.
-- `Exceeded USD budget`: reduce prompt/context once, then retry with a documented budget.
+- `Exceeded USD budget`: reduce prompt/context once, then retry with a documented budget; do not treat this as model fallback.
 - Permission/tool denial: retry once with the narrowest necessary read-only tool set.
 - Skill inaccessible: stop unless the user authorizes installing or syncing Claude skills.
 - Sensitive data detected: stop, redact locally, and ask for user direction.

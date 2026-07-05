@@ -68,6 +68,7 @@
         "The output uses claude-fable-5 as the primary Claude CLI model.",
         "The output uses claude-sonnet-5 as the Claude CLI fallback model.",
         "The output uses high effort for Claude CLI.",
+        "The output does not treat Exceeded USD budget as model fallback.",
         "The output uses no-session-persistence.",
         "The output uses read-only tools by default.",
         "The output records command, exit_code, key_output, and timestamp."

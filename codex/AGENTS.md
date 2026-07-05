@@ -50,7 +50,7 @@
 - 更具体的层级可以补充规则，但不能削弱本文件的安全与验证门禁。
 
 ## Workflow Hooks
-- 开始复杂任务前，先运行 `~/.codex/superpowers/.codex/superpowers-codex bootstrap` 并按需加载相关 skill。
+- 开始复杂任务前，优先使用当前 Codex session 已暴露的 `superpowers:*` skills；旧版 checkout 若仍存在 `~/.codex/superpowers/.codex/superpowers-codex`，可将它作为条件 fallback。
 - 复杂任务优先采用：Karpathy -> Planner -> TDD -> Verification 的顺序。
 - 工具与当前会话策略允许时，复杂且可并行的任务应以 orchestrator 方式拆给 parallel agents：明确每个 agent 的任务、验收标准和报告要求；主 agent 负责审阅、反馈、整合，并按需继续派发后续任务。
 - 所有项目的新建会话统一使用命名格式 `<项目缩写>-<YYYYMMDD>-<概要>`；该规则适用于全部对话与会话记录，且同一 repo 内的 `项目缩写` 必须保持稳定一致。

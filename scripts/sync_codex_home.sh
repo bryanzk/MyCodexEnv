@@ -341,7 +341,7 @@ fi
 
 SUPERPOWERS_DIR="${CODEX_HOME}/superpowers"
 if [[ -d "${SUPERPOWERS_DIR}/.git" ]]; then
-  if [[ -n "$(git -C "${SUPERPOWERS_DIR}" status --porcelain)" ]]; then
+  if [[ -n "$(git -C "${SUPERPOWERS_DIR}" status --porcelain --untracked-files=no)" ]]; then
     echo "Local changes detected in ${SUPERPOWERS_DIR}; aborting to avoid data loss." >&2
     exit 1
   fi
@@ -351,5 +351,58 @@ else
 fi
 
 git -C "${SUPERPOWERS_DIR}" checkout "${commit_sha}"
+
+MARKETPLACE_MANIFEST="${SUPERPOWERS_DIR}/.agents/plugins/marketplace.json"
+PLUGIN_MANIFEST="${SUPERPOWERS_DIR}/.codex-plugin/plugin.json"
+python3 - "${MARKETPLACE_MANIFEST}" "${PLUGIN_MANIFEST}" <<'PY'
+import json
+import sys
+from pathlib import Path
+
+marketplace_path = Path(sys.argv[1])
+plugin_path = Path(sys.argv[2])
+if not marketplace_path.is_file():
+    raise SystemExit(f"Missing Superpowers marketplace manifest: {marketplace_path}")
+if not plugin_path.is_file():
+    raise SystemExit(f"Missing Superpowers plugin manifest: {plugin_path}")
+
+marketplace = json.loads(marketplace_path.read_text(encoding="utf-8"))
+plugin = json.loads(plugin_path.read_text(encoding="utf-8"))
+if marketplace.get("name") != "superpowers-dev":
+    raise SystemExit("Superpowers marketplace name must be superpowers-dev")
+if plugin.get("name") != "superpowers" or plugin.get("version") != "6.1.1":
+    raise SystemExit("Superpowers plugin manifest must be superpowers version 6.1.1")
+if plugin.get("skills") != "./skills/":
+    raise SystemExit("Superpowers plugin manifest must expose ./skills/")
+PY
+
+if ! command -v codex >/dev/null 2>&1; then
+  echo "codex CLI is required to register and install the Superpowers plugin." >&2
+  exit 1
+fi
+
+superpowers_marketplace_registered() {
+  CODEX_HOME="${CODEX_HOME}" codex plugin marketplace list --json |
+    python3 -c 'import json, os, sys; expected = os.path.realpath(sys.argv[1]); data = json.load(sys.stdin); sys.exit(0 if any(m.get("name") == "superpowers-dev" and os.path.realpath(m.get("root", "")) == expected for m in data.get("marketplaces", [])) else 1)' "${SUPERPOWERS_DIR}"
+}
+
+superpowers_plugin_installed() {
+  CODEX_HOME="${CODEX_HOME}" codex plugin list --json |
+    python3 -c 'import json, sys; data = json.load(sys.stdin); sys.exit(0 if any(p.get("pluginId") == "superpowers@superpowers-dev" and p.get("installed") is True and p.get("enabled") is True and p.get("version") == "6.1.1" for p in data.get("installed", [])) else 1)'
+}
+
+if superpowers_marketplace_registered; then
+  echo "Superpowers marketplace already registered: superpowers-dev"
+else
+  CODEX_HOME="${CODEX_HOME}" codex plugin marketplace add "${SUPERPOWERS_DIR}" --json >/dev/null
+  echo "Superpowers marketplace registered: superpowers-dev"
+fi
+
+if superpowers_plugin_installed; then
+  echo "Superpowers plugin already installed: superpowers@superpowers-dev"
+else
+  CODEX_HOME="${CODEX_HOME}" codex plugin add superpowers@superpowers-dev --json >/dev/null
+  echo "Superpowers plugin installed: superpowers@superpowers-dev"
+fi
 
 echo "Codex home synchronized: ${CODEX_HOME}"

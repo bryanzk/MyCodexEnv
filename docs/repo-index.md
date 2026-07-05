@@ -66,6 +66,7 @@
 - `scripts/merge_gstack_refresh_if_safe.py`: unattended merge gate for gstack daily refresh; only `--verified` ahead-only automation branches can fast-forward `main`.
 - `scripts/sync_local_main_if_safe.py`: optional post-merge local sync gate; only clean local worktrees already on `main` and behind-only relative to `origin/main` are fast-forwarded.
 - `scripts/sync_gstack_vendor.py`: bulk-sync `codex/skills/gstack` from an upstream `garrytan/gstack` git snapshot.
+- `locks/superpowers.lock` + `scripts/sync_codex_home.sh`: pin `~/.codex/superpowers`, register local marketplace `superpowers-dev`, and install `superpowers@superpowers-dev` for new-session `superpowers:*` skills.
 - `codex/skills/delivery-harness-framework/evals/evals.json`: routing and boundary evals for the generic lifecycle skill, including gstack brain-aware planning and question-tuning boundaries.
 - `scripts/verify_codex_env.sh`: runtime sync and environment verification.
 - `docs/LIFECYCLE_SKILL_ROUTING.md`: stage, workflow, skill, and helper usage guide.

@@ -183,6 +183,11 @@
       "audience": ["codex", "human"]
     },
     {
+      "path": "scripts/sync_codex_home.sh",
+      "role": "Codex home sync and Superpowers plugin startup helper",
+      "audience": ["codex", "human"]
+    },
+    {
       "path": "scripts/verify_codex_env.sh",
       "role": "runtime sync and environment verification helper",
       "audience": ["codex", "human"]
