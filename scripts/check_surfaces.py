@@ -10,6 +10,7 @@ from typing import Any
 
 
 PATH_PREFIXES = ("docs/", "codex/", "scripts/")
+ROOT_SURFACES = {"CONTEXT.md"}
 
 
 def normalize_path(value: str) -> str:
@@ -19,7 +20,7 @@ def normalize_path(value: str) -> str:
 
 
 def is_repo_surface_path(value: str) -> bool:
-    return value.startswith(PATH_PREFIXES)
+    return value in ROOT_SURFACES or value.startswith(PATH_PREFIXES)
 
 
 def repo_index_surface_paths(repo_root: Path) -> set[str]:

@@ -35,6 +35,10 @@ Define the concrete outcome this Harness Runtime slice must deliver.
 ## Acceptance Criteria
 - [ ] Define at least one concrete acceptance criterion.
 
+## open_questions_resolved
+- question: Describe any user-facing or architecture ambiguity resolved through grilling.
+  answer: Record the confirmed answer or cite the repo source that resolved it.
+
 ## Verification Gate
 - `python3 test_runner.py`
 - `git diff --check`

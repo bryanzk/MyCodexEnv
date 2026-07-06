@@ -202,7 +202,7 @@ results+=("$(check claude_workflow_rules '[[ -f "'"${CLAUDE_HOME}"'"/workflow/ru
 results+=("$(check claude_integration_block 'rg -n "ccwf:integration:start|ccwf:integration:end" "'"${CLAUDE_HOME}"'"/CLAUDE.md')")
 results+=("$(check claude_security_scan_script '[[ -x "'"${CLAUDE_HOME}"'"/workflow/scripts/scan_skill_security.sh ]]')")
 
-repo_skills_count="$(find "${REPO_ROOT}/codex/skills" -mindepth 1 -maxdepth 1 -type d | wc -l | tr -d ' ')"
+repo_skills_count="$(find "${REPO_ROOT}/codex/skills" -mindepth 1 -maxdepth 1 -type d ! -name '.*' | wc -l | tr -d ' ')"
 codex_skills_count="$(find "${CODEX_HOME}/skills" -mindepth 1 -maxdepth 1 -type d | wc -l | tr -d ' ')"
 missing_managed_skills=0
 while IFS= read -r skill_dir; do
@@ -210,7 +210,7 @@ while IFS= read -r skill_dir; do
   if [[ ! -d "${CODEX_HOME}/skills/${skill_name}" ]]; then
     missing_managed_skills=$((missing_managed_skills + 1))
   fi
-done < <(find "${REPO_ROOT}/codex/skills" -mindepth 1 -maxdepth 1 -type d | sort)
+done < <(find "${REPO_ROOT}/codex/skills" -mindepth 1 -maxdepth 1 -type d ! -name '.*' | sort)
 if [[ "${missing_managed_skills}" -eq 0 ]]; then
   results+=("PASS:skills_managed_present")
 else

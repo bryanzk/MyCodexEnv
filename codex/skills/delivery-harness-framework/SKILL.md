@@ -43,6 +43,8 @@ When a repo implements a harness runtime, prefer these surfaces after local
 
 - `docs/repo-index.md`: low-token map of source of truth, verification commands,
   runtime surfaces, and high-risk areas.
+- `CONTEXT.md`: repo terminology contract for domain language and forbidden
+  aliases.
 - `docs/harness-state.md`: append-only current phase, blockers, next safe task,
   latest verification, and checkpoint notes.
 - `docs/HARNESS_RUNTIME.md`: contract for workflow, infra, evidence,
@@ -80,7 +82,8 @@ to helpers; it does not duplicate every helper option.
 
 For complex or resumed work:
 
-1. Read local `AGENTS.md`, then `docs/repo-index.md` if present.
+1. Read local `AGENTS.md`, then `docs/repo-index.md` and `CONTEXT.md` if
+   present.
 2. Run recovery and environment probes when the helper files exist:
 
 ```bash
@@ -133,12 +136,13 @@ Prefer durable project surfaces in this order:
 
 1. Repo or subdirectory `AGENTS.md`.
 2. Low-token repo index, usually `docs/repo-index.md`.
-3. Current state, recovery, and handoff surfaces such as `harness-state.md`,
+3. Repo terminology map, usually `CONTEXT.md` or `CONTEXT-MAP.md`.
+4. Current state, recovery, and handoff surfaces such as `harness-state.md`,
    `handoff.md`, or `TODOS.md`.
-4. Validated requirements artifacts, contracts, ADRs, test fixtures, and design
+5. Validated requirements artifacts, contracts, ADRs, test fixtures, and design
    docs.
-5. Source code, scripts, tests, CI configs, and local evidence reports.
-6. Chat history only as a hint, never as the sole source of truth.
+6. Source code, scripts, tests, CI configs, and local evidence reports.
+7. Chat history only as a hint, never as the sole source of truth.
 
 If sources conflict, preserve the conflict in the output and ask only when the
 choice affects architecture, data shape, public API, security, destructive
@@ -193,7 +197,7 @@ earliest stage that changes the decision.
 | Stage | Signals | Route |
 | --- | --- | --- |
 | Research | Unknown repo, stale handoff, unclear source ownership, missing context. | Read durable sources, run recovery/env probes, then classify again. |
-| Requirements | Goal, audience, success criteria, constraints, scope, domain terms, or acceptance criteria are unclear. | Capture requirements; read `CONTEXT.md`, `CONTEXT-MAP.md`, and relevant `docs/adr` files when present; use domain vocabulary and flag conflicts; validate artifacts with `scripts/harness_requirements.py validate PATH` when used. |
+| Requirements | Goal, audience, success criteria, constraints, scope, domain terms, or acceptance criteria are unclear. | Route through `grilling` first unless the user already provided complete acceptance criteria; then use planner or `req-to-dev` to structure the artifact, read `CONTEXT.md`, `CONTEXT-MAP.md`, and relevant `docs/adr` files when present, use domain vocabulary and flag conflicts, and validate artifacts with `scripts/harness_requirements.py validate PATH` when used. |
 | Backlog/spec authoring | The user wants to turn a fuzzy request into a backlog-ready issue, ticket, or executable spec before implementation starts. | Route to vendored gstack `spec`; preserve DHF source-of-truth reads, execution-lane classification, and validation gates so the resulting issue or spec inherits the right boundaries. |
 | Product boundary | What to build, who it is for, positioning, pricing, demo scope, or product tradeoff. | Route to `gstack-plan-ceo-review` or `gstack-office-hours` when product judgment is the core work. Prefer `gstack-office-hours` when the problem statement, demand signal, or wedge is still fluid. If gbrain is already configured, let the gstack planning skill run its own brain-aware preflight; do not make the generic harness read or sync gbrain directly. |
 | Architecture alignment checkpoint | Durable sources disagree or appear stale; competing product surfaces or architecture branches exist; execution lane, deployment topology, or parallel slice boundaries conflict; current slices are blocked by unresolved business/application architecture decisions; or the user explicitly asks to establish a unified decision surface before implementation or subagent dispatch. Do not use this route for ordinary architecture planning when there is no durable-source conflict, stale state, branch conflict, lane ambiguity, blocked slice boundary, or explicit alignment-checkpoint request. | Read durable sources in source-of-truth order, preserve conflicts, capture a decision-focused ADR/checkpoint, create a stakeholder-readable architecture view when useful, recut vertical slices around business outcomes, run product/engineering/security review as needed, append checkpoint state, then validate any agent-team plan before dispatch. Keep repo-specific file names and commands in the repo harness or checkpoint artifact. |

@@ -17,6 +17,11 @@
       "audience": ["codex", "human"]
     },
     {
+      "path": "CONTEXT.md",
+      "role": "repo terminology contract for DHF language and forbidden aliases",
+      "audience": ["codex", "human"]
+    },
+    {
       "path": "docs/harness-state.md",
       "role": "append-only harness state, checkpoint, and next-safe-task log",
       "audience": ["codex", "human"]

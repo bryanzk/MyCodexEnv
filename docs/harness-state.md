@@ -14,13 +14,13 @@ Stable rules belong in `AGENTS.md`, `README.md`, `docs/repo-index.md`, or
   - `codex/skills/delivery-harness-framework/SKILL.md`
 - blocked_sources: none
 - unsafe_inputs: none
-- next_safe_task: Next scheduled run should start from python3 scripts/prepare_gstack_dhf_daily_refresh.py --json; if prepare returns deferred/dns_unreachable, update only automation memory; otherwise stay on automation/gstack-dhf-daily-refresh and let the helper gates decide main merge and local safe-sync.
+- next_safe_task: Manual acceptance 5-6 remain: run one real ambiguous request through grilling -> planner -> requirements gate and inspect open_questions_resolved traceability; start a new session and spot-check 3 terms against CONTEXT.md. Optional Slice 4 after that: add harness_requirements.py validation for open_questions_resolved and harness_agent_team.py context-read guidance.
 - required_commands:
   - `python3 test_runner.py`
   - `git diff --check`
   - `./scripts/verify_codex_env.sh --repo-root "$(pwd)" --codex-home "$HOME/.codex" --claude-home "$HOME/.claude"`
-- latest_checkpoint: 2026-06-21T09:06:16-04:00 finalized 2026-06-21 gstack daily refresh after automation push and helper merge; local main safe-sync skipped because local repo is not behind-only
-- latest_verification: 2026-06-21T09:06:16-04:00 command=git ls-remote origin refs/heads/automation/gstack-dhf-daily-refresh refs/heads/main; exit_code=0; key_output=1d427b1 refs/heads/automation/gstack-dhf-daily-refresh; 1d427b1 refs/heads/main
+- latest_checkpoint: 2026-07-06T19:19:50-04:00 Completed docs/plans/2026-07-06-dhf-grilling-context-integration.md executable slices 1-3 and final gates
+- latest_verification: 2026-07-06T19:19:50-04:00 command=python3 scripts/check_surfaces.py --repo-root "/Users/kezheng/Codes/CursorDeveloper/MyCodexEnv" --check-public-nav; python3 test_runner.py; git diff --check; ./scripts/verify_codex_env.sh --repo-root "/Users/kezheng/Codes/CursorDeveloper/MyCodexEnv" --codex-home "/Users/kezheng/.codex" --claude-home "/Users/kezheng/.claude"; python3 scripts/harness_requirements.py validate docs/templates/harness-requirements.md; test -f "/Users/kezheng/.codex/skills/grilling/SKILL.md"; grep -l "694fa30" codex/skills/grilling/*.md; exit_code=0; key_output=surfaces manifest consistent; ran=63 passed=63 skipped=0 failed=0; git diff --check produced no output; Verification passed.; requirements template valid; runtime grilling skill present; grep returned 3 markdown files.
 
 ## State Log
 
@@ -1717,3 +1717,103 @@ Stable rules belong in `AGENTS.md`, `README.md`, `docs/repo-index.md`, or
 - blockers:
   - none
 - next_safe_task: Next scheduled run should start from python3 scripts/prepare_gstack_dhf_daily_refresh.py --json; if prepare returns deferred/dns_unreachable, update only automation memory; otherwise stay on automation/gstack-dhf-daily-refresh and let the helper gates decide main merge and local safe-sync.
+
+### 2026-07-06T18:51:48-04:00
+- phase: validation
+- event: checkpoint
+- summary: Slice 1 vendored grilling skill and routed ambiguous requirements through grilling
+- git:
+  - branch: main
+  - latest_commit: 1f716c2
+  - dirty_status: dirty
+  - dirty_count: 3
+- changed_surfaces:
+  - `codex/skills/grilling/SKILL.md`
+  - `codex/skills/grilling/CONTEXT-FORMAT.md`
+  - `codex/skills/grilling/ADR-FORMAT.md`
+  - `codex/skills/grilling/LICENSE`
+  - `codex/skills/delivery-harness-framework/SKILL.md`
+  - `docs/harness-state.md`
+- verification:
+  - command: `python3 scripts/check_surfaces.py --repo-root "/Users/kezheng/Codes/CursorDeveloper/MyCodexEnv"; git diff --check; ./scripts/sync_codex_home.sh --repo-root "/Users/kezheng/Codes/CursorDeveloper/MyCodexEnv" --codex-home "/Users/kezheng/.codex"; ./scripts/verify_codex_env.sh --repo-root "/Users/kezheng/Codes/CursorDeveloper/MyCodexEnv" --codex-home "/Users/kezheng/.codex" --claude-home "/Users/kezheng/.claude"`
+  - exit_code: 0
+  - key_output: surfaces manifest consistent; git diff --check produced no output; Codex home synchronized; Verification passed.
+- blockers:
+  - none
+- next_safe_task: Continue Slice 2 from docs/plans/2026-07-06-dhf-grilling-context-integration.md: add CONTEXT.md surface, register it in docs/surfaces.json and docs/repo-index.md, update DHF Runtime Surfaces and Startup Sequence, then run Slice 2 gates.
+
+### 2026-07-06T19:03:21-04:00
+- phase: validation
+- event: checkpoint
+- summary: Slice 2 added CONTEXT.md terminology surface and startup/runtime routing
+- git:
+  - branch: main
+  - latest_commit: 1f716c2
+  - dirty_status: dirty
+  - dirty_count: 8
+- changed_surfaces:
+  - `CONTEXT.md`
+  - `docs/surfaces.json`
+  - `docs/repo-index.md`
+  - `codex/skills/delivery-harness-framework/SKILL.md`
+  - `scripts/check_surfaces.py`
+  - `docs/harness-state.md`
+- verification:
+  - command: `python3 scripts/check_surfaces.py --repo-root "/Users/kezheng/Codes/CursorDeveloper/MyCodexEnv"; python3 test_runner.py; git diff --check`
+  - exit_code: 0
+  - key_output: surfaces manifest consistent; ran=63 passed=63 skipped=0 failed=0; git diff --check produced no output.
+- blockers:
+  - none
+- next_safe_task: Continue Slice 3 from docs/plans/2026-07-06-dhf-grilling-context-integration.md: update manual chapters 4/7/8 and 14.1, add open_questions_resolved to docs/templates/harness-requirements.md, then run public-nav surface check, test_runner, and requirements validate.
+
+### 2026-07-06T19:05:30-04:00
+- phase: validation
+- event: checkpoint
+- summary: Slice 3 updated DHF manual grilling flow and requirements template provenance field
+- git:
+  - branch: main
+  - latest_commit: 1f716c2
+  - dirty_status: dirty
+  - dirty_count: 10
+- changed_surfaces:
+  - `docs/delivery-harness-framework-manual-cn.md`
+  - `docs/templates/harness-requirements.md`
+  - `docs/harness-state.md`
+- verification:
+  - command: `python3 scripts/check_surfaces.py --repo-root "/Users/kezheng/Codes/CursorDeveloper/MyCodexEnv" --check-public-nav; python3 test_runner.py; python3 scripts/harness_requirements.py validate docs/templates/harness-requirements.md`
+  - exit_code: 0
+  - key_output: surfaces manifest consistent; ran=63 passed=63 skipped=0 failed=0; requirements template valid.
+- blockers:
+  - none
+- next_safe_task: Slice 4 is deferred optional work: add harness_requirements.py validation for open_questions_resolved and harness_agent_team.py context-read guidance only after manual acceptance checks 5-6 are complete.
+
+### 2026-07-06T19:19:50-04:00
+- phase: handoff
+- event: checkpoint
+- summary: Completed docs/plans/2026-07-06-dhf-grilling-context-integration.md executable slices 1-3 and final gates
+- git:
+  - branch: main
+  - latest_commit: 1f716c2
+  - dirty_status: dirty
+  - dirty_count: 11
+- changed_surfaces:
+  - `CONTEXT.md`
+  - `codex/skills/grilling/SKILL.md`
+  - `codex/skills/grilling/CONTEXT-FORMAT.md`
+  - `codex/skills/grilling/ADR-FORMAT.md`
+  - `codex/skills/grilling/LICENSE`
+  - `codex/skills/delivery-harness-framework/SKILL.md`
+  - `docs/surfaces.json`
+  - `docs/repo-index.md`
+  - `docs/delivery-harness-framework-manual-cn.md`
+  - `docs/templates/harness-requirements.md`
+  - `scripts/check_surfaces.py`
+  - `scripts/verify_codex_env.sh`
+  - `docs/harness-state.md`
+- verification:
+  - command: `python3 scripts/check_surfaces.py --repo-root "/Users/kezheng/Codes/CursorDeveloper/MyCodexEnv" --check-public-nav; python3 test_runner.py; git diff --check; ./scripts/verify_codex_env.sh --repo-root "/Users/kezheng/Codes/CursorDeveloper/MyCodexEnv" --codex-home "/Users/kezheng/.codex" --claude-home "/Users/kezheng/.claude"; python3 scripts/harness_requirements.py validate docs/templates/harness-requirements.md; test -f "/Users/kezheng/.codex/skills/grilling/SKILL.md"; grep -l "694fa30" codex/skills/grilling/*.md`
+  - exit_code: 0
+  - key_output: surfaces manifest consistent; ran=63 passed=63 skipped=0 failed=0; git diff --check produced no output; Verification passed.; requirements template valid; runtime grilling skill present; grep returned 3 markdown files.
+- blockers:
+  - none
+- next_safe_task: Manual acceptance 5-6 remain: run one real ambiguous request through grilling -> planner -> requirements gate and inspect open_questions_resolved traceability; start a new session and spot-check 3 terms against CONTEXT.md. Optional Slice 4 after that: add harness_requirements.py validation for open_questions_resolved and harness_agent_team.py context-read guidance.

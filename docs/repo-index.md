@@ -8,6 +8,7 @@
 ## Read First
 - `AGENTS.md`: repo-local navigation and verification expectations.
 - `README.md`: environment reproduction, sync, skills, and common commands.
+- `CONTEXT.md`: repo terminology contract for DHF language and forbidden aliases.
 - `docs/harness-state.md`: append-only harness runtime state and latest safe task.
 - `docs/HARNESS_RUNTIME.md`: design contract for workflow, infra, state, policy, evidence, hooks, checkpoints, and agent teams.
 - `docs/LIFECYCLE_SKILL_ROUTING.md`: Chinese lifecycle-to-skill routing map for current project workflows.
@@ -31,6 +32,7 @@
 - `docs/surfaces.json`: canonical machine-readable runtime surface inventory; edit this first when adding, renaming, or retiring runtime surfaces.
 - `scripts/check_surfaces.py`: validates `docs/surfaces.json` against files on disk, this Runtime Surfaces mirror, and opt-in public landing nav links.
 - `docs/repo-index.md`: low-token repo navigation and checked runtime surface mirror.
+- `CONTEXT.md`: repo terminology contract for DHF language and forbidden aliases.
 - `docs/harness-state.md`: append-only harness state, checkpoint, and next-safe-task log.
 - `docs/HARNESS_RUNTIME.md`: runtime workflow, evidence, permission, checkpoint, and agent-team contract.
 - `docs/AGENT_HARNESS_STATUS.md`: Agent Harness workflow and runtime governance status map.
@@ -86,6 +88,7 @@
 
 ## Related Documentation
 - `README.md`: top-level quick start and Harness Runtime overview.
+- `codex/skills/grilling/`: vendored grilling skill, context format, ADR format, and upstream MIT license.
 - `docs/HARNESS_RUNTIME.md`: lifecycle, evidence, checkpoint, permission, and subagent contracts.
 - `docs/MODEL_ROUTER_EVAL_MATRIX.md`: model routing existence, positive/negative, progressive-switching, and end-to-end evals.
 - `docs/HEADROOM_WORKFLOW.md`: optional Headroom command-output compression workflow and ShipQ examples.
