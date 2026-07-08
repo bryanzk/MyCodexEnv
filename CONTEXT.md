@@ -43,3 +43,7 @@ _Avoid_: coordinator, reviewer
 **promotion**:
 Moving a local or private finding into a durable repo surface such as a checkpoint, ADR, requirements artifact, or repo-index update.
 _Avoid_: sync, copy, publish
+
+**public docs entry**:
+A static landing page under `docs/` that links readers into the published DHF documentation set.
+_Avoid_: deploy backend, GitHub Pages settings, external CMS
