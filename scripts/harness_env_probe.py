@@ -93,6 +93,7 @@ def build_probe(home: Path) -> tuple[int, dict[str, Any] | None, list[str]]:
         else []
     )
 
+    hooks_feature = bool(feature_config.get("hooks", feature_config.get("codex_hooks")))
     payload = {
         "codex_home": str(home),
         "config": {
@@ -101,11 +102,12 @@ def build_probe(home: Path) -> tuple[int, dict[str, Any] | None, list[str]]:
             "observable_reason": observable_reason,
             "sandbox_mode": sandbox_mode,
             "approval_policy": approval_policy,
-            "codex_hooks_feature": bool(feature_config.get("codex_hooks")),
+            "hooks_feature": hooks_feature,
+            "legacy_codex_hooks_feature": bool(feature_config.get("codex_hooks")),
         },
         "hooks": {
             "path": str(hooks_path),
-            "enabled": bool(feature_config.get("codex_hooks")) and bool(hooks_config),
+            "enabled": hooks_feature and bool(hooks_config),
             "session_start": "SessionStart" in hooks_config,
             "pre_tool_use": "PreToolUse" in hooks_config,
             "post_tool_use": "PostToolUse" in hooks_config,

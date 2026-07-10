@@ -39,6 +39,7 @@
 - `codex/skills/delivery-harness-framework/`: lifecycle router skill.
 - `codex/skills/committee-review-loop/`: explicit expert-committee review and revision loop skill.
 - `codex/runtime/tool-policy.json`: stage-aware tool and permission policy, including unknown-phase read-only fallback, handoff repo-write ask-gate, and configured agent-dispatch tool patterns.
+- `codex/runtime/resolve_codex_cli.sh`: resolve a Codex CLI only after its `--version` smoke passes, preferring the npm global CLI before ChatGPT/Codex app bundle fallbacks for launchd and stale-shim recovery.
 - `codex/runtime/dhf-packet.schema.json`: portable DHF packet schema for incubation, consumer handoff, and future extraction boundaries.
 - `codex/runtime/evidence.schema.json`: compatibility local evidence JSONL event contract, including `agent_team_validated` receipts.
 - `codex/runtime/evidence/decision-evidence.schema.json`: focused schema for state, handoff, approval, guardrail, sandbox, agent-team validation, and durable recovery evidence.
@@ -63,6 +64,8 @@
 - `docs/plans/2026-06-15-dhf-incubation-plan.md`: controlled incubation boundary, compatibility, and extraction trigger plan.
 - `scripts/headroom_filter.py`: optional stdin filter for compressing large command outputs with Headroom before sending them into agent context.
 - `scripts/audit_skills.py`: report-only skill governance audit for repo/global/.agents skill sources and local usage traces.
+- `scripts/check_skill_compatibility.py`: offline compatibility gate for all local skill manifests, helper syntax, and relative links, plus complete repo/runtime parity for persistent managed skills; ephemeral `.system` projections are loader-gated separately.
+- `scripts/check_codex_skill_loader.py`: network-denied `app-server skills/list` gate that verifies every expected repo/runtime skill path is loaded and enabled with no loader errors.
 - `docs/skill-governance-20260608.md`: skill governance baseline and cleanup policy notes.
 - `scripts/prepare_gstack_dhf_daily_refresh.py`: preflight the daily refresh automation, retry DNS probes for about two minutes, require a standalone clone, check out the dedicated `automation/gstack-dhf-daily-refresh` branch rebased on `origin/main`, and return dry-run evidence before repo mutation.
 - `scripts/merge_gstack_refresh_if_safe.py`: unattended merge gate for gstack daily refresh; only `--verified` ahead-only automation branches can fast-forward `main`.
@@ -114,6 +117,8 @@
 - Primary: `python3 test_runner.py`.
 - CI gate: `.github/workflows/ci.yml` runs `python3 test_runner.py`, `git diff --check`, and `python3 scripts/check_surfaces.py --repo-root "$(pwd)" --check-public-nav` on `push` to `main`, `pull_request`, and manual dispatch.
 - Runtime sync: `./scripts/verify_codex_env.sh --repo-root "$(pwd)" --codex-home "$HOME/.codex" --claude-home "$HOME/.claude"`.
+- Skill compatibility: `python3 scripts/check_skill_compatibility.py --repo-root "$(pwd)" --codex-home "$HOME/.codex" --plugin-root "$HOME/.codex/plugins/cache" --plugin-root "$HOME/.cache/codex-runtimes/codex-primary-runtime/plugins"`.
+- Skill loader: `python3 scripts/check_codex_skill_loader.py --repo-root "$(pwd)" --codex-home "$HOME/.codex"`.
 - Automation-safe runtime sync: `./scripts/verify_codex_env.sh --repo-root "$(pwd)" --codex-home "$HOME/.codex" --claude-home "$HOME/.claude" --skip-check app_google_chrome`.
 - Formatting: `git diff --check`.
 - Gstack vendor refresh: `python3 scripts/prepare_gstack_dhf_daily_refresh.py --json`, then in the returned standalone clone and automation branch run `python3 scripts/sync_gstack_vendor.py --repo-root "$(pwd)" --dry-run --json`; only rerun without `--dry-run` when `needs_update=true`. Scheduled automation pushes `automation/gstack-dhf-daily-refresh` first, then may run `python3 scripts/merge_gstack_refresh_if_safe.py --apply --verified --json` to fast-forward `main` only when the branch is ahead-only and verification has passed. If `main` is updated, it may then run `python3 scripts/sync_local_main_if_safe.py --repo-root /Users/kezheng/Codes/CursorDeveloper/MyCodexEnv --apply --json` to fast-forward the local checkout only when it is clean, on `main`, and behind-only.

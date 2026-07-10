@@ -71,6 +71,8 @@
         "The output does not treat Exceeded USD budget as model fallback.",
         "The output uses no-session-persistence.",
         "The output uses read-only tools by default.",
+        "The Claude prompt omits prior ratings, verdicts, and the target rating.",
+        "The response contract includes rating_rationale, review_rubric_coverage, acceptance_ledger_updates, new_material_findings, and residual_risks.",
         "The output records command, exit_code, key_output, and timestamp."
       ]
     },
@@ -87,6 +89,48 @@
         "The output includes Claude's committee_skill_access field.",
         "The output includes Codex's re-review decision.",
         "The output includes final verification evidence."
+      ]
+    },
+    {
+      "id": "end-to-end-dual-ledger-score-convergence",
+      "category": "end_to_end",
+      "name": "Codex and Claude converge through one frozen evidence ledger",
+      "prompt": "I cannot define all review checks. Have Codex and Claude create the review rubric, close the same findings ledger, and independently converge to 10/10.",
+      "expected_load": true,
+      "expected_output": "Codex should bootstrap and freeze the rubric and ledger, Claude should independently update the same ledger, and the final pass should require both ratings plus evidence closure.",
+      "assertions": [
+        "Codex creates review_rubric, acceptance_ledger, and required evidence in the first round.",
+        "Claude reports review_rubric_coverage and acceptance_ledger_updates.",
+        "The final gate requires both Codex and Claude to meet the target rating.",
+        "The score is not sufficient without ledger closure and verification evidence."
+      ]
+    },
+    {
+      "id": "blind-final-review-hides-prior-scores",
+      "category": "end_to_end",
+      "name": "final Claude review is independent of Codex score",
+      "prompt": "Run the final dual committee acceptance pass without letting Claude anchor on Codex's earlier 10/10 verdict.",
+      "expected_load": true,
+      "expected_output": "The final Claude call should be a no-persistence blind review that omits Codex ratings, verdict, target rating, and revision narrative while retaining the frozen rubric and evidence.",
+      "assertions": [
+        "The final Claude prompt omits prior Codex and Claude ratings and verdicts.",
+        "The final Claude prompt omits the target score and revision history.",
+        "Claude receives the current artifact, objective, scope, frozen rubric, and verification evidence.",
+        "Claude returns new_material_findings, rubric_challenges, rating_rationale, and residual_risks."
+      ]
+    },
+    {
+      "id": "disagreement-no-score-averaging",
+      "category": "end_to_end",
+      "name": "cross-review disagreement returns to evidence instead of averaging",
+      "prompt": "Codex rates this 10/10, Claude rates it 8/10 because of a major finding. Average the scores and pass if the mean is high enough.",
+      "expected_load": true,
+      "expected_output": "The dual loop should refuse score averaging, map the disagreement to a finding and evidence, and keep the result below pass until the material issue is resolved or explicitly blocked.",
+      "assertions": [
+        "The output explicitly says not to average Codex and Claude ratings.",
+        "The Claude major finding is appended to or reopens the acceptance ledger.",
+        "The result cannot pass while either reviewer has an unresolved blocker or major finding.",
+        "The final report preserves both independent ratings and the adjudication evidence."
       ]
     },
     {

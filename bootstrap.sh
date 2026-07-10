@@ -94,8 +94,9 @@ echo "[5/5] Verifying environment..."
   --claude-home "${CLAUDE_HOME}"
 
 echo "Bootstrap finished."
-if codex login status >/dev/null 2>&1; then
+CODEX_BIN="$("${SCRIPT_DIR}/codex/runtime/resolve_codex_cli.sh")"
+if "${CODEX_BIN}" login status >/dev/null 2>&1; then
   echo "Authentication appears configured."
 else
-  echo "Run 'codex login' to authenticate on this machine."
+  echo "Run '${CODEX_BIN} login' to authenticate on this machine."
 fi

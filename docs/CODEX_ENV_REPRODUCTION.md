@@ -22,6 +22,7 @@
 - EigenPhi MCP server is kept as a commented template block and is disabled by default.
 - If Google Chrome is missing, bootstrap installs `google-chrome`
 - Harness runtime policy, compatibility evidence schema, and split evidence schemas are synced into `~/.codex/runtime/*`; local evidence logs are written under `~/.codex/harness/evidence/*` and are not committed.
+- `codex/runtime/resolve_codex_cli.sh` validates every candidate with `--version` before use, prefers a functional npm global CLI, and then falls back across the current ChatGPT/Codex app bundle paths, so stale npm/Homebrew shims do not satisfy automation checks.
 - `codex/hooks/model_router.py` is synced as the prompt/subtask model router. It emits a non-blocking JSON recommendation for `gpt-5.4-mini`, `gpt-5.4`, or `gpt-5.5` based on complexity and quality-floor signals; runtimes or wrapper scripts that can switch models may consume the recommendation directly.
 
 ## Skills Source of Truth
@@ -82,6 +83,8 @@ cd MyCodexEnv
 ```bash
 ./scripts/verify_codex_env.sh --repo-root "$(pwd)" --codex-home "$HOME/.codex" --claude-home "$HOME/.claude"
 ./scripts/verify_codex_env.sh --repo-root "$(pwd)" --codex-home "$HOME/.codex" --claude-home "$HOME/.claude" --skip-check app_google_chrome
+python3 scripts/check_skill_compatibility.py --repo-root "$(pwd)" --codex-home "$HOME/.codex" --plugin-root "$HOME/.codex/plugins/cache" --plugin-root "$HOME/.cache/codex-runtimes/codex-primary-runtime/plugins"
+python3 scripts/check_codex_skill_loader.py --repo-root "$(pwd)" --codex-home "$HOME/.codex"
 ```
 
 Verification evidence is appended to `TEST_VERIFICATION.md`.
@@ -159,3 +162,8 @@ every routine gate receipt.
 - 这是 macOS 对 `Documents` / `Desktop` 等受保护目录的 TCC 权限拦截，不是仓库配置本身报错。
 - 先把 Codex Desktop 的新会话目标目录改到 `~/Codes/Codex`、`~/Downloads` 或 `~/.codex/worktrees` 这类非受保护路径。
 - 如果必须落到 `Documents` / `Desktop`，在 macOS `系统设置 -> 隐私与安全性 -> 文件与文件夹` 或 `完全磁盘访问权限` 中给 `Codex` 授权后重试。
+
+6. `command not found: codex` or an existing `codex` shim reports embedded binary `ENOENT`
+- Run `codex/runtime/resolve_codex_cli.sh`; it prints only a candidate that passes `--version`.
+- For a damaged npm install, the official repair is `npm install -g @openai/codex`, then rerun the resolver and environment verification.
+- Scheduled runners should execute the resolver's absolute result instead of relying on launchd's minimal `PATH`.

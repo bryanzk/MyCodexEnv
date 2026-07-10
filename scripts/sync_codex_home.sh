@@ -127,12 +127,13 @@ import sys
 path = Path(sys.argv[1])
 text = path.read_text(encoding="utf-8")
 
-if re.search(r"^codex_hooks\s*=", text, flags=re.MULTILINE):
-    updated = re.sub(r"^codex_hooks\s*=.*$", "codex_hooks = true", text, count=1, flags=re.MULTILINE)
+updated = re.sub(r"^codex_hooks\s*=.*\n?", "", text, flags=re.MULTILINE)
+if re.search(r"^hooks\s*=", updated, flags=re.MULTILINE):
+    updated = re.sub(r"^hooks\s*=.*$", "hooks = true", updated, count=1, flags=re.MULTILINE)
 elif "[features]" in text:
-    updated = text.replace("[features]", "[features]\ncodex_hooks = true", 1)
+    updated = updated.replace("[features]", "[features]\nhooks = true", 1)
 else:
-    updated = text.rstrip() + "\n\n[features]\ncodex_hooks = true\n"
+    updated = updated.rstrip() + "\n\n[features]\nhooks = true\n"
 
 if updated != text:
     path.write_text(updated, encoding="utf-8")
@@ -234,11 +235,13 @@ def merge_table_keys(text, table_name, source_block):
     end = target_match.end() + next_match.start() if next_match else len(text)
     target_block = text[target_match.start():end]
     target_keys = table_key_lines(target_block)
-    additions = [
-        line
-        for key, line in table_key_lines(source_block).items()
-        if key not in target_keys
-    ]
+    additions = []
+    for key, line in table_key_lines(source_block).items():
+        if key in target_keys:
+            continue
+        if table_name == "features" and key == "codex_hooks":
+            continue
+        additions.append(line)
     if not additions:
         return text
     insertion = "\n" + "\n".join(additions)
@@ -278,7 +281,9 @@ cp "${rendered_tmp}" "${CONFIG_TARGET}"
 rm -f "${rendered_tmp}"
 
 mkdir -p "${CODEX_HOME}/skills"
-rsync -a --delete "${REPO_ROOT}/codex/skills/" "${CODEX_HOME}/skills/"
+# Repo skills are managed overlays; preserve runtime-only/local skills that are
+# intentionally outside this repository's source-of-truth.
+rsync -a "${REPO_ROOT}/codex/skills/" "${CODEX_HOME}/skills/"
 
 if [[ -d "${REPO_ROOT}/codex/workflow" ]]; then
   mkdir -p "${CODEX_HOME}/workflow"
@@ -376,32 +381,33 @@ if plugin.get("skills") != "./skills/":
     raise SystemExit("Superpowers plugin manifest must expose ./skills/")
 PY
 
-if ! command -v codex >/dev/null 2>&1; then
-  echo "codex CLI is required to register and install the Superpowers plugin." >&2
+CODEX_RESOLVER="${CODEX_HOME}/runtime/resolve_codex_cli.sh"
+if [[ ! -x "${CODEX_RESOLVER}" ]] || ! CODEX_BIN="$("${CODEX_RESOLVER}")"; then
+  echo "A functional Codex CLI is required to register and install the Superpowers plugin." >&2
   exit 1
 fi
 
 superpowers_marketplace_registered() {
-  CODEX_HOME="${CODEX_HOME}" codex plugin marketplace list --json |
+  CODEX_HOME="${CODEX_HOME}" "${CODEX_BIN}" plugin marketplace list --json |
     python3 -c 'import json, os, sys; expected = os.path.realpath(sys.argv[1]); data = json.load(sys.stdin); sys.exit(0 if any(m.get("name") == "superpowers-dev" and os.path.realpath(m.get("root", "")) == expected for m in data.get("marketplaces", [])) else 1)' "${SUPERPOWERS_DIR}"
 }
 
 superpowers_plugin_installed() {
-  CODEX_HOME="${CODEX_HOME}" codex plugin list --json |
+  CODEX_HOME="${CODEX_HOME}" "${CODEX_BIN}" plugin list --json |
     python3 -c 'import json, sys; data = json.load(sys.stdin); sys.exit(0 if any(p.get("pluginId") == "superpowers@superpowers-dev" and p.get("installed") is True and p.get("enabled") is True and p.get("version") == "6.1.1" for p in data.get("installed", [])) else 1)'
 }
 
 if superpowers_marketplace_registered; then
   echo "Superpowers marketplace already registered: superpowers-dev"
 else
-  CODEX_HOME="${CODEX_HOME}" codex plugin marketplace add "${SUPERPOWERS_DIR}" --json >/dev/null
+  CODEX_HOME="${CODEX_HOME}" "${CODEX_BIN}" plugin marketplace add "${SUPERPOWERS_DIR}" --json >/dev/null
   echo "Superpowers marketplace registered: superpowers-dev"
 fi
 
 if superpowers_plugin_installed; then
   echo "Superpowers plugin already installed: superpowers@superpowers-dev"
 else
-  CODEX_HOME="${CODEX_HOME}" codex plugin add superpowers@superpowers-dev --json >/dev/null
+  CODEX_HOME="${CODEX_HOME}" "${CODEX_BIN}" plugin add superpowers@superpowers-dev --json >/dev/null
   echo "Superpowers plugin installed: superpowers@superpowers-dev"
 fi
 

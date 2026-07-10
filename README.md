@@ -23,6 +23,7 @@ cd MyCodexEnv
 - Codex 远程访问流程规则：`codex/remote-access.md`（同步到 `~/.codex/remote-access.md`）；远程主机登记表：`codex/remote-hosts.md`（同步到 `~/.codex/remote-hosts.md`）
 - Codex hooks 来源：`codex/hooks.json` 与 `codex/hooks/*`（同步到 `~/.codex/hooks.json` 与 `~/.codex/hooks/*`）
 - Codex harness runtime 来源：`codex/runtime/*`（同步到 `~/.codex/runtime/*`），当前包含阶段化工具权限策略与 evidence schema
+- `codex/runtime/resolve_codex_cli.sh` 会实际执行候选 CLI 的 `--version` 后再返回路径；优先使用可用的 npm global CLI，launchd 或旧 shim 失效时再回退到当前 ChatGPT/Codex app bundle CLI
 - Codex zsh 标题钩子来源：`codex/zsh/*`（同步到 `~/.codex/zsh/*`）
 - Codex / Claude workflow 来源分别为 `codex/workflow/*`、`claude/workflow/*`，但都排除 `workflow/memory/` 这类运行态热数据
 - Claude workflow 同步到 `~/.claude/workflow/*`，通过注入块挂到 `~/.claude/CLAUDE.md`
@@ -60,6 +61,8 @@ cd MyCodexEnv
 - `scripts/harness_requirements.py`：校验需求 artifact 的字段、验收标准和验证命令
 - `scripts/harness_recover.py`：从 repo index、state、git 和 evidence 恢复 next safe task
 - `scripts/harness_env_probe.py`：观测本机 Codex runtime 配置、hooks、policy 和 schema 状态
+- `scripts/check_skill_compatibility.py`：离线检查全部本地 skill manifest、helper 语法和相对链接，并对常驻托管 skill 做 repo/runtime 完整文件一致性检查；临时 `.system` 投影的加载状态由 loader gate 负责
+- `scripts/check_codex_skill_loader.py`：在禁网 sandbox 中调用 Codex `app-server skills/list`，确认预期 skill path 全部 loaded/enabled 且 loader error 为零
 - `scripts/headroom_filter.py`：可选 Headroom stdin 过滤器，用于在把大型 `rg` 输出、测试日志、JSON 工具结果送入 agent context 前先做本地压缩
 - `codex/hooks/model_router.py`：`UserPromptSubmit` prompt 复杂度路由器，按 simple/medium/complex 和质量地板选择 `gpt-5.4-mini`、`gpt-5.4` 或 `gpt-5.5`，复杂任务可在阶段或 subtask 边界重复调用以自动下探或升级；当 hook payload 或环境变量提供 token / 5 小时 limit 字段时，同步输出 telemetry，缺失时显式写 `unavailable`
 - `codex/hooks/harness_guard.py`：`PreToolUse` guardrail，处理 destructive、secret、remote、dynamic execution 和越阶段写入

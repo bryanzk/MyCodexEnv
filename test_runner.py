@@ -18,6 +18,9 @@ BOOTSTRAP = ROOT / "bootstrap.sh"
 SYNC = ROOT / "scripts" / "sync_codex_home.sh"
 SYNC_CLAUDE = ROOT / "scripts" / "sync_claude_home.sh"
 VERIFY = ROOT / "scripts" / "verify_codex_env.sh"
+CODEX_CLI_RESOLVER = ROOT / "codex" / "runtime" / "resolve_codex_cli.sh"
+CHECK_SKILL_COMPATIBILITY = ROOT / "scripts" / "check_skill_compatibility.py"
+CHECK_CODEX_SKILL_LOADER = ROOT / "scripts" / "check_codex_skill_loader.py"
 MANAGE_AGENTS = ROOT / "scripts" / "manage_agents.py"
 HARNESS_EVIDENCE = ROOT / "scripts" / "harness_evidence.py"
 HARNESS_REPORT = ROOT / "scripts" / "harness_report.py"
@@ -277,6 +280,8 @@ def test_bootstrap_eigenphi_argument_is_optional():
     text = f"{out}\n{err}"
     require("[--eigenphi-backend-root <path>]" in text, "eigenphi argument should be optional in usage")
     require("默认禁用" in text, "help should explain EigenPhi MCP is disabled by default")
+    bootstrap_text = BOOTSTRAP.read_text(encoding="utf-8")
+    require("resolve_codex_cli.sh" in bootstrap_text, "bootstrap should use the functional Codex CLI resolver")
     print("[PASS] bootstrap optional EigenPhi argument check")
 
 
@@ -325,18 +330,171 @@ def test_codex_version_policy_accepts_current_cli():
             '"0.104.0" "0.130.0" "0.131.0" "0.133.0" "0.135.0" "0.136.0" "0.137.0"' in script_text,
             f"{script_name} should accept current codex-cli 0.137.0",
         )
+        require('"0.144."' in script_text, f"{script_name} should accept Codex 0.144.x")
         require("codex_version_ok" in script_text, f"{script_name} should evaluate version prefixes explicitly")
 
     require("skills_managed_present" in verify_text, "verify should require managed repo skills to exist")
+    require("codex_skill_compatibility" in verify_text, "verify should run complete skill compatibility checks")
     require("skills_count_match" not in verify_text, "verify should not fail only because runtime has extra skills")
 
     print("[PASS] codex version policy accepts current CLI")
+
+
+def test_codex_cli_resolver_skips_broken_candidates():
+    require(CODEX_CLI_RESOLVER.exists(), f"missing Codex CLI resolver: {CODEX_CLI_RESOLVER}")
+    with tempfile.TemporaryDirectory() as tmp:
+        tmp_path = Path(tmp)
+        broken_bin = tmp_path / "broken-bin"
+        fallback_bin = tmp_path / "fallback-bin"
+        broken_bin.mkdir()
+        fallback_bin.mkdir()
+        write_executable(
+            broken_bin / "codex",
+            "#!/usr/bin/env bash\necho 'missing embedded binary' >&2\nexit 127\n",
+        )
+        write_executable(
+            fallback_bin / "codex",
+            "#!/usr/bin/env bash\n[[ \"$1\" == \"--version\" ]] || exit 64\necho 'codex-cli 0.144.1'\n",
+        )
+        env = os.environ.copy()
+        env["PATH"] = f"{broken_bin}:/usr/bin:/bin"
+        env["CODEX_CLI_FALLBACKS"] = str(fallback_bin / "codex")
+        proc = subprocess.run(
+            [str(CODEX_CLI_RESOLVER)],
+            capture_output=True,
+            text=True,
+            check=False,
+            env=env,
+        )
+        require(proc.returncode == 0, f"resolver should find functional fallback: {proc.stderr or proc.stdout}")
+        require(proc.stdout.strip() == str(fallback_bin / "codex"), "resolver should skip the broken PATH entry")
+
+    print("[PASS] Codex CLI resolver skips broken candidates")
+
+
+def test_skill_compatibility_checker_contract():
+    require(CHECK_SKILL_COMPATIBILITY.exists(), f"missing skill compatibility checker: {CHECK_SKILL_COMPATIBILITY}")
+    with tempfile.TemporaryDirectory() as tmp:
+        tmp_path = Path(tmp)
+        repo = tmp_path / "repo"
+        codex_home = tmp_path / ".codex"
+        valid_skill = repo / "codex" / "skills" / "alias-skill"
+        write(
+            valid_skill / "SKILL.md",
+            "---\nname: canonical-skill\ndescription: Compatibility smoke fixture.\n---\n\nSee [details](references/details.md).\n",
+        )
+        write(valid_skill / "references" / "details.md", "# Details\n")
+        write(valid_skill / "scripts" / "ok.py", "print('ok')\n")
+        write(
+            repo / "codex" / "skills" / ".system" / "system-skill" / "SKILL.md",
+            "---\nname: system-skill\ndescription: App-server managed system fixture.\n---\n",
+        )
+        write(
+            codex_home / "skills" / "alias-skill" / "SKILL.md",
+            (valid_skill / "SKILL.md").read_text(encoding="utf-8"),
+        )
+        write(
+            codex_home / "skills" / "alias-skill" / "references" / "details.md",
+            "# Details\n",
+        )
+        write(codex_home / "skills" / "alias-skill" / "scripts" / "ok.py", "print('ok')\n")
+
+        code, out, err = run(
+            [
+                sys.executable,
+                str(CHECK_SKILL_COMPATIBILITY),
+                "--repo-root",
+                str(repo),
+                "--codex-home",
+                str(codex_home),
+                "--json",
+            ]
+        )
+        require(code == 0, f"valid aliased skill should pass with a warning: {err or out}")
+        payload = json.loads(out)
+        require(payload["summary"]["errors"] == 0, "valid fixture should have no compatibility errors")
+        require(payload["summary"]["warnings"] == 1, "name/parent alias should be reported as one warning")
+        require(payload["managed_runtime"]["missing"] == [], "managed runtime skill should be present")
+        require(payload["managed_runtime"]["drifted"] == [], "managed runtime skill should match source")
+        require(
+            payload["managed_runtime"]["checked"] == 1,
+            "ephemeral .system skills should be loader-gated instead of requiring persistent runtime files",
+        )
+
+        write(
+            valid_skill / "SKILL.md",
+            "---\nname: canonical-skill\ndescription: Broken fixture.\n---\n\nSee [missing](references/missing.md).\n",
+        )
+        write(valid_skill / "scripts" / "broken.py", "if True print('broken')\n")
+        code, out, err = run(
+            [
+                sys.executable,
+                str(CHECK_SKILL_COMPATIBILITY),
+                "--repo-root",
+                str(repo),
+                "--codex-home",
+                str(codex_home),
+                "--json",
+            ]
+        )
+        require(code != 0, "missing references and invalid helper syntax should fail compatibility audit")
+        payload = json.loads(out)
+        error_codes = {item["code"] for item in payload["findings"] if item["severity"] == "error"}
+        require("missing_relative_reference" in error_codes, "checker should report missing relative references")
+        require("python_syntax_error" in error_codes, "checker should report Python helper syntax errors")
+
+    print("[PASS] skill compatibility checker contract")
+
+
+def test_codex_skill_loader_gate():
+    require(CHECK_CODEX_SKILL_LOADER.exists(), f"missing Codex skill loader gate: {CHECK_CODEX_SKILL_LOADER}")
+    code, codex_bin, _ = run([str(CODEX_CLI_RESOLVER)])
+    if code != 0:
+        raise SkipTest("functional Codex CLI unavailable for app-server skill loader gate")
+    with tempfile.TemporaryDirectory() as tmp:
+        codex_home = Path(tmp) / ".codex"
+        code, out, err = run(
+            [
+                str(SYNC),
+                "--repo-root",
+                str(ROOT),
+                "--codex-home",
+                str(codex_home),
+                "--skip-superpowers-sync",
+            ]
+        )
+        require(code == 0, f"temp Codex sync should pass before loader gate: {err or out}")
+        code, out, err = run(
+            [
+                sys.executable,
+                str(CHECK_CODEX_SKILL_LOADER),
+                "--repo-root",
+                str(ROOT),
+                "--codex-home",
+                str(codex_home),
+                "--codex-bin",
+                codex_bin,
+                "--json",
+            ]
+        )
+        require(code == 0, f"Codex app-server should load every expected skill: {err or out}")
+        payload = json.loads(out)
+        require(payload["loader_errors"] == 0, "Codex loader should report no skill errors")
+        require(payload["missing_expected_paths"] == [], "Codex loader should expose every expected skill path")
+        require(payload["disabled_expected_paths"] == [], "Codex loader should enable every expected skill path")
+
+    print("[PASS] Codex app-server skill loader gate")
 
 
 def test_sync_renders_template_and_copies_skills():
     with tempfile.TemporaryDirectory() as tmp:
         tmp_path = Path(tmp)
         codex_home = tmp_path / ".codex"
+        runtime_only_skill = codex_home / "skills" / "runtime-only-fixture" / "SKILL.md"
+        write(
+            runtime_only_skill,
+            "---\nname: runtime-only-fixture\ndescription: Runtime-only preservation fixture.\n---\n",
+        )
 
         code, out, err = run(
             [
@@ -357,10 +515,13 @@ def test_sync_renders_template_and_copies_skills():
         require('[mcp_servers."chrome-devtools"]' in rendered, "chrome-devtools MCP should be rendered")
         require("--no-usage-statistics" in rendered, "chrome-devtools MCP should disable usage statistics")
         require("--no-performance-crux" in rendered, "chrome-devtools MCP should disable CrUX lookups")
+        require("hooks = true" in active_toml_lines(rendered), "current hooks feature flag should be enabled")
+        require("codex_hooks" not in active_toml_lines(rendered), "deprecated codex_hooks feature flag should be removed")
         require((codex_home / "AGENTS.md").exists(), "AGENTS.md should be copied")
         require((codex_home / "remote-access.md").exists(), "remote access policy should be copied")
         require((codex_home / "remote-hosts.md").exists(), "remote hosts registry should be copied")
         require((codex_home / "runtime" / "tool-policy.json").exists(), "harness tool policy should be copied")
+        require((codex_home / "runtime" / "resolve_codex_cli.sh").exists(), "Codex CLI resolver should be copied")
         require((codex_home / "runtime" / "evidence.schema.json").exists(), "harness evidence schema should be copied")
         require(
             (codex_home / "runtime" / "evidence" / "decision-evidence.schema.json").exists(),
@@ -392,7 +553,11 @@ def test_sync_renders_template_and_copies_skills():
 
         expected_skills = count_top_dirs(ROOT / "codex" / "skills")
         actual_skills = count_top_dirs(codex_home / "skills")
-        require(actual_skills == expected_skills, f"skills count mismatch: {actual_skills} != {expected_skills}")
+        require(
+            actual_skills == expected_skills + 1,
+            f"managed skills plus runtime-only fixture count mismatch: {actual_skills} != {expected_skills + 1}",
+        )
+        require(runtime_only_skill.exists(), "sync should preserve runtime-only local skills")
         require(
             (codex_home / "skills" / "review" / "checklist.md").exists(),
             "review checklist should be copied with the skill",
@@ -522,6 +687,8 @@ def test_sync_preserves_runtime_plugin_state():
             rendered.count('[plugins."browser-use@openai-bundled"]') == 1,
             "template plugin blocks should not be duplicated",
         )
+        require("hooks = true" in active_toml_lines(rendered), "sync should migrate to the current hooks feature flag")
+        require("codex_hooks" not in active_toml_lines(rendered), "sync should drop the deprecated codex_hooks alias")
 
     print("[PASS] sync preserves runtime plugin state")
 
@@ -539,6 +706,10 @@ def test_sync_registers_and_installs_superpowers_plugin():
             bin_dir / "codex",
             f"""#!/usr/bin/env bash
 echo "CODEX_HOME=${{CODEX_HOME:-}}|$*" >> "{log_path}"
+if [[ "$1" == "--version" ]]; then
+  echo 'codex-cli 0.144.1'
+  exit 0
+fi
 if [[ "$1 $2 $3" == "plugin marketplace list" ]]; then
   echo '{{"marketplaces":[]}}'
   exit 0
@@ -861,6 +1032,7 @@ def test_sync_agents_only_copies_and_backs_up_agents():
         require((codex_home / "remote-access.md").exists(), "remote-access.md should be copied in sync-agents-only mode")
         require((codex_home / "remote-hosts.md").exists(), "remote-hosts.md should be copied in sync-agents-only mode")
         require((codex_home / "runtime" / "tool-policy.json").exists(), "tool-policy should be copied in sync-agents-only mode")
+        require((codex_home / "runtime" / "resolve_codex_cli.sh").exists(), "Codex CLI resolver should be copied")
         require((codex_home / "runtime" / "evidence.schema.json").exists(), "evidence schema should be copied in sync-agents-only mode")
         require(
             (codex_home / "runtime" / "evidence" / "decision-evidence.schema.json").exists(),
@@ -4033,7 +4205,7 @@ def test_harness_env_probe():
             'sandbox_mode = "workspace-write"\n'
             'approval_policy = "on-request"\n\n'
             "[features]\n"
-            "codex_hooks = true\n",
+            "hooks = true\n",
         )
         write(
             codex_home / "hooks.json",
@@ -4055,7 +4227,7 @@ def test_harness_env_probe():
         no_sandbox_home = tmp_path / ".codex-no-sandbox"
         no_sandbox_runtime = no_sandbox_home / "runtime"
         no_sandbox_runtime.mkdir(parents=True)
-        write(no_sandbox_home / "config.toml", 'model = "gpt-5.4"\n[features]\ncodex_hooks = true\n')
+        write(no_sandbox_home / "config.toml", 'model = "gpt-5.4"\n[features]\nhooks = true\n')
         write(no_sandbox_home / "hooks.json", json.dumps({"hooks": {"PreToolUse": [], "PostToolUse": []}}))
         write(no_sandbox_runtime / "tool-policy.json", (ROOT / "codex" / "runtime" / "tool-policy.json").read_text(encoding="utf-8"))
         write_runtime_schemas(no_sandbox_runtime)
@@ -4185,6 +4357,7 @@ def test_verify_missing_codex_reports_failures_without_early_exit():
 
         env = os.environ.copy()
         env["PATH"] = f"{bin_dir}:/usr/bin:/bin:/usr/sbin:/sbin"
+        env["CODEX_CLI_DISABLE_DEFAULTS"] = "1"
         proc = subprocess.run(
             [
                 str(VERIFY),
@@ -4923,6 +5096,9 @@ TESTS = [
     test_sync_ignores_legacy_eigenphi_argument,
     test_verify_supports_skip_check_argument,
     test_codex_version_policy_accepts_current_cli,
+    test_codex_cli_resolver_skips_broken_candidates,
+    test_skill_compatibility_checker_contract,
+    test_codex_skill_loader_gate,
     test_sync_renders_template_and_copies_skills,
     test_sync_preserves_runtime_plugin_state,
     test_sync_registers_and_installs_superpowers_plugin,

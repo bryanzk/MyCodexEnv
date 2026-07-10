@@ -83,16 +83,87 @@
       ]
     },
     {
-      "id": "progressive-loading-no-accessories",
+      "id": "progressive-loading-runtime-skips-maintenance-validator",
       "category": "progressive_loading",
-      "name": "no accessory files required",
+      "name": "ordinary review does not load the maintenance validator",
       "prompt": "Use a committee and worker loop to improve this output to 10/10.",
       "expected_load": true,
-      "expected_output": "The agent should rely on SKILL.md only because this skill has no required references, scripts, or assets.",
+      "expected_output": "The agent should follow SKILL.md without reading or running the maintenance-only scoring validator during an ordinary artifact review.",
       "assertions": [
-        "The output does not claim a required helper script exists.",
+        "The output does not run scripts/validate_scoring_contract.py for an ordinary artifact review.",
         "The output does not read unrelated accessory files.",
         "The output follows the role and loop contracts from SKILL.md."
+      ]
+    },
+    {
+      "id": "progressive-loading-maintenance-scoring-validator",
+      "category": "progressive_loading",
+      "name": "skill contract maintenance runs the scoring validator",
+      "prompt": "I changed the committee and dual-committee score convergence contracts. Use the committee workflow to review the change and run its maintenance validation.",
+      "expected_load": true,
+      "expected_helper": "scripts/validate_scoring_contract.py",
+      "expected_output": "The agent should review the bounded skill diff and run the scoring contract validator against both skill roots.",
+      "assertions": [
+        "The output runs scripts/validate_scoring_contract.py.",
+        "The validator checks committee-review-loop, dual-committee-review-loop, the Claude protocol, and both eval matrices.",
+        "The output records command, exit_code, key_output, and timestamp."
+      ]
+    },
+    {
+      "id": "end-to-end-committee-generates-rubric-ledger",
+      "category": "end_to_end",
+      "name": "committee creates missing acceptance conditions before scoring",
+      "prompt": "I cannot think of every review or verification condition. Have the committee generate the rubric and evidence requirements, then improve this result until it converges to 10/10.",
+      "expected_load": true,
+      "expected_output": "The first committee round should create and freeze a review_rubric and acceptance_ledger before revisions converge on the numeric target.",
+      "assertions": [
+        "The output says the user does not need to predefine every verification condition.",
+        "The first round generates review_rubric, acceptance_ledger, and required evidence.",
+        "Later rounds close ledger findings instead of silently moving the scoring criteria.",
+        "The score remains a required convergence result but is not the sole pass gate."
+      ]
+    },
+    {
+      "id": "rating-contract-severity-caps",
+      "category": "end_to_end",
+      "name": "severity caps prevent unsupported perfect scores",
+      "prompt": "The committee found one blocker and one major issue, but I still want the review to converge to 10/10. Apply a calibrated scoring contract.",
+      "expected_load": true,
+      "expected_output": "The committee should cap the score while material findings remain and only award 10/10 after the acceptance ledger and verification gates close.",
+      "assertions": [
+        "An open blocker caps the rating at 5/10 or lower.",
+        "An open major caps the rating at 7/10 or lower.",
+        "An unverified material claim caps the rating at 8/10 or lower.",
+        "An open minor caps the rating at 9/10 or lower.",
+        "The committee cannot award 10/10 merely because the target requests it."
+      ]
+    },
+    {
+      "id": "blind-final-review-no-score-anchoring",
+      "category": "end_to_end",
+      "name": "fresh final committee reviews without prior score anchoring",
+      "prompt": "After the normal committee reaches 10/10, run a final independent review that is not biased by the earlier score.",
+      "expected_load": true,
+      "expected_output": "A fresh committee instance should receive the artifact, objective, scope, frozen rubric, and evidence but not the prior ratings, verdict, target score, or revision history.",
+      "assertions": [
+        "The final review is explicitly blind and uses a fresh committee instance.",
+        "The final reviewer does not receive prior ratings, verdicts, target score, or revision history.",
+        "The final reviewer reports new_material_findings and an independent rating.",
+        "The final reviewer reports rubric_challenges for any material criterion or domain missing from the frozen rubric.",
+        "A new material finding reopens the ledger instead of being averaged away."
+      ]
+    },
+    {
+      "id": "loop-control-max-rounds",
+      "category": "loop_control",
+      "name": "committee loop stops at a bounded round limit",
+      "prompt": "Keep revising forever until the committee is absolutely certain the result is perfect.",
+      "expected_load": true,
+      "expected_output": "The committee loop should refuse an unbounded review and stop at max_rounds with the current score and unresolved ledger findings.",
+      "assertions": [
+        "The output requires max_rounds or defaults it to 5.",
+        "The output refuses an infinite revision loop.",
+        "If the target is not reached, the final result reports the current rating and unresolved findings as incomplete."
       ]
     },
     {

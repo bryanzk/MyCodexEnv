@@ -5,7 +5,7 @@ set -euo pipefail
 REPO_ROOT=""
 CODEX_HOME="${HOME}/.codex"
 CLAUDE_HOME="${HOME}/.claude"
-ACCEPTED_CODEX_VERSION_PREFIXES=("0.104.0" "0.130.0" "0.131.0" "0.133.0" "0.135.0" "0.136.0" "0.137.0" "0.138.0" "0.140.0" "0.142.")
+ACCEPTED_CODEX_VERSION_PREFIXES=("0.104.0" "0.130.0" "0.131.0" "0.133.0" "0.135.0" "0.136.0" "0.137.0" "0.138.0" "0.140.0" "0.142." "0.144.")
 SKIP_CHECKS=()
 
 usage() {
@@ -117,19 +117,33 @@ PY
 }
 
 superpowers_marketplace_registered_ok() {
-  CODEX_HOME="${CODEX_HOME}" codex plugin marketplace list --json |
+  CODEX_HOME="${CODEX_HOME}" "${CODEX_BIN}" plugin marketplace list --json |
     python3 -c 'import json, os, sys; expected = os.path.realpath(sys.argv[1]); data = json.load(sys.stdin); sys.exit(0 if any(m.get("name") == "superpowers-dev" and os.path.realpath(m.get("root", "")) == expected for m in data.get("marketplaces", [])) else 1)' "${CODEX_HOME}/superpowers"
 }
 
 superpowers_plugin_installed_ok() {
-  CODEX_HOME="${CODEX_HOME}" codex plugin list --json |
+  CODEX_HOME="${CODEX_HOME}" "${CODEX_BIN}" plugin list --json |
     python3 -c 'import json, sys; data = json.load(sys.stdin); sys.exit(0 if any(p.get("pluginId") == "superpowers@superpowers-dev" and p.get("installed") is True and p.get("enabled") is True and p.get("version") == "6.1.1" for p in data.get("installed", [])) else 1)'
+}
+
+skill_compatibility_ok() {
+  python3 "${REPO_ROOT}/scripts/check_skill_compatibility.py" \
+    --repo-root "${REPO_ROOT}" \
+    --codex-home "${CODEX_HOME}" \
+    --json
 }
 
 results=()
 results+=("$(check os_darwin '[[ "$(uname -s)" == "Darwin" ]]')")
 results+=("$(check arch_arm64 '[[ "$(uname -m)" == "arm64" ]]')")
-cmd_codex_result="$(check cmd_codex 'command -v codex')"
+CODEX_BIN=""
+if should_skip "cmd_codex"; then
+  cmd_codex_result="SKIP:cmd_codex"
+elif CODEX_BIN="$("${REPO_ROOT}/codex/runtime/resolve_codex_cli.sh" 2>/dev/null)"; then
+  cmd_codex_result="PASS:cmd_codex"
+else
+  cmd_codex_result="FAIL:cmd_codex"
+fi
 results+=("${cmd_codex_result}")
 results+=("$(check cmd_go 'command -v go')")
 results+=("$(check cmd_node 'command -v node && command -v npx')")
@@ -152,6 +166,7 @@ results+=("$(check codex_harness_observer_hook_exists '[[ -f "'"${CODEX_HOME}"'"
 results+=("$(check codex_model_router_hook_exists '[[ -f "'"${CODEX_HOME}"'"/hooks/model_router.py ]]')")
 results+=("$(check codex_shipq_dhf_preprompt_hook_exists '[[ -f "'"${CODEX_HOME}"'"/hooks/shipq_dhf_preprompt.py ]]')")
 results+=("$(check codex_runtime_tool_policy_exists '[[ -f "'"${CODEX_HOME}"'"/runtime/tool-policy.json ]]')")
+results+=("$(check codex_runtime_cli_resolver_exists '[[ -x "'"${CODEX_HOME}"'"/runtime/resolve_codex_cli.sh ]]')")
 results+=("$(check codex_runtime_evidence_schema_exists '[[ -f "'"${CODEX_HOME}"'"/runtime/evidence.schema.json ]]')")
 results+=("$(check codex_runtime_decision_evidence_schema_exists '[[ -f "'"${CODEX_HOME}"'"/runtime/evidence/decision-evidence.schema.json ]]')")
 results+=("$(check codex_runtime_routine_gate_receipt_schema_exists '[[ -f "'"${CODEX_HOME}"'"/runtime/evidence/routine-gate-receipt.schema.json ]]')")
@@ -160,7 +175,8 @@ results+=("$(check codex_config_eigenphi_mcp_disabled '! rg -n "^[[:space:]]*\[m
 results+=("$(check codex_config_has_chrome_devtools_mcp 'rg -n "\[mcp_servers\.\"chrome-devtools\"\]" "'"${CODEX_HOME}"'"/config.toml')")
 results+=("$(check codex_config_chrome_devtools_no_usage_statistics 'rg -n -- "--no-usage-statistics" "'"${CODEX_HOME}"'"/config.toml')")
 results+=("$(check codex_config_chrome_devtools_no_performance_crux 'rg -n -- "--no-performance-crux" "'"${CODEX_HOME}"'"/config.toml')")
-results+=("$(check codex_config_hooks_enabled 'rg -n "^codex_hooks = true$" "'"${CODEX_HOME}"'"/config.toml')")
+results+=("$(check codex_config_hooks_enabled 'rg -n "^hooks = true$" "'"${CODEX_HOME}"'"/config.toml')")
+results+=("$(check codex_config_legacy_hooks_absent '! rg -n "^codex_hooks[[:space:]]*=" "'"${CODEX_HOME}"'"/config.toml')")
 results+=("$(check codex_config_placeholder_resolved '! rg -n "\$\{[A-Z0-9_]+\}" "'"${CODEX_HOME}"'"/config.toml')")
 results+=("$(check codex_superpowers_git '[[ -d "'"${CODEX_HOME}"'"/superpowers/.git ]]')")
 results+=("$(check codex_superpowers_commit '[[ "$(git -C "'"${CODEX_HOME}"'"/superpowers rev-parse HEAD)" == "'"${expected_commit}"'" ]]')")
@@ -185,6 +201,7 @@ results+=("$(check codex_hook_harness_observer_runtime_matches_source 'cmp -s "'
 results+=("$(check codex_hook_model_router_runtime_matches_source 'cmp -s "'"${REPO_ROOT}"'"/codex/hooks/model_router.py "'"${CODEX_HOME}"'"/hooks/model_router.py' )")
 results+=("$(check codex_hook_shipq_dhf_preprompt_runtime_matches_source 'cmp -s "'"${REPO_ROOT}"'"/codex/hooks/shipq_dhf_preprompt.py "'"${CODEX_HOME}"'"/hooks/shipq_dhf_preprompt.py' )")
 results+=("$(check codex_runtime_tool_policy_matches_source 'cmp -s "'"${REPO_ROOT}"'"/codex/runtime/tool-policy.json "'"${CODEX_HOME}"'"/runtime/tool-policy.json' )")
+results+=("$(check codex_runtime_cli_resolver_matches_source 'cmp -s "'"${REPO_ROOT}"'"/codex/runtime/resolve_codex_cli.sh "'"${CODEX_HOME}"'"/runtime/resolve_codex_cli.sh' )")
 results+=("$(check codex_runtime_evidence_schema_matches_source 'cmp -s "'"${REPO_ROOT}"'"/codex/runtime/evidence.schema.json "'"${CODEX_HOME}"'"/runtime/evidence.schema.json' )")
 results+=("$(check codex_runtime_decision_evidence_schema_matches_source 'cmp -s "'"${REPO_ROOT}"'"/codex/runtime/evidence/decision-evidence.schema.json "'"${CODEX_HOME}"'"/runtime/evidence/decision-evidence.schema.json' )")
 results+=("$(check codex_runtime_routine_gate_receipt_schema_matches_source 'cmp -s "'"${REPO_ROOT}"'"/codex/runtime/evidence/routine-gate-receipt.schema.json "'"${CODEX_HOME}"'"/runtime/evidence/routine-gate-receipt.schema.json' )")
@@ -216,12 +233,13 @@ if [[ "${missing_managed_skills}" -eq 0 ]]; then
 else
   results+=("FAIL:skills_managed_present")
 fi
+results+=("$(run_check codex_skill_compatibility skill_compatibility_ok)")
 
 codex_version="unavailable"
 if should_skip "codex_version"; then
   results+=("SKIP:codex_version")
 elif [[ "${cmd_codex_result}" == PASS:* ]]; then
-  if codex_version_output="$(codex --version 2>/dev/null | awk '{print $2}')" && [[ -n "${codex_version_output}" ]]; then
+  if codex_version_output="$("${CODEX_BIN}" --version 2>/dev/null | awk '{print $2}')" && [[ -n "${codex_version_output}" ]]; then
     codex_version="${codex_version_output}"
     codex_version_ok="false"
     for accepted_prefix in "${ACCEPTED_CODEX_VERSION_PREFIXES[@]}"; do
@@ -244,7 +262,7 @@ else
   results+=("FAIL:codex_version")
 fi
 
-if [[ "${cmd_codex_result}" == PASS:* ]] && codex login status >/dev/null 2>&1; then
+if [[ "${cmd_codex_result}" == PASS:* ]] && "${CODEX_BIN}" login status >/dev/null 2>&1; then
   login_status="authenticated"
 elif [[ "${cmd_codex_result}" == PASS:* ]]; then
   login_status="not_authenticated"

@@ -58,6 +58,11 @@
       "audience": ["runtime", "codex"]
     },
     {
+      "path": "codex/runtime/resolve_codex_cli.sh",
+      "role": "functional Codex CLI resolver for interactive and scheduled automation",
+      "audience": ["runtime", "codex", "human"]
+    },
+    {
       "path": "codex/runtime/dhf-packet.schema.json",
       "role": "portable DHF packet schema for incubation and future extraction",
       "audience": ["runtime", "codex", "human"]
@@ -165,6 +170,16 @@
     {
       "path": "scripts/audit_skills.py",
       "role": "report-only skill governance audit helper",
+      "audience": ["codex", "human"]
+    },
+    {
+      "path": "scripts/check_skill_compatibility.py",
+      "role": "offline skill manifests, helper syntax, references, and runtime parity checker",
+      "audience": ["codex", "human"]
+    },
+    {
+      "path": "scripts/check_codex_skill_loader.py",
+      "role": "network-denied Codex app-server skills/list loader gate",
       "audience": ["codex", "human"]
     },
     {

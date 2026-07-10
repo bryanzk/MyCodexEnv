@@ -4,7 +4,9 @@ set -euo pipefail
 # 安装并验证 bootstrap 依赖。
 NON_INTERACTIVE="false"
 CHROME_DEVTOOLS_MCP_VERSION="0.20.0"
-ACCEPTED_CODEX_VERSION_PREFIXES=("0.104.0" "0.130.0" "0.131.0" "0.133.0" "0.135.0" "0.136.0" "0.137.0" "0.138.0" "0.140.0" "0.142.")
+ACCEPTED_CODEX_VERSION_PREFIXES=("0.104.0" "0.130.0" "0.131.0" "0.133.0" "0.135.0" "0.136.0" "0.137.0" "0.138.0" "0.140.0" "0.142." "0.144.")
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+CODEX_CLI_RESOLVER="${SCRIPT_DIR}/../codex/runtime/resolve_codex_cli.sh"
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
@@ -96,12 +98,17 @@ ensure_cask codex
 ensure_google_chrome
 ensure_npm_package chrome-devtools-mcp "${CHROME_DEVTOOLS_MCP_VERSION}"
 
-for cmd in git jq rg node npm npx pnpm uv go codex; do
+for cmd in git jq rg node npm npx pnpm uv go; do
   if ! command -v "${cmd}" >/dev/null 2>&1; then
     echo "Required command not found after installation: ${cmd}" >&2
     exit 1
   fi
 done
+
+if ! CODEX_BIN="$("${CODEX_CLI_RESOLVER}")"; then
+  echo "Required Codex CLI is not functional after installation." >&2
+  exit 1
+fi
 
 npm_global_bin="$(npm prefix -g)/bin"
 if [[ ! -x "${npm_global_bin}/chrome-devtools-mcp" ]]; then
@@ -109,7 +116,7 @@ if [[ ! -x "${npm_global_bin}/chrome-devtools-mcp" ]]; then
   exit 1
 fi
 
-codex_version_raw="$(codex --version | awk '{print $2}')"
+codex_version_raw="$("${CODEX_BIN}" --version | awk '{print $2}')"
 codex_version_ok="false"
 for accepted_prefix in "${ACCEPTED_CODEX_VERSION_PREFIXES[@]}"; do
   if [[ "${codex_version_raw}" == "${accepted_prefix}"* ]]; then
