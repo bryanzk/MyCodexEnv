@@ -60,7 +60,7 @@
 - runtime_sync: `./scripts/sync_codex_home.sh` 已从 clone_root 同步到 `$HOME/.codex`，修复了 `shipq_dhf_preprompt` runtime drift 与 managed skill compatibility 校验失败。
 
 ## Closeout Status
-- commit: `6c9bf40`
+- commit: `71f19e5`
 - automation_branch_push: `pushed`
 - main_auto_merge: `merged`
 - local_main_safe_sync: `skipped`
@@ -103,24 +103,24 @@
   timestamp: `2026-07-11T13:03:30Z`
 - command: `git fetch origin && git rebase origin/main && git push --force-with-lease origin HEAD:refs/heads/automation/gstack-dhf-daily-refresh`
   exit_code: `0`
-  key_output: `Current branch automation/gstack-dhf-daily-refresh is up to date. ; 36dfd2f..6c9bf40  HEAD -> automation/gstack-dhf-daily-refresh`
-  timestamp: `2026-07-11T13:04:10Z`
+  key_output: `Current branch automation/gstack-dhf-daily-refresh is up to date. ; 6c9bf40..71f19e5  HEAD -> automation/gstack-dhf-daily-refresh`
+  timestamp: `2026-07-11T13:05:44Z`
 - command: `python3 scripts/merge_gstack_refresh_if_safe.py --repo-root "$(pwd)" --apply --verified --json`
   exit_code: `0`
-  key_output: `{"status":"merged","reason":"ahead_only","main_before":"f81793670bd022610973a5faf45fdb726839b096","main_after":"6c9bf4043c784b48a0d5ec0c7beb2368e68c2cd4"}`
-  timestamp: `2026-07-11T13:04:31Z`
+  key_output: `{"status":"merged","reason":"ahead_only","main_before":"6c9bf4043c784b48a0d5ec0c7beb2368e68c2cd4","main_after":"71f19e5b20a307249426e7c6f8f22dda08b8c6e6"}`
+  timestamp: `2026-07-11T13:05:52Z`
 - command: `python3 scripts/sync_local_main_if_safe.py --repo-root /Users/kezheng/Codes/CursorDeveloper/MyCodexEnv --apply --json`
   exit_code: `0`
   key_output: `{"status":"skipped","reason":"dirty_worktree","current_branch":"main"}`
-  timestamp: `2026-07-11T13:04:40Z`
+  timestamp: `2026-07-11T13:05:56Z`
 - command: `git ls-remote origin refs/heads/automation/gstack-dhf-daily-refresh refs/heads/main`
   exit_code: `0`
-  key_output: `6c9bf40 refs/heads/automation/gstack-dhf-daily-refresh ; 6c9bf40 refs/heads/main`
-  timestamp: `2026-07-11T13:05:12Z`
+  key_output: `71f19e5 refs/heads/automation/gstack-dhf-daily-refresh ; 71f19e5 refs/heads/main`
+  timestamp: `2026-07-11T13:06:03Z`
 - command: `git status --short --branch && git rev-parse --short=7 HEAD`
   exit_code: `0`
-  key_output: `## automation/gstack-dhf-daily-refresh ; 6c9bf40`
-  timestamp: `2026-07-11T13:05:12Z`
+  key_output: `## automation/gstack-dhf-daily-refresh ; 71f19e5`
+  timestamp: `2026-07-11T13:06:03Z`
 - command: `git -C /Users/kezheng/Codes/CursorDeveloper/MyCodexEnv status --short --branch && git -C /Users/kezheng/Codes/CursorDeveloper/MyCodexEnv rev-parse --short=7 main`
   exit_code: `0`
   key_output: `## main...origin/main ; dirty_worktree ; f817936`
