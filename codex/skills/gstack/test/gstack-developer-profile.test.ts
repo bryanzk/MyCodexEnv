@@ -26,7 +26,6 @@ let tmpHome: string;
 beforeEach(() => {
   tmpHome = fs.mkdtempSync(path.join(os.tmpdir(), 'gstack-test-'));
 });
-
 afterEach(() => {
   fs.rmSync(tmpHome, { recursive: true, force: true });
 });
@@ -550,8 +549,8 @@ describe('gstack-developer-profile --log-session (#1671 fix)', () => {
     const r = runDev('--read');
     expect(r.stdout).toContain('LAST_PROJECT: realproj');
     expect(r.stdout).toContain('LAST_ASSIGNMENT: real assignment text');
-  expect(r.stdout).toContain('LAST_DESIGN_TITLE: plans/real.md');
-  // Resources still aggregate into RESOURCES_SHOWN.
-  expect(r.stdout).toContain('RESOURCES_SHOWN: url1');
-});
+    expect(r.stdout).toContain('LAST_DESIGN_TITLE: plans/real.md');
+    // Resources still aggregate into RESOURCES_SHOWN.
+    expect(r.stdout).toContain('RESOURCES_SHOWN: url1');
+  });
 });
