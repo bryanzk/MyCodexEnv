@@ -40,6 +40,17 @@ def parse_state_value(text: str, key: str) -> str:
     return "unknown"
 
 
+def parse_state_json_value(text: str, key: str, expected_type: type) -> Any:
+    raw = parse_state_value(text, key)
+    if raw == "unknown":
+        return None
+    try:
+        value = json.loads(raw)
+    except json.JSONDecodeError:
+        return None
+    return value if isinstance(value, expected_type) else None
+
+
 def compact_decision_event(event: dict[str, Any]) -> dict[str, Any]:
     keys = ["timestamp", "event_type", "phase", "message", "key_output", "failure_class"]
     return {key: event[key] for key in keys if key in event}
@@ -106,11 +117,15 @@ def build_recovery(args: argparse.Namespace) -> tuple[int, dict[str, Any] | None
         "unknown": evidence_kind_counter.get("unknown", 0),
     }
     decision_events = [event for event in evidence_events if event.get("evidence_kind") == "decision"]
+    next_safe_task = parse_state_value(state_text, "next_safe_task")
     payload = {
         "repo_root": str(repo_root),
         "phase": parse_state_value(state_text, "phase"),
         "blocked_sources": parse_state_value(state_text, "blocked_sources"),
-        "next_safe_task": parse_state_value(state_text, "next_safe_task"),
+        "constraints": parse_state_json_value(state_text, "constraints", list),
+        "ownership": parse_state_json_value(state_text, "ownership", dict),
+        "next_safe_task": next_safe_task,
+        "next_action": parse_state_json_value(state_text, "next_safe_task", dict),
         "latest_verification_state": parse_state_value(state_text, "latest_verification"),
         "dirty_status": "unknown" if git_status == "unknown" else ("dirty" if dirty_lines else "clean"),
         "dirty_count": len(dirty_lines),
