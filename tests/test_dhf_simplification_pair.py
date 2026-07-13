@@ -93,11 +93,75 @@ class DhfSimplificationPairTests(unittest.TestCase):
                     self.assertEqual(capture["provenance"]["capture_mode"], "deterministic_local_bounded_execution")
                     self.assertTrue(capture["provenance"]["capture_version"])
                     self.assertTrue(capture["provenance"]["source_contract"])
+                    self.assertRegex(capture["provenance"]["context_sha256"], r"^[0-9a-f]{64}$")
+                    self.assertGreaterEqual(capture["provenance"]["context_utf8_bytes"], 0)
+                    self.assertRegex(capture["provenance"]["dispatcher_sha256"], r"^[0-9a-f]{64}$")
+                    self.assertIn("dispatcher_route", capture["provenance"])
                     raw = capture["raw_task_output"]
                     self.assertIsInstance(raw["result"], str)
                     self.assertIsInstance(raw["scope_and_constraints"], list)
                     self.assertIsInstance(raw["verification_receipt"], dict)
                     self.assertIn("permission_outcome", raw)
+                    self.assertEqual(raw["execution_policy"]["context_sha256"], capture["provenance"]["context_sha256"])
+
+        activated = next(item for item in self.observations["observations"] if item["id"] == "STANDARD-LOCAL-FEATURE")
+        self.assertNotEqual(
+            activated["baseline_capture"]["provenance"]["context_sha256"],
+            activated["candidate_capture"]["provenance"]["context_sha256"],
+        )
+        self.assertEqual(activated["baseline_capture"]["provenance"]["base_commit"], self.runner.BASELINE_BASE_SHA)
+        self.assertTrue(activated["candidate_capture"]["provenance"]["profile_contract"])
+
+    def test_context_drives_execution_policy_and_permission_oracle_is_not_capture_input(self):
+        scenario = next(item for item in self.corpus["scenarios"] if item["id"] == "GOVERNED-REMOTE-DEPLOY")
+        contexts = self.runner.capture_contract_contexts(scenario, ROOT)
+        candidate = contexts["candidate"]
+        policy = self.runner.derive_execution_policy(
+            scenario["sanitized_prompt"], scenario["scenario_type"], candidate["context"], candidate["profile_contract"]
+        )
+        self.assertEqual(policy["action"], "block_pending_authorization")
+        self.assertIn("Deployment Readiness Gate", policy["gates"])
+
+        corrupted = candidate["context"].replace("Deployment Readiness Gate", "")
+        corrupted_policy = self.runner.derive_execution_policy(
+            scenario["sanitized_prompt"], scenario["scenario_type"], corrupted, None
+        )
+        self.assertNotEqual(corrupted_policy, policy)
+        self.assertEqual(corrupted_policy["action"], "fail_closed_missing_contract")
+
+        changed_oracle = copy.deepcopy(scenario)
+        changed_oracle["permission_safety_outcome"]["decision"] = "execute_without_authorization"
+        original_output = self.runner.execute_bounded_scenario(scenario, candidate)
+        changed_output = self.runner.execute_bounded_scenario(changed_oracle, candidate)
+        self.assertEqual(original_output["permission_outcome"], changed_output["permission_outcome"])
+        self.assertNotEqual(original_output["permission_outcome"], "execute_without_authorization")
+
+    def test_runner_rejects_context_hash_or_contract_corruption_and_reports_each_side_assertions(self):
+        observations = copy.deepcopy(self.observations)
+        item = next(row for row in observations["observations"] if row["id"] == "STANDARD-LOCAL-FEATURE")
+        item["candidate_capture"]["provenance"]["context_sha256"] = "0" * 64
+        report = self.compare(observations=observations)
+        self.assertTrue(any("candidate context" in error for error in report["errors"]), report)
+
+        observations = copy.deepcopy(self.observations)
+        item = next(row for row in observations["observations"] if row["id"] == "GOVERNED-REMOTE-DEPLOY")
+        item["candidate_capture"]["provenance"]["profile_contract"] = {}
+        report = self.compare(observations=observations)
+        self.assertTrue(any("candidate contract" in error for error in report["errors"]), report)
+
+        clean = self.compare()
+        raw = next(row for row in clean["raw_results"] if row["id"] == "STANDARD-LOCAL-FEATURE")
+        self.assertEqual(raw["assertion_errors"], {"baseline": [], "candidate": []})
+
+    def test_runner_rejects_valid_looking_but_stale_source_hashes(self):
+        for profile, field in (("baseline", "skill_sha256"), ("candidate", "dispatcher_sha256")):
+            with self.subTest(profile=profile, field=field):
+                observations = copy.deepcopy(self.observations)
+                item = next(row for row in observations["observations"] if row["id"] == "STANDARD-LOCAL-FEATURE")
+                item[f"{profile}_capture"]["provenance"][field] = "f" * 64
+                report = self.compare(observations=observations)
+                self.assertFalse(report["pass"])
+                self.assertTrue(any(f"{profile} source hash mismatch" in error for error in report["errors"]), report)
 
     def test_machine_output_separates_routing_and_actual_outcome_parity(self):
         report = self.compare()
@@ -269,6 +333,84 @@ class DhfSimplificationPairTests(unittest.TestCase):
                 {"command": "python3 focused.py --check", "exit_code": 0, "key_output": "1 passed",
                  "timestamp": "2026-07-12T00:00:00Z", "freshness": "stale"},
             )
+
+    def test_checkpoint_rejects_invalid_structured_fields_atomically(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            repo = Path(tmp)
+            docs = repo / "docs"
+            docs.mkdir()
+            subprocess.run(["git", "init", "-q"], cwd=repo, check=True)
+            state = docs / "harness-state.md"
+            original = "# Harness State\n\n- phase: research\n- next_safe_task: none\n\n## State Log\n"
+            state.write_text(original, encoding="utf-8")
+            base = [sys.executable, str(ROOT / "scripts" / "harness_checkpoint.py"), "append",
+                    "--repo-root", str(repo), "--phase", "development", "--summary", "invalid",
+                    "--verification-command", "python3 check.py", "--verification-exit-code", "0",
+                    "--verification-key-output", "ok", "--next-safe-task", "python3 check.py"]
+            invalid_args = (
+                ["--next-action-json", '{"command":""}'],
+                ["--next-action-json", '{"command":"python3 check.py","args":"--bad"}'],
+                ["--constraint", ""],
+                ["--ownership-json", '{"boundary":1}'],
+            )
+            for extra in invalid_args:
+                with self.subTest(extra=extra):
+                    proc = subprocess.run(base + extra, cwd=repo, capture_output=True, text=True, check=False)
+                    self.assertEqual(proc.returncode, 1, proc.stderr)
+                    self.assertIn("ERROR:", proc.stderr)
+                    self.assertEqual(state.read_text(encoding="utf-8"), original)
+
+    def test_recover_distinguishes_absent_malformed_checkpoint_and_preserves_latest_event_semantics(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            repo = Path(tmp) / "repo"
+            docs = repo / "docs"
+            docs.mkdir(parents=True)
+            subprocess.run(["git", "init", "-q"], cwd=repo, check=True)
+            (docs / "repo-index.md").write_text("# Index\n", encoding="utf-8")
+            state = docs / "harness-state.md"
+            base_state = "# Harness State\n\n- phase: research\n- next_safe_task: none\n- blocked_sources: none\n\n## State Log\n"
+            state.write_text(base_state, encoding="utf-8")
+            absent = subprocess.run(
+                [sys.executable, str(ROOT / "scripts" / "harness_recover.py"), "--repo-root", str(repo), "--codex-home", str(Path(tmp) / "codex"), "--json"],
+                cwd=repo, capture_output=True, text=True, check=False,
+            )
+            self.assertEqual(absent.returncode, 0, absent.stderr)
+            self.assertEqual(json.loads(absent.stdout)["checkpoint_status"], "absent")
+
+            for marker, expected in (("{bad-json", "malformed"), ('{"schema":"wrong"}', "schema-invalid")):
+                with self.subTest(expected=expected):
+                    state.write_text(base_state + f"- checkpoint_data: {marker}\n", encoding="utf-8")
+                    proc = subprocess.run(
+                        [sys.executable, str(ROOT / "scripts" / "harness_recover.py"), "--repo-root", str(repo), "--codex-home", str(Path(tmp) / "codex"), "--json"],
+                        cwd=repo, capture_output=True, text=True, check=False,
+                    )
+                    self.assertEqual(proc.returncode, 1)
+                    self.assertIn(expected, proc.stderr)
+
+            state.write_text(base_state, encoding="utf-8")
+            checkpoint = subprocess.run(
+                [sys.executable, str(ROOT / "scripts" / "harness_checkpoint.py"), "append", "--repo-root", str(repo),
+                 "--phase", "development", "--summary", "valid", "--constraint", "no_remote",
+                 "--ownership-json", '{"boundary":"task"}', "--next-action-json", '{"command":"python3 next.py"}',
+                 "--verification-command", "python3 checkpoint.py", "--verification-exit-code", "0",
+                 "--verification-key-output", "checkpoint", "--verification-timestamp", "2026-07-12T00:00:00Z",
+                 "--verification-freshness", "stale", "--next-safe-task", "python3 next.py"],
+                cwd=repo, capture_output=True, text=True, check=False,
+            )
+            self.assertEqual(checkpoint.returncode, 0, checkpoint.stderr)
+            evidence_dir = Path(tmp) / "codex" / "harness" / "evidence"
+            evidence_dir.mkdir(parents=True)
+            event = {"event_type":"verification_result","evidence_kind":"decision","cwd":str(repo),
+                     "command":"python3 event.py","exit_code":0,"key_output":"event","timestamp":"2026-07-13T00:00:00Z"}
+            (evidence_dir / "event.jsonl").write_text(json.dumps(event) + "\n", encoding="utf-8")
+            recovered = subprocess.run(
+                [sys.executable, str(ROOT / "scripts" / "harness_recover.py"), "--repo-root", str(repo), "--codex-home", str(Path(tmp) / "codex"), "--json"],
+                cwd=repo, capture_output=True, text=True, check=False,
+            )
+            payload = json.loads(recovered.stdout)
+            self.assertEqual(payload["checkpoint_status"], "valid")
+            self.assertEqual(payload["verification_evidence"]["command"], "python3 checkpoint.py")
+            self.assertEqual(payload["latest_verification"]["command"], "python3 event.py")
 
     def test_runner_rejects_efficiency_target_and_zero_baseline_regression(self):
         measured = self.measurements()

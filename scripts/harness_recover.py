@@ -66,7 +66,7 @@ def parse_state_json_value(text: str, key: str, expected_type: type) -> Any:
     return value if isinstance(value, expected_type) else None
 
 
-def latest_checkpoint_data(text: str) -> dict[str, Any] | None:
+def latest_checkpoint_data(text: str) -> tuple[str, dict[str, Any] | None]:
     prefix = "- checkpoint_data: "
     for line in reversed(text.splitlines()):
         if not line.startswith(prefix):
@@ -74,11 +74,13 @@ def latest_checkpoint_data(text: str) -> dict[str, Any] | None:
         try:
             value = json.loads(line[len(prefix) :])
         except json.JSONDecodeError:
-            return None
+            return "malformed", None
         if isinstance(value, dict) and value.get("schema") == "dhf_checkpoint_v1":
-            return value
-        return None
-    return None
+            required = {"phase", "constraints", "ownership", "next_action", "verification_evidence"}
+            if required.issubset(value):
+                return "valid", value
+        return "schema-invalid", None
+    return "absent", None
 
 
 def compact_decision_event(event: dict[str, Any]) -> dict[str, Any]:
@@ -222,7 +224,9 @@ def build_recovery(args: argparse.Namespace) -> tuple[int, dict[str, Any] | None
         return 1, None, f"missing state file: {state_file}"
 
     state_text = state_file.read_text(encoding="utf-8")
-    checkpoint = latest_checkpoint_data(state_text)
+    checkpoint_status, checkpoint = latest_checkpoint_data(state_text)
+    if checkpoint_status in {"malformed", "schema-invalid"}:
+        return 1, None, f"{checkpoint_status} checkpoint_data recovery blocker"
     git_status = run_git(repo_root, ["status", "--short"], empty_value="")
     dirty_lines = [line for line in git_status.splitlines() if line.strip()] if git_status != "unknown" else []
     evidence_status, latest, malformed_count, evidence_events = latest_evidence(codex_home(args.codex_home), repo_root)
@@ -242,6 +246,7 @@ def build_recovery(args: argparse.Namespace) -> tuple[int, dict[str, Any] | None
     checkpoint_evidence = checkpoint.get("verification_evidence") if checkpoint else None
     payload = {
         "repo_root": str(repo_root),
+        "checkpoint_status": checkpoint_status,
         "phase": checkpoint.get("phase") if checkpoint else parse_state_value(state_text, "phase"),
         "blocked_sources": parse_state_value(state_text, "blocked_sources"),
         "constraints": checkpoint.get("constraints") if checkpoint else parse_state_json_value(state_text, "constraints", list),
@@ -257,7 +262,7 @@ def build_recovery(args: argparse.Namespace) -> tuple[int, dict[str, Any] | None
         "evidence_malformed_count": malformed_count,
         "conversion_health": conversion_health,
         "task_demand": latest_validated_task_demand(repo_root),
-        "latest_verification": checkpoint_evidence or latest or {},
+        "latest_verification": latest or {},
         "evidence_kind_counts": evidence_kind_counts,
         "latest_decision_evidence": compact_decision_event(decision_events[0]) if decision_events else {},
     }

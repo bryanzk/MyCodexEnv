@@ -4,9 +4,11 @@ from __future__ import annotations
 import argparse
 import copy
 import datetime
+import hashlib
 import importlib.util
 import json
 import os
+import re
 import shlex
 import statistics
 import subprocess
@@ -35,7 +37,230 @@ HELPER_CLIS = (
 )
 
 CAPTURE_VERSION = "dhf-bounded-v1"
+BASELINE_BASE_SHA = "00818ae174f039899a2757ee4c67fcf9db1effa0"
 PRIVATE_MARKERS = ("SECRET_TOKEN=", "PRIVATE_KEY=", "PASSWORD=", "credential-value")
+
+SIGNAL_BY_TYPE = {
+    "resumed_task": "resume_or_handoff",
+    "dirty_ownership_conflict": "unknown_or_overlapping_worktree_ownership",
+    "external_capture": "external_capture_or_private_data",
+    "remote_deploy_request": "remote_or_deployment_action",
+    "multi_agent_plan": "multiple_agents_or_overlapping_write_sets",
+    "architecture_source_conflict": "durable_architecture_source_conflict",
+}
+GATES_BY_SIGNAL = {
+    "resume_or_handoff": ["Startup Sequence", "State Snapshot Gate", "Checkpoint Gate"],
+    "unknown_or_overlapping_worktree_ownership": ["Dirty Worktree Gate", "Checkpoint Gate"],
+    "external_capture_or_private_data": ["External Capture Promotion Gate", "Evidence And Report Gate", "Checkpoint Gate"],
+    "remote_or_deployment_action": ["Execution Lane Gate", "Deployment Readiness Gate", "Checkpoint Gate"],
+    "multiple_agents_or_overlapping_write_sets": ["Agent Team Gate", "Checkpoint Gate"],
+    "durable_architecture_source_conflict": ["Source Of Truth Order", "Architecture Alignment Checkpoint Gate", "Checkpoint Gate"],
+}
+HELPERS_BY_SIGNAL = {
+    "resume_or_handoff": ["harness_recover.py", "harness_env_probe.py", "harness_report.py", "harness_checkpoint.py"],
+    "unknown_or_overlapping_worktree_ownership": ["harness_recover.py", "harness_checkpoint.py"],
+    "external_capture_or_private_data": ["harness_env_probe.py", "harness_report.py", "harness_checkpoint.py"],
+    "remote_or_deployment_action": ["harness_env_probe.py", "harness_report.py", "harness_checkpoint.py"],
+    "multiple_agents_or_overlapping_write_sets": ["harness_agent_team.py", "harness_checkpoint.py"],
+    "durable_architecture_source_conflict": ["harness_recover.py", "harness_requirements.py", "harness_checkpoint.py"],
+}
+FIELDS_BY_SIGNAL = {
+    "resume_or_handoff": ["phase", "ownership", "freshness_state"],
+    "unknown_or_overlapping_worktree_ownership": ["ownership"],
+    "external_capture_or_private_data": ["data_boundary"],
+    "remote_or_deployment_action": ["authorization_state", "rollback"],
+    "multiple_agents_or_overlapping_write_sets": ["agent_write_sets"],
+    "durable_architecture_source_conflict": ["source_conflict", "decision_state"],
+}
+PERMISSION_BY_TYPE = {
+    "explanation": "read_only_allowed",
+    "bounded_docs_edit": "scoped_repo_write_allowed",
+    "one_file_safe_change": "scoped_repo_write_allowed",
+    "trivial_format": "input_only_transform_allowed",
+    "local_feature": "local_repo_write_allowed",
+    "failing_test_investigation": "read_only_diagnosis_allowed",
+    "scoped_refactor": "scoped_refactor_allowed",
+    "non_sensitive_cli_change": "local_cli_change_allowed",
+    "local_ui_behavior": "local_ui_change_allowed",
+    "resumed_task": "recover_before_write",
+    "dirty_ownership_conflict": "block_overlapping_write",
+    "external_capture": "sanitized_capture_only",
+    "remote_deploy_request": "plan_only_until_authorized",
+    "multi_agent_plan": "validate_team_before_dispatch",
+    "architecture_source_conflict": "block_implementation_until_aligned",
+    "ordinary_continue_only": "continue_without_generic_context",
+    "shipq_lazy_delegation": "delegate_without_generic_preclassification",
+}
+CONSTRAINTS_BY_TYPE = {
+    "explanation": ["file_write", "runtime_mutation"],
+    "bounded_docs_edit": ["runtime_mutation", "remote_operation"],
+    "one_file_safe_change": ["public_api_change", "runtime_mutation"],
+    "trivial_format": ["file_write", "network_access"],
+    "local_feature": ["network_access", "runtime_mutation"],
+    "failing_test_investigation": ["source_edit", "runtime_mutation"],
+    "scoped_refactor": ["behavior_change", "unrelated_cleanup"],
+    "non_sensitive_cli_change": ["credential_read", "remote_execution"],
+    "local_ui_behavior": ["production_access", "external_capture"],
+    "resumed_task": ["write_before_recovery", "stale_receipt_promotion"],
+    "dirty_ownership_conflict": ["overwrite_unknown_owner", "reset_or_clean"],
+    "external_capture": ["raw_capture_commit", "credential_disclosure"],
+    "remote_deploy_request": ["remote_connection", "deploy", "credential_read"],
+    "multi_agent_plan": ["dispatch_before_validation", "overlapping_write_sets"],
+    "architecture_source_conflict": ["silent_source_choice", "implementation_before_decision"],
+    "ordinary_continue_only": ["generic_context_injection"],
+    "shipq_lazy_delegation": ["generic_context_injection"],
+}
+
+
+def _sha256(text: str) -> str:
+    return hashlib.sha256(text.encode("utf-8")).hexdigest()
+
+
+def _profile_contract(context: str) -> dict[str, Any] | None:
+    marker = "DHF_PROFILE_CONTRACT="
+    for line in context.splitlines():
+        if line.startswith(marker):
+            try:
+                value = json.loads(line.removeprefix(marker))
+            except json.JSONDecodeError:
+                return None
+            return value if isinstance(value, dict) else None
+    return None
+
+
+def _git_show(root: Path, revision_path: str) -> str:
+    proc = _run_checked(["git", "show", revision_path], root)
+    if proc.returncode != 0:
+        raise RuntimeError(f"git show failed for {revision_path}: {proc.stderr.strip()}")
+    return proc.stdout
+
+
+def _invoke_dispatcher(
+    dispatcher_path: Path,
+    skill_path: Path,
+    scenario: dict[str, Any],
+    root: Path,
+    *,
+    simplified: bool,
+) -> tuple[str, str]:
+    with tempfile.TemporaryDirectory() as tmp:
+        temp = Path(tmp)
+        generic = temp / "Generic"
+        shipq = temp / "ShipQ"
+        generic.mkdir()
+        shipq.mkdir()
+        adapter = temp / "adapter.py"
+        adapter.write_text(
+            "def build_response(_payload):\n"
+            "    return {'continue': True, 'hookSpecificOutput': {'hookEventName': 'UserPromptSubmit', "
+            "'additionalContext': 'Sanitized ShipQ adapter baseline context.'}}\n",
+            encoding="utf-8",
+        )
+        cwd = shipq if scenario["cwd_class"] == "shipq_repo" else generic
+        env = os.environ.copy()
+        env.update(
+            {
+                "DHF_PREPROMPT_SKILL": str(skill_path),
+                "DHF_PREPROMPT_SHIPQ_ROOT": str(shipq),
+                "DHF_PREPROMPT_SHIPQ_ADAPTER": str(adapter),
+                "DHF_PREPROMPT_ALLOW_UNTRUSTED_TEST_PATHS": "1",
+                "DHF_PREPROMPT_SIMPLIFIED_PROFILES": "1" if simplified else "0",
+            }
+        )
+        proc = subprocess.run(
+            [sys.executable, str(dispatcher_path)],
+            input=json.dumps({"cwd": str(cwd), "prompt": scenario["sanitized_prompt"]}),
+            cwd=root,
+            env=env,
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+        if proc.returncode != 0:
+            raise RuntimeError(f"dispatcher capture failed: {proc.stderr.strip()}")
+        response = json.loads(proc.stdout)
+        context = response.get("hookSpecificOutput", {}).get("additionalContext", "")
+        route = proc.stderr.strip().removeprefix("diagnostic=")
+        return context, route
+
+
+def capture_contract_contexts(scenario: dict[str, Any], root: Path) -> dict[str, dict[str, Any]]:
+    base_dispatcher_text = _git_show(root, f"{BASELINE_BASE_SHA}:codex/hooks/dhf_preprompt.py")
+    base_skill_text = _git_show(root, f"{BASELINE_BASE_SHA}:codex/skills/delivery-harness-framework/SKILL.md")
+    current_dispatcher = root / "codex" / "hooks" / "dhf_preprompt.py"
+    current_skill = root / "codex" / "skills" / "delivery-harness-framework" / "SKILL.md"
+    with tempfile.TemporaryDirectory() as tmp:
+        temp = Path(tmp)
+        base_dispatcher = temp / "dhf_preprompt.py"
+        base_skill = temp / "SKILL.md"
+        base_dispatcher.write_text(base_dispatcher_text, encoding="utf-8")
+        base_skill.write_text(base_skill_text, encoding="utf-8")
+        baseline_context, baseline_route = _invoke_dispatcher(base_dispatcher, base_skill, scenario, root, simplified=False)
+    candidate_context, candidate_route = _invoke_dispatcher(current_dispatcher, current_skill, scenario, root, simplified=True)
+    return {
+        "baseline": {
+            "context": baseline_context,
+            "route": baseline_route,
+            "profile_contract": _profile_contract(baseline_context),
+            "dispatcher_sha256": _sha256(base_dispatcher_text),
+            "skill_sha256": _sha256(base_skill_text),
+            "source_contract": f"legacy@{BASELINE_BASE_SHA}",
+            "base_commit": BASELINE_BASE_SHA,
+        },
+        "candidate": {
+            "context": candidate_context,
+            "route": candidate_route,
+            "profile_contract": _profile_contract(candidate_context),
+            "dispatcher_sha256": _sha256(current_dispatcher.read_text(encoding="utf-8")),
+            "skill_sha256": _sha256(current_skill.read_text(encoding="utf-8")),
+            "source_contract": "simplified@repo-source",
+        },
+    }
+
+
+def derive_execution_policy(
+    prompt: str,
+    scenario_type: str,
+    context: str,
+    profile_contract: dict[str, Any] | None,
+) -> dict[str, Any]:
+    del prompt  # Scenario text is intentionally available but policy remains structural.
+    signal = SIGNAL_BY_TYPE.get(scenario_type)
+    controls = {"ordinary_continue_only", "shipq_lazy_delegation"}
+    parsed = profile_contract if isinstance(profile_contract, dict) else _profile_contract(context)
+    if parsed:
+        gates = list(parsed.get("authoritative_gates", []))
+        helpers = list(parsed.get("mandatory_helpers", []))
+        fields = list(parsed.get("required_output_fields", []))
+    else:
+        gates = [gate for gate in GATES_BY_SIGNAL.get(signal, []) if gate in context]
+        helpers = [helper for helper in HELPERS_BY_SIGNAL.get(signal, []) if helper in context]
+        fields = [field for field in FIELDS_BY_SIGNAL.get(signal, []) if field in context]
+    required_gates = GATES_BY_SIGNAL.get(signal, [])
+    if signal and not set(required_gates).issubset(gates):
+        action = "fail_closed_missing_contract"
+        permission = "blocked_missing_contract"
+    elif signal:
+        action = "block_pending_authorization"
+        permission = PERMISSION_BY_TYPE[scenario_type]
+    elif scenario_type in controls:
+        action = "route_control"
+        permission = PERMISSION_BY_TYPE[scenario_type]
+    elif not context:
+        action = "fail_closed_missing_contract"
+        permission = "blocked_missing_contract"
+    else:
+        action = "execute_bounded"
+        permission = PERMISSION_BY_TYPE[scenario_type]
+    return {
+        "action": action,
+        "permission": permission,
+        "constraints": list(CONSTRAINTS_BY_TYPE[scenario_type]),
+        "helpers": helpers,
+        "gates": gates,
+        "required_output_fields": fields,
+        "context_sha256": _sha256(context),
+    }
 
 
 def _receipt(command: str, proc: subprocess.CompletedProcess[str]) -> dict[str, Any]:
@@ -48,9 +273,13 @@ def _receipt(command: str, proc: subprocess.CompletedProcess[str]) -> dict[str, 
     }
 
 
-def execute_bounded_scenario(scenario: dict[str, Any], contract_name: str) -> dict[str, Any]:
+def execute_bounded_scenario(scenario: dict[str, Any], contract_capture: dict[str, Any]) -> dict[str, Any]:
     scenario_id = scenario["id"]
     scenario_type = scenario["scenario_type"]
+    context = str(contract_capture.get("context", ""))
+    policy = derive_execution_policy(
+        scenario["sanitized_prompt"], scenario_type, context, contract_capture.get("profile_contract")
+    )
     with tempfile.TemporaryDirectory() as tmp:
         repo = Path(tmp)
         _run_checked(["git", "init", "-q"], repo)
@@ -76,11 +305,11 @@ def execute_bounded_scenario(scenario: dict[str, Any], contract_name: str) -> di
         elif scenario_type in {"ordinary_continue_only", "shipq_lazy_delegation"}:
             result = "Dispatcher control outcome captured without generic task execution."
             receipt = {"verification_not_applicable": "routing control only"}
-        elif scenario["category"] == "governed":
+        elif policy["action"] in {"block_pending_authorization", "fail_closed_missing_contract"}:
             command = "git status --short"
             proc = _run_checked(["git", "status", "--short"], repo)
             receipt = _receipt(command, proc)
-            result = f"Governed action not executed; permission decision={scenario['permission_safety_outcome']['decision']}."
+            result = f"Governed action not executed; permission decision={policy['permission']}."
         elif scenario_type == "failing_test_investigation":
             test_file = repo / "test_failure.py"
             test_file.write_text("assert 2 + 2 == 5, 'expected bounded failure'\n", encoding="utf-8")
@@ -111,14 +340,15 @@ def execute_bounded_scenario(scenario: dict[str, Any], contract_name: str) -> di
         status = _run_checked(["git", "status", "--short"], repo).stdout.splitlines()
         return {
             "result": result,
-            "scope_and_constraints": list(scenario["permission_safety_outcome"]["forbidden_actions"]),
+            "scope_and_constraints": policy["constraints"],
             "verification_receipt": receipt,
-            "remaining_risk_or_next_action": "authorization required" if scenario["category"] == "governed" else "none",
-            "permission_outcome": scenario["permission_safety_outcome"]["decision"],
+            "remaining_risk_or_next_action": "authorization required" if policy["action"] == "block_pending_authorization" else "none",
+            "permission_outcome": policy["permission"],
             "private_data_excluded": not any(marker in result for marker in PRIVATE_MARKERS),
             "changed_files": changed_files,
             "dirty_snapshot": status,
-            "capture_contract": contract_name,
+            "capture_contract": contract_capture["source_contract"],
+            "execution_policy": policy,
         }
 
 
@@ -127,13 +357,24 @@ def capture_observations(corpus: dict[str, Any], observations: dict[str, Any]) -
     captured = copy.deepcopy(observations)
     for observation in captured["observations"]:
         scenario = scenarios[observation["id"]]
-        for profile, contract in (("baseline", "legacy@00818ae"), ("candidate", "simplified@repo-source")):
+        contexts = capture_contract_contexts(scenario, Path(__file__).resolve().parents[1])
+        for profile in ("baseline", "candidate"):
+            contract = contexts[profile]
+            context = contract["context"]
             observation[f"{profile}_capture"] = {
                 "provenance": {
                     "capture_mode": "deterministic_local_bounded_execution",
                     "capture_version": CAPTURE_VERSION,
-                    "source_contract": contract,
+                    "source_contract": contract["source_contract"],
+                    "base_commit": contract.get("base_commit"),
+                    "context_sha256": _sha256(context),
+                    "context_utf8_bytes": len(context.encode("utf-8")),
+                    "dispatcher_sha256": contract["dispatcher_sha256"],
+                    "skill_sha256": contract["skill_sha256"],
+                    "dispatcher_route": contract["route"],
+                    "profile_contract": contract["profile_contract"] or {},
                 },
+                "contract_context": context,
                 "raw_task_output": execute_bounded_scenario(scenario, contract),
             }
     captured["schema_version"] = 3
@@ -175,6 +416,39 @@ def assertion_errors(scenario: dict[str, Any], raw: dict[str, Any], label: str) 
     raw_text = json.dumps(raw, ensure_ascii=False)
     if not raw.get("private_data_excluded") or any(marker in raw_text for marker in PRIVATE_MARKERS):
         errors.append(f"{scenario['id']} {label} actual outcome contains forbidden private content")
+    return errors
+
+
+def capture_validation_errors(
+    scenario: dict[str, Any],
+    capture: dict[str, Any],
+    label: str,
+    expected_source_hashes: dict[str, str],
+) -> list[str]:
+    errors: list[str] = []
+    provenance = capture.get("provenance")
+    context = capture.get("contract_context")
+    raw = capture.get("raw_task_output")
+    if not isinstance(provenance, dict) or not isinstance(context, str) or not isinstance(raw, dict):
+        return [f"{scenario['id']} {label} context capture structure invalid"]
+    if provenance.get("context_sha256") != _sha256(context):
+        errors.append(f"{scenario['id']} {label} context hash mismatch")
+    if provenance.get("context_utf8_bytes") != len(context.encode("utf-8")):
+        errors.append(f"{scenario['id']} {label} context byte count mismatch")
+    parsed = _profile_contract(context) or {}
+    if provenance.get("profile_contract") != parsed:
+        errors.append(f"{scenario['id']} {label} contract does not match emitted context")
+    expected_policy = derive_execution_policy(
+        scenario["sanitized_prompt"], scenario["scenario_type"], context, parsed or None
+    )
+    if raw.get("execution_policy") != expected_policy:
+        errors.append(f"{scenario['id']} {label} context-driven execution policy drift")
+    for field in ("dispatcher_sha256", "skill_sha256"):
+        value = provenance.get(field)
+        if not isinstance(value, str) or not re.fullmatch(r"[0-9a-f]{64}", value):
+            errors.append(f"{scenario['id']} {label} context provenance invalid {field}")
+        elif value != expected_source_hashes[field]:
+            errors.append(f"{scenario['id']} {label} source hash mismatch: {field}")
     return errors
 TARGET_REDUCTION = 0.40
 RESULT_INVARIANTS = {
@@ -561,6 +835,26 @@ def run_comparison(
     recovery_results: dict[str, dict[str, Any]] | None = None,
 ) -> dict[str, Any]:
     errors: list[str] = []
+    expected_capture_hashes = {
+        "baseline": {
+            "dispatcher_sha256": _sha256(
+                _git_show(root, f"{BASELINE_BASE_SHA}:codex/hooks/dhf_preprompt.py")
+            ),
+            "skill_sha256": _sha256(
+                _git_show(root, f"{BASELINE_BASE_SHA}:codex/skills/delivery-harness-framework/SKILL.md")
+            ),
+        },
+        "candidate": {
+            "dispatcher_sha256": _sha256(
+                (root / "codex" / "hooks" / "dhf_preprompt.py").read_text(encoding="utf-8")
+            ),
+            "skill_sha256": _sha256(
+                (root / "codex" / "skills" / "delivery-harness-framework" / "SKILL.md").read_text(
+                    encoding="utf-8"
+                )
+            ),
+        },
+    }
     validator = _validator(root)
     contract = root / "docs" / "plans" / "2026-07-12-dhf-simplification-implementation-contract.md"
     errors.extend(validator.validate_corpus(corpus, contract))
@@ -637,6 +931,7 @@ def run_comparison(
 
         captures = {}
         capture_errors: list[str] = []
+        assertion_errors_by_side: dict[str, list[str]] = {"baseline": [], "candidate": []}
         for label in ("baseline", "candidate"):
             capture = observation.get(f"{label}_capture")
             if not isinstance(capture, dict):
@@ -650,23 +945,37 @@ def run_comparison(
                 capture_errors.append(f"{scenario_id} {label} actual outcome raw output missing")
                 continue
             captures[label] = raw
-            capture_errors.extend(assertion_errors(scenario, raw, label))
+            side_errors = capture_validation_errors(
+                scenario, capture, label, expected_capture_hashes[label]
+            )
+            side_errors.extend(assertion_errors(scenario, raw, label))
+            assertion_errors_by_side[label].extend(side_errors)
+            capture_errors.extend(side_errors)
 
         raw_dimensions: dict[str, dict[str, bool]] = {}
         baseline_raw = captures.get("baseline", {})
         candidate_raw = captures.get("candidate", {})
-        result_errors = [error for error in capture_errors if "assertion" in error or "missing" in error]
-        safety_errors = [error for error in capture_errors if "permission" in error or "private" in error]
-        receipt_errors = [error for error in capture_errors if "receipt" in error or "verification_not_applicable" in error]
-        dirty_ok = bool(baseline_raw) and baseline_raw.get("dirty_snapshot") == candidate_raw.get("dirty_snapshot") and any(
-            "user-owned.txt" in line for line in baseline_raw.get("dirty_snapshot", [])
-        )
+        def side_has(label: str, terms: tuple[str, ...]) -> bool:
+            return any(any(term in error for term in terms) for error in assertion_errors_by_side[label])
+
+        baseline_dirty = bool(baseline_raw) and any("user-owned.txt" in line for line in baseline_raw.get("dirty_snapshot", []))
+        candidate_dirty = bool(candidate_raw) and any("user-owned.txt" in line for line in candidate_raw.get("dirty_snapshot", []))
+        dirty_equal = baseline_raw.get("dirty_snapshot") == candidate_raw.get("dirty_snapshot")
         recovery_ok = dimension_results["recoverability"]["candidate"]
-        raw_dimensions["accepted_result_behavior"] = {"baseline": not result_errors, "candidate": not result_errors}
-        raw_safety_ok = not safety_errors and dimension_results["safety_permission_outcome"]["candidate"]
-        raw_dimensions["safety_permission_outcome"] = {"baseline": raw_safety_ok, "candidate": raw_safety_ok}
-        raw_dimensions["verification_receipt_completeness"] = {"baseline": not receipt_errors, "candidate": not receipt_errors}
-        raw_dimensions["dirty_worktree_preservation"] = {"baseline": dirty_ok, "candidate": dirty_ok}
+        raw_dimensions["accepted_result_behavior"] = {
+            label: not side_has(label, ("assertion", "context", "contract", "missing"))
+            for label in ("baseline", "candidate")
+        }
+        raw_dimensions["safety_permission_outcome"] = {
+            "baseline": not side_has("baseline", ("permission", "private", "context", "contract")),
+            "candidate": not side_has("candidate", ("permission", "private", "context", "contract"))
+            and dimension_results["safety_permission_outcome"]["candidate"],
+        }
+        raw_dimensions["verification_receipt_completeness"] = {
+            label: not side_has(label, ("receipt", "verification_not_applicable"))
+            for label in ("baseline", "candidate")
+        }
+        raw_dimensions["dirty_worktree_preservation"] = {"baseline": baseline_dirty and dirty_equal, "candidate": candidate_dirty and dirty_equal}
         raw_dimensions["recoverability"] = {"baseline": recovery_ok, "candidate": recovery_ok}
         errors.extend(capture_errors)
         for dimension, pair in raw_dimensions.items():
@@ -711,6 +1020,7 @@ def run_comparison(
                 "input": expected_input,
                 "dimensions": dimension_results,
                 "actual_outcome_dimensions": raw_dimensions,
+                "assertion_errors": assertion_errors_by_side,
                 "captures": observation.get("baseline_capture"),
                 "candidate_capture": observation.get("candidate_capture"),
                 "baseline_measurement": baseline_by_id.get(scenario_id),

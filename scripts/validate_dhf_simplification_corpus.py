@@ -374,10 +374,17 @@ def validate_corpus(corpus: object, contract_path: Path) -> list[str]:
         for test_id in test_ids:
             if not _non_empty_string(test_id) or test_id not in test_catalog:
                 errors.append(f"{trace_id} references unknown test ID: {test_id}")
-        if not _non_empty_string(trace.get("evidence_status")):
-            errors.append(f"{trace_id} must declare evidence_status")
-        if trace_id in {"AC-02", "AC-10", "AC-11", "AC-12", "AC-13", "AC-15", "AC-17", "AC-18"} and "deferred" in str(trace.get("evidence_status", "")).lower():
-            errors.append(f"{trace_id} completed-slice evidence must not remain deferred")
+        evidence_status = trace.get("evidence_status")
+        if (
+            not isinstance(evidence_status, dict)
+            or set(evidence_status) != {"state", "evidence_id"}
+            or evidence_status.get("state") != "completed"
+            or not _non_empty_string(evidence_status.get("evidence_id"))
+        ):
+            errors.append(
+                f"{trace_id} evidence_status must be exactly "
+                "{state: completed, evidence_id: non-empty}"
+            )
     return errors
 
 
