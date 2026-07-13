@@ -94,7 +94,10 @@ to helpers; it does not duplicate every helper option.
 
 ## Startup Sequence
 
-For complex or resumed work:
+Use this full sequence only for governed work with a matching recovery,
+handoff, durable-state, or environment escalation signal. Light and standard
+work read the narrowest local instructions and sources needed for the task; they
+do not run recovery or environment helpers by default.
 
 1. Read local `AGENTS.md`, then `docs/repo-index.md` and `CONTEXT.md` if
    present.
@@ -140,9 +143,9 @@ mixed ownership:
 - `generated_disposable`: regenerable local artifacts; commit only if promoted.
 - `unknown_owner`: unclear ownership; avoid overwrites and ask only if blocked.
 
-State the classification when it affects write, review, or ship scope. Never
-clean, reset, delete, stage, or fold unrelated files into the task to make the
-repo look tidy.
+State the classification when it affects write, review, or ship scope. A clean
+or non-overlapping light task need not narrate dirty status. Never clean, reset,
+delete, stage, or fold unrelated files into the task to make the repo look tidy.
 
 ## Source Of Truth Order
 
@@ -200,8 +203,10 @@ to:
 | `operator_live_demo` | Temporary live demo or capture owned by the operator/developer. | Explicit opt-in, local secret source, temporary outputs, no production/customer authority. |
 | `customer_or_production` | Customer-owned, production, or deployment-facing infrastructure and auth paths. | Requires owner/project, auth, IAM, secrets, data store, rollback, smoke/canary, and approval before mutation. |
 
-At routing time, state the selected lane, allowed external systems, forbidden
-actions, and the gate that would move the task to a higher-risk lane.
+State the selected lane, allowed external systems, forbidden actions, and the
+upgrade gate when external systems, credentials, customer data, deploys, or
+demos are actually in scope. Otherwise preserve the local boundary under
+`scope_and_constraints` without narrating a default execution lane.
 
 ## Stage Classifier
 
@@ -404,16 +409,16 @@ architecture conflict implicitly through competing implementations.
 
 ## Evidence And Report Gate
 
-Before claiming completion, identify the narrowest fresh gate and include
-verification evidence with `command`, `exit_code`, `key_output`, and
-`timestamp`. Do not reuse stale verification as fresh evidence.
+For an implemented/fixed or documented/configured completion claim, identify
+the narrowest fresh gate and include `command`, `exit_code`, `key_output`, and
+`timestamp`. A diagnosed blocker requires concrete inspected evidence and the
+exact blocker. A pure explanation uses `verification_not_applicable` and must
+not invent a command. Do not reuse stale verification as fresh evidence.
 
-Effective-feedback check: before claiming completion, the feedback loops spent
-on the task must be classifiable as informative, valid, non-redundant, and
-retained. Any segment that consumed budget without producing retained,
-task-relevant feedback, such as re-running an already-green gate or repeating
-information already present in the trajectory, must be flagged as
-low-conversion in the handoff.
+For governed work with a feedback-stall or long-trajectory signal, the feedback
+loops spent on the task should be classifiable as informative, valid,
+non-redundant, and retained. Flag low-conversion segments in a handoff only when
+that governed signal exists; this is not light-output boilerplate.
 
 Use this stable shape:
 
@@ -426,17 +431,19 @@ effective_feedback_check:
 - low_conversion_segments:
 ```
 
-Use the report helper when local evidence can inform validation or handoff:
+Use the report helper when the governed escalation contract requires it and
+local evidence can inform validation or handoff:
 
 ```bash
 python3 scripts/harness_report.py --limit 20
 python3 scripts/harness_report.py --phase validation --json
 ```
 
-When local evidence exists, use `scripts/harness_report.py --json` or
-`scripts/harness_recover.py --json` to surface `conversion_health.status` and
-its reason in handoff or final routing output. Treat `stalled` as a
-planning/recovery warning, not an automatic failure.
+When governed recovery/report evidence is required, surface
+`conversion_health.status` and its reason if those helpers provide it. Treat
+`stalled` as a planning/recovery warning, not an automatic failure. Do not add
+conversion-health boilerplate to light or standard output merely because a
+local evidence file exists.
 
 Common gates:
 
@@ -452,9 +459,11 @@ Common gates:
 
 ## Checkpoint Gate
 
-Create or update a checkpoint when work crosses a major phase boundary, before a
-destructive/remote/release action, after a meaningful validated slice, or before
-ending a long-running task.
+Create or update a checkpoint only when the governed escalation contract calls
+for one: resume/handoff, ownership conflict, external capture/private data,
+destructive/remote/deployment/release action, multi-agent execution,
+architecture source conflict, or malformed/retained governed state. A validated
+light or standard slice does not require a checkpoint by default.
 
 Preferred route:
 
@@ -497,36 +506,64 @@ gap.
 
 ## Output Contract
 
-After routing, state:
+Every completed task preserves exactly these four result invariants. They are
+semantic fields, so concise prose is acceptable when the mapping stays clear.
 
-1. Lifecycle stage selected.
-2. Execution lane selected, allowed external systems, and forbidden actions.
-3. Dirty worktree classification and any unrelated user-owned files.
-4. State snapshot status, state files, source-of-truth files, recovery output, and env probe output
-   read.
-5. Existing repo-specific lifecycle harness or skill to delegate to, if any.
-6. Required gstack/skill/tool workflow for this stage.
-7. Required helper CLIs, probes, and verification gates.
-8. Failure modes that must be handled.
-9. Any user decision, credential, approval, or external dependency blocking safe
-   execution.
-10. For `committee-review-loop`, the three expert domains, target rating,
-   revision worker scope, verification gate, and stopping condition.
-11. For `Architecture alignment checkpoint`, the durable sources compared,
-    conflicts found, decision artifact to create or update, stakeholder-readable
-    view requirement, vertical slice recut rule, review perspectives, state
-    append path, and agent-team dispatch gate.
-12. Selected `task_demand`, demand-matched gate actually used, and the result of
-    `effective_feedback_check`, including any `low_conversion_segments`.
-13. `conversion_health` status and whether any stall or low-conversion signals
-    are present when local evidence exists.
+1. `result`: provide the usable artifact, answer, or explicit blocker requested.
+2. `scope_and_constraints`: obey material boundaries and forbidden actions;
+   omit narration of irrelevant defaults.
+3. `verification_receipt`: use the completion claim taxonomy below; never
+   present stale or invented evidence as fresh.
+4. `remaining_risk_or_next_action`: state unresolved risk, a required decision,
+   or the next safe action when one exists; do not emit an empty ritual field.
 
-When gstack is the delegated specialist, also note which advanced posture is
-expected: product interrogation, mockup-first design review, fix-first review,
-distribution-aware ship planning, documentation-debt audit, or retrospective
-analytics. This keeps the router aligned with newer gstack workflows without
-hard-coding repo-specific commands.
+### Profile Output And Helper Contract
 
-Do not start substantial implementation before this routing step when the task
-is ambiguous, cross-module, security-sensitive, data-sensitive, release-facing,
-or likely to span multiple sessions.
+| Profile | Required outcome fields | Mandatory helpers before first task action | Helpers not mandatory unless the profile escalates |
+| --- | --- | --- | --- |
+| `light` | The four result invariants | None | `harness_recover.py`, `harness_env_probe.py`, `harness_report.py`, `harness_checkpoint.py` |
+| `standard` | The four result invariants | None; use the repo's focused feedback and verification commands | `harness_checkpoint.py`, `harness_agent_team.py` |
+| `governed` | The four result invariants plus only the matching conditional fields below | The exact matching escalation row below | None |
+
+Absent a matching escalation signal, light and standard output must not require
+lifecycle phase, default execution lane, dirty status, recovery output,
+environment probe output, conversion-health boilerplate, effective-feedback
+boilerplate, checkpoint narration, or empty committee fields. Standard work
+still checks dirty-worktree ownership before scoped edits, but only reports it
+when it materially affects the result or constraints.
+
+### Governed Escalation Contract
+
+Apply only the row matching the active escalation signal. The named gate
+sections remain authoritative; this table controls which details become visible
+and which helpers are mandatory.
+
+| Escalation signal | Mandatory helpers | Additional required output fields | Authoritative gates |
+| --- | --- | --- | --- |
+| `resume_or_handoff` | `harness_recover.py`, `harness_env_probe.py`, `harness_report.py`, `harness_checkpoint.py` | `phase`, `ownership`, `freshness_state` | Startup Sequence, State Snapshot Gate, Checkpoint Gate |
+| `unknown_or_overlapping_worktree_ownership` | `harness_recover.py`, `harness_checkpoint.py` | `ownership` | Dirty Worktree Gate, Checkpoint Gate |
+| `external_capture_or_private_data` | `harness_env_probe.py`, `harness_report.py`, `harness_checkpoint.py` | `data_boundary` | External Capture Promotion Gate, Evidence And Report Gate, Checkpoint Gate |
+| `remote_or_deployment_action` | `harness_env_probe.py`, `harness_report.py`, `harness_checkpoint.py` | `authorization_state`, `rollback` | Execution Lane Gate, Deployment Readiness Gate, Checkpoint Gate |
+| `multiple_agents_or_overlapping_write_sets` | `harness_agent_team.py`, `harness_checkpoint.py` | `agent_write_sets` | Agent Team Gate, Checkpoint Gate |
+| `durable_architecture_source_conflict` | `harness_recover.py`, `harness_requirements.py`, `harness_checkpoint.py` | `source_conflict`, `decision_state` | Source Of Truth Order, Architecture Alignment Checkpoint Gate, Checkpoint Gate |
+| `destructive_or_irreversible_action` | `harness_recover.py`, `harness_env_probe.py`, `harness_report.py`, `harness_checkpoint.py` | `authorization_state`, `rollback` | Execution Lane Gate, Deployment Readiness Gate, Checkpoint Gate |
+| `malformed_profile_state` | `harness_recover.py`, `harness_env_probe.py`, `harness_report.py`, `harness_checkpoint.py` | `profile_state`, `freshness_state` | Startup Sequence, State Snapshot Gate, Checkpoint Gate |
+| `retained_higher_active_profile` | `harness_recover.py`, `harness_env_probe.py`, `harness_report.py`, `harness_checkpoint.py` | `active_profile`, `escalation_signal` | Startup Sequence, Evidence And Report Gate, Checkpoint Gate |
+
+Safety, permission, recovery, ownership, and fresh-verification gates are never
+waived by concise output. If multiple signals exist, union their helpers,
+conditional fields, and authoritative gates before the risky action.
+
+### Completion Claim Taxonomy
+
+| Claim class | Required `verification_receipt` value |
+| --- | --- |
+| `implemented_or_fixed` | Fresh `command`, `exit_code`, `key_output`, and `timestamp` evidence proportionate to the claimed behavior. |
+| `documented_or_configured` | Fresh structural or contract validation with `command`, `exit_code`, `key_output`, and `timestamp`. |
+| `diagnosed_or_blocked` | Concrete inspected evidence and the exact blocker; when a command ran, report its `command`, `exit_code`, `key_output`, and `timestamp`. |
+| `verification_not_applicable` | Only for pure explanation or advice with no artifact, state, runtime, or behavior completion claim; state why verification is not applicable. |
+
+The response must not invent a command or receipt. Any generated or edited
+artifact requires fresh validation and cannot use `verification_not_applicable`.
+For a governed route, include only the matching escalation details above rather
+than replaying every lifecycle gate.

@@ -5,6 +5,7 @@ import copy
 import importlib.util
 import json
 import os
+import re
 import subprocess
 import sys
 import unittest
@@ -16,6 +17,14 @@ CORPUS = ROOT / "tests" / "fixtures" / "dhf_simplification_scenarios.json"
 VALIDATOR = ROOT / "scripts" / "validate_dhf_simplification_corpus.py"
 CONTRACT = ROOT / "docs" / "plans" / "2026-07-12-dhf-simplification-implementation-contract.md"
 DISPATCHER = ROOT / "codex" / "hooks" / "dhf_preprompt.py"
+SKILL = ROOT / "codex" / "skills" / "delivery-harness-framework" / "SKILL.md"
+EVALS = ROOT / "codex" / "skills" / "delivery-harness-framework" / "evals" / "evals.json"
+RESULT_INVARIANTS = [
+    "result",
+    "scope_and_constraints",
+    "verification_receipt",
+    "remaining_risk_or_next_action",
+]
 HELPER_CLIS = [
     ROOT / "scripts" / "harness_recover.py",
     ROOT / "scripts" / "harness_env_probe.py",
@@ -382,6 +391,141 @@ class DhfGovernanceProfileTests(unittest.TestCase):
             self.assertIn("profile=light", context)
             self.assertNotIn(marker, context)
             self.assertNotIn("Traceback", context)
+
+    def test_output_contract_is_reduced_to_exact_result_invariants(self):
+        skill_text = SKILL.read_text(encoding="utf-8")
+        output_contract = skill_text.split("## Output Contract", 1)[1]
+        invariant_block = output_contract.split("### Profile Output And Helper Contract", 1)[0]
+        self.assertEqual(
+            re.findall(r"^\d+\. `([^`]+)`:", invariant_block, flags=re.MULTILINE),
+            RESULT_INVARIANTS,
+        )
+        self.assertNotIn("After routing, state:", output_contract)
+        for ceremony in (
+            "Lifecycle stage selected",
+            "Execution lane selected",
+            "Dirty worktree classification",
+            "effective_feedback_check",
+            "conversion_health",
+            "empty committee fields",
+        ):
+            self.assertNotIn(ceremony, invariant_block)
+
+    def test_profile_contract_does_not_mandate_lightweight_ceremony(self):
+        skill_text = SKILL.read_text(encoding="utf-8")
+        profile_contract = skill_text.split("### Profile Output And Helper Contract", 1)[1]
+        profile_contract = profile_contract.split("### Governed Escalation Contract", 1)[0]
+        expected_not_mandatory = {
+            "light": {
+                "harness_recover.py",
+                "harness_env_probe.py",
+                "harness_report.py",
+                "harness_checkpoint.py",
+            },
+            "standard": {"harness_checkpoint.py", "harness_agent_team.py"},
+            "governed": set(),
+        }
+        rows = {}
+        for line in profile_contract.splitlines():
+            if not line.startswith("| `"):
+                continue
+            cells = [cell.strip() for cell in line.split("|")[1:-1]]
+            if cells and cells[0].strip("`") in expected_not_mandatory:
+                rows[cells[0].strip("`")] = {
+                    "mandatory": set(re.findall(r"`([^`]+\.py)`", cells[2])),
+                    "not_mandatory": set(re.findall(r"`([^`]+\.py)`", cells[3])),
+                }
+        self.assertEqual(set(rows), set(expected_not_mandatory))
+        self.assertEqual(rows["light"]["mandatory"], set())
+        self.assertEqual(rows["standard"]["mandatory"], set())
+        for profile, helpers in expected_not_mandatory.items():
+            self.assertEqual(rows[profile]["not_mandatory"], helpers)
+        normalized_contract = " ".join(profile_contract.split())
+        for ceremony in (
+            "lifecycle phase",
+            "default execution lane",
+            "dirty status",
+            "recovery output",
+            "environment probe output",
+            "conversion-health boilerplate",
+            "effective-feedback boilerplate",
+            "checkpoint",
+            "empty committee fields",
+        ):
+            self.assertIn(ceremony, normalized_contract)
+
+    def test_governed_escalation_contract_preserves_scenario_gates(self):
+        skill_text = SKILL.read_text(encoding="utf-8")
+        governed_contract = skill_text.split("### Governed Escalation Contract", 1)[1]
+        governed_contract = governed_contract.split("### Completion Claim Taxonomy", 1)[0]
+        rows = {}
+        for line in governed_contract.splitlines():
+            if not line.startswith("| `"):
+                continue
+            cells = [cell.strip() for cell in line.split("|")[1:-1]]
+            signal = cells[0].strip("`")
+            rows[signal] = {
+                "helpers": set(re.findall(r"`([^`]+\.py)`", cells[1])),
+                "fields": set(re.findall(r"`([^`]+)`", cells[2])),
+            }
+        governed_scenarios = [
+            scenario for scenario in self.corpus["scenarios"] if scenario["category"] == "governed"
+        ]
+        self.assertEqual(set(rows), set(self.dispatcher.MANDATORY_HELPERS_BY_SIGNAL))
+        for signal, helpers in self.dispatcher.MANDATORY_HELPERS_BY_SIGNAL.items():
+            self.assertEqual(rows[signal]["helpers"], set(helpers), signal)
+        for scenario in governed_scenarios:
+            with self.subTest(scenario=scenario["id"]):
+                row = rows[scenario["escalation_signal"]]
+                self.assertEqual(row["helpers"], set(scenario["mandatory_helpers"]))
+                self.assertEqual(
+                    row["fields"],
+                    set(scenario["required_output_fields"]) - set(RESULT_INVARIANTS),
+                )
+
+    def test_completion_taxonomy_and_evals_cover_all_claim_classes(self):
+        skill_text = SKILL.read_text(encoding="utf-8")
+        taxonomy = skill_text.split("### Completion Claim Taxonomy", 1)[1]
+        claim_classes = {
+            "implemented_or_fixed",
+            "documented_or_configured",
+            "diagnosed_or_blocked",
+            "verification_not_applicable",
+        }
+        self.assertEqual(set(re.findall(r"^\| `([^`]+)` \|", taxonomy, flags=re.MULTILINE)), claim_classes)
+        self.assertIn("command", taxonomy)
+        self.assertIn("exit_code", taxonomy)
+        self.assertIn("key_output", taxonomy)
+        self.assertIn("timestamp", taxonomy)
+        self.assertIn("must not invent a command or receipt", taxonomy)
+
+        eval_data = json.loads(EVALS.read_text(encoding="utf-8"))
+        claim_evals = {
+            case["completion_claim_class"]: case
+            for case in eval_data["evals"]
+            if "completion_claim_class" in case
+        }
+        self.assertEqual(set(claim_evals), claim_classes)
+        explanation = claim_evals["verification_not_applicable"]
+        self.assertTrue(any("must not invent" in assertion for assertion in explanation["assertions"]))
+        for claim_class in ("implemented_or_fixed", "documented_or_configured"):
+            assertions = " ".join(claim_evals[claim_class]["assertions"])
+            for field in ("command", "exit_code", "key_output", "timestamp"):
+                self.assertIn(field, assertions)
+        blocker_assertions = " ".join(claim_evals["diagnosed_or_blocked"]["assertions"])
+        self.assertIn("exact blocker", blocker_assertions)
+        self.assertIn("concrete", blocker_assertions)
+
+    def test_profile_context_matches_completion_taxonomy(self):
+        explanation = self.dispatcher.profile_context(self.dispatcher.ProfileSelection("light", None))
+        self.assertIn("verification_not_applicable", explanation)
+        self.assertNotIn("fresh verification_receipt", explanation)
+        for claim_class in (
+            "implemented_or_fixed",
+            "documented_or_configured",
+            "diagnosed_or_blocked",
+        ):
+            self.assertIn(claim_class, explanation)
 
     def test_feature_switch_defaults_legacy_and_requires_explicit_enable(self):
         marker = "LEGACY_FULL_SKILL_MARKER"
