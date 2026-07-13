@@ -12,6 +12,24 @@ runtime provides the surrounding workflow and infrastructure: state, tool
 routing, permissions, evidence, verification, checkpoints, and recoverable
 handoffs.
 
+## DHF Source-Stage Contract Mirror
+
+Canonical profile and Result Invariant semantics live in
+`codex/skills/delivery-harness-framework/SKILL.md`; routing and rollout-switch
+behavior live in `codex/hooks/dhf_preprompt.py`.
+
+- Governance profiles are `light`, `standard`, and `governed`.
+- Generic injection requires explicit generic activation; an ordinary
+  non-project prompt stays continue-only. opt-out is evaluated before every
+  route, and a ShipQ cwd uses ShipQ adapter lazy delegation.
+- Every completion preserves exactly `result`, `scope_and_constraints`,
+  `verification_receipt`, and `remaining_risk_or_next_action`; profile-specific
+  ceremony is conditional rather than repeated by default.
+- The source candidate is enabled only by
+  `DHF_PREPROMPT_SIMPLIFIED_PROFILES=1`; default remains `legacy`. Runtime
+  promotion is pending separate authorization, and runtime home remains
+  unsynced.
+
 ## Workflow Contract
 The lifecycle router uses these stages:
 
@@ -615,11 +633,11 @@ Response telemetry behavior:
   response instructions must not estimate or invent token usage or limits.
 
 ## Checkpoint Contract
-Create a checkpoint when a task crosses any of these boundaries:
-- before destructive, remote, or release actions;
-- after a major phase transition;
-- before ending a long-running or cross-session task;
-- after validation passes for a meaningful implementation slice.
+Create a checkpoint only when a matching `governed` escalation signal requires
+one: resume/handoff, ownership conflict, external capture/private data,
+destructive or remote/deployment/release action, multi-agent execution,
+architecture source conflict, or malformed/retained governed state. A validated
+`light` or `standard` slice does not checkpoint by default.
 
 A checkpoint must record:
 - phase;

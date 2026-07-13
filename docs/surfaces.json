@@ -39,7 +39,7 @@
     },
     {
       "path": "codex/skills/delivery-harness-framework",
-      "role": "generic lifecycle router skill source",
+      "role": "canonical light, standard, and governed profile semantics plus four Result Invariants",
       "audience": ["codex", "human"]
     },
     {
@@ -144,7 +144,7 @@
     },
     {
       "path": "codex/hooks/dhf_preprompt.py",
-      "role": "generic DHF UserPromptSubmit dispatcher with opt-out, activation, and ShipQ lazy-adapter routing",
+      "role": "generic DHF dispatcher with explicit generic activation, ordinary continue-only, opt-out precedence, ShipQ lazy delegation, default legacy, runtime promotion pending, and runtime unsynced",
       "audience": ["runtime", "codex"]
     },
     {
