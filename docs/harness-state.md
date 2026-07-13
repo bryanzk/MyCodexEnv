@@ -14,13 +14,13 @@ Stable rules belong in `AGENTS.md`, `README.md`, `docs/repo-index.md`, or
   - `codex/skills/delivery-harness-framework/SKILL.md`
 - blocked_sources: none
 - unsafe_inputs: none
-- next_safe_task: Wait for PR 10 CI gate to pass, review the four checkpoint commits, then squash or merge according to repository policy; after merge, fast-forward local main only from a clean worktree.
+- next_safe_task: Review PR 10 and merge it into main; after merge, fast-forward local main only from a clean worktree, then delete the merged checkpoint branch.
 - required_commands:
   - `python3 test_runner.py`
   - `git diff --check`
   - `./scripts/verify_codex_env.sh --repo-root "$(pwd)" --codex-home "$HOME/.codex" --claude-home "$HOME/.claude"`
-- latest_checkpoint: 2026-07-13T12:03:32-04:00 Pushed checkpoint branch and opened PR 10 after targeted runtime activation
-- latest_verification: 2026-07-13T12:03:32-04:00 command=git push -u origin codex/mce-20260713-user-change-checkpoints; gh pr view 10 --json state,mergeable,statusCheckRollup; git ls-remote --heads origin codex/mce-20260713-user-change-checkpoints; exit_code=0; key_output=remote SHA matched local 1789a59; PR 10 OPEN and MERGEABLE; CI gate IN_PROGRESS
+- latest_checkpoint: 2026-07-13T12:04:35-04:00 PR 10 CI gate passed after checkpoint branch push
+- latest_verification: 2026-07-13T12:04:35-04:00 command=gh pr checks 10 --watch --interval 10; exit_code=0; key_output=All checks were successful; CI/gate pull_request passed in 22s
 
 ## State Log
 
@@ -1979,3 +1979,22 @@ Stable rules belong in `AGENTS.md`, `README.md`, `docs/repo-index.md`, or
 - blockers:
   - none
 - next_safe_task: Wait for PR 10 CI gate to pass, review the four checkpoint commits, then squash or merge according to repository policy; after merge, fast-forward local main only from a clean worktree.
+
+### 2026-07-13T12:04:35-04:00
+- phase: handoff
+- event: checkpoint
+- summary: PR 10 CI gate passed after checkpoint branch push
+- git:
+  - branch: codex/mce-20260713-user-change-checkpoints
+  - latest_commit: 68a1299
+  - dirty_status: clean
+  - dirty_count: 0
+- changed_surfaces:
+  - `https://github.com/bryanzk/MyCodexEnv/pull/10`
+- verification:
+  - command: `gh pr checks 10 --watch --interval 10`
+  - exit_code: 0
+  - key_output: All checks were successful; CI/gate pull_request passed in 22s
+- blockers:
+  - none
+- next_safe_task: Review PR 10 and merge it into main; after merge, fast-forward local main only from a clean worktree, then delete the merged checkpoint branch.
