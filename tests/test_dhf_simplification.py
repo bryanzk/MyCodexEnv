@@ -43,6 +43,13 @@ HELPER_CLIS = [
     ROOT / "scripts" / "harness_agent_team.py",
     ROOT / "scripts" / "harness_checkpoint.py",
 ]
+NORMATIVE_MIRRORS = [
+    ROOT / "README.md",
+    ROOT / "docs" / "HARNESS_RUNTIME.md",
+    ROOT / "docs" / "LIFECYCLE_SKILL_ROUTING.md",
+    ROOT / "docs" / "repo-index.md",
+]
+SURFACES = ROOT / "docs" / "surfaces.json"
 
 
 def load_validator():
@@ -728,6 +735,60 @@ class DhfGovernanceProfileTests(unittest.TestCase):
                     payload = json.loads(proc.stdout)
                     self.assertIn(marker, payload["hookSpecificOutput"]["additionalContext"])
                     self.assertIn("diagnostic=generic-activated:legacy", proc.stderr)
+
+    def test_normative_mirrors_align_with_simplified_source_stage_contract(self):
+        required_terms = (
+            "codex/skills/delivery-harness-framework/SKILL.md",
+            "codex/hooks/dhf_preprompt.py",
+            "`light`",
+            "`standard`",
+            "`governed`",
+            "explicit generic activation",
+            "continue-only",
+            "opt-out",
+            "ShipQ",
+            "lazy delegation",
+            "`result`",
+            "`scope_and_constraints`",
+            "`verification_receipt`",
+            "`remaining_risk_or_next_action`",
+            "DHF_PREPROMPT_SIMPLIFIED_PROFILES=1",
+            "default remains `legacy`",
+            "Runtime promotion is pending separate authorization",
+            "runtime home remains unsynced",
+        )
+        stale_statements = (
+            "Use first for complex or resumed work",
+            "after a meaningful validated slice",
+            "after validation passes for a meaningful implementation slice",
+            "candidate is ready for runtime promotion",
+        )
+        for mirror in NORMATIVE_MIRRORS:
+            text = mirror.read_text(encoding="utf-8")
+            normalized = " ".join(text.split())
+            with self.subTest(mirror=mirror.relative_to(ROOT)):
+                for term in required_terms:
+                    self.assertIn(term, normalized)
+                for statement in stale_statements:
+                    self.assertNotIn(statement, normalized)
+
+    def test_surfaces_manifest_identifies_canonical_contract_and_rollout_boundary(self):
+        manifest = json.loads(SURFACES.read_text(encoding="utf-8"))
+        by_path = {surface["path"]: surface for surface in manifest["surfaces"]}
+        skill_role = by_path["codex/skills/delivery-harness-framework"]["role"]
+        dispatcher_role = by_path["codex/hooks/dhf_preprompt.py"]["role"]
+        for term in ("canonical", "light", "standard", "governed", "four Result Invariants"):
+            self.assertIn(term, skill_role)
+        for term in (
+            "explicit generic activation",
+            "ordinary continue-only",
+            "opt-out precedence",
+            "ShipQ lazy delegation",
+            "default legacy",
+            "runtime promotion pending",
+            "runtime unsynced",
+        ):
+            self.assertIn(term, dispatcher_role)
 
 
 if __name__ == "__main__":

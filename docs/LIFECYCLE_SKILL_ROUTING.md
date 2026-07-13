@@ -19,6 +19,24 @@ The generic lifecycle skill should stay generic. Project-only paths, fixtures,
 commands, smoke matrices, and business safety boundaries belong in repo-specific
 adapter skills.
 
+## DHF Source-Stage Contract Mirror
+
+Canonical profile and Result Invariant semantics live in
+`codex/skills/delivery-harness-framework/SKILL.md`; routing and rollout-switch
+behavior live in `codex/hooks/dhf_preprompt.py`.
+
+- Governance profiles are `light`, `standard`, and `governed`.
+- Generic injection requires explicit generic activation; an ordinary
+  non-project prompt stays continue-only. opt-out is evaluated before every
+  route, and a ShipQ cwd uses ShipQ adapter lazy delegation.
+- Every completion preserves exactly `result`, `scope_and_constraints`,
+  `verification_receipt`, and `remaining_risk_or_next_action`; profile-specific
+  ceremony is conditional rather than repeated by default.
+- The source candidate is enabled only by
+  `DHF_PREPROMPT_SIMPLIFIED_PROFILES=1`; default remains `legacy`. Runtime
+  promotion is pending separate authorization, and runtime home remains
+  unsynced.
+
 ## Visual Guides
 
 - `docs/index.html`: Chinese Delivery Harness Framework public landing page for GitHub Pages.
@@ -84,7 +102,7 @@ adapter skills.
 
 | Skill | Use For | Notes |
 | --- | --- | --- |
-| `delivery-harness-framework` | Generic startup/resume routing, durable state reads, phase classification, helper selection, evidence expectations. | Use first for complex or resumed work; delegate after phase selection. |
+| `delivery-harness-framework` | Generic startup/resume routing, durable state reads, phase classification, helper selection, evidence expectations. | When explicitly activated, use the selected profile and delegate after phase selection. |
 | repo-specific lifecycle harnesses | Project paths, local commands, business fixtures, deployment topology, smoke matrices. | These adapters take over after the generic router identifies a repo-specific boundary. |
 | `gstack-plan-ceo-review` | Product framing, user value, scope, demo boundaries, strategic tradeoffs. | Use when product judgment is the work. |
 | vendored gstack `spec` | Backlog-ready GitHub issues, tickets, and executable specs with explicit acceptance criteria before implementation begins. | Use when the work needs a durable spec artifact rather than immediate coding. |
@@ -152,8 +170,8 @@ adapter skills.
 
 ## Routing Rules
 
-- Start with `delivery-harness-framework` when work is complex, resumed,
-  cross-session, security-sensitive, release-facing, or ambiguous.
+- Activate `delivery-harness-framework` only through the explicit generic
+  activation boundary or a matching repo adapter; ordinary prompts continue.
 - Prefer repo-specific lifecycle harnesses when a known project adapter owns the
   business domain.
 - Prefer gstack skills when the task is product review, engineering review,
@@ -182,8 +200,9 @@ adapter skills.
   delegated worker plans; workers should report or write slice-local handoff
   artifacts instead. Single-line main-agent tasks may still append verified
   checkpoints directly.
-- Use `harness_checkpoint.py append` before ending long-running work, after a
-  meaningful validated slice, or before risky remote/release actions.
+- Use `harness_checkpoint.py append` only for a matching governed escalation,
+  such as resume/handoff, ownership conflict, private data, remote/release,
+  multi-agent, architecture conflict, or malformed/retained governed state.
 
 ## Evidence Standard
 
