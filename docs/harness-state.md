@@ -14,13 +14,13 @@ Stable rules belong in `AGENTS.md`, `README.md`, `docs/repo-index.md`, or
   - `codex/skills/delivery-harness-framework/SKILL.md`
 - blocked_sources: none
 - unsafe_inputs: none
-- next_safe_task: Read-only review the two patch-unique commits 6eada3b and a3a94a3 against current main, then decide preserve by rebuilding or cherry-picking onto a fresh branch, or retire the old diverged branch; do not rebase or delete before that decision.
+- next_safe_task: Create a fresh isolated branch/worktree from current main, rebuild only the 6eada3b Freeze-Review Policy plus skills_managed_present --skip-check behavior and focused tests, exclude historical harness-state changes and all a3a94a3 content, then run focused and full gates before deciding whether to delete codex/mce-20260608-freeze-review-policy.
 - required_commands:
   - `python3 test_runner.py`
   - `git diff --check`
   - `./scripts/verify_codex_env.sh --repo-root "$(pwd)" --codex-home "$HOME/.codex" --claude-home "$HOME/.claude"`
-- latest_checkpoint: 2026-07-13T10:27:29-04:00 Target-synced repo-branch-governance runtime skill after preserving a timestamped backup
-- latest_verification: 2026-07-13T10:27:29-04:00 command=/bin/bash "/Users/kezheng/.codex/skills/repo-branch-governance/scripts/cleanup_merged_branches.sh" --main main --remote origin; python3 -c 'import test_runner as t; t.test_repo_branch_cleanup_supports_system_bash()'; python3 scripts/check_skill_compatibility.py --repo-root "/Users/kezheng/Codes/CursorDeveloper/MyCodexEnv" --codex-home "/Users/kezheng/.codex" --claude-home "/Users/kezheng/.claude" --plugin-root "/Users/kezheng/.codex/plugins/cache" --plugin-root "/Users/kezheng/.cache/codex-runtimes/codex-primary-runtime/plugins"; python3 scripts/check_codex_skill_loader.py --repo-root "/Users/kezheng/Codes/CursorDeveloper/MyCodexEnv" --codex-home "/Users/kezheng/.codex"; diff -qr codex/skills/repo-branch-governance "/Users/kezheng/.codex/skills/repo-branch-governance"; exit_code=0; key_output=system-Bash dry-run: No merged branches found; focused test PASS; compatibility errors=0; loader_errors=0 missing_expected_paths=0 disabled_expected_paths=0; source/runtime parity clean; backup=/Users/kezheng/.codex/runtime-backups/repo-branch-governance-before-sync-20260713T142612Z
+- latest_checkpoint: 2026-07-13T10:34:24-04:00 Reviewed diverged freeze-review-policy branch: retire a3a94a3 as already integrated; preserve and rebuild only the still-missing 6eada3b policy and skip-check intent
+- latest_verification: 2026-07-13T10:34:24-04:00 command=git show/current-main assertions for legacy agent evidence, Freeze-Review Policy, and skills_managed_present skip behavior; python3 -c 'import test_runner as t; t.test_agent_dispatch_gate()'; exit_code=0; key_output=a3 behavior exists on main via 86d5f29 and agent dispatch gate passes; 6e freeze-review policy and skills_managed_present skip behavior are absent on main but present on the old branch; whole patch does not apply cleanly to the current user-owned worktree
 
 ## State Log
 
@@ -1875,3 +1875,22 @@ Stable rules belong in `AGENTS.md`, `README.md`, `docs/repo-index.md`, or
 - blockers:
   - Optional quick_validate.py is absent from the current runtime; repo compatibility, focused regression, loader, syntax, dry-run, and parity gates passed instead. Five user-owned source-stage drift warnings remain intentionally untouched.
 - next_safe_task: Read-only review the two patch-unique commits 6eada3b and a3a94a3 against current main, then decide preserve by rebuilding or cherry-picking onto a fresh branch, or retire the old diverged branch; do not rebase or delete before that decision.
+
+### 2026-07-13T10:34:24-04:00
+- phase: handoff
+- event: checkpoint
+- summary: Reviewed diverged freeze-review-policy branch: retire a3a94a3 as already integrated; preserve and rebuild only the still-missing 6eada3b policy and skip-check intent
+- git:
+  - branch: main
+  - latest_commit: 3a02856
+  - dirty_status: dirty
+  - dirty_count: 22
+- changed_surfaces:
+  - `docs/harness-state.md`
+- verification:
+  - command: `git show/current-main assertions for legacy agent evidence, Freeze-Review Policy, and skills_managed_present skip behavior; python3 -c 'import test_runner as t; t.test_agent_dispatch_gate()'`
+  - exit_code: 0
+  - key_output: a3 behavior exists on main via 86d5f29 and agent dispatch gate passes; 6e freeze-review policy and skills_managed_present skip behavior are absent on main but present on the old branch; whole patch does not apply cleanly to the current user-owned worktree
+- blockers:
+  - scripts/verify_codex_env.sh and test_runner.py contain user-owned changes; do not apply or cherry-pick 6eada3b in this worktree. The old branch remains preserved until the rebuilt slice lands and verifies.
+- next_safe_task: Create a fresh isolated branch/worktree from current main, rebuild only the 6eada3b Freeze-Review Policy plus skills_managed_present --skip-check behavior and focused tests, exclude historical harness-state changes and all a3a94a3 content, then run focused and full gates before deciding whether to delete codex/mce-20260608-freeze-review-policy.
