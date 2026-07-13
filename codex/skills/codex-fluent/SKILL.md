@@ -56,11 +56,61 @@ The skill will report on:
 - Dead config entries
 - Heavy background processes (reported only)
 
-### 2. Handoff Creation (Mandatory for Valuable Work)
+#### Deterministic Active-Session Triage (Report-Only Scanner)
+
+Route deterministic report-only diagnosis of old active sessions through the
+bundled scanner:
+
+```
+python3 ~/.codex/skills/codex-fluent/scripts/report_active_sessions.py \
+  --codex-home ~/.codex --older-than-days 30 --limit 30 --format markdown
+```
+
+Contract:
+
+- `--older-than-days` accepts any value `>= 0`; the default window is 30 days.
+- `--limit` accepts 20 to 50 inclusive; the default is 30. Values such as 19
+  or 51 are rejected before any scan.
+- The primary size ranking is immutable: `primary_rank` is assigned once from
+  `(-size_bytes, started_at, thread_id)` and never renumbered.
+- A separate `returned_handoff_queue` lists returned candidates whose
+  `compaction_count` is 2 or more (`handoff_required`), sorted by
+  `compaction_count` descending then `primary_rank` ascending. It always
+  reports `queue_scope=returned-window-only`: it covers only the returned
+  top-N window and makes no claim about eligible tasks outside it.
+- Compactions are counted only from decoded top-level JSONL objects whose
+  `type` equals `compacted`; embedded strings and nested payload types never
+  count.
+- Repository identity is evidence-backed and nullable: with the current
+  persisted schema, `repo_root` is `null` with provenance `unknown`. The
+  scanner never infers a repository from a `cwd` basename and never probes
+  guessed paths. `cwd_label` is display-only.
+- Malformed session and index lines are skipped and counted
+  (`skipped_session_lines`, `skipped_index_lines`), as are invalid or missing
+  timestamps; subagent sessions are always excluded.
+- The scanner is strictly report-only: it opens inputs only for reading and
+  never writes file content or explicit metadata. Do not archive or delete
+  based on its output alone. It never runs apply behavior.
+- Reports are classified `sensitive-local` because operational identity fields
+  can include thread titles, IDs, and local paths; do not publish or paste a
+  report into a shared issue, webpage, or model context without reviewing and
+  redacting it first. Markdown output renders persisted metadata inertly but
+  does not remove the operational identity fields.
+
+### 2. Handoff Creation (Chat Default)
 
 Before any archiving of chats you care about, create excellent handoffs.
 
-Use the template in `references/handoff-template.md`.
+The default handoff artifact is a terminal chat handoff: a structured message
+in the task itself recording anchors, state, evidence, blockers, and one
+next-safe task. A repo-native handoff file is allowed only when the original
+task explicitly authorized the exact documentation path. Archive authorization
+does not imply file-write authorization. Apply authorization does not imply
+file-write authorization. Without that exact-path authorization, keep active
+and do not archive.
+
+When a file handoff is authorized, use the template in
+`references/handoff-template.md`.
 
 The reactivation prompt must allow a completely fresh Codex thread (or even Claude via the codex skill) to pick up without the old giant context.
 

@@ -53,6 +53,61 @@ python3 scripts/sync_gstack_vendor.py --repo-root "$(pwd)" --source https://gith
 python3 test_runner.py
 ```
 
+## Codex Thread Discipline and Fluent Triage
+
+Thread discipline and old-session triage are guaranteed in three layers:
+
+1. **Agent policy (best effort, immediate).** `codex/AGENTS.md` owns the
+   global contract: each task freezes a `THREAD_DISCIPLINE_V1` anchor envelope
+   (one task, one evidence-backed `repo_anchor`, one `mode_anchor`) and carries
+   a `THREAD_DISCIPLINE_SUMMARY_V1` marker across summaries. A confirmed first
+   compaction refreshes a concise checkpoint; a confirmed second compaction, or
+   an unknown/conflicting compaction ordinal, stops normal work and returns a
+   terminal chat handoff. Chat handoff is the default: a repo-native handoff
+   file requires the original task to have explicitly authorized the exact
+   documentation path, and archive or apply authorization does not imply
+   file-write authorization.
+2. **Deterministic weekly audit (report-only).** The scanner
+   `codex/skills/codex-fluent/scripts/report_active_sessions.py` reads only
+   `CODEX_HOME/sessions/**/*.jsonl` and `CODEX_HOME/session_index.jsonl`,
+   counts compactions from decoded top-level JSONL objects with
+   `type == "compacted"`, and ranks eligible non-subagent sessions by
+   transcript size. Invocation:
+
+   ```bash
+   python3 ~/.codex/skills/codex-fluent/scripts/report_active_sessions.py \
+     --codex-home ~/.codex --older-than-days 30 --limit 30 --format markdown
+   ```
+
+   Defaults: 30-day window (`older_than_days >= 0`), limit 30 (inclusive
+   range 20–50). The primary size ranking is immutable; a separate
+   `returned_handoff_queue` (scope `returned-window-only`) references
+   `primary_rank` for returned candidates with two or more compactions.
+   Repository identity is evidence-backed and nullable (`repo_root` is `null`
+   with provenance `unknown` under the current persisted schema); the scanner
+   never infers a repository from `cwd`. It never writes file content or
+   explicit metadata and never archives, deletes, moves, prunes, rotates,
+   normalizes, or applies. Its output is `sensitive-local`: ranking remains
+   operationally usable and Markdown metadata is escaped, but reports can
+   still contain thread titles, IDs, and local paths. Do not publish or paste
+   them into shared systems without review and redaction.
+3. **Future Desktop lifecycle hard trigger.** An immediate hard guarantee at
+   compaction time requires a future Codex Desktop lifecycle API exposing the
+   thread ID and compaction ordinal. The weekly scanner is a deterministic
+   audit, not a lifecycle hook, and is not represented as an equivalent
+   trigger.
+
+Source and runtime ownership: `codex/AGENTS.md` and
+`codex/skills/codex-fluent` are the repo sources; `~/.codex/AGENTS.md` and
+`~/.codex/skills/codex-fluent` are runtime copies synchronized only through a
+separately authorized activation with persistent backups. The unique
+`weekly-codex-maintenance-report` automation remains the only scheduled
+maintenance report; when separately authorized, its prompt gains a managed
+appendix that runs the scanner in report-only mode with
+`--older-than-days 30 --limit 30`, displays the primary size ranking and the
+bounded `returned_handoff_queue`, and never calls apply behavior or archives
+or deletes anything.
+
 ## Related Documentation
 - `README.md`: top-level quick start and Harness Runtime overview.
 - `docs/repo-index.md`: low-token repo navigation and runtime surface index.

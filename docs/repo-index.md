@@ -38,6 +38,7 @@
 - `docs/AGENT_HARNESS_STATUS.md`: Agent Harness workflow and runtime governance status map.
 - `codex/skills/delivery-harness-framework/`: lifecycle router skill.
 - `codex/skills/committee-review-loop/`: explicit expert-committee review and revision loop skill.
+- `codex/skills/codex-fluent/scripts/report_active_sessions.py`: read-only active Codex session ranking and handoff audit.
 - `codex/runtime/tool-policy.json`: stage-aware tool and permission policy, including unknown-phase read-only fallback, handoff repo-write ask-gate, and configured agent-dispatch tool patterns.
 - `codex/runtime/resolve_codex_cli.sh`: resolve a Codex CLI only after its `--version` smoke passes, preferring the npm global CLI before ChatGPT/Codex app bundle fallbacks for launchd and stale-shim recovery.
 - `codex/runtime/dhf-packet.schema.json`: portable DHF packet schema for incubation, consumer handoff, and future extraction boundaries.
