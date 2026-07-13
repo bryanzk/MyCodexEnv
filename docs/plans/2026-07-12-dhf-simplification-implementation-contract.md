@@ -43,7 +43,9 @@ The target operating model is a thin invariant core with progressive governance:
 - Using average committee ratings as a pass condition.
 
 ## Constraints
-- Preserve all unrelated user-owned changes in the current dirty worktree.
+- Probe worktree state at implementation time and preserve every unrelated or
+  non-task-owned change found by that probe; this contract does not assume the
+  future worktree is clean or dirty.
 - Start with source-stage changes only; runtime sync is a separate, explicit gate.
 - Keep existing helper commands working until compatibility wrappers and consumer
   checks prove migration safety.
@@ -63,12 +65,13 @@ The target operating model is a thin invariant core with progressive governance:
 - H_tool (tool-selection ambiguity): Static tests, subprocess hook tests, eval
   corpus execution, runtime parity checks, and committee reviews serve different
   purposes and must not be substituted for one another.
-- S_state (cross-module state tracking): Existing uncommitted dispatcher and DHF
-  changes must be preserved while source, runtime, adapter, documentation, and
-  evidence contracts remain distinguishable.
-- N_obs (observation/external noise): Token counts, helper-call counts, and model
-  output quality are noisy; deterministic acceptance checks and repeated bounded
-  scenarios are required before drawing efficiency conclusions.
+- S_state (cross-module state tracking): Any implementation-time uncommitted
+  dispatcher or DHF changes must be classified and preserved while source,
+  runtime, adapter, documentation, and evidence contracts remain distinguishable.
+- N_obs (observation/external noise): The normative measurement is deterministic
+  local execution and excludes model output. Any future model-inclusive study is
+  a separate protocol that must pin the model and pre-register its repeat count
+  before collecting data; it cannot be mixed into this gate.
 
 ## Source Of Truth
 - `AGENTS.md`
@@ -133,6 +136,36 @@ activated generic DHF request reaches generic profile selection. ShipQ owns its
 profile/context after lazy delegation; the generic classifier must not
 pre-classify or inject generic context into that path.
 
+The machine-readable activation grammar is `DHF_ACTIVATION_V1` below. An
+implementation may compile these strings to case-insensitive regular
+expressions, but may not add an unlisted activation token without a contract and
+corpus revision. `prompt_text` is the newline join, in source/key order, of
+non-empty strings found at the root and then object-valued `tool_input`, `input`,
+`arguments`, and `params`, using keys `prompt`, `user_prompt`, `message`, `task`,
+and `input_text`. `cwd_text` is the first non-empty string from the same sources
+using keys `cwd`, `workdir`, and `repo_root`.
+
+```json
+{
+  "schema": "DHF_ACTIVATION_V1",
+  "match": "regex_search_ignore_case_any",
+  "opt_out_patterns": [
+    "\\bno\\s+dhf\\b", "\\bskip\\s+dhf\\b", "\\bwithout\\s+dhf\\b",
+    "\\bno\\s+delivery[-\\s]+harness\\b", "\\bskip\\s+delivery[-\\s]+harness\\b",
+    "\\b(?:do\\s+not|don't)\\s+use\\s+(?:dhf|delivery[-\\s]+harness)\\b",
+    "\\bdisable\\s+(?:dhf|delivery[-\\s]+harness)\\b",
+    "不用\\s*(dhf|delivery[-\\s]*harness)", "不要\\s*(dhf|delivery[-\\s]*harness)",
+    "跳过\\s*(dhf|delivery[-\\s]*harness)", "不调用\\s*(dhf|delivery[-\\s]*harness)"
+  ],
+  "activation_patterns": [
+    "\\buse\\s+dhf\\b", "\\buse\\s+(?:the\\s+)?delivery[-\\s]+harness(?:\\s+framework)?\\b",
+    "\\bcomplex\\b", "\\bresume\\b", "\\btake\\s*over\\b", "\\btakeover\\b",
+    "\\bhandoff\\b", "\\bstate[-\\s]+conflict\\b", "接手", "恢复", "交接", "状态冲突",
+    "(?:使用|启用|调用)\\s*(?:dhf|交付(?:治理)?框架|交付(?:治理)?流程)"
+  ]
+}
+```
+
 | Precedence | Input condition | Dispatcher outcome | Profile/context owner |
 | --- | --- | --- | --- |
 | 1 | payload is non-dict, malformed, or `cwd` is missing/invalid | safe continue-only; no traceback, partial output, or DHF context | none |
@@ -141,12 +174,50 @@ pre-classify or inject generic context into that path.
 | 4 | explicit generic DHF activation matches | enter activated cohort, then select `light`, `standard`, or `governed` from task/risk signals | generic DHF profile selector |
 | 5 | ordinary non-ShipQ request | continue-only with zero injected DHF context | none |
 
-After activation, the selected profile owns the minimum injected context and
-mandatory helper set. A new risk signal during execution causes monotonic
-`light -> standard -> governed` escalation before the risky action. The agent
-records the signal and newly required gates; it does not rerun dispatcher
-activation or silently downgrade. Malformed follow-up state fails closed to the
-higher active profile until the state is repaired or the user resolves it.
+### Active Profile State Contract
+
+The task/thread lifecycle state owner, not the stateless hook or model, is the
+authoritative owner of `active_profile`. The owner transports state to the hook
+in top-level `dhf_profile_state`; the hook returns only derived context and must
+not claim to persist state. The state shape is:
+
+```json
+{
+  "schema_version": 1,
+  "task_id": "non-empty stable task id",
+  "thread_id": "non-empty stable thread id",
+  "active_profile": "light|standard|governed",
+  "sequence": 0,
+  "updated_at": "RFC3339 UTC",
+  "expires_at": "RFC3339 UTC or null",
+  "escalation_signals": []
+}
+```
+
+The owner binds state to both current `task_id` and `thread_id`. A binding
+mismatch, unknown schema/profile, non-integer or decreasing sequence, or expired
+state is `malformed_profile_state`: fail closed to `governed` and require recover
+before risky work. A new risk signal causes monotonic
+`light -> standard -> governed` escalation before the risky action and an atomic
+sequence increment; duplicate delivery at the same sequence is idempotent, and a
+lower sequence is rejected. Normal prompt processing must not downgrade. Task
+terminal state expires the record. Time expiry never silently downgrades; recover
+reconstructs the last valid checkpoint for the same task/thread, marks prior
+verification freshness accurately, and writes a higher sequence before routing
+continues. Tests must cover binding mismatch, expiry, duplicate delivery,
+out-of-order delivery, upgrade, forbidden downgrade, and checkpoint recovery.
+
+### Feature Switch Contract
+
+`DHF_PREPROMPT_SIMPLIFIED_PROFILES` accepts exactly string `"0"` (legacy route)
+or `"1"` (simplified profiles). Slice 0 has no candidate activation; Slice 1
+introduces the switch with absent-value default `"0"`; Slices 2-3 keep that
+default; Slice 4 may change the repo-source default to `"1"` only after every
+parity, recoverability, traceability, and efficiency gate passes. Any other value
+is invalid and must emit a bounded diagnostic and fail closed to the legacy
+route. Runtime remains unchanged until Slice 6. Rollback explicitly sets `"0"`
+and proves legacy dispatcher and helper callability; merely editing prose or
+unsetting a post-promotion default is not a rollback.
 
 ## Completion Claim Taxonomy
 
@@ -172,14 +243,33 @@ scenarios remain routing/safety controls, but are excluded from the reduction
 denominator because they are not injected `light` cases.
 
 For each scenario, record baseline and candidate measurements under the same
-prompt, cwd class, activation state, measurement boundary, and tokenizer/proxy.
-Report injected context and mandatory helper calls separately, both per-scenario
-and as cohort medians. When a baseline value is greater than zero, relative
-reduction is `(baseline - candidate) / baseline`. A zero baseline is excluded
-from relative-reduction aggregation and reported in a separate absolute
-non-regression table; its candidate must remain zero. Sample counts for
-positive-baseline and zero-baseline groups are mandatory. The 40% target applies
-independently to the paired positive-baseline median for context and helpers.
+prompt, cwd class, activation state, measurement boundary, runner version, and
+byte proxy. The normative runner is deterministic local bounded execution: it
+does not call a model and makes no model-quality or model-token claim. Report
+injected context and mandatory helper calls separately. For each scenario and
+metric with baseline `b_i > 0`, compute `r_i = (b_i - c_i) / b_i`; the estimator
+is `median(r_i)` across scenarios, not a ratio of aggregate or median counts. A
+zero baseline is excluded from relative-reduction aggregation and reported in a
+separate absolute non-regression table; its candidate must remain zero. Sample
+counts for positive-baseline and zero-baseline groups are mandatory. The 40%
+target applies independently to the two per-scenario-relative-reduction medians.
+Any future model-inclusive measurement requires a separate, pre-registered
+repeat protocol and cannot satisfy this acceptance criterion.
+
+## Frozen Baseline Identity And Independent Execution
+
+Slice 0 records one immutable Base identity: `base_commit`, SHA-256 of the Base
+dispatcher and Base generic skill bytes, corpus SHA-256, schema version, and
+runner name/version/SHA-256. The fixture also records the current candidate
+source hashes at capture time. Slice 4 executes Base and current independently
+from those exact bytes in isolated directories; it must not emulate Base by
+toggling the current implementation or accept a shared imported module.
+
+Raw route/context/task output is the oracle input. The runner derives pass/fail
+from executable assertions and rejects handwritten/self-reported booleans such
+as `baseline_pass` or `candidate_accepted`. Any Base identity mismatch, current
+source-hash drift, corpus drift, runner drift, or shared execution provenance
+fails the comparison before metrics are accepted.
 
 ## Recoverability Oracle
 
@@ -198,39 +288,39 @@ Missing, widened, or silently defaulted fields fail the oracle. Tests must also
 prove that stale verification is not promoted to fresh after recovery.
 
 ## Acceptance Criteria
-- [ ] The generic DHF Output Contract is reduced from an always-visible routing
+- [ ] **AC-01** The generic DHF Output Contract is reduced from an always-visible routing
       checklist to the four Result Invariants, with conditional governed fields.
-- [ ] A deterministic classifier or equivalent explicit routing contract maps
+- [ ] **AC-02** A deterministic classifier or equivalent explicit routing contract maps
       representative prompts to `light`, `standard`, or `governed`.
-- [ ] Ordinary non-ShipQ prompts remain continue-only and receive no DHF context.
-- [ ] Explicit opt-out continues to win before all project and generic activation.
-- [ ] ShipQ continues to load only through lazy adapter delegation under its cwd.
-- [ ] Malformed, non-dict, and missing-cwd payloads continue safely without
+- [ ] **AC-03** Ordinary non-ShipQ prompts remain continue-only and receive no DHF context.
+- [ ] **AC-04** Explicit opt-out continues to win before all project and generic activation.
+- [ ] **AC-05** ShipQ continues to load only through lazy adapter delegation under its cwd.
+- [ ] **AC-06** Malformed, non-dict, and missing-cwd payloads continue safely without
       leaking traceback, skill text, secrets, or unrelated local context.
-- [ ] Light tasks do not require `harness_recover.py`, `harness_env_probe.py`,
+- [ ] **AC-07** Light tasks do not require `harness_recover.py`, `harness_env_probe.py`,
       `harness_report.py`, lifecycle narration, or a checkpoint.
-- [ ] Governed scenarios still select every safety/recovery gate required by
+- [ ] **AC-08** Governed scenarios still select every safety/recovery gate required by
       their escalation signal.
-- [ ] Existing helper CLI entry points remain callable after the initial slices.
-- [ ] Golden scenarios establish 100% parity for outcome correctness, safety
+- [ ] **AC-09** Existing helper CLI entry points remain callable after the initial slices.
+- [ ] **AC-10** Golden scenarios establish 100% parity for outcome correctness, safety
       blocking, fresh verification completeness, worktree preservation, and
       recoverability where required.
-- [ ] No scenario improves efficiency by weakening a required verification or
+- [ ] **AC-11** No scenario improves efficiency by weakening a required verification or
       permission gate.
-- [ ] On same-scenario paired, explicitly activated light/standard observations
-      with baseline greater than zero, median injected DHF context and median
-      mandatory helper invocations each decrease by at least 40%; context and
-      helpers are reported separately.
-- [ ] Zero-baseline observations are reported separately and show absolute
+- [ ] **AC-12** On same-scenario paired, explicitly activated light/standard observations
+      with baseline greater than zero, the median of per-scenario relative
+      reductions is at least 40% independently for injected DHF context and
+      mandatory helper invocations; context and helpers are reported separately.
+- [ ] **AC-13** Zero-baseline observations are reported separately and show absolute
       non-regression (`candidate == 0`), not an undefined relative improvement.
-- [ ] Results include raw per-scenario measurements and sample counts; no claim
+- [ ] **AC-14** Results include raw per-scenario measurements and sample counts; no claim
       of statistical generality is made beyond the bounded corpus.
-- [ ] Repo source, documentation mirrors, surface inventory, tests, and evals
+- [ ] **AC-15** Repo source, documentation mirrors, surface inventory, tests, and evals
       agree on the same three-profile contract.
-- [ ] Runtime sync remains blocked until source verification passes and the user
+- [ ] **AC-16** Runtime sync remains blocked until source verification passes and the user
       separately authorizes runtime mutation.
-- [ ] Governed checkpoint fixtures pass the field-level recoverability oracle.
-- [ ] A feature-switch rollback smoke proves the simplified route can be
+- [ ] **AC-17** Governed checkpoint fixtures pass the field-level recoverability oracle.
+- [ ] **AC-18** A feature-switch rollback smoke proves the simplified route can be
       disabled and legacy paths/helper entry points still execute.
 
 ## Golden Scenario Matrix
@@ -246,6 +336,16 @@ Each scenario records expected profile, escalation signal or absence, mandatory
 and forbidden helpers, required output fields, permission outcome, result
 acceptance checks, injected-context size, helper-call count, and verification
 receipt status.
+
+The corpus owns an `acceptance_trace_map` keyed by the stable `AC-01` through
+`AC-18` IDs. Every entry must contain `criterion`, `slice`, `scenario_ids`,
+`test_ids`, `producer`, and `evidence_status`; `producer` identifies the slice
+runner and scenario/output fixture that creates the evidence. `test_ids` resolve
+through `test_catalog` entries in the exact callable form
+`path.py::ClassName.test_method` or `path.py::test_function`. Validation imports
+or otherwise resolves each binding and rejects missing/non-test callables,
+unknown scenarios, duplicate IDs, missing producers, and non-terminal evidence
+states. Renumbering an AC requires an explicit schema migration.
 
 ## Verification Gate
 - `python3 -m py_compile codex/hooks/dhf_preprompt.py`
@@ -270,8 +370,8 @@ change must be reported as an expected pending gate, never presented as green.
   context; measurement boundaries must be recorded.
 - Helper consolidation can create compatibility churn disproportionate to its
   value; it is gated behind successful output/routing simplification.
-- Existing dirty files overlap planned implementation surfaces, so implementation
-  must begin with an ownership/baseline checkpoint and may require user direction.
+- Implementation-time dirty files may overlap planned surfaces, so Slice 0 must
+  probe state and may require user direction when ownership cannot be isolated.
 
 ## Rollback And Compatibility
 - Keep the current dispatcher and helper entry points recoverable during each
@@ -299,15 +399,16 @@ change must be reported as an expected pending gate, never presented as green.
 - question: Is live runtime sync part of the initial implementation?
   answer: No. Initial work is repo source-stage only; runtime mutation requires
     separate authorization.
-- question: What is the review convergence target?
-  answer: Dual committee target is 10/10, maximum five rounds, with independent
-    Codex and Claude ratings, closed material ledger, fresh verification, and a
-    blind final review with no new material finding.
+- question: How is blind-review acceptance decided without leaking the target?
+  answer: The orchestrator holds the external acceptance criterion and does not
+    place it in either reviewed artifact or the blind-review prompt. The artifact
+    records only closed material findings and fresh validation evidence.
 
 ## Handoff Notes
 - Editable scope for this planning task is limited to this contract and
   `docs/plans/2026-07-12-dhf-simplification-implementation-plan.md`.
 - During implementation, append a checkpoint only after a meaningful verified
   slice or before runtime/remote/handoff boundaries.
-- Preserve the existing dirty worktree. Do not stage, reset, clean, commit,
-  push, archive, or sync runtime as part of this contract-review task.
+- Preserve all non-task-owned changes found by the fresh worktree probe. Do not
+  reset, clean, push, archive, or sync runtime as part of this contract-review
+  task; staging/commit coordination follows the task owner.
