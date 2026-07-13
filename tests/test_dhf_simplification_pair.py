@@ -117,14 +117,14 @@ class DhfSimplificationPairTests(unittest.TestCase):
         contexts = self.runner.capture_contract_contexts(scenario, ROOT)
         candidate = contexts["candidate"]
         policy = self.runner.derive_execution_policy(
-            scenario["sanitized_prompt"], scenario["scenario_type"], candidate["context"], candidate["profile_contract"]
+            scenario["sanitized_prompt"], candidate["context"], candidate["profile_contract"]
         )
         self.assertEqual(policy["action"], "block_pending_authorization")
         self.assertIn("Deployment Readiness Gate", policy["gates"])
 
         corrupted = candidate["context"].replace("Deployment Readiness Gate", "")
         corrupted_policy = self.runner.derive_execution_policy(
-            scenario["sanitized_prompt"], scenario["scenario_type"], corrupted, None
+            scenario["sanitized_prompt"], corrupted, None
         )
         self.assertNotEqual(corrupted_policy, policy)
         self.assertEqual(corrupted_policy["action"], "fail_closed_missing_contract")
@@ -135,6 +135,50 @@ class DhfSimplificationPairTests(unittest.TestCase):
         changed_output = self.runner.execute_bounded_scenario(changed_oracle, candidate)
         self.assertEqual(original_output["permission_outcome"], changed_output["permission_outcome"])
         self.assertNotEqual(original_output["permission_outcome"], "execute_without_authorization")
+
+    def test_prompt_and_captured_contract_drive_outcome_not_scenario_type(self):
+        scenario = next(item for item in self.corpus["scenarios"] if item["id"] == "STANDARD-LOCAL-FEATURE")
+        candidate = self.runner.capture_contract_contexts(scenario, ROOT)["candidate"]
+        original = self.runner.execute_bounded_scenario(scenario, candidate)
+
+        mismatched_type = copy.deepcopy(scenario)
+        mismatched_type["scenario_type"] = "explanation"
+        mismatched = self.runner.execute_bounded_scenario(mismatched_type, candidate)
+        for field in ("result", "scope_and_constraints", "permission_outcome", "changed_files", "execution_policy"):
+            self.assertEqual(original[field], mismatched[field])
+        self.assertTrue(
+            any(
+                "prompt/type mismatch" in error
+                for error in self.runner.assertion_errors(mismatched_type, original, "candidate")
+            )
+        )
+
+        mismatched_prompt = copy.deepcopy(scenario)
+        mismatched_prompt["sanitized_prompt"] = "Explain why this pure function is deterministic; do not edit files."
+        prompt_driven = self.runner.execute_bounded_scenario(mismatched_prompt, candidate)
+        self.assertNotEqual(original["result"], prompt_driven["result"])
+        self.assertTrue(self.runner.assertion_errors(scenario, prompt_driven, "candidate"))
+
+    def test_capture_validator_does_not_call_outcome_generation_oracle(self):
+        scenario = next(item for item in self.corpus["scenarios"] if item["id"] == "STANDARD-LOCAL-FEATURE")
+        capture = copy.deepcopy(
+            next(item for item in self.observations["observations"] if item["id"] == scenario["id"])[
+                "candidate_capture"
+            ]
+        )
+        expected = {
+            field: capture["provenance"][field]
+            for field in ("dispatcher_sha256", "skill_sha256")
+        }
+
+        def forbidden_same_oracle(*_args, **_kwargs):
+            raise AssertionError("validator called the outcome generation oracle")
+
+        self.runner.derive_execution_policy = forbidden_same_oracle
+        self.assertEqual(
+            self.runner.capture_validation_errors(scenario, capture, "candidate", expected),
+            [],
+        )
 
     def test_runner_rejects_context_hash_or_contract_corruption_and_reports_each_side_assertions(self):
         observations = copy.deepcopy(self.observations)
@@ -411,6 +455,33 @@ class DhfSimplificationPairTests(unittest.TestCase):
             self.assertEqual(payload["checkpoint_status"], "valid")
             self.assertEqual(payload["verification_evidence"]["command"], "python3 checkpoint.py")
             self.assertEqual(payload["latest_verification"]["command"], "python3 event.py")
+
+    def test_recover_rejects_structurally_complete_but_semantically_invalid_checkpoint(self):
+        invalid_artifacts = (
+            {"schema":"dhf_checkpoint_v1","phase":"bogus","constraints":["no_remote"],"ownership":{"boundary":"task"},"next_action":{"command":"python3 next.py"},"verification_evidence":{"command":"python3 check.py","exit_code":0,"key_output":"ok","timestamp":"2026-07-12T00:00:00Z","freshness":"fresh"}},
+            {"schema":"dhf_checkpoint_v1","phase":"development","constraints":[""],"ownership":{"boundary":"task"},"next_action":{"command":"python3 next.py"},"verification_evidence":{"command":"python3 check.py","exit_code":0,"key_output":"ok","timestamp":"2026-07-12T00:00:00Z","freshness":"fresh"}},
+            {"schema":"dhf_checkpoint_v1","phase":"development","constraints":["no_remote"],"ownership":{},"next_action":{"command":"","args":[]},"verification_evidence":{"command":"python3 check.py","exit_code":"0","key_output":"ok","timestamp":"2026-07-12T00:00:00Z","freshness":"fresh"}},
+        )
+        with tempfile.TemporaryDirectory() as tmp:
+            repo = Path(tmp) / "repo"
+            docs = repo / "docs"
+            docs.mkdir(parents=True)
+            subprocess.run(["git", "init", "-q"], cwd=repo, check=True)
+            (docs / "repo-index.md").write_text("# Index\n", encoding="utf-8")
+            base = "# Harness State\n\n- phase: research\n- next_safe_task: none\n- blocked_sources: none\n\n## State Log\n"
+            state = docs / "harness-state.md"
+            for artifact in invalid_artifacts:
+                with self.subTest(artifact=artifact):
+                    state.write_text(
+                        base + "- checkpoint_data: " + json.dumps(artifact, separators=(",", ":")) + "\n",
+                        encoding="utf-8",
+                    )
+                    proc = subprocess.run(
+                        [sys.executable, str(ROOT / "scripts" / "harness_recover.py"), "--repo-root", str(repo), "--codex-home", str(Path(tmp) / "codex"), "--json"],
+                        cwd=repo, capture_output=True, text=True, check=False,
+                    )
+                    self.assertEqual(proc.returncode, 1, proc.stdout + proc.stderr)
+                    self.assertIn("schema-invalid checkpoint_data recovery blocker", proc.stderr)
 
     def test_runner_rejects_efficiency_target_and_zero_baseline_regression(self):
         measured = self.measurements()
