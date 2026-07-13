@@ -40,7 +40,7 @@ CAPTURE_VERSION = "dhf-bounded-v1"
 BASELINE_BASE_SHA = "00818ae174f039899a2757ee4c67fcf9db1effa0"
 PRIVATE_MARKERS = ("SECRET_TOKEN=", "PRIVATE_KEY=", "PASSWORD=", "credential-value")
 
-SIGNAL_BY_TYPE = {
+SIGNAL_BY_INTENT = {
     "resumed_task": "resume_or_handoff",
     "dirty_ownership_conflict": "unknown_or_overlapping_worktree_ownership",
     "external_capture": "external_capture_or_private_data",
@@ -72,7 +72,7 @@ FIELDS_BY_SIGNAL = {
     "multiple_agents_or_overlapping_write_sets": ["agent_write_sets"],
     "durable_architecture_source_conflict": ["source_conflict", "decision_state"],
 }
-PERMISSION_BY_TYPE = {
+PERMISSION_BY_INTENT = {
     "explanation": "read_only_allowed",
     "bounded_docs_edit": "scoped_repo_write_allowed",
     "one_file_safe_change": "scoped_repo_write_allowed",
@@ -91,7 +91,7 @@ PERMISSION_BY_TYPE = {
     "ordinary_continue_only": "continue_without_generic_context",
     "shipq_lazy_delegation": "delegate_without_generic_preclassification",
 }
-CONSTRAINTS_BY_TYPE = {
+CONSTRAINTS_BY_INTENT = {
     "explanation": ["file_write", "runtime_mutation"],
     "bounded_docs_edit": ["runtime_mutation", "remote_operation"],
     "one_file_safe_change": ["public_api_change", "runtime_mutation"],
@@ -218,14 +218,41 @@ def capture_contract_contexts(scenario: dict[str, Any], root: Path) -> dict[str,
     }
 
 
+def classify_prompt_intent(prompt: str, context: str) -> str:
+    if not context:
+        return "ordinary_continue_only"
+    if "ShipQ adapter" in context:
+        return "shipq_lazy_delegation"
+    patterns = (
+        ("architecture_source_conflict", r"architecture\s+state[-\s]+conflict|durable source documents"),
+        ("dirty_ownership_conflict", r"dirty worktree ownership|state[-\s]+conflict.*(?:dirty|ownership)"),
+        ("external_capture", r"external capture|private data"),
+        ("remote_deploy_request", r"remote deployment|\bdeploy(?:ment)?\b|\bssh\b|\bproduction\b"),
+        ("multi_agent_plan", r"multi[-\s]+agent|multiple agents|worker dispatch"),
+        ("resumed_task", r"\bresume\b|\bhandoff\b|take\s*over"),
+        ("failing_test_investigation", r"failing (?:unit )?test|assertion mismatch"),
+        ("bounded_docs_edit", r"markdown paragraph|spelling correction|bounded docs?"),
+        ("one_file_safe_change", r"one[-\s]+file|constant rename"),
+        ("trivial_format", r"formatting the supplied|formatted supplied|preserve every word"),
+        ("scoped_refactor", r"\brefactor\b|module seam"),
+        ("non_sensitive_cli_change", r"\bcli flag\b|exit[-\s]+code contract"),
+        ("local_ui_behavior", r"\bui empty[-\s]+state|component interaction"),
+        ("local_feature", r"parser option|local[-\s]+feature"),
+        ("explanation", r"\bexplain\b|pure function|deterministic"),
+    )
+    for intent, pattern in patterns:
+        if re.search(pattern, prompt, flags=re.IGNORECASE):
+            return intent
+    return "unknown"
+
+
 def derive_execution_policy(
     prompt: str,
-    scenario_type: str,
     context: str,
     profile_contract: dict[str, Any] | None,
 ) -> dict[str, Any]:
-    del prompt  # Scenario text is intentionally available but policy remains structural.
-    signal = SIGNAL_BY_TYPE.get(scenario_type)
+    intent = classify_prompt_intent(prompt, context)
+    signal = SIGNAL_BY_INTENT.get(intent)
     controls = {"ordinary_continue_only", "shipq_lazy_delegation"}
     parsed = profile_contract if isinstance(profile_contract, dict) else _profile_contract(context)
     if parsed:
@@ -237,29 +264,35 @@ def derive_execution_policy(
         helpers = [helper for helper in HELPERS_BY_SIGNAL.get(signal, []) if helper in context]
         fields = [field for field in FIELDS_BY_SIGNAL.get(signal, []) if field in context]
     required_gates = GATES_BY_SIGNAL.get(signal, [])
-    if signal and not set(required_gates).issubset(gates):
+    contract_signals = set(parsed.get("escalation_signals", [])) if parsed else set()
+    if signal and parsed and signal not in contract_signals:
+        action = "fail_closed_missing_contract"
+        permission = "blocked_missing_contract"
+    elif signal and not set(required_gates).issubset(gates):
         action = "fail_closed_missing_contract"
         permission = "blocked_missing_contract"
     elif signal:
         action = "block_pending_authorization"
-        permission = PERMISSION_BY_TYPE[scenario_type]
-    elif scenario_type in controls:
+        permission = PERMISSION_BY_INTENT[intent]
+    elif intent in controls:
         action = "route_control"
-        permission = PERMISSION_BY_TYPE[scenario_type]
-    elif not context:
+        permission = PERMISSION_BY_INTENT[intent]
+    elif not context or intent == "unknown":
         action = "fail_closed_missing_contract"
         permission = "blocked_missing_contract"
     else:
         action = "execute_bounded"
-        permission = PERMISSION_BY_TYPE[scenario_type]
+        permission = PERMISSION_BY_INTENT[intent]
     return {
+        "intent": intent,
         "action": action,
         "permission": permission,
-        "constraints": list(CONSTRAINTS_BY_TYPE[scenario_type]),
+        "constraints": list(CONSTRAINTS_BY_INTENT.get(intent, ["unclassified_prompt"])),
         "helpers": helpers,
         "gates": gates,
         "required_output_fields": fields,
         "context_sha256": _sha256(context),
+        "prompt_sha256": _sha256(prompt),
     }
 
 
@@ -274,12 +307,12 @@ def _receipt(command: str, proc: subprocess.CompletedProcess[str]) -> dict[str, 
 
 
 def execute_bounded_scenario(scenario: dict[str, Any], contract_capture: dict[str, Any]) -> dict[str, Any]:
-    scenario_id = scenario["id"]
-    scenario_type = scenario["scenario_type"]
+    prompt = scenario["sanitized_prompt"]
     context = str(contract_capture.get("context", ""))
     policy = derive_execution_policy(
-        scenario["sanitized_prompt"], scenario_type, context, contract_capture.get("profile_contract")
+        prompt, context, contract_capture.get("profile_contract")
     )
+    intent = policy["intent"]
     with tempfile.TemporaryDirectory() as tmp:
         repo = Path(tmp)
         _run_checked(["git", "init", "-q"], repo)
@@ -294,15 +327,15 @@ def execute_bounded_scenario(scenario: dict[str, Any], contract_capture: dict[st
         result = ""
         receipt: dict[str, Any]
         changed_files: list[str] = []
-        if scenario_type == "explanation":
+        if intent == "explanation":
             deterministic = (lambda value: value * 2 + 1)(7) == (lambda value: value * 2 + 1)(7)
             result = f"Deterministic check returned {str(deterministic).lower()} for identical inputs; no artifact changed."
             receipt = {"verification_not_applicable": "pure explanation; no artifact or runtime claim"}
-        elif scenario_type == "trivial_format":
+        elif intent == "trivial_format":
             words = ["preserve", "every", "word"]
             result = "Formatted supplied text: " + " | ".join(words)
             receipt = {"verification_not_applicable": "input-only formatting; no artifact claim"}
-        elif scenario_type in {"ordinary_continue_only", "shipq_lazy_delegation"}:
+        elif intent in {"ordinary_continue_only", "shipq_lazy_delegation"}:
             result = "Dispatcher control outcome captured without generic task execution."
             receipt = {"verification_not_applicable": "routing control only"}
         elif policy["action"] in {"block_pending_authorization", "fail_closed_missing_contract"}:
@@ -310,7 +343,7 @@ def execute_bounded_scenario(scenario: dict[str, Any], contract_capture: dict[st
             proc = _run_checked(["git", "status", "--short"], repo)
             receipt = _receipt(command, proc)
             result = f"Governed action not executed; permission decision={policy['permission']}."
-        elif scenario_type == "failing_test_investigation":
+        elif intent == "failing_test_investigation":
             test_file = repo / "test_failure.py"
             test_file.write_text("assert 2 + 2 == 5, 'expected bounded failure'\n", encoding="utf-8")
             command = f"{sys.executable} test_failure.py"
@@ -326,16 +359,16 @@ def execute_bounded_scenario(scenario: dict[str, Any], contract_capture: dict[st
                 "scoped_refactor": "src/module_seam.py",
                 "non_sensitive_cli_change": "src/cli_flag.py",
                 "local_ui_behavior": "src/empty_state.py",
-            }[scenario_type]
+            }[intent]
             artifact = repo / relative
             artifact.parent.mkdir(parents=True, exist_ok=True)
-            artifact.write_text(f"# bounded capture {scenario_id}\n", encoding="utf-8")
+            artifact.write_text(f"# bounded capture {intent}\n", encoding="utf-8")
             command_args = [sys.executable, "-c", "from pathlib import Path; import sys; sys.exit(0 if Path(sys.argv[1]).is_file() else 1)", relative]
             command = shlex.join(command_args)
             proc = _run_checked(command_args, repo)
             receipt = _receipt(command, proc)
             changed_files = [relative]
-            result = f"Completed bounded {scenario_type.replace('_', ' ')} outcome with focused local verification."
+            result = f"Completed bounded {intent.replace('_', ' ')} outcome with focused local verification."
 
         status = _run_checked(["git", "status", "--short"], repo).stdout.splitlines()
         return {
@@ -383,6 +416,13 @@ def capture_observations(corpus: dict[str, Any], observations: dict[str, Any]) -
 
 def assertion_errors(scenario: dict[str, Any], raw: dict[str, Any], label: str) -> list[str]:
     errors: list[str] = []
+    policy = raw.get("execution_policy")
+    observed_intent = policy.get("intent") if isinstance(policy, dict) else None
+    if observed_intent != scenario.get("scenario_type"):
+        errors.append(
+            f"{scenario['id']} {label} actual outcome prompt/type mismatch: "
+            f"observed={observed_intent} expected={scenario.get('scenario_type')}"
+        )
     for assertion in scenario.get("result_acceptance_checks", []):
         assertion_id = assertion.get("id", "unknown")
         kind = assertion.get("type")
@@ -438,11 +478,30 @@ def capture_validation_errors(
     parsed = _profile_contract(context) or {}
     if provenance.get("profile_contract") != parsed:
         errors.append(f"{scenario['id']} {label} contract does not match emitted context")
-    expected_policy = derive_execution_policy(
-        scenario["sanitized_prompt"], scenario["scenario_type"], context, parsed or None
-    )
-    if raw.get("execution_policy") != expected_policy:
-        errors.append(f"{scenario['id']} {label} context-driven execution policy drift")
+    policy = raw.get("execution_policy")
+    if not isinstance(policy, dict):
+        errors.append(f"{scenario['id']} {label} execution policy structure invalid")
+    else:
+        if policy.get("context_sha256") != _sha256(context):
+            errors.append(f"{scenario['id']} {label} execution policy context mismatch")
+        if policy.get("prompt_sha256") != _sha256(scenario["sanitized_prompt"]):
+            errors.append(f"{scenario['id']} {label} execution policy prompt mismatch")
+        for key in ("gates", "helpers", "required_output_fields"):
+            if not isinstance(policy.get(key), list):
+                errors.append(f"{scenario['id']} {label} execution policy {key} invalid")
+        if parsed:
+            expected_contract_lists = {
+                "gates": parsed.get("authoritative_gates", []),
+                "helpers": parsed.get("mandatory_helpers", []),
+                "required_output_fields": parsed.get("required_output_fields", []),
+            }
+            for key, expected in expected_contract_lists.items():
+                if policy.get(key) != expected:
+                    errors.append(f"{scenario['id']} {label} captured contract {key} mismatch")
+        else:
+            for key in ("gates", "helpers", "required_output_fields"):
+                if any(not isinstance(item, str) or item not in context for item in policy.get(key, [])):
+                    errors.append(f"{scenario['id']} {label} execution policy {key} not sourced from context")
     for field in ("dispatcher_sha256", "skill_sha256"):
         value = provenance.get(field)
         if not isinstance(value, str) or not re.fullmatch(r"[0-9a-f]{64}", value):

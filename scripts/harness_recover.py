@@ -10,6 +10,7 @@ from collections import Counter
 from pathlib import Path
 from typing import Any
 
+from harness_checkpoint_contract import validate_checkpoint_artifact
 from harness_feedback import compute_conversion_health, with_malformed_evidence_signal
 
 
@@ -60,10 +61,8 @@ def latest_checkpoint_data(text: str) -> tuple[str, dict[str, Any] | None]:
             value = json.loads(line[len(prefix) :])
         except json.JSONDecodeError:
             return "malformed", None
-        if isinstance(value, dict) and value.get("schema") == "dhf_checkpoint_v1":
-            required = {"phase", "constraints", "ownership", "next_action", "verification_evidence"}
-            if required.issubset(value):
-                return "valid", value
+        if isinstance(value, dict) and not validate_checkpoint_artifact(value):
+            return "valid", value
         return "schema-invalid", None
     return "absent", None
 
