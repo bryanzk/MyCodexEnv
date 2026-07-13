@@ -5,7 +5,7 @@ Stable rules belong in `AGENTS.md`, `README.md`, `docs/repo-index.md`, or
 `docs/HARNESS_RUNTIME.md`; session facts and phase transitions are appended here.
 
 ## Current Snapshot
-- phase: ship
+- phase: handoff
 - source_of_truth:
   - `AGENTS.md`
   - `docs/repo-index.md`
@@ -14,13 +14,13 @@ Stable rules belong in `AGENTS.md`, `README.md`, `docs/repo-index.md`, or
   - `codex/skills/delivery-harness-framework/SKILL.md`
 - blocked_sources: none
 - unsafe_inputs: none
-- next_safe_task: Push codex/mce-20260713-user-change-checkpoints, open a PR against main, and review CI; after merge, fast-forward local main only when its worktree is clean.
+- next_safe_task: Wait for PR 10 CI gate to pass, review the four checkpoint commits, then squash or merge according to repository policy; after merge, fast-forward local main only from a clean worktree.
 - required_commands:
   - `python3 test_runner.py`
   - `git diff --check`
   - `./scripts/verify_codex_env.sh --repo-root "$(pwd)" --codex-home "$HOME/.codex" --claude-home "$HOME/.claude"`
-- latest_checkpoint: 2026-07-13T12:02:26-04:00 Target-activated generic DHF dispatcher and thread-discipline runtime surfaces from checkpoint branch
-- latest_verification: 2026-07-13T12:02:26-04:00 command=targeted cmp 8 files; ./scripts/verify_codex_env.sh --repo-root "/Users/kezheng/Codes/CursorDeveloper/MyCodexEnv" --codex-home "/Users/kezheng/.codex" --claude-home "/Users/kezheng/.claude"; python3 scripts/check_codex_skill_loader.py --repo-root "/Users/kezheng/Codes/CursorDeveloper/MyCodexEnv" --codex-home "/Users/kezheng/.codex"; python3 test_runner.py; exit_code=0; key_output=targeted_parity=8/8; Verification passed.; loader_errors=0 missing_expected_paths=0 disabled_expected_paths=0; ran=82 passed=82 skipped=0 failed=0; backup=/Users/kezheng/.codex/runtime-backups/user-change-checkpoints-before-sync-20260713T155952Z
+- latest_checkpoint: 2026-07-13T12:03:32-04:00 Pushed checkpoint branch and opened PR 10 after targeted runtime activation
+- latest_verification: 2026-07-13T12:03:32-04:00 command=git push -u origin codex/mce-20260713-user-change-checkpoints; gh pr view 10 --json state,mergeable,statusCheckRollup; git ls-remote --heads origin codex/mce-20260713-user-change-checkpoints; exit_code=0; key_output=remote SHA matched local 1789a59; PR 10 OPEN and MERGEABLE; CI gate IN_PROGRESS
 
 ## State Log
 
@@ -1959,3 +1959,23 @@ Stable rules belong in `AGENTS.md`, `README.md`, `docs/repo-index.md`, or
 - blockers:
   - none
 - next_safe_task: Push codex/mce-20260713-user-change-checkpoints, open a PR against main, and review CI; after merge, fast-forward local main only when its worktree is clean.
+
+### 2026-07-13T12:03:32-04:00
+- phase: handoff
+- event: checkpoint
+- summary: Pushed checkpoint branch and opened PR 10 after targeted runtime activation
+- git:
+  - branch: codex/mce-20260713-user-change-checkpoints
+  - latest_commit: 1789a59
+  - dirty_status: clean
+  - dirty_count: 0
+- changed_surfaces:
+  - `branch:codex/mce-20260713-user-change-checkpoints`
+  - `https://github.com/bryanzk/MyCodexEnv/pull/10`
+- verification:
+  - command: `git push -u origin codex/mce-20260713-user-change-checkpoints; gh pr view 10 --json state,mergeable,statusCheckRollup; git ls-remote --heads origin codex/mce-20260713-user-change-checkpoints`
+  - exit_code: 0
+  - key_output: remote SHA matched local 1789a59; PR 10 OPEN and MERGEABLE; CI gate IN_PROGRESS
+- blockers:
+  - none
+- next_safe_task: Wait for PR 10 CI gate to pass, review the four checkpoint commits, then squash or merge according to repository policy; after merge, fast-forward local main only from a clean worktree.
