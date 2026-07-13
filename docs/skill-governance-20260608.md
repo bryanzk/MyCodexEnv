@@ -134,11 +134,79 @@ Recommended handling: choose one canonical user-facing name per pair, then keep 
 
 Do not delete `.agents/skills` duplicates until the chosen policy is reflected in README, `docs/repo-index.md`, tests, and sync behavior.
 
-## Next Safe Slice
-Choose and document a `freeze-review` policy before any removal, archive, rename, or runtime sync:
+## Freeze-Review Policy
 
-- define what `freeze-review` changes in docs, prompts, sync behavior, and user-facing skill availability
-- start with the seven manual-review-only candidates if a reversible pilot is needed
+`freeze-review` is a reversible governance status for a skill or skill family.
+It is not deletion, archival, renaming, runtime hiding, or runtime sync.
+
+Use `freeze-review` before any skill removal, archive, rename, or broad runtime
+sync when the action could change user-facing skill availability, routing,
+source ownership, or compatibility aliases.
+
+### Entry Criteria
+
+A skill or bundle may enter `freeze-review` only after all of these are true:
+
+- A fresh `scripts/audit_skills.py` report identifies the candidate, source
+  locations, usage signals, repo references, alias relationships, and duplicate
+  source relationships.
+- A report-only deprecation simulation exists for the exact candidate list:
+  `python3 scripts/audit_skills.py --repo-root "$(pwd)" --codex-home "$HOME/.codex" --simulate-deprecation NAME`.
+- The simulation output has been reviewed with `safe_to_remove=false` treated as
+  the default state, not as an error to bypass.
+- Runtime-only, `.agents` duplicate, gstack alias, router-reference, or repo
+  reference blockers are each assigned to an explicit follow-up decision.
+
+### Allowed Actions During Freeze-Review
+
+- Mark candidates in governance notes, issue/spec text, or a future decision
+  table as `freeze-review`.
+- Add or update report-only evidence, simulation commands, human review notes,
+  and rollback notes.
+- Update tests or docs that make the policy enforceable.
+
+### Forbidden Actions During Freeze-Review
+
+- Do not delete, move, archive, or rename `codex/skills/*`,
+  `~/.codex/skills/*`, or `.agents/skills/*`.
+- Do not make a broad runtime sync, mirror, or `--delete` operation part of the
+  same slice.
+- Do not remove user-facing skill names, aliases, routing references, or prompt
+  examples.
+- Do not claim a skill is removed, unavailable, deprecated, or safe to remove
+  while the report-only simulation still reports blockers.
+
+### Exit Criteria
+
+Every frozen candidate or bundle must leave `freeze-review` through one explicit
+decision:
+
+- `keep`: retain the skill unchanged and record the reason.
+- `defer`: keep the status open with the unresolved blocker named.
+- `policy-needed`: resolve alias behavior, `.agents` source ownership, or
+  runtime-only source ownership before deciding.
+- `ready-for-deprecation-plan`: create a separate implementation plan with
+  exact file changes, runtime sync boundary, rollback path, and verification
+  commands.
+
+Before any actual removal/archive/rename or broad runtime sync, the separate
+implementation plan must include:
+
+- exact candidate list and source paths
+- explicit source-of-truth owner for repo, runtime, and `.agents` copies
+- references to update in docs, routing, tests, prompts, and templates
+- rollback path for repo and runtime state
+- fresh verification with `command`, `exit_code`, `key_output`, and `timestamp`
+- a checkpoint in `docs/harness-state.md`
+
+## Next Safe Slice
+Run a report-only freeze-review batch for the seven manual-review-only
+candidates, then record the decision table without mutating skill source or
+runtime state:
+
+- start with the seven manual-review-only candidates if a reversible pilot is needed:
+  `chronicle-behavior-analysis`, `code-simplifier`, `colorize`, `find-skills`,
+  `ljg-roundtable`, `teach-impeccable`, `transreader-chrome-store-release`
 - keep gstack aliases as a bundle until canonical alias behavior is decided
 - keep `.agents` duplicates untouched until imported-source policy is decided
 - verification: policy doc update, `python3 test_runner.py`, and `git diff --check`

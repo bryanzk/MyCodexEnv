@@ -315,7 +315,98 @@ def test_verify_supports_skip_check_argument():
     require("--skip-check <name>" in text, "verify help should document skip-check")
     script_text = VERIFY.read_text(encoding="utf-8")
     require("SKIP:" in script_text, "verify script should emit SKIP status for skipped checks")
+    require(
+        'should_skip "skills_managed_present"' in script_text,
+        "skills_managed_present must honor --skip-check like ordinary checks",
+    )
     print("[PASS] verify skip-check support")
+
+
+def test_verify_skips_managed_skill_presence_behavior():
+    with tempfile.TemporaryDirectory() as tmp:
+        tmp_path = Path(tmp)
+        repo = tmp_path / "repo"
+        codex_home = tmp_path / ".codex"
+        claude_home = tmp_path / ".claude"
+        (repo / "codex" / "skills" / "managed-skill").mkdir(parents=True)
+        (codex_home / "skills").mkdir(parents=True)
+        claude_home.mkdir()
+        write(repo / "locks" / "superpowers.lock", "commit=test-commit\n")
+
+        script_text = VERIFY.read_text(encoding="utf-8")
+        other_checks = {"cmd_codex", "codex_version", "codex_skill_compatibility"}
+        for line in script_text.splitlines():
+            for marker in ("$(check ", "$(run_check "):
+                if marker not in line:
+                    continue
+                name = line.split(marker, 1)[1].split()[0].strip("\"'")
+                if "${" not in name:
+                    other_checks.add(name)
+        other_checks.update(
+            f"codex_skill_{name}"
+            for name in [
+                "ccwf-session-end",
+                "ccwf-verification-before-completion",
+                "ccwf-systematic-debugging",
+                "ccwf-planning-with-files",
+                "ccwf-experience-evolution",
+            ]
+        )
+        other_checks.discard("skills_managed_present")
+        skip_other_args = [arg for name in sorted(other_checks) for arg in ("--skip-check", name)]
+
+        base_args = [
+            str(VERIFY),
+            "--repo-root",
+            str(repo),
+            "--codex-home",
+            str(codex_home),
+            "--claude-home",
+            str(claude_home),
+            *skip_other_args,
+        ]
+        ordinary_code, ordinary_out, _ = run(base_args)
+        require(
+            ordinary_code != 0 and "FAIL:skills_managed_present" in ordinary_out,
+            "missing managed skills should fail when the named check is not skipped",
+        )
+
+        skipped_code, skipped_out, skipped_err = run([*base_args, "--skip-check", "skills_managed_present"])
+        status_lines = [line for line in skipped_out.splitlines() if line.endswith("skills_managed_present")]
+        require(
+            status_lines == ["SKIP:skills_managed_present"],
+            f"skipped managed-skill presence check should emit only SKIP, got: {status_lines}",
+        )
+        require(skipped_code == 0, f"named skip should not count as a verification failure: {skipped_err or skipped_out}")
+        require("Verification passed." in skipped_out, "all-skipped fixture should reach the success contract")
+
+        missing_repo = tmp_path / "missing-skill-dirs-repo"
+        missing_codex_home = tmp_path / ".codex-without-skills"
+        write(missing_repo / "locks" / "superpowers.lock", "commit=test-commit\n")
+        missing_args = [
+            str(VERIFY),
+            "--repo-root",
+            str(missing_repo),
+            "--codex-home",
+            str(missing_codex_home),
+            "--claude-home",
+            str(claude_home),
+            *skip_other_args,
+            "--skip-check",
+            "skills_managed_present",
+        ]
+        missing_code, missing_out, missing_err = run(missing_args)
+        require(
+            missing_code == 0,
+            f"named skip should tolerate absent repo/runtime skill directories: {missing_err or missing_out}",
+        )
+        require(
+            [line for line in missing_out.splitlines() if line.endswith("skills_managed_present")]
+            == ["SKIP:skills_managed_present"],
+            "missing skill directories should still produce the exact named SKIP status",
+        )
+
+    print("[PASS] verify skips managed skill presence behavior")
 
 
 def test_codex_version_policy_accepts_current_cli():
@@ -1538,6 +1629,38 @@ def test_skill_governance_audit_cli():
         require("ERROR[simulate_deprecation_file]" in err, "missing simulation target file should name the failure")
 
     print("[PASS] skill governance audit CLI")
+
+
+def test_skill_governance_freeze_review_policy_doc():
+    text = SKILL_GOVERNANCE_DOC.read_text(encoding="utf-8")
+    require("## Freeze-Review Policy" in text, "skill governance doc should define freeze-review policy")
+    require(
+        "`freeze-review` is a reversible governance status" in text,
+        "freeze-review must be a reversible status, not an implicit mutation",
+    )
+    require(
+        "It is not deletion, archival, renaming, runtime hiding, or runtime sync." in text,
+        "freeze-review must explicitly forbid treating the status as a runtime change",
+    )
+    require("### Entry Criteria" in text, "freeze-review policy should name entry criteria")
+    require("### Allowed Actions During Freeze-Review" in text, "freeze-review policy should name allowed actions")
+    require("### Forbidden Actions During Freeze-Review" in text, "freeze-review policy should name forbidden actions")
+    require("### Exit Criteria" in text, "freeze-review policy should name exit criteria")
+    require("Do not delete, move, archive, or rename" in text, "freeze-review must block direct skill mutation")
+    require("Do not make a broad runtime sync" in text, "freeze-review must block same-slice broad runtime sync")
+    require("safe_to_remove=false" in text, "freeze-review must preserve conservative simulation semantics")
+    for decision in ["`keep`", "`defer`", "`policy-needed`", "`ready-for-deprecation-plan`"]:
+        require(decision in text, f"freeze-review exit criteria missing decision: {decision}")
+    require(
+        "fresh verification with `command`, `exit_code`, `key_output`, and `timestamp`" in text,
+        "freeze-review implementation plan must require full verification evidence fields",
+    )
+    require(
+        "rollback path for repo and runtime state" in text,
+        "freeze-review implementation plan must preserve an explicit repo/runtime rollback path",
+    )
+
+    print("[PASS] skill governance freeze-review policy doc")
 
 
 def test_shipq_dhf_prompt_hook_auto_invokes_skill():
@@ -5125,6 +5248,7 @@ TESTS = [
     test_bootstrap_eigenphi_argument_is_optional,
     test_sync_ignores_legacy_eigenphi_argument,
     test_verify_supports_skip_check_argument,
+    test_verify_skips_managed_skill_presence_behavior,
     test_codex_version_policy_accepts_current_cli,
     test_codex_cli_resolver_skips_broken_candidates,
     test_skill_compatibility_checker_contract,
@@ -5147,6 +5271,7 @@ TESTS = [
     test_dhf_packet_schema_examples,
     test_ci_workflow_runs_green_gate,
     test_skill_governance_audit_cli,
+    test_skill_governance_freeze_review_policy_doc,
     test_shipq_dhf_prompt_hook_auto_invokes_skill,
     test_harness_agent_brief_template,
     test_lifecycle_skill_routing_doc_is_discoverable,
