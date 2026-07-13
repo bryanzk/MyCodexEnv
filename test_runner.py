@@ -45,6 +45,7 @@ SURFACES_MANIFEST = ROOT / "docs" / "surfaces.json"
 CHECK_SURFACES = ROOT / "scripts" / "check_surfaces.py"
 SKILL_GOVERNANCE_DOC = ROOT / "docs" / "skill-governance-20260608.md"
 LIFECYCLE_SKILL_ROUTING_DOC = ROOT / "docs" / "LIFECYCLE_SKILL_ROUTING.md"
+BRANCH_CLEANUP = ROOT / "codex" / "skills" / "repo-branch-governance" / "scripts" / "cleanup_merged_branches.sh"
 CI_WORKFLOW = ROOT / ".github" / "workflows" / "ci.yml"
 PUBLIC_INDEX_HTML = ROOT / "docs" / "index.html"
 PUBLIC_INDEX_EN_HTML = ROOT / "docs" / "index-en.html"
@@ -1007,6 +1008,35 @@ def test_dual_committee_review_loop_skill_contract():
     require("max_rounds" in loop_control_text, "dual skill eval matrix should cover max_rounds termination")
 
     print("[PASS] dual committee review loop skill contract")
+
+
+def test_repo_branch_cleanup_supports_system_bash():
+    script_text = BRANCH_CLEANUP.read_text(encoding="utf-8")
+    require("declare -A" not in script_text, "branch cleanup should not require Bash associative arrays")
+    require("mapfile" not in script_text, "branch cleanup should not require Bash mapfile")
+
+    with tempfile.TemporaryDirectory() as tmp:
+        repo = Path(tmp) / "repo"
+        repo.mkdir()
+        commands = [
+            ["git", "init", "-b", "main"],
+            ["git", "config", "user.name", "Test User"],
+            ["git", "config", "user.email", "test@example.com"],
+        ]
+        for command in commands:
+            code, out, err = run(command, cwd=repo)
+            require(code == 0, f"branch cleanup fixture setup failed: {err or out}")
+        (repo / "README.md").write_text("fixture\n", encoding="utf-8")
+        code, out, err = run(["git", "add", "README.md"], cwd=repo)
+        require(code == 0, f"branch cleanup fixture add failed: {err or out}")
+        code, out, err = run(["git", "commit", "-m", "fixture"], cwd=repo)
+        require(code == 0, f"branch cleanup fixture commit failed: {err or out}")
+
+        code, out, err = run(["/bin/bash", str(BRANCH_CLEANUP), "--main", "main"], cwd=repo)
+        require(code == 0, f"branch cleanup should run under system Bash: {err or out}")
+        require("mode=dry-run" in out, "branch cleanup should remain dry-run by default")
+
+    print("[PASS] repo branch cleanup supports system Bash")
 
 
 def test_sync_agents_only_copies_and_backs_up_agents():
@@ -5106,6 +5136,7 @@ TESTS = [
     test_delivery_harness_framework_routes_runtime_helpers,
     test_delivery_harness_framework_eval_matrix,
     test_dual_committee_review_loop_skill_contract,
+    test_repo_branch_cleanup_supports_system_bash,
     test_sync_agents_only_copies_and_backs_up_agents,
     test_harness_runtime_surfaces_exist_and_parse,
     test_surfaces_manifest_no_orphans,

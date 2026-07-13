@@ -5,7 +5,7 @@ Stable rules belong in `AGENTS.md`, `README.md`, `docs/repo-index.md`, or
 `docs/HARNESS_RUNTIME.md`; session facts and phase transitions are appended here.
 
 ## Current Snapshot
-- phase: handoff
+- phase: development
 - source_of_truth:
   - `AGENTS.md`
   - `docs/repo-index.md`
@@ -14,13 +14,13 @@ Stable rules belong in `AGENTS.md`, `README.md`, `docs/repo-index.md`, or
   - `codex/skills/delivery-harness-framework/SKILL.md`
 - blocked_sources: none
 - unsafe_inputs: none
-- next_safe_task: Manual acceptance 5-6 remain: run one real ambiguous request through grilling -> planner -> requirements gate and inspect open_questions_resolved traceability; start a new session and spot-check 3 terms against CONTEXT.md. Optional Slice 4 after that: add harness_requirements.py validation for open_questions_resolved and harness_agent_team.py context-read guidance.
+- next_safe_task: Remove only clean merged detached worktrees and merged stale remote codex branches; preserve automation branch, dirty a649 worktree, and diverged freeze-review-policy branch
 - required_commands:
   - `python3 test_runner.py`
   - `git diff --check`
   - `./scripts/verify_codex_env.sh --repo-root "$(pwd)" --codex-home "$HOME/.codex" --claude-home "$HOME/.claude"`
-- latest_checkpoint: 2026-07-06T19:19:50-04:00 Completed docs/plans/2026-07-06-dhf-grilling-context-integration.md executable slices 1-3 and final gates
-- latest_verification: 2026-07-06T19:19:50-04:00 command=python3 scripts/check_surfaces.py --repo-root "/Users/kezheng/Codes/CursorDeveloper/MyCodexEnv" --check-public-nav; python3 test_runner.py; git diff --check; ./scripts/verify_codex_env.sh --repo-root "/Users/kezheng/Codes/CursorDeveloper/MyCodexEnv" --codex-home "/Users/kezheng/.codex" --claude-home "/Users/kezheng/.claude"; python3 scripts/harness_requirements.py validate docs/templates/harness-requirements.md; test -f "/Users/kezheng/.codex/skills/grilling/SKILL.md"; grep -l "694fa30" codex/skills/grilling/*.md; exit_code=0; key_output=surfaces manifest consistent; ran=63 passed=63 skipped=0 failed=0; git diff --check produced no output; Verification passed.; requirements template valid; runtime grilling skill present; grep returned 3 markdown files.
+- latest_checkpoint: 2026-07-13T10:16:39-04:00 Prepared branch governance cleanup after local main fast-forward and Bash 3 compatibility fix
+- latest_verification: 2026-07-13T10:16:39-04:00 command=python3 -c 'import test_runner as t; t.test_repo_branch_cleanup_supports_system_bash()'; exit_code=0; key_output=[PASS] repo branch cleanup supports system Bash
 
 ## State Log
 
@@ -1817,3 +1817,22 @@ Stable rules belong in `AGENTS.md`, `README.md`, `docs/repo-index.md`, or
 - blockers:
   - none
 - next_safe_task: Manual acceptance 5-6 remain: run one real ambiguous request through grilling -> planner -> requirements gate and inspect open_questions_resolved traceability; start a new session and spot-check 3 terms against CONTEXT.md. Optional Slice 4 after that: add harness_requirements.py validation for open_questions_resolved and harness_agent_team.py context-read guidance.
+
+### 2026-07-13T10:16:39-04:00
+- phase: development
+- event: checkpoint
+- summary: Prepared branch governance cleanup after local main fast-forward and Bash 3 compatibility fix
+- git:
+  - branch: main
+  - latest_commit: f8525da
+  - dirty_status: dirty
+  - dirty_count: 2
+- changed_surfaces:
+  - `codex/skills/repo-branch-governance/scripts/cleanup_merged_branches.sh; test_runner.py`
+- verification:
+  - command: `python3 -c 'import test_runner as t; t.test_repo_branch_cleanup_supports_system_bash()'`
+  - exit_code: 0
+  - key_output: [PASS] repo branch cleanup supports system Bash
+- blockers:
+  - none
+- next_safe_task: Remove only clean merged detached worktrees and merged stale remote codex branches; preserve automation branch, dirty a649 worktree, and diverged freeze-review-policy branch

@@ -51,34 +51,19 @@ fi
 
 current_branch="$(git branch --show-current)"
 
-declare -A branch_to_worktree=()
-current_worktree=""
-while IFS= read -r line; do
-  key="${line%% *}"
-  value="${line#* }"
-  if [[ "${key}" == "worktree" ]]; then
-    current_worktree="${value}"
-  elif [[ "${key}" == "branch" ]]; then
-    b="${value#refs/heads/}"
-    branch_to_worktree["${b}"]="${current_worktree}"
-  fi
-done < <(git worktree list --porcelain)
-
-mapfile -t merged_candidates < <(git for-each-ref --format='%(refname:short)' --merged "${main_branch}" refs/heads)
-
-if [[ "${#merged_candidates[@]}" -eq 0 ]]; then
-  echo "No merged branches found."
-  exit 0
-fi
-
 echo "mode=$([[ "${apply_changes}" == "true" ]] && echo apply || echo dry-run) main=${main_branch} remote=${remote_name}"
 
-for branch in "${merged_candidates[@]}"; do
+found_candidate="false"
+while IFS= read -r branch; do
   if [[ "${branch}" == "${main_branch}" || "${branch}" == "${current_branch}" ]]; then
     continue
   fi
+  found_candidate="true"
 
-  wt_path="${branch_to_worktree[${branch}]:-}"
+  wt_path="$(git worktree list --porcelain | awk -v target="refs/heads/${branch}" '
+    $1 == "worktree" { worktree = substr($0, index($0, " ") + 1) }
+    $1 == "branch" && $2 == target { print worktree; exit }
+  ')"
   if [[ -n "${wt_path}" ]]; then
     echo "[worktree] branch=${branch} path=${wt_path}"
     if [[ "${apply_changes}" == "true" ]]; then
@@ -97,7 +82,12 @@ for branch in "${merged_candidates[@]}"; do
       git push "${remote_name}" --delete "${branch}"
     fi
   fi
-done
+done < <(git for-each-ref --format='%(refname:short)' --merged "${main_branch}" refs/heads)
+
+if [[ "${found_candidate}" != "true" ]]; then
+  echo "No merged branches found."
+  exit 0
+fi
 
 if [[ "${apply_changes}" == "true" ]]; then
   git fetch --all --prune >/dev/null
