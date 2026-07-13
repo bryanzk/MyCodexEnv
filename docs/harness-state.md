@@ -5,7 +5,7 @@ Stable rules belong in `AGENTS.md`, `README.md`, `docs/repo-index.md`, or
 `docs/HARNESS_RUNTIME.md`; session facts and phase transitions are appended here.
 
 ## Current Snapshot
-- phase: ship
+- phase: handoff
 - source_of_truth:
   - `AGENTS.md`
   - `docs/repo-index.md`
@@ -14,13 +14,13 @@ Stable rules belong in `AGENTS.md`, `README.md`, `docs/repo-index.md`, or
   - `codex/skills/delivery-harness-framework/SKILL.md`
 - blocked_sources: none
 - unsafe_inputs: none
-- next_safe_task: Fast-forward origin/main to the isolated implementation branch, verify remote containment, then delete codex/mce-20260608-freeze-review-policy and append a post-delete handoff checkpoint before removing the isolated worktree.
+- next_safe_task: Review and checkpoint the 22 user-owned changes in the primary worktree, then reconcile their overlapping test_runner.py and scripts/verify_codex_env.sh edits with origin/main and fast-forward or rebase safely; do not force-update the dirty local main ref.
 - required_commands:
   - `python3 test_runner.py`
   - `git diff --check`
   - `./scripts/verify_codex_env.sh --repo-root "$(pwd)" --codex-home "$HOME/.codex" --claude-home "$HOME/.claude"`
-- latest_checkpoint: 2026-07-13T11:12:17-04:00 Rebuilt the retained 6eada3b Freeze-Review Policy and managed-skill named-skip behavior in an isolated worktree; dual committee passed
-- latest_verification: 2026-07-13T11:12:17-04:00 command=python3 test_runner.py; verify_codex_env.sh ordinary and --skip-check skills_managed_present; bash -n; git diff --check; Codex and Claude dual committee; exit_code=0; key_output=ran=69 passed=69 skipped=0 failed=0; ordinary PASS and named SKIP both Verification passed; absent-directory RED/GREEN closed; Codex=10/10; Claude blind final=10/10; ledger closed
+- latest_checkpoint: 2026-07-13T11:12:48-04:00 Merged the isolated freeze-review rebuild into origin/main and deleted the superseded local diverged branch
+- latest_verification: 2026-07-13T11:12:48-04:00 command=git push origin HEAD:main; git merge-base --is-ancestor 76d12ed origin/main; git ls-remote --heads origin codex/mce-20260608-freeze-review-policy; git show-ref refs/heads/codex/mce-20260608-freeze-review-policy; exit_code=0; key_output=origin/main=ef3e6994925742f9047101e97161e5b3247c4323 contains implementation 76d12ed; old branch absent locally and remotely
 
 ## State Log
 
@@ -1915,3 +1915,23 @@ Stable rules belong in `AGENTS.md`, `README.md`, `docs/repo-index.md`, or
 - blockers:
   - Primary main worktree has 22 user-owned dirty items and will not be mutated; after remote fast-forward it must be reconciled separately before local main can advance safely.
 - next_safe_task: Fast-forward origin/main to the isolated implementation branch, verify remote containment, then delete codex/mce-20260608-freeze-review-policy and append a post-delete handoff checkpoint before removing the isolated worktree.
+
+### 2026-07-13T11:12:48-04:00
+- phase: handoff
+- event: checkpoint
+- summary: Merged the isolated freeze-review rebuild into origin/main and deleted the superseded local diverged branch
+- git:
+  - branch: codex/mce-20260713-freeze-review-rebuild
+  - latest_commit: ef3e699
+  - dirty_status: clean
+  - dirty_count: 0
+- changed_surfaces:
+  - `branch:codex/mce-20260608-freeze-review-policy (deleted; old SHA a3a94a3625e835e89ea6472b8aad79f3c787d6a3)`
+  - `docs/harness-state.md`
+- verification:
+  - command: `git push origin HEAD:main; git merge-base --is-ancestor 76d12ed origin/main; git ls-remote --heads origin codex/mce-20260608-freeze-review-policy; git show-ref refs/heads/codex/mce-20260608-freeze-review-policy`
+  - exit_code: 0
+  - key_output: origin/main=ef3e6994925742f9047101e97161e5b3247c4323 contains implementation 76d12ed; old branch absent locally and remotely
+- blockers:
+  - Primary local main worktree still contains 22 user-owned dirty items and intentionally remains behind origin/main; it was not stashed, overwritten, or switched during isolated delivery.
+- next_safe_task: Review and checkpoint the 22 user-owned changes in the primary worktree, then reconcile their overlapping test_runner.py and scripts/verify_codex_env.sh edits with origin/main and fast-forward or rebase safely; do not force-update the dirty local main ref.
