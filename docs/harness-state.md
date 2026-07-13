@@ -5,7 +5,7 @@ Stable rules belong in `AGENTS.md`, `README.md`, `docs/repo-index.md`, or
 `docs/HARNESS_RUNTIME.md`; session facts and phase transitions are appended here.
 
 ## Current Snapshot
-- phase: development
+- phase: handoff
 - source_of_truth:
   - `AGENTS.md`
   - `docs/repo-index.md`
@@ -14,13 +14,13 @@ Stable rules belong in `AGENTS.md`, `README.md`, `docs/repo-index.md`, or
   - `codex/skills/delivery-harness-framework/SKILL.md`
 - blocked_sources: none
 - unsafe_inputs: none
-- next_safe_task: Remove only clean merged detached worktrees and merged stale remote codex branches; preserve automation branch, dirty a649 worktree, and diverged freeze-review-policy branch
+- next_safe_task: Target-sync only codex/skills/repo-branch-governance to ~/.codex/skills/repo-branch-governance, rerun focused system-Bash dry-run and check_skill_compatibility, then return to the preserved diverged branch decision
 - required_commands:
   - `python3 test_runner.py`
   - `git diff --check`
   - `./scripts/verify_codex_env.sh --repo-root "$(pwd)" --codex-home "$HOME/.codex" --claude-home "$HOME/.claude"`
-- latest_checkpoint: 2026-07-13T10:16:39-04:00 Prepared branch governance cleanup after local main fast-forward and Bash 3 compatibility fix
-- latest_verification: 2026-07-13T10:16:39-04:00 command=python3 -c 'import test_runner as t; t.test_repo_branch_cleanup_supports_system_bash()'; exit_code=0; key_output=[PASS] repo branch cleanup supports system Bash
+- latest_checkpoint: 2026-07-13T10:23:03-04:00 Completed branch governance convergence, cleanup, and Bash 3 compatibility hardening
+- latest_verification: 2026-07-13T10:23:03-04:00 command=python3 test_runner.py; branch_snapshot.sh; check_skill_compatibility.py; exit_code=0; key_output=ran=80 passed=80 skipped=0 failed=0; main=origin/main; only expected managed runtime drift remains
 
 ## State Log
 
@@ -1836,3 +1836,22 @@ Stable rules belong in `AGENTS.md`, `README.md`, `docs/repo-index.md`, or
 - blockers:
   - none
 - next_safe_task: Remove only clean merged detached worktrees and merged stale remote codex branches; preserve automation branch, dirty a649 worktree, and diverged freeze-review-policy branch
+
+### 2026-07-13T10:23:03-04:00
+- phase: handoff
+- event: checkpoint
+- summary: Completed branch governance convergence, cleanup, and Bash 3 compatibility hardening
+- git:
+  - branch: main
+  - latest_commit: 3a61901
+  - dirty_status: dirty
+  - dirty_count: 22
+- changed_surfaces:
+  - `codex/skills/repo-branch-governance/scripts/cleanup_merged_branches.sh; test_runner.py; branch/worktree refs`
+- verification:
+  - command: `python3 test_runner.py; branch_snapshot.sh; check_skill_compatibility.py`
+  - exit_code: 0
+  - key_output: ran=80 passed=80 skipped=0 failed=0; main=origin/main; only expected managed runtime drift remains
+- blockers:
+  - Managed runtime copy of repo-branch-governance cleanup script is stale; user-owned source-stage whitespace/drift remains intentionally untouched
+- next_safe_task: Target-sync only codex/skills/repo-branch-governance to ~/.codex/skills/repo-branch-governance, rerun focused system-Bash dry-run and check_skill_compatibility, then return to the preserved diverged branch decision
