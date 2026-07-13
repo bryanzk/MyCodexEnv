@@ -4,16 +4,19 @@
   "measurement_boundary": {
     "context_unit": "utf8_bytes_proxy",
     "context_boundary": "UTF-8 byte length of hookSpecificOutput.additionalContext returned by the repo-source dispatcher; wrapper and injected skill text are included, other system or adapter context is excluded.",
-    "mandatory_helper_boundary": "Count of distinct helper CLI entry points that the current generic DHF contract requires before the scenario's first task action; git and ordinary read commands are not helper CLIs.",
+    "mandatory_helper_boundary": "Count of distinct helper CLI entry points that the current generic DHF contract requires before the scenario's first task action, checked against the validator's fixed BASELINE_HELPER_ORACLE; git and ordinary read commands are not helper CLIs.",
     "token_claimed": false
   },
-  "test_catalog": [
-    "TEST-SCHEMA-COUNTS",
-    "TEST-COHORT-SEPARATION",
-    "TEST-ACCEPTANCE-TRACE",
-    "TEST-BASELINE-MEASUREMENT",
-    "TEST-CURRENT-ROUTING-CONTROLS"
-  ],
+  "test_catalog": {
+    "TEST-SCHEMA-COUNTS": "tests/test_dhf_simplification.py::DhfSimplificationCorpusTests.test_cli_validates_schema_counts_trace_and_baseline",
+    "TEST-COHORT-SEPARATION": "tests/test_dhf_simplification.py::DhfSimplificationCorpusTests.test_validation_rejects_category_and_cohort_drift",
+    "TEST-ACCEPTANCE-TRACE": "tests/test_dhf_simplification.py::DhfSimplificationCorpusTests.test_validation_rejects_incomplete_acceptance_traceability",
+    "TEST-BASELINE-MEASUREMENT": "tests/test_dhf_simplification.py::DhfSimplificationCorpusTests.test_baseline_measurement_is_deterministic_and_detects_drift",
+    "TEST-CURRENT-ROUTING-CONTROLS": "test_runner.py::test_dhf_dispatcher_shipq_non_shipq_truth_table",
+    "TEST-OPT-OUT-PRECEDENCE": "tests/test_dhf_simplification.py::DhfSimplificationCorpusTests.test_current_dispatcher_opt_out_precedence",
+    "TEST-MALFORMED-PAYLOAD-SAFETY": "tests/test_dhf_simplification.py::DhfSimplificationCorpusTests.test_current_dispatcher_malformed_payload_safety",
+    "TEST-HELPER-CLI-CALLABILITY": "tests/test_dhf_simplification.py::DhfSimplificationCorpusTests.test_current_helper_cli_entry_points_are_callable"
+  },
   "scenarios": [
     {
       "id": "LIGHT-EXPLANATION",
@@ -343,12 +346,12 @@
     "AC-01": {"criterion": "The generic DHF Output Contract is reduced from an always-visible routing checklist to the four Result Invariants, with conditional governed fields.", "scenario_ids": ["LIGHT-EXPLANATION", "STANDARD-LOCAL-FEATURE", "GOVERNED-RESUMED-TASK"], "test_ids": ["TEST-SCHEMA-COUNTS"], "evidence_status": "deferred_to_slice_2; Slice 0 freezes required output expectations"},
     "AC-02": {"criterion": "A deterministic classifier or equivalent explicit routing contract maps representative prompts to `light`, `standard`, or `governed`.", "scenario_ids": ["LIGHT-ONE-FILE-SAFE", "STANDARD-LOCAL-FEATURE", "GOVERNED-DIRTY-CONFLICT"], "test_ids": ["TEST-SCHEMA-COUNTS"], "evidence_status": "known_baseline_mismatch; deferred_to_slice_1"},
     "AC-03": {"criterion": "Ordinary non-ShipQ prompts remain continue-only and receive no DHF context.", "scenario_ids": ["CONTROL-ORDINARY-CONTINUE"], "test_ids": ["TEST-CURRENT-ROUTING-CONTROLS", "TEST-BASELINE-MEASUREMENT"], "evidence_status": "covered_by_slice_0_baseline"},
-    "AC-04": {"criterion": "Explicit opt-out continues to win before all project and generic activation.", "scenario_ids": ["CONTROL-ORDINARY-CONTINUE"], "test_ids": ["TEST-CURRENT-ROUTING-CONTROLS"], "evidence_status": "existing_dispatcher_test; deferred_corpus_expansion_to_slice_1"},
+    "AC-04": {"criterion": "Explicit opt-out continues to win before all project and generic activation.", "scenario_ids": ["CONTROL-ORDINARY-CONTINUE", "CONTROL-SHIPQ-DELEGATION"], "test_ids": ["TEST-OPT-OUT-PRECEDENCE"], "evidence_status": "covered_by_slice_0_current_behavior_test"},
     "AC-05": {"criterion": "ShipQ continues to load only through lazy adapter delegation under its cwd.", "scenario_ids": ["CONTROL-SHIPQ-DELEGATION"], "test_ids": ["TEST-CURRENT-ROUTING-CONTROLS", "TEST-BASELINE-MEASUREMENT"], "evidence_status": "covered_by_slice_0_baseline"},
-    "AC-06": {"criterion": "Malformed, non-dict, and missing-cwd payloads continue safely without leaking traceback, skill text, secrets, or unrelated local context.", "scenario_ids": ["CONTROL-ORDINARY-CONTINUE"], "test_ids": ["TEST-CURRENT-ROUTING-CONTROLS"], "evidence_status": "existing_dispatcher_test; deferred_corpus_expansion_to_slice_1"},
+    "AC-06": {"criterion": "Malformed, non-dict, and missing-cwd payloads continue safely without leaking traceback, skill text, secrets, or unrelated local context.", "scenario_ids": ["CONTROL-ORDINARY-CONTINUE"], "test_ids": ["TEST-MALFORMED-PAYLOAD-SAFETY"], "evidence_status": "covered_by_slice_0_current_behavior_test"},
     "AC-07": {"criterion": "Light tasks do not require `harness_recover.py`, `harness_env_probe.py`, `harness_report.py`, lifecycle narration, or a checkpoint.", "scenario_ids": ["LIGHT-EXPLANATION", "LIGHT-BOUNDED-DOCS", "LIGHT-ONE-FILE-SAFE", "LIGHT-TRIVIAL-FORMAT"], "test_ids": ["TEST-SCHEMA-COUNTS"], "evidence_status": "expected_contract_frozen; known_baseline_mismatch"},
     "AC-08": {"criterion": "Governed scenarios still select every safety/recovery gate required by their escalation signal.", "scenario_ids": ["GOVERNED-RESUMED-TASK", "GOVERNED-DIRTY-CONFLICT", "GOVERNED-EXTERNAL-CAPTURE", "GOVERNED-REMOTE-DEPLOY", "GOVERNED-MULTI-AGENT", "GOVERNED-ARCH-SOURCE-CONFLICT"], "test_ids": ["TEST-SCHEMA-COUNTS"], "evidence_status": "expected_contract_frozen; deferred_behavior_to_slices_1_2"},
-    "AC-09": {"criterion": "Existing helper CLI entry points remain callable after the initial slices.", "scenario_ids": ["GOVERNED-RESUMED-TASK", "GOVERNED-MULTI-AGENT"], "test_ids": [], "evidence_status": "deferred_to_compatibility_gates; no helper deleted in Slice 0"},
+    "AC-09": {"criterion": "Existing helper CLI entry points remain callable after the initial slices.", "scenario_ids": ["GOVERNED-RESUMED-TASK", "GOVERNED-MULTI-AGENT"], "test_ids": ["TEST-HELPER-CLI-CALLABILITY"], "evidence_status": "covered_by_slice_0_current_behavior_test"},
     "AC-10": {"criterion": "Golden scenarios establish 100% parity for outcome correctness, safety blocking, fresh verification completeness, worktree preservation, and recoverability where required.", "scenario_ids": ["LIGHT-BOUNDED-DOCS", "STANDARD-LOCAL-FEATURE", "GOVERNED-RESUMED-TASK", "GOVERNED-DIRTY-CONFLICT"], "test_ids": ["TEST-SCHEMA-COUNTS", "TEST-BASELINE-MEASUREMENT"], "evidence_status": "baseline_frozen; candidate_parity_deferred_to_slice_4"},
     "AC-11": {"criterion": "No scenario improves efficiency by weakening a required verification or permission gate.", "scenario_ids": ["STANDARD-LOCAL-FEATURE", "GOVERNED-REMOTE-DEPLOY", "GOVERNED-EXTERNAL-CAPTURE"], "test_ids": ["TEST-SCHEMA-COUNTS"], "evidence_status": "expected_gates_frozen; candidate_comparison_deferred_to_slice_4"},
     "AC-12": {"criterion": "On same-scenario paired, explicitly activated light/standard observations with baseline greater than zero, median injected DHF context and median mandatory helper invocations each decrease by at least 40%; context and helpers are reported separately.", "scenario_ids": ["LIGHT-EXPLANATION", "LIGHT-BOUNDED-DOCS", "LIGHT-ONE-FILE-SAFE", "LIGHT-TRIVIAL-FORMAT", "STANDARD-LOCAL-FEATURE", "STANDARD-FAILING-TEST", "STANDARD-SCOPED-REFACTOR", "STANDARD-CLI-CHANGE", "STANDARD-LOCAL-UI"], "test_ids": ["TEST-BASELINE-MEASUREMENT", "TEST-COHORT-SEPARATION"], "evidence_status": "positive_baseline_frozen; paired_candidate_deferred_to_slice_4"},
