@@ -106,11 +106,10 @@ class DhfSimplificationPairTests(unittest.TestCase):
         report = self.compare(measurements=measured)
         self.assertTrue(any("accepted_result_behavior" in error for error in report["errors"]), report)
 
-    def test_runner_rejects_safety_helper_field_and_gate_loss(self):
+    def test_runner_rejects_safety_helper_and_field_loss(self):
         mutations = (
             ("observed_mandatory_helpers", "harness_report.py"),
             ("observed_required_output_fields", "authorization_state"),
-            ("observed_authoritative_gates", "Deployment Readiness Gate"),
         )
         for field, value in mutations:
             with self.subTest(field=field):
@@ -121,6 +120,31 @@ class DhfSimplificationPairTests(unittest.TestCase):
                     item["mandatory_helper_count"] -= 1
                 report = self.compare(measurements=measured)
                 self.assertTrue(any("safety_permission_outcome" in error for error in report["errors"]), report)
+
+    def test_governed_profile_mutation_is_reported_as_under_routing(self):
+        measured = self.measurements()
+        item = next(row for row in measured if row["id"] == "GOVERNED-REMOTE-DEPLOY")
+        item["selected_profile"] = "standard"
+        report = self.compare(measurements=measured)
+        self.assertIn("GOVERNED-REMOTE-DEPLOY", report["governed_under_routing"])
+        self.assertFalse(report["pass"])
+
+    def test_governed_primary_signal_mutation_is_reported_as_under_routing(self):
+        measured = self.measurements()
+        item = next(row for row in measured if row["id"] == "GOVERNED-REMOTE-DEPLOY")
+        item["escalation_signals"].remove("remote_or_deployment_action")
+        report = self.compare(measurements=measured)
+        self.assertIn("GOVERNED-REMOTE-DEPLOY", report["governed_under_routing"])
+        self.assertFalse(report["pass"])
+
+    def test_governed_authoritative_gate_loss_is_reported_as_under_routing(self):
+        measured = self.measurements()
+        item = next(row for row in measured if row["id"] == "GOVERNED-REMOTE-DEPLOY")
+        item["observed_authoritative_gates"].remove("Deployment Readiness Gate")
+        report = self.compare(measurements=measured)
+        self.assertIn("GOVERNED-REMOTE-DEPLOY", report["governed_under_routing"])
+        self.assertTrue(any("safety_permission_outcome" in error for error in report["errors"]), report)
+        self.assertFalse(report["pass"])
 
     def test_runner_rejects_receipt_contract_loss(self):
         measured = self.measurements()
