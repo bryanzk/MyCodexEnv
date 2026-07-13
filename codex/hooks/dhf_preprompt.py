@@ -25,8 +25,8 @@ DHF_SKILL = Path(
 )
 TRUSTED_HOOKS_ROOT = Path.home() / ".codex" / "hooks"
 ALLOW_UNTRUSTED_ADAPTER = os.environ.get("DHF_PREPROMPT_ALLOW_UNTRUSTED_TEST_PATHS") == "1"
-# Default-on during source evaluation; set to 0, false, off, or legacy for rollback.
-SIMPLIFIED_PROFILES_ENABLED = os.environ.get("DHF_PREPROMPT_SIMPLIFIED_PROFILES", "1").strip().lower() not in {
+# Default-off until Slice 4 parity passes; set to 1 to evaluate the candidate path.
+SIMPLIFIED_PROFILES_ENABLED = os.environ.get("DHF_PREPROMPT_SIMPLIFIED_PROFILES", "0").strip().lower() not in {
     "0",
     "false",
     "off",
@@ -78,11 +78,24 @@ GOVERNED_SIGNAL_PATTERNS = [
     ),
     (
         "external_capture_or_private_data",
-        [r"\bexternal\s+capture\b", r"\b(?:private|customer|credential|secret)\s+(?:data|capture|content)\b"],
+        [
+            r"\bexternal\s+capture\b",
+            r"\b(?:private|customer|credential|secret)\s+(?:data|capture|content)\b",
+            r"\b(?:rotate|update|change|write|revoke|delete)\b.*\b(?:credential|token|api[-\s]+key|secret)\b",
+            r"\b(?:credential|token|api[-\s]+key|secret)\b.*\b(?:rotate|update|change|write|revoke|delete|stored\s+value)\b",
+        ],
     ),
     (
         "remote_or_deployment_action",
-        [r"\bremote\b", r"\bdeploy(?:ment|ed|ing)?\b", r"\bproduction\b", r"\brelease\b"],
+        [r"\bremote\b", r"\bssh\b", r"\bdeploy(?:ment|ed|ing)?\b", r"\bproduction\b", r"\brelease\b"],
+    ),
+    (
+        "destructive_or_irreversible_action",
+        [
+            r"\b(?:destructive|irreversible)\b",
+            r"\b(?:delete|drop|truncate|purge|erase)\b.*\b(?:data|rows?|records?|table|database)\b",
+            r"\b(?:data|database|schema)\s+migration\b.*\b(?:delete|drop|truncate|irreversible)\b",
+        ],
     ),
     (
         "multiple_agents_or_overlapping_write_sets",
@@ -104,6 +117,42 @@ STANDARD_PATTERNS = [
     r"\bcli\s+(?:flag|change|option)\b",
     r"\bui\s+(?:behavior|change|empty[-\s]+state)\b",
 ]
+
+MANDATORY_HELPERS_BY_SIGNAL = {
+    "resume_or_handoff": [
+        "harness_recover.py",
+        "harness_env_probe.py",
+        "harness_report.py",
+        "harness_checkpoint.py",
+    ],
+    "unknown_or_overlapping_worktree_ownership": ["harness_recover.py", "harness_checkpoint.py"],
+    "external_capture_or_private_data": ["harness_env_probe.py", "harness_report.py", "harness_checkpoint.py"],
+    "remote_or_deployment_action": ["harness_env_probe.py", "harness_report.py", "harness_checkpoint.py"],
+    "multiple_agents_or_overlapping_write_sets": ["harness_agent_team.py", "harness_checkpoint.py"],
+    "durable_architecture_source_conflict": [
+        "harness_recover.py",
+        "harness_requirements.py",
+        "harness_checkpoint.py",
+    ],
+    "malformed_profile_state": [
+        "harness_recover.py",
+        "harness_env_probe.py",
+        "harness_report.py",
+        "harness_checkpoint.py",
+    ],
+    "destructive_or_irreversible_action": [
+        "harness_recover.py",
+        "harness_env_probe.py",
+        "harness_report.py",
+        "harness_checkpoint.py",
+    ],
+    "retained_higher_active_profile": [
+        "harness_recover.py",
+        "harness_env_probe.py",
+        "harness_report.py",
+        "harness_checkpoint.py",
+    ],
+}
 
 
 def load_payload() -> tuple[dict[str, Any], str]:
@@ -192,12 +241,16 @@ def select_governance_profile(text: str, active_profile: str | None = None) -> P
     return ProfileSelection(selected, signal)
 
 
-def active_profile_from_payload(payload: dict[str, Any]) -> str | None:
-    state = payload.get("dhf_profile_state")
+def profile_state_from_payload(payload: dict[str, Any]) -> tuple[str | None, bool]:
+    if "dhf_profile_state" not in payload:
+        return None, False
+    state = payload["dhf_profile_state"]
     if not isinstance(state, dict):
-        return None
+        return None, True
     active = state.get("active_profile")
-    return active if active in PROFILE_RANK else None
+    if active not in PROFILE_RANK:
+        return None, True
+    return active, False
 
 
 def load_shipq_adapter() -> ModuleType:
@@ -257,16 +310,23 @@ def generic_response() -> dict[str, Any]:
 
 
 def profile_context(selection: ProfileSelection) -> str:
+    signal = selection.escalation_signal or (
+        "retained_higher_active_profile" if selection.profile == "governed" else None
+    )
+    contract = json.dumps(
+        {"mandatory_helpers": MANDATORY_HELPERS_BY_SIGNAL.get(signal, [])},
+        ensure_ascii=True,
+        separators=(",", ":"),
+    )
     common = (
         "Activated generic DHF governance profile. "
         f"profile={selection.profile}. Preserve result, scope_and_constraints, fresh verification_receipt, "
-        "and remaining_risk_or_next_action when applicable."
+        f"and remaining_risk_or_next_action when applicable.\nDHF_PROFILE_CONTRACT={contract}\n"
     )
     if selection.profile == "light":
         return common + " Execute directly and use only the narrowest useful verification; no lifecycle helpers are required."
     if selection.profile == "standard":
         return common + " Define done, preserve dirty-worktree ownership, use a runnable focused feedback loop, and verify fresh."
-    signal = selection.escalation_signal or "retained_higher_active_profile"
     return (
         common
         + f" escalation_signal={signal}. Retain the relevant recovery, ownership, permission, evidence, "
@@ -299,7 +359,12 @@ def route_response(payload: dict[str, Any]) -> tuple[dict[str, Any], str]:
     if generic_activation_requested(text):
         if not SIMPLIFIED_PROFILES_ENABLED:
             return generic_response(), "generic-activated:legacy"
-        selection = select_governance_profile(text, active_profile_from_payload(payload))
+        active_profile, malformed_state = profile_state_from_payload(payload)
+        selection = (
+            ProfileSelection("governed", "malformed_profile_state")
+            if malformed_state
+            else select_governance_profile(text, active_profile)
+        )
         return simplified_generic_response(selection), f"generic-activated:{selection.profile}"
     return continue_only(), "continue-only"
 

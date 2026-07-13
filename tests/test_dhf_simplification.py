@@ -210,6 +210,22 @@ class DhfSimplificationCorpusTests(unittest.TestCase):
             "generic-activated",
         )
 
+    def test_candidate_helper_measurement_is_observed_and_missing_helper_fails(self):
+        self.assertTrue(
+            hasattr(self.validator, "validate_candidate_measurements"),
+            "candidate measurement needs an independent helper validator",
+        )
+        measured = self.validator.measure_candidate(self.corpus, ROOT)
+        remote = next(item for item in measured if item["id"] == "GOVERNED-REMOTE-DEPLOY")
+        self.assertEqual(
+            remote["observed_mandatory_helpers"],
+            ["harness_env_probe.py", "harness_report.py", "harness_checkpoint.py"],
+        )
+        remote["observed_mandatory_helpers"].remove("harness_report.py")
+        remote["mandatory_helper_count"] -= 1
+        errors = self.validator.validate_candidate_measurements(self.corpus, ROOT, measured)
+        self.assertTrue(any("GOVERNED-REMOTE-DEPLOY candidate helper mismatch" in error for error in errors), errors)
+
     def test_baseline_helper_measurement_uses_independent_oracle(self):
         broken = copy.deepcopy(self.corpus)
         scenario = broken["scenarios"][0]
@@ -250,6 +266,9 @@ class DhfGovernanceProfileTests(unittest.TestCase):
             "Use complex analysis on this sanitized customer private data.": "external_capture_or_private_data",
             "Implement this complex local change, then deploy it remotely.": "remote_or_deployment_action",
             "Review this complex change with multiple agents.": "multiple_agents_or_overlapping_write_sets",
+            "Run this complex operation over SSH on the build host.": "remote_or_deployment_action",
+            "Rotate this complex API credential and update its stored value.": "external_capture_or_private_data",
+            "Apply this complex irreversible data migration that deletes rows.": "destructive_or_irreversible_action",
         }
         for prompt, signal in cases.items():
             with self.subTest(prompt=prompt):
@@ -271,6 +290,18 @@ class DhfGovernanceProfileTests(unittest.TestCase):
         )
         self.assertEqual(malformed.profile, "governed")
         self.assertEqual(malformed.escalation_signal, "resume_or_handoff")
+
+    def test_malformed_profile_state_without_risk_keywords_fails_closed(self):
+        self.dispatcher.SIMPLIFIED_PROFILES_ENABLED = True
+        prompt = "Use complex analysis to format this supplied text."
+        absent, absent_route = self.dispatcher.route_response({"cwd": "/tmp/Generic", "prompt": prompt})
+        malformed, malformed_route = self.dispatcher.route_response(
+            {"cwd": "/tmp/Generic", "prompt": prompt, "dhf_profile_state": "corrupt-state"}
+        )
+        self.assertEqual(absent_route, "generic-activated:light")
+        self.assertIn("profile=light", absent["hookSpecificOutput"]["additionalContext"])
+        self.assertEqual(malformed_route, "generic-activated:governed")
+        self.assertIn("escalation_signal=malformed_profile_state", malformed["hookSpecificOutput"]["additionalContext"])
 
     def test_route_precedence_and_shipq_profile_ownership(self):
         with __import__("tempfile").TemporaryDirectory() as tmp:
@@ -310,6 +341,7 @@ class DhfGovernanceProfileTests(unittest.TestCase):
             skill = Path(tmp) / "DHF.md"
             skill.write_text(marker, encoding="utf-8")
             self.dispatcher.DHF_SKILL = skill
+            self.dispatcher.SIMPLIFIED_PROFILES_ENABLED = True
             response, route = self.dispatcher.route_response(
                 {"cwd": tmp, "prompt": "Use complex analysis to explain this deterministic function."}
             )
@@ -319,33 +351,49 @@ class DhfGovernanceProfileTests(unittest.TestCase):
             self.assertNotIn(marker, context)
             self.assertNotIn("Traceback", context)
 
-    def test_feature_switch_off_exercises_legacy_full_skill_route(self):
+    def test_feature_switch_defaults_legacy_and_requires_explicit_enable(self):
         marker = "LEGACY_FULL_SKILL_MARKER"
         with __import__("tempfile").TemporaryDirectory() as tmp:
             skill = Path(tmp) / "DHF.md"
             skill.write_text(marker, encoding="utf-8")
-            env = os.environ.copy()
-            env.update(
-                {
-                    "DHF_PREPROMPT_SIMPLIFIED_PROFILES": "0",
-                    "DHF_PREPROMPT_SKILL": str(skill),
-                    "DHF_PREPROMPT_SHIPQ_ROOT": str(Path(tmp) / "ShipQ"),
-                }
-            )
-            proc = subprocess.run(
-                [sys.executable, str(DISPATCHER)],
-                input=json.dumps({"cwd": tmp, "prompt": "complex local feature"}),
-                cwd=ROOT,
-                env=env,
-                capture_output=True,
-                text=True,
-                check=False,
-            )
-            self.assertEqual(proc.returncode, 0, proc.stderr)
-            payload = json.loads(proc.stdout)
-            self.assertIn(marker, payload["hookSpecificOutput"]["additionalContext"])
-            self.assertIn("diagnostic=generic-activated:legacy", proc.stderr)
-            self.assertNotIn("Traceback", proc.stderr)
+            base_env = os.environ.copy()
+            base_env.pop("DHF_PREPROMPT_SIMPLIFIED_PROFILES", None)
+            base_env.update({"DHF_PREPROMPT_SKILL": str(skill), "DHF_PREPROMPT_SHIPQ_ROOT": str(Path(tmp) / "ShipQ")})
+
+            def run_with(value):
+                env = base_env.copy()
+                if value is not None:
+                    env["DHF_PREPROMPT_SIMPLIFIED_PROFILES"] = value
+                return subprocess.run(
+                    [sys.executable, str(DISPATCHER)],
+                    input=json.dumps({"cwd": tmp, "prompt": "complex local feature"}),
+                    cwd=ROOT,
+                    env=env,
+                    capture_output=True,
+                    text=True,
+                    check=False,
+                )
+
+            default_proc = run_with(None)
+            self.assertEqual(default_proc.returncode, 0, default_proc.stderr)
+            self.assertIn(marker, json.loads(default_proc.stdout)["hookSpecificOutput"]["additionalContext"])
+            self.assertIn("diagnostic=generic-activated:legacy", default_proc.stderr)
+
+            enabled_proc = run_with("1")
+            self.assertEqual(enabled_proc.returncode, 0, enabled_proc.stderr)
+            enabled_payload = json.loads(enabled_proc.stdout)
+            self.assertIn("profile=standard", enabled_payload["hookSpecificOutput"]["additionalContext"])
+            self.assertNotIn(marker, enabled_proc.stdout)
+            self.assertIn("diagnostic=generic-activated:standard", enabled_proc.stderr)
+
+            for rollback_value in ("0", "false", "off", "legacy"):
+                with self.subTest(rollback_value=rollback_value):
+                    proc = run_with(rollback_value)
+                    self.assertEqual(proc.returncode, 0, proc.stderr)
+                    payload = json.loads(proc.stdout)
+                    self.assertIn(marker, payload["hookSpecificOutput"]["additionalContext"])
+                    self.assertIn("diagnostic=generic-activated:legacy", proc.stderr)
+                    self.assertNotIn("Traceback", proc.stderr)
 
 
 if __name__ == "__main__":
