@@ -6,8 +6,17 @@ Use this checklist when running `codex-fluent` in apply mode. Treat every step a
 
 - [ ] Ran full diagnosis in report mode first
 - [ ] Reviewed sizes and candidates
+- [ ] Review the 20–50 item returned handoff queue by its primary_rank
+  references; queue_scope is returned-window-only. Keep active unless a
+  separately authorized workflow confirms a handoff and action.
+- [ ] Use terminal chat handoff by default. A repo-native file requires the
+  original task to authorize the exact documentation path; archive authorization
+  does not imply file-write authorization; apply authorization does not imply
+  file-write authorization. Without it, keep active and do not archive.
 - [ ] Identified all active repo chats that still matter
-- [ ] Created high-quality handoff documents + reactivation prompts for every chat you might want to continue later (see handoff-template.md)
+- [ ] Created high-quality handoffs (terminal chat handoff by default; a
+  handoff file only with exact-path authorization) + reactivation prompts for
+  every chat you might want to continue later (see handoff-template.md)
 - [ ] Confirmed Codex is not running (or explicitly accepted `--wait-for-codex-exit`)
 - [ ] Understand that we only archive, never delete
 

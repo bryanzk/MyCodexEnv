@@ -313,6 +313,11 @@
       "role": "archived English skill and helper routing map",
       "audience": ["human"],
       "public_nav": ["docs/index-en.html"]
+    },
+    {
+      "path": "codex/skills/codex-fluent/scripts/report_active_sessions.py",
+      "role": "read-only active Codex session ranking and handoff audit",
+      "audience": ["runtime", "codex", "human"]
     }
   ]
 }
