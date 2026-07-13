@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import argparse
+import json
 import subprocess
 import sys
 from datetime import datetime
@@ -122,10 +123,50 @@ def update_current_snapshot(content: str, args: argparse.Namespace, timestamp: s
         upsert_snapshot_line(lines, "- transition_key: ", args.transition_key)
     if args.gate_decision is not None:
         upsert_snapshot_line(lines, "- gate_decision: ", args.gate_decision)
+    structured = structured_checkpoint(args, timestamp)
+    for key in ("constraints", "ownership", "next_action"):
+        value = json.dumps(structured[key], ensure_ascii=False, sort_keys=True, separators=(",", ":"))
+        if not replace_snapshot_line(lines, f"- {key}: ", value):
+            lines.append(f"- {key}: {value}")
     return "\n".join(lines).rstrip() + "\n"
 
 
+def parse_json_object(raw: str | None, flag: str) -> dict[str, object]:
+    if not raw:
+        return {}
+    try:
+        value = json.loads(raw)
+    except json.JSONDecodeError as exc:
+        raise ValueError(f"{flag} must be valid JSON: {exc.msg}") from exc
+    if not isinstance(value, dict):
+        raise ValueError(f"{flag} must be a JSON object")
+    return value
+
+
+def structured_checkpoint(args: argparse.Namespace, timestamp: str) -> dict[str, object]:
+    next_action = parse_json_object(args.next_action_json, "--next-action-json")
+    if not next_action:
+        next_action = {"command": args.next_safe_task}
+    evidence_timestamp = args.verification_timestamp or timestamp
+    verification = {
+        "command": args.verification_command,
+        "exit_code": args.verification_exit_code,
+        "key_output": args.verification_key_output,
+        "timestamp": evidence_timestamp,
+        "freshness": args.verification_freshness if args.verification_command else "unknown",
+    }
+    return {
+        "schema": "dhf_checkpoint_v1",
+        "phase": args.phase,
+        "constraints": list(args.constraint),
+        "ownership": parse_json_object(args.ownership_json, "--ownership-json"),
+        "next_action": next_action,
+        "verification_evidence": verification,
+    }
+
+
 def render_checkpoint(args: argparse.Namespace, timestamp: str, git: dict[str, str | int]) -> str:
+    structured = structured_checkpoint(args, timestamp)
     lines = [
         f"### {timestamp}",
         f"- phase: {args.phase}",
@@ -167,11 +208,19 @@ def render_checkpoint(args: argparse.Namespace, timestamp: str, git: dict[str, s
     else:
         lines.append("  - none")
     lines.append(f"- next_safe_task: {args.next_safe_task}")
+    lines.append(
+        "- checkpoint_data: "
+        + json.dumps(structured, ensure_ascii=False, sort_keys=True, separators=(",", ":"))
+    )
     return "\n".join(lines) + "\n"
 
 
 def append_checkpoint(args: argparse.Namespace) -> int:
     errors = validate_args(args)
+    try:
+        structured_checkpoint(args, now_iso())
+    except ValueError as exc:
+        errors.append(str(exc))
     if errors:
         print("ERROR: " + "; ".join(errors), file=sys.stderr)
         return 1
@@ -214,10 +263,15 @@ def main() -> int:
     append_parser.add_argument("--verification-command")
     append_parser.add_argument("--verification-exit-code", type=int)
     append_parser.add_argument("--verification-key-output")
+    append_parser.add_argument("--verification-timestamp")
+    append_parser.add_argument("--verification-freshness", choices=("fresh", "stale", "unknown"), default="fresh")
     append_parser.add_argument("--next-safe-task", required=True)
     append_parser.add_argument("--compaction-ordinal", type=int)
     append_parser.add_argument("--transition-key")
     append_parser.add_argument("--gate-decision", choices=sorted(GATE_DECISIONS))
+    append_parser.add_argument("--constraint", action="append", default=[])
+    append_parser.add_argument("--ownership-json")
+    append_parser.add_argument("--next-action-json")
     append_parser.add_argument("--blocker", action="append", default=[])
     append_parser.add_argument("--allow-unverified", action="store_true")
     append_parser.set_defaults(func=append_checkpoint)

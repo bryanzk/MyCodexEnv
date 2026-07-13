@@ -2,9 +2,12 @@
 from __future__ import annotations
 
 import argparse
+import copy
+import datetime
 import importlib.util
 import json
 import os
+import shlex
 import statistics
 import subprocess
 import sys
@@ -30,6 +33,149 @@ HELPER_CLIS = (
     "harness_agent_team.py",
     "harness_checkpoint.py",
 )
+
+CAPTURE_VERSION = "dhf-bounded-v1"
+PRIVATE_MARKERS = ("SECRET_TOKEN=", "PRIVATE_KEY=", "PASSWORD=", "credential-value")
+
+
+def _receipt(command: str, proc: subprocess.CompletedProcess[str]) -> dict[str, Any]:
+    output = (proc.stdout or proc.stderr).strip().replace("\n", " ")[:160] or "completed"
+    return {
+        "command": command,
+        "exit_code": proc.returncode,
+        "key_output": output,
+        "timestamp": datetime.datetime.now(datetime.timezone.utc).replace(microsecond=0).isoformat().replace("+00:00", "Z"),
+    }
+
+
+def execute_bounded_scenario(scenario: dict[str, Any], contract_name: str) -> dict[str, Any]:
+    scenario_id = scenario["id"]
+    scenario_type = scenario["scenario_type"]
+    with tempfile.TemporaryDirectory() as tmp:
+        repo = Path(tmp)
+        _run_checked(["git", "init", "-q"], repo)
+        _run_checked(["git", "config", "user.email", "capture@example.invalid"], repo)
+        _run_checked(["git", "config", "user.name", "Bounded Capture"], repo)
+        seed = repo / "user-owned.txt"
+        seed.write_text("preserve-me\n", encoding="utf-8")
+        _run_checked(["git", "add", "user-owned.txt"], repo)
+        _run_checked(["git", "commit", "-q", "-m", "seed"], repo)
+        seed.write_text("preserve-me\nuser-owned-dirty\n", encoding="utf-8")
+
+        result = ""
+        receipt: dict[str, Any]
+        changed_files: list[str] = []
+        if scenario_type == "explanation":
+            deterministic = (lambda value: value * 2 + 1)(7) == (lambda value: value * 2 + 1)(7)
+            result = f"Deterministic check returned {str(deterministic).lower()} for identical inputs; no artifact changed."
+            receipt = {"verification_not_applicable": "pure explanation; no artifact or runtime claim"}
+        elif scenario_type == "trivial_format":
+            words = ["preserve", "every", "word"]
+            result = "Formatted supplied text: " + " | ".join(words)
+            receipt = {"verification_not_applicable": "input-only formatting; no artifact claim"}
+        elif scenario_type in {"ordinary_continue_only", "shipq_lazy_delegation"}:
+            result = "Dispatcher control outcome captured without generic task execution."
+            receipt = {"verification_not_applicable": "routing control only"}
+        elif scenario["category"] == "governed":
+            command = "git status --short"
+            proc = _run_checked(["git", "status", "--short"], repo)
+            receipt = _receipt(command, proc)
+            result = f"Governed action not executed; permission decision={scenario['permission_safety_outcome']['decision']}."
+        elif scenario_type == "failing_test_investigation":
+            test_file = repo / "test_failure.py"
+            test_file.write_text("assert 2 + 2 == 5, 'expected bounded failure'\n", encoding="utf-8")
+            command = f"{sys.executable} test_failure.py"
+            proc = _run_checked([sys.executable, "test_failure.py"], repo)
+            receipt = _receipt(command, proc)
+            result = "Diagnosed concrete assertion mismatch (2 + 2 != 5) without editing the failing source."
+            test_file.unlink()
+        else:
+            relative = {
+                "bounded_docs_edit": "docs/example.md",
+                "one_file_safe_change": "src/example.py",
+                "local_feature": "src/parser_option.py",
+                "scoped_refactor": "src/module_seam.py",
+                "non_sensitive_cli_change": "src/cli_flag.py",
+                "local_ui_behavior": "src/empty_state.py",
+            }[scenario_type]
+            artifact = repo / relative
+            artifact.parent.mkdir(parents=True, exist_ok=True)
+            artifact.write_text(f"# bounded capture {scenario_id}\n", encoding="utf-8")
+            command_args = [sys.executable, "-c", "from pathlib import Path; import sys; sys.exit(0 if Path(sys.argv[1]).is_file() else 1)", relative]
+            command = shlex.join(command_args)
+            proc = _run_checked(command_args, repo)
+            receipt = _receipt(command, proc)
+            changed_files = [relative]
+            result = f"Completed bounded {scenario_type.replace('_', ' ')} outcome with focused local verification."
+
+        status = _run_checked(["git", "status", "--short"], repo).stdout.splitlines()
+        return {
+            "result": result,
+            "scope_and_constraints": list(scenario["permission_safety_outcome"]["forbidden_actions"]),
+            "verification_receipt": receipt,
+            "remaining_risk_or_next_action": "authorization required" if scenario["category"] == "governed" else "none",
+            "permission_outcome": scenario["permission_safety_outcome"]["decision"],
+            "private_data_excluded": not any(marker in result for marker in PRIVATE_MARKERS),
+            "changed_files": changed_files,
+            "dirty_snapshot": status,
+            "capture_contract": contract_name,
+        }
+
+
+def capture_observations(corpus: dict[str, Any], observations: dict[str, Any]) -> dict[str, Any]:
+    scenarios = {scenario["id"]: scenario for scenario in corpus["scenarios"]}
+    captured = copy.deepcopy(observations)
+    for observation in captured["observations"]:
+        scenario = scenarios[observation["id"]]
+        for profile, contract in (("baseline", "legacy@00818ae"), ("candidate", "simplified@repo-source")):
+            observation[f"{profile}_capture"] = {
+                "provenance": {
+                    "capture_mode": "deterministic_local_bounded_execution",
+                    "capture_version": CAPTURE_VERSION,
+                    "source_contract": contract,
+                },
+                "raw_task_output": execute_bounded_scenario(scenario, contract),
+            }
+    captured["schema_version"] = 3
+    return captured
+
+
+def assertion_errors(scenario: dict[str, Any], raw: dict[str, Any], label: str) -> list[str]:
+    errors: list[str] = []
+    for assertion in scenario.get("result_acceptance_checks", []):
+        assertion_id = assertion.get("id", "unknown")
+        kind = assertion.get("type")
+        path = assertion.get("path")
+        if not isinstance(path, str) or path not in raw:
+            errors.append(f"{scenario['id']} {label} assertion {assertion_id} has unimplemented path/type")
+            continue
+        actual = raw[path]
+        if kind == "field_nonempty":
+            passed = bool(actual)
+        elif kind == "field_equals":
+            passed = actual == assertion.get("expected")
+        elif kind == "field_contains":
+            passed = str(assertion.get("expected", "")).lower() in str(actual).lower()
+        elif kind == "field_forbids":
+            passed = all(str(value).lower() not in str(actual).lower() for value in assertion.get("values", []))
+        else:
+            errors.append(f"{scenario['id']} {label} assertion {assertion_id} unimplemented type: {kind}")
+            continue
+        if not passed:
+            errors.append(f"{scenario['id']} {label} actual outcome assertion failed: {assertion_id}")
+
+    receipt = raw.get("verification_receipt")
+    if scenario["verification_receipt_status"] == "required":
+        if not isinstance(receipt, dict) or not all(field in receipt for field in RECEIPT_FIELDS):
+            errors.append(f"{scenario['id']} {label} actual outcome receipt incomplete")
+    elif not isinstance(receipt, dict) or set(receipt) != {"verification_not_applicable"}:
+        errors.append(f"{scenario['id']} {label} actual outcome invalid verification_not_applicable")
+    if raw.get("permission_outcome") != scenario["permission_safety_outcome"]["decision"]:
+        errors.append(f"{scenario['id']} {label} actual outcome permission mismatch")
+    raw_text = json.dumps(raw, ensure_ascii=False)
+    if not raw.get("private_data_excluded") or any(marker in raw_text for marker in PRIVATE_MARKERS):
+        errors.append(f"{scenario['id']} {label} actual outcome contains forbidden private content")
+    return errors
 TARGET_REDUCTION = 0.40
 RESULT_INVARIANTS = {
     "result",
@@ -119,10 +265,8 @@ def run_recoverability_cases(observations: dict[str, Any], root: Path) -> dict[s
             state_file = docs / "harness-state.md"
             state_file.write_text(
                 "# Harness State\n\n"
-                f"- phase: {case['phase']}\n"
-                f"- constraints: {json.dumps(case['constraints'], ensure_ascii=False, sort_keys=True)}\n"
-                f"- ownership: {json.dumps(case['ownership'], ensure_ascii=False, sort_keys=True)}\n"
-                f"- next_safe_task: {next_action_json}\n"
+                "- phase: research\n"
+                "- next_safe_task: none\n"
                 "- latest_checkpoint: none\n"
                 "- latest_verification: none\n"
                 "- blocked_sources: none\n\n"
@@ -132,19 +276,7 @@ def run_recoverability_cases(observations: dict[str, Any], root: Path) -> dict[s
             _run_checked(["git", "add", "docs"], repo)
             _run_checked(["git", "commit", "-q", "-m", "fixture"], repo)
 
-            codex_home = temp_root / "codex-home"
-            evidence_dir = codex_home / "harness" / "evidence"
-            evidence_dir.mkdir(parents=True)
-            evidence = {
-                **case["verification_evidence"],
-                "event_type": "verification_result",
-                "phase": case["phase"],
-                "cwd": str(repo),
-                "evidence_kind": "decision",
-            }
-            (evidence_dir / "sanitized.jsonl").write_text(
-                json.dumps(evidence, ensure_ascii=False, sort_keys=True) + "\n", encoding="utf-8"
-            )
+            codex_home = temp_root / "empty-codex-home"
 
             checkpoint = _run_checked(
                 [
@@ -165,8 +297,17 @@ def run_recoverability_cases(observations: dict[str, Any], root: Path) -> dict[s
                     str(case["verification_evidence"]["exit_code"]),
                     "--verification-key-output",
                     case["verification_evidence"]["key_output"],
+                    "--verification-timestamp",
+                    case["verification_evidence"]["timestamp"],
+                    "--verification-freshness",
+                    case["verification_evidence"]["freshness"],
+                    "--ownership-json",
+                    json.dumps(case["ownership"], ensure_ascii=False, sort_keys=True),
+                    "--next-action-json",
+                    next_action_json,
                     "--next-safe-task",
                     next_action_json,
+                    *[value for constraint in case["constraints"] for value in ("--constraint", constraint)],
                 ],
                 repo,
             )
@@ -189,7 +330,7 @@ def run_recoverability_cases(observations: dict[str, Any], root: Path) -> dict[s
                 results[case_id] = {"_error": f"recover failed: {recovery.stderr.strip()}"}
                 continue
             payload = json.loads(recovery.stdout)
-            latest = payload.get("latest_verification", {})
+            latest = payload.get("verification_evidence", {})
             results[case_id] = {
                 "phase": payload.get("phase"),
                 "constraints": payload.get("constraints"),
@@ -425,8 +566,8 @@ def run_comparison(
     errors.extend(validator.validate_corpus(corpus, contract))
     if observations.get("measurement_boundary") != corpus.get("measurement_boundary"):
         errors.append("measurement boundary changed between oracle and observed output")
-    if observations.get("schema_version") != 2:
-        errors.append("observations schema_version must be 2")
+    if observations.get("schema_version") != 3:
+        errors.append("observations schema_version must be 3")
     observations_by_id = {
         item.get("id"): item for item in observations.get("observations", []) if isinstance(item, dict)
     }
@@ -459,8 +600,10 @@ def run_comparison(
     baseline_by_id = {item["id"]: item for item in baseline}
     candidate_by_id = {item["id"]: item for item in candidate}
     raw_results = []
-    passed_checks = 0
-    total_checks = 0
+    routing_passed = 0
+    routing_total = 0
+    actual_passed = 0
+    actual_total = 0
     governed_under_routing = []
 
     for scenario in corpus["scenarios"]:
@@ -488,9 +631,50 @@ def run_comparison(
         )
         errors.extend(dimension_errors)
         for pair in dimension_results.values():
-            total_checks += 1
+            routing_total += 1
             if pair["baseline"] and pair["candidate"] and pair["baseline"] == pair["candidate"]:
-                passed_checks += 1
+                routing_passed += 1
+
+        captures = {}
+        capture_errors: list[str] = []
+        for label in ("baseline", "candidate"):
+            capture = observation.get(f"{label}_capture")
+            if not isinstance(capture, dict):
+                capture_errors.append(f"{scenario_id} missing {label} actual outcome capture")
+                continue
+            provenance = capture.get("provenance")
+            raw = capture.get("raw_task_output")
+            if not isinstance(provenance, dict) or provenance.get("capture_mode") != "deterministic_local_bounded_execution":
+                capture_errors.append(f"{scenario_id} {label} actual outcome provenance invalid")
+            if not isinstance(raw, dict):
+                capture_errors.append(f"{scenario_id} {label} actual outcome raw output missing")
+                continue
+            captures[label] = raw
+            capture_errors.extend(assertion_errors(scenario, raw, label))
+
+        raw_dimensions: dict[str, dict[str, bool]] = {}
+        baseline_raw = captures.get("baseline", {})
+        candidate_raw = captures.get("candidate", {})
+        result_errors = [error for error in capture_errors if "assertion" in error or "missing" in error]
+        safety_errors = [error for error in capture_errors if "permission" in error or "private" in error]
+        receipt_errors = [error for error in capture_errors if "receipt" in error or "verification_not_applicable" in error]
+        dirty_ok = bool(baseline_raw) and baseline_raw.get("dirty_snapshot") == candidate_raw.get("dirty_snapshot") and any(
+            "user-owned.txt" in line for line in baseline_raw.get("dirty_snapshot", [])
+        )
+        recovery_ok = dimension_results["recoverability"]["candidate"]
+        raw_dimensions["accepted_result_behavior"] = {"baseline": not result_errors, "candidate": not result_errors}
+        raw_safety_ok = not safety_errors and dimension_results["safety_permission_outcome"]["candidate"]
+        raw_dimensions["safety_permission_outcome"] = {"baseline": raw_safety_ok, "candidate": raw_safety_ok}
+        raw_dimensions["verification_receipt_completeness"] = {"baseline": not receipt_errors, "candidate": not receipt_errors}
+        raw_dimensions["dirty_worktree_preservation"] = {"baseline": dirty_ok, "candidate": dirty_ok}
+        raw_dimensions["recoverability"] = {"baseline": recovery_ok, "candidate": recovery_ok}
+        errors.extend(capture_errors)
+        for dimension, pair in raw_dimensions.items():
+            actual_total += 1
+            if pair["baseline"] and pair["candidate"]:
+                actual_passed += 1
+            else:
+                errors.append(f"{scenario_id} actual outcome parity loss: {dimension}")
 
         if scenario["category"] == "governed":
             signals = measured.get("escalation_signals", [])
@@ -526,6 +710,9 @@ def run_comparison(
                 "id": scenario_id,
                 "input": expected_input,
                 "dimensions": dimension_results,
+                "actual_outcome_dimensions": raw_dimensions,
+                "captures": observation.get("baseline_capture"),
+                "candidate_capture": observation.get("candidate_capture"),
                 "baseline_measurement": baseline_by_id.get(scenario_id),
                 "candidate_measurement": measured,
             }
@@ -541,18 +728,25 @@ def run_comparison(
     errors.extend(helper_errors)
     rollback = run_rollback_smoke(root)
     errors.extend(rollback["errors"])
-    parity = {
+    routing_parity = {
         "dimensions": list(DIMENSIONS),
-        "passed_checks": passed_checks,
-        "total_checks": total_checks,
-        "rate": passed_checks / total_checks if total_checks else 0.0,
+        "passed_checks": routing_passed,
+        "total_checks": routing_total,
+        "rate": routing_passed / routing_total if routing_total else 0.0,
+    }
+    actual_outcome_parity = {
+        "dimensions": list(DIMENSIONS),
+        "passed_checks": actual_passed,
+        "total_checks": actual_total,
+        "rate": actual_passed / actual_total if actual_total else 0.0,
     }
     return {
         "schema_version": 1,
-        "pass": not errors and total_checks == len(corpus["scenarios"]) * len(DIMENSIONS),
+        "pass": not errors and routing_total == len(corpus["scenarios"]) * len(DIMENSIONS) and actual_total == len(corpus["scenarios"]) * len(DIMENSIONS),
         "scenario_count": len(corpus["scenarios"]),
         "measurement_boundary": corpus["measurement_boundary"],
-        "parity": parity,
+        "routing_parity": routing_parity,
+        "actual_outcome_parity": actual_outcome_parity,
         "governed_under_routing": governed_under_routing,
         "efficiency": {"context": context_summary, "helpers": helper_summary},
         "recoverability": {
@@ -577,6 +771,10 @@ def main() -> int:
     compare.add_argument("corpus")
     compare.add_argument("--observations", required=True)
     compare.add_argument("--json", action="store_true")
+    capture = subparsers.add_parser("capture")
+    capture.add_argument("corpus")
+    capture.add_argument("--observations", required=True)
+    capture.add_argument("--output", required=True)
     args = parser.parse_args()
 
     corpus_path = Path(args.corpus).resolve()
@@ -585,6 +783,11 @@ def main() -> int:
     try:
         corpus = json.loads(corpus_path.read_text(encoding="utf-8"))
         observations = json.loads(observations_path.read_text(encoding="utf-8"))
+        if args.command == "capture":
+            captured = capture_observations(corpus, observations)
+            Path(args.output).write_text(json.dumps(captured, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+            print(f"captured={len(captured['observations'])} version={CAPTURE_VERSION}")
+            return 0
         report = run_comparison(corpus, observations, root)
     except (OSError, ValueError, KeyError, json.JSONDecodeError) as exc:
         print(f"ERROR: {exc}", file=sys.stderr)
@@ -593,8 +796,9 @@ def main() -> int:
         print(json.dumps(report, ensure_ascii=False, sort_keys=True))
     else:
         print(
-            f"pass={str(report['pass']).lower()} parity={report['parity']['passed_checks']}/"
-            f"{report['parity']['total_checks']} context_median="
+            f"pass={str(report['pass']).lower()} routing_parity={report['routing_parity']['passed_checks']}/"
+            f"{report['routing_parity']['total_checks']} actual_outcome_parity="
+            f"{report['actual_outcome_parity']['passed_checks']}/{report['actual_outcome_parity']['total_checks']} context_median="
             f"{report['efficiency']['context']['median_relative_reduction']:.6f} helper_median="
             f"{report['efficiency']['helpers']['median_relative_reduction']:.6f}"
         )

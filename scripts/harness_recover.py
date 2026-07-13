@@ -66,6 +66,21 @@ def parse_state_json_value(text: str, key: str, expected_type: type) -> Any:
     return value if isinstance(value, expected_type) else None
 
 
+def latest_checkpoint_data(text: str) -> dict[str, Any] | None:
+    prefix = "- checkpoint_data: "
+    for line in reversed(text.splitlines()):
+        if not line.startswith(prefix):
+            continue
+        try:
+            value = json.loads(line[len(prefix) :])
+        except json.JSONDecodeError:
+            return None
+        if isinstance(value, dict) and value.get("schema") == "dhf_checkpoint_v1":
+            return value
+        return None
+    return None
+
+
 def compact_decision_event(event: dict[str, Any]) -> dict[str, Any]:
     keys = ["timestamp", "event_type", "phase", "message", "key_output", "failure_class"]
     return {key: event[key] for key in keys if key in event}
@@ -207,6 +222,7 @@ def build_recovery(args: argparse.Namespace) -> tuple[int, dict[str, Any] | None
         return 1, None, f"missing state file: {state_file}"
 
     state_text = state_file.read_text(encoding="utf-8")
+    checkpoint = latest_checkpoint_data(state_text)
     git_status = run_git(repo_root, ["status", "--short"], empty_value="")
     dirty_lines = [line for line in git_status.splitlines() if line.strip()] if git_status != "unknown" else []
     evidence_status, latest, malformed_count, evidence_events = latest_evidence(codex_home(args.codex_home), repo_root)
@@ -223,14 +239,16 @@ def build_recovery(args: argparse.Namespace) -> tuple[int, dict[str, Any] | None
     decision_events = [event for event in evidence_events if event.get("evidence_kind") == "decision"]
     next_safe_task = parse_state_value(state_text, "next_safe_task")
     dirty_status = "unknown" if git_status == "unknown" else ("dirty" if dirty_lines else "clean")
+    checkpoint_evidence = checkpoint.get("verification_evidence") if checkpoint else None
     payload = {
         "repo_root": str(repo_root),
-        "phase": parse_state_value(state_text, "phase"),
+        "phase": checkpoint.get("phase") if checkpoint else parse_state_value(state_text, "phase"),
         "blocked_sources": parse_state_value(state_text, "blocked_sources"),
-        "constraints": parse_state_json_value(state_text, "constraints", list),
-        "ownership": parse_state_json_value(state_text, "ownership", dict),
+        "constraints": checkpoint.get("constraints") if checkpoint else parse_state_json_value(state_text, "constraints", list),
+        "ownership": checkpoint.get("ownership") if checkpoint else parse_state_json_value(state_text, "ownership", dict),
         "next_safe_task": next_safe_task,
-        "next_action": parse_state_json_value(state_text, "next_safe_task", dict),
+        "next_action": checkpoint.get("next_action") if checkpoint else parse_state_json_value(state_text, "next_safe_task", dict),
+        "verification_evidence": checkpoint_evidence or {},
         "latest_verification_state": parse_state_value(state_text, "latest_verification"),
         "dirty_status": dirty_status,
         "dirty_count": len(dirty_lines),
@@ -239,7 +257,7 @@ def build_recovery(args: argparse.Namespace) -> tuple[int, dict[str, Any] | None
         "evidence_malformed_count": malformed_count,
         "conversion_health": conversion_health,
         "task_demand": latest_validated_task_demand(repo_root),
-        "latest_verification": latest or {},
+        "latest_verification": checkpoint_evidence or latest or {},
         "evidence_kind_counts": evidence_kind_counts,
         "latest_decision_evidence": compact_decision_event(decision_events[0]) if decision_events else {},
     }

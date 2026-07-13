@@ -314,6 +314,21 @@ class DhfSimplificationCorpusTests(unittest.TestCase):
         errors = self.validator.validate_corpus(broken, CONTRACT)
         self.assertTrue(any("does not resolve to a test callable" in error for error in errors), errors)
 
+    def test_completed_slice_acceptance_trace_has_live_evidence_and_callable_bindings(self):
+        completed = ("AC-02", "AC-10", "AC-11", "AC-12", "AC-13", "AC-15", "AC-17", "AC-18")
+        for acceptance_id in completed:
+            with self.subTest(acceptance_id=acceptance_id):
+                trace = self.corpus["acceptance_trace_map"][acceptance_id]
+                self.assertNotIn("deferred", trace["evidence_status"])
+                self.assertTrue(trace["test_ids"])
+                for test_id in trace["test_ids"]:
+                    self.assertIn(test_id, self.corpus["test_catalog"])
+
+        broken = copy.deepcopy(self.corpus)
+        broken["acceptance_trace_map"]["AC-10"]["evidence_status"] = "candidate_deferred_to_slice_4"
+        errors = self.validator.validate_corpus(broken, CONTRACT)
+        self.assertTrue(any("AC-10" in error and "deferred" in error for error in errors), errors)
+
         broken = copy.deepcopy(self.corpus)
         broken["test_catalog"]["TEST-SCHEMA-COUNTS"] = "tests/test_dhf_simplification.py::load_validator"
         errors = self.validator.validate_corpus(broken, CONTRACT)
@@ -853,7 +868,7 @@ class DhfGovernanceProfileTests(unittest.TestCase):
         self.assertEqual(proc.returncode, 1, proc.stdout + proc.stderr)
         self.assertIn("must not include command receipt fields", proc.stderr)
 
-    def test_feature_switch_defaults_simplified_and_preserves_explicit_rollback(self):
+    def test_feature_switch_defaults_simplified_after_repaired_gates_and_preserves_rollback(self):
         marker = "LEGACY_FULL_SKILL_MARKER"
         with __import__("tempfile").TemporaryDirectory() as tmp:
             skill = Path(tmp) / "DHF.md"
@@ -905,6 +920,40 @@ class DhfGovernanceProfileTests(unittest.TestCase):
                     payload = json.loads(proc.stdout)
                     self.assertIn(marker, payload["hookSpecificOutput"]["additionalContext"])
                     self.assertIn("diagnostic=generic-activated:legacy", proc.stderr)
+
+    def test_adversarial_governed_route_table_and_active_state_continuation(self):
+        self.dispatcher.SIMPLIFIED_PROFILES_ENABLED = True
+        root = str(ROOT)
+        cases = (
+            ("Use DHF to explain this function", None, "generic-activated:light", "profile=light"),
+            ("use delivery harness for this local feature", None, "generic-activated:standard", "profile=standard"),
+            ("请使用交付框架解释这个函数", None, "generic-activated:light", "profile=light"),
+            ("continue the next safe action", {"active_profile": "governed"}, "generic-activated:governed", "profile=governed"),
+            ("continue the next safe action", {"active_profile": "standard"}, "generic-activated:standard", "profile=standard"),
+            ("continue the next safe action", "corrupt", "generic-activated:governed", "malformed_profile_state"),
+            ("Use DHF then git push --force", None, "generic-activated:governed", "destructive_or_irreversible_action"),
+            ("Use DHF then git reset --hard HEAD~1", None, "generic-activated:governed", "destructive_or_irreversible_action"),
+            ("Use DHF then run rm -rf ./cache", None, "generic-activated:governed", "destructive_or_irreversible_action"),
+            ("Use DHF to rotate the API key and inspect private customer records", None, "generic-activated:governed", "external_capture_or_private_data"),
+            ("Use DHF to SSH to production and deploy", None, "generic-activated:governed", "remote_or_deployment_action"),
+        )
+        for prompt, state, expected_route, expected_context in cases:
+            with self.subTest(prompt=prompt, state=state):
+                payload = {"cwd": root, "prompt": prompt}
+                if state is not None:
+                    payload["dhf_profile_state"] = state
+                response, route = self.dispatcher.route_response(payload)
+                self.assertEqual(route, expected_route)
+                context = response.get("hookSpecificOutput", {}).get("additionalContext", "")
+                self.assertIn(expected_context, context)
+
+        opt_out, route = self.dispatcher.route_response(
+            {"cwd": root, "prompt": "Use DHF to deploy, but skip DHF", "dhf_profile_state": {"active_profile": "governed"}}
+        )
+        self.assertEqual((opt_out, route), ({"continue": True}, "opt-out"))
+
+        ordinary, route = self.dispatcher.route_response({"cwd": root, "prompt": "continue formatting"})
+        self.assertEqual((ordinary, route), ({"continue": True}, "continue-only"))
 
     def test_normative_mirrors_align_with_simplified_source_stage_contract(self):
         contract = extract_canonical_contract(
@@ -966,6 +1015,24 @@ class DhfGovernanceProfileTests(unittest.TestCase):
                 self.assertEqual(
                     public_helper_contract_errors(mirror.read_text(encoding="utf-8"), contract), []
                 )
+
+    def test_canonical_delegation_precedes_generic_state_reads_and_public_flows_show_skip_edge(self):
+        skill = SKILL.read_text(encoding="utf-8")
+        routing = (ROOT / "docs" / "LIFECYCLE_SKILL_ROUTING.md").read_text(encoding="utf-8")
+        required = (
+            "directly lazy-delegates",
+            "must not recover, read shared state, or pre-classify",
+        )
+        for phrase in required:
+            self.assertIn(phrase, skill)
+            self.assertIn(phrase, routing)
+        for mirror in registered_public_routing_mirrors():
+            text = mirror.read_text(encoding="utf-8")
+            if "flowchart TD" not in text:
+                continue
+            with self.subTest(mirror=mirror.relative_to(ROOT)):
+                self.assertIn("ProfileDecision", text)
+                self.assertRegex(text, r'ProfileDecision\s+--\s+"(?:light|light / standard|light/standard)')
 
     def test_surfaces_manifest_identifies_canonical_contract_and_rollout_boundary(self):
         contract = extract_canonical_contract(

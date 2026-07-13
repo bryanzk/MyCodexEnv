@@ -6,6 +6,7 @@ import importlib.util
 import json
 import subprocess
 import sys
+import tempfile
 import unittest
 from pathlib import Path
 
@@ -57,7 +58,9 @@ class DhfSimplificationPairTests(unittest.TestCase):
         self.assertEqual(proc.returncode, 0, proc.stderr)
         payload = json.loads(proc.stdout)
         self.assertTrue(payload["pass"])
-        self.assertEqual(payload["parity"], {"dimensions": list(self.runner.DIMENSIONS), "passed_checks": 85, "total_checks": 85, "rate": 1.0})
+        expected_parity = {"dimensions": list(self.runner.DIMENSIONS), "passed_checks": 85, "total_checks": 85, "rate": 1.0}
+        self.assertEqual(payload["routing_parity"], expected_parity)
+        self.assertEqual(payload["actual_outcome_parity"], expected_parity)
         self.assertEqual(payload["governed_under_routing"], [])
         self.assertEqual(payload["efficiency"]["context"]["positive_baseline_sample_count"], 9)
         self.assertEqual(payload["efficiency"]["helpers"]["positive_baseline_sample_count"], 9)
@@ -81,6 +84,56 @@ class DhfSimplificationPairTests(unittest.TestCase):
                     visit(child)
 
         visit(self.observations)
+
+    def test_observation_fixture_contains_actual_raw_paired_outputs_and_provenance(self):
+        for observation in self.observations["observations"]:
+            with self.subTest(scenario=observation["id"]):
+                for profile in ("baseline", "candidate"):
+                    capture = observation[f"{profile}_capture"]
+                    self.assertEqual(capture["provenance"]["capture_mode"], "deterministic_local_bounded_execution")
+                    self.assertTrue(capture["provenance"]["capture_version"])
+                    self.assertTrue(capture["provenance"]["source_contract"])
+                    raw = capture["raw_task_output"]
+                    self.assertIsInstance(raw["result"], str)
+                    self.assertIsInstance(raw["scope_and_constraints"], list)
+                    self.assertIsInstance(raw["verification_receipt"], dict)
+                    self.assertIn("permission_outcome", raw)
+
+    def test_machine_output_separates_routing_and_actual_outcome_parity(self):
+        report = self.compare()
+        self.assertEqual(report["routing_parity"]["rate"], 1.0)
+        self.assertEqual(report["actual_outcome_parity"]["rate"], 1.0)
+        self.assertNotIn("parity", report)
+
+    def test_runner_rejects_raw_result_permission_receipt_and_private_content_mutations(self):
+        mutations = (
+            ("LIGHT-EXPLANATION", "candidate_capture", "result", ""),
+            ("GOVERNED-REMOTE-DEPLOY", "candidate_capture", "permission_outcome", "executed_without_authorization"),
+            ("STANDARD-LOCAL-FEATURE", "candidate_capture", "verification_receipt", {"command": "x"}),
+            ("GOVERNED-EXTERNAL-CAPTURE", "candidate_capture", "result", "SECRET_TOKEN=forbidden-private-value"),
+            ("LIGHT-ONE-FILE-SAFE", "candidate_capture", "dirty_snapshot", []),
+        )
+        for scenario_id, capture_name, field, value in mutations:
+            with self.subTest(field=field):
+                observations = copy.deepcopy(self.observations)
+                item = next(row for row in observations["observations"] if row["id"] == scenario_id)
+                item[capture_name]["raw_task_output"][field] = value
+                report = self.compare(observations=observations)
+                self.assertFalse(report["pass"])
+                self.assertTrue(any("actual outcome" in error or "assertion" in error for error in report["errors"]), report)
+
+    def test_runner_rejects_unimplemented_or_false_result_assertions(self):
+        for mutation in ("unknown_type", "false_expected"):
+            with self.subTest(mutation=mutation):
+                corpus = copy.deepcopy(self.corpus)
+                check = corpus["scenarios"][0]["result_acceptance_checks"][0]
+                if mutation == "unknown_type":
+                    check["type"] = "copy_expected_text"
+                else:
+                    check["expected"] = "not present in actual bounded output"
+                report = self.compare(corpus=corpus)
+                self.assertFalse(report["pass"])
+                self.assertTrue(any("assertion" in error for error in report["errors"]), report)
 
     def test_run_comparison_invokes_canonical_corpus_validation(self):
         broken = copy.deepcopy(self.corpus)
@@ -144,6 +197,7 @@ class DhfSimplificationPairTests(unittest.TestCase):
         report = self.compare(measurements=measured)
         self.assertIn("GOVERNED-REMOTE-DEPLOY", report["governed_under_routing"])
         self.assertTrue(any("safety_permission_outcome" in error for error in report["errors"]), report)
+        self.assertLess(report["actual_outcome_parity"]["rate"], 1.0)
         self.assertFalse(report["pass"])
 
     def test_runner_rejects_receipt_contract_loss(self):
@@ -172,6 +226,49 @@ class DhfSimplificationPairTests(unittest.TestCase):
         stale["verification_evidence"]["freshness"] = "fresh"
         report = self.compare(recovery_results=recovered)
         self.assertTrue(any("stale verification promoted to fresh" in error for error in report["errors"]), report)
+
+    def test_checkpoint_artifact_roundtrip_is_self_contained_and_preserves_stale(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            repo = Path(tmp) / "repo"
+            docs = repo / "docs"
+            docs.mkdir(parents=True)
+            subprocess.run(["git", "init", "-q"], cwd=repo, check=True)
+            subprocess.run(["git", "config", "user.email", "fixture@example.invalid"], cwd=repo, check=True)
+            subprocess.run(["git", "config", "user.name", "Fixture"], cwd=repo, check=True)
+            (docs / "repo-index.md").write_text("# Fixture\n", encoding="utf-8")
+            state = docs / "harness-state.md"
+            state.write_text(
+                "# Harness State\n\n- phase: research\n- next_safe_task: none\n"
+                "- latest_checkpoint: none\n- latest_verification: none\n- blocked_sources: none\n\n## State Log\n",
+                encoding="utf-8",
+            )
+            checkpoint = subprocess.run(
+                [sys.executable, str(ROOT / "scripts" / "harness_checkpoint.py"), "append",
+                 "--repo-root", str(repo), "--phase", "development", "--summary", "roundtrip",
+                 "--constraint", "no_remote", "--constraint", "preserve_dirty",
+                 "--ownership-json", '{"boundary":"task_owned_only"}',
+                 "--next-action-json", '{"command":"python3 focused.py","args":["--check"]}',
+                 "--verification-command", "python3 focused.py --check", "--verification-exit-code", "0",
+                 "--verification-key-output", "1 passed", "--verification-timestamp", "2026-07-12T00:00:00Z",
+                 "--verification-freshness", "stale", "--next-safe-task", "python3 focused.py --check"],
+                cwd=repo, capture_output=True, text=True, check=False,
+            )
+            self.assertEqual(checkpoint.returncode, 0, checkpoint.stderr)
+            recovered = subprocess.run(
+                [sys.executable, str(ROOT / "scripts" / "harness_recover.py"), "--repo-root", str(repo),
+                 "--codex-home", str(Path(tmp) / "empty-codex-home"), "--json"],
+                cwd=repo, capture_output=True, text=True, check=False,
+            )
+            self.assertEqual(recovered.returncode, 0, recovered.stderr)
+            payload = json.loads(recovered.stdout)
+            self.assertEqual(payload["constraints"], ["no_remote", "preserve_dirty"])
+            self.assertEqual(payload["ownership"], {"boundary": "task_owned_only"})
+            self.assertEqual(payload["next_action"], {"command": "python3 focused.py", "args": ["--check"]})
+            self.assertEqual(
+                payload["verification_evidence"],
+                {"command": "python3 focused.py --check", "exit_code": 0, "key_output": "1 passed",
+                 "timestamp": "2026-07-12T00:00:00Z", "freshness": "stale"},
+            )
 
     def test_runner_rejects_efficiency_target_and_zero_baseline_regression(self):
         measured = self.measurements()

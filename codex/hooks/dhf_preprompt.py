@@ -52,6 +52,8 @@ SKIP_PATTERNS = [
 ]
 
 ACTIVATION_PATTERNS = [
+    r"\buse\s+dhf\b",
+    r"\buse\s+(?:the\s+)?delivery[-\s]+harness(?:\s+framework)?\b",
     r"\bcomplex\b",
     r"\bresume\b",
     r"\btake\s*over\b",
@@ -62,6 +64,7 @@ ACTIVATION_PATTERNS = [
     r"恢复",
     r"交接",
     r"状态冲突",
+    r"(?:使用|启用|调用)\s*(?:dhf|交付(?:治理)?框架|交付(?:治理)?流程)",
 ]
 
 GOVERNED_SIGNAL_PATTERNS = [
@@ -80,6 +83,8 @@ GOVERNED_SIGNAL_PATTERNS = [
             r"\b(?:private|customer|credential|secret)\s+(?:data|capture|content)\b",
             r"\b(?:rotate|update|change|write|revoke|delete)\b.*\b(?:credential|token|api[-\s]+key|secret)\b",
             r"\b(?:credential|token|api[-\s]+key|secret)\b.*\b(?:rotate|update|change|write|revoke|delete|stored\s+value)\b",
+            r"\b(?:show|print|log|dump|expose|disclose|share|reveal)\b.*\b(?:credential|token|api[-\s]+key|secret|private\s+data)\b",
+            r"\b(?:private|secret|confidential|customer)\s+(?:record|records|information|data|content)\b",
         ],
     ),
     (
@@ -92,6 +97,10 @@ GOVERNED_SIGNAL_PATTERNS = [
             r"\b(?:destructive|irreversible)\b",
             r"\b(?:delete|drop|truncate|purge|erase)\b.*\b(?:data|rows?|records?|table|database)\b",
             r"\b(?:data|database|schema)\s+migration\b.*\b(?:delete|drop|truncate|irreversible)\b",
+            r"\bgit\s+push\b[^\n]*(?:--force(?:-with-lease)?|-f)(?:\s|$)",
+            r"\bgit\s+reset\b[^\n]*--hard(?:\s|$)",
+            r"\brm\s+-[a-z]*r[a-z]*f\b|\brm\s+-[a-z]*f[a-z]*r\b",
+            r"\b(?:drop|truncate)\s+(?:table|database|schema)\b",
         ],
     ),
     (
@@ -414,10 +423,10 @@ def route_response(payload: dict[str, Any]) -> tuple[dict[str, Any], str]:
     if under_shipq(cwd):
         adapter = load_shipq_adapter()
         return adapter.build_response(payload), "shipq-delegated"
-    if generic_activation_requested(text):
+    active_profile, malformed_state = profile_state_from_payload(payload)
+    if generic_activation_requested(text) or active_profile is not None or malformed_state:
         if not SIMPLIFIED_PROFILES_ENABLED:
             return generic_response(), "generic-activated:legacy"
-        active_profile, malformed_state = profile_state_from_payload(payload)
         selection = (
             ProfileSelection("governed", "malformed_profile_state")
             if malformed_state

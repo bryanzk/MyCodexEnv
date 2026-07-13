@@ -11,9 +11,10 @@ Use this as the generic lifecycle router before non-trivial project work. It
 turns an ambiguous request into a staged workflow with explicit state, source of
 truth, runtime probes, helper CLIs, verification evidence, and handoff rules.
 
-If a repo-specific lifecycle harness exists, use this skill to confirm phase,
-read shared runtime state, and then delegate. Keep this skill generic: do not
-encode business repo paths, domain fixtures, private service names, or
+The dispatcher recognizes a repo-specific project boundary and directly lazy-delegates
+to its adapter. Before that delegation, generic DHF must not recover, read shared state, or pre-classify
+the task. Keep this skill generic:
+do not encode business repo paths, domain fixtures, private service names, or
 project-only commands here.
 
 ## Lifecycle Ownership

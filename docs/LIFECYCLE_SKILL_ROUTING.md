@@ -36,14 +36,17 @@ behavior live in `codex/hooks/dhf_preprompt.py`.
 - Governance profiles are `light`, `standard`, and `governed`.
 - Generic injection requires explicit generic activation; an ordinary
   non-project prompt stays continue-only. opt-out is evaluated before every
-  route, and a ShipQ cwd uses ShipQ adapter lazy delegation.
+  route. The dispatcher recognizes the ShipQ project boundary and directly lazy-delegates
+  (lazy delegation);
+  generic DHF must not recover, read shared state, or pre-classify before the ShipQ adapter
+  owns the task.
 - Every completion preserves exactly `result`, `scope_and_constraints`,
   `verification_receipt`, and `remaining_risk_or_next_action`; profile-specific
   ceremony is conditional rather than repeated by default.
 - The source simplified route uses the exact enabled value
-  `DHF_PREPROMPT_SIMPLIFIED_PROFILES=1`, which is also the repo-source default,
-  so repo-source default is now `simplified`,
-  while `0`, `false`, `off`, and `legacy` explicitly roll back. Runtime
+  `DHF_PREPROMPT_SIMPLIFIED_PROFILES=1`, which is the repo-source default after
+  repaired source gates passed, so repo-source default is now `simplified`.
+  Values `0`, `false`, `off`, and `legacy` explicitly roll back. Runtime
   promotion is pending separate authorization, and runtime home remains
   unsynced.
 

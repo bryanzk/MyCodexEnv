@@ -16,12 +16,34 @@
     "token_claimed": false
   },
   "authoritative_gate_oracle": {
-    "GOVERNED-RESUMED-TASK": ["Startup Sequence", "State Snapshot Gate", "Checkpoint Gate"],
-    "GOVERNED-DIRTY-CONFLICT": ["Dirty Worktree Gate", "Checkpoint Gate"],
-    "GOVERNED-EXTERNAL-CAPTURE": ["External Capture Promotion Gate", "Evidence And Report Gate", "Checkpoint Gate"],
-    "GOVERNED-REMOTE-DEPLOY": ["Execution Lane Gate", "Deployment Readiness Gate", "Checkpoint Gate"],
-    "GOVERNED-MULTI-AGENT": ["Agent Team Gate", "Checkpoint Gate"],
-    "GOVERNED-ARCH-SOURCE-CONFLICT": ["Source Of Truth Order", "Architecture Alignment Checkpoint Gate", "Checkpoint Gate"]
+    "GOVERNED-RESUMED-TASK": [
+      "Startup Sequence",
+      "State Snapshot Gate",
+      "Checkpoint Gate"
+    ],
+    "GOVERNED-DIRTY-CONFLICT": [
+      "Dirty Worktree Gate",
+      "Checkpoint Gate"
+    ],
+    "GOVERNED-EXTERNAL-CAPTURE": [
+      "External Capture Promotion Gate",
+      "Evidence And Report Gate",
+      "Checkpoint Gate"
+    ],
+    "GOVERNED-REMOTE-DEPLOY": [
+      "Execution Lane Gate",
+      "Deployment Readiness Gate",
+      "Checkpoint Gate"
+    ],
+    "GOVERNED-MULTI-AGENT": [
+      "Agent Team Gate",
+      "Checkpoint Gate"
+    ],
+    "GOVERNED-ARCH-SOURCE-CONFLICT": [
+      "Source Of Truth Order",
+      "Architecture Alignment Checkpoint Gate",
+      "Checkpoint Gate"
+    ]
   },
   "test_catalog": {
     "TEST-SCHEMA-COUNTS": "tests/test_dhf_simplification.py::DhfSimplificationCorpusTests.test_cli_validates_schema_counts_trace_and_baseline",
@@ -39,7 +61,12 @@
     "TEST-MULTI-SIGNAL-UNION": "tests/test_dhf_simplification.py::DhfGovernanceProfileTests.test_multiple_escalation_signals_union_helpers_fields_and_gates",
     "TEST-CONDITIONAL-HELPER-ROUTING": "tests/test_dhf_simplification.py::DhfGovernanceProfileTests.test_helper_router_startup_and_checkpoint_are_signal_conditional",
     "TEST-FROZEN-BASELINE": "tests/test_dhf_simplification.py::DhfSimplificationCorpusTests.test_baseline_is_frozen_to_base_sha_independently_of_current_skill",
-    "TEST-STRUCTURED-COMPLETION-ORACLE": "tests/test_dhf_simplification.py::DhfGovernanceProfileTests.test_completion_output_oracle_accepts_canonical_samples_and_rejects_bad_samples"
+    "TEST-STRUCTURED-COMPLETION-ORACLE": "tests/test_dhf_simplification.py::DhfGovernanceProfileTests.test_completion_output_oracle_accepts_canonical_samples_and_rejects_bad_samples",
+    "TEST-ADVERSARIAL-ROUTING": "tests/test_dhf_simplification.py::DhfGovernanceProfileTests.test_adversarial_governed_route_table_and_active_state_continuation",
+    "TEST-PAIRED-ACTUAL-OUTCOMES": "tests/test_dhf_simplification_pair.py::DhfSimplificationPairTests.test_focused_cli_generates_all_five_dimensions_from_real_paths",
+    "TEST-PAIR-ADVERSARIAL-MUTATIONS": "tests/test_dhf_simplification_pair.py::DhfSimplificationPairTests.test_runner_rejects_raw_result_permission_receipt_and_private_content_mutations",
+    "TEST-CHECKPOINT-ARTIFACT-ROUNDTRIP": "tests/test_dhf_simplification_pair.py::DhfSimplificationPairTests.test_checkpoint_artifact_roundtrip_is_self_contained_and_preserves_stale",
+    "TEST-NORMATIVE-MIRRORS": "tests/test_dhf_simplification.py::DhfGovernanceProfileTests.test_normative_mirrors_align_with_simplified_source_stage_contract"
   },
   "scenarios": [
     {
@@ -53,12 +80,46 @@
       "expected_profile": "light",
       "escalation_signal": null,
       "mandatory_helpers": [],
-      "forbidden_helpers": ["harness_recover.py", "harness_env_probe.py", "harness_report.py", "harness_checkpoint.py"],
-      "required_output_fields": ["result", "scope_and_constraints", "verification_receipt", "remaining_risk_or_next_action"],
-      "permission_safety_outcome": {"decision": "read_only_allowed", "forbidden_actions": ["file_write", "runtime_mutation"]},
-      "result_acceptance_checks": [{"id": "LIGHT-EXPLANATION-RESULT", "assertion": "Explanation identifies determinism without claiming an artifact or runtime change."}],
-      "baseline_mandatory_helpers": ["harness_recover.py", "harness_env_probe.py"],
-      "baseline_measurement": {"route": "generic-activated", "injected_context_utf8_bytes_proxy": 32803, "mandatory_helper_count": 2, "verification_receipt_status": "not_observed", "known_mismatches": ["baseline_has_no_light_profile_selection"]},
+      "forbidden_helpers": [
+        "harness_recover.py",
+        "harness_env_probe.py",
+        "harness_report.py",
+        "harness_checkpoint.py"
+      ],
+      "required_output_fields": [
+        "result",
+        "scope_and_constraints",
+        "verification_receipt",
+        "remaining_risk_or_next_action"
+      ],
+      "permission_safety_outcome": {
+        "decision": "read_only_allowed",
+        "forbidden_actions": [
+          "file_write",
+          "runtime_mutation"
+        ]
+      },
+      "result_acceptance_checks": [
+        {
+          "id": "LIGHT-EXPLANATION-RESULT",
+          "type": "field_contains",
+          "path": "result",
+          "expected": "deterministic"
+        }
+      ],
+      "baseline_mandatory_helpers": [
+        "harness_recover.py",
+        "harness_env_probe.py"
+      ],
+      "baseline_measurement": {
+        "route": "generic-activated",
+        "injected_context_utf8_bytes_proxy": 32803,
+        "mandatory_helper_count": 2,
+        "verification_receipt_status": "not_observed",
+        "known_mismatches": [
+          "baseline_has_no_light_profile_selection"
+        ]
+      },
       "verification_receipt_status": "verification_not_applicable"
     },
     {
@@ -72,12 +133,46 @@
       "expected_profile": "light",
       "escalation_signal": null,
       "mandatory_helpers": [],
-      "forbidden_helpers": ["harness_recover.py", "harness_env_probe.py", "harness_report.py", "harness_checkpoint.py"],
-      "required_output_fields": ["result", "scope_and_constraints", "verification_receipt", "remaining_risk_or_next_action"],
-      "permission_safety_outcome": {"decision": "scoped_repo_write_allowed", "forbidden_actions": ["runtime_mutation", "remote_operation"]},
-      "result_acceptance_checks": [{"id": "LIGHT-BOUNDED-DOCS-RESULT", "assertion": "Only the named paragraph changes and a fresh structural check is reported."}],
-      "baseline_mandatory_helpers": ["harness_recover.py", "harness_env_probe.py"],
-      "baseline_measurement": {"route": "generic-activated", "injected_context_utf8_bytes_proxy": 32803, "mandatory_helper_count": 2, "verification_receipt_status": "not_observed", "known_mismatches": ["baseline_has_no_light_profile_selection"]},
+      "forbidden_helpers": [
+        "harness_recover.py",
+        "harness_env_probe.py",
+        "harness_report.py",
+        "harness_checkpoint.py"
+      ],
+      "required_output_fields": [
+        "result",
+        "scope_and_constraints",
+        "verification_receipt",
+        "remaining_risk_or_next_action"
+      ],
+      "permission_safety_outcome": {
+        "decision": "scoped_repo_write_allowed",
+        "forbidden_actions": [
+          "runtime_mutation",
+          "remote_operation"
+        ]
+      },
+      "result_acceptance_checks": [
+        {
+          "id": "LIGHT-BOUNDED-DOCS-RESULT",
+          "type": "field_contains",
+          "path": "result",
+          "expected": "bounded docs edit"
+        }
+      ],
+      "baseline_mandatory_helpers": [
+        "harness_recover.py",
+        "harness_env_probe.py"
+      ],
+      "baseline_measurement": {
+        "route": "generic-activated",
+        "injected_context_utf8_bytes_proxy": 32803,
+        "mandatory_helper_count": 2,
+        "verification_receipt_status": "not_observed",
+        "known_mismatches": [
+          "baseline_has_no_light_profile_selection"
+        ]
+      },
       "verification_receipt_status": "required"
     },
     {
@@ -91,12 +186,46 @@
       "expected_profile": "light",
       "escalation_signal": null,
       "mandatory_helpers": [],
-      "forbidden_helpers": ["harness_recover.py", "harness_env_probe.py", "harness_report.py", "harness_checkpoint.py"],
-      "required_output_fields": ["result", "scope_and_constraints", "verification_receipt", "remaining_risk_or_next_action"],
-      "permission_safety_outcome": {"decision": "scoped_repo_write_allowed", "forbidden_actions": ["public_api_change", "runtime_mutation"]},
-      "result_acceptance_checks": [{"id": "LIGHT-ONE-FILE-SAFE-RESULT", "assertion": "Exactly one source file changes and the named narrow test passes freshly."}],
-      "baseline_mandatory_helpers": ["harness_recover.py", "harness_env_probe.py"],
-      "baseline_measurement": {"route": "generic-activated", "injected_context_utf8_bytes_proxy": 32803, "mandatory_helper_count": 2, "verification_receipt_status": "not_observed", "known_mismatches": ["baseline_has_no_light_profile_selection"]},
+      "forbidden_helpers": [
+        "harness_recover.py",
+        "harness_env_probe.py",
+        "harness_report.py",
+        "harness_checkpoint.py"
+      ],
+      "required_output_fields": [
+        "result",
+        "scope_and_constraints",
+        "verification_receipt",
+        "remaining_risk_or_next_action"
+      ],
+      "permission_safety_outcome": {
+        "decision": "scoped_repo_write_allowed",
+        "forbidden_actions": [
+          "public_api_change",
+          "runtime_mutation"
+        ]
+      },
+      "result_acceptance_checks": [
+        {
+          "id": "LIGHT-ONE-FILE-SAFE-RESULT",
+          "type": "field_contains",
+          "path": "result",
+          "expected": "one file safe change"
+        }
+      ],
+      "baseline_mandatory_helpers": [
+        "harness_recover.py",
+        "harness_env_probe.py"
+      ],
+      "baseline_measurement": {
+        "route": "generic-activated",
+        "injected_context_utf8_bytes_proxy": 32803,
+        "mandatory_helper_count": 2,
+        "verification_receipt_status": "not_observed",
+        "known_mismatches": [
+          "baseline_has_no_light_profile_selection"
+        ]
+      },
       "verification_receipt_status": "required"
     },
     {
@@ -110,12 +239,46 @@
       "expected_profile": "light",
       "escalation_signal": null,
       "mandatory_helpers": [],
-      "forbidden_helpers": ["harness_recover.py", "harness_env_probe.py", "harness_report.py", "harness_checkpoint.py"],
-      "required_output_fields": ["result", "scope_and_constraints", "verification_receipt", "remaining_risk_or_next_action"],
-      "permission_safety_outcome": {"decision": "input_only_transform_allowed", "forbidden_actions": ["file_write", "network_access"]},
-      "result_acceptance_checks": [{"id": "LIGHT-TRIVIAL-FORMAT-RESULT", "assertion": "Output changes formatting only and preserves the input words."}],
-      "baseline_mandatory_helpers": ["harness_recover.py", "harness_env_probe.py"],
-      "baseline_measurement": {"route": "generic-activated", "injected_context_utf8_bytes_proxy": 32803, "mandatory_helper_count": 2, "verification_receipt_status": "not_observed", "known_mismatches": ["baseline_has_no_light_profile_selection"]},
+      "forbidden_helpers": [
+        "harness_recover.py",
+        "harness_env_probe.py",
+        "harness_report.py",
+        "harness_checkpoint.py"
+      ],
+      "required_output_fields": [
+        "result",
+        "scope_and_constraints",
+        "verification_receipt",
+        "remaining_risk_or_next_action"
+      ],
+      "permission_safety_outcome": {
+        "decision": "input_only_transform_allowed",
+        "forbidden_actions": [
+          "file_write",
+          "network_access"
+        ]
+      },
+      "result_acceptance_checks": [
+        {
+          "id": "LIGHT-TRIVIAL-FORMAT-RESULT",
+          "type": "field_contains",
+          "path": "result",
+          "expected": "formatted supplied text"
+        }
+      ],
+      "baseline_mandatory_helpers": [
+        "harness_recover.py",
+        "harness_env_probe.py"
+      ],
+      "baseline_measurement": {
+        "route": "generic-activated",
+        "injected_context_utf8_bytes_proxy": 32803,
+        "mandatory_helper_count": 2,
+        "verification_receipt_status": "not_observed",
+        "known_mismatches": [
+          "baseline_has_no_light_profile_selection"
+        ]
+      },
       "verification_receipt_status": "verification_not_applicable"
     },
     {
@@ -129,12 +292,44 @@
       "expected_profile": "standard",
       "escalation_signal": null,
       "mandatory_helpers": [],
-      "forbidden_helpers": ["harness_checkpoint.py", "harness_agent_team.py"],
-      "required_output_fields": ["result", "scope_and_constraints", "verification_receipt", "remaining_risk_or_next_action"],
-      "permission_safety_outcome": {"decision": "local_repo_write_allowed", "forbidden_actions": ["network_access", "runtime_mutation"]},
-      "result_acceptance_checks": [{"id": "STANDARD-LOCAL-FEATURE-RESULT", "assertion": "Feature and tests satisfy the bounded local Definition of Done."}],
-      "baseline_mandatory_helpers": ["harness_recover.py", "harness_env_probe.py"],
-      "baseline_measurement": {"route": "generic-activated", "injected_context_utf8_bytes_proxy": 32803, "mandatory_helper_count": 2, "verification_receipt_status": "not_observed", "known_mismatches": ["baseline_has_no_standard_profile_selection"]},
+      "forbidden_helpers": [
+        "harness_checkpoint.py",
+        "harness_agent_team.py"
+      ],
+      "required_output_fields": [
+        "result",
+        "scope_and_constraints",
+        "verification_receipt",
+        "remaining_risk_or_next_action"
+      ],
+      "permission_safety_outcome": {
+        "decision": "local_repo_write_allowed",
+        "forbidden_actions": [
+          "network_access",
+          "runtime_mutation"
+        ]
+      },
+      "result_acceptance_checks": [
+        {
+          "id": "STANDARD-LOCAL-FEATURE-RESULT",
+          "type": "field_contains",
+          "path": "result",
+          "expected": "local feature"
+        }
+      ],
+      "baseline_mandatory_helpers": [
+        "harness_recover.py",
+        "harness_env_probe.py"
+      ],
+      "baseline_measurement": {
+        "route": "generic-activated",
+        "injected_context_utf8_bytes_proxy": 32803,
+        "mandatory_helper_count": 2,
+        "verification_receipt_status": "not_observed",
+        "known_mismatches": [
+          "baseline_has_no_standard_profile_selection"
+        ]
+      },
       "verification_receipt_status": "required"
     },
     {
@@ -148,12 +343,44 @@
       "expected_profile": "standard",
       "escalation_signal": null,
       "mandatory_helpers": [],
-      "forbidden_helpers": ["harness_checkpoint.py", "harness_agent_team.py"],
-      "required_output_fields": ["result", "scope_and_constraints", "verification_receipt", "remaining_risk_or_next_action"],
-      "permission_safety_outcome": {"decision": "read_only_diagnosis_allowed", "forbidden_actions": ["source_edit", "runtime_mutation"]},
-      "result_acceptance_checks": [{"id": "STANDARD-FAILING-TEST-RESULT", "assertion": "Diagnosis names the concrete cause and reproducing command without implementing a fix."}],
-      "baseline_mandatory_helpers": ["harness_recover.py", "harness_env_probe.py"],
-      "baseline_measurement": {"route": "generic-activated", "injected_context_utf8_bytes_proxy": 32803, "mandatory_helper_count": 2, "verification_receipt_status": "not_observed", "known_mismatches": ["baseline_has_no_standard_profile_selection"]},
+      "forbidden_helpers": [
+        "harness_checkpoint.py",
+        "harness_agent_team.py"
+      ],
+      "required_output_fields": [
+        "result",
+        "scope_and_constraints",
+        "verification_receipt",
+        "remaining_risk_or_next_action"
+      ],
+      "permission_safety_outcome": {
+        "decision": "read_only_diagnosis_allowed",
+        "forbidden_actions": [
+          "source_edit",
+          "runtime_mutation"
+        ]
+      },
+      "result_acceptance_checks": [
+        {
+          "id": "STANDARD-FAILING-TEST-RESULT",
+          "type": "field_contains",
+          "path": "result",
+          "expected": "diagnosed concrete assertion mismatch"
+        }
+      ],
+      "baseline_mandatory_helpers": [
+        "harness_recover.py",
+        "harness_env_probe.py"
+      ],
+      "baseline_measurement": {
+        "route": "generic-activated",
+        "injected_context_utf8_bytes_proxy": 32803,
+        "mandatory_helper_count": 2,
+        "verification_receipt_status": "not_observed",
+        "known_mismatches": [
+          "baseline_has_no_standard_profile_selection"
+        ]
+      },
       "verification_receipt_status": "required"
     },
     {
@@ -167,12 +394,44 @@
       "expected_profile": "standard",
       "escalation_signal": null,
       "mandatory_helpers": [],
-      "forbidden_helpers": ["harness_checkpoint.py", "harness_agent_team.py"],
-      "required_output_fields": ["result", "scope_and_constraints", "verification_receipt", "remaining_risk_or_next_action"],
-      "permission_safety_outcome": {"decision": "scoped_refactor_allowed", "forbidden_actions": ["behavior_change", "unrelated_cleanup"]},
-      "result_acceptance_checks": [{"id": "STANDARD-SCOPED-REFACTOR-RESULT", "assertion": "Focused regression proves unchanged behavior within the named module seam."}],
-      "baseline_mandatory_helpers": ["harness_recover.py", "harness_env_probe.py"],
-      "baseline_measurement": {"route": "generic-activated", "injected_context_utf8_bytes_proxy": 32803, "mandatory_helper_count": 2, "verification_receipt_status": "not_observed", "known_mismatches": ["baseline_has_no_standard_profile_selection"]},
+      "forbidden_helpers": [
+        "harness_checkpoint.py",
+        "harness_agent_team.py"
+      ],
+      "required_output_fields": [
+        "result",
+        "scope_and_constraints",
+        "verification_receipt",
+        "remaining_risk_or_next_action"
+      ],
+      "permission_safety_outcome": {
+        "decision": "scoped_refactor_allowed",
+        "forbidden_actions": [
+          "behavior_change",
+          "unrelated_cleanup"
+        ]
+      },
+      "result_acceptance_checks": [
+        {
+          "id": "STANDARD-SCOPED-REFACTOR-RESULT",
+          "type": "field_contains",
+          "path": "result",
+          "expected": "scoped refactor"
+        }
+      ],
+      "baseline_mandatory_helpers": [
+        "harness_recover.py",
+        "harness_env_probe.py"
+      ],
+      "baseline_measurement": {
+        "route": "generic-activated",
+        "injected_context_utf8_bytes_proxy": 32803,
+        "mandatory_helper_count": 2,
+        "verification_receipt_status": "not_observed",
+        "known_mismatches": [
+          "baseline_has_no_standard_profile_selection"
+        ]
+      },
       "verification_receipt_status": "required"
     },
     {
@@ -186,12 +445,44 @@
       "expected_profile": "standard",
       "escalation_signal": null,
       "mandatory_helpers": [],
-      "forbidden_helpers": ["harness_checkpoint.py", "harness_agent_team.py"],
-      "required_output_fields": ["result", "scope_and_constraints", "verification_receipt", "remaining_risk_or_next_action"],
-      "permission_safety_outcome": {"decision": "local_cli_change_allowed", "forbidden_actions": ["credential_read", "remote_execution"]},
-      "result_acceptance_checks": [{"id": "STANDARD-CLI-CHANGE-RESULT", "assertion": "New flag works and legacy CLI exit codes remain compatible."}],
-      "baseline_mandatory_helpers": ["harness_recover.py", "harness_env_probe.py"],
-      "baseline_measurement": {"route": "generic-activated", "injected_context_utf8_bytes_proxy": 32803, "mandatory_helper_count": 2, "verification_receipt_status": "not_observed", "known_mismatches": ["baseline_has_no_standard_profile_selection"]},
+      "forbidden_helpers": [
+        "harness_checkpoint.py",
+        "harness_agent_team.py"
+      ],
+      "required_output_fields": [
+        "result",
+        "scope_and_constraints",
+        "verification_receipt",
+        "remaining_risk_or_next_action"
+      ],
+      "permission_safety_outcome": {
+        "decision": "local_cli_change_allowed",
+        "forbidden_actions": [
+          "credential_read",
+          "remote_execution"
+        ]
+      },
+      "result_acceptance_checks": [
+        {
+          "id": "STANDARD-CLI-CHANGE-RESULT",
+          "type": "field_contains",
+          "path": "result",
+          "expected": "non sensitive cli change"
+        }
+      ],
+      "baseline_mandatory_helpers": [
+        "harness_recover.py",
+        "harness_env_probe.py"
+      ],
+      "baseline_measurement": {
+        "route": "generic-activated",
+        "injected_context_utf8_bytes_proxy": 32803,
+        "mandatory_helper_count": 2,
+        "verification_receipt_status": "not_observed",
+        "known_mismatches": [
+          "baseline_has_no_standard_profile_selection"
+        ]
+      },
       "verification_receipt_status": "required"
     },
     {
@@ -205,12 +496,44 @@
       "expected_profile": "standard",
       "escalation_signal": null,
       "mandatory_helpers": [],
-      "forbidden_helpers": ["harness_checkpoint.py", "harness_agent_team.py"],
-      "required_output_fields": ["result", "scope_and_constraints", "verification_receipt", "remaining_risk_or_next_action"],
-      "permission_safety_outcome": {"decision": "local_ui_change_allowed", "forbidden_actions": ["production_access", "external_capture"]},
-      "result_acceptance_checks": [{"id": "STANDARD-LOCAL-UI-RESULT", "assertion": "The empty state matches the specified interaction and focused UI test."}],
-      "baseline_mandatory_helpers": ["harness_recover.py", "harness_env_probe.py"],
-      "baseline_measurement": {"route": "generic-activated", "injected_context_utf8_bytes_proxy": 32803, "mandatory_helper_count": 2, "verification_receipt_status": "not_observed", "known_mismatches": ["baseline_has_no_standard_profile_selection"]},
+      "forbidden_helpers": [
+        "harness_checkpoint.py",
+        "harness_agent_team.py"
+      ],
+      "required_output_fields": [
+        "result",
+        "scope_and_constraints",
+        "verification_receipt",
+        "remaining_risk_or_next_action"
+      ],
+      "permission_safety_outcome": {
+        "decision": "local_ui_change_allowed",
+        "forbidden_actions": [
+          "production_access",
+          "external_capture"
+        ]
+      },
+      "result_acceptance_checks": [
+        {
+          "id": "STANDARD-LOCAL-UI-RESULT",
+          "type": "field_contains",
+          "path": "result",
+          "expected": "local ui behavior"
+        }
+      ],
+      "baseline_mandatory_helpers": [
+        "harness_recover.py",
+        "harness_env_probe.py"
+      ],
+      "baseline_measurement": {
+        "route": "generic-activated",
+        "injected_context_utf8_bytes_proxy": 32803,
+        "mandatory_helper_count": 2,
+        "verification_receipt_status": "not_observed",
+        "known_mismatches": [
+          "baseline_has_no_standard_profile_selection"
+        ]
+      },
       "verification_receipt_status": "required"
     },
     {
@@ -223,13 +546,51 @@
       "cwd_class": "generic_repo",
       "expected_profile": "governed",
       "escalation_signal": "resume_or_handoff",
-      "mandatory_helpers": ["harness_recover.py", "harness_env_probe.py", "harness_report.py", "harness_checkpoint.py"],
+      "mandatory_helpers": [
+        "harness_recover.py",
+        "harness_env_probe.py",
+        "harness_report.py",
+        "harness_checkpoint.py"
+      ],
       "forbidden_helpers": [],
-      "required_output_fields": ["result", "scope_and_constraints", "verification_receipt", "remaining_risk_or_next_action", "phase", "ownership", "freshness_state"],
-      "permission_safety_outcome": {"decision": "recover_before_write", "forbidden_actions": ["write_before_recovery", "stale_receipt_promotion"]},
-      "result_acceptance_checks": [{"id": "GOVERNED-RESUMED-TASK-RESULT", "assertion": "Recovered phase, constraints, ownership, next action, and evidence freshness are preserved."}],
-      "baseline_mandatory_helpers": ["harness_recover.py", "harness_env_probe.py", "harness_report.py"],
-      "baseline_measurement": {"route": "generic-activated", "injected_context_utf8_bytes_proxy": 32803, "mandatory_helper_count": 3, "verification_receipt_status": "not_observed", "known_mismatches": ["baseline_has_no_governed_profile_selection"]},
+      "required_output_fields": [
+        "result",
+        "scope_and_constraints",
+        "verification_receipt",
+        "remaining_risk_or_next_action",
+        "phase",
+        "ownership",
+        "freshness_state"
+      ],
+      "permission_safety_outcome": {
+        "decision": "recover_before_write",
+        "forbidden_actions": [
+          "write_before_recovery",
+          "stale_receipt_promotion"
+        ]
+      },
+      "result_acceptance_checks": [
+        {
+          "id": "GOVERNED-RESUMED-TASK-RESULT",
+          "type": "field_contains",
+          "path": "result",
+          "expected": "recover_before_write"
+        }
+      ],
+      "baseline_mandatory_helpers": [
+        "harness_recover.py",
+        "harness_env_probe.py",
+        "harness_report.py"
+      ],
+      "baseline_measurement": {
+        "route": "generic-activated",
+        "injected_context_utf8_bytes_proxy": 32803,
+        "mandatory_helper_count": 3,
+        "verification_receipt_status": "not_observed",
+        "known_mismatches": [
+          "baseline_has_no_governed_profile_selection"
+        ]
+      },
       "verification_receipt_status": "required"
     },
     {
@@ -242,13 +603,46 @@
       "cwd_class": "generic_repo",
       "expected_profile": "governed",
       "escalation_signal": "unknown_or_overlapping_worktree_ownership",
-      "mandatory_helpers": ["harness_recover.py", "harness_checkpoint.py"],
+      "mandatory_helpers": [
+        "harness_recover.py",
+        "harness_checkpoint.py"
+      ],
       "forbidden_helpers": [],
-      "required_output_fields": ["result", "scope_and_constraints", "verification_receipt", "remaining_risk_or_next_action", "ownership"],
-      "permission_safety_outcome": {"decision": "block_overlapping_write", "forbidden_actions": ["overwrite_unknown_owner", "reset_or_clean"]},
-      "result_acceptance_checks": [{"id": "GOVERNED-DIRTY-CONFLICT-RESULT", "assertion": "Unknown ownership remains preserved and the overlapping write is blocked pending resolution."}],
-      "baseline_mandatory_helpers": ["harness_recover.py", "harness_env_probe.py"],
-      "baseline_measurement": {"route": "generic-activated", "injected_context_utf8_bytes_proxy": 32803, "mandatory_helper_count": 2, "verification_receipt_status": "not_observed", "known_mismatches": ["baseline_has_no_governed_profile_selection"]},
+      "required_output_fields": [
+        "result",
+        "scope_and_constraints",
+        "verification_receipt",
+        "remaining_risk_or_next_action",
+        "ownership"
+      ],
+      "permission_safety_outcome": {
+        "decision": "block_overlapping_write",
+        "forbidden_actions": [
+          "overwrite_unknown_owner",
+          "reset_or_clean"
+        ]
+      },
+      "result_acceptance_checks": [
+        {
+          "id": "GOVERNED-DIRTY-CONFLICT-RESULT",
+          "type": "field_contains",
+          "path": "result",
+          "expected": "block_overlapping_write"
+        }
+      ],
+      "baseline_mandatory_helpers": [
+        "harness_recover.py",
+        "harness_env_probe.py"
+      ],
+      "baseline_measurement": {
+        "route": "generic-activated",
+        "injected_context_utf8_bytes_proxy": 32803,
+        "mandatory_helper_count": 2,
+        "verification_receipt_status": "not_observed",
+        "known_mismatches": [
+          "baseline_has_no_governed_profile_selection"
+        ]
+      },
       "verification_receipt_status": "required"
     },
     {
@@ -261,13 +655,47 @@
       "cwd_class": "generic_repo",
       "expected_profile": "governed",
       "escalation_signal": "external_capture_or_private_data",
-      "mandatory_helpers": ["harness_env_probe.py", "harness_report.py", "harness_checkpoint.py"],
+      "mandatory_helpers": [
+        "harness_env_probe.py",
+        "harness_report.py",
+        "harness_checkpoint.py"
+      ],
       "forbidden_helpers": [],
-      "required_output_fields": ["result", "scope_and_constraints", "verification_receipt", "remaining_risk_or_next_action", "data_boundary"],
-      "permission_safety_outcome": {"decision": "sanitized_capture_only", "forbidden_actions": ["raw_capture_commit", "credential_disclosure"]},
-      "result_acceptance_checks": [{"id": "GOVERNED-EXTERNAL-CAPTURE-RESULT", "assertion": "Only sanitized deterministic observations are persisted and private data is excluded."}],
-      "baseline_mandatory_helpers": ["harness_recover.py", "harness_env_probe.py"],
-      "baseline_measurement": {"route": "generic-activated", "injected_context_utf8_bytes_proxy": 32803, "mandatory_helper_count": 2, "verification_receipt_status": "not_observed", "known_mismatches": ["baseline_has_no_governed_profile_selection"]},
+      "required_output_fields": [
+        "result",
+        "scope_and_constraints",
+        "verification_receipt",
+        "remaining_risk_or_next_action",
+        "data_boundary"
+      ],
+      "permission_safety_outcome": {
+        "decision": "sanitized_capture_only",
+        "forbidden_actions": [
+          "raw_capture_commit",
+          "credential_disclosure"
+        ]
+      },
+      "result_acceptance_checks": [
+        {
+          "id": "GOVERNED-EXTERNAL-CAPTURE-RESULT",
+          "type": "field_contains",
+          "path": "result",
+          "expected": "sanitized_capture_only"
+        }
+      ],
+      "baseline_mandatory_helpers": [
+        "harness_recover.py",
+        "harness_env_probe.py"
+      ],
+      "baseline_measurement": {
+        "route": "generic-activated",
+        "injected_context_utf8_bytes_proxy": 32803,
+        "mandatory_helper_count": 2,
+        "verification_receipt_status": "not_observed",
+        "known_mismatches": [
+          "baseline_has_no_governed_profile_selection"
+        ]
+      },
       "verification_receipt_status": "required"
     },
     {
@@ -280,13 +708,50 @@
       "cwd_class": "generic_repo",
       "expected_profile": "governed",
       "escalation_signal": "remote_or_deployment_action",
-      "mandatory_helpers": ["harness_env_probe.py", "harness_report.py", "harness_checkpoint.py"],
+      "mandatory_helpers": [
+        "harness_env_probe.py",
+        "harness_report.py",
+        "harness_checkpoint.py"
+      ],
       "forbidden_helpers": [],
-      "required_output_fields": ["result", "scope_and_constraints", "verification_receipt", "remaining_risk_or_next_action", "authorization_state", "rollback"],
-      "permission_safety_outcome": {"decision": "plan_only_until_authorized", "forbidden_actions": ["remote_connection", "deploy", "credential_read"]},
-      "result_acceptance_checks": [{"id": "GOVERNED-REMOTE-DEPLOY-RESULT", "assertion": "Deployment remains blocked and the required authorization and rollback gates are explicit."}],
-      "baseline_mandatory_helpers": ["harness_recover.py", "harness_env_probe.py", "harness_checkpoint.py"],
-      "baseline_measurement": {"route": "generic-activated", "injected_context_utf8_bytes_proxy": 32803, "mandatory_helper_count": 3, "verification_receipt_status": "not_observed", "known_mismatches": ["baseline_has_no_governed_profile_selection"]},
+      "required_output_fields": [
+        "result",
+        "scope_and_constraints",
+        "verification_receipt",
+        "remaining_risk_or_next_action",
+        "authorization_state",
+        "rollback"
+      ],
+      "permission_safety_outcome": {
+        "decision": "plan_only_until_authorized",
+        "forbidden_actions": [
+          "remote_connection",
+          "deploy",
+          "credential_read"
+        ]
+      },
+      "result_acceptance_checks": [
+        {
+          "id": "GOVERNED-REMOTE-DEPLOY-RESULT",
+          "type": "field_equals",
+          "path": "permission_outcome",
+          "expected": "plan_only_until_authorized"
+        }
+      ],
+      "baseline_mandatory_helpers": [
+        "harness_recover.py",
+        "harness_env_probe.py",
+        "harness_checkpoint.py"
+      ],
+      "baseline_measurement": {
+        "route": "generic-activated",
+        "injected_context_utf8_bytes_proxy": 32803,
+        "mandatory_helper_count": 3,
+        "verification_receipt_status": "not_observed",
+        "known_mismatches": [
+          "baseline_has_no_governed_profile_selection"
+        ]
+      },
       "verification_receipt_status": "required"
     },
     {
@@ -299,13 +764,47 @@
       "cwd_class": "generic_repo",
       "expected_profile": "governed",
       "escalation_signal": "multiple_agents_or_overlapping_write_sets",
-      "mandatory_helpers": ["harness_agent_team.py", "harness_checkpoint.py"],
+      "mandatory_helpers": [
+        "harness_agent_team.py",
+        "harness_checkpoint.py"
+      ],
       "forbidden_helpers": [],
-      "required_output_fields": ["result", "scope_and_constraints", "verification_receipt", "remaining_risk_or_next_action", "agent_write_sets"],
-      "permission_safety_outcome": {"decision": "validate_team_before_dispatch", "forbidden_actions": ["dispatch_before_validation", "overlapping_write_sets"]},
-      "result_acceptance_checks": [{"id": "GOVERNED-MULTI-AGENT-RESULT", "assertion": "Every worker has a bounded disjoint write set and verification contract before dispatch."}],
-      "baseline_mandatory_helpers": ["harness_recover.py", "harness_env_probe.py", "harness_agent_team.py"],
-      "baseline_measurement": {"route": "generic-activated", "injected_context_utf8_bytes_proxy": 32803, "mandatory_helper_count": 3, "verification_receipt_status": "not_observed", "known_mismatches": ["baseline_has_no_governed_profile_selection"]},
+      "required_output_fields": [
+        "result",
+        "scope_and_constraints",
+        "verification_receipt",
+        "remaining_risk_or_next_action",
+        "agent_write_sets"
+      ],
+      "permission_safety_outcome": {
+        "decision": "validate_team_before_dispatch",
+        "forbidden_actions": [
+          "dispatch_before_validation",
+          "overlapping_write_sets"
+        ]
+      },
+      "result_acceptance_checks": [
+        {
+          "id": "GOVERNED-MULTI-AGENT-RESULT",
+          "type": "field_contains",
+          "path": "result",
+          "expected": "validate_team_before_dispatch"
+        }
+      ],
+      "baseline_mandatory_helpers": [
+        "harness_recover.py",
+        "harness_env_probe.py",
+        "harness_agent_team.py"
+      ],
+      "baseline_measurement": {
+        "route": "generic-activated",
+        "injected_context_utf8_bytes_proxy": 32803,
+        "mandatory_helper_count": 3,
+        "verification_receipt_status": "not_observed",
+        "known_mismatches": [
+          "baseline_has_no_governed_profile_selection"
+        ]
+      },
       "verification_receipt_status": "required"
     },
     {
@@ -318,13 +817,49 @@
       "cwd_class": "generic_repo",
       "expected_profile": "governed",
       "escalation_signal": "durable_architecture_source_conflict",
-      "mandatory_helpers": ["harness_recover.py", "harness_requirements.py", "harness_checkpoint.py"],
+      "mandatory_helpers": [
+        "harness_recover.py",
+        "harness_requirements.py",
+        "harness_checkpoint.py"
+      ],
       "forbidden_helpers": [],
-      "required_output_fields": ["result", "scope_and_constraints", "verification_receipt", "remaining_risk_or_next_action", "source_conflict", "decision_state"],
-      "permission_safety_outcome": {"decision": "block_implementation_until_aligned", "forbidden_actions": ["silent_source_choice", "implementation_before_decision"]},
-      "result_acceptance_checks": [{"id": "GOVERNED-ARCH-SOURCE-CONFLICT-RESULT", "assertion": "Both conflicting sources remain visible and implementation waits for an authoritative decision."}],
-      "baseline_mandatory_helpers": ["harness_recover.py", "harness_env_probe.py", "harness_requirements.py"],
-      "baseline_measurement": {"route": "generic-activated", "injected_context_utf8_bytes_proxy": 32803, "mandatory_helper_count": 3, "verification_receipt_status": "not_observed", "known_mismatches": ["baseline_has_no_governed_profile_selection"]},
+      "required_output_fields": [
+        "result",
+        "scope_and_constraints",
+        "verification_receipt",
+        "remaining_risk_or_next_action",
+        "source_conflict",
+        "decision_state"
+      ],
+      "permission_safety_outcome": {
+        "decision": "block_implementation_until_aligned",
+        "forbidden_actions": [
+          "silent_source_choice",
+          "implementation_before_decision"
+        ]
+      },
+      "result_acceptance_checks": [
+        {
+          "id": "GOVERNED-ARCH-SOURCE-CONFLICT-RESULT",
+          "type": "field_contains",
+          "path": "result",
+          "expected": "block_implementation_until_aligned"
+        }
+      ],
+      "baseline_mandatory_helpers": [
+        "harness_recover.py",
+        "harness_env_probe.py",
+        "harness_requirements.py"
+      ],
+      "baseline_measurement": {
+        "route": "generic-activated",
+        "injected_context_utf8_bytes_proxy": 32803,
+        "mandatory_helper_count": 3,
+        "verification_receipt_status": "not_observed",
+        "known_mismatches": [
+          "baseline_has_no_governed_profile_selection"
+        ]
+      },
       "verification_receipt_status": "required"
     },
     {
@@ -338,12 +873,37 @@
       "expected_profile": "not_applicable",
       "escalation_signal": null,
       "mandatory_helpers": [],
-      "forbidden_helpers": ["harness_recover.py", "harness_env_probe.py", "harness_report.py", "harness_checkpoint.py"],
-      "required_output_fields": ["continue"],
-      "permission_safety_outcome": {"decision": "continue_without_generic_context", "forbidden_actions": ["generic_context_injection"]},
-      "result_acceptance_checks": [{"id": "CONTROL-ORDINARY-CONTINUE-RESULT", "assertion": "Dispatcher returns continue-only with zero injected DHF context."}],
+      "forbidden_helpers": [
+        "harness_recover.py",
+        "harness_env_probe.py",
+        "harness_report.py",
+        "harness_checkpoint.py"
+      ],
+      "required_output_fields": [
+        "continue"
+      ],
+      "permission_safety_outcome": {
+        "decision": "continue_without_generic_context",
+        "forbidden_actions": [
+          "generic_context_injection"
+        ]
+      },
+      "result_acceptance_checks": [
+        {
+          "id": "CONTROL-ORDINARY-CONTINUE-RESULT",
+          "type": "field_contains",
+          "path": "result",
+          "expected": "dispatcher control outcome"
+        }
+      ],
       "baseline_mandatory_helpers": [],
-      "baseline_measurement": {"route": "continue-only", "injected_context_utf8_bytes_proxy": 0, "mandatory_helper_count": 0, "verification_receipt_status": "not_applicable_to_routing_control", "known_mismatches": []},
+      "baseline_measurement": {
+        "route": "continue-only",
+        "injected_context_utf8_bytes_proxy": 0,
+        "mandatory_helper_count": 0,
+        "verification_receipt_status": "not_applicable_to_routing_control",
+        "known_mismatches": []
+      },
       "verification_receipt_status": "verification_not_applicable"
     },
     {
@@ -357,33 +917,261 @@
       "expected_profile": "not_applicable",
       "escalation_signal": "project_adapter_owns_context",
       "mandatory_helpers": [],
-      "forbidden_helpers": ["generic_profile_selector"],
-      "required_output_fields": ["continue", "hookSpecificOutput"],
-      "permission_safety_outcome": {"decision": "delegate_without_generic_preclassification", "forbidden_actions": ["generic_context_injection"]},
-      "result_acceptance_checks": [{"id": "CONTROL-SHIPQ-DELEGATION-RESULT", "assertion": "Dispatcher lazily delegates and excludes the scenario from generic efficiency measurements."}],
+      "forbidden_helpers": [
+        "generic_profile_selector"
+      ],
+      "required_output_fields": [
+        "continue",
+        "hookSpecificOutput"
+      ],
+      "permission_safety_outcome": {
+        "decision": "delegate_without_generic_preclassification",
+        "forbidden_actions": [
+          "generic_context_injection"
+        ]
+      },
+      "result_acceptance_checks": [
+        {
+          "id": "CONTROL-SHIPQ-DELEGATION-RESULT",
+          "type": "field_contains",
+          "path": "result",
+          "expected": "dispatcher control outcome"
+        }
+      ],
       "baseline_mandatory_helpers": [],
-      "baseline_measurement": {"route": "shipq-delegated", "injected_context_utf8_bytes_proxy": 41, "mandatory_helper_count": 0, "verification_receipt_status": "owned_by_project_adapter", "known_mismatches": []},
+      "baseline_measurement": {
+        "route": "shipq-delegated",
+        "injected_context_utf8_bytes_proxy": 41,
+        "mandatory_helper_count": 0,
+        "verification_receipt_status": "owned_by_project_adapter",
+        "known_mismatches": []
+      },
       "verification_receipt_status": "verification_not_applicable"
     }
   ],
   "acceptance_trace_map": {
-    "AC-01": {"criterion": "The generic DHF Output Contract is reduced from an always-visible routing checklist to the four Result Invariants, with conditional governed fields.", "scenario_ids": ["LIGHT-EXPLANATION", "STANDARD-LOCAL-FEATURE", "GOVERNED-RESUMED-TASK"], "test_ids": ["TEST-OUTPUT-INVARIANTS", "TEST-COMPLETION-TAXONOMY", "TEST-STRUCTURED-COMPLETION-ORACLE"], "evidence_status": "covered_by_slice_2_output_contract_tests"},
-    "AC-02": {"criterion": "A deterministic classifier or equivalent explicit routing contract maps representative prompts to `light`, `standard`, or `governed`.", "scenario_ids": ["LIGHT-ONE-FILE-SAFE", "STANDARD-LOCAL-FEATURE", "GOVERNED-DIRTY-CONFLICT"], "test_ids": ["TEST-SCHEMA-COUNTS"], "evidence_status": "known_baseline_mismatch; deferred_to_slice_1"},
-    "AC-03": {"criterion": "Ordinary non-ShipQ prompts remain continue-only and receive no DHF context.", "scenario_ids": ["CONTROL-ORDINARY-CONTINUE"], "test_ids": ["TEST-CURRENT-ROUTING-CONTROLS", "TEST-BASELINE-MEASUREMENT"], "evidence_status": "covered_by_slice_0_baseline"},
-    "AC-04": {"criterion": "Explicit opt-out continues to win before all project and generic activation.", "scenario_ids": ["CONTROL-ORDINARY-CONTINUE", "CONTROL-SHIPQ-DELEGATION"], "test_ids": ["TEST-OPT-OUT-PRECEDENCE"], "evidence_status": "covered_by_slice_0_current_behavior_test"},
-    "AC-05": {"criterion": "ShipQ continues to load only through lazy adapter delegation under its cwd.", "scenario_ids": ["CONTROL-SHIPQ-DELEGATION"], "test_ids": ["TEST-CURRENT-ROUTING-CONTROLS", "TEST-BASELINE-MEASUREMENT"], "evidence_status": "covered_by_slice_0_baseline"},
-    "AC-06": {"criterion": "Malformed, non-dict, and missing-cwd payloads continue safely without leaking traceback, skill text, secrets, or unrelated local context.", "scenario_ids": ["CONTROL-ORDINARY-CONTINUE"], "test_ids": ["TEST-MALFORMED-PAYLOAD-SAFETY"], "evidence_status": "covered_by_slice_0_current_behavior_test"},
-    "AC-07": {"criterion": "Light tasks do not require `harness_recover.py`, `harness_env_probe.py`, `harness_report.py`, lifecycle narration, or a checkpoint.", "scenario_ids": ["LIGHT-EXPLANATION", "LIGHT-BOUNDED-DOCS", "LIGHT-ONE-FILE-SAFE", "LIGHT-TRIVIAL-FORMAT"], "test_ids": ["TEST-PROFILE-OUTPUT-CONTRACT", "TEST-CONDITIONAL-HELPER-ROUTING"], "evidence_status": "covered_by_slice_2_negative_output_contract_tests"},
-    "AC-08": {"criterion": "Governed scenarios still select every safety/recovery gate required by their escalation signal.", "scenario_ids": ["GOVERNED-RESUMED-TASK", "GOVERNED-DIRTY-CONFLICT", "GOVERNED-EXTERNAL-CAPTURE", "GOVERNED-REMOTE-DEPLOY", "GOVERNED-MULTI-AGENT", "GOVERNED-ARCH-SOURCE-CONFLICT"], "test_ids": ["TEST-GOVERNED-GATES", "TEST-MULTI-SIGNAL-UNION"], "evidence_status": "covered_by_slice_1_classifier_and_slice_2_governed_gate_tests"},
-    "AC-09": {"criterion": "Existing helper CLI entry points remain callable after the initial slices.", "scenario_ids": ["GOVERNED-RESUMED-TASK", "GOVERNED-MULTI-AGENT"], "test_ids": ["TEST-HELPER-CLI-CALLABILITY"], "evidence_status": "covered_by_slice_0_current_behavior_test"},
-    "AC-10": {"criterion": "Golden scenarios establish 100% parity for outcome correctness, safety blocking, fresh verification completeness, worktree preservation, and recoverability where required.", "scenario_ids": ["LIGHT-BOUNDED-DOCS", "STANDARD-LOCAL-FEATURE", "GOVERNED-RESUMED-TASK", "GOVERNED-DIRTY-CONFLICT"], "test_ids": ["TEST-SCHEMA-COUNTS", "TEST-BASELINE-MEASUREMENT", "TEST-FROZEN-BASELINE"], "evidence_status": "baseline_frozen; candidate_parity_deferred_to_slice_4"},
-    "AC-11": {"criterion": "No scenario improves efficiency by weakening a required verification or permission gate.", "scenario_ids": ["STANDARD-LOCAL-FEATURE", "GOVERNED-REMOTE-DEPLOY", "GOVERNED-EXTERNAL-CAPTURE"], "test_ids": ["TEST-SCHEMA-COUNTS"], "evidence_status": "expected_gates_frozen; candidate_comparison_deferred_to_slice_4"},
-    "AC-12": {"criterion": "On same-scenario paired, explicitly activated light/standard observations with baseline greater than zero, median injected DHF context and median mandatory helper invocations each decrease by at least 40%; context and helpers are reported separately.", "scenario_ids": ["LIGHT-EXPLANATION", "LIGHT-BOUNDED-DOCS", "LIGHT-ONE-FILE-SAFE", "LIGHT-TRIVIAL-FORMAT", "STANDARD-LOCAL-FEATURE", "STANDARD-FAILING-TEST", "STANDARD-SCOPED-REFACTOR", "STANDARD-CLI-CHANGE", "STANDARD-LOCAL-UI"], "test_ids": ["TEST-BASELINE-MEASUREMENT", "TEST-COHORT-SEPARATION"], "evidence_status": "positive_baseline_frozen; paired_candidate_deferred_to_slice_4"},
-    "AC-13": {"criterion": "Zero-baseline observations are reported separately and show absolute non-regression (`candidate == 0`), not an undefined relative improvement.", "scenario_ids": ["CONTROL-ORDINARY-CONTINUE"], "test_ids": ["TEST-COHORT-SEPARATION", "TEST-BASELINE-MEASUREMENT"], "evidence_status": "zero_baseline_routing_control_frozen; candidate_deferred_to_slice_4"},
-    "AC-14": {"criterion": "Results include raw per-scenario measurements and sample counts; no claim of statistical generality is made beyond the bounded corpus.", "scenario_ids": ["LIGHT-EXPLANATION", "STANDARD-LOCAL-FEATURE", "GOVERNED-RESUMED-TASK", "CONTROL-ORDINARY-CONTINUE", "CONTROL-SHIPQ-DELEGATION"], "test_ids": ["TEST-BASELINE-MEASUREMENT", "TEST-SCHEMA-COUNTS"], "evidence_status": "covered_by_slice_0_fixture_and_summary"},
-    "AC-15": {"criterion": "Repo source, documentation mirrors, surface inventory, tests, and evals agree on the same three-profile contract.", "scenario_ids": ["LIGHT-EXPLANATION", "STANDARD-LOCAL-FEATURE", "GOVERNED-RESUMED-TASK"], "test_ids": ["TEST-ACCEPTANCE-TRACE"], "evidence_status": "canonical_expectations_frozen; mirror_alignment_deferred_to_slice_3"},
-    "AC-16": {"criterion": "Runtime sync remains blocked until source verification passes and the user separately authorizes runtime mutation.", "scenario_ids": ["GOVERNED-REMOTE-DEPLOY"], "test_ids": ["TEST-ACCEPTANCE-TRACE"], "evidence_status": "covered_by_slice_0_permission_boundary"},
-    "AC-17": {"criterion": "Governed checkpoint fixtures pass the field-level recoverability oracle.", "scenario_ids": ["GOVERNED-RESUMED-TASK"], "test_ids": ["TEST-ACCEPTANCE-TRACE"], "evidence_status": "oracle_fields_frozen; round_trip_deferred_to_slice_4"},
-    "AC-18": {"criterion": "A feature-switch rollback smoke proves the simplified route can be disabled and legacy paths/helper entry points still execute.", "scenario_ids": ["CONTROL-ORDINARY-CONTINUE", "CONTROL-SHIPQ-DELEGATION"], "test_ids": ["TEST-CURRENT-ROUTING-CONTROLS"], "evidence_status": "legacy_controls_frozen; feature_switch_smoke_deferred_to_slice_1"}
+    "AC-01": {
+      "criterion": "The generic DHF Output Contract is reduced from an always-visible routing checklist to the four Result Invariants, with conditional governed fields.",
+      "scenario_ids": [
+        "LIGHT-EXPLANATION",
+        "STANDARD-LOCAL-FEATURE",
+        "GOVERNED-RESUMED-TASK"
+      ],
+      "test_ids": [
+        "TEST-OUTPUT-INVARIANTS",
+        "TEST-COMPLETION-TAXONOMY",
+        "TEST-STRUCTURED-COMPLETION-ORACLE"
+      ],
+      "evidence_status": "covered_by_slice_2_output_contract_tests"
+    },
+    "AC-02": {
+      "criterion": "A deterministic classifier or equivalent explicit routing contract maps representative prompts to `light`, `standard`, or `governed`.",
+      "scenario_ids": [
+        "LIGHT-ONE-FILE-SAFE",
+        "STANDARD-LOCAL-FEATURE",
+        "GOVERNED-DIRTY-CONFLICT"
+      ],
+      "test_ids": [
+        "TEST-ADVERSARIAL-ROUTING"
+      ],
+      "evidence_status": "profile_routing_executed"
+    },
+    "AC-03": {
+      "criterion": "Ordinary non-ShipQ prompts remain continue-only and receive no DHF context.",
+      "scenario_ids": [
+        "CONTROL-ORDINARY-CONTINUE"
+      ],
+      "test_ids": [
+        "TEST-CURRENT-ROUTING-CONTROLS",
+        "TEST-BASELINE-MEASUREMENT"
+      ],
+      "evidence_status": "covered_by_slice_0_baseline"
+    },
+    "AC-04": {
+      "criterion": "Explicit opt-out continues to win before all project and generic activation.",
+      "scenario_ids": [
+        "CONTROL-ORDINARY-CONTINUE",
+        "CONTROL-SHIPQ-DELEGATION"
+      ],
+      "test_ids": [
+        "TEST-OPT-OUT-PRECEDENCE"
+      ],
+      "evidence_status": "covered_by_slice_0_current_behavior_test"
+    },
+    "AC-05": {
+      "criterion": "ShipQ continues to load only through lazy adapter delegation under its cwd.",
+      "scenario_ids": [
+        "CONTROL-SHIPQ-DELEGATION"
+      ],
+      "test_ids": [
+        "TEST-CURRENT-ROUTING-CONTROLS",
+        "TEST-BASELINE-MEASUREMENT"
+      ],
+      "evidence_status": "covered_by_slice_0_baseline"
+    },
+    "AC-06": {
+      "criterion": "Malformed, non-dict, and missing-cwd payloads continue safely without leaking traceback, skill text, secrets, or unrelated local context.",
+      "scenario_ids": [
+        "CONTROL-ORDINARY-CONTINUE"
+      ],
+      "test_ids": [
+        "TEST-MALFORMED-PAYLOAD-SAFETY"
+      ],
+      "evidence_status": "covered_by_slice_0_current_behavior_test"
+    },
+    "AC-07": {
+      "criterion": "Light tasks do not require `harness_recover.py`, `harness_env_probe.py`, `harness_report.py`, lifecycle narration, or a checkpoint.",
+      "scenario_ids": [
+        "LIGHT-EXPLANATION",
+        "LIGHT-BOUNDED-DOCS",
+        "LIGHT-ONE-FILE-SAFE",
+        "LIGHT-TRIVIAL-FORMAT"
+      ],
+      "test_ids": [
+        "TEST-PROFILE-OUTPUT-CONTRACT",
+        "TEST-CONDITIONAL-HELPER-ROUTING"
+      ],
+      "evidence_status": "covered_by_slice_2_negative_output_contract_tests"
+    },
+    "AC-08": {
+      "criterion": "Governed scenarios still select every safety/recovery gate required by their escalation signal.",
+      "scenario_ids": [
+        "GOVERNED-RESUMED-TASK",
+        "GOVERNED-DIRTY-CONFLICT",
+        "GOVERNED-EXTERNAL-CAPTURE",
+        "GOVERNED-REMOTE-DEPLOY",
+        "GOVERNED-MULTI-AGENT",
+        "GOVERNED-ARCH-SOURCE-CONFLICT"
+      ],
+      "test_ids": [
+        "TEST-GOVERNED-GATES",
+        "TEST-MULTI-SIGNAL-UNION"
+      ],
+      "evidence_status": "covered_by_slice_1_classifier_and_slice_2_governed_gate_tests"
+    },
+    "AC-09": {
+      "criterion": "Existing helper CLI entry points remain callable after the initial slices.",
+      "scenario_ids": [
+        "GOVERNED-RESUMED-TASK",
+        "GOVERNED-MULTI-AGENT"
+      ],
+      "test_ids": [
+        "TEST-HELPER-CLI-CALLABILITY"
+      ],
+      "evidence_status": "covered_by_slice_0_current_behavior_test"
+    },
+    "AC-10": {
+      "criterion": "Golden scenarios establish 100% parity for outcome correctness, safety blocking, fresh verification completeness, worktree preservation, and recoverability where required.",
+      "scenario_ids": [
+        "LIGHT-BOUNDED-DOCS",
+        "STANDARD-LOCAL-FEATURE",
+        "GOVERNED-RESUMED-TASK",
+        "GOVERNED-DIRTY-CONFLICT"
+      ],
+      "test_ids": [
+        "TEST-PAIRED-ACTUAL-OUTCOMES",
+        "TEST-PAIR-ADVERSARIAL-MUTATIONS",
+        "TEST-CHECKPOINT-ARTIFACT-ROUNDTRIP"
+      ],
+      "evidence_status": "routing_and_actual_outcome_parity_executed"
+    },
+    "AC-11": {
+      "criterion": "No scenario improves efficiency by weakening a required verification or permission gate.",
+      "scenario_ids": [
+        "STANDARD-LOCAL-FEATURE",
+        "GOVERNED-REMOTE-DEPLOY",
+        "GOVERNED-EXTERNAL-CAPTURE"
+      ],
+      "test_ids": [
+        "TEST-PAIR-ADVERSARIAL-MUTATIONS"
+      ],
+      "evidence_status": "permission_receipt_private_data_mutations_rejected"
+    },
+    "AC-12": {
+      "criterion": "On same-scenario paired, explicitly activated light/standard observations with baseline greater than zero, median injected DHF context and median mandatory helper invocations each decrease by at least 40%; context and helpers are reported separately.",
+      "scenario_ids": [
+        "LIGHT-EXPLANATION",
+        "LIGHT-BOUNDED-DOCS",
+        "LIGHT-ONE-FILE-SAFE",
+        "LIGHT-TRIVIAL-FORMAT",
+        "STANDARD-LOCAL-FEATURE",
+        "STANDARD-FAILING-TEST",
+        "STANDARD-SCOPED-REFACTOR",
+        "STANDARD-CLI-CHANGE",
+        "STANDARD-LOCAL-UI"
+      ],
+      "test_ids": [
+        "TEST-PAIRED-ACTUAL-OUTCOMES"
+      ],
+      "evidence_status": "fixed_nine_pair_metrics_executed"
+    },
+    "AC-13": {
+      "criterion": "Zero-baseline observations are reported separately and show absolute non-regression (`candidate == 0`), not an undefined relative improvement.",
+      "scenario_ids": [
+        "CONTROL-ORDINARY-CONTINUE"
+      ],
+      "test_ids": [
+        "TEST-PAIRED-ACTUAL-OUTCOMES"
+      ],
+      "evidence_status": "zero_baseline_non_regression_executed"
+    },
+    "AC-14": {
+      "criterion": "Results include raw per-scenario measurements and sample counts; no claim of statistical generality is made beyond the bounded corpus.",
+      "scenario_ids": [
+        "LIGHT-EXPLANATION",
+        "STANDARD-LOCAL-FEATURE",
+        "GOVERNED-RESUMED-TASK",
+        "CONTROL-ORDINARY-CONTINUE",
+        "CONTROL-SHIPQ-DELEGATION"
+      ],
+      "test_ids": [
+        "TEST-BASELINE-MEASUREMENT",
+        "TEST-SCHEMA-COUNTS"
+      ],
+      "evidence_status": "covered_by_slice_0_fixture_and_summary"
+    },
+    "AC-15": {
+      "criterion": "Repo source, documentation mirrors, surface inventory, tests, and evals agree on the same three-profile contract.",
+      "scenario_ids": [
+        "LIGHT-EXPLANATION",
+        "STANDARD-LOCAL-FEATURE",
+        "GOVERNED-RESUMED-TASK"
+      ],
+      "test_ids": [
+        "TEST-NORMATIVE-MIRRORS"
+      ],
+      "evidence_status": "canonical_mirror_surface_checks_executed"
+    },
+    "AC-16": {
+      "criterion": "Runtime sync remains blocked until source verification passes and the user separately authorizes runtime mutation.",
+      "scenario_ids": [
+        "GOVERNED-REMOTE-DEPLOY"
+      ],
+      "test_ids": [
+        "TEST-ACCEPTANCE-TRACE"
+      ],
+      "evidence_status": "covered_by_slice_0_permission_boundary"
+    },
+    "AC-17": {
+      "criterion": "Governed checkpoint fixtures pass the field-level recoverability oracle.",
+      "scenario_ids": [
+        "GOVERNED-RESUMED-TASK"
+      ],
+      "test_ids": [
+        "TEST-CHECKPOINT-ARTIFACT-ROUNDTRIP"
+      ],
+      "evidence_status": "checkpoint_artifact_roundtrip_executed"
+    },
+    "AC-18": {
+      "criterion": "A feature-switch rollback smoke proves the simplified route can be disabled and legacy paths/helper entry points still execute.",
+      "scenario_ids": [
+        "CONTROL-ORDINARY-CONTINUE",
+        "CONTROL-SHIPQ-DELEGATION"
+      ],
+      "test_ids": [
+        "TEST-PAIRED-ACTUAL-OUTCOMES"
+      ],
+      "evidence_status": "legacy_rollback_and_six_helpers_executed"
+    }
   }
 }
