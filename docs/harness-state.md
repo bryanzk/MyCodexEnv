@@ -5,7 +5,7 @@ Stable rules belong in `AGENTS.md`, `README.md`, `docs/repo-index.md`, or
 `docs/HARNESS_RUNTIME.md`; session facts and phase transitions are appended here.
 
 ## Current Snapshot
-- phase: handoff
+- phase: ship
 - source_of_truth:
   - `AGENTS.md`
   - `docs/repo-index.md`
@@ -14,13 +14,13 @@ Stable rules belong in `AGENTS.md`, `README.md`, `docs/repo-index.md`, or
   - `codex/skills/delivery-harness-framework/SKILL.md`
 - blocked_sources: none
 - unsafe_inputs: none
-- next_safe_task: Create a fresh isolated branch/worktree from current main, rebuild only the 6eada3b Freeze-Review Policy plus skills_managed_present --skip-check behavior and focused tests, exclude historical harness-state changes and all a3a94a3 content, then run focused and full gates before deciding whether to delete codex/mce-20260608-freeze-review-policy.
+- next_safe_task: Fast-forward origin/main to the isolated implementation branch, verify remote containment, then delete codex/mce-20260608-freeze-review-policy and append a post-delete handoff checkpoint before removing the isolated worktree.
 - required_commands:
   - `python3 test_runner.py`
   - `git diff --check`
   - `./scripts/verify_codex_env.sh --repo-root "$(pwd)" --codex-home "$HOME/.codex" --claude-home "$HOME/.claude"`
-- latest_checkpoint: 2026-07-13T10:34:24-04:00 Reviewed diverged freeze-review-policy branch: retire a3a94a3 as already integrated; preserve and rebuild only the still-missing 6eada3b policy and skip-check intent
-- latest_verification: 2026-07-13T10:34:24-04:00 command=git show/current-main assertions for legacy agent evidence, Freeze-Review Policy, and skills_managed_present skip behavior; python3 -c 'import test_runner as t; t.test_agent_dispatch_gate()'; exit_code=0; key_output=a3 behavior exists on main via 86d5f29 and agent dispatch gate passes; 6e freeze-review policy and skills_managed_present skip behavior are absent on main but present on the old branch; whole patch does not apply cleanly to the current user-owned worktree
+- latest_checkpoint: 2026-07-13T11:12:17-04:00 Rebuilt the retained 6eada3b Freeze-Review Policy and managed-skill named-skip behavior in an isolated worktree; dual committee passed
+- latest_verification: 2026-07-13T11:12:17-04:00 command=python3 test_runner.py; verify_codex_env.sh ordinary and --skip-check skills_managed_present; bash -n; git diff --check; Codex and Claude dual committee; exit_code=0; key_output=ran=69 passed=69 skipped=0 failed=0; ordinary PASS and named SKIP both Verification passed; absent-directory RED/GREEN closed; Codex=10/10; Claude blind final=10/10; ledger closed
 
 ## State Log
 
@@ -1894,3 +1894,24 @@ Stable rules belong in `AGENTS.md`, `README.md`, `docs/repo-index.md`, or
 - blockers:
   - scripts/verify_codex_env.sh and test_runner.py contain user-owned changes; do not apply or cherry-pick 6eada3b in this worktree. The old branch remains preserved until the rebuilt slice lands and verifies.
 - next_safe_task: Create a fresh isolated branch/worktree from current main, rebuild only the 6eada3b Freeze-Review Policy plus skills_managed_present --skip-check behavior and focused tests, exclude historical harness-state changes and all a3a94a3 content, then run focused and full gates before deciding whether to delete codex/mce-20260608-freeze-review-policy.
+
+### 2026-07-13T11:12:17-04:00
+- phase: ship
+- event: checkpoint
+- summary: Rebuilt the retained 6eada3b Freeze-Review Policy and managed-skill named-skip behavior in an isolated worktree; dual committee passed
+- git:
+  - branch: codex/mce-20260713-freeze-review-rebuild
+  - latest_commit: 76d12ed
+  - dirty_status: clean
+  - dirty_count: 0
+- changed_surfaces:
+  - `docs/skill-governance-20260608.md`
+  - `scripts/verify_codex_env.sh`
+  - `test_runner.py`
+- verification:
+  - command: `python3 test_runner.py; verify_codex_env.sh ordinary and --skip-check skills_managed_present; bash -n; git diff --check; Codex and Claude dual committee`
+  - exit_code: 0
+  - key_output: ran=69 passed=69 skipped=0 failed=0; ordinary PASS and named SKIP both Verification passed; absent-directory RED/GREEN closed; Codex=10/10; Claude blind final=10/10; ledger closed
+- blockers:
+  - Primary main worktree has 22 user-owned dirty items and will not be mutated; after remote fast-forward it must be reconciled separately before local main can advance safely.
+- next_safe_task: Fast-forward origin/main to the isolated implementation branch, verify remote containment, then delete codex/mce-20260608-freeze-review-policy and append a post-delete handoff checkpoint before removing the isolated worktree.
