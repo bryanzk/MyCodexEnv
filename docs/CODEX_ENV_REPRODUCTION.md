@@ -24,6 +24,9 @@
 - Harness runtime policy, compatibility evidence schema, and split evidence schemas are synced into `~/.codex/runtime/*`; local evidence logs are written under `~/.codex/harness/evidence/*` and are not committed.
 - `codex/runtime/resolve_codex_cli.sh` validates every candidate with `--version` before use, prefers a functional npm global CLI, and then falls back across the current ChatGPT/Codex app bundle paths, so stale npm/Homebrew shims do not satisfy automation checks.
 - `codex/hooks/model_router.py` is synced as the prompt/subtask model router. It emits a non-blocking JSON recommendation for `gpt-5.4-mini`, `gpt-5.4`, or `gpt-5.5` based on complexity and quality-floor signals; runtimes or wrapper scripts that can switch models may consume the recommendation directly.
+- `codex/hooks/dhf_preprompt.py` is the only global DHF `UserPromptSubmit` dispatcher. It treats malformed, non-dict, or missing-cwd payloads as continue-only, applies `no dhf` / `skip dhf` and Chinese equivalents before any routing, injects generic DHF context only for explicit non-ShipQ activation such as complex/resume/takeover/handoff/state-conflict prompts, and lazily loads the ShipQ adapter only when `cwd` is under the configured ShipQ root.
+- `DHF_PREPROMPT_ALLOW_UNTRUSTED_TEST_PATHS=1` and the scanner's hidden `--now` argument are deterministic test seams only. Never set the former in a normal Codex hook environment because it disables the adapter trusted-root check.
+- `codex/hooks/shipq_dhf_preprompt.py` remains a synced adapter file for ShipQ cwd only; it is not registered directly in `codex/hooks.json`, and ordinary non-ShipQ prompts must not import, read, execute, or leak adapter-specific context.
 
 ## Skills Source of Truth
 - Repository source of truth is `codex/skills/*`.
@@ -49,6 +52,61 @@ python3 scripts/sync_gstack_vendor.py --repo-root "$(pwd)" --source https://gith
 python3 scripts/sync_gstack_vendor.py --repo-root "$(pwd)" --source https://github.com/garrytan/gstack.git
 python3 test_runner.py
 ```
+
+## Codex Thread Discipline and Fluent Triage
+
+Thread discipline and old-session triage are guaranteed in three layers:
+
+1. **Agent policy (best effort, immediate).** `codex/AGENTS.md` owns the
+   global contract: each task freezes a `THREAD_DISCIPLINE_V1` anchor envelope
+   (one task, one evidence-backed `repo_anchor`, one `mode_anchor`) and carries
+   a `THREAD_DISCIPLINE_SUMMARY_V1` marker across summaries. A confirmed first
+   compaction refreshes a concise checkpoint; a confirmed second compaction, or
+   an unknown/conflicting compaction ordinal, stops normal work and returns a
+   terminal chat handoff. Chat handoff is the default: a repo-native handoff
+   file requires the original task to have explicitly authorized the exact
+   documentation path, and archive or apply authorization does not imply
+   file-write authorization.
+2. **Deterministic weekly audit (report-only).** The scanner
+   `codex/skills/codex-fluent/scripts/report_active_sessions.py` reads only
+   `CODEX_HOME/sessions/**/*.jsonl` and `CODEX_HOME/session_index.jsonl`,
+   counts compactions from decoded top-level JSONL objects with
+   `type == "compacted"`, and ranks eligible non-subagent sessions by
+   transcript size. Invocation:
+
+   ```bash
+   python3 ~/.codex/skills/codex-fluent/scripts/report_active_sessions.py \
+     --codex-home ~/.codex --older-than-days 30 --limit 30 --format markdown
+   ```
+
+   Defaults: 30-day window (`older_than_days >= 0`), limit 30 (inclusive
+   range 20–50). The primary size ranking is immutable; a separate
+   `returned_handoff_queue` (scope `returned-window-only`) references
+   `primary_rank` for returned candidates with two or more compactions.
+   Repository identity is evidence-backed and nullable (`repo_root` is `null`
+   with provenance `unknown` under the current persisted schema); the scanner
+   never infers a repository from `cwd`. It never writes file content or
+   explicit metadata and never archives, deletes, moves, prunes, rotates,
+   normalizes, or applies. Its output is `sensitive-local`: ranking remains
+   operationally usable and Markdown metadata is escaped, but reports can
+   still contain thread titles, IDs, and local paths. Do not publish or paste
+   them into shared systems without review and redaction.
+3. **Future Desktop lifecycle hard trigger.** An immediate hard guarantee at
+   compaction time requires a future Codex Desktop lifecycle API exposing the
+   thread ID and compaction ordinal. The weekly scanner is a deterministic
+   audit, not a lifecycle hook, and is not represented as an equivalent
+   trigger.
+
+Source and runtime ownership: `codex/AGENTS.md` and
+`codex/skills/codex-fluent` are the repo sources; `~/.codex/AGENTS.md` and
+`~/.codex/skills/codex-fluent` are runtime copies synchronized only through a
+separately authorized activation with persistent backups. The unique
+`weekly-codex-maintenance-report` automation remains the only scheduled
+maintenance report; when separately authorized, its prompt gains a managed
+appendix that runs the scanner in report-only mode with
+`--older-than-days 30 --limit 30`, displays the primary size ranking and the
+bounded `returned_handoff_queue`, and never calls apply behavior or archives
+or deletes anything.
 
 ## Related Documentation
 - `README.md`: top-level quick start and Harness Runtime overview.
@@ -83,7 +141,7 @@ cd MyCodexEnv
 ```bash
 ./scripts/verify_codex_env.sh --repo-root "$(pwd)" --codex-home "$HOME/.codex" --claude-home "$HOME/.claude"
 ./scripts/verify_codex_env.sh --repo-root "$(pwd)" --codex-home "$HOME/.codex" --claude-home "$HOME/.claude" --skip-check app_google_chrome
-python3 scripts/check_skill_compatibility.py --repo-root "$(pwd)" --codex-home "$HOME/.codex" --plugin-root "$HOME/.codex/plugins/cache" --plugin-root "$HOME/.cache/codex-runtimes/codex-primary-runtime/plugins"
+python3 scripts/check_skill_compatibility.py --repo-root "$(pwd)" --codex-home "$HOME/.codex" --claude-home "$HOME/.claude" --plugin-root "$HOME/.codex/plugins/cache" --plugin-root "$HOME/.cache/codex-runtimes/codex-primary-runtime/plugins"
 python3 scripts/check_codex_skill_loader.py --repo-root "$(pwd)" --codex-home "$HOME/.codex"
 ```
 

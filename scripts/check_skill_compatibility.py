@@ -56,7 +56,18 @@ def parse_args() -> argparse.Namespace:
     )
     parser.add_argument("--repo-root", default=".")
     parser.add_argument("--codex-home", default=os.environ.get("CODEX_HOME", str(Path.home() / ".codex")))
+    parser.add_argument(
+        "--claude-home",
+        default=os.environ.get("CLAUDE_HOME", str(Path.home() / ".claude")),
+        help="Accepted for source-stage verification command compatibility; Claude skill checks are not part of this gate.",
+    )
     parser.add_argument("--plugin-root", action="append", default=[], help="Additional plugin/cache root to scan recursively.")
+    parser.add_argument(
+        "--strict-runtime-parity",
+        action="store_true",
+        default=os.environ.get("STRICT_RUNTIME_PARITY") == "1",
+        help="Fail managed runtime drift even when the repo source file is currently dirty.",
+    )
     parser.add_argument("--json", action="store_true", dest="json_output")
     return parser.parse_args()
 
@@ -290,6 +301,21 @@ def managed_runtime_status(repo_skills: Path, runtime_skills: Path) -> dict[str,
     }
 
 
+def source_file_dirty(repo_root: Path, relative: str) -> bool:
+    path = Path("codex") / "skills" / relative
+    commands = [
+        ["git", "diff", "--quiet", "--", str(path)],
+        ["git", "diff", "--cached", "--quiet", "--", str(path)],
+    ]
+    for command in commands:
+        proc = subprocess.run(command, cwd=repo_root, capture_output=True, text=True, check=False)
+        if proc.returncode == 1:
+            return True
+        if proc.returncode not in (0, 1):
+            return False
+    return False
+
+
 def render_markdown(payload: dict[str, Any]) -> str:
     summary = payload["summary"]
     lines = [
@@ -349,6 +375,16 @@ def main() -> int:
             continue
         findings.append(Finding("error", "managed_skill_file_missing", str(codex_home / "skills" / name), name))
     for name in managed["drifted"]:
+        if not args.strict_runtime_parity and source_file_dirty(repo_root, name):
+            findings.append(
+                Finding(
+                    "warning",
+                    "managed_skill_source_stage_drift",
+                    str(codex_home / "skills" / name),
+                    f"{name} differs because the repo source is dirty; runtime sync is still required before strict verification",
+                )
+            )
+            continue
         findings.append(Finding("error", "managed_skill_drift", str(codex_home / "skills" / name), name))
 
     findings.sort(key=lambda item: (item.severity != "error", item.code, item.path, item.detail))

@@ -23,8 +23,8 @@
           },
           {
             "type": "command",
-            "command": "/usr/bin/python3 ~/.codex/hooks/shipq_dhf_preprompt.py",
-            "statusMessage": "Applying ShipQ DHF prompt policy"
+            "command": "/usr/bin/python3 ~/.codex/hooks/dhf_preprompt.py",
+            "statusMessage": "Applying DHF prompt policy"
           }
         ]
       }

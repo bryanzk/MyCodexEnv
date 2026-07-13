@@ -1,12 +1,16 @@
 #!/usr/bin/env python3
 from __future__ import annotations
 
+import datetime as dt
+import hashlib
 import io
 import subprocess
 import importlib.util
 import json
 import sys
 import tempfile
+from contextlib import contextmanager
+from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
 import os
@@ -60,6 +64,7 @@ LIFECYCLE_SKILLS_EN_ARCHIVE_HTML = ROOT / "docs" / "project-lifecycle-harness-fl
 HARNESS_GUARD = ROOT / "codex" / "hooks" / "harness_guard.py"
 HARNESS_OBSERVER = ROOT / "codex" / "hooks" / "harness_observer.py"
 MODEL_ROUTER = ROOT / "codex" / "hooks" / "model_router.py"
+GENERIC_DHF_PREPROMPT = ROOT / "codex" / "hooks" / "dhf_preprompt.py"
 SHIPQ_DHF_PREPROMPT = ROOT / "codex" / "hooks" / "shipq_dhf_preprompt.py"
 
 
@@ -499,6 +504,8 @@ def test_skill_compatibility_checker_contract():
                 str(repo),
                 "--codex-home",
                 str(codex_home),
+                "--claude-home",
+                str(tmp_path / ".claude"),
                 "--json",
             ]
         )
@@ -626,6 +633,7 @@ def test_sync_renders_template_and_copies_skills():
         require((codex_home / "hooks" / "harness_guard.py").exists(), "harness guard hook should be copied")
         require((codex_home / "hooks" / "harness_observer.py").exists(), "harness observer hook should be copied")
         require((codex_home / "hooks" / "model_router.py").exists(), "model router hook should be copied")
+        require((codex_home / "hooks" / "dhf_preprompt.py").exists(), "generic DHF dispatcher hook should be copied")
         require(
             (codex_home / "remote-access.md").read_text(encoding="utf-8")
             == (ROOT / "codex" / "remote-access.md").read_text(encoding="utf-8"),
@@ -1165,6 +1173,7 @@ def test_sync_agents_only_copies_and_backs_up_agents():
         )
         require((codex_home / "hooks" / "harness_guard.py").exists(), "harness guard should be copied in sync-agents-only mode")
         require((codex_home / "hooks" / "model_router.py").exists(), "model router should be copied in sync-agents-only mode")
+        require((codex_home / "hooks" / "dhf_preprompt.py").exists(), "generic DHF dispatcher should be copied in sync-agents-only mode")
         require(
             (codex_home / "AGENTS.md").read_text(encoding="utf-8")
             == (ROOT / "codex" / "AGENTS.md").read_text(encoding="utf-8"),
@@ -1668,26 +1677,350 @@ def test_shipq_dhf_prompt_hook_auto_invokes_skill():
     prompt_hooks = hooks["hooks"]["UserPromptSubmit"][0]["hooks"]
     commands = [hook.get("command", "") for hook in prompt_hooks]
     model_router_command = "/usr/bin/python3 ~/.codex/hooks/model_router.py"
-    dhf_command = "/usr/bin/python3 ~/.codex/hooks/shipq_dhf_preprompt.py"
+    dhf_command = "/usr/bin/python3 ~/.codex/hooks/dhf_preprompt.py"
+    legacy_shipq_command = "/usr/bin/python3 ~/.codex/hooks/shipq_dhf_preprompt.py"
     require(model_router_command in commands, "UserPromptSubmit should run model router")
-    require(dhf_command in commands, "UserPromptSubmit should run ShipQ DHF pre-prompt hook")
+    require(dhf_command in commands, "UserPromptSubmit should run the generic DHF dispatcher")
+    require(legacy_shipq_command not in commands, "UserPromptSubmit must not directly register the ShipQ adapter")
     require(
         commands.index(model_router_command) < commands.index(dhf_command),
-        "ShipQ DHF pre-prompt hook should run after model routing",
+        "generic DHF dispatcher should run after model routing",
     )
 
     hook_text = SHIPQ_DHF_PREPROMPT.read_text(encoding="utf-8")
+    require(str(Path.home()) not in hook_text,
+            "ShipQ adapter source must not expose the current home path")
     for term in [
-        "DHF_LOADER",
-        '"use-skill"',
-        "DHF_SKILL_NAME",
         "load_dhf_context()",
         "BEGIN AUTO-INVOKED delivery-harness-framework",
-        "DHF auto-invocation fallback",
     ]:
         require(term in hook_text, f"ShipQ DHF hook should include auto invocation term: {term}")
 
+    for legacy_term in [
+        "DHF_LOADER",
+        "superpowers-codex",
+        "DHF auto-invocation fallback",
+    ]:
+        require(legacy_term not in hook_text, f"ShipQ DHF hook should not retain legacy loader term: {legacy_term}")
+
+    spec = importlib.util.spec_from_file_location("shipq_dhf_preprompt_test", SHIPQ_DHF_PREPROMPT)
+    require(spec is not None and spec.loader is not None, "ShipQ DHF hook should be importable")
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    with tempfile.TemporaryDirectory() as tmp:
+        tmp_path = Path(tmp)
+        skill_path = tmp_path / "delivery-harness-framework.md"
+        skill_path.write_text("DHF direct context\n", encoding="utf-8")
+        module.SHIPQ_ROOT = tmp_path.resolve()
+        module.DHF_SKILL = str(skill_path)
+        response = module.build_response({"cwd": str(tmp_path), "prompt": "continue ShipQ work"})
+        context = response["hookSpecificOutput"]["additionalContext"]
+        require("DHF direct context" in context, "ShipQ DHF hook should inject the synchronized skill content")
+        require("DHF auto-invocation fallback" not in context, "ShipQ DHF hook should not inject fallback errors")
+
     print("[PASS] ShipQ DHF prompt hook auto invocation")
+
+
+def _load_generic_dhf_module():
+    spec = importlib.util.spec_from_file_location("dhf_preprompt_test", GENERIC_DHF_PREPROMPT)
+    require(spec is not None and spec.loader is not None, "generic DHF dispatcher should be importable")
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
+
+
+def _run_generic_dhf_hook(payload, *, extra_env=None):
+    env = os.environ.copy()
+    env.update(extra_env or {})
+    input_text = payload if isinstance(payload, str) else json.dumps(payload)
+    proc = subprocess.run(
+        [sys.executable, str(GENERIC_DHF_PREPROMPT)],
+        input=input_text,
+        capture_output=True,
+        text=True,
+        check=False,
+        env=env,
+    )
+    stdout = proc.stdout.strip()
+    parsed = json.loads(stdout) if stdout else None
+    return proc.returncode, parsed, proc.stdout, proc.stderr
+
+
+def _assert_continue_only(response, message):
+    require(response == {"continue": True}, message)
+
+
+def _file_fingerprint(path):
+    stat = path.stat()
+    return {
+        "sha256": hashlib.sha256(path.read_bytes()).hexdigest(),
+        "size": stat.st_size,
+        "mtime_ns": stat.st_mtime_ns,
+        "mode": stat.st_mode,
+    }
+
+
+def _fixture_tree_fingerprint(root):
+    files = sorted(path for path in root.rglob("*") if path.is_file())
+    return {
+        str(path.relative_to(root)): _file_fingerprint(path)
+        for path in files
+    }
+
+
+def test_dhf_dispatcher_global_registration_and_hook_order():
+    hooks = json.loads((ROOT / "codex" / "hooks.json").read_text(encoding="utf-8"))
+    prompt_hooks = hooks["hooks"]["UserPromptSubmit"][0]["hooks"]
+    commands = [hook.get("command", "") for hook in prompt_hooks]
+    model_router_command = "/usr/bin/python3 ~/.codex/hooks/model_router.py"
+    generic_command = "/usr/bin/python3 ~/.codex/hooks/dhf_preprompt.py"
+    shipq_command = "/usr/bin/python3 ~/.codex/hooks/shipq_dhf_preprompt.py"
+    require(GENERIC_DHF_PREPROMPT.exists(), "generic DHF dispatcher source must exist")
+    require(model_router_command in commands, "model router must remain globally registered")
+    require(generic_command in commands, "generic DHF dispatcher must be globally registered")
+    require(shipq_command not in commands, "ShipQ adapter must not be globally registered")
+    dispatcher_text = GENERIC_DHF_PREPROMPT.read_text(encoding="utf-8")
+    require(str(Path.home()) not in dispatcher_text, "generic dispatcher must not expose the current home path")
+    require("Path.home()" in dispatcher_text, "generic dispatcher defaults must be home-relative")
+    require(
+        commands.index(model_router_command) < commands.index(generic_command),
+        "generic DHF dispatcher must run after model router",
+    )
+    reproduction = (ROOT / "docs" / "CODEX_ENV_REPRODUCTION.md").read_text(encoding="utf-8")
+    require("DHF_PREPROMPT_ALLOW_UNTRUSTED_TEST_PATHS=1" in reproduction
+            and "test seams only" in reproduction,
+            "reproduction docs must identify the adapter trust bypass as test-only")
+    print("[PASS] DHF dispatcher global registration and hook order")
+
+
+def test_dhf_dispatcher_malformed_payloads_continue_only():
+    for input_text in ["{malformed", "[]", json.dumps({"prompt": "resume this"})]:
+        code, response, stdout, stderr = _run_generic_dhf_hook(input_text)
+        require(code == 0, f"malformed/non-dict/missing-cwd payload should not block: {stderr}")
+        _assert_continue_only(response, "malformed/non-dict/missing-cwd payload should be continue-only")
+        require(stdout.strip() == json.dumps({"continue": True}), "stdout must contain only compact JSON")
+        require("diagnostic=" in stderr, "stderr should carry the blocked diagnostic")
+        require("additionalContext" not in stdout, "invalid payloads must not inject context")
+    print("[PASS] DHF dispatcher malformed payload contract")
+
+
+def test_dhf_dispatcher_runtime_errors_fail_open():
+    cases = [
+        (
+            {"cwd": "/tmp/OtherRepo", "prompt": "resume complex handoff"},
+            {"DHF_PREPROMPT_SKILL": "/tmp/missing-dhf-skill"},
+            "FileNotFoundError",
+        ),
+        (
+            {"cwd": "/tmp/ShipQ", "prompt": "ordinary prompt"},
+            {
+                "DHF_PREPROMPT_SHIPQ_ROOT": "/tmp/ShipQ",
+                "DHF_PREPROMPT_SHIPQ_ADAPTER": "/tmp/missing-shipq-adapter.py",
+            },
+            "RuntimeError",
+        ),
+        (
+            {"cwd": "invalid\x00cwd", "prompt": "resume complex handoff"},
+            {},
+            "",
+        ),
+    ]
+    for payload, extra_env, expected_error in cases:
+        code, response, stdout, stderr = _run_generic_dhf_hook(payload, extra_env=extra_env)
+        require(code == 0, f"runtime routing errors must fail open: {stderr}")
+        _assert_continue_only(response, "runtime routing errors must return continue-only")
+        require(stdout.strip() == json.dumps({"continue": True}), "fail-open stdout must contain only compact JSON")
+        require("diagnostic=" in stderr, "fail-open stderr should carry a bounded diagnostic")
+        require("Traceback" not in stderr, "fail-open errors must not emit a traceback")
+        if expected_error:
+            require(
+                f"runtime-error:{expected_error}" in stderr,
+                f"fail-open diagnostic missing {expected_error}: {stderr}",
+            )
+        if payload.get("cwd") == "invalid\x00cwd":
+            require("diagnostic=invalid-cwd" in stderr,
+                    "invalid cwd must have a distinct bounded diagnostic")
+    print("[PASS] DHF dispatcher runtime errors fail open")
+
+
+def test_dhf_dispatcher_invalid_adapter_responses_fail_open():
+    with tempfile.TemporaryDirectory() as tmp:
+        shipq_root = Path(tmp) / "ShipQ"
+        shipq_root.mkdir()
+        adapter = Path(tmp) / "adapter.py"
+        for expression in (
+            "None",
+            "[]",
+            "{'continue': False}",
+            "{'continue': True, 'value': {1, 2}}",
+            "{'continue': True, 'decision': 'unexpected'}",
+        ):
+            adapter.write_text(
+                f"def build_response(_payload):\n    return {expression}\n",
+                encoding="utf-8",
+            )
+            code, response, stdout, stderr = _run_generic_dhf_hook(
+                {"cwd": str(shipq_root), "prompt": "ordinary"},
+                extra_env={
+                    "DHF_PREPROMPT_SHIPQ_ROOT": str(shipq_root),
+                    "DHF_PREPROMPT_SHIPQ_ADAPTER": str(adapter),
+                    "DHF_PREPROMPT_ALLOW_UNTRUSTED_TEST_PATHS": "1",
+                },
+            )
+            require(code == 0, f"invalid adapter response must fail open: {stderr}")
+            _assert_continue_only(response, "invalid adapter response must return continue-only")
+            require(stdout.strip() == json.dumps({"continue": True}), "fail-open stdout must stay valid JSON")
+            require("diagnostic=runtime-error:" in stderr and "Traceback" not in stderr,
+                    "invalid adapter response must emit only a bounded diagnostic")
+    print("[PASS] DHF dispatcher invalid adapter responses fail open")
+
+
+def test_dhf_dispatcher_shipq_non_shipq_truth_table():
+    module = _load_generic_dhf_module()
+    with tempfile.TemporaryDirectory() as tmp:
+        tmp_path = Path(tmp)
+        shipq_root = tmp_path / "ShipQ"
+        other_root = tmp_path / "OtherRepo"
+        shipq_root.mkdir()
+        other_root.mkdir()
+        adapter = tmp_path / "shipq_adapter.py"
+        adapter.write_text(
+            "def build_response(payload):\n"
+            "    return {'continue': True, 'hookSpecificOutput': {'hookEventName': 'UserPromptSubmit', 'additionalContext': 'ShipQ adapter context'}}\n",
+            encoding="utf-8",
+        )
+        skill = tmp_path / "DHF.md"
+        skill.write_text("# Delivery Harness Framework\n\nGeneric lifecycle context only.\n", encoding="utf-8")
+        module.SHIPQ_ROOT = shipq_root
+        module.SHIPQ_ADAPTER = adapter
+        module.DHF_SKILL = skill
+        module.ALLOW_UNTRUSTED_ADAPTER = False
+        try:
+            module.load_shipq_adapter()
+        except RuntimeError as exc:
+            require("trusted hooks root" in str(exc), "untrusted adapter path must fail with a bounded diagnostic")
+        else:
+            require(False, "untrusted adapter path must not execute")
+        adapter_link = tmp_path / "adapter-link.py"
+        adapter_link.symlink_to(adapter)
+        module.SHIPQ_ADAPTER = adapter_link
+        module.ALLOW_UNTRUSTED_ADAPTER = True
+        try:
+            module.load_shipq_adapter()
+        except RuntimeError as exc:
+            require("symlink" in str(exc), "symlink adapter path must fail with a bounded diagnostic")
+        else:
+            require(False, "symlink adapter path must not execute")
+        module.SHIPQ_ADAPTER = adapter
+        module.ALLOW_UNTRUSTED_ADAPTER = True
+
+        cases = [
+            ({"cwd": str(other_root), "prompt": "rename this variable"}, False, "ordinary non-ShipQ prompt"),
+            ({"cwd": str(other_root), "prompt": "resume this complex implementation handoff"}, True, "activated non-ShipQ prompt"),
+            ({"cwd": str(shipq_root), "prompt": "ordinary quote work"}, True, "ShipQ ordinary prompt"),
+            ({"cwd": str(shipq_root / "nested"), "prompt": "complex quote work"}, True, "ShipQ nested prompt"),
+        ]
+        for payload, should_inject, label in cases:
+            response = module.build_response(payload)
+            has_context = "hookSpecificOutput" in response and "additionalContext" in response["hookSpecificOutput"]
+            require(has_context is should_inject, f"truth table mismatch for {label}: {response}")
+        non_shipq_context = module.build_response({"cwd": str(other_root), "prompt": "takeover state-conflict handoff"})[
+            "hookSpecificOutput"
+        ]["additionalContext"]
+        require("Generic DHF pre-prompt dispatcher" in non_shipq_context, "generic activated prompt should load generic context")
+        shipq_context = module.build_response({"cwd": str(shipq_root), "prompt": "ordinary"})["hookSpecificOutput"]["additionalContext"]
+        require(shipq_context == "ShipQ adapter context", "ShipQ prompt should be delegated to adapter unchanged")
+    print("[PASS] DHF dispatcher ShipQ/non-ShipQ truth table")
+
+
+def test_dhf_dispatcher_opt_out_precedence():
+    module = _load_generic_dhf_module()
+    with tempfile.TemporaryDirectory() as tmp:
+        tmp_path = Path(tmp)
+        shipq_root = tmp_path / "ShipQ"
+        other_root = tmp_path / "Other"
+        shipq_root.mkdir()
+        other_root.mkdir()
+        adapter = tmp_path / "shipq_adapter.py"
+        adapter.write_text("raise RuntimeError('ShipQ adapter must not load after opt-out')\n", encoding="utf-8")
+        module.SHIPQ_ROOT = shipq_root
+        module.SHIPQ_ADAPTER = adapter
+        module.DHF_SKILL = tmp_path / "missing-generic.md"
+        for payload in [
+            {"cwd": str(shipq_root), "prompt": "skip dhf but continue quote work"},
+            {"cwd": str(other_root), "prompt": "resume this handoff 不用 dhf"},
+            {"cwd": str(other_root), "prompt": "do not use dhf for this complex handoff"},
+            {"cwd": str(other_root), "prompt": "disable delivery harness for this takeover"},
+            {
+                "cwd": str(shipq_root),
+                "tool_input": {},
+                "input": {"prompt": "do not use dhf"},
+                "arguments": {"prompt": "resume complex handoff"},
+            },
+        ]:
+            _assert_continue_only(module.build_response(payload), "opt-out should win before ShipQ/generic routing")
+    print("[PASS] DHF dispatcher opt-out precedence")
+
+
+def test_dhf_dispatcher_lazy_import_and_no_write_snapshot():
+    module = _load_generic_dhf_module()
+    with tempfile.TemporaryDirectory() as tmp:
+        tmp_path = Path(tmp)
+        shipq_root = tmp_path / "ShipQ"
+        other_root = tmp_path / "Other"
+        shipq_root.mkdir()
+        other_root.mkdir()
+        adapter = tmp_path / "shipq_adapter.py"
+        adapter.write_text("raise RuntimeError('non-ShipQ route must not read or import ShipQ adapter')\n", encoding="utf-8")
+        skill = tmp_path / "DHF.md"
+        skill.write_text("generic context\n", encoding="utf-8")
+        payloads = [
+            {"cwd": str(other_root), "prompt": "ordinary prompt"},
+            {"cwd": str(other_root), "prompt": "resume complex handoff"},
+        ]
+        module.SHIPQ_ROOT = shipq_root
+        module.SHIPQ_ADAPTER = adapter
+        module.DHF_SKILL = skill
+        before = _fixture_tree_fingerprint(tmp_path)
+        module.load_shipq_adapter = lambda: (_ for _ in ()).throw(RuntimeError("ShipQ adapter loader was called"))
+        ordinary = module.build_response(payloads[0])
+        activated = module.build_response(payloads[1])
+        after = _fixture_tree_fingerprint(tmp_path)
+        _assert_continue_only(ordinary, "non-ShipQ ordinary prompt should not load any adapter or context")
+        require("additionalContext" in activated["hookSpecificOutput"], "activated generic prompt should inject context")
+        require(before == after, "dispatcher must not write files or mutate fixture snapshots")
+    print("[PASS] DHF dispatcher lazy import and no-write snapshot")
+
+
+def test_dhf_dispatcher_stdout_stderr_and_no_leak_output():
+    with tempfile.TemporaryDirectory() as tmp:
+        tmp_path = Path(tmp)
+        skill = tmp_path / "generic-dhf.md"
+        skill.write_text("Generic lifecycle guidance without private project language.\n", encoding="utf-8")
+        code, response, stdout, stderr = _run_generic_dhf_hook(
+            {"cwd": str(tmp_path), "prompt": "resume this complex handoff"},
+            extra_env={
+                "DHF_PREPROMPT_SKILL": str(skill),
+                "DHF_PREPROMPT_SHIPQ_ROOT": str(tmp_path / "ShipQ"),
+                "DHF_PREPROMPT_SHIPQ_ADAPTER": str(tmp_path / "missing_adapter.py"),
+            },
+        )
+        require(code == 0, f"activated generic hook should succeed: {stderr}")
+        require(stdout.endswith("\n"), "stdout JSON should end with one newline")
+        require(json.loads(stdout) == response, "stdout should be parseable as the exact JSON response")
+        require("diagnostic=" in stderr and "generic-activated" in stderr, "stderr should carry route diagnostic")
+        require("diagnostic=" not in stdout, "diagnostic must stay out of stdout JSON")
+        context = response["hookSpecificOutput"]["additionalContext"]
+        forbidden = [
+            "/Users/example/Codes/CursorDeveloper/ShipQ",
+            "ShipQ",
+            "quote",
+            "Customer account",
+            "Get Rate",
+        ]
+        for term in forbidden:
+            require(term not in context, f"generic output must not leak private/project term: {term}")
+    print("[PASS] DHF dispatcher stdout/stderr and no-leak output")
 
 
 def test_harness_agent_brief_template():
@@ -5225,6 +5558,626 @@ def test_runner_reports_skips_distinctly():
     print("[PASS] runner reports skips distinctly")
 
 
+def test_codex_fluent_active_session_report():
+    script = ROOT / "codex" / "skills" / "codex-fluent" / "scripts" / "report_active_sessions.py"
+    require(script.exists(), "codex-fluent active-session scanner missing")
+    with tempfile.TemporaryDirectory() as tmp:
+        codex_home = Path(tmp) / ".codex"
+        sessions = codex_home / "sessions" / "2026" / "05" / "01"
+        sessions.mkdir(parents=True)
+        index = codex_home / "session_index.jsonl"
+        now = dt.datetime(2026, 7, 10, tzinfo=dt.timezone.utc)
+
+        old = "2026-05-01T00:00:00Z"
+        recent = "2026-07-09T00:00:00Z"
+        rows = [
+            {"timestamp": old, "type": "session_meta", "payload": {
+                "id": "thread-large", "timestamp": old, "cwd": "/work/display-only"}},
+            {"timestamp": old, "type": "compacted", "payload": {}},
+        ]
+        large = sessions / "rollout-thread-large.jsonl"
+        large.write_text(
+            json.dumps(rows[0], separators=(",", ":")) + "\n"
+            + json.dumps(rows[1], indent=None) + "\n"
+            + json.dumps({"type": "event_msg", "payload": {
+                "message": "embedded only: \\\"type\\\":\\\"compacted\\\""}}) + "\n"
+            + json.dumps({"type": "event_msg", "payload": {"type": "compacted"}}) + "\n"
+            + json.dumps({"type": "compacted", "payload": {"pad": "x" * 4000}}) + "\n",
+            encoding="utf-8",
+        )
+        tie_a = sessions / "rollout-thread-a.jsonl"
+        tie_b = sessions / "rollout-thread-b.jsonl"
+        for path, thread_id in ((tie_a, "thread-a"), (tie_b, "thread-b")):
+            path.write_text(json.dumps({"timestamp": old, "type": "session_meta", "payload": {
+                "id": thread_id, "timestamp": old, "cwd": "/work/not-a-repo"}}) + "\n", encoding="utf-8")
+        tie_b.write_bytes(tie_b.read_bytes().ljust(tie_a.stat().st_size, b" "))
+        (sessions / "rollout-recent.jsonl").write_text(json.dumps({
+            "timestamp": recent, "type": "session_meta", "payload": {
+                "id": "thread-recent", "timestamp": recent, "cwd": "/work/recent"}}) + "\n", encoding="utf-8")
+        (sessions / "rollout-agent.jsonl").write_text(json.dumps({
+            "timestamp": old, "type": "session_meta", "payload": {
+                "id": "thread-agent", "timestamp": old, "cwd": "/work/agent",
+                "thread_source": "subagent"}}) + "\n", encoding="utf-8")
+        (sessions / "rollout-malformed.jsonl").write_text("{malformed\n", encoding="utf-8")
+        (sessions / "rollout-null-payload-timestamp.jsonl").write_text(json.dumps({
+            "timestamp": old,
+            "type": "session_meta",
+            "payload": {"id": "thread-null-payload-timestamp", "timestamp": None, "cwd": "/work/null"},
+        }) + "\n", encoding="utf-8")
+        index.write_text(
+            json.dumps({"id": "thread-large", "thread_name": "Large task"}) + "\n"
+            + "{malformed index\n",
+            encoding="utf-8",
+        )
+        before = _fixture_tree_fingerprint(codex_home)
+
+        proc = subprocess.run([
+            sys.executable, str(script), "--codex-home", str(codex_home),
+            "--older-than-days", "30", "--limit", "20", "--format", "json",
+            "--now", now.isoformat(),
+        ], capture_output=True, text=True, check=False,
+           env={**os.environ, "PYTHONDONTWRITEBYTECODE": "1"})
+        require(proc.returncode == 0, f"scanner failed: {proc.stderr}")
+        report = json.loads(proc.stdout)
+        require(report["data_classification"] == "sensitive-local",
+                "JSON report must identify sensitive local metadata")
+        candidates = report["candidates"]
+        require(any(item["thread_id"] == "thread-null-payload-timestamp" for item in candidates),
+                "null payload timestamp must fall back to the valid event timestamp")
+        require(all(item["thread_id"] not in {"thread-agent", "thread-recent"} for item in candidates),
+                "scanner must exclude subagents and recent sessions")
+        large_row = next(item for item in candidates if item["thread_id"] == "thread-large")
+        require(large_row["compaction_count"] == 2, "only decoded top-level compactions count")
+        spaced_naive_count = large.read_text(encoding="utf-8").count('"type": "compacted"')
+        require(spaced_naive_count == 3,
+                "fixture must make spaced substring counting overcount the nested payload")
+        require(large_row["compaction_count"] != spaced_naive_count,
+                "scanner must reject naive spaced substring counting")
+        require(large_row["handoff_required"] is True, "second compaction requires handoff")
+        require(large_row["repo_root"] is None
+                and large_row["repo_root_provenance"] == "unknown",
+                "real persisted schema must not invent a canonical repo root")
+        unknown = next(item for item in candidates if item["thread_id"] == "thread-a")
+        require(unknown["repo_root"] is None and unknown["repo_root_provenance"] == "unknown",
+                "scanner must not infer a repo from cwd")
+        tie_ids = [item["thread_id"] for item in candidates if item["thread_id"] in {"thread-a", "thread-b"}]
+        require(tie_ids == ["thread-a", "thread-b"], "size ties need deterministic thread-id ordering")
+        require([item["primary_rank"] for item in candidates] == list(range(1, len(candidates) + 1)),
+                "primary size ranks must be contiguous")
+        require(all(entry["primary_rank"] == next(
+            item["primary_rank"] for item in candidates if item["thread_id"] == entry["thread_id"])
+            for entry in report["returned_handoff_queue"]),
+                "returned handoff queue must preserve primary ranks")
+        require(report["queue_scope"] == "returned-window-only",
+                "queue scope must disclose the bounded returned window")
+        require(report["skipped_session_lines"] >= 1 and report["skipped_index_lines"] >= 1,
+                "malformed session and index lines must be reported")
+        after = _fixture_tree_fingerprint(codex_home)
+        require(set(before) == set(after), "fixture scan must preserve the complete file path set")
+        require(before == after,
+                "fixture scan must preserve sha256/size/mtime/mode for every original file")
+        # atime is intentionally not asserted: a read-only scanner cannot
+        # control OS or mount read-access metadata behavior.
+    print("[PASS] codex-fluent active session report")
+
+
+def test_codex_fluent_active_session_boundaries():
+    script = ROOT / "codex" / "skills" / "codex-fluent" / "scripts" / "report_active_sessions.py"
+    with tempfile.TemporaryDirectory() as tmp:
+        home = Path(tmp) / ".codex"
+        (home / "sessions").mkdir(parents=True)
+        for value, expected in ((19, 2), (20, 0), (50, 0), (51, 2)):
+            proc = subprocess.run([sys.executable, str(script), "--codex-home", str(home),
+                                   "--limit", str(value), "--format", "json"],
+                                  capture_output=True, text=True, check=False)
+            require(proc.returncode == expected, f"unexpected limit result for {value}")
+        valid_zero_age = subprocess.run([sys.executable, str(script), "--codex-home", str(home),
+                                         "--older-than-days", "0", "--format", "json"],
+                                        capture_output=True, text=True, check=False)
+        require(valid_zero_age.returncode == 0, "older-than-days must accept zero")
+        invalid_age = subprocess.run([sys.executable, str(script), "--codex-home", str(home),
+                                      "--older-than-days", "-1"],
+                                     capture_output=True, text=True, check=False)
+        require(invalid_age.returncode == 2, "older-than-days must reject negative values")
+        require("older-than-days must be at least 0" in invalid_age.stderr,
+                "negative-age error must be explicit")
+        missing_home = subprocess.run([
+            sys.executable, str(script), "--codex-home", str(Path(tmp) / "missing"),
+            "--format", "json",
+        ], capture_output=True, text=True, check=False)
+        require(missing_home.returncode == 2,
+                "missing codex home must not look like a successful empty report")
+        require("codex home must be an existing directory" in missing_home.stderr,
+                "missing codex home error must be explicit")
+    print("[PASS] codex-fluent active session boundaries")
+
+
+@dataclass(frozen=True)
+class _FixtureSession:
+    thread_id: str
+    path: Path
+    started_at: str | None
+    size_bytes: int
+    compaction_count: int
+
+
+@dataclass(frozen=True)
+class _SessionFixture:
+    home: Path
+    now: dt.datetime
+    eligible_rows: tuple[_FixtureSession, ...]
+
+
+def _write_session(
+    path,
+    *,
+    thread_id,
+    started_at,
+    target_size,
+    compaction_count=0,
+    source_fields=None,
+    omit_timestamp=False,
+):
+    payload = {"id": thread_id, "cwd": f"/work/{thread_id}"}
+    event = {"type": "session_meta", "payload": payload}
+    if not omit_timestamp:
+        event["timestamp"] = started_at
+        payload["timestamp"] = started_at
+    payload.update(source_fields or {})
+    events = [event]
+    events.extend(
+        {"timestamp": started_at, "type": "compacted", "payload": {}}
+        for _ in range(compaction_count)
+    )
+    prefix = b"".join(
+        (json.dumps(row, separators=(",", ":")) + "\n").encode("utf-8")
+        for row in events
+    )
+    empty_pad = (
+        json.dumps(
+            {"type": "event_msg", "payload": {"message": ""}},
+            separators=(",", ":"),
+        )
+        + "\n"
+    ).encode("utf-8")
+    pad_length = target_size - len(prefix) - len(empty_pad)
+    require(pad_length >= 0, f"target size too small for {thread_id}")
+    pad = (
+        json.dumps(
+            {"type": "event_msg", "payload": {"message": "x" * pad_length}},
+            separators=(",", ":"),
+        )
+        + "\n"
+    ).encode("utf-8")
+    content = prefix + pad
+    require(len(content) == target_size, f"exact fixture size drift for {thread_id}")
+    path.write_bytes(content)
+    return _FixtureSession(
+        thread_id=thread_id,
+        path=path,
+        started_at=started_at,
+        size_bytes=target_size,
+        compaction_count=compaction_count,
+    )
+
+
+@contextmanager
+def _session_fixture(count=60, eligible=56):
+    require(count == 60 and eligible == 56, "fixture contract is exactly 60/56")
+    with tempfile.TemporaryDirectory() as tmp:
+        home = Path(tmp) / ".codex"
+        sessions = home / "sessions" / "2026" / "05" / "01"
+        sessions.mkdir(parents=True)
+        now = dt.datetime(2026, 7, 10, tzinfo=dt.timezone.utc)
+        old = "2026-05-01T00:00:00Z"
+        recent = "2026-07-09T00:00:00Z"
+        rows = []
+        index_rows = []
+        for index in range(count):
+            thread_id = f"thread-{index:02d}"
+            is_eligible = index < eligible
+            is_subagent = index >= 58
+            started_at = old if index < 56 or is_subagent else recent
+            source_fields = {"thread_source": "subagent"} if is_subagent else {}
+            compactions = 2 + (index % 3) if is_eligible else 0
+            row = _write_session(
+                sessions / f"rollout-{thread_id}.jsonl",
+                thread_id=thread_id,
+                started_at=started_at,
+                target_size=20_000 - (index * 100),
+                compaction_count=compactions,
+                source_fields=source_fields,
+            )
+            index_rows.append({"id": thread_id, "thread_name": f"Task {index:02d}"})
+            if is_eligible:
+                rows.append(row)
+        require(len(rows) == eligible, "fixture must expose exactly 56 eligible rows")
+        (home / "session_index.jsonl").write_text(
+            "".join(json.dumps(row, separators=(",", ":")) + "\n" for row in index_rows),
+            encoding="utf-8",
+        )
+        yield _SessionFixture(home=home, now=now, eligible_rows=tuple(rows))
+
+
+def _run_report(home, *, limit, now, output_format="json"):
+    script = ROOT / "codex" / "skills" / "codex-fluent" / "scripts" / "report_active_sessions.py"
+    proc = subprocess.run(
+        [
+            sys.executable,
+            str(script),
+            "--codex-home",
+            str(home),
+            "--older-than-days",
+            "30",
+            "--limit",
+            str(limit),
+            "--format",
+            output_format,
+            "--now",
+            now.isoformat(),
+        ],
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    require(proc.returncode == 0, f"scanner failed: {proc.stderr}")
+    return json.loads(proc.stdout) if output_format == "json" else proc.stdout
+
+
+def _expected_size_order(rows):
+    return sorted(rows, key=lambda row: (-row.size_bytes, row.started_at or "", row.thread_id))
+
+
+def _run_timestamp_cases(cases, *, now):
+    with tempfile.TemporaryDirectory() as tmp:
+        home = Path(tmp) / ".codex"
+        sessions = home / "sessions" / "2026" / "06" / "10"
+        sessions.mkdir(parents=True)
+        index_rows = []
+        for index, (thread_id, (started_at, _)) in enumerate(cases.items()):
+            _write_session(
+                sessions / f"rollout-{thread_id}.jsonl",
+                thread_id=thread_id,
+                started_at=started_at,
+                target_size=4_000 + index * 100,
+                omit_timestamp=started_at is None,
+            )
+            index_rows.append({"id": thread_id, "thread_name": thread_id})
+        (home / "session_index.jsonl").write_text(
+            "".join(json.dumps(row) + "\n" for row in index_rows), encoding="utf-8"
+        )
+        report = _run_report(home, limit=20, now=now)
+        returned_ids = {row["thread_id"] for row in report["candidates"]}
+        report["_fixture_eligibility"] = {
+            thread_id: thread_id in returned_ids
+            for thread_id, (started_at, _) in cases.items()
+            if started_at is not None and started_at != "not-a-time"
+        }
+        return report
+
+
+def _eligibility_map(report):
+    return report["_fixture_eligibility"]
+
+
+def _run_equal_size_timestamp_tiebreak_cases():
+    with tempfile.TemporaryDirectory() as tmp:
+        home = Path(tmp) / ".codex"
+        sessions = home / "sessions" / "2026" / "05" / "01"
+        sessions.mkdir(parents=True)
+        cases = [
+            ("same-a", "2026-05-01T02:00:00+02:00"),
+            ("same-b", "2026-05-01T00:00:00Z"),
+            ("offset-later", "2026-05-01T01:30:00+01:00"),
+            ("naive", "2026-05-01T00:00:00"),
+        ]
+        index_rows = []
+        for thread_id, started_at in cases:
+            _write_session(
+                sessions / f"rollout-{thread_id}.jsonl",
+                thread_id=thread_id,
+                started_at=started_at,
+                target_size=4_096,
+            )
+            index_rows.append({"id": thread_id, "thread_name": thread_id})
+        (home / "session_index.jsonl").write_text(
+            "".join(json.dumps(row) + "\n" for row in index_rows),
+            encoding="utf-8",
+        )
+        return _run_report(
+            home,
+            limit=20,
+            now=dt.datetime(2026, 7, 10, tzinfo=dt.timezone.utc),
+        )
+
+
+def _run_source_cases(source_shapes):
+    with tempfile.TemporaryDirectory() as tmp:
+        home = Path(tmp) / ".codex"
+        sessions = home / "sessions" / "2026" / "05" / "01"
+        sessions.mkdir(parents=True)
+        index_rows = []
+        ids = ["thread-source", "nested-source", "unknown-source"]
+        for index, (thread_id, source_fields) in enumerate(zip(ids, source_shapes, strict=True)):
+            _write_session(
+                sessions / f"rollout-{thread_id}.jsonl",
+                thread_id=thread_id,
+                started_at="2026-05-01T00:00:00Z",
+                target_size=4_000 + index * 100,
+                source_fields=source_fields,
+            )
+            index_rows.append({"id": thread_id, "thread_name": thread_id})
+        (home / "session_index.jsonl").write_text(
+            "".join(json.dumps(row) + "\n" for row in index_rows), encoding="utf-8"
+        )
+        return _run_report(
+            home,
+            limit=20,
+            now=dt.datetime(2026, 7, 10, tzinfo=dt.timezone.utc),
+        )
+
+
+@contextmanager
+def _golden_home():
+    with tempfile.TemporaryDirectory() as tmp:
+        home = Path(tmp) / ".codex"
+        sessions = home / "sessions" / "2026" / "05" / "01"
+        sessions.mkdir(parents=True)
+        now = dt.datetime(2026, 7, 10, tzinfo=dt.timezone.utc)
+        large = _write_session(
+            sessions / "rollout-golden-large.jsonl",
+            thread_id="golden-large",
+            started_at="2026-05-01T00:00:00Z",
+            target_size=4_096,
+            compaction_count=2,
+        )
+        small = _write_session(
+            sessions / "rollout-golden-small.jsonl",
+            thread_id="golden-small",
+            started_at="2026-05-01T00:00:00Z",
+            target_size=2_048,
+            compaction_count=0,
+        )
+        (home / "session_index.jsonl").write_text(
+            json.dumps({"id": "golden-large", "thread_name": "Golden large"}) + "\n"
+            + json.dumps({"id": "golden-small", "thread_name": "Golden small"}) + "\n",
+            encoding="utf-8",
+        )
+        yield _SessionFixture(home=home, now=now, eligible_rows=(large, small))
+
+
+def test_codex_fluent_selection_contract():
+    with _session_fixture(count=60, eligible=56) as fixture:
+        all_rows = _run_report(fixture.home, limit=50, now=fixture.now)
+        expected = _expected_size_order(fixture.eligible_rows)
+        require(all_rows["candidate_count"] == 56, "eligible count must be complete")
+        for limit in (20, 30, 50):
+            report = _run_report(fixture.home, limit=limit, now=fixture.now)
+            require(report["returned_count"] == limit, f"limit={limit} count drift")
+            require(
+                [(row["thread_id"], row["primary_rank"])
+                 for row in report["candidates"]]
+                == [(row.thread_id, rank)
+                    for rank, row in enumerate(expected[:limit], 1)],
+                f"limit={limit} must return exact top-N IDs and ranks",
+            )
+        outside = expected[50]
+        require(outside.compaction_count >= 2,
+                "fixture must include a high-compaction eligible item outside top 50")
+        require(outside.thread_id not in {
+            row["thread_id"] for row in all_rows["returned_handoff_queue"]
+        }, "queue must never audit outside the returned top-N window")
+        require(all_rows["queue_scope"] == "returned-window-only",
+                "bounded queue disclosure missing")
+    print("[PASS] codex-fluent selection contract")
+
+
+def test_codex_fluent_timestamp_and_source_contract():
+    cutoff = dt.datetime(2026, 6, 10, 12, 0, tzinfo=dt.timezone.utc)
+    cases = {
+        "cutoff-exact": ("2026-06-10T12:00:00Z", True),
+        "cutoff-minus-one": ("2026-06-10T11:59:59Z", True),
+        "cutoff-plus-one": ("2026-06-10T12:00:01Z", False),
+        "offset-equivalent": ("2026-06-10T08:00:00-04:00", True),
+        "invalid": ("not-a-time", False),
+        "missing": (None, False),
+    }
+    report = _run_timestamp_cases(cases, now=cutoff + dt.timedelta(days=30))
+    require(report["invalid_or_missing_timestamp_count"] == 2,
+            "invalid and missing timestamps must be skipped and counted")
+    require(_eligibility_map(report) == {
+        key: expected for key, (_, expected) in cases.items() if key not in {"invalid", "missing"}
+    }, "eligibility must use inclusive UTC cutoff")
+
+    tie_report = _run_equal_size_timestamp_tiebreak_cases()
+    tie_rows = tie_report["candidates"]
+    require(tie_report["invalid_or_missing_timestamp_count"] == 1,
+            "timezone-naive timestamps must be skipped and counted")
+    require([row["thread_id"] for row in tie_rows] == [
+        "same-a", "same-b", "offset-later",
+    ], "equal-size rows must sort by UTC instant, then thread_id for same instants")
+    require([row["started_at"] for row in tie_rows] == [
+        "2026-05-01T00:00:00.000000Z",
+        "2026-05-01T00:00:00.000000Z",
+        "2026-05-01T00:30:00.000000Z",
+    ], "output must use canonical UTC Z timestamps before applying the tie-break")
+
+    source_report = _run_source_cases([
+        {"thread_source": "subagent"},
+        {"source": {"subagent": {"parent_thread_id": "p"}}},
+        {"source": "unrecognized-shape"},
+    ])
+    require(source_report["excluded_subagent_count"] == 2,
+            "both observed persisted subagent shapes must be excluded")
+    unknown = next(row for row in source_report["candidates"]
+                   if row["thread_id"] == "unknown-source")
+    require(unknown["source_kind"] == "unknown",
+            "unknown shape stays eligible and is disclosed, never guessed")
+    require(unknown["repo_root"] is None
+            and unknown["repo_root_provenance"] == "unknown",
+            "ordinary persisted schema must return nullable repo identity")
+    print("[PASS] codex-fluent timestamp and source contract")
+
+
+def test_codex_fluent_markdown_golden():
+    with _golden_home() as fixture:
+        rendered = _run_report(
+            fixture.home, limit=20, now=fixture.now, output_format="markdown"
+        )
+        expected = (
+            ROOT / "tests" / "fixtures" / "codex_fluent_report.golden.md"
+        ).read_text(encoding="utf-8")
+        require(rendered == expected,
+                "Markdown headings, columns, queue scope, and rows must remain stable")
+    print("[PASS] codex-fluent markdown golden")
+
+
+def test_codex_fluent_markdown_metadata_is_inert():
+    script = ROOT / "codex" / "skills" / "codex-fluent" / "scripts" / "report_active_sessions.py"
+    spec = importlib.util.spec_from_file_location("codex_fluent_report_test", script)
+    require(spec is not None and spec.loader is not None, "codex-fluent scanner should be importable")
+    module = importlib.util.module_from_spec(spec)
+    sys.modules[spec.name] = module
+    try:
+        spec.loader.exec_module(module)
+    finally:
+        sys.modules.pop(spec.name, None)
+    hostile = (
+        "private | title\n![](https://tracker.invalid/pixel) <img src=x> \x1b[31m"
+        "\x1b]8;;https://osc.invalid/track\x07linked\x1b]8;;\x07"
+        " plain https://bare.invalid/path"
+    )
+    report = {
+        "data_classification": "sensitive-local",
+        "candidate_count": 1,
+        "returned_count": 1,
+        "queue_scope": "returned-window-only",
+        "skipped_session_lines": 0,
+        "skipped_index_lines": 0,
+        "invalid_or_missing_timestamp_count": 0,
+        "excluded_subagent_count": 0,
+        "candidates": [{
+            "primary_rank": 1,
+            "size_bytes": 100,
+            "age_days": 40,
+            "compaction_count": 2,
+            "handoff_required": True,
+            "thread_id": hostile,
+            "title": hostile,
+            "cwd_label": hostile,
+            "repo_root": hostile,
+        }],
+        "returned_handoff_queue": [{
+            "primary_rank": 1,
+            "compaction_count": 2,
+            "thread_id": hostile,
+        }],
+    }
+    rendered = module.render_markdown(report)
+    require("data_classification: sensitive-local" in rendered,
+            "Markdown report must identify sensitive local metadata")
+    require("![](" not in rendered and "!\\[\\](" in rendered and "\\<img" in rendered,
+            "persisted metadata must not retain active Markdown or HTML")
+    require("\x1b" not in rendered and "31m" not in rendered and "osc.invalid" not in rendered
+            and "private | title" not in rendered,
+            "control characters and unescaped table delimiters must be inert")
+    require("https://bare.invalid" not in rendered and "https\\:\\/\\/bare.invalid" in rendered,
+            "bare URL schemes must remain readable without GFM autolinking")
+    require("private \\| title" in rendered and "primary_rank | size_bytes" in rendered,
+            "escaping must preserve readable identity and ranking fields")
+    print("[PASS] codex-fluent Markdown metadata inertness")
+
+
+def test_codex_fluent_report_only_contract():
+    root = ROOT / "codex" / "skills" / "codex-fluent"
+    skill = (root / "SKILL.md").read_text(encoding="utf-8")
+    checklist = (root / "references" / "maintenance-checklist.md").read_text(encoding="utf-8")
+    required = [
+        "scripts/report_active_sessions.py", "--older-than-days 30", "--limit 30",
+        "20", "50", "primary_rank", "returned_handoff_queue", "compaction_count",
+        "handoff_required", "report-only", "Do not archive or delete",
+        "queue_scope=returned-window-only", "terminal chat handoff",
+        "sensitive-local", "do not publish",
+    ]
+    for term in required:
+        require(term in skill, f"codex-fluent missing report contract term: {term}")
+    require("Review the 20–50 item returned handoff queue" in checklist,
+            "maintenance checklist must review the bounded queue")
+    combined = skill + "\n" + checklist
+    normalized = " ".join(combined.lower().split())
+    forbidden = [
+        "always write a handoff document",
+        "must write a repo-native handoff",
+        "archive authorization implies handoff-file authorization",
+    ]
+    for phrase in forbidden:
+        require(phrase not in combined.lower(),
+                f"unconditional file handoff conflicts with chat default: {phrase}")
+    require("exact documentation path" in " ".join(combined.split()),
+            "file handoff requires exact-path authorization")
+    require("archive authorization does not imply file-write authorization" in normalized,
+            "archive permission must not imply file-write authorization")
+    require("apply authorization does not imply file-write authorization" in normalized,
+            "apply permission must not imply file-write authorization")
+    require("keep active" in normalized,
+            "no file authorization must keep the task active")
+    print("[PASS] codex-fluent report-only contract")
+
+
+def test_global_agents_thread_discipline_contract():
+    text = (ROOT / "codex" / "AGENTS.md").read_text(encoding="utf-8")
+    normalized = " ".join(text.split())
+    required = [
+        "## Thread Discipline",
+        "THREAD_DISCIPLINE_V1",
+        "THREAD_DISCIPLINE_SUMMARY_V1",
+        "repo_anchor",
+        "repo_anchor_provenance",
+        "mode_anchor",
+        "compaction_ordinal",
+        "checkpoint",
+        "terminal chat handoff",
+        "unknown",
+        "future Codex Desktop lifecycle API",
+        "ANCHOR_MISMATCH_SEQUENCE_V1",
+        "resolve request_repo and request_mode from direct request and already-available workspace evidence",
+        "unknown mismatch",
+        "next_action=terminal_chat_handoff",
+        "forbid new-direction tool calls and edits",
+        "must not probe or partially start the new direction",
+        "<project>-<YYYYMMDD>-<summary>",
+    ]
+    for term in required:
+        require(term in text, f"global AGENTS missing thread discipline term: {term}")
+    require(
+        "Research and verification do not change mode_anchor" in text,
+        "supporting work must remain inside the anchored mode",
+    )
+    for term in [
+        "explicitly authorized the exact documentation path",
+        "Archive authorization does not imply file-write authorization",
+        "Apply authorization does not imply file-write authorization",
+        "keep the task active",
+    ]:
+        require(term in normalized, f"global AGENTS missing handoff authorization term: {term}")
+    require(
+        "Do not automatically create, archive, or delete a task" in text,
+        "global AGENTS must preserve the no-mutation boundary",
+    )
+    sequence_start = text.index("ANCHOR_MISMATCH_SEQUENCE_V1")
+    sequence = text[sequence_start:]
+    ordered_terms = [
+        "1. resolve request_repo and request_mode from direct request and already-available workspace evidence",
+        "2. compare both values with the frozen anchors",
+        "3. on mismatch or unknown mismatch, forbid new-direction tool calls and edits",
+        "4. set next_action=terminal_chat_handoff and return the bounded terminal chat handoff",
+        "5. recommend <project>-<YYYYMMDD>-<summary>",
+    ]
+    positions = [sequence.index(term) for term in ordered_terms]
+    require(positions == sorted(positions), "anchor mismatch handling must preserve its fail-closed order")
+    print("[PASS] global AGENTS thread discipline contract")
+
+
 def test_runner_registry_complete():
     registered = [fn.__name__ for fn in TESTS]
     defined = defined_test_names()
@@ -5272,6 +6225,14 @@ TESTS = [
     test_ci_workflow_runs_green_gate,
     test_skill_governance_audit_cli,
     test_skill_governance_freeze_review_policy_doc,
+    test_dhf_dispatcher_global_registration_and_hook_order,
+    test_dhf_dispatcher_malformed_payloads_continue_only,
+    test_dhf_dispatcher_runtime_errors_fail_open,
+    test_dhf_dispatcher_invalid_adapter_responses_fail_open,
+    test_dhf_dispatcher_shipq_non_shipq_truth_table,
+    test_dhf_dispatcher_opt_out_precedence,
+    test_dhf_dispatcher_lazy_import_and_no_write_snapshot,
+    test_dhf_dispatcher_stdout_stderr_and_no_leak_output,
     test_shipq_dhf_prompt_hook_auto_invokes_skill,
     test_harness_agent_brief_template,
     test_lifecycle_skill_routing_doc_is_discoverable,
@@ -5308,6 +6269,14 @@ TESTS = [
     test_capture_text_auto_classifies_input_types,
     test_headroom_filter_detects_modes_and_reports_stats,
     test_manage_agents_scan_backup_generate_restore,
+    test_global_agents_thread_discipline_contract,
+    test_codex_fluent_active_session_report,
+    test_codex_fluent_active_session_boundaries,
+    test_codex_fluent_selection_contract,
+    test_codex_fluent_timestamp_and_source_contract,
+    test_codex_fluent_markdown_golden,
+    test_codex_fluent_markdown_metadata_is_inert,
+    test_codex_fluent_report_only_contract,
     test_runner_registry_complete,
 ]
 

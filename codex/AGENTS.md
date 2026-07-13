@@ -49,9 +49,42 @@
 - Repo local level：子目录 `AGENTS.md`，只放局部模块约束。
 - 更具体的层级可以补充规则，但不能削弱本文件的安全与验证门禁。
 
+## Thread Discipline
+
+- At task start, freeze a THREAD_DISCIPLINE_V1 envelope containing task_name,
+  repo_anchor, repo_anchor_provenance, mode_anchor, and compaction_ordinal.
+- repo_anchor is a canonical absolute root proven by git top-level or a
+  registered project; otherwise use explicit projectless scope. Never infer it
+  from a cwd basename.
+- mode_anchor is exactly one of plan, review, implementation, report-only, or
+  handoff. Research and verification do not change mode_anchor.
+- ANCHOR_MISMATCH_SEQUENCE_V1
+  1. resolve request_repo and request_mode from direct request and already-available workspace evidence
+  2. compare both values with the frozen anchors
+  3. on mismatch or unknown mismatch, forbid new-direction tool calls and edits
+  4. set next_action=terminal_chat_handoff and return the bounded terminal chat handoff
+  5. recommend <project>-<YYYYMMDD>-<summary>
+- The resolver must not probe or partially start the new direction. If available
+  evidence cannot safely resolve either anchor, treat it as an unknown mismatch.
+- Carry THREAD_DISCIPLINE_SUMMARY_V1 with repo_anchor, mode_anchor,
+  compaction_ordinal, and next_action across summaries.
+- After a confirmed first compaction, refresh a concise checkpoint.
+- At a confirmed second compaction, stop normal work and return a terminal chat
+  handoff. If the ordinal is missing, conflicting, or untrusted, conservatively
+  return the same terminal chat handoff.
+- Chat handoff is the default. Write a repo-native handoff only when the
+  original task explicitly authorized the exact documentation path. Archive
+  authorization does not imply file-write authorization. Apply authorization
+  does not imply file-write authorization. Without that exact-path
+  authorization, keep the task active and do not archive it.
+- The weekly scanner is a deterministic audit, not an immediate trigger. A hard
+  trigger requires a future Codex Desktop lifecycle API.
+- Do not automatically create, archive, or delete a task.
+
 ## Workflow Hooks
 - 开始复杂任务前，优先使用当前 Codex session 已暴露的 `superpowers:*` skills；旧版 checkout 若仍存在 `~/.codex/superpowers/.codex/superpowers-codex`，可将它作为条件 fallback。
 - 复杂任务优先采用：Karpathy -> Planner -> TDD -> Verification 的顺序。
+- 全局 `UserPromptSubmit` 只注册 generic `dhf_preprompt.py`；repo-specific adapter（例如 `shipq_dhf_preprompt.py`）只能由 dispatcher 在对应 repo `cwd` 下 lazy import/call。opt-out 必须优先于所有路由，非对应 repo 的普通 prompt 不得注入 repo-specific `additionalContext`。
 - 工具与当前会话策略允许时，复杂且可并行的任务应以 orchestrator 方式拆给 parallel agents：明确每个 agent 的任务、验收标准和报告要求；主 agent 负责审阅、反馈、整合，并按需继续派发后续任务。
 - 所有项目的新建会话统一使用命名格式 `<项目缩写>-<YYYYMMDD>-<概要>`；该规则适用于全部对话与会话记录，且同一 repo 内的 `项目缩写` 必须保持稳定一致。
 - 交付前必须重新运行相关验证，不使用旧结果替代 fresh evidence。

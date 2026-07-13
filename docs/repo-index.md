@@ -38,6 +38,7 @@
 - `docs/AGENT_HARNESS_STATUS.md`: Agent Harness workflow and runtime governance status map.
 - `codex/skills/delivery-harness-framework/`: lifecycle router skill.
 - `codex/skills/committee-review-loop/`: explicit expert-committee review and revision loop skill.
+- `codex/skills/codex-fluent/scripts/report_active_sessions.py`: read-only active Codex session ranking and handoff audit.
 - `codex/runtime/tool-policy.json`: stage-aware tool and permission policy, including unknown-phase read-only fallback, handoff repo-write ask-gate, and configured agent-dispatch tool patterns.
 - `codex/runtime/resolve_codex_cli.sh`: resolve a Codex CLI only after its `--version` smoke passes, preferring the npm global CLI before ChatGPT/Codex app bundle fallbacks for launchd and stale-shim recovery.
 - `codex/runtime/dhf-packet.schema.json`: portable DHF packet schema for incubation, consumer handoff, and future extraction boundaries.
@@ -48,7 +49,8 @@
 - `codex/hooks/harness_guard.py`: PreToolUse permission and guardrail hook.
 - `codex/hooks/harness_observer.py`: PostToolUse evidence observer hook.
 - `codex/hooks/model_router.py`: prompt/subtask complexity router for cheapest quality-safe model recommendations.
-- `codex/hooks/shipq_dhf_preprompt.py`: repo-owned ShipQ DHF preprompt hook surface.
+- `codex/hooks/dhf_preprompt.py`: generic `UserPromptSubmit` DHF dispatcher; malformed or missing-cwd payloads continue, opt-out wins first, non-ShipQ prompts need explicit generic activation, and ShipQ cwd delegates lazily to the adapter.
+- `codex/hooks/shipq_dhf_preprompt.py`: ShipQ-only DHF preprompt adapter, never registered globally and loaded only by the generic dispatcher for ShipQ cwd.
 - `scripts/harness_evidence.py`: evidence validation, kind inference, and append helper.
 - `scripts/harness_feedback.py`: conversion-health helper for local evidence reports and recovery.
 - `scripts/harness_report.py`: local evidence summary CLI with evidence-kind counts and filters.
@@ -117,7 +119,7 @@
 - Primary: `python3 test_runner.py`.
 - CI gate: `.github/workflows/ci.yml` runs `python3 test_runner.py`, `git diff --check`, and `python3 scripts/check_surfaces.py --repo-root "$(pwd)" --check-public-nav` on `push` to `main`, `pull_request`, and manual dispatch.
 - Runtime sync: `./scripts/verify_codex_env.sh --repo-root "$(pwd)" --codex-home "$HOME/.codex" --claude-home "$HOME/.claude"`.
-- Skill compatibility: `python3 scripts/check_skill_compatibility.py --repo-root "$(pwd)" --codex-home "$HOME/.codex" --plugin-root "$HOME/.codex/plugins/cache" --plugin-root "$HOME/.cache/codex-runtimes/codex-primary-runtime/plugins"`.
+- Skill compatibility: `python3 scripts/check_skill_compatibility.py --repo-root "$(pwd)" --codex-home "$HOME/.codex" --claude-home "$HOME/.claude" --plugin-root "$HOME/.codex/plugins/cache" --plugin-root "$HOME/.cache/codex-runtimes/codex-primary-runtime/plugins"`.
 - Skill loader: `python3 scripts/check_codex_skill_loader.py --repo-root "$(pwd)" --codex-home "$HOME/.codex"`.
 - Automation-safe runtime sync: `./scripts/verify_codex_env.sh --repo-root "$(pwd)" --codex-home "$HOME/.codex" --claude-home "$HOME/.claude" --skip-check app_google_chrome`.
 - Formatting: `git diff --check`.
@@ -144,6 +146,7 @@
 - Session State: `docs/harness-state.md` plus local evidence JSONL.
 - Permissions: `codex/runtime/tool-policy.json` and guard hooks.
 - Hooks: `codex/hooks.json` and `codex/hooks/*`.
+- DHF Prompt Dispatch: global `UserPromptSubmit` registers `dhf_preprompt.py`; `shipq_dhf_preprompt.py` remains a lazy project adapter and ordinary non-ShipQ prompts do not receive `additionalContext`.
 - Observability: `scripts/harness_evidence.py`, `scripts/harness_feedback.py`, `scripts/harness_report.py`, split evidence schemas, and local evidence files. Decision evidence is promoted into state and handoff summaries; routine gate receipts remain available for audit without burying recovery signals.
 - Tool Router: lifecycle stage policy in `tool-policy.json`.
 - Model Router: `model_router.py` recommends `gpt-5.4-mini`, `gpt-5.4`, or `gpt-5.5` per prompt/subtask and can be re-run at complex task phase boundaries.
