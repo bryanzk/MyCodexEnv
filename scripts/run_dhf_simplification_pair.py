@@ -494,6 +494,9 @@ def run_comparison(
 
         if scenario["category"] == "governed":
             signals = measured.get("escalation_signals", [])
+            expected_authoritative_gates = set(
+                corpus.get("authoritative_gate_oracle", {}).get(scenario_id, [])
+            )
             expected_conditional_fields = set(scenario["required_output_fields"]) - {
                 "result",
                 "scope_and_constraints",
@@ -506,6 +509,9 @@ def run_comparison(
                 )
                 and expected_conditional_fields.issubset(
                     set(measured.get("observed_required_output_fields", []))
+                )
+                and expected_authoritative_gates.issubset(
+                    set(measured.get("observed_authoritative_gates", []))
                 )
             )
             if (

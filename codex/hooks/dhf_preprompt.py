@@ -25,8 +25,8 @@ DHF_SKILL = Path(
 )
 TRUSTED_HOOKS_ROOT = Path.home() / ".codex" / "hooks"
 ALLOW_UNTRUSTED_ADAPTER = os.environ.get("DHF_PREPROMPT_ALLOW_UNTRUSTED_TEST_PATHS") == "1"
-# Repaired Slice 4 parity/efficiency is green in repo source. Explicit rollback
-# values remain fail-closed because only the exact value 1 enables profiles.
+# Final governed under-routing review gate is green in repo source. Explicit
+# rollback values remain fail-closed because only exact value 1 enables profiles.
 SIMPLIFIED_PROFILES_ENABLED = os.environ.get("DHF_PREPROMPT_SIMPLIFIED_PROFILES", "1") == "1"
 
 PROFILE_RANK = {"light": 0, "standard": 1, "governed": 2}
