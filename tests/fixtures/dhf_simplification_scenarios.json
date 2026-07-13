@@ -951,7 +951,7 @@
   ],
   "acceptance_trace_map": {
     "AC-01": {
-      "criterion": "The generic DHF Output Contract is reduced from an always-visible routing checklist to the four Result Invariants, with conditional governed fields.",
+      "criterion": "**AC-01** The generic DHF Output Contract is reduced from an always-visible routing checklist to the four Result Invariants, with conditional governed fields.",
       "scenario_ids": [
         "LIGHT-EXPLANATION",
         "STANDARD-LOCAL-FEATURE",
@@ -968,7 +968,7 @@
       }
     },
     "AC-02": {
-      "criterion": "A deterministic classifier or equivalent explicit routing contract maps representative prompts to `light`, `standard`, or `governed`.",
+      "criterion": "**AC-02** A deterministic classifier or equivalent explicit routing contract maps representative prompts to `light`, `standard`, or `governed`.",
       "scenario_ids": [
         "LIGHT-ONE-FILE-SAFE",
         "STANDARD-LOCAL-FEATURE",
@@ -983,7 +983,7 @@
       }
     },
     "AC-03": {
-      "criterion": "Ordinary non-ShipQ prompts remain continue-only and receive no DHF context.",
+      "criterion": "**AC-03** Ordinary non-ShipQ prompts remain continue-only and receive no DHF context.",
       "scenario_ids": [
         "CONTROL-ORDINARY-CONTINUE"
       ],
@@ -997,7 +997,7 @@
       }
     },
     "AC-04": {
-      "criterion": "Explicit opt-out continues to win before all project and generic activation.",
+      "criterion": "**AC-04** Explicit opt-out continues to win before all project and generic activation.",
       "scenario_ids": [
         "CONTROL-ORDINARY-CONTINUE",
         "CONTROL-SHIPQ-DELEGATION"
@@ -1011,7 +1011,7 @@
       }
     },
     "AC-05": {
-      "criterion": "ShipQ continues to load only through lazy adapter delegation under its cwd.",
+      "criterion": "**AC-05** ShipQ continues to load only through lazy adapter delegation under its cwd.",
       "scenario_ids": [
         "CONTROL-SHIPQ-DELEGATION"
       ],
@@ -1025,7 +1025,7 @@
       }
     },
     "AC-06": {
-      "criterion": "Malformed, non-dict, and missing-cwd payloads continue safely without leaking traceback, skill text, secrets, or unrelated local context.",
+      "criterion": "**AC-06** Malformed, non-dict, and missing-cwd payloads continue safely without leaking traceback, skill text, secrets, or unrelated local context.",
       "scenario_ids": [
         "CONTROL-ORDINARY-CONTINUE"
       ],
@@ -1038,7 +1038,7 @@
       }
     },
     "AC-07": {
-      "criterion": "Light tasks do not require `harness_recover.py`, `harness_env_probe.py`, `harness_report.py`, lifecycle narration, or a checkpoint.",
+      "criterion": "**AC-07** Light tasks do not require `harness_recover.py`, `harness_env_probe.py`, `harness_report.py`, lifecycle narration, or a checkpoint.",
       "scenario_ids": [
         "LIGHT-EXPLANATION",
         "LIGHT-BOUNDED-DOCS",
@@ -1055,7 +1055,7 @@
       }
     },
     "AC-08": {
-      "criterion": "Governed scenarios still select every safety/recovery gate required by their escalation signal.",
+      "criterion": "**AC-08** Governed scenarios still select every safety/recovery gate required by their escalation signal.",
       "scenario_ids": [
         "GOVERNED-RESUMED-TASK",
         "GOVERNED-DIRTY-CONFLICT",
@@ -1074,7 +1074,7 @@
       }
     },
     "AC-09": {
-      "criterion": "Existing helper CLI entry points remain callable after the initial slices.",
+      "criterion": "**AC-09** Existing helper CLI entry points remain callable after the initial slices.",
       "scenario_ids": [
         "GOVERNED-RESUMED-TASK",
         "GOVERNED-MULTI-AGENT"
@@ -1088,7 +1088,7 @@
       }
     },
     "AC-10": {
-      "criterion": "Golden scenarios establish 100% parity for outcome correctness, safety blocking, fresh verification completeness, worktree preservation, and recoverability where required.",
+      "criterion": "**AC-10** Golden scenarios establish 100% parity for outcome correctness, safety blocking, fresh verification completeness, worktree preservation, and recoverability where required.",
       "scenario_ids": [
         "LIGHT-BOUNDED-DOCS",
         "STANDARD-LOCAL-FEATURE",
@@ -1106,7 +1106,7 @@
       }
     },
     "AC-11": {
-      "criterion": "No scenario improves efficiency by weakening a required verification or permission gate.",
+      "criterion": "**AC-11** No scenario improves efficiency by weakening a required verification or permission gate.",
       "scenario_ids": [
         "STANDARD-LOCAL-FEATURE",
         "GOVERNED-REMOTE-DEPLOY",
@@ -1121,7 +1121,7 @@
       }
     },
     "AC-12": {
-      "criterion": "On same-scenario paired, explicitly activated light/standard observations with baseline greater than zero, median injected DHF context and median mandatory helper invocations each decrease by at least 40%; context and helpers are reported separately.",
+      "criterion": "**AC-12** On same-scenario paired, explicitly activated light/standard observations with baseline greater than zero, the median of per-scenario relative reductions is at least 40% independently for injected DHF context and mandatory helper invocations; context and helpers are reported separately.",
       "scenario_ids": [
         "LIGHT-EXPLANATION",
         "LIGHT-BOUNDED-DOCS",
@@ -1142,7 +1142,7 @@
       }
     },
     "AC-13": {
-      "criterion": "Zero-baseline observations are reported separately and show absolute non-regression (`candidate == 0`), not an undefined relative improvement.",
+      "criterion": "**AC-13** Zero-baseline observations are reported separately and show absolute non-regression (`candidate == 0`), not an undefined relative improvement.",
       "scenario_ids": [
         "CONTROL-ORDINARY-CONTINUE"
       ],
@@ -1155,7 +1155,7 @@
       }
     },
     "AC-14": {
-      "criterion": "Results include raw per-scenario measurements and sample counts; no claim of statistical generality is made beyond the bounded corpus.",
+      "criterion": "**AC-14** Results include raw per-scenario measurements and sample counts; no claim of statistical generality is made beyond the bounded corpus.",
       "scenario_ids": [
         "LIGHT-EXPLANATION",
         "STANDARD-LOCAL-FEATURE",
@@ -1173,7 +1173,7 @@
       }
     },
     "AC-15": {
-      "criterion": "Repo source, documentation mirrors, surface inventory, tests, and evals agree on the same three-profile contract.",
+      "criterion": "**AC-15** Repo source, documentation mirrors, surface inventory, tests, and evals agree on the same three-profile contract.",
       "scenario_ids": [
         "LIGHT-EXPLANATION",
         "STANDARD-LOCAL-FEATURE",
@@ -1188,7 +1188,7 @@
       }
     },
     "AC-16": {
-      "criterion": "Runtime sync remains blocked until source verification passes and the user separately authorizes runtime mutation.",
+      "criterion": "**AC-16** Runtime sync remains blocked until source verification passes and the user separately authorizes runtime mutation.",
       "scenario_ids": [
         "GOVERNED-REMOTE-DEPLOY"
       ],
@@ -1201,7 +1201,7 @@
       }
     },
     "AC-17": {
-      "criterion": "Governed checkpoint fixtures pass the field-level recoverability oracle.",
+      "criterion": "**AC-17** Governed checkpoint fixtures pass the field-level recoverability oracle.",
       "scenario_ids": [
         "GOVERNED-RESUMED-TASK"
       ],
@@ -1214,7 +1214,7 @@
       }
     },
     "AC-18": {
-      "criterion": "A feature-switch rollback smoke proves the simplified route can be disabled and legacy paths/helper entry points still execute.",
+      "criterion": "**AC-18** A feature-switch rollback smoke proves the simplified route can be disabled and legacy paths/helper entry points still execute.",
       "scenario_ids": [
         "CONTROL-ORDINARY-CONTINUE",
         "CONTROL-SHIPQ-DELEGATION"
