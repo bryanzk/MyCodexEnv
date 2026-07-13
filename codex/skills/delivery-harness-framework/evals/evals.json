@@ -300,6 +300,62 @@
         "The output requires owner or project, auth path, IAM, secrets, data store, rollback, smoke or canary, and approval.",
         "The output blocks deploy or remote mutation until the readiness checklist is satisfied."
       ]
+    },
+    {
+      "id": "output-contract-implemented-or-fixed",
+      "category": "output_contract",
+      "name": "implemented behavior uses a fresh four-field receipt",
+      "prompt": "Implement this complex but local parser option and report the completed result concisely.",
+      "expected_load": true,
+      "completion_claim_class": "implemented_or_fixed",
+      "expected_output": "The output preserves the four result invariants and includes fresh command, exit_code, key_output, and timestamp evidence without lifecycle boilerplate.",
+      "assertions": [
+        "The output contains a usable result plus material scope_and_constraints and remaining_risk_or_next_action only when one exists.",
+        "The verification_receipt contains fresh command, exit_code, key_output, and timestamp fields.",
+        "The output does not require recovery, environment, checkpoint, conversion-health, feedback, or committee boilerplate without an escalation signal."
+      ]
+    },
+    {
+      "id": "output-contract-documented-or-configured",
+      "category": "output_contract",
+      "name": "documented artifact uses fresh structural validation",
+      "prompt": "Make this complex but bounded correction in one Markdown paragraph and report the completed artifact.",
+      "expected_load": true,
+      "completion_claim_class": "documented_or_configured",
+      "expected_output": "The output uses the documented_or_configured class with fresh structural evidence and no unrelated lifecycle narration.",
+      "assertions": [
+        "The verification_receipt includes the fresh structural validation command, exit_code, key_output, and timestamp.",
+        "The scope_and_constraints confirms that only the bounded documentation surface changed.",
+        "The output omits default lane, clean dirty-status, recovery output, checkpoint, and empty committee fields."
+      ]
+    },
+    {
+      "id": "output-contract-diagnosed-or-blocked",
+      "category": "output_contract",
+      "name": "governed blocker reports concrete evidence and matching gates",
+      "prompt": "Diagnose why this complex remote deployment cannot proceed, but do not connect or read credentials without authorization.",
+      "expected_load": true,
+      "completion_claim_class": "diagnosed_or_blocked",
+      "expected_output": "The output reports concrete inspected evidence, the exact blocker, and only the remote/deployment governed fields and helpers.",
+      "assertions": [
+        "The result names the exact blocker and cites concrete inspected evidence without claiming a deployment occurred.",
+        "The output preserves authorization_state, rollback, forbidden remote actions, and the required environment, report, and checkpoint gates.",
+        "If a command ran, its receipt contains command, exit_code, key_output, and timestamp; otherwise no command is invented."
+      ]
+    },
+    {
+      "id": "output-contract-verification-not-applicable",
+      "category": "output_contract",
+      "name": "pure explanation does not synthesize verification",
+      "prompt": "Use complex analysis to explain why this supplied pure function is deterministic; do not edit files or inspect runtime state.",
+      "expected_load": true,
+      "completion_claim_class": "verification_not_applicable",
+      "expected_output": "The output gives the explanation under the four result invariants and states verification_not_applicable without a synthetic command receipt.",
+      "assertions": [
+        "The verification_receipt is verification_not_applicable and explains that this is pure advice with no artifact, state, runtime, or behavior completion claim.",
+        "The output must not invent a command, exit_code, key_output, or timestamp.",
+        "The output omits lifecycle phase, default lane, dirty status, recovery or environment output, conversion health, feedback boilerplate, checkpoint, and empty committee fields."
+      ]
     }
   ]
 }

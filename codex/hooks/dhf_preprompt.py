@@ -315,8 +315,11 @@ def profile_context(selection: ProfileSelection) -> str:
     )
     common = (
         "Activated generic DHF governance profile. "
-        f"profile={selection.profile}. Preserve result, scope_and_constraints, fresh verification_receipt, "
-        f"and remaining_risk_or_next_action when applicable.\nDHF_PROFILE_CONTRACT={contract}\n"
+        f"profile={selection.profile}. Preserve result, scope_and_constraints, verification_receipt, "
+        "and remaining_risk_or_next_action. Classify completion as implemented_or_fixed, "
+        "documented_or_configured, diagnosed_or_blocked, or verification_not_applicable; "
+        "artifact claims need fresh command/exit_code/key_output/timestamp evidence, while pure "
+        f"explanation uses verification_not_applicable without an invented command.\nDHF_PROFILE_CONTRACT={contract}\n"
     )
     if selection.profile == "light":
         return common + " Execute directly and use only the narrowest useful verification; no lifecycle helpers are required."
