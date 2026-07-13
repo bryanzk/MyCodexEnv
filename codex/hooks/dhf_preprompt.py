@@ -85,6 +85,9 @@ GOVERNED_SIGNAL_PATTERNS = [
             r"\b(?:credential|token|api[-\s]+key|secret)\b.*\b(?:rotate|update|change|write|revoke|delete|stored\s+value)\b",
             r"\b(?:show|print|log|dump|expose|disclose|share|reveal)\b.*\b(?:credential|token|api[-\s]+key|secret|private\s+data)\b",
             r"\b(?:private|secret|confidential|customer)\s+(?:record|records|information|data|content)\b",
+            r"\b(?:read|access|inspect|fetch|load|export|copy)\b.{0,48}\b(?:credentials?|api[-\s]+keys?|access[-\s]+tokens?|client[-\s]+secrets?|tokens?|secrets?)\b",
+            r"\b(?:credentials?|api[-\s]+keys?|access[-\s]+tokens?|client[-\s]+secrets?|tokens?|secrets?)\b.{0,48}\b(?:read|access|inspect|fetch|load|export|copy)\b",
+            r"(?:读取|访问|检查|获取|加载|导出|复制).{0,24}(?:凭据|API\s*密钥|访问令牌|令牌|密钥|secret|token)",
         ],
     ),
     (
@@ -285,7 +288,18 @@ def select_governance_profile(text: str, active_profile: str | None = None) -> P
         selected = active_profile
         if active_profile == "governed":
             signals = (*signals, "retained_higher_active_profile")
-    return ProfileSelection(selected, signals[0] if signals else None, signals)
+    primary_signal = next(
+        (
+            signal
+            for signal in (
+                "durable_architecture_source_conflict",
+                "remote_or_deployment_action",
+            )
+            if signal in signals
+        ),
+        signals[0] if signals else None,
+    )
+    return ProfileSelection(selected, primary_signal, signals)
 
 
 def profile_state_from_payload(payload: dict[str, Any]) -> tuple[str | None, bool]:

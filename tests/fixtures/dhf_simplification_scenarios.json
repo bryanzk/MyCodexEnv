@@ -962,7 +962,10 @@
         "TEST-COMPLETION-TAXONOMY",
         "TEST-STRUCTURED-COMPLETION-ORACLE"
       ],
-      "evidence_status": "covered_by_slice_2_output_contract_tests"
+      "evidence_status": {
+        "state": "completed",
+        "evidence_id": "covered_by_slice_2_output_contract_tests"
+      }
     },
     "AC-02": {
       "criterion": "A deterministic classifier or equivalent explicit routing contract maps representative prompts to `light`, `standard`, or `governed`.",
@@ -974,7 +977,10 @@
       "test_ids": [
         "TEST-ADVERSARIAL-ROUTING"
       ],
-      "evidence_status": "profile_routing_executed"
+      "evidence_status": {
+        "state": "completed",
+        "evidence_id": "profile_routing_executed"
+      }
     },
     "AC-03": {
       "criterion": "Ordinary non-ShipQ prompts remain continue-only and receive no DHF context.",
@@ -985,7 +991,10 @@
         "TEST-CURRENT-ROUTING-CONTROLS",
         "TEST-BASELINE-MEASUREMENT"
       ],
-      "evidence_status": "covered_by_slice_0_baseline"
+      "evidence_status": {
+        "state": "completed",
+        "evidence_id": "covered_by_slice_0_baseline"
+      }
     },
     "AC-04": {
       "criterion": "Explicit opt-out continues to win before all project and generic activation.",
@@ -996,7 +1005,10 @@
       "test_ids": [
         "TEST-OPT-OUT-PRECEDENCE"
       ],
-      "evidence_status": "covered_by_slice_0_current_behavior_test"
+      "evidence_status": {
+        "state": "completed",
+        "evidence_id": "covered_by_slice_0_current_behavior_test"
+      }
     },
     "AC-05": {
       "criterion": "ShipQ continues to load only through lazy adapter delegation under its cwd.",
@@ -1007,7 +1019,10 @@
         "TEST-CURRENT-ROUTING-CONTROLS",
         "TEST-BASELINE-MEASUREMENT"
       ],
-      "evidence_status": "covered_by_slice_0_baseline"
+      "evidence_status": {
+        "state": "completed",
+        "evidence_id": "covered_by_slice_0_baseline"
+      }
     },
     "AC-06": {
       "criterion": "Malformed, non-dict, and missing-cwd payloads continue safely without leaking traceback, skill text, secrets, or unrelated local context.",
@@ -1017,7 +1032,10 @@
       "test_ids": [
         "TEST-MALFORMED-PAYLOAD-SAFETY"
       ],
-      "evidence_status": "covered_by_slice_0_current_behavior_test"
+      "evidence_status": {
+        "state": "completed",
+        "evidence_id": "covered_by_slice_0_current_behavior_test"
+      }
     },
     "AC-07": {
       "criterion": "Light tasks do not require `harness_recover.py`, `harness_env_probe.py`, `harness_report.py`, lifecycle narration, or a checkpoint.",
@@ -1031,7 +1049,10 @@
         "TEST-PROFILE-OUTPUT-CONTRACT",
         "TEST-CONDITIONAL-HELPER-ROUTING"
       ],
-      "evidence_status": "covered_by_slice_2_negative_output_contract_tests"
+      "evidence_status": {
+        "state": "completed",
+        "evidence_id": "covered_by_slice_2_negative_output_contract_tests"
+      }
     },
     "AC-08": {
       "criterion": "Governed scenarios still select every safety/recovery gate required by their escalation signal.",
@@ -1047,7 +1068,10 @@
         "TEST-GOVERNED-GATES",
         "TEST-MULTI-SIGNAL-UNION"
       ],
-      "evidence_status": "covered_by_slice_1_classifier_and_slice_2_governed_gate_tests"
+      "evidence_status": {
+        "state": "completed",
+        "evidence_id": "covered_by_slice_1_classifier_and_slice_2_governed_gate_tests"
+      }
     },
     "AC-09": {
       "criterion": "Existing helper CLI entry points remain callable after the initial slices.",
@@ -1058,7 +1082,10 @@
       "test_ids": [
         "TEST-HELPER-CLI-CALLABILITY"
       ],
-      "evidence_status": "covered_by_slice_0_current_behavior_test"
+      "evidence_status": {
+        "state": "completed",
+        "evidence_id": "covered_by_slice_0_current_behavior_test"
+      }
     },
     "AC-10": {
       "criterion": "Golden scenarios establish 100% parity for outcome correctness, safety blocking, fresh verification completeness, worktree preservation, and recoverability where required.",
@@ -1073,7 +1100,10 @@
         "TEST-PAIR-ADVERSARIAL-MUTATIONS",
         "TEST-CHECKPOINT-ARTIFACT-ROUNDTRIP"
       ],
-      "evidence_status": "routing_and_actual_outcome_parity_executed"
+      "evidence_status": {
+        "state": "completed",
+        "evidence_id": "routing_and_actual_outcome_parity_executed"
+      }
     },
     "AC-11": {
       "criterion": "No scenario improves efficiency by weakening a required verification or permission gate.",
@@ -1085,7 +1115,10 @@
       "test_ids": [
         "TEST-PAIR-ADVERSARIAL-MUTATIONS"
       ],
-      "evidence_status": "permission_receipt_private_data_mutations_rejected"
+      "evidence_status": {
+        "state": "completed",
+        "evidence_id": "permission_receipt_private_data_mutations_rejected"
+      }
     },
     "AC-12": {
       "criterion": "On same-scenario paired, explicitly activated light/standard observations with baseline greater than zero, median injected DHF context and median mandatory helper invocations each decrease by at least 40%; context and helpers are reported separately.",
@@ -1103,7 +1136,10 @@
       "test_ids": [
         "TEST-PAIRED-ACTUAL-OUTCOMES"
       ],
-      "evidence_status": "fixed_nine_pair_metrics_executed"
+      "evidence_status": {
+        "state": "completed",
+        "evidence_id": "fixed_nine_pair_metrics_executed"
+      }
     },
     "AC-13": {
       "criterion": "Zero-baseline observations are reported separately and show absolute non-regression (`candidate == 0`), not an undefined relative improvement.",
@@ -1113,7 +1149,10 @@
       "test_ids": [
         "TEST-PAIRED-ACTUAL-OUTCOMES"
       ],
-      "evidence_status": "zero_baseline_non_regression_executed"
+      "evidence_status": {
+        "state": "completed",
+        "evidence_id": "zero_baseline_non_regression_executed"
+      }
     },
     "AC-14": {
       "criterion": "Results include raw per-scenario measurements and sample counts; no claim of statistical generality is made beyond the bounded corpus.",
@@ -1128,7 +1167,10 @@
         "TEST-BASELINE-MEASUREMENT",
         "TEST-SCHEMA-COUNTS"
       ],
-      "evidence_status": "covered_by_slice_0_fixture_and_summary"
+      "evidence_status": {
+        "state": "completed",
+        "evidence_id": "covered_by_slice_0_fixture_and_summary"
+      }
     },
     "AC-15": {
       "criterion": "Repo source, documentation mirrors, surface inventory, tests, and evals agree on the same three-profile contract.",
@@ -1140,7 +1182,10 @@
       "test_ids": [
         "TEST-NORMATIVE-MIRRORS"
       ],
-      "evidence_status": "canonical_mirror_surface_checks_executed"
+      "evidence_status": {
+        "state": "completed",
+        "evidence_id": "canonical_mirror_surface_checks_executed"
+      }
     },
     "AC-16": {
       "criterion": "Runtime sync remains blocked until source verification passes and the user separately authorizes runtime mutation.",
@@ -1150,7 +1195,10 @@
       "test_ids": [
         "TEST-ACCEPTANCE-TRACE"
       ],
-      "evidence_status": "covered_by_slice_0_permission_boundary"
+      "evidence_status": {
+        "state": "completed",
+        "evidence_id": "covered_by_slice_0_permission_boundary"
+      }
     },
     "AC-17": {
       "criterion": "Governed checkpoint fixtures pass the field-level recoverability oracle.",
@@ -1160,7 +1208,10 @@
       "test_ids": [
         "TEST-CHECKPOINT-ARTIFACT-ROUNDTRIP"
       ],
-      "evidence_status": "checkpoint_artifact_roundtrip_executed"
+      "evidence_status": {
+        "state": "completed",
+        "evidence_id": "checkpoint_artifact_roundtrip_executed"
+      }
     },
     "AC-18": {
       "criterion": "A feature-switch rollback smoke proves the simplified route can be disabled and legacy paths/helper entry points still execute.",
@@ -1171,7 +1222,10 @@
       "test_ids": [
         "TEST-PAIRED-ACTUAL-OUTCOMES"
       ],
-      "evidence_status": "legacy_rollback_and_six_helpers_executed"
+      "evidence_status": {
+        "state": "completed",
+        "evidence_id": "legacy_rollback_and_six_helpers_executed"
+      }
     }
   }
 }

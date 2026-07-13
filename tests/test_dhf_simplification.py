@@ -173,7 +173,7 @@ def mirror_contract_errors(text: str, contract: dict[str, object], routes: dict[
         *(f"`{profile}`" for profile in contract["profiles"]),
         *(f"`{invariant}`" for invariant in contract["invariants"]),
         f"{contract['switch_name']}={contract['switch_enable']}",
-        "repo-source default is now `simplified`",
+        "repo-source default is `simplified`",
         "Runtime promotion is pending separate authorization",
         "runtime home remains unsynced",
     ]
@@ -319,15 +319,23 @@ class DhfSimplificationCorpusTests(unittest.TestCase):
         for acceptance_id in completed:
             with self.subTest(acceptance_id=acceptance_id):
                 trace = self.corpus["acceptance_trace_map"][acceptance_id]
-                self.assertNotIn("deferred", trace["evidence_status"])
+                self.assertEqual(set(trace["evidence_status"]), {"state", "evidence_id"})
+                self.assertEqual(trace["evidence_status"]["state"], "completed")
+                self.assertTrue(trace["evidence_status"]["evidence_id"])
                 self.assertTrue(trace["test_ids"])
                 for test_id in trace["test_ids"]:
                     self.assertIn(test_id, self.corpus["test_catalog"])
 
         broken = copy.deepcopy(self.corpus)
-        broken["acceptance_trace_map"]["AC-10"]["evidence_status"] = "candidate_deferred_to_slice_4"
-        errors = self.validator.validate_corpus(broken, CONTRACT)
-        self.assertTrue(any("AC-10" in error and "deferred" in error for error in errors), errors)
+        for invalid_state in ("stale", "pending", "banana", "deferred"):
+            with self.subTest(invalid_state=invalid_state):
+                broken = copy.deepcopy(self.corpus)
+                broken["acceptance_trace_map"]["AC-10"]["evidence_status"] = {
+                    "state": invalid_state,
+                    "evidence_id": "TEST-PAIRED-ACTUAL-OUTCOMES",
+                }
+                errors = self.validator.validate_corpus(broken, CONTRACT)
+                self.assertTrue(any("AC-10" in error and "evidence_status" in error for error in errors), errors)
 
         broken = copy.deepcopy(self.corpus)
         broken["test_catalog"]["TEST-SCHEMA-COUNTS"] = "tests/test_dhf_simplification.py::load_validator"
@@ -868,7 +876,7 @@ class DhfGovernanceProfileTests(unittest.TestCase):
         self.assertEqual(proc.returncode, 1, proc.stdout + proc.stderr)
         self.assertIn("must not include command receipt fields", proc.stderr)
 
-    def test_feature_switch_defaults_simplified_after_repaired_gates_and_preserves_rollback(self):
+    def test_feature_switch_defaults_simplified_after_final_gate_and_preserves_explicit_rollback(self):
         marker = "LEGACY_FULL_SKILL_MARKER"
         with __import__("tempfile").TemporaryDirectory() as tmp:
             skill = Path(tmp) / "DHF.md"
@@ -893,7 +901,8 @@ class DhfGovernanceProfileTests(unittest.TestCase):
 
             default_proc = run_with(None)
             self.assertEqual(default_proc.returncode, 0, default_proc.stderr)
-            self.assertIn("profile=standard", json.loads(default_proc.stdout)["hookSpecificOutput"]["additionalContext"])
+            default_payload = json.loads(default_proc.stdout)
+            self.assertIn("profile=standard", default_payload["hookSpecificOutput"]["additionalContext"])
             self.assertNotIn(marker, default_proc.stdout)
             self.assertIn("diagnostic=generic-activated:standard", default_proc.stderr)
 
@@ -955,12 +964,41 @@ class DhfGovernanceProfileTests(unittest.TestCase):
         ordinary, route = self.dispatcher.route_response({"cwd": root, "prompt": "continue formatting"})
         self.assertEqual((ordinary, route), ({"continue": True}, "continue-only"))
 
+    def test_credential_read_access_and_export_are_governed_without_bare_key_false_positive(self):
+        self.dispatcher.SIMPLIFIED_PROFILES_ENABLED = True
+        governed_prompts = (
+            "Use DHF to read the API key",
+            "Use DHF to access credentials",
+            "Use DHF to inspect the token",
+            "Use DHF to fetch a client secret",
+            "Use DHF to load credentials",
+            "Use DHF to export the API key",
+            "Use DHF to copy the access token",
+            "使用交付框架读取凭据",
+            "使用交付框架访问 API 密钥",
+            "使用交付框架检查令牌",
+            "使用交付框架导出密钥",
+            "使用交付框架复制 secret",
+        )
+        for prompt in governed_prompts:
+            with self.subTest(prompt=prompt):
+                response, route = self.dispatcher.route_response({"cwd": str(ROOT), "prompt": prompt})
+                self.assertEqual(route, "generic-activated:governed")
+                self.assertIn("external_capture_or_private_data", response["hookSpecificOutput"]["additionalContext"])
+
+        response, route = self.dispatcher.route_response(
+            {"cwd": str(ROOT), "prompt": "Use DHF to rename the key in a local dictionary"}
+        )
+        self.assertNotEqual(route, "generic-activated:governed")
+        self.assertNotIn("external_capture_or_private_data", response["hookSpecificOutput"]["additionalContext"])
+
     def test_normative_mirrors_align_with_simplified_source_stage_contract(self):
         contract = extract_canonical_contract(
             SKILL.read_text(encoding="utf-8"), DISPATCHER.read_text(encoding="utf-8")
         )
         routes = probe_dispatcher_routes(self.dispatcher)
         self.assertEqual(contract["switch_default"], contract["switch_enable"])
+        self.assertEqual(contract["switch_default"], "1")
         stale_statements = (
             "Use first for complex or resumed work",
             "after a meaningful validated slice",
@@ -1026,6 +1064,10 @@ class DhfGovernanceProfileTests(unittest.TestCase):
         for phrase in required:
             self.assertIn(phrase, skill)
             self.assertIn(phrase, routing)
+        self.assertIn("directly delegates at the project boundary", routing)
+        self.assertNotIn("delegate after phase selection", routing)
+        self.assertNotIn("after the generic router identifies", routing)
+        self.assertNotIn("default standard", SURFACES.read_text(encoding="utf-8"))
         for mirror in registered_public_routing_mirrors():
             text = mirror.read_text(encoding="utf-8")
             if "flowchart TD" not in text:
@@ -1050,7 +1092,7 @@ class DhfGovernanceProfileTests(unittest.TestCase):
             "ordinary continue-only",
             "opt-out precedence",
             "ShipQ lazy delegation",
-            f"default {routes['default_generic'].removeprefix('generic-activated:')}",
+            "simplified repo-source default",
             "runtime promotion pending",
             "runtime unsynced",
             f"{contract['switch_name']}={contract['switch_enable']}",

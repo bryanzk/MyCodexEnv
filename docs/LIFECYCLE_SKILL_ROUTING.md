@@ -36,9 +36,9 @@ behavior live in `codex/hooks/dhf_preprompt.py`.
   `verification_receipt`, and `remaining_risk_or_next_action`; profile-specific
   ceremony is conditional rather than repeated by default.
 - The source simplified route uses the exact enabled value
-  `DHF_PREPROMPT_SIMPLIFIED_PROFILES=1`, which is the repo-source default after
-  repaired source gates passed, so repo-source default is now `simplified`.
-  Values `0`, `false`, `off`, and `legacy` explicitly roll back. Runtime
+  `DHF_PREPROMPT_SIMPLIFIED_PROFILES=1`; the repo-source default is `simplified`
+  after the second final-fix gate. Values `0`, `false`, `off`,
+  and `legacy` explicitly roll back. Runtime
   promotion is pending separate authorization, and runtime home remains
   unsynced.
 
@@ -107,8 +107,8 @@ behavior live in `codex/hooks/dhf_preprompt.py`.
 
 | Skill | Use For | Notes |
 | --- | --- | --- |
-| `delivery-harness-framework` | Generic startup/resume routing, durable state reads, phase classification, helper selection, evidence expectations. | When explicitly activated, use the selected profile and delegate after phase selection. |
-| repo-specific lifecycle harnesses | Project paths, local commands, business fixtures, deployment topology, smoke matrices. | These adapters take over after the generic router identifies a repo-specific boundary. |
+| `delivery-harness-framework` | Generic startup/resume routing, durable state reads, phase classification, helper selection, evidence expectations. | For generic activation only; it directly delegates at the project boundary before generic recovery, shared-state reads, or phase selection. |
+| repo-specific lifecycle harnesses | Project paths, local commands, business fixtures, deployment topology, smoke matrices. | The dispatcher directly lazy-delegates at the recognized project boundary; the adapter owns all project phase and state classification. |
 | `gstack-plan-ceo-review` | Product framing, user value, scope, demo boundaries, strategic tradeoffs. | Use when product judgment is the work. |
 | vendored gstack `spec` | Backlog-ready GitHub issues, tickets, and executable specs with explicit acceptance criteria before implementation begins. | Use when the work needs a durable spec artifact rather than immediate coding. |
 | `gstack-office-hours` | Founder-style pressure testing, market/user/business clarity. | Useful before committing to a product direction. In gstack `1.52.x`, it can use configured gbrain context during planning preflight. |
