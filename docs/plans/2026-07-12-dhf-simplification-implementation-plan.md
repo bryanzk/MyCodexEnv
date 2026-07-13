@@ -11,11 +11,10 @@ slice.
 
 ## Planning Artifact Gate
 
-This gate closes planning only: both artifacts validate, material committee
-findings are closed, and a blind review receives neither the numeric nor textual
-external acceptance criterion held by the orchestrator. Passing this gate does
-not claim that any implementation slice, runtime sync, or behavioral parity gate
-has run.
+The orchestrator-held external planning gate has been satisfied. Its criterion
+is intentionally absent from these artifacts and was not disclosed to blind
+reviewers. This statement closes planning only; it does not claim that any
+implementation slice, runtime sync, or behavioral parity gate has run.
 
 ## Implementation Definition Of Done
 - The contract acceptance criteria are traceable to tests or explicit evidence.
@@ -30,9 +29,9 @@ has run.
 - Existing helper entry points and ShipQ lazy delegation remain compatible.
 - Repo gates pass, or any runtime-parity-only failure is explicitly isolated as
   pending the unauthorized runtime-sync boundary.
-- The orchestrator-held planning review criterion was satisfied before source
-  implementation began; implementation completion is determined by the Slice
-  0-4 executable gates above, not by a planning review score.
+- The external planning gate was satisfied before source implementation began;
+  implementation completion is determined by the Slice 0-4 executable gates,
+  not by planning-review mechanics.
 
 ## Runtime Baseline And Ownership Gate
 Worktree cleanliness and ownership are unknown until probed at implementation
@@ -41,10 +40,11 @@ time. Before implementation:
 1. Record `git status --short --branch`, `git rev-parse HEAD`, and a timestamp.
 2. Capture a task-local baseline diff inventory without modifying or staging it.
 3. Create a task-owned commit/preimage ledger. Each planned path records status,
-   owner (`preexisting_user`, `task`, or `unknown`), preimage blob/SHA-256 (or
-   `absent`), and the task commit that later changes it (initially `null`).
+   owner (`preexisting_user`, `task`, or `unknown`), `before_hash` (or `absent`),
+   exact task-produced `after_hash`, and the task commit when available.
 4. Identify which, if any, overlapping changes belong to this implementation.
-5. Re-probe before each rollback or commit and reject preimage drift.
+5. Re-probe before each rollback or commit. Roll back only when current hash
+   equals `after_hash`; otherwise stop for concurrent drift without overwriting.
 6. Ask the user only if the required edit cannot be isolated from ownership that
    remains unknown.
 7. Never reset, clean, stash, stage, commit, push, archive, or runtime-sync merely
@@ -56,28 +56,26 @@ time. Before implementation:
   unnecessary always-on helper calls.
 - Keep dispatcher activation conservative: ordinary non-ShipQ requests remain
   continue-only.
-- Make governed escalation monotonic during a task unless evidence disproves the
-  triggering risk.
+- Within one dispatch/current action, union all risk signals and select the
+  highest required profile; make no cross-prompt monotonicity claim.
 - Treat helper consolidation as a later compatibility slice, not a prerequisite.
 
 ## Normative Routing And Ownership
 
 Implementation and tests use the routing truth table in the contract verbatim:
-malformed/missing cwd -> opt-out -> ShipQ lazy delegation -> explicit generic
-activation -> ordinary continue-only. Ordinary continue-only is not an injected
-`light` profile. Generic profile selection and context ownership begin only
-after explicit generic activation; ShipQ owns both after delegation. Mid-task
-risk upgrades the active profile monotonically before the risky action, without
-re-running activation. Malformed resumed state retains the higher active profile
-until resolved.
+malformed/missing cwd -> explicit opt-out -> ShipQ lazy delegation -> explicit
+opt-in / compatibility risk trigger / current-evaluation profile hint -> ordinary
+continue-only. Every activated route records its reason. Ordinary continue-only
+is not an injected `light` profile; only `explicit_opt_in` scenarios enter the
+efficiency cohort.
 
-The implementation consumes `DHF_ACTIVATION_V1` exactly. The task/thread
-lifecycle state owner is authoritative for the `dhf_profile_state` transported
-to the hook; the hook is stateless and emits derived context only. Tests bind the
-state to both task and thread, enforce monotonic `sequence`, reject expired,
-out-of-order, cross-task, and cross-thread state, prove duplicate idempotency,
-and prove checkpoint recovery writes a higher sequence without promoting stale
-verification.
+The implementation consumes `DHF_ACTIVATION_V1` exactly. The hook is stateless.
+`dhf_profile_state` is only an optional host compatibility hint for the current
+evaluation; malformed hints select governed. Resume/handoff in the current
+prompt selects governed directly. Slices 0-4 guarantee monotonic union only
+within one dispatch/current action. Cross-prompt task/thread binding,
+persistence, sequence, expiry, and recovery are unsupported host capabilities
+and remain a separate blocked future integration.
 
 ## Slice Execution Control Template
 
@@ -86,13 +84,13 @@ slice-specific values below are normative, not optional status prose.
 
 | Slice | Entry conditions | Stop/escalation conditions | Rollback action | Evidence artifact |
 | --- | --- | --- | --- | --- |
-| 0 | fresh runtime ownership probe captured; editable test/fixture surfaces isolated | ownership overlap cannot be isolated; frozen identity or corpus/trace schema cannot express a contract field | restore only task-owned paths whose preimages still match the ledger | sanitized ownership/preimage ledger, frozen Base identity, corpus and recover fixtures, acceptance trace map |
+| 0 | fresh runtime ownership probe captured; editable test/fixture surfaces isolated | ownership overlap cannot be isolated; frozen identity or corpus/trace schema cannot express a contract field | compare-and-swap only when current hash equals task `after_hash`; otherwise stop | sanitized before/after ledger, frozen Base identity, corpus and recover fixtures, acceptance trace map, no-runtime assertion |
 | 1 | Slice 0 schema/baseline green; legacy dispatcher behavior captured | any opt-out, ShipQ, malformed input, no-leak, or ordinary continue-only regression | disable simplified feature switch and restore legacy dispatcher selection | routing truth-table test report and feature-switch rollback smoke receipt |
 | 2 | Slice 1 routing green and feature switch available | governed field/gate loss or completion-claim ambiguity | switch back to legacy Output Contract and revert task-owned skill edits | invariant eval report plus completion-claim taxonomy cases |
 | 3 | canonical profile/output semantics green in Slices 1-2 | mirror disagreement or edits needed outside authorized source scope | revert task-owned mirror changes; retain canonical source behavior | surface/contract consistency report |
-| 4 | independent Base/current runner and identities fixed; Slices 0-3 green | identity/hash drift, self-reported verdict fields, correctness/safety parity below 100%, governed under-route, changed measurement boundary, recover oracle failure, or target miss | keep simplified path disabled; return to failing slice rather than waive gate | raw independently executed paired results, derived assertions, recover oracle, separate context/helper summaries, zero-baseline table |
+| 4 | independent Base/current runner and identities fixed; Slices 0-3 green | identity/hash drift, self-reported verdict fields, correctness/safety parity below 100%, governed under-route, changed measurement boundary, recover oracle failure, required positive cohort `n=0`, or target miss | keep simplified path disabled; return to failing slice rather than waive gate | raw independently executed paired results, derived assertions, recover oracle, separate context/helper summaries, zero-baseline table, no-runtime assertion |
 | 5 | Slices 0-4 green and explicit user value confirmation | old CLI/JSON consumer incompatibility or mutation-semantics drift | retain old implementations and remove/disable unified entry point | old/new CLI compatibility and consumer report |
-| 6 | source gates and dual committee pass; explicit runtime authorization; backup ready | authorization absent, source/runtime diff changes, or post-sync smoke failure | restore targeted backup and rerun legacy-path smoke | authorization receipt, sync manifest, post-sync and rollback-smoke receipts |
+| 6 | source gates and external planning gate satisfied; explicit runtime authorization; backup ready | authorization absent, source/runtime diff changes, or post-sync smoke failure | restore targeted backup and rerun legacy-path smoke | authorization receipt, sync manifest, post-sync and rollback-smoke receipts |
 
 Any stop condition blocks completion of that slice. Escalation requiring user
 authority changes mode to HITL; it does not authorize a broader edit surface.
@@ -112,6 +110,9 @@ authority changes mode to HITL; it does not authorize a broader edit surface.
   Label proxies as proxies; do not label them model tokens.
 - Encode ordinary continue-only and ShipQ scenarios as routing controls outside
   the explicitly activated efficiency cohort.
+- Separate `explicit_opt_in` scenarios from `compatibility_risk_trigger` and
+  `profile_hint` scenarios; add near-miss false-positive controls for `complex`,
+  resume, takeover, handoff, and state-conflict trigger families.
 - Freeze `base_commit`, Base dispatcher SHA-256, Base generic skill SHA-256,
   corpus SHA-256/schema version, and runner name/version/SHA-256. Fail on any
   later identity drift.
@@ -119,9 +120,13 @@ authority changes mode to HITL; it does not authorize a broader edit surface.
   stale-evidence case; this fixture is mandatory Slice 0 infrastructure, not
   optional Slice 5 work.
 - Define `acceptance_trace_map` entries keyed by stable `AC-01` through `AC-18`
-  with `criterion`, `slice`, `scenario_ids`, `test_ids`, `producer`, and terminal
-  `evidence_status`. Bind every `test_id` through `test_catalog` to a resolvable
-  test callable.
+  with `criterion`, unioned `scenario_ids`/`test_ids`, and per-slice `producers`;
+  each producer has `slice`, `producer_id`, fixture, and `evidence_status`. Bind
+  every `test_id` through `test_catalog` to a resolvable test callable.
+- Define evidence states exactly: `planned`/`deferred` are nonterminal;
+  `completed`/`blocked`/`not_applicable` are terminal. Slice 0 may initialize
+  planned evidence, but each producing slice must terminalize its entries.
+- Add an executable AC-16 assertion that repo-source work did not mutate runtime.
 
 ### GREEN
 - Validate corpus schema and unique scenario IDs.
@@ -130,10 +135,13 @@ authority changes mode to HITL; it does not authorize a broader edit surface.
   repo-approved test fixture.
 - Record known baseline mismatches instead of editing expected results to make
   the current implementation pass.
-- Persist the sanitized task-owned commit/preimage ledger and prove rollback
-  refuses any path whose current preimage no longer matches the ledger.
+- Persist the sanitized task-owned ledger with `before_hash` and exact
+  task-produced `after_hash`. Prove compare-and-swap rollback for clean,
+  pre-existing dirty, concurrent-drift, and task-created-new-file cases.
 - Materialize the recover fixture with phase, constraints, ownership, executable
   next action, and verification evidence/freshness fields.
+- Encode unverified checkpoints with the contract's exact null receipt fields,
+  `status`/`freshness = unverified`, and a non-empty reason.
 
 ### Expected surfaces
 - `tests/fixtures/dhf_simplification_scenarios.json`
@@ -145,6 +153,8 @@ authority changes mode to HITL; it does not authorize a broader edit surface.
 - Every acceptance criterion has one or more scenario/test IDs.
 - Frozen hashes, runner version, callable bindings, producer fields, and the
   field-level recover fixture validate.
+- AC-16's Slice 0 no-runtime assertion is terminal; evidence owned by later
+  producing slices may remain `planned` only until those slices execute.
 
 ## Slice 1 — Introduce Deterministic Governance Profiles
 
@@ -155,13 +165,15 @@ authority changes mode to HITL; it does not authorize a broader edit surface.
 - Cover implicit risk, explicit opt-out, malformed/non-dict/missing-cwd input,
   ShipQ cwd lazy delegation, ordinary continue-only, and mid-task upgrade rules.
 - Assert the normative precedence table, post-activation profile/context owner,
-  and monotonic escalation behavior directly.
-- Assert `DHF_ACTIVATION_V1` pattern parity and task/thread state transport,
-  binding, expiry, duplicate/out-of-order sequence, recover, and forbidden
-  downgrade rules.
-- Assert the feature switch accepts only `"0"`/`"1"`, defaults to `"0"` in this
-  slice, and sends every invalid value to legacy with a bounded diagnostic.
+  activation reason, and same-dispatch/current-action risk-signal union directly.
+- Assert `DHF_ACTIVATION_V1` explicit opt-in vs compatibility-trigger pattern
+  parity, profile-hint current-evaluation behavior, resume/handoff governed
+  routing, malformed-hint governed fallback, and false-positive controls.
+- Assert the feature switch enables only exact `"1"`; recognizes `"0"`,
+  `"false"`, `"off"`, and `"legacy"` as rollback values; and sends every unknown
+  value to legacy with a bounded diagnostic.
 - Assert no traceback, full skill leak, secret-path leak, or partial output.
+- Assert existing helper CLI entry points are callable here for AC-09.
 
 ### GREEN
 - Add the smallest explicit classifier/contract needed by
@@ -175,6 +187,7 @@ authority changes mode to HITL; it does not authorize a broader edit surface.
 ### Gate
 - Focused dispatcher/profile tests pass.
 - Existing dispatcher registration, lazy-import, opt-out, and no-leak tests pass.
+- AC-09 helper CLI callability tests pass.
 - `python3 -m py_compile codex/hooks/dhf_preprompt.py` exits `0`.
 
 ## Slice 2 — Reduce The Visible Output Contract
@@ -249,10 +262,14 @@ outputs. It rejects any handwritten/self-reported pass booleans, shared-module
 execution, Base/current/corpus/runner hash drift, or provenance mismatch. For
 each metric and scenario with `b_i > 0`, compute `r_i = (b_i - c_i) / b_i` and
 use `median(r_i)` as the estimator; do not use a ratio of aggregate or median
-counts. Put zero-baseline cases in a separate absolute table and require
-candidate zero; report both sample counts. Any later model-inclusive study is a
-separate protocol that pins the model and pre-registers repeats before data
-collection; it cannot satisfy this gate.
+counts. The efficiency denominator includes only `explicit_opt_in` scenarios;
+compatibility-risk-triggered, profile-hint, and false-positive controls are
+reported separately. Put zero-baseline cases in a separate absolute table and
+require candidate zero; report both sample counts. When a metric's positive
+explicit-opt-in cohort has `n=0`, report `not_applicable` plus a reason and make
+no reduction claim; if promotion requires positive samples, the gate fails. Any
+later model-inclusive study is a separate protocol that pins the model and
+pre-registers repeats before data collection; it cannot satisfy this gate.
 
 ### Pass rule
 - 100% parity on the first five correctness/safety dimensions.
@@ -265,9 +282,12 @@ collection; it cannot satisfy this gate.
   scenario results, and any outlier; do not claim population-wide significance.
 - The Slice 0 checkpoint/recover fixture passes field by field and stale evidence
   is not promoted; this is a mandatory Slice 4 parity gate.
+- AC-16's independent Slice 4 no-runtime-mutation assertion is terminal before
+  source promotion; Slice 0 evidence alone is insufficient.
 - Only after all Slice 4 gates pass may repo source change the absent-value switch
   default from `"0"` to `"1"`. Runtime remains unsynced. Invalid values still
-  fail closed to legacy, and rollback is the explicit `"0"` legacy smoke.
+  fail safely to legacy with a diagnostic, and rollback uses any recognized
+  rollback alias plus the legacy smoke.
 
 ### Gate
 - Focused corpus comparison exits `0`.
@@ -300,7 +320,7 @@ collection; it cannot satisfy this gate.
 
 ### Preconditions
 - Slices 0–4 pass with fresh evidence.
-- Dual committee pass gate is satisfied.
+- The orchestrator-held external planning gate is satisfied.
 - Source/runtime diff is enumerated.
 - User explicitly authorizes targeted runtime mutation.
 - Backup and rollback paths are defined without broad mirror or `--delete`.
@@ -321,34 +341,23 @@ The machine-readable corpus is authoritative; this table is its review mirror.
 | Contract area | AC IDs | Slice | Scenario producer | Primary evidence |
 | --- | --- | --- | --- | --- |
 | Result Invariants and completion claims | AC-01 | 2 | Slice 2 eval runner + light/standard/governed outputs | Output Contract evals, structured completion oracle, and taxonomy cases |
-| Profile selection/state | AC-02 | 1 | Slice 1 dispatcher runner + activated profile scenarios | Classifier, activation grammar, state binding/sequence tests, and golden corpus |
+| Profile selection/current hint | AC-02 | 1 | Slice 1 dispatcher runner + explicit/risk/hint/false-positive scenarios | Classifier, activation reason, stateless hint, current-signal union, and golden corpus |
 | Ordinary/opt-out/malformed routing | AC-03, AC-04, AC-06 | 0-1 | Dispatcher subprocess runner + routing controls | Continue-only, precedence, no-leak, and malformed-input assertions |
 | ShipQ lazy delegation | AC-05 | 0-1 | Import-tracing runner + ShipQ control | Lazy-delegation and no-generic-context assertions |
 | Conditional/governed helpers and gates | AC-07, AC-08 | 1-2 | Profile-contract runner + light/governed scenarios | Forbidden-light and mandatory-governed helper/gate assertions |
-| Helper compatibility | AC-09 | 0; optional 5 | CLI runner + governed helper scenarios | Existing helper callability; optional unified-entry compatibility |
+| Helper compatibility | AC-09 | 1; optional 5 | Slice 1 CLI runner + governed helper scenarios | Existing helper callability; optional unified-entry compatibility |
 | Behavioral/safety/recovery parity | AC-10, AC-11, AC-17 | 0 fixture; 4 gate | Independent pair runner + all bounded outputs/recover fixture | Derived result, permission, receipt, dirty-preservation, and field-level recovery assertions |
 | Efficiency and bounded reporting | AC-12, AC-13, AC-14 | 0 fixture; 4 gate | Independent pair runner + activated cohort/routing controls | Per-scenario relative-reduction medians, zero table, raw results, and sample counts |
 | Source/mirror consistency | AC-15 | 3 | Surface checker + canonical contract fixture | Surface and contract mirror checks |
-| Runtime authorization boundary | AC-16 | 6 | Runtime promotion runner + authorization receipt | Source/runtime diff, explicit authorization, targeted sync receipt |
-| Feature rollback | AC-18 | 1; 4 promotion gate | Dispatcher rollback runner + routing/helper controls | `"0"` legacy route/helper smoke and invalid-value fail-closed tests |
+| Runtime authorization boundary | AC-16 | 0 and 4 assertions | Slice 0/4 no-runtime runners | Two independently terminal no-runtime assertions; Slice 6 remains separately authorized |
+| Feature rollback | AC-18 | 1; 4 promotion gate | Dispatcher rollback runner + routing/helper controls | Recognized rollback aliases, legacy route/helper smoke, and unknown-value safe-legacy diagnostics |
 
-## Dual Committee Review Contract
-- Artifact scope: this plan and its implementation contract only.
-- Editable scope: the same two files.
-- Maximum rounds: 5, including blind final review.
-- Codex expert domains:
-  1. lifecycle/runtime architecture and compatibility;
-  2. verification, measurement, and test strategy;
-  3. operator safety, usability, and implementation sequencing.
-- Claude uses its local `committee-review-loop` skill read-only.
-- Ratings are not averaged. Findings use stable IDs and explicit closure
-  conditions.
-- The orchestrator holds the external acceptance criterion; it is absent from
-  both artifacts and the blind-review prompt. The reviewer receives the rubric
-  and artifacts, but no target score or pass wording to anchor its judgment.
-- Planning pass additionally requires fresh plan/contract validation and a blind
-  final review with no new material finding or rubric challenge. This closes the
-  planning artifact gate only; implementation DoD still requires Slices 0-4.
+## External Planning Review Boundary
+
+The orchestrator-held external planning gate is satisfied and remains invisible
+in these artifacts. No review round count, scoring target, or pass mechanics are
+part of the implementation contract. Implementation DoD remains the executable
+Slice 0-4 gates.
 
 ## Final Verification Bundle
 Run fresh after the final document revision:

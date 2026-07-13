@@ -40,7 +40,7 @@ The target operating model is a thin invariant core with progressive governance:
   authorization after repo-source verification.
 - Rewriting append-only harness history.
 - Optimizing for identical prose between the old and simplified DHF.
-- Using average committee ratings as a pass condition.
+- Defining or implementing a host-level cross-prompt lifecycle state store.
 
 ## Constraints
 - Probe worktree state at implementation time and preserve every unrelated or
@@ -63,8 +63,8 @@ The target operating model is a thin invariant core with progressive governance:
   evals, documentation mirrors, compatibility boundaries, and a later optional
   helper consolidation slice.
 - H_tool (tool-selection ambiguity): Static tests, subprocess hook tests, eval
-  corpus execution, runtime parity checks, and committee reviews serve different
-  purposes and must not be substituted for one another.
+  corpus execution, and runtime parity checks serve different purposes and must
+  not be substituted for one another.
 - S_state (cross-module state tracking): Any implementation-time uncommitted
   dispatcher or DHF changes must be classified and preserved while source,
   runtime, adapter, documentation, and evidence contracts remain distinguishable.
@@ -123,9 +123,9 @@ Use when any escalation signal is present:
 Governed tasks retain the relevant recovery, lane, environment, permission,
 evidence, checkpoint, deployment-readiness, and agent-team gates.
 
-When uncertain between two profiles, select the higher profile and record the
-specific escalation signal. A profile may be upgraded during execution; it may
-only be downgraded after the triggering risk is disproven with evidence.
+When uncertain between two profiles in the current dispatch/action, select the
+higher profile and record the specific escalation signal. Union all current
+signals before that action; do not infer a cross-prompt profile guarantee.
 
 ## Normative Routing Contract
 
@@ -149,7 +149,7 @@ using keys `cwd`, `workdir`, and `repo_root`.
 {
   "schema": "DHF_ACTIVATION_V1",
   "match": "regex_search_ignore_case_any",
-  "opt_out_patterns": [
+  "explicit_opt_out_patterns": [
     "\\bno\\s+dhf\\b", "\\bskip\\s+dhf\\b", "\\bwithout\\s+dhf\\b",
     "\\bno\\s+delivery[-\\s]+harness\\b", "\\bskip\\s+delivery[-\\s]+harness\\b",
     "\\b(?:do\\s+not|don't)\\s+use\\s+(?:dhf|delivery[-\\s]+harness)\\b",
@@ -157,67 +157,62 @@ using keys `cwd`, `workdir`, and `repo_root`.
     "不用\\s*(dhf|delivery[-\\s]*harness)", "不要\\s*(dhf|delivery[-\\s]*harness)",
     "跳过\\s*(dhf|delivery[-\\s]*harness)", "不调用\\s*(dhf|delivery[-\\s]*harness)"
   ],
-  "activation_patterns": [
+  "explicit_opt_in_patterns": [
     "\\buse\\s+dhf\\b", "\\buse\\s+(?:the\\s+)?delivery[-\\s]+harness(?:\\s+framework)?\\b",
-    "\\bcomplex\\b", "\\bresume\\b", "\\btake\\s*over\\b", "\\btakeover\\b",
-    "\\bhandoff\\b", "\\bstate[-\\s]+conflict\\b", "接手", "恢复", "交接", "状态冲突",
     "(?:使用|启用|调用)\\s*(?:dhf|交付(?:治理)?框架|交付(?:治理)?流程)"
+  ],
+  "compatibility_risk_trigger_patterns": [
+    "\\bcomplex\\b", "\\bresume\\b", "\\btake\\s*over\\b", "\\btakeover\\b",
+    "\\bhandoff\\b", "\\bstate[-\\s]+conflict\\b", "接手", "恢复", "交接", "状态冲突"
   ]
 }
 ```
+
+Every activated route records `activation_reason` as exactly
+`explicit_opt_in`, `compatibility_risk_trigger`, or `profile_hint`. Explicit
+opt-in and compatibility triggers share dispatcher precedence but remain
+separate cohorts. Resume/handoff triggers select `governed` from the current
+prompt. Corpus controls include near-miss/false-positive phrases for every broad
+compatibility trigger.
 
 | Precedence | Input condition | Dispatcher outcome | Profile/context owner |
 | --- | --- | --- | --- |
 | 1 | payload is non-dict, malformed, or `cwd` is missing/invalid | safe continue-only; no traceback, partial output, or DHF context | none |
 | 2 | explicit opt-out is present | continue-only, even if ShipQ or generic activation also matches | none |
 | 3 | valid ShipQ cwd matches the lazy adapter boundary | lazy delegate without importing generic activated context | ShipQ adapter |
-| 4 | explicit generic DHF activation matches | enter activated cohort, then select `light`, `standard`, or `governed` from task/risk signals | generic DHF profile selector |
+| 4 | explicit opt-in, compatibility risk trigger, or valid current-evaluation profile hint matches | record the activation reason, then select `light`, `standard`, or `governed` from current input/risk signals | generic DHF profile selector |
 | 5 | ordinary non-ShipQ request | continue-only with zero injected DHF context | none |
 
-### Active Profile State Contract
+### Current Host State Boundary
 
-The task/thread lifecycle state owner, not the stateless hook or model, is the
-authoritative owner of `active_profile`. The owner transports state to the hook
-in top-level `dhf_profile_state`; the hook returns only derived context and must
-not claim to persist state. The state shape is:
+The hook is stateless. The current host exposes no authoritative task/thread
+binding, sequence, expiry, or cross-prompt persistence capability to this hook.
+Top-level `dhf_profile_state`, when supplied, is only an optional compatibility
+hint and current-evaluation input with shape
+`{"active_profile":"light|standard|governed"}`. It is not proof that a profile
+was persisted, belongs to this task/thread, is fresh, or was delivered in order.
+A malformed hint selects `governed`; absence of a hint creates no remembered
+state. Resume/handoff language in the current prompt directly selects
+`governed` without relying on prior state.
 
-```json
-{
-  "schema_version": 1,
-  "task_id": "non-empty stable task id",
-  "thread_id": "non-empty stable thread id",
-  "active_profile": "light|standard|governed",
-  "sequence": 0,
-  "updated_at": "RFC3339 UTC",
-  "expires_at": "RFC3339 UTC or null",
-  "escalation_signals": []
-}
-```
-
-The owner binds state to both current `task_id` and `thread_id`. A binding
-mismatch, unknown schema/profile, non-integer or decreasing sequence, or expired
-state is `malformed_profile_state`: fail closed to `governed` and require recover
-before risky work. A new risk signal causes monotonic
-`light -> standard -> governed` escalation before the risky action and an atomic
-sequence increment; duplicate delivery at the same sequence is idempotent, and a
-lower sequence is rejected. Normal prompt processing must not downgrade. Task
-terminal state expires the record. Time expiry never silently downgrades; recover
-reconstructs the last valid checkpoint for the same task/thread, marks prior
-verification freshness accurately, and writes a higher sequence before routing
-continues. Tests must cover binding mismatch, expiry, duplicate delivery,
-out-of-order delivery, upgrade, forbidden downgrade, and checkpoint recovery.
+The only monotonic guarantee in Slices 0-4 is within one dispatch/current action:
+the selected profile is the maximum of the valid hint, current prompt profile,
+and the union of all current risk signals before that action. No artifact may
+claim cross-prompt monotonicity or recovery of `active_profile`. A future host
+lifecycle integration could add authoritative task/thread binding, persistence,
+sequence, expiry, and recovery, but that is a separate blocked capability outside
+Slices 0-4 and requires a new contract and host authorization.
 
 ### Feature Switch Contract
 
-`DHF_PREPROMPT_SIMPLIFIED_PROFILES` accepts exactly string `"0"` (legacy route)
-or `"1"` (simplified profiles). Slice 0 has no candidate activation; Slice 1
-introduces the switch with absent-value default `"0"`; Slices 2-3 keep that
-default; Slice 4 may change the repo-source default to `"1"` only after every
-parity, recoverability, traceability, and efficiency gate passes. Any other value
-is invalid and must emit a bounded diagnostic and fail closed to the legacy
-route. Runtime remains unchanged until Slice 6. Rollback explicitly sets `"0"`
-and proves legacy dispatcher and helper callability; merely editing prose or
-unsetting a post-promotion default is not a rollback.
+`DHF_PREPROMPT_SIMPLIFIED_PROFILES` enables simplified profiles only when its
+value is exactly string `"1"`. Recognized rollback aliases are `"0"`, `"false"`,
+`"off"`, and `"legacy"`; each selects the legacy route. An absent value follows
+the slice-controlled repo-source default: legacy through Slices 1-3, and
+simplified only after the Slice 4 promotion gate. Any other value emits a bounded
+diagnostic and fails safely to legacy. Runtime remains unchanged until Slice 6.
+Rollback uses a recognized alias and proves legacy dispatcher/helper callability;
+merely editing prose is not a rollback.
 
 ## Completion Claim Taxonomy
 
@@ -237,10 +232,11 @@ explanation and requires fresh validation.
 
 ## Efficiency Measurement Contract
 
-Efficiency is evaluated only with same-scenario paired observations from the
-explicitly activated generic cohort. Ordinary continue-only and ShipQ delegated
-scenarios remain routing/safety controls, but are excluded from the reduction
-denominator because they are not injected `light` cases.
+Efficiency is evaluated only with same-scenario paired observations whose
+`activation_reason` is `explicit_opt_in`. Compatibility-risk-triggered,
+profile-hint, ordinary continue-only, ShipQ delegated, and false-positive control
+scenarios remain routing/safety controls but never enter the reduction
+denominator.
 
 For each scenario, record baseline and candidate measurements under the same
 prompt, cwd class, activation state, measurement boundary, runner version, and
@@ -255,6 +251,11 @@ counts for positive-baseline and zero-baseline groups are mandatory. The 40%
 target applies independently to the two per-scenario-relative-reduction medians.
 Any future model-inclusive measurement requires a separate, pre-registered
 repeat protocol and cannot satisfy this acceptance criterion.
+
+If a metric's positive-baseline explicit-opt-in cohort has `n = 0`, its result is
+`not_applicable` with a non-empty reason and no reduction claim. If the applicable
+promotion target requires positive samples, `n = 0` fails the promotion gate;
+`not_applicable` cannot be treated as passing or as a 0%/100% reduction.
 
 ## Frozen Baseline Identity And Independent Execution
 
@@ -271,6 +272,20 @@ as `baseline_pass` or `candidate_accepted`. Any Base identity mismatch, current
 source-hash drift, corpus drift, runner drift, or shared execution provenance
 fails the comparison before metrics are accepted.
 
+## Ownership And Rollback Ledger Contract
+
+Before a task-owned write, the ledger records path, ownership class, `before_hash`
+(`absent` for a new file), and later the exact task-produced `after_hash` plus
+task commit when available. Rollback is compare-and-swap: restore/delete the
+task-owned path only when its current hash equals `after_hash`; any mismatch is
+concurrent drift and stops rollback for that path without overwriting it.
+
+Tests cover a clean tracked file, a pre-existing dirty file left untouched, an
+isolated task-owned edit, concurrent modification after the task write, and a
+task-created new file. They prove rollback restores `before_hash` only for the
+task-produced `after_hash`, never absorbs pre-existing dirt, and deletes a new
+file only when its current bytes still equal the task-produced bytes.
+
 ## Recoverability Oracle
 
 Every governed checkpoint/recovery fixture must exercise a field-level
@@ -286,6 +301,26 @@ semantic fields are preserved (normalization of formatting is allowed):
 
 Missing, widened, or silently defaulted fields fail the oracle. Tests must also
 prove that stale verification is not promoted to fresh after recovery.
+
+An unverified checkpoint has exactly this verification shape; receipt-like
+values must not be synthesized:
+
+```json
+{
+  "verification_evidence": {
+    "status": "unverified",
+    "command": null,
+    "exit_code": null,
+    "key_output": null,
+    "timestamp": null,
+    "freshness": "unverified",
+    "reason": "non-empty explanation"
+  }
+}
+```
+
+Any non-null receipt field, missing/non-empty-status mismatch, empty `reason`, or
+fresh/stale label on an unverified checkpoint fails validation.
 
 ## Acceptance Criteria
 - [ ] **AC-01** The generic DHF Output Contract is reduced from an always-visible routing
@@ -318,7 +353,8 @@ prove that stale verification is not promoted to fresh after recovery.
 - [ ] **AC-15** Repo source, documentation mirrors, surface inventory, tests, and evals
       agree on the same three-profile contract.
 - [ ] **AC-16** Runtime sync remains blocked until source verification passes and the user
-      separately authorizes runtime mutation.
+      separately authorizes runtime mutation; Slice 0 and Slice 4 each produce an
+      executable no-runtime-mutation assertion.
 - [ ] **AC-17** Governed checkpoint fixtures pass the field-level recoverability oracle.
 - [ ] **AC-18** A feature-switch rollback smoke proves the simplified route can be
       disabled and legacy paths/helper entry points still execute.
@@ -338,14 +374,26 @@ acceptance checks, injected-context size, helper-call count, and verification
 receipt status.
 
 The corpus owns an `acceptance_trace_map` keyed by the stable `AC-01` through
-`AC-18` IDs. Every entry must contain `criterion`, `slice`, `scenario_ids`,
-`test_ids`, `producer`, and `evidence_status`; `producer` identifies the slice
-runner and scenario/output fixture that creates the evidence. `test_ids` resolve
-through `test_catalog` entries in the exact callable form
+`AC-18` IDs. Every entry contains `criterion`, unioned `scenario_ids`/`test_ids`,
+and a non-empty `producers` array. Each producer contains `slice`, `producer_id`,
+its scenario/output fixture, and its own `evidence_status`; this supports AC-16's
+independent Slice 0 and Slice 4 evidence without flattening lifecycle state.
+`test_ids` resolve through `test_catalog` entries in the exact callable form
 `path.py::ClassName.test_method` or `path.py::test_function`. Validation imports
 or otherwise resolves each binding and rejects missing/non-test callables,
-unknown scenarios, duplicate IDs, missing producers, and non-terminal evidence
-states. Renumbering an AC requires an explicit schema migration.
+unknown scenarios, duplicate IDs, missing producers, and a nonterminal state at
+the named producing slice's gate. Renumbering an AC requires an explicit schema
+migration.
+
+Each producer's `evidence_status.state` is exactly one of `planned`, `deferred`, `completed`,
+`blocked`, or `not_applicable`. `planned` and `deferred` are nonterminal;
+`completed`, `blocked`, and `not_applicable` are terminal and require a non-empty
+`evidence_id` or reason. Slice 0 may initialize a later slice's entry as
+`planned`, but the slice named by that producer must write a terminal state
+before its own gate can pass. `blocked` records a real boundary, not success.
+AC-16 has two source-stage producers: Slice 0 and Slice 4 each terminally prove
+no runtime mutation. Slice 6 remains separately authorized and is not pre-marked
+as an AC-16 producer.
 
 ## Verification Gate
 - `python3 -m py_compile codex/hooks/dhf_preprompt.py`
@@ -399,10 +447,9 @@ change must be reported as an expected pending gate, never presented as green.
 - question: Is live runtime sync part of the initial implementation?
   answer: No. Initial work is repo source-stage only; runtime mutation requires
     separate authorization.
-- question: How is blind-review acceptance decided without leaking the target?
-  answer: The orchestrator holds the external acceptance criterion and does not
-    place it in either reviewed artifact or the blind-review prompt. The artifact
-    records only closed material findings and fresh validation evidence.
+- question: What planning-review state may this artifact expose?
+  answer: Only that the orchestrator-held external planning gate is satisfied
+    and invisible here; its criterion and mechanics are not part of this artifact.
 
 ## Handoff Notes
 - Editable scope for this planning task is limited to this contract and
