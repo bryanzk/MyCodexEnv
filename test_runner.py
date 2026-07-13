@@ -1887,6 +1887,7 @@ def test_dhf_dispatcher_invalid_adapter_responses_fail_open():
 
 def test_dhf_dispatcher_shipq_non_shipq_truth_table():
     module = _load_generic_dhf_module()
+    module.SIMPLIFIED_PROFILES_ENABLED = True
     with tempfile.TemporaryDirectory() as tmp:
         tmp_path = Path(tmp)
         shipq_root = tmp_path / "ShipQ"
@@ -1974,6 +1975,7 @@ def test_dhf_dispatcher_opt_out_precedence():
 
 def test_dhf_dispatcher_lazy_import_and_no_write_snapshot():
     module = _load_generic_dhf_module()
+    module.SIMPLIFIED_PROFILES_ENABLED = True
     with tempfile.TemporaryDirectory() as tmp:
         tmp_path = Path(tmp)
         shipq_root = tmp_path / "ShipQ"
@@ -2010,6 +2012,7 @@ def test_dhf_dispatcher_stdout_stderr_and_no_leak_output():
         code, response, stdout, stderr = _run_generic_dhf_hook(
             {"cwd": str(tmp_path), "prompt": "resume this complex handoff"},
             extra_env={
+                "DHF_PREPROMPT_SIMPLIFIED_PROFILES": "1",
                 "DHF_PREPROMPT_SKILL": str(skill),
                 "DHF_PREPROMPT_SHIPQ_ROOT": str(tmp_path / "ShipQ"),
                 "DHF_PREPROMPT_SHIPQ_ADAPTER": str(tmp_path / "missing_adapter.py"),

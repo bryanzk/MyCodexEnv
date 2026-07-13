@@ -320,6 +320,22 @@ def _load_dispatcher(root: Path):
     return module
 
 
+def _observed_candidate_helpers(context: str) -> list[str]:
+    marker = "DHF_PROFILE_CONTRACT="
+    for line in context.splitlines():
+        if not line.startswith(marker):
+            continue
+        try:
+            contract = json.loads(line.removeprefix(marker))
+        except json.JSONDecodeError:
+            return []
+        helpers = contract.get("mandatory_helpers") if isinstance(contract, dict) else None
+        if isinstance(helpers, list) and all(_non_empty_string(item) for item in helpers):
+            return helpers
+        return []
+    return []
+
+
 def _measure_dispatcher(
     corpus: dict[str, Any], root: Path, *, simplified_profiles: bool
 ) -> list[dict[str, Any]]:
@@ -352,6 +368,7 @@ def _measure_dispatcher(
             }
             response, route = module.route_response(payload)
             context = response.get("hookSpecificOutput", {}).get("additionalContext", "")
+            observed_helpers = _observed_candidate_helpers(context) if simplified_profiles else []
             selected_profile = route.removeprefix("generic-activated:") if route.startswith("generic-activated:") else None
             if selected_profile == "legacy":
                 selected_profile = None
@@ -362,12 +379,13 @@ def _measure_dispatcher(
                     "route": route,
                     "injected_context_utf8_bytes_proxy": len(context.encode("utf-8")),
                     "mandatory_helper_count": (
-                        len(scenario["mandatory_helpers"])
+                        len(observed_helpers)
                         if simplified_profiles
                         else len(BASELINE_HELPER_ORACLE[scenario["id"]])
                     ),
                     "verification_receipt_status": scenario["baseline_measurement"]["verification_receipt_status"],
                     "selected_profile": selected_profile,
+                    "observed_mandatory_helpers": observed_helpers,
                 }
             )
         return measurements
@@ -379,6 +397,31 @@ def measure_baseline(corpus: dict[str, Any], root: Path) -> list[dict[str, Any]]
 
 def measure_candidate(corpus: dict[str, Any], root: Path) -> list[dict[str, Any]]:
     return _measure_dispatcher(corpus, root, simplified_profiles=True)
+
+
+def validate_candidate_measurements(
+    corpus: dict[str, Any],
+    root: Path,
+    measurements: list[dict[str, Any]] | None = None,
+) -> list[str]:
+    actual = measurements if measurements is not None else measure_candidate(corpus, root)
+    actual_by_id = {item.get("id"): item for item in actual if isinstance(item, dict)}
+    errors: list[str] = []
+    for scenario in corpus["scenarios"]:
+        scenario_id = scenario["id"]
+        measured = actual_by_id.get(scenario_id)
+        if measured is None:
+            errors.append(f"{scenario_id} missing candidate measurement")
+            continue
+        expected_helpers = scenario["mandatory_helpers"]
+        observed_helpers = measured.get("observed_mandatory_helpers")
+        if observed_helpers != expected_helpers:
+            errors.append(
+                f"{scenario_id} candidate helper mismatch: {observed_helpers} != {expected_helpers}"
+            )
+        if measured.get("mandatory_helper_count") != len(observed_helpers or []):
+            errors.append(f"{scenario_id} candidate helper count does not match observed helpers")
+    return errors
 
 
 def validate_baseline_measurements(corpus: dict[str, Any], root: Path) -> list[str]:
