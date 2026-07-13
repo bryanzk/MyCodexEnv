@@ -28,7 +28,7 @@ cd MyCodexEnv
 - Codex / Claude workflow 来源分别为 `codex/workflow/*`、`claude/workflow/*`，但都排除 `workflow/memory/` 这类运行态热数据
 - Claude workflow 同步到 `~/.claude/workflow/*`，通过注入块挂到 `~/.claude/CLAUDE.md`
 - 默认启用 Codex hooks；全局 `SessionStart` hook 会在新会话启动时提醒会话名采用 `<项目缩写>-<YYYYMMDD>-<概要>` 格式
-- Harness runtime 默认启用薄 hooks：`UserPromptSubmit` 运行 `model_router.py` 给出 prompt/subtask 级模型路由建议，并注入最终回复 telemetry 要求；`PreToolUse` 读取 `tool-policy.json` 做客观 guardrail，`PostToolUse` 尝试把工具事件写入本机 `~/.codex/harness/evidence/*.jsonl`
+- Harness runtime 默认启用薄 hooks：`UserPromptSubmit` 运行 `model_router.py` 给出 prompt/subtask 级模型路由建议，并运行 `dhf_preprompt.py` 作为 generic DHF dispatcher；`shipq_dhf_preprompt.py` 只在 ShipQ cwd 下延迟加载；`PreToolUse` 读取 `tool-policy.json` 做客观 guardrail，`PostToolUse` 尝试把工具事件写入本机 `~/.codex/harness/evidence/*.jsonl`
 - 全局 zsh 会话标题钩子默认生成 `<项目缩写>-<YYYYMMDD>-summary`，避免被旧的 `[Repo] zsh` 标题覆盖
 - 若 Codex Desktop 在新建会话时对 `~/Documents` 或 `~/Desktop` 报 `EPERM: operation not permitted, mkdir`，优先将会话根目录切到 `~/Codes/Codex` 这类非受保护目录，或在 macOS `隐私与安全性 -> 文件与文件夹 / 完全磁盘访问权限` 中授权 `Codex`
 
@@ -65,6 +65,7 @@ cd MyCodexEnv
 - `scripts/check_codex_skill_loader.py`：在禁网 sandbox 中调用 Codex `app-server skills/list`，确认预期 skill path 全部 loaded/enabled 且 loader error 为零
 - `scripts/headroom_filter.py`：可选 Headroom stdin 过滤器，用于在把大型 `rg` 输出、测试日志、JSON 工具结果送入 agent context 前先做本地压缩
 - `codex/hooks/model_router.py`：`UserPromptSubmit` prompt 复杂度路由器，按 simple/medium/complex 和质量地板选择 `gpt-5.4-mini`、`gpt-5.4` 或 `gpt-5.5`，复杂任务可在阶段或 subtask 边界重复调用以自动下探或升级；当 hook payload 或环境变量提供 token / 5 小时 limit 字段时，同步输出 telemetry，缺失时显式写 `unavailable`
+- `codex/hooks/dhf_preprompt.py`：全局 DHF prompt dispatcher；无效 payload 或缺少 cwd 只返回 continue，opt-out 优先，非 ShipQ 只有 complex/resume/takeover/handoff/state-conflict 等明确 activation 才注入 generic DHF context，ShipQ cwd 才延迟调用 `shipq_dhf_preprompt.py`
 - `codex/hooks/harness_guard.py`：`PreToolUse` guardrail，处理 destructive、secret、remote、dynamic execution 和越阶段写入
 - `codex/hooks/harness_observer.py`：`PostToolUse` observer，非阻塞记录工具事件
 

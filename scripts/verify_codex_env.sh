@@ -127,7 +127,7 @@ superpowers_plugin_installed_ok() {
 }
 
 skill_compatibility_ok() {
-  python3 "${REPO_ROOT}/scripts/check_skill_compatibility.py" \
+  STRICT_RUNTIME_PARITY=1 python3 "${REPO_ROOT}/scripts/check_skill_compatibility.py" \
     --repo-root "${REPO_ROOT}" \
     --codex-home "${CODEX_HOME}" \
     --json
@@ -164,6 +164,7 @@ results+=("$(check codex_hook_script_exists '[[ -f "'"${CODEX_HOME}"'"/hooks/ses
 results+=("$(check codex_harness_guard_hook_exists '[[ -f "'"${CODEX_HOME}"'"/hooks/harness_guard.py ]]')")
 results+=("$(check codex_harness_observer_hook_exists '[[ -f "'"${CODEX_HOME}"'"/hooks/harness_observer.py ]]')")
 results+=("$(check codex_model_router_hook_exists '[[ -f "'"${CODEX_HOME}"'"/hooks/model_router.py ]]')")
+results+=("$(check codex_dhf_preprompt_hook_exists '[[ -f "'"${CODEX_HOME}"'"/hooks/dhf_preprompt.py ]]')")
 results+=("$(check codex_shipq_dhf_preprompt_hook_exists '[[ -f "'"${CODEX_HOME}"'"/hooks/shipq_dhf_preprompt.py ]]')")
 results+=("$(check codex_runtime_tool_policy_exists '[[ -f "'"${CODEX_HOME}"'"/runtime/tool-policy.json ]]')")
 results+=("$(check codex_runtime_cli_resolver_exists '[[ -x "'"${CODEX_HOME}"'"/runtime/resolve_codex_cli.sh ]]')")
@@ -199,6 +200,7 @@ results+=("$(check codex_hook_session_start_runtime_matches_source 'cmp -s "'"${
 results+=("$(check codex_hook_harness_guard_runtime_matches_source 'cmp -s "'"${REPO_ROOT}"'"/codex/hooks/harness_guard.py "'"${CODEX_HOME}"'"/hooks/harness_guard.py' )")
 results+=("$(check codex_hook_harness_observer_runtime_matches_source 'cmp -s "'"${REPO_ROOT}"'"/codex/hooks/harness_observer.py "'"${CODEX_HOME}"'"/hooks/harness_observer.py' )")
 results+=("$(check codex_hook_model_router_runtime_matches_source 'cmp -s "'"${REPO_ROOT}"'"/codex/hooks/model_router.py "'"${CODEX_HOME}"'"/hooks/model_router.py' )")
+results+=("$(check codex_hook_dhf_preprompt_runtime_matches_source 'cmp -s "'"${REPO_ROOT}"'"/codex/hooks/dhf_preprompt.py "'"${CODEX_HOME}"'"/hooks/dhf_preprompt.py' )")
 results+=("$(check codex_hook_shipq_dhf_preprompt_runtime_matches_source 'cmp -s "'"${REPO_ROOT}"'"/codex/hooks/shipq_dhf_preprompt.py "'"${CODEX_HOME}"'"/hooks/shipq_dhf_preprompt.py' )")
 results+=("$(check codex_runtime_tool_policy_matches_source 'cmp -s "'"${REPO_ROOT}"'"/codex/runtime/tool-policy.json "'"${CODEX_HOME}"'"/runtime/tool-policy.json' )")
 results+=("$(check codex_runtime_cli_resolver_matches_source 'cmp -s "'"${REPO_ROOT}"'"/codex/runtime/resolve_codex_cli.sh "'"${CODEX_HOME}"'"/runtime/resolve_codex_cli.sh' )")

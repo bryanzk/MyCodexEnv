@@ -103,8 +103,13 @@
       "audience": ["runtime", "codex"]
     },
     {
+      "path": "codex/hooks/dhf_preprompt.py",
+      "role": "generic DHF UserPromptSubmit dispatcher with opt-out, activation, and ShipQ lazy-adapter routing",
+      "audience": ["runtime", "codex"]
+    },
+    {
       "path": "codex/hooks/shipq_dhf_preprompt.py",
-      "role": "repo-owned ShipQ DHF preprompt hook surface",
+      "role": "ShipQ-only DHF preprompt adapter loaded only by the generic dispatcher for ShipQ cwd",
       "audience": ["runtime", "codex"]
     },
     {
