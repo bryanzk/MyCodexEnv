@@ -320,7 +320,7 @@ def _load_dispatcher(root: Path):
     return module
 
 
-def _observed_candidate_helpers(context: str) -> list[str]:
+def _observed_candidate_contract(context: str) -> dict[str, Any]:
     marker = "DHF_PROFILE_CONTRACT="
     for line in context.splitlines():
         if not line.startswith(marker):
@@ -328,12 +328,12 @@ def _observed_candidate_helpers(context: str) -> list[str]:
         try:
             contract = json.loads(line.removeprefix(marker))
         except json.JSONDecodeError:
-            return []
+            return {"contract_observed": True, "contract_parse_valid": False, "helpers": []}
         helpers = contract.get("mandatory_helpers") if isinstance(contract, dict) else None
         if isinstance(helpers, list) and all(_non_empty_string(item) for item in helpers):
-            return helpers
-        return []
-    return []
+            return {"contract_observed": True, "contract_parse_valid": True, "helpers": helpers}
+        return {"contract_observed": True, "contract_parse_valid": False, "helpers": []}
+    return {"contract_observed": False, "contract_parse_valid": False, "helpers": []}
 
 
 def _measure_dispatcher(
@@ -368,7 +368,12 @@ def _measure_dispatcher(
             }
             response, route = module.route_response(payload)
             context = response.get("hookSpecificOutput", {}).get("additionalContext", "")
-            observed_helpers = _observed_candidate_helpers(context) if simplified_profiles else []
+            observed_contract = (
+                _observed_candidate_contract(context)
+                if simplified_profiles
+                else {"contract_observed": False, "contract_parse_valid": False, "helpers": []}
+            )
+            observed_helpers = observed_contract["helpers"]
             selected_profile = route.removeprefix("generic-activated:") if route.startswith("generic-activated:") else None
             if selected_profile == "legacy":
                 selected_profile = None
@@ -386,6 +391,8 @@ def _measure_dispatcher(
                     "verification_receipt_status": scenario["baseline_measurement"]["verification_receipt_status"],
                     "selected_profile": selected_profile,
                     "observed_mandatory_helpers": observed_helpers,
+                    "contract_observed": observed_contract["contract_observed"],
+                    "contract_parse_valid": observed_contract["contract_parse_valid"],
                 }
             )
         return measurements
@@ -413,6 +420,11 @@ def validate_candidate_measurements(
         if measured is None:
             errors.append(f"{scenario_id} missing candidate measurement")
             continue
+        if measured.get("selected_profile") is not None:
+            if not measured.get("contract_observed"):
+                errors.append(f"{scenario_id} candidate contract missing")
+            elif not measured.get("contract_parse_valid"):
+                errors.append(f"{scenario_id} candidate contract invalid")
         expected_helpers = scenario["mandatory_helpers"]
         observed_helpers = measured.get("observed_mandatory_helpers")
         if observed_helpers != expected_helpers:

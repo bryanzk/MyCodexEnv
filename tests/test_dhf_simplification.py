@@ -216,6 +216,13 @@ class DhfSimplificationCorpusTests(unittest.TestCase):
             "candidate measurement needs an independent helper validator",
         )
         measured = self.validator.measure_candidate(self.corpus, ROOT)
+        self.assertEqual(self.validator.validate_candidate_measurements(self.corpus, ROOT, measured), [])
+        self.assertTrue(
+            all("contract_observed" in item and "contract_parse_valid" in item for item in measured),
+            "candidate measurements must expose contract observation metadata",
+        )
+        self.assertTrue(all(item["contract_observed"] for item in measured if item["selected_profile"] is not None))
+        self.assertTrue(all(item["contract_parse_valid"] for item in measured if item["selected_profile"] is not None))
         remote = next(item for item in measured if item["id"] == "GOVERNED-REMOTE-DEPLOY")
         self.assertEqual(
             remote["observed_mandatory_helpers"],
@@ -225,6 +232,31 @@ class DhfSimplificationCorpusTests(unittest.TestCase):
         remote["mandatory_helper_count"] -= 1
         errors = self.validator.validate_candidate_measurements(self.corpus, ROOT, measured)
         self.assertTrue(any("GOVERNED-REMOTE-DEPLOY candidate helper mismatch" in error for error in errors), errors)
+
+    def test_candidate_contract_parser_distinguishes_missing_corrupt_and_valid_zero(self):
+        self.assertTrue(
+            hasattr(self.validator, "_observed_candidate_contract"),
+            "candidate parser must return contract observation metadata",
+        )
+        missing = self.validator._observed_candidate_contract("profile=light")
+        corrupt = self.validator._observed_candidate_contract("DHF_PROFILE_CONTRACT={broken")
+        valid_zero = self.validator._observed_candidate_contract('DHF_PROFILE_CONTRACT={"mandatory_helpers":[]}')
+        self.assertEqual(missing, {"contract_observed": False, "contract_parse_valid": False, "helpers": []})
+        self.assertEqual(corrupt, {"contract_observed": True, "contract_parse_valid": False, "helpers": []})
+        self.assertEqual(valid_zero, {"contract_observed": True, "contract_parse_valid": True, "helpers": []})
+
+        measured = self.validator.measure_candidate(self.corpus, ROOT)
+        activated = next(item for item in measured if item["id"] == "LIGHT-EXPLANATION")
+        activated["contract_observed"] = False
+        activated["contract_parse_valid"] = False
+        errors = self.validator.validate_candidate_measurements(self.corpus, ROOT, measured)
+        self.assertTrue(any("LIGHT-EXPLANATION candidate contract missing" in error for error in errors), errors)
+
+        corrupt_measured = self.validator.measure_candidate(self.corpus, ROOT)
+        corrupt_activated = next(item for item in corrupt_measured if item["id"] == "LIGHT-EXPLANATION")
+        corrupt_activated["contract_parse_valid"] = False
+        errors = self.validator.validate_candidate_measurements(self.corpus, ROOT, corrupt_measured)
+        self.assertTrue(any("LIGHT-EXPLANATION candidate contract invalid" in error for error in errors), errors)
 
     def test_baseline_helper_measurement_uses_independent_oracle(self):
         broken = copy.deepcopy(self.corpus)
@@ -394,6 +426,14 @@ class DhfGovernanceProfileTests(unittest.TestCase):
                     self.assertIn(marker, payload["hookSpecificOutput"]["additionalContext"])
                     self.assertIn("diagnostic=generic-activated:legacy", proc.stderr)
                     self.assertNotIn("Traceback", proc.stderr)
+
+            for unrecognized_value in ("", "typo", "true", "on", "enabled", " 1 "):
+                with self.subTest(unrecognized_value=unrecognized_value):
+                    proc = run_with(unrecognized_value)
+                    self.assertEqual(proc.returncode, 0, proc.stderr)
+                    payload = json.loads(proc.stdout)
+                    self.assertIn(marker, payload["hookSpecificOutput"]["additionalContext"])
+                    self.assertIn("diagnostic=generic-activated:legacy", proc.stderr)
 
 
 if __name__ == "__main__":
