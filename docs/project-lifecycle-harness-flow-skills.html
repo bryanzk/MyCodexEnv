@@ -473,7 +473,7 @@
 
       <section class="section" id="flow">
         <h2>归档流程</h2>
-        <div class="section-note">经典 Mermaid 纵向流程图，仅保留用于对比；当前 status-style 页面是主要 Flow Map。</div>
+        <div class="section-note">经典 Mermaid 纵向流程图，仅保留用于对比。Recover / Env / Checkpoint 节点只有 <code>governed</code> 且命中 matching escalation signal 时执行；<code>light</code> 不要求 <code>harness_recover.py</code>、<code>harness_env_probe.py</code> 或 <code>harness_checkpoint.py</code>。</div>
         <div class="mermaid-wrap" data-zoom="1">
           <div class="zoom-controls">
             <button type="button" data-action="in">+</button>
@@ -484,8 +484,8 @@
 flowchart TD
   Start(["用户任务进入<br/>delivery-harness-framework"])
   AGENTS["读取 AGENTS.md<br/>README 与 docs/repo-index.md"]
-  Recover["运行 harness_recover.py --json<br/>恢复 phase、dirty state、next safe task"]
-  Env["运行 harness_env_probe.py --json<br/>观测 hooks、policy、schema"]
+  Recover["governed matching signal 才运行<br/>harness_recover.py --json"]
+  Env["governed matching signal 才运行<br/>harness_env_probe.py --json"]
   NeedsReq{"目标、范围、验收是否清晰？"}
   Req["需求锁定<br/>planner / req-to-dev / task-flow-orchestrator"]
   ReqVal["harness_requirements.py validate PATH"]
@@ -501,7 +501,7 @@ flowchart TD
   QA["QA / 安全 / 评审<br/>gstack-qa / gstack-cso / gstack-review / code-reviewer"]
   Ship["发布/部署<br/>gstack-ship / gstack-land-and-deploy / gstack-canary"]
   Docs["文档发布<br/>gstack-document-release / doc-updater"]
-  Handoff["交接<br/>harness_checkpoint.py append"]
+  Handoff["governed matching signal 才交接<br/>harness_checkpoint.py append"]
   Done(["输出<br/>skill 路由、验证证据、next safe task"])
 
   Start --> AGENTS --> Recover --> Env --> NeedsReq
@@ -554,7 +554,7 @@ flowchart TD
                 <td class="phase">启动 / 恢复</td>
                 <td><span class="badge primary">delivery-harness-framework</span></td>
                 <td><code>scripts/harness_recover.py --json</code><br><code>scripts/harness_env_probe.py --json</code></td>
-                <td>任何复杂任务、恢复会话、dirty 工作树、跨阶段交接或含糊请求。</td>
+                <td>仅限 <code>governed</code> 且命中 recovery、handoff、ownership、private-data、remote、destructive、malformed 或 retained-profile escalation signal；<code>light</code> 不运行这些 helpers。</td>
               </tr>
               <tr>
                 <td class="phase">需求</td>
@@ -614,7 +614,7 @@ flowchart TD
         <div class="grid">
           <div class="card accent-recover">
             <b>1. 运行时事实优先于记忆</b>
-            <small>先运行 recovery 与 env probe。聊天历史和 subconscious 输出只是提示，不能作为唯一事实来源。</small>
+            <small>先选 profile；仅在 governed matching escalation signal 要求时运行 recovery 与 env probe。聊天历史和 subconscious 输出只是提示，不能作为唯一事实来源。</small>
           </div>
           <div class="card accent-decide">
             <b>2. 需求 gate before planning</b>
@@ -630,7 +630,7 @@ flowchart TD
           </div>
           <div class="card accent-ship">
             <b>5. 交接是运行时事件</b>
-            <small>有意义的工作切片结束时，用 <code>harness_checkpoint.py append</code> 记录 command、exit code、key output、timestamp 和 next safe task。</small>
+            <small>仅在 governed matching escalation signal 要求时，用 <code>harness_checkpoint.py append</code> 记录 command、exit code、key output、timestamp 和 next safe task；普通 validated slice 不自动 checkpoint。</small>
           </div>
           <div class="card accent-recover">
             <b>6. Repo 不能强制全局 sandbox</b>

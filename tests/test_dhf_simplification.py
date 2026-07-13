@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 from __future__ import annotations
 
+import ast
 import copy
 import importlib.util
 import json
@@ -49,6 +50,11 @@ NORMATIVE_MIRRORS = [
     ROOT / "docs" / "LIFECYCLE_SKILL_ROUTING.md",
     ROOT / "docs" / "repo-index.md",
 ]
+PUBLIC_ROUTING_MIRRORS = [
+    ROOT / "docs" / "delivery-harness-beginner-guide-cn.html",
+    ROOT / "docs" / "project-lifecycle-harness-flow-skills.html",
+    ROOT / "docs" / "project-lifecycle-harness-flow-skills-zh-status-style.html",
+]
 SURFACES = ROOT / "docs" / "surfaces.json"
 
 
@@ -70,6 +76,146 @@ def load_dispatcher():
     module = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(module)
     return module
+
+
+def extract_canonical_contract(skill_text: str, dispatcher_text: str) -> dict[str, object]:
+    output_contract = skill_text.split("## Output Contract", 1)[1]
+    invariant_block = output_contract.split("### Profile Output And Helper Contract", 1)[0]
+    invariants = tuple(re.findall(r"^\d+\. `([^`]+)`:", invariant_block, flags=re.MULTILINE))
+    profile_block = output_contract.split("### Profile Output And Helper Contract", 1)[1]
+    profile_block = profile_block.split("### Governed Escalation Contract", 1)[0]
+    skill_profiles = tuple(re.findall(r"^\| `([^`]+)` \|", profile_block, flags=re.MULTILINE))
+
+    tree = ast.parse(dispatcher_text)
+    assignments = {
+        node.targets[0].id: node.value
+        for node in tree.body
+        if isinstance(node, ast.Assign)
+        and len(node.targets) == 1
+        and isinstance(node.targets[0], ast.Name)
+    }
+    dispatcher_profiles = tuple(ast.literal_eval(assignments["PROFILE_RANK"]).keys())
+    if skill_profiles != dispatcher_profiles:
+        raise AssertionError(
+            f"canonical profile drift: skill={skill_profiles}, dispatcher={dispatcher_profiles}"
+        )
+
+    switch = assignments["SIMPLIFIED_PROFILES_ENABLED"]
+    if not isinstance(switch, ast.Compare) or len(switch.ops) != 1 or not isinstance(switch.ops[0], ast.Eq):
+        raise AssertionError("candidate switch must use one exact equality comparison")
+    env_get = switch.left
+    if not isinstance(env_get, ast.Call) or len(env_get.args) != 2:
+        raise AssertionError("candidate switch must declare environment name and default")
+    switch_name = ast.literal_eval(env_get.args[0])
+    switch_default = ast.literal_eval(env_get.args[1])
+    switch_enable = ast.literal_eval(switch.comparators[0])
+    return {
+        "profiles": skill_profiles,
+        "invariants": invariants,
+        "switch_name": switch_name,
+        "switch_default": switch_default,
+        "switch_enable": switch_enable,
+    }
+
+
+def probe_dispatcher_routes(dispatcher) -> dict[str, str]:
+    original = {
+        "SHIPQ_ROOT": dispatcher.SHIPQ_ROOT,
+        "SHIPQ_ADAPTER": dispatcher.SHIPQ_ADAPTER,
+        "ALLOW_UNTRUSTED_ADAPTER": dispatcher.ALLOW_UNTRUSTED_ADAPTER,
+        "SIMPLIFIED_PROFILES_ENABLED": dispatcher.SIMPLIFIED_PROFILES_ENABLED,
+    }
+    try:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            shipq = root / "ShipQ"
+            generic = root / "Generic"
+            shipq.mkdir()
+            generic.mkdir()
+            adapter = root / "adapter.py"
+            adapter.write_text(
+                "def build_response(_payload):\n"
+                "    return {'continue': True, 'hookSpecificOutput': "
+                "{'hookEventName': 'UserPromptSubmit', 'additionalContext': 'adapter-owned'}}\n",
+                encoding="utf-8",
+            )
+            dispatcher.SHIPQ_ROOT = shipq
+            dispatcher.SHIPQ_ADAPTER = adapter
+            dispatcher.ALLOW_UNTRUSTED_ADAPTER = True
+            dispatcher.SIMPLIFIED_PROFILES_ENABLED = False
+            default_generic = dispatcher.route_response(
+                {"cwd": str(generic), "prompt": "complex local feature"}
+            )[1]
+            dispatcher.SIMPLIFIED_PROFILES_ENABLED = True
+            return {
+                "default_generic": default_generic,
+                "opt_out": dispatcher.route_response(
+                    {"cwd": str(shipq), "prompt": "complex handoff; skip dhf"}
+                )[1],
+                "shipq": dispatcher.route_response(
+                    {"cwd": str(shipq), "prompt": "complex handoff"}
+                )[1],
+                "explicit_generic": dispatcher.route_response(
+                    {"cwd": str(generic), "prompt": "complex local feature"}
+                )[1],
+                "ordinary": dispatcher.route_response(
+                    {"cwd": str(generic), "prompt": "Rename a local variable."}
+                )[1],
+            }
+    finally:
+        for name, value in original.items():
+            setattr(dispatcher, name, value)
+
+
+def mirror_contract_errors(text: str, contract: dict[str, object], routes: dict[str, str]) -> list[str]:
+    normalized = " ".join(text.split())
+    required = [
+        "codex/skills/delivery-harness-framework/SKILL.md",
+        "codex/hooks/dhf_preprompt.py",
+        *(f"`{profile}`" for profile in contract["profiles"]),
+        *(f"`{invariant}`" for invariant in contract["invariants"]),
+        f"{contract['switch_name']}={contract['switch_enable']}",
+        f"default remains `{routes['default_generic'].removeprefix('generic-activated:')}`",
+        "Runtime promotion is pending separate authorization",
+        "runtime home remains unsynced",
+    ]
+    if routes == {
+        "default_generic": "generic-activated:legacy",
+        "opt_out": "opt-out",
+        "shipq": "shipq-delegated",
+        "explicit_generic": "generic-activated:standard",
+        "ordinary": "continue-only",
+    }:
+        required.extend(
+            ["explicit generic activation", "continue-only", "opt-out", "ShipQ", "lazy delegation"]
+        )
+    else:
+        return [f"unexpected canonical dispatcher routes: {routes}"]
+    return [term for term in required if term not in normalized]
+
+
+def public_helper_contract_errors(text: str, contract: dict[str, object]) -> list[str]:
+    normalized = " ".join(text.split())
+    governed = contract["profiles"][-1]
+    light = contract["profiles"][0]
+    required = (
+        f"<code>{governed}</code>",
+        "matching escalation signal",
+        f"<code>{light}</code>",
+        "不要求",
+        "harness_recover.py",
+        "harness_env_probe.py",
+        "harness_checkpoint.py",
+    )
+    stale = (
+        "任何复杂任务、恢复会话、dirty 工作树、跨阶段交接或含糊请求",
+        "任何复杂任务、恢复中的会话、脏工作区、跨阶段交接，或目标不清的请求",
+        "有意义的工作切片结束时",
+        "在有意义的工作切片结束时",
+    )
+    return [f"missing:{term}" for term in required if term not in normalized] + [
+        f"stale:{term}" for term in stale if term in normalized
+    ]
 
 
 class DhfSimplificationCorpusTests(unittest.TestCase):
@@ -737,26 +883,11 @@ class DhfGovernanceProfileTests(unittest.TestCase):
                     self.assertIn("diagnostic=generic-activated:legacy", proc.stderr)
 
     def test_normative_mirrors_align_with_simplified_source_stage_contract(self):
-        required_terms = (
-            "codex/skills/delivery-harness-framework/SKILL.md",
-            "codex/hooks/dhf_preprompt.py",
-            "`light`",
-            "`standard`",
-            "`governed`",
-            "explicit generic activation",
-            "continue-only",
-            "opt-out",
-            "ShipQ",
-            "lazy delegation",
-            "`result`",
-            "`scope_and_constraints`",
-            "`verification_receipt`",
-            "`remaining_risk_or_next_action`",
-            "DHF_PREPROMPT_SIMPLIFIED_PROFILES=1",
-            "default remains `legacy`",
-            "Runtime promotion is pending separate authorization",
-            "runtime home remains unsynced",
+        contract = extract_canonical_contract(
+            SKILL.read_text(encoding="utf-8"), DISPATCHER.read_text(encoding="utf-8")
         )
+        routes = probe_dispatcher_routes(self.dispatcher)
+        self.assertNotEqual(contract["switch_default"], contract["switch_enable"])
         stale_statements = (
             "Use first for complex or resumed work",
             "after a meaningful validated slice",
@@ -767,26 +898,68 @@ class DhfGovernanceProfileTests(unittest.TestCase):
             text = mirror.read_text(encoding="utf-8")
             normalized = " ".join(text.split())
             with self.subTest(mirror=mirror.relative_to(ROOT)):
-                for term in required_terms:
-                    self.assertIn(term, normalized)
+                self.assertEqual(mirror_contract_errors(text, contract, routes), [])
                 for statement in stale_statements:
                     self.assertNotIn(statement, normalized)
 
+    def test_consistency_oracle_detects_canonical_and_mirror_drift(self):
+        skill_text = SKILL.read_text(encoding="utf-8")
+        dispatcher_text = DISPATCHER.read_text(encoding="utf-8")
+        contract = extract_canonical_contract(skill_text, dispatcher_text)
+        routes = probe_dispatcher_routes(self.dispatcher)
+        mirror = NORMATIVE_MIRRORS[0].read_text(encoding="utf-8")
+        self.assertEqual(mirror_contract_errors(mirror, contract, routes), [])
+
+        first_invariant = contract["invariants"][0]
+        mirror_drift = mirror.replace(f"`{first_invariant}`", "`drifted_result`", 1)
+        self.assertIn(f"`{first_invariant}`", mirror_contract_errors(mirror_drift, contract, routes))
+
+        switch_drift_text = dispatcher_text.replace(
+            'os.environ.get("DHF_PREPROMPT_SIMPLIFIED_PROFILES", "0") == "1"',
+            'os.environ.get("DHF_PREPROMPT_SIMPLIFIED_PROFILES", "0") == "candidate"',
+            1,
+        )
+        switch_drift_contract = extract_canonical_contract(skill_text, switch_drift_text)
+        self.assertIn(
+            f"{switch_drift_contract['switch_name']}={switch_drift_contract['switch_enable']}",
+            mirror_contract_errors(mirror, switch_drift_contract, routes),
+        )
+
+        governed_profile = contract["profiles"][-1]
+        skill_drift = skill_text.replace(f"| `{governed_profile}` |", "| `drifted_profile` |", 1)
+        with self.assertRaisesRegex(AssertionError, "canonical profile drift"):
+            extract_canonical_contract(skill_drift, dispatcher_text)
+
+    def test_public_docs_limit_runtime_helpers_to_matching_governed_signals(self):
+        contract = extract_canonical_contract(
+            SKILL.read_text(encoding="utf-8"), DISPATCHER.read_text(encoding="utf-8")
+        )
+        for mirror in PUBLIC_ROUTING_MIRRORS:
+            with self.subTest(mirror=mirror.relative_to(ROOT)):
+                self.assertEqual(
+                    public_helper_contract_errors(mirror.read_text(encoding="utf-8"), contract), []
+                )
+
     def test_surfaces_manifest_identifies_canonical_contract_and_rollout_boundary(self):
+        contract = extract_canonical_contract(
+            SKILL.read_text(encoding="utf-8"), DISPATCHER.read_text(encoding="utf-8")
+        )
+        routes = probe_dispatcher_routes(self.dispatcher)
         manifest = json.loads(SURFACES.read_text(encoding="utf-8"))
         by_path = {surface["path"]: surface for surface in manifest["surfaces"]}
         skill_role = by_path["codex/skills/delivery-harness-framework"]["role"]
         dispatcher_role = by_path["codex/hooks/dhf_preprompt.py"]["role"]
-        for term in ("canonical", "light", "standard", "governed", "four Result Invariants"):
+        for term in ("canonical", *contract["profiles"], "four Result Invariants"):
             self.assertIn(term, skill_role)
         for term in (
             "explicit generic activation",
             "ordinary continue-only",
             "opt-out precedence",
             "ShipQ lazy delegation",
-            "default legacy",
+            f"default {routes['default_generic'].removeprefix('generic-activated:')}",
             "runtime promotion pending",
             "runtime unsynced",
+            f"{contract['switch_name']}={contract['switch_enable']}",
         ):
             self.assertIn(term, dispatcher_role)
 
