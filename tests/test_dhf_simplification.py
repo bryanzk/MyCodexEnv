@@ -37,6 +37,15 @@ def load_validator():
     return module
 
 
+def load_dispatcher():
+    spec = importlib.util.spec_from_file_location("dhf_simplification_candidate_dispatcher", DISPATCHER)
+    if spec is None or spec.loader is None:
+        raise AssertionError("DHF dispatcher is not importable")
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
+
+
 class DhfSimplificationCorpusTests(unittest.TestCase):
     def setUp(self):
         self.validator = load_validator()
@@ -188,6 +197,19 @@ class DhfSimplificationCorpusTests(unittest.TestCase):
         errors = self.validator.validate_baseline_measurements(broken, ROOT)
         self.assertTrue(any("injected-context proxy mismatch" in error for error in errors), errors)
 
+    def test_candidate_measurement_exposes_selected_profiles_without_rewriting_baseline(self):
+        candidate = self.validator.measure_candidate(self.corpus, ROOT)
+        by_id = {item["id"]: item for item in candidate}
+        self.assertEqual(by_id["LIGHT-EXPLANATION"]["selected_profile"], "light")
+        self.assertEqual(by_id["STANDARD-LOCAL-FEATURE"]["selected_profile"], "standard")
+        self.assertEqual(by_id["GOVERNED-REMOTE-DEPLOY"]["selected_profile"], "governed")
+        self.assertEqual(by_id["CONTROL-ORDINARY-CONTINUE"]["selected_profile"], None)
+        self.assertEqual(by_id["CONTROL-SHIPQ-DELEGATION"]["selected_profile"], None)
+        self.assertEqual(
+            self.corpus["scenarios"][0]["baseline_measurement"]["route"],
+            "generic-activated",
+        )
+
     def test_baseline_helper_measurement_uses_independent_oracle(self):
         broken = copy.deepcopy(self.corpus)
         scenario = broken["scenarios"][0]
@@ -207,6 +229,123 @@ class DhfSimplificationCorpusTests(unittest.TestCase):
     def test_runner_wrapper_does_not_depend_on_test_count(self):
         runner_text = (ROOT / "test_runner.py").read_text(encoding="utf-8")
         self.assertNotIn('require("Ran 5 tests"', runner_text)
+
+
+class DhfGovernanceProfileTests(unittest.TestCase):
+    def setUp(self):
+        self.dispatcher = load_dispatcher()
+        self.corpus = json.loads(CORPUS.read_text(encoding="utf-8"))
+
+    def test_canonical_activated_scenarios_select_deterministic_profiles(self):
+        for scenario in self.corpus["scenarios"]:
+            if scenario["activation_status"] != "explicitly_activated_generic":
+                continue
+            with self.subTest(scenario=scenario["id"]):
+                selected = self.dispatcher.select_governance_profile(scenario["sanitized_prompt"])
+                self.assertEqual(selected.profile, scenario["expected_profile"])
+                self.assertEqual(selected.escalation_signal, scenario["escalation_signal"])
+
+    def test_implicit_risk_upgrades_an_explicit_generic_activation(self):
+        cases = {
+            "Use complex analysis on this sanitized customer private data.": "external_capture_or_private_data",
+            "Implement this complex local change, then deploy it remotely.": "remote_or_deployment_action",
+            "Review this complex change with multiple agents.": "multiple_agents_or_overlapping_write_sets",
+        }
+        for prompt, signal in cases.items():
+            with self.subTest(prompt=prompt):
+                selection = self.dispatcher.select_governance_profile(prompt)
+                self.assertEqual(selection.profile, "governed")
+                self.assertEqual(selection.escalation_signal, signal)
+
+    def test_profile_upgrade_is_monotonic_and_malformed_resume_fails_closed(self):
+        standard = self.dispatcher.select_governance_profile(
+            "Implement this complex local parser option.", active_profile="light"
+        )
+        self.assertEqual(standard.profile, "standard")
+        governed = self.dispatcher.select_governance_profile(
+            "Continue this complex local parser option.", active_profile="governed"
+        )
+        self.assertEqual(governed.profile, "governed")
+        malformed = self.dispatcher.select_governance_profile(
+            "Resume this complex task with malformed state.", active_profile="not-a-profile"
+        )
+        self.assertEqual(malformed.profile, "governed")
+        self.assertEqual(malformed.escalation_signal, "resume_or_handoff")
+
+    def test_route_precedence_and_shipq_profile_ownership(self):
+        with __import__("tempfile").TemporaryDirectory() as tmp:
+            tmp_path = Path(tmp)
+            shipq_root = tmp_path / "ShipQ"
+            generic_root = tmp_path / "Generic"
+            shipq_root.mkdir()
+            generic_root.mkdir()
+            adapter = tmp_path / "adapter.py"
+            adapter.write_text(
+                "def build_response(_payload):\n"
+                "    return {'continue': True, 'hookSpecificOutput': "
+                "{'hookEventName': 'UserPromptSubmit', 'additionalContext': 'adapter-owned'}}\n",
+                encoding="utf-8",
+            )
+            self.dispatcher.SHIPQ_ROOT = shipq_root
+            self.dispatcher.SHIPQ_ADAPTER = adapter
+            self.dispatcher.ALLOW_UNTRUSTED_ADAPTER = True
+
+            opted_out, route = self.dispatcher.route_response(
+                {"cwd": str(shipq_root), "prompt": "complex remote deploy; skip dhf"}
+            )
+            self.assertEqual((opted_out, route), ({"continue": True}, "opt-out"))
+            delegated, route = self.dispatcher.route_response(
+                {"cwd": str(shipq_root), "prompt": "complex remote deployment"}
+            )
+            self.assertEqual(route, "shipq-delegated")
+            self.assertEqual(delegated["hookSpecificOutput"]["additionalContext"], "adapter-owned")
+            ordinary, route = self.dispatcher.route_response(
+                {"cwd": str(generic_root), "prompt": "Rename a local variable."}
+            )
+            self.assertEqual((ordinary, route), ({"continue": True}, "continue-only"))
+
+    def test_enabled_profiles_emit_minimum_context_without_full_skill(self):
+        marker = "FULL_SKILL_SECRET_MARKER_/Users/private/unrelated"
+        with __import__("tempfile").TemporaryDirectory() as tmp:
+            skill = Path(tmp) / "DHF.md"
+            skill.write_text(marker, encoding="utf-8")
+            self.dispatcher.DHF_SKILL = skill
+            response, route = self.dispatcher.route_response(
+                {"cwd": tmp, "prompt": "Use complex analysis to explain this deterministic function."}
+            )
+            self.assertEqual(route, "generic-activated:light")
+            context = response["hookSpecificOutput"]["additionalContext"]
+            self.assertIn("profile=light", context)
+            self.assertNotIn(marker, context)
+            self.assertNotIn("Traceback", context)
+
+    def test_feature_switch_off_exercises_legacy_full_skill_route(self):
+        marker = "LEGACY_FULL_SKILL_MARKER"
+        with __import__("tempfile").TemporaryDirectory() as tmp:
+            skill = Path(tmp) / "DHF.md"
+            skill.write_text(marker, encoding="utf-8")
+            env = os.environ.copy()
+            env.update(
+                {
+                    "DHF_PREPROMPT_SIMPLIFIED_PROFILES": "0",
+                    "DHF_PREPROMPT_SKILL": str(skill),
+                    "DHF_PREPROMPT_SHIPQ_ROOT": str(Path(tmp) / "ShipQ"),
+                }
+            )
+            proc = subprocess.run(
+                [sys.executable, str(DISPATCHER)],
+                input=json.dumps({"cwd": tmp, "prompt": "complex local feature"}),
+                cwd=ROOT,
+                env=env,
+                capture_output=True,
+                text=True,
+                check=False,
+            )
+            self.assertEqual(proc.returncode, 0, proc.stderr)
+            payload = json.loads(proc.stdout)
+            self.assertIn(marker, payload["hookSpecificOutput"]["additionalContext"])
+            self.assertIn("diagnostic=generic-activated:legacy", proc.stderr)
+            self.assertNotIn("Traceback", proc.stderr)
 
 
 if __name__ == "__main__":

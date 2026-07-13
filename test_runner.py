@@ -1815,7 +1815,10 @@ def test_dhf_dispatcher_runtime_errors_fail_open():
     cases = [
         (
             {"cwd": "/tmp/OtherRepo", "prompt": "resume complex handoff"},
-            {"DHF_PREPROMPT_SKILL": "/tmp/missing-dhf-skill"},
+            {
+                "DHF_PREPROMPT_SKILL": "/tmp/missing-dhf-skill",
+                "DHF_PREPROMPT_SIMPLIFIED_PROFILES": "0",
+            },
             "FileNotFoundError",
         ),
         (
@@ -1934,7 +1937,7 @@ def test_dhf_dispatcher_shipq_non_shipq_truth_table():
         non_shipq_context = module.build_response({"cwd": str(other_root), "prompt": "takeover state-conflict handoff"})[
             "hookSpecificOutput"
         ]["additionalContext"]
-        require("Generic DHF pre-prompt dispatcher" in non_shipq_context, "generic activated prompt should load generic context")
+        require("profile=governed" in non_shipq_context, "generic activated prompt should load governed profile context")
         shipq_context = module.build_response({"cwd": str(shipq_root), "prompt": "ordinary"})["hookSpecificOutput"]["additionalContext"]
         require(shipq_context == "ShipQ adapter context", "ShipQ prompt should be delegated to adapter unchanged")
     print("[PASS] DHF dispatcher ShipQ/non-ShipQ truth table")
