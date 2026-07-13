@@ -62,6 +62,52 @@ BASELINE_HELPER_ORACLE = {
     "CONTROL-ORDINARY-CONTINUE": (),
     "CONTROL-SHIPQ-DELEGATION": (),
 }
+BASELINE_BASE_SHA = "00818ae174f039899a2757ee4c67fcf9db1effa0"
+BASELINE_PROVENANCE = {
+    "base_sha": BASELINE_BASE_SHA,
+    "oracle_kind": "frozen_measurement",
+    "generic_skill_utf8_bytes_proxy": 32482,
+    "generic_wrapper_utf8_bytes_proxy": 321,
+    "generic_context_utf8_bytes_proxy": 32803,
+    "captured_before_simplification": True,
+}
+_GENERIC_BASELINE_IDS = (
+    "LIGHT-EXPLANATION",
+    "LIGHT-BOUNDED-DOCS",
+    "LIGHT-ONE-FILE-SAFE",
+    "LIGHT-TRIVIAL-FORMAT",
+    "STANDARD-LOCAL-FEATURE",
+    "STANDARD-FAILING-TEST",
+    "STANDARD-SCOPED-REFACTOR",
+    "STANDARD-CLI-CHANGE",
+    "STANDARD-LOCAL-UI",
+    "GOVERNED-RESUMED-TASK",
+    "GOVERNED-DIRTY-CONFLICT",
+    "GOVERNED-EXTERNAL-CAPTURE",
+    "GOVERNED-REMOTE-DEPLOY",
+    "GOVERNED-MULTI-AGENT",
+    "GOVERNED-ARCH-SOURCE-CONFLICT",
+)
+FROZEN_BASELINE_ORACLE = {
+    **{
+        scenario_id: {
+            "route": "generic-activated",
+            "injected_context_utf8_bytes_proxy": 32803,
+            "verification_receipt_status": "not_observed",
+        }
+        for scenario_id in _GENERIC_BASELINE_IDS
+    },
+    "CONTROL-ORDINARY-CONTINUE": {
+        "route": "continue-only",
+        "injected_context_utf8_bytes_proxy": 0,
+        "verification_receipt_status": "not_applicable_to_routing_control",
+    },
+    "CONTROL-SHIPQ-DELEGATION": {
+        "route": "shipq-delegated",
+        "injected_context_utf8_bytes_proxy": 41,
+        "verification_receipt_status": "owned_by_project_adapter",
+    },
+}
 
 
 def extract_acceptance_criteria(contract_path: Path) -> list[str]:
@@ -238,6 +284,8 @@ def validate_corpus(corpus: object, contract_path: Path) -> list[str]:
             errors.append("measurement boundary must document the mandatory-helper boundary")
         if boundary.get("token_claimed") is not False:
             errors.append("measurement boundary must explicitly state token_claimed=false")
+        if boundary.get("baseline_provenance") != BASELINE_PROVENANCE:
+            errors.append("baseline provenance must match the frozen Base SHA oracle")
 
     scenarios = corpus.get("scenarios")
     if not isinstance(scenarios, list):
@@ -399,7 +447,25 @@ def _measure_dispatcher(
 
 
 def measure_baseline(corpus: dict[str, Any], root: Path) -> list[dict[str, Any]]:
-    return _measure_dispatcher(corpus, root, simplified_profiles=False)
+    del root
+    measurements: list[dict[str, Any]] = []
+    for scenario in corpus["scenarios"]:
+        scenario_id = scenario["id"]
+        frozen = FROZEN_BASELINE_ORACLE[scenario_id]
+        measurements.append(
+            {
+                "id": scenario_id,
+                "route": frozen["route"],
+                "injected_context_utf8_bytes_proxy": frozen["injected_context_utf8_bytes_proxy"],
+                "mandatory_helper_count": len(BASELINE_HELPER_ORACLE[scenario_id]),
+                "verification_receipt_status": frozen["verification_receipt_status"],
+                "selected_profile": None,
+                "observed_mandatory_helpers": [],
+                "contract_observed": False,
+                "contract_parse_valid": False,
+            }
+        )
+    return measurements
 
 
 def measure_candidate(corpus: dict[str, Any], root: Path) -> list[dict[str, Any]]:
@@ -459,6 +525,11 @@ def validate_baseline_measurements(corpus: dict[str, Any], root: Path) -> list[s
             errors.append(
                 f"{scenario['id']} mandatory-helper count mismatch: "
                 f"{expected['mandatory_helper_count']} != {actual['mandatory_helper_count']}"
+            )
+        if expected["verification_receipt_status"] != actual["verification_receipt_status"]:
+            errors.append(
+                f"{scenario['id']} verification-receipt status mismatch: "
+                f"{expected['verification_receipt_status']} != {actual['verification_receipt_status']}"
             )
     return errors
 

@@ -308,6 +308,18 @@
       "prompt": "Implement this complex but local parser option and report the completed result concisely.",
       "expected_load": true,
       "completion_claim_class": "implemented_or_fixed",
+      "structured_output_sample": {
+        "completion_claim_class": "implemented_or_fixed",
+        "result": "The local parser option is implemented and available.",
+        "scope_and_constraints": ["Local parser only", "No network or runtime mutation"],
+        "verification_receipt": {
+          "command": "python3 -m unittest tests.test_parser.ParserTests.test_local_option",
+          "exit_code": 0,
+          "key_output": "Ran 1 test; OK",
+          "timestamp": "2026-07-13T20:00:00Z"
+        },
+        "remaining_risk_or_next_action": null
+      },
       "expected_output": "The output preserves the four result invariants and includes fresh command, exit_code, key_output, and timestamp evidence without lifecycle boilerplate.",
       "assertions": [
         "The output contains a usable result plus material scope_and_constraints and remaining_risk_or_next_action only when one exists.",
@@ -322,6 +334,18 @@
       "prompt": "Make this complex but bounded correction in one Markdown paragraph and report the completed artifact.",
       "expected_load": true,
       "completion_claim_class": "documented_or_configured",
+      "structured_output_sample": {
+        "completion_claim_class": "documented_or_configured",
+        "result": "The requested Markdown paragraph is corrected.",
+        "scope_and_constraints": ["One public Markdown paragraph only"],
+        "verification_receipt": {
+          "command": "git diff --check -- docs/example.md",
+          "exit_code": 0,
+          "key_output": "No whitespace errors",
+          "timestamp": "2026-07-13T20:00:00Z"
+        },
+        "remaining_risk_or_next_action": null
+      },
       "expected_output": "The output uses the documented_or_configured class with fresh structural evidence and no unrelated lifecycle narration.",
       "assertions": [
         "The verification_receipt includes the fresh structural validation command, exit_code, key_output, and timestamp.",
@@ -336,6 +360,16 @@
       "prompt": "Diagnose why this complex remote deployment cannot proceed, but do not connect or read credentials without authorization.",
       "expected_load": true,
       "completion_claim_class": "diagnosed_or_blocked",
+      "structured_output_sample": {
+        "completion_claim_class": "diagnosed_or_blocked",
+        "result": "The remote deployment remains blocked.",
+        "scope_and_constraints": ["No remote connection", "No credential read"],
+        "verification_receipt": {
+          "concrete_evidence": "The request contains no deployment authorization or credential source.",
+          "exact_blocker": "Explicit remote-operation authorization is absent."
+        },
+        "remaining_risk_or_next_action": "Obtain explicit authorization and rollback ownership before connecting."
+      },
       "expected_output": "The output reports concrete inspected evidence, the exact blocker, and only the remote/deployment governed fields and helpers.",
       "assertions": [
         "The result names the exact blocker and cites concrete inspected evidence without claiming a deployment occurred.",
@@ -350,6 +384,16 @@
       "prompt": "Use complex analysis to explain why this supplied pure function is deterministic; do not edit files or inspect runtime state.",
       "expected_load": true,
       "completion_claim_class": "verification_not_applicable",
+      "structured_output_sample": {
+        "completion_claim_class": "verification_not_applicable",
+        "result": "The function is deterministic because equal inputs traverse the same pure expression.",
+        "scope_and_constraints": ["Explanation only", "No artifact, runtime, or behavior claim"],
+        "verification_receipt": {
+          "status": "verification_not_applicable",
+          "reason": "This is a pure explanation based only on the supplied text."
+        },
+        "remaining_risk_or_next_action": null
+      },
       "expected_output": "The output gives the explanation under the four result invariants and states verification_not_applicable without a synthetic command receipt.",
       "assertions": [
         "The verification_receipt is verification_not_applicable and explains that this is pure advice with no artifact, state, runtime, or behavior completion claim.",

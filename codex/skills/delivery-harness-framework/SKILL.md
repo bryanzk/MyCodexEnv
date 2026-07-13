@@ -76,18 +76,20 @@ sanitized.
 
 ## Helper Router
 
-Prefer runtime helper CLIs when present. Fall back to manual inspection only
-when a helper is missing, fails because its own required source is absent, or
-the repo has not implemented the harness runtime.
+Select a runtime helper only after profile selection identifies the matching
+standard or governed signal. Light requires no lifecycle helper. For multiple
+governed signals, use the union of their rows. Fall back to manual inspection
+only when a required helper is unavailable; helper presence alone does not make
+it mandatory.
 
-| Need | Preferred Route | Use When |
+| Need | Preferred Route | Matching profile and signal |
 | --- | --- | --- |
-| Recover current phase and next safe task | `python3 scripts/harness_recover.py --repo-root "$(pwd)" --codex-home "$HOME/.codex"` | Starting or resuming complex work, after handoff, or when chat history conflicts with repo state. |
-| Inspect observable Codex runtime config | `python3 scripts/harness_env_probe.py --codex-home "$HOME/.codex"` | Before relying on hooks, sandbox, approval, tool policy, or evidence schema behavior. |
-| Validate requirements artifact | `python3 scripts/harness_requirements.py validate PATH` | Before treating requirements as source of truth for planning or development. |
-| Summarize local evidence | `python3 scripts/harness_report.py` | During validation, review, handoff, or when deciding whether fresh evidence exists. |
-| Validate parallel agent plan | `python3 scripts/harness_agent_team.py validate PLAN.json` | Before dispatching multiple workers or any scoped agent team with write sets. |
-| Append checkpoint state | `python3 scripts/harness_checkpoint.py append` | At phase transitions, before handoff, before destructive/remote/release actions, or after a meaningful validated implementation slice. |
+| Recover current phase and next safe task | `python3 scripts/harness_recover.py --repo-root "$(pwd)" --codex-home "$HOME/.codex"` | Governed: resume/handoff, ownership conflict, architecture source conflict, malformed state, destructive action, or retained higher profile. |
+| Inspect observable Codex runtime config | `python3 scripts/harness_env_probe.py --codex-home "$HOME/.codex"` | Governed: resume/handoff, external/private data, remote/deployment, destructive action, malformed state, or retained higher profile. |
+| Validate requirements artifact | `python3 scripts/harness_requirements.py validate PATH` | Standard: a requirements artifact is being promoted to source of truth. Governed: architecture source conflict. |
+| Summarize local evidence | `python3 scripts/harness_report.py` | Governed: resume/handoff, external/private data, remote/deployment, destructive action, malformed state, or retained higher profile. |
+| Validate parallel agent plan | `python3 scripts/harness_agent_team.py validate PLAN.json` | Governed: multiple agents or overlapping write sets. |
+| Append checkpoint state | `python3 scripts/harness_checkpoint.py append` | Governed: only the escalation signals listed in the Governed Escalation Contract. |
 
 The exact helper contracts live in `docs/HARNESS_RUNTIME.md`. This skill routes
 to helpers; it does not duplicate every helper option.
@@ -97,11 +99,15 @@ to helpers; it does not duplicate every helper option.
 Use this full sequence only for governed work with a matching recovery,
 handoff, durable-state, or environment escalation signal. Light and standard
 work read the narrowest local instructions and sources needed for the task; they
-do not run recovery or environment helpers by default.
+do not run recovery or environment helpers by default. Light does not enter
+this sequence merely because a prompt says `complex` or work is starting; a
+standard task does not enter it merely because it spans several local steps.
 
 1. Read local `AGENTS.md`, then `docs/repo-index.md` and `CONTEXT.md` if
    present.
-2. Run recovery and environment probes when the helper files exist:
+2. Union the helpers required by all active governed signals, then run only the
+   recovery or environment probes present in that union. File existence alone
+   does not activate either probe:
 
 ```bash
 python3 scripts/harness_recover.py --repo-root "$(pwd)" --codex-home "$HOME/.codex" --json
@@ -459,11 +465,13 @@ Common gates:
 
 ## Checkpoint Gate
 
-Create or update a checkpoint only when the governed escalation contract calls
-for one: resume/handoff, ownership conflict, external capture/private data,
+Create or update a checkpoint only when a matching governed escalation signal
+calls for one: resume/handoff, ownership conflict, external capture/private data,
 destructive/remote/deployment/release action, multi-agent execution,
 architecture source conflict, or malformed/retained governed state. A validated
-light or standard slice does not require a checkpoint by default.
+light or standard slice does not require a checkpoint by default. A light or
+standard task does not checkpoint merely because the work is complex, starts,
+ends, or completes a validated slice.
 
 Preferred route:
 
