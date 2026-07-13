@@ -15,6 +15,14 @@
     },
     "token_claimed": false
   },
+  "authoritative_gate_oracle": {
+    "GOVERNED-RESUMED-TASK": ["Startup Sequence", "State Snapshot Gate", "Checkpoint Gate"],
+    "GOVERNED-DIRTY-CONFLICT": ["Dirty Worktree Gate", "Checkpoint Gate"],
+    "GOVERNED-EXTERNAL-CAPTURE": ["External Capture Promotion Gate", "Evidence And Report Gate", "Checkpoint Gate"],
+    "GOVERNED-REMOTE-DEPLOY": ["Execution Lane Gate", "Deployment Readiness Gate", "Checkpoint Gate"],
+    "GOVERNED-MULTI-AGENT": ["Agent Team Gate", "Checkpoint Gate"],
+    "GOVERNED-ARCH-SOURCE-CONFLICT": ["Source Of Truth Order", "Architecture Alignment Checkpoint Gate", "Checkpoint Gate"]
+  },
   "test_catalog": {
     "TEST-SCHEMA-COUNTS": "tests/test_dhf_simplification.py::DhfSimplificationCorpusTests.test_cli_validates_schema_counts_trace_and_baseline",
     "TEST-COHORT-SEPARATION": "tests/test_dhf_simplification.py::DhfSimplificationCorpusTests.test_validation_rejects_category_and_cohort_drift",

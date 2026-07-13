@@ -4,8 +4,10 @@ from __future__ import annotations
 import argparse
 import ast
 import copy
+import hashlib
 import importlib.util
 import json
+import subprocess
 import sys
 import tempfile
 from collections import Counter
@@ -310,6 +312,20 @@ def validate_corpus(corpus: object, contract_path: Path) -> list[str]:
         if counts[category] < minimum:
             errors.append(f"at least {minimum} {category} scenarios are required")
 
+    gate_oracle = corpus.get("authoritative_gate_oracle")
+    governed_ids = {
+        scenario.get("id")
+        for scenario in scenarios
+        if isinstance(scenario, dict) and scenario.get("category") == "governed"
+    }
+    if not isinstance(gate_oracle, dict) or set(gate_oracle) != governed_ids:
+        errors.append("authoritative_gate_oracle must cover exactly every governed scenario")
+    elif any(
+        not isinstance(gates, list) or not gates or any(not _non_empty_string(gate) for gate in gates)
+        for gates in gate_oracle.values()
+    ):
+        errors.append("authoritative_gate_oracle values must be non-empty string lists")
+
     contract_criteria = extract_acceptance_criteria(contract_path)
     expected_trace_ids = {f"AC-{index:02d}" for index in range(1, len(contract_criteria) + 1)}
     trace_map = corpus.get("acceptance_trace_map")
@@ -400,6 +416,26 @@ def _observed_candidate_contract(context: str) -> dict[str, Any]:
     return {"contract_observed": False, "contract_parse_valid": False, **empty}
 
 
+def _init_dirty_git_repo(path: Path) -> None:
+    path.mkdir()
+    subprocess.run(["git", "init", "-q"], cwd=path, check=True)
+    subprocess.run(["git", "config", "user.email", "sanitized@example.invalid"], cwd=path, check=True)
+    subprocess.run(["git", "config", "user.name", "Sanitized Fixture"], cwd=path, check=True)
+    owned = path / "user-owned.txt"
+    owned.write_text("committed\n", encoding="utf-8")
+    subprocess.run(["git", "add", "user-owned.txt"], cwd=path, check=True)
+    subprocess.run(["git", "commit", "-q", "-m", "fixture"], cwd=path, check=True)
+    owned.write_text("user-owned-unsaved-change\n", encoding="utf-8")
+
+
+def _dirty_snapshot(path: Path) -> dict[str, Any]:
+    status = subprocess.run(
+        ["git", "status", "--short"], cwd=path, capture_output=True, text=True, check=True
+    ).stdout.splitlines()
+    content = (path / "user-owned.txt").read_bytes()
+    return {"status": status, "content_sha256": hashlib.sha256(content).hexdigest()}
+
+
 def _measure_dispatcher(
     corpus: dict[str, Any], root: Path, *, simplified_profiles: bool
 ) -> list[dict[str, Any]]:
@@ -409,8 +445,8 @@ def _measure_dispatcher(
         temp_root = Path(tmp)
         generic_root = temp_root / "GenericRepo"
         shipq_root = temp_root / "ShipQ"
-        generic_root.mkdir()
-        shipq_root.mkdir()
+        _init_dirty_git_repo(generic_root)
+        _init_dirty_git_repo(shipq_root)
         adapter = temp_root / "shipq_adapter.py"
         adapter.write_text(
             "def build_response(_payload):\n"
@@ -430,8 +466,10 @@ def _measure_dispatcher(
                 "cwd": str(cwd_by_class[scenario["cwd_class"]]),
                 "prompt": scenario["sanitized_prompt"],
             }
+            dirty_before = _dirty_snapshot(cwd_by_class[scenario["cwd_class"]])
             response, route = module.route_response(payload)
             context = response.get("hookSpecificOutput", {}).get("additionalContext", "")
+            dirty_after = _dirty_snapshot(cwd_by_class[scenario["cwd_class"]])
             observed_contract = (
                 _observed_candidate_contract(context)
                 if simplified_profiles
@@ -465,6 +503,9 @@ def _measure_dispatcher(
                     "escalation_signals": observed_contract["escalation_signals"],
                     "observed_required_output_fields": observed_contract["required_output_fields"],
                     "observed_authoritative_gates": observed_contract["authoritative_gates"],
+                    "additional_context": context,
+                    "dirty_before": dirty_before,
+                    "dirty_after": dirty_after,
                     "contract_observed": observed_contract["contract_observed"],
                     "contract_parse_valid": observed_contract["contract_parse_valid"],
                 }
