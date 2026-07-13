@@ -14,13 +14,13 @@ Stable rules belong in `AGENTS.md`, `README.md`, `docs/repo-index.md`, or
   - `codex/skills/delivery-harness-framework/SKILL.md`
 - blocked_sources: none
 - unsafe_inputs: none
-- next_safe_task: Target-sync only codex/skills/repo-branch-governance to ~/.codex/skills/repo-branch-governance, rerun focused system-Bash dry-run and check_skill_compatibility, then return to the preserved diverged branch decision
+- next_safe_task: Read-only review the two patch-unique commits 6eada3b and a3a94a3 against current main, then decide preserve by rebuilding or cherry-picking onto a fresh branch, or retire the old diverged branch; do not rebase or delete before that decision.
 - required_commands:
   - `python3 test_runner.py`
   - `git diff --check`
   - `./scripts/verify_codex_env.sh --repo-root "$(pwd)" --codex-home "$HOME/.codex" --claude-home "$HOME/.claude"`
-- latest_checkpoint: 2026-07-13T10:23:03-04:00 Completed branch governance convergence, cleanup, and Bash 3 compatibility hardening
-- latest_verification: 2026-07-13T10:23:03-04:00 command=python3 test_runner.py; branch_snapshot.sh; check_skill_compatibility.py; exit_code=0; key_output=ran=80 passed=80 skipped=0 failed=0; main=origin/main; only expected managed runtime drift remains
+- latest_checkpoint: 2026-07-13T10:27:29-04:00 Target-synced repo-branch-governance runtime skill after preserving a timestamped backup
+- latest_verification: 2026-07-13T10:27:29-04:00 command=/bin/bash "/Users/kezheng/.codex/skills/repo-branch-governance/scripts/cleanup_merged_branches.sh" --main main --remote origin; python3 -c 'import test_runner as t; t.test_repo_branch_cleanup_supports_system_bash()'; python3 scripts/check_skill_compatibility.py --repo-root "/Users/kezheng/Codes/CursorDeveloper/MyCodexEnv" --codex-home "/Users/kezheng/.codex" --claude-home "/Users/kezheng/.claude" --plugin-root "/Users/kezheng/.codex/plugins/cache" --plugin-root "/Users/kezheng/.cache/codex-runtimes/codex-primary-runtime/plugins"; python3 scripts/check_codex_skill_loader.py --repo-root "/Users/kezheng/Codes/CursorDeveloper/MyCodexEnv" --codex-home "/Users/kezheng/.codex"; diff -qr codex/skills/repo-branch-governance "/Users/kezheng/.codex/skills/repo-branch-governance"; exit_code=0; key_output=system-Bash dry-run: No merged branches found; focused test PASS; compatibility errors=0; loader_errors=0 missing_expected_paths=0 disabled_expected_paths=0; source/runtime parity clean; backup=/Users/kezheng/.codex/runtime-backups/repo-branch-governance-before-sync-20260713T142612Z
 
 ## State Log
 
@@ -1855,3 +1855,23 @@ Stable rules belong in `AGENTS.md`, `README.md`, `docs/repo-index.md`, or
 - blockers:
   - Managed runtime copy of repo-branch-governance cleanup script is stale; user-owned source-stage whitespace/drift remains intentionally untouched
 - next_safe_task: Target-sync only codex/skills/repo-branch-governance to ~/.codex/skills/repo-branch-governance, rerun focused system-Bash dry-run and check_skill_compatibility, then return to the preserved diverged branch decision
+
+### 2026-07-13T10:27:29-04:00
+- phase: handoff
+- event: checkpoint
+- summary: Target-synced repo-branch-governance runtime skill after preserving a timestamped backup
+- git:
+  - branch: main
+  - latest_commit: 3656639
+  - dirty_status: dirty
+  - dirty_count: 22
+- changed_surfaces:
+  - `/Users/kezheng/.codex/skills/repo-branch-governance`
+  - `docs/harness-state.md`
+- verification:
+  - command: `/bin/bash "/Users/kezheng/.codex/skills/repo-branch-governance/scripts/cleanup_merged_branches.sh" --main main --remote origin; python3 -c 'import test_runner as t; t.test_repo_branch_cleanup_supports_system_bash()'; python3 scripts/check_skill_compatibility.py --repo-root "/Users/kezheng/Codes/CursorDeveloper/MyCodexEnv" --codex-home "/Users/kezheng/.codex" --claude-home "/Users/kezheng/.claude" --plugin-root "/Users/kezheng/.codex/plugins/cache" --plugin-root "/Users/kezheng/.cache/codex-runtimes/codex-primary-runtime/plugins"; python3 scripts/check_codex_skill_loader.py --repo-root "/Users/kezheng/Codes/CursorDeveloper/MyCodexEnv" --codex-home "/Users/kezheng/.codex"; diff -qr codex/skills/repo-branch-governance "/Users/kezheng/.codex/skills/repo-branch-governance"`
+  - exit_code: 0
+  - key_output: system-Bash dry-run: No merged branches found; focused test PASS; compatibility errors=0; loader_errors=0 missing_expected_paths=0 disabled_expected_paths=0; source/runtime parity clean; backup=/Users/kezheng/.codex/runtime-backups/repo-branch-governance-before-sync-20260713T142612Z
+- blockers:
+  - Optional quick_validate.py is absent from the current runtime; repo compatibility, focused regression, loader, syntax, dry-run, and parity gates passed instead. Five user-owned source-stage drift warnings remain intentionally untouched.
+- next_safe_task: Read-only review the two patch-unique commits 6eada3b and a3a94a3 against current main, then decide preserve by rebuilding or cherry-picking onto a fresh branch, or retire the old diverged branch; do not rebase or delete before that decision.
