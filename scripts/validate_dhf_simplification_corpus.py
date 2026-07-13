@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import argparse
+import ast
 import copy
 import importlib.util
 import json
@@ -42,6 +43,25 @@ REQUIRED_BASELINE_FIELDS = {
     "verification_receipt_status",
     "known_mismatches",
 }
+BASELINE_HELPER_ORACLE = {
+    "LIGHT-EXPLANATION": ("harness_recover.py", "harness_env_probe.py"),
+    "LIGHT-BOUNDED-DOCS": ("harness_recover.py", "harness_env_probe.py"),
+    "LIGHT-ONE-FILE-SAFE": ("harness_recover.py", "harness_env_probe.py"),
+    "LIGHT-TRIVIAL-FORMAT": ("harness_recover.py", "harness_env_probe.py"),
+    "STANDARD-LOCAL-FEATURE": ("harness_recover.py", "harness_env_probe.py"),
+    "STANDARD-FAILING-TEST": ("harness_recover.py", "harness_env_probe.py"),
+    "STANDARD-SCOPED-REFACTOR": ("harness_recover.py", "harness_env_probe.py"),
+    "STANDARD-CLI-CHANGE": ("harness_recover.py", "harness_env_probe.py"),
+    "STANDARD-LOCAL-UI": ("harness_recover.py", "harness_env_probe.py"),
+    "GOVERNED-RESUMED-TASK": ("harness_recover.py", "harness_env_probe.py", "harness_report.py"),
+    "GOVERNED-DIRTY-CONFLICT": ("harness_recover.py", "harness_env_probe.py"),
+    "GOVERNED-EXTERNAL-CAPTURE": ("harness_recover.py", "harness_env_probe.py"),
+    "GOVERNED-REMOTE-DEPLOY": ("harness_recover.py", "harness_env_probe.py", "harness_checkpoint.py"),
+    "GOVERNED-MULTI-AGENT": ("harness_recover.py", "harness_env_probe.py", "harness_agent_team.py"),
+    "GOVERNED-ARCH-SOURCE-CONFLICT": ("harness_recover.py", "harness_env_probe.py", "harness_requirements.py"),
+    "CONTROL-ORDINARY-CONTINUE": (),
+    "CONTROL-SHIPQ-DELEGATION": (),
+}
 
 
 def extract_acceptance_criteria(contract_path: Path) -> list[str]:
@@ -79,17 +99,27 @@ def _validate_scenario(scenario: object, index: int) -> list[str]:
         errors.append(f"{prefix} missing required fields: {', '.join(missing)}")
         return errors
 
-    for field in ("id", "scenario_type", "sanitized_prompt", "activation_status"):
+    for field in (
+        "id",
+        "category",
+        "scenario_type",
+        "sanitized_prompt",
+        "activation_status",
+        "cohort_status",
+        "cwd_class",
+        "expected_profile",
+        "verification_receipt_status",
+    ):
         if not _non_empty_string(scenario[field]):
             errors.append(f"{prefix}.{field} must be a non-empty string")
     category = scenario["category"]
-    if category not in {*MINIMUM_CATEGORY_COUNTS, "routing_control"}:
+    if _non_empty_string(category) and category not in {*MINIMUM_CATEGORY_COUNTS, "routing_control"}:
         errors.append(f"{prefix}.category is invalid: {category}")
-    if scenario["cwd_class"] not in ALLOWED_CWD_CLASSES:
+    if _non_empty_string(scenario["cwd_class"]) and scenario["cwd_class"] not in ALLOWED_CWD_CLASSES:
         errors.append(f"{prefix}.cwd_class is invalid: {scenario['cwd_class']}")
-    if scenario["cohort_status"] not in ALLOWED_COHORT_STATUSES:
+    if _non_empty_string(scenario["cohort_status"]) and scenario["cohort_status"] not in ALLOWED_COHORT_STATUSES:
         errors.append(f"{prefix}.cohort_status is invalid: {scenario['cohort_status']}")
-    if category in MINIMUM_CATEGORY_COUNTS and scenario["expected_profile"] != category:
+    if _non_empty_string(category) and category in MINIMUM_CATEGORY_COUNTS and scenario["expected_profile"] != category:
         errors.append(f"{prefix}.expected_profile must match category {category}")
     if category == "routing_control" and scenario["expected_profile"] != "not_applicable":
         errors.append(f"{prefix}.expected_profile must be not_applicable")
@@ -101,9 +131,10 @@ def _validate_scenario(scenario: object, index: int) -> list[str]:
 
     if category == "governed" and not _non_empty_string(scenario["escalation_signal"]):
         errors.append(f"{prefix}.escalation_signal must name the governed trigger")
-    if category in {"light", "standard"} and scenario["escalation_signal"] is not None:
+    if _non_empty_string(category) and category in {"light", "standard"} and scenario["escalation_signal"] is not None:
         errors.append(f"{prefix}.escalation_signal must be explicit null when absent")
 
+    valid_string_lists: dict[str, list[str]] = {}
     for field in (
         "mandatory_helpers",
         "forbidden_helpers",
@@ -113,9 +144,11 @@ def _validate_scenario(scenario: object, index: int) -> list[str]:
         value = scenario[field]
         if not isinstance(value, list) or any(not _non_empty_string(item) for item in value):
             errors.append(f"{prefix}.{field} must be a string list")
-    if set(scenario["mandatory_helpers"]) & set(scenario["forbidden_helpers"]):
+        else:
+            valid_string_lists[field] = value
+    if set(valid_string_lists.get("mandatory_helpers", [])) & set(valid_string_lists.get("forbidden_helpers", [])):
         errors.append(f"{prefix} cannot require and forbid the same helper")
-    if not scenario["required_output_fields"]:
+    if "required_output_fields" in valid_string_lists and not valid_string_lists["required_output_fields"]:
         errors.append(f"{prefix}.required_output_fields must not be empty")
 
     outcome = scenario["permission_safety_outcome"]
@@ -148,9 +181,43 @@ def _validate_scenario(scenario: object, index: int) -> list[str]:
             or not isinstance(baseline["known_mismatches"], list)
         ):
             errors.append(f"{prefix}.baseline_measurement has invalid measurement values")
-    if scenario["verification_receipt_status"] not in ALLOWED_RECEIPT_STATUSES:
+    if (
+        _non_empty_string(scenario["verification_receipt_status"])
+        and scenario["verification_receipt_status"] not in ALLOWED_RECEIPT_STATUSES
+    ):
         errors.append(f"{prefix}.verification_receipt_status is invalid")
     return errors
+
+
+def _test_callable_exists(root: Path, reference: object) -> bool:
+    if not _non_empty_string(reference) or reference.count("::") != 1:
+        return False
+    relative_path, qualified_name = reference.split("::", 1)
+    candidate = (root / relative_path).resolve()
+    try:
+        candidate.relative_to(root.resolve())
+    except ValueError:
+        return False
+    if candidate.suffix != ".py" or not candidate.is_file():
+        return False
+    try:
+        tree = ast.parse(candidate.read_text(encoding="utf-8"))
+    except (OSError, SyntaxError):
+        return False
+    parts = qualified_name.split(".")
+    if not parts[-1].startswith("test_"):
+        return False
+    if len(parts) == 1:
+        return any(isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)) and node.name == parts[0] for node in tree.body)
+    if len(parts) == 2:
+        class_name, method_name = parts
+        for node in tree.body:
+            if isinstance(node, ast.ClassDef) and node.name == class_name:
+                return any(
+                    isinstance(item, (ast.FunctionDef, ast.AsyncFunctionDef)) and item.name == method_name
+                    for item in node.body
+                )
+    return False
 
 
 def validate_corpus(corpus: object, contract_path: Path) -> list[str]:
@@ -177,13 +244,19 @@ def validate_corpus(corpus: object, contract_path: Path) -> list[str]:
         return errors + ["scenarios must be a list"]
     for index, scenario in enumerate(scenarios):
         errors.extend(_validate_scenario(scenario, index))
-    ids = [scenario.get("id") for scenario in scenarios if isinstance(scenario, dict)]
+    ids = [
+        scenario.get("id")
+        for scenario in scenarios
+        if isinstance(scenario, dict) and _non_empty_string(scenario.get("id"))
+    ]
     if len(ids) != len(set(ids)):
         errors.append("scenario IDs must be unique")
     counts = Counter(
         scenario.get("category")
         for scenario in scenarios
-        if isinstance(scenario, dict) and scenario.get("category") in MINIMUM_CATEGORY_COUNTS
+        if isinstance(scenario, dict)
+        and _non_empty_string(scenario.get("category"))
+        and scenario.get("category") in MINIMUM_CATEGORY_COUNTS
     )
     for category, minimum in MINIMUM_CATEGORY_COUNTS.items():
         if counts[category] < minimum:
@@ -203,6 +276,17 @@ def validate_corpus(corpus: object, contract_path: Path) -> list[str]:
     if extra_trace_ids:
         errors.append(f"unknown acceptance trace IDs: {', '.join(extra_trace_ids)}")
     known_ids = set(ids)
+    test_catalog = corpus.get("test_catalog")
+    if not isinstance(test_catalog, dict):
+        errors.append("test_catalog must map stable test IDs to callables")
+        test_catalog = {}
+    else:
+        repo_root = contract_path.resolve().parents[2]
+        for test_id, reference in test_catalog.items():
+            if not _non_empty_string(test_id):
+                errors.append("test_catalog IDs must be non-empty strings")
+            elif not _test_callable_exists(repo_root, reference):
+                errors.append(f"{test_id} does not resolve to a test callable: {reference}")
     for index, criterion in enumerate(contract_criteria, 1):
         trace_id = f"AC-{index:02d}"
         trace = trace_map.get(trace_id)
@@ -216,8 +300,11 @@ def validate_corpus(corpus: object, contract_path: Path) -> list[str]:
             errors.append(f"{trace_id} must map to one or more scenario/test IDs")
             continue
         for scenario_id in scenario_ids:
-            if scenario_id not in known_ids:
+            if not _non_empty_string(scenario_id) or scenario_id not in known_ids:
                 errors.append(f"{trace_id} references unknown scenario ID: {scenario_id}")
+        for test_id in test_ids:
+            if not _non_empty_string(test_id) or test_id not in test_catalog:
+                errors.append(f"{trace_id} references unknown test ID: {test_id}")
         if not _non_empty_string(trace.get("evidence_status")):
             errors.append(f"{trace_id} must declare evidence_status")
     return errors
@@ -267,7 +354,7 @@ def measure_baseline(corpus: dict[str, Any], root: Path) -> list[dict[str, Any]]
                     "id": scenario["id"],
                     "route": route,
                     "injected_context_utf8_bytes_proxy": len(context.encode("utf-8")),
-                    "mandatory_helper_count": len(set(scenario["baseline_mandatory_helpers"])),
+                    "mandatory_helper_count": len(BASELINE_HELPER_ORACLE[scenario["id"]]),
                     "verification_receipt_status": scenario["baseline_measurement"]["verification_receipt_status"],
                 }
             )
@@ -280,6 +367,12 @@ def validate_baseline_measurements(corpus: dict[str, Any], root: Path) -> list[s
     for scenario in corpus["scenarios"]:
         expected = scenario["baseline_measurement"]
         actual = actual_by_id[scenario["id"]]
+        oracle_helpers = list(BASELINE_HELPER_ORACLE[scenario["id"]])
+        if scenario["baseline_mandatory_helpers"] != oracle_helpers:
+            errors.append(
+                f"{scenario['id']} canonical helper oracle mismatch: "
+                f"{scenario['baseline_mandatory_helpers']} != {oracle_helpers}"
+            )
         if expected["route"] != actual["route"]:
             errors.append(f"{scenario['id']} route mismatch: {expected['route']} != {actual['route']}")
         if expected["injected_context_utf8_bytes_proxy"] != actual["injected_context_utf8_bytes_proxy"]:

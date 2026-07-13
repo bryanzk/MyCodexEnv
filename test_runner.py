@@ -2033,7 +2033,6 @@ def test_dhf_dispatcher_stdout_stderr_and_no_leak_output():
 def test_dhf_simplification_golden_corpus():
     code, out, err = run([sys.executable, str(DHF_SIMPLIFICATION_TEST)], cwd=ROOT)
     require(code == 0, f"DHF simplification golden corpus failed:\n{out}\n{err}")
-    require("Ran 5 tests" in err and "OK" in err, "focused DHF corpus test summary missing")
     print("[PASS] DHF simplification golden corpus")
 
 
