@@ -5,7 +5,7 @@ Stable rules belong in `AGENTS.md`, `README.md`, `docs/repo-index.md`, or
 `docs/HARNESS_RUNTIME.md`; session facts and phase transitions are appended here.
 
 ## Current Snapshot
-- phase: handoff
+- phase: ship
 - source_of_truth:
   - `AGENTS.md`
   - `docs/repo-index.md`
@@ -14,13 +14,13 @@ Stable rules belong in `AGENTS.md`, `README.md`, `docs/repo-index.md`, or
   - `codex/skills/delivery-harness-framework/SKILL.md`
 - blocked_sources: none
 - unsafe_inputs: none
-- next_safe_task: Review and checkpoint the 22 user-owned changes in the primary worktree, then reconcile their overlapping test_runner.py and scripts/verify_codex_env.sh edits with origin/main and fast-forward or rebase safely; do not force-update the dirty local main ref.
+- next_safe_task: Push codex/mce-20260713-user-change-checkpoints, open a PR against main, and review CI; after merge, fast-forward local main only when its worktree is clean.
 - required_commands:
   - `python3 test_runner.py`
   - `git diff --check`
   - `./scripts/verify_codex_env.sh --repo-root "$(pwd)" --codex-home "$HOME/.codex" --claude-home "$HOME/.claude"`
-- latest_checkpoint: 2026-07-13T11:12:48-04:00 Merged the isolated freeze-review rebuild into origin/main and deleted the superseded local diverged branch
-- latest_verification: 2026-07-13T11:12:48-04:00 command=git push origin HEAD:main; git merge-base --is-ancestor 76d12ed origin/main; git ls-remote --heads origin codex/mce-20260608-freeze-review-policy; git show-ref refs/heads/codex/mce-20260608-freeze-review-policy; exit_code=0; key_output=origin/main=ef3e6994925742f9047101e97161e5b3247c4323 contains implementation 76d12ed; old branch absent locally and remotely
+- latest_checkpoint: 2026-07-13T12:02:26-04:00 Target-activated generic DHF dispatcher and thread-discipline runtime surfaces from checkpoint branch
+- latest_verification: 2026-07-13T12:02:26-04:00 command=targeted cmp 8 files; ./scripts/verify_codex_env.sh --repo-root "/Users/kezheng/Codes/CursorDeveloper/MyCodexEnv" --codex-home "/Users/kezheng/.codex" --claude-home "/Users/kezheng/.claude"; python3 scripts/check_codex_skill_loader.py --repo-root "/Users/kezheng/Codes/CursorDeveloper/MyCodexEnv" --codex-home "/Users/kezheng/.codex"; python3 test_runner.py; exit_code=0; key_output=targeted_parity=8/8; Verification passed.; loader_errors=0 missing_expected_paths=0 disabled_expected_paths=0; ran=82 passed=82 skipped=0 failed=0; backup=/Users/kezheng/.codex/runtime-backups/user-change-checkpoints-before-sync-20260713T155952Z
 
 ## State Log
 
@@ -1935,3 +1935,27 @@ Stable rules belong in `AGENTS.md`, `README.md`, `docs/repo-index.md`, or
 - blockers:
   - Primary local main worktree still contains 22 user-owned dirty items and intentionally remains behind origin/main; it was not stashed, overwritten, or switched during isolated delivery.
 - next_safe_task: Review and checkpoint the 22 user-owned changes in the primary worktree, then reconcile their overlapping test_runner.py and scripts/verify_codex_env.sh edits with origin/main and fast-forward or rebase safely; do not force-update the dirty local main ref.
+
+### 2026-07-13T12:02:26-04:00
+- phase: ship
+- event: checkpoint
+- summary: Target-activated generic DHF dispatcher and thread-discipline runtime surfaces from checkpoint branch
+- git:
+  - branch: codex/mce-20260713-user-change-checkpoints
+  - latest_commit: e5181ca
+  - dirty_status: clean
+  - dirty_count: 0
+- changed_surfaces:
+  - `/Users/kezheng/.codex/AGENTS.md`
+  - `/Users/kezheng/.codex/hooks.json`
+  - `/Users/kezheng/.codex/hooks/dhf_preprompt.py`
+  - `/Users/kezheng/.codex/hooks/shipq_dhf_preprompt.py`
+  - `/Users/kezheng/.codex/skills/delivery-harness-framework/SKILL.md`
+  - `/Users/kezheng/.codex/skills/codex-fluent`
+- verification:
+  - command: `targeted cmp 8 files; ./scripts/verify_codex_env.sh --repo-root "/Users/kezheng/Codes/CursorDeveloper/MyCodexEnv" --codex-home "/Users/kezheng/.codex" --claude-home "/Users/kezheng/.claude"; python3 scripts/check_codex_skill_loader.py --repo-root "/Users/kezheng/Codes/CursorDeveloper/MyCodexEnv" --codex-home "/Users/kezheng/.codex"; python3 test_runner.py`
+  - exit_code: 0
+  - key_output: targeted_parity=8/8; Verification passed.; loader_errors=0 missing_expected_paths=0 disabled_expected_paths=0; ran=82 passed=82 skipped=0 failed=0; backup=/Users/kezheng/.codex/runtime-backups/user-change-checkpoints-before-sync-20260713T155952Z
+- blockers:
+  - none
+- next_safe_task: Push codex/mce-20260713-user-change-checkpoints, open a PR against main, and review CI; after merge, fast-forward local main only when its worktree is clean.
