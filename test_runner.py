@@ -86,6 +86,7 @@ PLAN_GOVERNOR_SCHEMAS = [
     ROOT / "codex" / "runtime" / "evidence" / "plan-finding-decision.schema.json",
     ROOT / "codex" / "runtime" / "evidence" / "plan-governor-receipt.schema.json",
 ]
+DHF_SIMPLIFICATION_TEST = ROOT / "tests" / "test_dhf_simplification.py"
 
 
 def prepare_test_loaded_readback(prepared: list[str]) -> None:
@@ -2904,6 +2905,13 @@ def test_dhf_dispatcher_stdout_stderr_and_no_leak_output():
         for term in forbidden:
             require(term not in context, f"generic output must not leak private/project term: {term}")
     print("[PASS] DHF dispatcher stdout/stderr and no-leak output")
+
+
+def test_dhf_simplification_golden_corpus():
+    code, out, err = run([sys.executable, str(DHF_SIMPLIFICATION_TEST)], cwd=ROOT)
+    require(code == 0, f"DHF simplification golden corpus failed:\n{out}\n{err}")
+    require("Ran 5 tests" in err and "OK" in err, "focused DHF corpus test summary missing")
+    print("[PASS] DHF simplification golden corpus")
 
 
 def test_harness_agent_brief_template():
@@ -10016,6 +10024,7 @@ TESTS = [
     test_dhf_dispatcher_opt_out_precedence,
     test_dhf_dispatcher_lazy_import_and_no_write_snapshot,
     test_dhf_dispatcher_stdout_stderr_and_no_leak_output,
+    test_dhf_simplification_golden_corpus,
     test_shipq_dhf_prompt_hook_auto_invokes_skill,
     test_harness_agent_brief_template,
     test_lifecycle_skill_routing_doc_is_discoverable,
