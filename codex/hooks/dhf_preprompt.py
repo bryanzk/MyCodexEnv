@@ -34,6 +34,7 @@ PROFILE_RANK = {"light": 0, "standard": 1, "governed": 2}
 class ProfileSelection(NamedTuple):
     profile: str
     escalation_signal: str | None
+    escalation_signals: tuple[str, ...] = ()
 
 SKIP_PATTERNS = [
     r"\bno\s+dhf\b",
@@ -149,6 +150,46 @@ MANDATORY_HELPERS_BY_SIGNAL = {
     ],
 }
 
+REQUIRED_OUTPUT_FIELDS_BY_SIGNAL = {
+    "resume_or_handoff": ["phase", "ownership", "freshness_state"],
+    "unknown_or_overlapping_worktree_ownership": ["ownership"],
+    "external_capture_or_private_data": ["data_boundary"],
+    "remote_or_deployment_action": ["authorization_state", "rollback"],
+    "multiple_agents_or_overlapping_write_sets": ["agent_write_sets"],
+    "durable_architecture_source_conflict": ["source_conflict", "decision_state"],
+    "malformed_profile_state": ["profile_state", "freshness_state"],
+    "destructive_or_irreversible_action": ["authorization_state", "rollback"],
+    "retained_higher_active_profile": ["active_profile", "escalation_signal"],
+}
+
+AUTHORITATIVE_GATES_BY_SIGNAL = {
+    "resume_or_handoff": ["Startup Sequence", "State Snapshot Gate", "Checkpoint Gate"],
+    "unknown_or_overlapping_worktree_ownership": ["Dirty Worktree Gate", "Checkpoint Gate"],
+    "external_capture_or_private_data": [
+        "External Capture Promotion Gate",
+        "Evidence And Report Gate",
+        "Checkpoint Gate",
+    ],
+    "remote_or_deployment_action": [
+        "Execution Lane Gate",
+        "Deployment Readiness Gate",
+        "Checkpoint Gate",
+    ],
+    "multiple_agents_or_overlapping_write_sets": ["Agent Team Gate", "Checkpoint Gate"],
+    "durable_architecture_source_conflict": [
+        "Source Of Truth Order",
+        "Architecture Alignment Checkpoint Gate",
+        "Checkpoint Gate",
+    ],
+    "malformed_profile_state": ["Startup Sequence", "State Snapshot Gate", "Checkpoint Gate"],
+    "destructive_or_irreversible_action": [
+        "Execution Lane Gate",
+        "Deployment Readiness Gate",
+        "Checkpoint Gate",
+    ],
+    "retained_higher_active_profile": ["Startup Sequence", "Evidence And Report Gate", "Checkpoint Gate"],
+}
+
 
 def load_payload() -> tuple[dict[str, Any], str]:
     try:
@@ -221,19 +262,20 @@ def generic_activation_requested(text: str) -> bool:
 
 
 def select_governance_profile(text: str, active_profile: str | None = None) -> ProfileSelection:
-    signal = None
-    selected = "light"
-    for candidate_signal, patterns in GOVERNED_SIGNAL_PATTERNS:
-        if any(re.search(pattern, text, flags=re.IGNORECASE) for pattern in patterns):
-            selected = "governed"
-            signal = candidate_signal
-            break
-    if selected == "light" and any(re.search(pattern, text, flags=re.IGNORECASE) for pattern in STANDARD_PATTERNS):
+    signals = tuple(
+        candidate_signal
+        for candidate_signal, patterns in GOVERNED_SIGNAL_PATTERNS
+        if any(re.search(pattern, text, flags=re.IGNORECASE) for pattern in patterns)
+    )
+    selected = "governed" if signals else "light"
+    if not signals and any(re.search(pattern, text, flags=re.IGNORECASE) for pattern in STANDARD_PATTERNS):
         selected = "standard"
 
     if active_profile in PROFILE_RANK and PROFILE_RANK[active_profile] > PROFILE_RANK[selected]:
         selected = active_profile
-    return ProfileSelection(selected, signal)
+        if active_profile == "governed":
+            signals = (*signals, "retained_higher_active_profile")
+    return ProfileSelection(selected, signals[0] if signals else None, signals)
 
 
 def profile_state_from_payload(payload: dict[str, Any]) -> tuple[str | None, bool]:
@@ -305,11 +347,27 @@ def generic_response() -> dict[str, Any]:
 
 
 def profile_context(selection: ProfileSelection) -> str:
-    signal = selection.escalation_signal or (
-        "retained_higher_active_profile" if selection.profile == "governed" else None
+    signals = selection.escalation_signals or (
+        (selection.escalation_signal,)
+        if selection.escalation_signal
+        else (("retained_higher_active_profile",) if selection.profile == "governed" else ())
+    )
+    mandatory_helpers = list(
+        dict.fromkeys(helper for signal in signals for helper in MANDATORY_HELPERS_BY_SIGNAL.get(signal, []))
+    )
+    required_output_fields = list(
+        dict.fromkeys(field for signal in signals for field in REQUIRED_OUTPUT_FIELDS_BY_SIGNAL.get(signal, []))
+    )
+    authoritative_gates = list(
+        dict.fromkeys(gate for signal in signals for gate in AUTHORITATIVE_GATES_BY_SIGNAL.get(signal, []))
     )
     contract = json.dumps(
-        {"mandatory_helpers": MANDATORY_HELPERS_BY_SIGNAL.get(signal, [])},
+        {
+            "escalation_signals": list(signals),
+            "mandatory_helpers": mandatory_helpers,
+            "required_output_fields": required_output_fields,
+            "authoritative_gates": authoritative_gates,
+        },
         ensure_ascii=True,
         separators=(",", ":"),
     )
@@ -327,7 +385,8 @@ def profile_context(selection: ProfileSelection) -> str:
         return common + " Define done, preserve dirty-worktree ownership, use a runnable focused feedback loop, and verify fresh."
     return (
         common
-        + f" escalation_signal={signal}. Retain the relevant recovery, ownership, permission, evidence, "
+        + f" escalation_signal={signals[0]}; escalation_signals={','.join(signals)}. "
+        "Retain the union of relevant recovery, ownership, permission, evidence, "
         "checkpoint, deployment-readiness, and agent-team gates before risky action."
     )
 

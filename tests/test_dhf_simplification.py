@@ -8,6 +8,7 @@ import os
 import re
 import subprocess
 import sys
+import tempfile
 import unittest
 from pathlib import Path
 
@@ -19,6 +20,15 @@ CONTRACT = ROOT / "docs" / "plans" / "2026-07-12-dhf-simplification-implementati
 DISPATCHER = ROOT / "codex" / "hooks" / "dhf_preprompt.py"
 SKILL = ROOT / "codex" / "skills" / "delivery-harness-framework" / "SKILL.md"
 EVALS = ROOT / "codex" / "skills" / "delivery-harness-framework" / "evals" / "evals.json"
+COMPLETION_ORACLE = (
+    ROOT
+    / "codex"
+    / "skills"
+    / "delivery-harness-framework"
+    / "evals"
+    / "validate_completion_output.py"
+)
+BASELINE_BASE_SHA = "00818ae174f039899a2757ee4c67fcf9db1effa0"
 RESULT_INVARIANTS = [
     "result",
     "scope_and_constraints",
@@ -205,6 +215,45 @@ class DhfSimplificationCorpusTests(unittest.TestCase):
         broken["scenarios"][0]["baseline_measurement"]["injected_context_utf8_bytes_proxy"] += 1
         errors = self.validator.validate_baseline_measurements(broken, ROOT)
         self.assertTrue(any("injected-context proxy mismatch" in error for error in errors), errors)
+
+    def test_baseline_is_frozen_to_base_sha_independently_of_current_skill(self):
+        provenance = self.corpus["measurement_boundary"]["baseline_provenance"]
+        self.assertEqual(provenance["base_sha"], BASELINE_BASE_SHA)
+        self.assertEqual(provenance["oracle_kind"], "frozen_measurement")
+        self.assertEqual(provenance["generic_context_utf8_bytes_proxy"], 32803)
+        self.assertEqual(self.validator.BASELINE_BASE_SHA, BASELINE_BASE_SHA)
+
+        baseline = self.validator.measure_baseline(self.corpus, ROOT)
+        generic = [item for item in baseline if item["route"] == "generic-activated"]
+        self.assertEqual(len(generic), 15)
+        self.assertEqual({item["injected_context_utf8_bytes_proxy"] for item in generic}, {32803})
+        self.assertEqual(
+            {
+                scenario["baseline_measurement"]["injected_context_utf8_bytes_proxy"]
+                for scenario in self.corpus["scenarios"]
+                if scenario["baseline_measurement"]["route"] == "generic-activated"
+            },
+            {32803},
+        )
+
+        candidate = self.validator.measure_candidate(self.corpus, ROOT)
+        light = next(item for item in candidate if item["id"] == "LIGHT-EXPLANATION")
+        dispatcher = load_dispatcher()
+        current_context = dispatcher.profile_context(
+            dispatcher.select_governance_profile(
+                next(
+                    scenario["sanitized_prompt"]
+                    for scenario in self.corpus["scenarios"]
+                    if scenario["id"] == "LIGHT-EXPLANATION"
+                )
+            )
+        )
+        self.assertEqual(light["injected_context_utf8_bytes_proxy"], len(current_context.encode("utf-8")))
+
+        broken = copy.deepcopy(self.corpus)
+        broken["measurement_boundary"]["baseline_provenance"]["base_sha"] = "deadbeef"
+        errors = self.validator.validate_corpus(broken, CONTRACT)
+        self.assertTrue(any("baseline provenance" in error for error in errors), errors)
 
     def test_candidate_measurement_exposes_selected_profiles_without_rewriting_baseline(self):
         candidate = self.validator.measure_candidate(self.corpus, ROOT)
@@ -526,6 +575,107 @@ class DhfGovernanceProfileTests(unittest.TestCase):
             "diagnosed_or_blocked",
         ):
             self.assertIn(claim_class, explanation)
+
+    def test_multiple_escalation_signals_union_helpers_fields_and_gates(self):
+        prompt = (
+            "Perform this complex customer private data deployment remotely with multiple agents "
+            "and overlapping write sets."
+        )
+        selection = self.dispatcher.select_governance_profile(prompt)
+        self.assertEqual(selection.profile, "governed")
+        self.assertEqual(
+            selection.escalation_signals,
+            (
+                "external_capture_or_private_data",
+                "remote_or_deployment_action",
+                "multiple_agents_or_overlapping_write_sets",
+            ),
+        )
+        context = self.dispatcher.profile_context(selection)
+        contract_line = context.split("DHF_PROFILE_CONTRACT=", 1)[1].splitlines()[0]
+        contract = json.loads(contract_line)
+        self.assertEqual(contract["escalation_signals"], list(selection.escalation_signals))
+        self.assertEqual(
+            contract["mandatory_helpers"],
+            ["harness_env_probe.py", "harness_report.py", "harness_checkpoint.py", "harness_agent_team.py"],
+        )
+        self.assertEqual(
+            set(contract["required_output_fields"]),
+            {"data_boundary", "authorization_state", "rollback", "agent_write_sets"},
+        )
+        self.assertEqual(
+            set(contract["authoritative_gates"]),
+            {
+                "External Capture Promotion Gate",
+                "Evidence And Report Gate",
+                "Checkpoint Gate",
+                "Execution Lane Gate",
+                "Deployment Readiness Gate",
+                "Agent Team Gate",
+            },
+        )
+        for signal in selection.escalation_signals:
+            self.assertIn(signal, context)
+
+    def test_helper_router_startup_and_checkpoint_are_signal_conditional(self):
+        skill_text = SKILL.read_text(encoding="utf-8")
+        helper_router = skill_text.split("## Helper Router", 1)[1].split("## Startup Sequence", 1)[0]
+        startup = skill_text.split("## Startup Sequence", 1)[1].split("## Dirty Worktree Gate", 1)[0]
+        checkpoint = skill_text.split("## Checkpoint Gate", 1)[1].split("## Exception Handling Principles", 1)[0]
+        self.assertIn("Matching profile and signal", helper_router)
+        self.assertIn("Light", helper_router)
+        self.assertIn("requires no lifecycle helper", helper_router)
+        self.assertNotIn("Prefer runtime helper CLIs when present", helper_router)
+        self.assertNotIn("after a meaningful validated implementation slice", helper_router)
+        for section in (startup, checkpoint):
+            normalized = " ".join(section.split()).lower()
+            self.assertIn("matching", normalized)
+            self.assertIn("light", normalized)
+            self.assertIn("does not", normalized)
+            self.assertIn("complex", normalized)
+        self.assertNotIn("Run recovery and environment probes when the helper files exist", startup)
+
+    def test_completion_output_oracle_accepts_canonical_samples_and_rejects_bad_samples(self):
+        self.assertTrue(COMPLETION_ORACLE.is_file(), "missing executable completion output oracle")
+        spec = importlib.util.spec_from_file_location("dhf_completion_output_oracle", COMPLETION_ORACLE)
+        self.assertIsNotNone(spec)
+        self.assertIsNotNone(spec.loader)
+        oracle = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(oracle)
+
+        eval_data = json.loads(EVALS.read_text(encoding="utf-8"))
+        samples = [case["structured_output_sample"] for case in eval_data["evals"] if "completion_claim_class" in case]
+        self.assertEqual(len(samples), 4)
+        for sample in samples:
+            with self.subTest(claim=sample["completion_claim_class"]):
+                self.assertEqual(oracle.validate_output_sample(sample), [])
+
+        bad_explanation = copy.deepcopy(
+            next(sample for sample in samples if sample["completion_claim_class"] == "verification_not_applicable")
+        )
+        bad_explanation["verification_receipt"]["command"] = "invented --check"
+        errors = oracle.validate_output_sample(bad_explanation)
+        self.assertTrue(any("must not include command receipt fields" in error for error in errors), errors)
+
+        bad_implemented = copy.deepcopy(
+            next(sample for sample in samples if sample["completion_claim_class"] == "implemented_or_fixed")
+        )
+        del bad_implemented["verification_receipt"]["timestamp"]
+        errors = oracle.validate_output_sample(bad_implemented)
+        self.assertTrue(any("missing receipt fields" in error for error in errors), errors)
+
+        with tempfile.TemporaryDirectory() as tmp:
+            sample_path = Path(tmp) / "bad-sample.json"
+            sample_path.write_text(json.dumps(bad_explanation), encoding="utf-8")
+            proc = subprocess.run(
+                [sys.executable, str(COMPLETION_ORACLE), "--sample", str(sample_path)],
+                cwd=ROOT,
+                capture_output=True,
+                text=True,
+                check=False,
+            )
+        self.assertEqual(proc.returncode, 1, proc.stdout + proc.stderr)
+        self.assertIn("must not include command receipt fields", proc.stderr)
 
     def test_feature_switch_defaults_legacy_and_requires_explicit_enable(self):
         marker = "LEGACY_FULL_SKILL_MARKER"
