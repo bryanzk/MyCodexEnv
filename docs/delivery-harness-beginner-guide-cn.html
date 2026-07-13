@@ -620,13 +620,13 @@
 
       <section class="section" id="flow" style="--i:3">
         <h2>五步流程</h2>
-        <div class="section-note">Beginner 可以把每个任务都压进这五步，而不是直接跳到写代码。</div>
+        <div class="section-note">这是检查清单，不是每个任务的固定仪式：只有 <code>governed</code> 且命中 matching escalation signal 时才运行 <code>harness_recover.py</code>、<code>harness_env_probe.py</code> 或 <code>harness_checkpoint.py</code>；<code>light</code> 不要求这些 lifecycle helpers。</div>
         <div class="pipeline">
-          <div class="pipe"><b>1. Recover</b><span>读取 AGENTS、README、repo-index、harness state、git 状态和本地 evidence。</span></div>
+          <div class="pipe"><b>1. Recover（条件化）</b><span>仅在 governed 的 matching escalation signal 要求时读取 harness state、git 状态和本地 evidence；light 直接读取任务所需的最窄来源。</span></div>
           <div class="pipe"><b>2. Clarify</b><span>确认目标、范围、受众、约束、领域词汇和验收标准；不清楚就进入 requirements。</span></div>
           <div class="pipe"><b>3. Route</b><span>按生命周期阶段选择 planner、TDD、QA、安全、发布、文档或 runtime helper；多步工作拆成垂直切片。</span></div>
           <div class="pipe"><b>4. Verify</b><span>运行测试、静态检查、浏览器 smoke 或脚本验证，记录四个证据字段。</span></div>
-          <div class="pipe"><b>5. Handoff</b><span>写入 checkpoint：变更面、验证、阻塞项、下一步安全任务。</span></div>
+          <div class="pipe"><b>5. Handoff（条件化）</b><span>仅在 matching governed escalation 要求时写入 checkpoint：变更面、验证、阻塞项、下一步安全任务。</span></div>
         </div>
         <div class="steps" style="margin-top:18px">
           <div class="step">
@@ -655,7 +655,7 @@
           <div class="quote">“帮我把这个功能做好，然后发出去。”</div>
           <div class="steps">
             <div class="step"><div class="step-num">A</div><div><h3>没有 Harness</h3><p>agent 可能直接改代码、猜测范围、跳过需求、最后用“看起来可以”作为完成依据。</p></div></div>
-            <div class="step"><div class="step-num">B</div><div><h3>使用 DHF</h3><p>先恢复 repo 状态，判断需求和领域语言是否清晰；若不清晰，进入 requirements；若清晰，把多步工作拆成可验证的 vertical slices。</p></div></div>
+            <div class="step"><div class="step-num">B</div><div><h3>使用 DHF</h3><p>先选择治理 profile；只有 governed escalation 才恢复完整 repo 状态。若需求不清晰，进入 requirements；若清晰，把多步工作拆成可验证的 vertical slices。</p></div></div>
             <div class="step"><div class="step-num">C</div><div><h3>交付结果</h3><p>输出包含阶段判断、已读来源、执行路径、验证命令、退出码、关键输出、时间戳和下一步安全任务。</p></div></div>
           </div>
         </div>
