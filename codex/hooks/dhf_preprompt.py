@@ -25,8 +25,9 @@ DHF_SKILL = Path(
 )
 TRUSTED_HOOKS_ROOT = Path.home() / ".codex" / "hooks"
 ALLOW_UNTRUSTED_ADAPTER = os.environ.get("DHF_PREPROMPT_ALLOW_UNTRUSTED_TEST_PATHS") == "1"
-# Default-off until Slice 4 parity passes; set to 1 to evaluate the candidate path.
-SIMPLIFIED_PROFILES_ENABLED = os.environ.get("DHF_PREPROMPT_SIMPLIFIED_PROFILES", "0") == "1"
+# Slice 4 parity/efficiency is green in repo source. Explicit rollback values
+# remain fail-closed because only the exact value 1 enables simplified profiles.
+SIMPLIFIED_PROFILES_ENABLED = os.environ.get("DHF_PREPROMPT_SIMPLIFIED_PROFILES", "1") == "1"
 
 PROFILE_RANK = {"light": 0, "standard": 1, "governed": 2}
 
