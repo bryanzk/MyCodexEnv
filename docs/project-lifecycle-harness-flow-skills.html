@@ -467,6 +467,7 @@
 flowchart TD
   Start(["用户任务进入<br/>delivery-harness-framework"])
   AGENTS["读取 AGENTS.md<br/>README 与 docs/repo-index.md"]
+  ProfileDecision{"所选 profile 是否需要 governed 恢复"}
   Recover["governed matching signal 才运行<br/>harness_recover.py --json"]
   Env["governed matching signal 才运行<br/>harness_env_probe.py --json"]
   NeedsReq{"目标、范围、验收是否清晰？"}
@@ -487,7 +488,9 @@ flowchart TD
   Handoff["governed matching signal 才交接<br/>harness_checkpoint.py append"]
   Done(["输出<br/>skill 路由、验证证据、next safe task"])
 
-  Start --> AGENTS --> Recover --> Env --> NeedsReq
+  Start --> AGENTS --> ProfileDecision
+  ProfileDecision -- "governed matching signal" --> Recover --> Env --> NeedsReq
+  ProfileDecision -- "light/standard skip Recover / Env" --> NeedsReq
   NeedsReq -- 否 --> Req --> ReqVal --> Classify
   NeedsReq -- 是 --> Classify
   Classify --> Repo

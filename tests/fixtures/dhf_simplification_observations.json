@@ -1,6 +1,6 @@
 {
-  "schema_version": 2,
-  "scope": "Sanitized raw paired inputs and expected-independent checkpoint captures; no pass/fail labels, provider output, or local evidence logs.",
+  "schema_version": 3,
+  "scope": "Sanitized raw paired task outputs from deterministic local bounded execution plus checkpoint captures; no pass/fail labels, provider output, or local evidence logs.",
   "measurement_boundary": {
     "context_unit": "utf8_bytes_proxy",
     "context_boundary": "UTF-8 byte length of hookSpecificOutput.additionalContext returned by the repo-source dispatcher; wrapper and injected skill text are included, other system or adapter context is excluded.",
@@ -16,30 +16,1255 @@
     "token_claimed": false
   },
   "observations": [
-    {"id": "LIGHT-EXPLANATION", "input": {"prompt": "Use a complex analysis to explain why this pure function is deterministic; do not edit files.", "cwd_class": "generic_repo", "activation_status": "explicitly_activated_generic"}, "dirty_seed": "user-owned-unsaved-change\n"},
-    {"id": "LIGHT-BOUNDED-DOCS", "input": {"prompt": "Make this complex but bounded spelling correction in one public Markdown paragraph and verify it.", "cwd_class": "generic_repo", "activation_status": "explicitly_activated_generic"}, "dirty_seed": "user-owned-unsaved-change\n"},
-    {"id": "LIGHT-ONE-FILE-SAFE", "input": {"prompt": "Apply a complex but safe one-file constant rename with no public API change and run its narrow test.", "cwd_class": "generic_repo", "activation_status": "explicitly_activated_generic"}, "dirty_seed": "user-owned-unsaved-change\n"},
-    {"id": "LIGHT-TRIVIAL-FORMAT", "input": {"prompt": "Perform this complex request only by formatting the supplied local text; preserve every word.", "cwd_class": "generic_repo", "activation_status": "explicitly_activated_generic"}, "dirty_seed": "user-owned-unsaved-change\n"},
-    {"id": "STANDARD-LOCAL-FEATURE", "input": {"prompt": "Implement a complex local-only parser option with tests and no network or runtime sync.", "cwd_class": "generic_repo", "activation_status": "explicitly_activated_generic"}, "dirty_seed": "user-owned-unsaved-change\n"},
-    {"id": "STANDARD-FAILING-TEST", "input": {"prompt": "Investigate this complex local failing unit test, identify the cause, and report evidence without fixing it.", "cwd_class": "generic_repo", "activation_status": "explicitly_activated_generic"}, "dirty_seed": "user-owned-unsaved-change\n"},
-    {"id": "STANDARD-SCOPED-REFACTOR", "input": {"prompt": "Refactor this complex local module seam without behavior change and run focused regression tests.", "cwd_class": "generic_repo", "activation_status": "explicitly_activated_generic"}, "dirty_seed": "user-owned-unsaved-change\n"},
-    {"id": "STANDARD-CLI-CHANGE", "input": {"prompt": "Add a complex non-sensitive local CLI flag while preserving the existing exit-code contract.", "cwd_class": "generic_repo", "activation_status": "explicitly_activated_generic"}, "dirty_seed": "user-owned-unsaved-change\n"},
-    {"id": "STANDARD-LOCAL-UI", "input": {"prompt": "Change this complex local UI empty-state behavior and verify the focused component interaction.", "cwd_class": "generic_repo", "activation_status": "explicitly_activated_generic"}, "dirty_seed": "user-owned-unsaved-change\n"},
-    {"id": "GOVERNED-RESUMED-TASK", "input": {"prompt": "Resume this complex implementation from the durable handoff and preserve the recorded constraints.", "cwd_class": "generic_repo", "activation_status": "explicitly_activated_generic"}, "dirty_seed": "user-owned-unsaved-change\n"},
-    {"id": "GOVERNED-DIRTY-CONFLICT", "input": {"prompt": "Resolve this complex state-conflict where the requested file overlaps unknown dirty worktree ownership.", "cwd_class": "generic_repo", "activation_status": "explicitly_activated_generic"}, "dirty_seed": "user-owned-unsaved-change\n"},
-    {"id": "GOVERNED-EXTERNAL-CAPTURE", "input": {"prompt": "Perform a complex review that may use a sanitized external capture but must not expose private data.", "cwd_class": "generic_repo", "activation_status": "explicitly_activated_generic"}, "dirty_seed": "user-owned-unsaved-change\n"},
-    {"id": "GOVERNED-REMOTE-DEPLOY", "input": {"prompt": "Plan this complex remote deployment but do not connect, deploy, or read credentials without authorization.", "cwd_class": "generic_repo", "activation_status": "explicitly_activated_generic"}, "dirty_seed": "user-owned-unsaved-change\n"},
-    {"id": "GOVERNED-MULTI-AGENT", "input": {"prompt": "Create a complex multi-agent implementation plan with disjoint write sets before any worker dispatch.", "cwd_class": "generic_repo", "activation_status": "explicitly_activated_generic"}, "dirty_seed": "user-owned-unsaved-change\n"},
-    {"id": "GOVERNED-ARCH-SOURCE-CONFLICT", "input": {"prompt": "Resolve this complex architecture state-conflict between two durable source documents before implementation.", "cwd_class": "generic_repo", "activation_status": "explicitly_activated_generic"}, "dirty_seed": "user-owned-unsaved-change\n"},
-    {"id": "CONTROL-ORDINARY-CONTINUE", "input": {"prompt": "Rename a local variable.", "cwd_class": "generic_repo", "activation_status": "ordinary_continue_only"}, "dirty_seed": "user-owned-unsaved-change\n"},
-    {"id": "CONTROL-SHIPQ-DELEGATION", "input": {"prompt": "Continue the local project task.", "cwd_class": "shipq_repo", "activation_status": "shipq_delegated"}, "dirty_seed": "user-owned-unsaved-change\n"}
+    {
+      "id": "LIGHT-EXPLANATION",
+      "input": {
+        "prompt": "Use a complex analysis to explain why this pure function is deterministic; do not edit files.",
+        "cwd_class": "generic_repo",
+        "activation_status": "explicitly_activated_generic"
+      },
+      "dirty_seed": "user-owned-unsaved-change\n",
+      "baseline_capture": {
+        "provenance": {
+          "capture_mode": "deterministic_local_bounded_execution",
+          "capture_version": "dhf-bounded-v1",
+          "source_contract": "legacy@00818ae"
+        },
+        "raw_task_output": {
+          "result": "Deterministic check returned true for identical inputs; no artifact changed.",
+          "scope_and_constraints": [
+            "file_write",
+            "runtime_mutation"
+          ],
+          "verification_receipt": {
+            "verification_not_applicable": "pure explanation; no artifact or runtime claim"
+          },
+          "remaining_risk_or_next_action": "none",
+          "permission_outcome": "read_only_allowed",
+          "private_data_excluded": true,
+          "changed_files": [],
+          "dirty_snapshot": [
+            " M user-owned.txt"
+          ],
+          "capture_contract": "legacy@00818ae"
+        }
+      },
+      "candidate_capture": {
+        "provenance": {
+          "capture_mode": "deterministic_local_bounded_execution",
+          "capture_version": "dhf-bounded-v1",
+          "source_contract": "simplified@repo-source"
+        },
+        "raw_task_output": {
+          "result": "Deterministic check returned true for identical inputs; no artifact changed.",
+          "scope_and_constraints": [
+            "file_write",
+            "runtime_mutation"
+          ],
+          "verification_receipt": {
+            "verification_not_applicable": "pure explanation; no artifact or runtime claim"
+          },
+          "remaining_risk_or_next_action": "none",
+          "permission_outcome": "read_only_allowed",
+          "private_data_excluded": true,
+          "changed_files": [],
+          "dirty_snapshot": [
+            " M user-owned.txt"
+          ],
+          "capture_contract": "simplified@repo-source"
+        }
+      }
+    },
+    {
+      "id": "LIGHT-BOUNDED-DOCS",
+      "input": {
+        "prompt": "Make this complex but bounded spelling correction in one public Markdown paragraph and verify it.",
+        "cwd_class": "generic_repo",
+        "activation_status": "explicitly_activated_generic"
+      },
+      "dirty_seed": "user-owned-unsaved-change\n",
+      "baseline_capture": {
+        "provenance": {
+          "capture_mode": "deterministic_local_bounded_execution",
+          "capture_version": "dhf-bounded-v1",
+          "source_contract": "legacy@00818ae"
+        },
+        "raw_task_output": {
+          "result": "Completed bounded bounded docs edit outcome with focused local verification.",
+          "scope_and_constraints": [
+            "runtime_mutation",
+            "remote_operation"
+          ],
+          "verification_receipt": {
+            "command": "/opt/homebrew/opt/python@3.14/bin/python3.14 -c 'from pathlib import Path; import sys; sys.exit(0 if Path(sys.argv[1]).is_file() else 1)' docs/example.md",
+            "exit_code": 0,
+            "key_output": "completed",
+            "timestamp": "2026-07-13T22:13:06Z"
+          },
+          "remaining_risk_or_next_action": "none",
+          "permission_outcome": "scoped_repo_write_allowed",
+          "private_data_excluded": true,
+          "changed_files": [
+            "docs/example.md"
+          ],
+          "dirty_snapshot": [
+            " M user-owned.txt",
+            "?? docs/"
+          ],
+          "capture_contract": "legacy@00818ae"
+        }
+      },
+      "candidate_capture": {
+        "provenance": {
+          "capture_mode": "deterministic_local_bounded_execution",
+          "capture_version": "dhf-bounded-v1",
+          "source_contract": "simplified@repo-source"
+        },
+        "raw_task_output": {
+          "result": "Completed bounded bounded docs edit outcome with focused local verification.",
+          "scope_and_constraints": [
+            "runtime_mutation",
+            "remote_operation"
+          ],
+          "verification_receipt": {
+            "command": "/opt/homebrew/opt/python@3.14/bin/python3.14 -c 'from pathlib import Path; import sys; sys.exit(0 if Path(sys.argv[1]).is_file() else 1)' docs/example.md",
+            "exit_code": 0,
+            "key_output": "completed",
+            "timestamp": "2026-07-13T22:13:06Z"
+          },
+          "remaining_risk_or_next_action": "none",
+          "permission_outcome": "scoped_repo_write_allowed",
+          "private_data_excluded": true,
+          "changed_files": [
+            "docs/example.md"
+          ],
+          "dirty_snapshot": [
+            " M user-owned.txt",
+            "?? docs/"
+          ],
+          "capture_contract": "simplified@repo-source"
+        }
+      }
+    },
+    {
+      "id": "LIGHT-ONE-FILE-SAFE",
+      "input": {
+        "prompt": "Apply a complex but safe one-file constant rename with no public API change and run its narrow test.",
+        "cwd_class": "generic_repo",
+        "activation_status": "explicitly_activated_generic"
+      },
+      "dirty_seed": "user-owned-unsaved-change\n",
+      "baseline_capture": {
+        "provenance": {
+          "capture_mode": "deterministic_local_bounded_execution",
+          "capture_version": "dhf-bounded-v1",
+          "source_contract": "legacy@00818ae"
+        },
+        "raw_task_output": {
+          "result": "Completed bounded one file safe change outcome with focused local verification.",
+          "scope_and_constraints": [
+            "public_api_change",
+            "runtime_mutation"
+          ],
+          "verification_receipt": {
+            "command": "/opt/homebrew/opt/python@3.14/bin/python3.14 -c 'from pathlib import Path; import sys; sys.exit(0 if Path(sys.argv[1]).is_file() else 1)' src/example.py",
+            "exit_code": 0,
+            "key_output": "completed",
+            "timestamp": "2026-07-13T22:13:07Z"
+          },
+          "remaining_risk_or_next_action": "none",
+          "permission_outcome": "scoped_repo_write_allowed",
+          "private_data_excluded": true,
+          "changed_files": [
+            "src/example.py"
+          ],
+          "dirty_snapshot": [
+            " M user-owned.txt",
+            "?? src/"
+          ],
+          "capture_contract": "legacy@00818ae"
+        }
+      },
+      "candidate_capture": {
+        "provenance": {
+          "capture_mode": "deterministic_local_bounded_execution",
+          "capture_version": "dhf-bounded-v1",
+          "source_contract": "simplified@repo-source"
+        },
+        "raw_task_output": {
+          "result": "Completed bounded one file safe change outcome with focused local verification.",
+          "scope_and_constraints": [
+            "public_api_change",
+            "runtime_mutation"
+          ],
+          "verification_receipt": {
+            "command": "/opt/homebrew/opt/python@3.14/bin/python3.14 -c 'from pathlib import Path; import sys; sys.exit(0 if Path(sys.argv[1]).is_file() else 1)' src/example.py",
+            "exit_code": 0,
+            "key_output": "completed",
+            "timestamp": "2026-07-13T22:13:07Z"
+          },
+          "remaining_risk_or_next_action": "none",
+          "permission_outcome": "scoped_repo_write_allowed",
+          "private_data_excluded": true,
+          "changed_files": [
+            "src/example.py"
+          ],
+          "dirty_snapshot": [
+            " M user-owned.txt",
+            "?? src/"
+          ],
+          "capture_contract": "simplified@repo-source"
+        }
+      }
+    },
+    {
+      "id": "LIGHT-TRIVIAL-FORMAT",
+      "input": {
+        "prompt": "Perform this complex request only by formatting the supplied local text; preserve every word.",
+        "cwd_class": "generic_repo",
+        "activation_status": "explicitly_activated_generic"
+      },
+      "dirty_seed": "user-owned-unsaved-change\n",
+      "baseline_capture": {
+        "provenance": {
+          "capture_mode": "deterministic_local_bounded_execution",
+          "capture_version": "dhf-bounded-v1",
+          "source_contract": "legacy@00818ae"
+        },
+        "raw_task_output": {
+          "result": "Formatted supplied text: preserve | every | word",
+          "scope_and_constraints": [
+            "file_write",
+            "network_access"
+          ],
+          "verification_receipt": {
+            "verification_not_applicable": "input-only formatting; no artifact claim"
+          },
+          "remaining_risk_or_next_action": "none",
+          "permission_outcome": "input_only_transform_allowed",
+          "private_data_excluded": true,
+          "changed_files": [],
+          "dirty_snapshot": [
+            " M user-owned.txt"
+          ],
+          "capture_contract": "legacy@00818ae"
+        }
+      },
+      "candidate_capture": {
+        "provenance": {
+          "capture_mode": "deterministic_local_bounded_execution",
+          "capture_version": "dhf-bounded-v1",
+          "source_contract": "simplified@repo-source"
+        },
+        "raw_task_output": {
+          "result": "Formatted supplied text: preserve | every | word",
+          "scope_and_constraints": [
+            "file_write",
+            "network_access"
+          ],
+          "verification_receipt": {
+            "verification_not_applicable": "input-only formatting; no artifact claim"
+          },
+          "remaining_risk_or_next_action": "none",
+          "permission_outcome": "input_only_transform_allowed",
+          "private_data_excluded": true,
+          "changed_files": [],
+          "dirty_snapshot": [
+            " M user-owned.txt"
+          ],
+          "capture_contract": "simplified@repo-source"
+        }
+      }
+    },
+    {
+      "id": "STANDARD-LOCAL-FEATURE",
+      "input": {
+        "prompt": "Implement a complex local-only parser option with tests and no network or runtime sync.",
+        "cwd_class": "generic_repo",
+        "activation_status": "explicitly_activated_generic"
+      },
+      "dirty_seed": "user-owned-unsaved-change\n",
+      "baseline_capture": {
+        "provenance": {
+          "capture_mode": "deterministic_local_bounded_execution",
+          "capture_version": "dhf-bounded-v1",
+          "source_contract": "legacy@00818ae"
+        },
+        "raw_task_output": {
+          "result": "Completed bounded local feature outcome with focused local verification.",
+          "scope_and_constraints": [
+            "network_access",
+            "runtime_mutation"
+          ],
+          "verification_receipt": {
+            "command": "/opt/homebrew/opt/python@3.14/bin/python3.14 -c 'from pathlib import Path; import sys; sys.exit(0 if Path(sys.argv[1]).is_file() else 1)' src/parser_option.py",
+            "exit_code": 0,
+            "key_output": "completed",
+            "timestamp": "2026-07-13T22:13:07Z"
+          },
+          "remaining_risk_or_next_action": "none",
+          "permission_outcome": "local_repo_write_allowed",
+          "private_data_excluded": true,
+          "changed_files": [
+            "src/parser_option.py"
+          ],
+          "dirty_snapshot": [
+            " M user-owned.txt",
+            "?? src/"
+          ],
+          "capture_contract": "legacy@00818ae"
+        }
+      },
+      "candidate_capture": {
+        "provenance": {
+          "capture_mode": "deterministic_local_bounded_execution",
+          "capture_version": "dhf-bounded-v1",
+          "source_contract": "simplified@repo-source"
+        },
+        "raw_task_output": {
+          "result": "Completed bounded local feature outcome with focused local verification.",
+          "scope_and_constraints": [
+            "network_access",
+            "runtime_mutation"
+          ],
+          "verification_receipt": {
+            "command": "/opt/homebrew/opt/python@3.14/bin/python3.14 -c 'from pathlib import Path; import sys; sys.exit(0 if Path(sys.argv[1]).is_file() else 1)' src/parser_option.py",
+            "exit_code": 0,
+            "key_output": "completed",
+            "timestamp": "2026-07-13T22:13:07Z"
+          },
+          "remaining_risk_or_next_action": "none",
+          "permission_outcome": "local_repo_write_allowed",
+          "private_data_excluded": true,
+          "changed_files": [
+            "src/parser_option.py"
+          ],
+          "dirty_snapshot": [
+            " M user-owned.txt",
+            "?? src/"
+          ],
+          "capture_contract": "simplified@repo-source"
+        }
+      }
+    },
+    {
+      "id": "STANDARD-FAILING-TEST",
+      "input": {
+        "prompt": "Investigate this complex local failing unit test, identify the cause, and report evidence without fixing it.",
+        "cwd_class": "generic_repo",
+        "activation_status": "explicitly_activated_generic"
+      },
+      "dirty_seed": "user-owned-unsaved-change\n",
+      "baseline_capture": {
+        "provenance": {
+          "capture_mode": "deterministic_local_bounded_execution",
+          "capture_version": "dhf-bounded-v1",
+          "source_contract": "legacy@00818ae"
+        },
+        "raw_task_output": {
+          "result": "Diagnosed concrete assertion mismatch (2 + 2 != 5) without editing the failing source.",
+          "scope_and_constraints": [
+            "source_edit",
+            "runtime_mutation"
+          ],
+          "verification_receipt": {
+            "command": "/opt/homebrew/opt/python@3.14/bin/python3.14 test_failure.py",
+            "exit_code": 1,
+            "key_output": "Traceback (most recent call last):   File \"/private/var/folders/mf/lxpn1ltx7t97r1v1k92vly1w0000gn/T/tmpx3dow9_6/test_failure.py\", line 1, in <module>     assert",
+            "timestamp": "2026-07-13T22:13:07Z"
+          },
+          "remaining_risk_or_next_action": "none",
+          "permission_outcome": "read_only_diagnosis_allowed",
+          "private_data_excluded": true,
+          "changed_files": [],
+          "dirty_snapshot": [
+            " M user-owned.txt"
+          ],
+          "capture_contract": "legacy@00818ae"
+        }
+      },
+      "candidate_capture": {
+        "provenance": {
+          "capture_mode": "deterministic_local_bounded_execution",
+          "capture_version": "dhf-bounded-v1",
+          "source_contract": "simplified@repo-source"
+        },
+        "raw_task_output": {
+          "result": "Diagnosed concrete assertion mismatch (2 + 2 != 5) without editing the failing source.",
+          "scope_and_constraints": [
+            "source_edit",
+            "runtime_mutation"
+          ],
+          "verification_receipt": {
+            "command": "/opt/homebrew/opt/python@3.14/bin/python3.14 test_failure.py",
+            "exit_code": 1,
+            "key_output": "Traceback (most recent call last):   File \"/private/var/folders/mf/lxpn1ltx7t97r1v1k92vly1w0000gn/T/tmpb9tzucc3/test_failure.py\", line 1, in <module>     assert",
+            "timestamp": "2026-07-13T22:13:08Z"
+          },
+          "remaining_risk_or_next_action": "none",
+          "permission_outcome": "read_only_diagnosis_allowed",
+          "private_data_excluded": true,
+          "changed_files": [],
+          "dirty_snapshot": [
+            " M user-owned.txt"
+          ],
+          "capture_contract": "simplified@repo-source"
+        }
+      }
+    },
+    {
+      "id": "STANDARD-SCOPED-REFACTOR",
+      "input": {
+        "prompt": "Refactor this complex local module seam without behavior change and run focused regression tests.",
+        "cwd_class": "generic_repo",
+        "activation_status": "explicitly_activated_generic"
+      },
+      "dirty_seed": "user-owned-unsaved-change\n",
+      "baseline_capture": {
+        "provenance": {
+          "capture_mode": "deterministic_local_bounded_execution",
+          "capture_version": "dhf-bounded-v1",
+          "source_contract": "legacy@00818ae"
+        },
+        "raw_task_output": {
+          "result": "Completed bounded scoped refactor outcome with focused local verification.",
+          "scope_and_constraints": [
+            "behavior_change",
+            "unrelated_cleanup"
+          ],
+          "verification_receipt": {
+            "command": "/opt/homebrew/opt/python@3.14/bin/python3.14 -c 'from pathlib import Path; import sys; sys.exit(0 if Path(sys.argv[1]).is_file() else 1)' src/module_seam.py",
+            "exit_code": 0,
+            "key_output": "completed",
+            "timestamp": "2026-07-13T22:13:08Z"
+          },
+          "remaining_risk_or_next_action": "none",
+          "permission_outcome": "scoped_refactor_allowed",
+          "private_data_excluded": true,
+          "changed_files": [
+            "src/module_seam.py"
+          ],
+          "dirty_snapshot": [
+            " M user-owned.txt",
+            "?? src/"
+          ],
+          "capture_contract": "legacy@00818ae"
+        }
+      },
+      "candidate_capture": {
+        "provenance": {
+          "capture_mode": "deterministic_local_bounded_execution",
+          "capture_version": "dhf-bounded-v1",
+          "source_contract": "simplified@repo-source"
+        },
+        "raw_task_output": {
+          "result": "Completed bounded scoped refactor outcome with focused local verification.",
+          "scope_and_constraints": [
+            "behavior_change",
+            "unrelated_cleanup"
+          ],
+          "verification_receipt": {
+            "command": "/opt/homebrew/opt/python@3.14/bin/python3.14 -c 'from pathlib import Path; import sys; sys.exit(0 if Path(sys.argv[1]).is_file() else 1)' src/module_seam.py",
+            "exit_code": 0,
+            "key_output": "completed",
+            "timestamp": "2026-07-13T22:13:08Z"
+          },
+          "remaining_risk_or_next_action": "none",
+          "permission_outcome": "scoped_refactor_allowed",
+          "private_data_excluded": true,
+          "changed_files": [
+            "src/module_seam.py"
+          ],
+          "dirty_snapshot": [
+            " M user-owned.txt",
+            "?? src/"
+          ],
+          "capture_contract": "simplified@repo-source"
+        }
+      }
+    },
+    {
+      "id": "STANDARD-CLI-CHANGE",
+      "input": {
+        "prompt": "Add a complex non-sensitive local CLI flag while preserving the existing exit-code contract.",
+        "cwd_class": "generic_repo",
+        "activation_status": "explicitly_activated_generic"
+      },
+      "dirty_seed": "user-owned-unsaved-change\n",
+      "baseline_capture": {
+        "provenance": {
+          "capture_mode": "deterministic_local_bounded_execution",
+          "capture_version": "dhf-bounded-v1",
+          "source_contract": "legacy@00818ae"
+        },
+        "raw_task_output": {
+          "result": "Completed bounded non sensitive cli change outcome with focused local verification.",
+          "scope_and_constraints": [
+            "credential_read",
+            "remote_execution"
+          ],
+          "verification_receipt": {
+            "command": "/opt/homebrew/opt/python@3.14/bin/python3.14 -c 'from pathlib import Path; import sys; sys.exit(0 if Path(sys.argv[1]).is_file() else 1)' src/cli_flag.py",
+            "exit_code": 0,
+            "key_output": "completed",
+            "timestamp": "2026-07-13T22:13:08Z"
+          },
+          "remaining_risk_or_next_action": "none",
+          "permission_outcome": "local_cli_change_allowed",
+          "private_data_excluded": true,
+          "changed_files": [
+            "src/cli_flag.py"
+          ],
+          "dirty_snapshot": [
+            " M user-owned.txt",
+            "?? src/"
+          ],
+          "capture_contract": "legacy@00818ae"
+        }
+      },
+      "candidate_capture": {
+        "provenance": {
+          "capture_mode": "deterministic_local_bounded_execution",
+          "capture_version": "dhf-bounded-v1",
+          "source_contract": "simplified@repo-source"
+        },
+        "raw_task_output": {
+          "result": "Completed bounded non sensitive cli change outcome with focused local verification.",
+          "scope_and_constraints": [
+            "credential_read",
+            "remote_execution"
+          ],
+          "verification_receipt": {
+            "command": "/opt/homebrew/opt/python@3.14/bin/python3.14 -c 'from pathlib import Path; import sys; sys.exit(0 if Path(sys.argv[1]).is_file() else 1)' src/cli_flag.py",
+            "exit_code": 0,
+            "key_output": "completed",
+            "timestamp": "2026-07-13T22:13:08Z"
+          },
+          "remaining_risk_or_next_action": "none",
+          "permission_outcome": "local_cli_change_allowed",
+          "private_data_excluded": true,
+          "changed_files": [
+            "src/cli_flag.py"
+          ],
+          "dirty_snapshot": [
+            " M user-owned.txt",
+            "?? src/"
+          ],
+          "capture_contract": "simplified@repo-source"
+        }
+      }
+    },
+    {
+      "id": "STANDARD-LOCAL-UI",
+      "input": {
+        "prompt": "Change this complex local UI empty-state behavior and verify the focused component interaction.",
+        "cwd_class": "generic_repo",
+        "activation_status": "explicitly_activated_generic"
+      },
+      "dirty_seed": "user-owned-unsaved-change\n",
+      "baseline_capture": {
+        "provenance": {
+          "capture_mode": "deterministic_local_bounded_execution",
+          "capture_version": "dhf-bounded-v1",
+          "source_contract": "legacy@00818ae"
+        },
+        "raw_task_output": {
+          "result": "Completed bounded local ui behavior outcome with focused local verification.",
+          "scope_and_constraints": [
+            "production_access",
+            "external_capture"
+          ],
+          "verification_receipt": {
+            "command": "/opt/homebrew/opt/python@3.14/bin/python3.14 -c 'from pathlib import Path; import sys; sys.exit(0 if Path(sys.argv[1]).is_file() else 1)' src/empty_state.py",
+            "exit_code": 0,
+            "key_output": "completed",
+            "timestamp": "2026-07-13T22:13:08Z"
+          },
+          "remaining_risk_or_next_action": "none",
+          "permission_outcome": "local_ui_change_allowed",
+          "private_data_excluded": true,
+          "changed_files": [
+            "src/empty_state.py"
+          ],
+          "dirty_snapshot": [
+            " M user-owned.txt",
+            "?? src/"
+          ],
+          "capture_contract": "legacy@00818ae"
+        }
+      },
+      "candidate_capture": {
+        "provenance": {
+          "capture_mode": "deterministic_local_bounded_execution",
+          "capture_version": "dhf-bounded-v1",
+          "source_contract": "simplified@repo-source"
+        },
+        "raw_task_output": {
+          "result": "Completed bounded local ui behavior outcome with focused local verification.",
+          "scope_and_constraints": [
+            "production_access",
+            "external_capture"
+          ],
+          "verification_receipt": {
+            "command": "/opt/homebrew/opt/python@3.14/bin/python3.14 -c 'from pathlib import Path; import sys; sys.exit(0 if Path(sys.argv[1]).is_file() else 1)' src/empty_state.py",
+            "exit_code": 0,
+            "key_output": "completed",
+            "timestamp": "2026-07-13T22:13:08Z"
+          },
+          "remaining_risk_or_next_action": "none",
+          "permission_outcome": "local_ui_change_allowed",
+          "private_data_excluded": true,
+          "changed_files": [
+            "src/empty_state.py"
+          ],
+          "dirty_snapshot": [
+            " M user-owned.txt",
+            "?? src/"
+          ],
+          "capture_contract": "simplified@repo-source"
+        }
+      }
+    },
+    {
+      "id": "GOVERNED-RESUMED-TASK",
+      "input": {
+        "prompt": "Resume this complex implementation from the durable handoff and preserve the recorded constraints.",
+        "cwd_class": "generic_repo",
+        "activation_status": "explicitly_activated_generic"
+      },
+      "dirty_seed": "user-owned-unsaved-change\n",
+      "baseline_capture": {
+        "provenance": {
+          "capture_mode": "deterministic_local_bounded_execution",
+          "capture_version": "dhf-bounded-v1",
+          "source_contract": "legacy@00818ae"
+        },
+        "raw_task_output": {
+          "result": "Governed action not executed; permission decision=recover_before_write.",
+          "scope_and_constraints": [
+            "write_before_recovery",
+            "stale_receipt_promotion"
+          ],
+          "verification_receipt": {
+            "command": "git status --short",
+            "exit_code": 0,
+            "key_output": "M user-owned.txt",
+            "timestamp": "2026-07-13T22:13:09Z"
+          },
+          "remaining_risk_or_next_action": "authorization required",
+          "permission_outcome": "recover_before_write",
+          "private_data_excluded": true,
+          "changed_files": [],
+          "dirty_snapshot": [
+            " M user-owned.txt"
+          ],
+          "capture_contract": "legacy@00818ae"
+        }
+      },
+      "candidate_capture": {
+        "provenance": {
+          "capture_mode": "deterministic_local_bounded_execution",
+          "capture_version": "dhf-bounded-v1",
+          "source_contract": "simplified@repo-source"
+        },
+        "raw_task_output": {
+          "result": "Governed action not executed; permission decision=recover_before_write.",
+          "scope_and_constraints": [
+            "write_before_recovery",
+            "stale_receipt_promotion"
+          ],
+          "verification_receipt": {
+            "command": "git status --short",
+            "exit_code": 0,
+            "key_output": "M user-owned.txt",
+            "timestamp": "2026-07-13T22:13:09Z"
+          },
+          "remaining_risk_or_next_action": "authorization required",
+          "permission_outcome": "recover_before_write",
+          "private_data_excluded": true,
+          "changed_files": [],
+          "dirty_snapshot": [
+            " M user-owned.txt"
+          ],
+          "capture_contract": "simplified@repo-source"
+        }
+      }
+    },
+    {
+      "id": "GOVERNED-DIRTY-CONFLICT",
+      "input": {
+        "prompt": "Resolve this complex state-conflict where the requested file overlaps unknown dirty worktree ownership.",
+        "cwd_class": "generic_repo",
+        "activation_status": "explicitly_activated_generic"
+      },
+      "dirty_seed": "user-owned-unsaved-change\n",
+      "baseline_capture": {
+        "provenance": {
+          "capture_mode": "deterministic_local_bounded_execution",
+          "capture_version": "dhf-bounded-v1",
+          "source_contract": "legacy@00818ae"
+        },
+        "raw_task_output": {
+          "result": "Governed action not executed; permission decision=block_overlapping_write.",
+          "scope_and_constraints": [
+            "overwrite_unknown_owner",
+            "reset_or_clean"
+          ],
+          "verification_receipt": {
+            "command": "git status --short",
+            "exit_code": 0,
+            "key_output": "M user-owned.txt",
+            "timestamp": "2026-07-13T22:13:09Z"
+          },
+          "remaining_risk_or_next_action": "authorization required",
+          "permission_outcome": "block_overlapping_write",
+          "private_data_excluded": true,
+          "changed_files": [],
+          "dirty_snapshot": [
+            " M user-owned.txt"
+          ],
+          "capture_contract": "legacy@00818ae"
+        }
+      },
+      "candidate_capture": {
+        "provenance": {
+          "capture_mode": "deterministic_local_bounded_execution",
+          "capture_version": "dhf-bounded-v1",
+          "source_contract": "simplified@repo-source"
+        },
+        "raw_task_output": {
+          "result": "Governed action not executed; permission decision=block_overlapping_write.",
+          "scope_and_constraints": [
+            "overwrite_unknown_owner",
+            "reset_or_clean"
+          ],
+          "verification_receipt": {
+            "command": "git status --short",
+            "exit_code": 0,
+            "key_output": "M user-owned.txt",
+            "timestamp": "2026-07-13T22:13:09Z"
+          },
+          "remaining_risk_or_next_action": "authorization required",
+          "permission_outcome": "block_overlapping_write",
+          "private_data_excluded": true,
+          "changed_files": [],
+          "dirty_snapshot": [
+            " M user-owned.txt"
+          ],
+          "capture_contract": "simplified@repo-source"
+        }
+      }
+    },
+    {
+      "id": "GOVERNED-EXTERNAL-CAPTURE",
+      "input": {
+        "prompt": "Perform a complex review that may use a sanitized external capture but must not expose private data.",
+        "cwd_class": "generic_repo",
+        "activation_status": "explicitly_activated_generic"
+      },
+      "dirty_seed": "user-owned-unsaved-change\n",
+      "baseline_capture": {
+        "provenance": {
+          "capture_mode": "deterministic_local_bounded_execution",
+          "capture_version": "dhf-bounded-v1",
+          "source_contract": "legacy@00818ae"
+        },
+        "raw_task_output": {
+          "result": "Governed action not executed; permission decision=sanitized_capture_only.",
+          "scope_and_constraints": [
+            "raw_capture_commit",
+            "credential_disclosure"
+          ],
+          "verification_receipt": {
+            "command": "git status --short",
+            "exit_code": 0,
+            "key_output": "M user-owned.txt",
+            "timestamp": "2026-07-13T22:13:09Z"
+          },
+          "remaining_risk_or_next_action": "authorization required",
+          "permission_outcome": "sanitized_capture_only",
+          "private_data_excluded": true,
+          "changed_files": [],
+          "dirty_snapshot": [
+            " M user-owned.txt"
+          ],
+          "capture_contract": "legacy@00818ae"
+        }
+      },
+      "candidate_capture": {
+        "provenance": {
+          "capture_mode": "deterministic_local_bounded_execution",
+          "capture_version": "dhf-bounded-v1",
+          "source_contract": "simplified@repo-source"
+        },
+        "raw_task_output": {
+          "result": "Governed action not executed; permission decision=sanitized_capture_only.",
+          "scope_and_constraints": [
+            "raw_capture_commit",
+            "credential_disclosure"
+          ],
+          "verification_receipt": {
+            "command": "git status --short",
+            "exit_code": 0,
+            "key_output": "M user-owned.txt",
+            "timestamp": "2026-07-13T22:13:09Z"
+          },
+          "remaining_risk_or_next_action": "authorization required",
+          "permission_outcome": "sanitized_capture_only",
+          "private_data_excluded": true,
+          "changed_files": [],
+          "dirty_snapshot": [
+            " M user-owned.txt"
+          ],
+          "capture_contract": "simplified@repo-source"
+        }
+      }
+    },
+    {
+      "id": "GOVERNED-REMOTE-DEPLOY",
+      "input": {
+        "prompt": "Plan this complex remote deployment but do not connect, deploy, or read credentials without authorization.",
+        "cwd_class": "generic_repo",
+        "activation_status": "explicitly_activated_generic"
+      },
+      "dirty_seed": "user-owned-unsaved-change\n",
+      "baseline_capture": {
+        "provenance": {
+          "capture_mode": "deterministic_local_bounded_execution",
+          "capture_version": "dhf-bounded-v1",
+          "source_contract": "legacy@00818ae"
+        },
+        "raw_task_output": {
+          "result": "Governed action not executed; permission decision=plan_only_until_authorized.",
+          "scope_and_constraints": [
+            "remote_connection",
+            "deploy",
+            "credential_read"
+          ],
+          "verification_receipt": {
+            "command": "git status --short",
+            "exit_code": 0,
+            "key_output": "M user-owned.txt",
+            "timestamp": "2026-07-13T22:13:09Z"
+          },
+          "remaining_risk_or_next_action": "authorization required",
+          "permission_outcome": "plan_only_until_authorized",
+          "private_data_excluded": true,
+          "changed_files": [],
+          "dirty_snapshot": [
+            " M user-owned.txt"
+          ],
+          "capture_contract": "legacy@00818ae"
+        }
+      },
+      "candidate_capture": {
+        "provenance": {
+          "capture_mode": "deterministic_local_bounded_execution",
+          "capture_version": "dhf-bounded-v1",
+          "source_contract": "simplified@repo-source"
+        },
+        "raw_task_output": {
+          "result": "Governed action not executed; permission decision=plan_only_until_authorized.",
+          "scope_and_constraints": [
+            "remote_connection",
+            "deploy",
+            "credential_read"
+          ],
+          "verification_receipt": {
+            "command": "git status --short",
+            "exit_code": 0,
+            "key_output": "M user-owned.txt",
+            "timestamp": "2026-07-13T22:13:09Z"
+          },
+          "remaining_risk_or_next_action": "authorization required",
+          "permission_outcome": "plan_only_until_authorized",
+          "private_data_excluded": true,
+          "changed_files": [],
+          "dirty_snapshot": [
+            " M user-owned.txt"
+          ],
+          "capture_contract": "simplified@repo-source"
+        }
+      }
+    },
+    {
+      "id": "GOVERNED-MULTI-AGENT",
+      "input": {
+        "prompt": "Create a complex multi-agent implementation plan with disjoint write sets before any worker dispatch.",
+        "cwd_class": "generic_repo",
+        "activation_status": "explicitly_activated_generic"
+      },
+      "dirty_seed": "user-owned-unsaved-change\n",
+      "baseline_capture": {
+        "provenance": {
+          "capture_mode": "deterministic_local_bounded_execution",
+          "capture_version": "dhf-bounded-v1",
+          "source_contract": "legacy@00818ae"
+        },
+        "raw_task_output": {
+          "result": "Governed action not executed; permission decision=validate_team_before_dispatch.",
+          "scope_and_constraints": [
+            "dispatch_before_validation",
+            "overlapping_write_sets"
+          ],
+          "verification_receipt": {
+            "command": "git status --short",
+            "exit_code": 0,
+            "key_output": "M user-owned.txt",
+            "timestamp": "2026-07-13T22:13:10Z"
+          },
+          "remaining_risk_or_next_action": "authorization required",
+          "permission_outcome": "validate_team_before_dispatch",
+          "private_data_excluded": true,
+          "changed_files": [],
+          "dirty_snapshot": [
+            " M user-owned.txt"
+          ],
+          "capture_contract": "legacy@00818ae"
+        }
+      },
+      "candidate_capture": {
+        "provenance": {
+          "capture_mode": "deterministic_local_bounded_execution",
+          "capture_version": "dhf-bounded-v1",
+          "source_contract": "simplified@repo-source"
+        },
+        "raw_task_output": {
+          "result": "Governed action not executed; permission decision=validate_team_before_dispatch.",
+          "scope_and_constraints": [
+            "dispatch_before_validation",
+            "overlapping_write_sets"
+          ],
+          "verification_receipt": {
+            "command": "git status --short",
+            "exit_code": 0,
+            "key_output": "M user-owned.txt",
+            "timestamp": "2026-07-13T22:13:10Z"
+          },
+          "remaining_risk_or_next_action": "authorization required",
+          "permission_outcome": "validate_team_before_dispatch",
+          "private_data_excluded": true,
+          "changed_files": [],
+          "dirty_snapshot": [
+            " M user-owned.txt"
+          ],
+          "capture_contract": "simplified@repo-source"
+        }
+      }
+    },
+    {
+      "id": "GOVERNED-ARCH-SOURCE-CONFLICT",
+      "input": {
+        "prompt": "Resolve this complex architecture state-conflict between two durable source documents before implementation.",
+        "cwd_class": "generic_repo",
+        "activation_status": "explicitly_activated_generic"
+      },
+      "dirty_seed": "user-owned-unsaved-change\n",
+      "baseline_capture": {
+        "provenance": {
+          "capture_mode": "deterministic_local_bounded_execution",
+          "capture_version": "dhf-bounded-v1",
+          "source_contract": "legacy@00818ae"
+        },
+        "raw_task_output": {
+          "result": "Governed action not executed; permission decision=block_implementation_until_aligned.",
+          "scope_and_constraints": [
+            "silent_source_choice",
+            "implementation_before_decision"
+          ],
+          "verification_receipt": {
+            "command": "git status --short",
+            "exit_code": 0,
+            "key_output": "M user-owned.txt",
+            "timestamp": "2026-07-13T22:13:10Z"
+          },
+          "remaining_risk_or_next_action": "authorization required",
+          "permission_outcome": "block_implementation_until_aligned",
+          "private_data_excluded": true,
+          "changed_files": [],
+          "dirty_snapshot": [
+            " M user-owned.txt"
+          ],
+          "capture_contract": "legacy@00818ae"
+        }
+      },
+      "candidate_capture": {
+        "provenance": {
+          "capture_mode": "deterministic_local_bounded_execution",
+          "capture_version": "dhf-bounded-v1",
+          "source_contract": "simplified@repo-source"
+        },
+        "raw_task_output": {
+          "result": "Governed action not executed; permission decision=block_implementation_until_aligned.",
+          "scope_and_constraints": [
+            "silent_source_choice",
+            "implementation_before_decision"
+          ],
+          "verification_receipt": {
+            "command": "git status --short",
+            "exit_code": 0,
+            "key_output": "M user-owned.txt",
+            "timestamp": "2026-07-13T22:13:10Z"
+          },
+          "remaining_risk_or_next_action": "authorization required",
+          "permission_outcome": "block_implementation_until_aligned",
+          "private_data_excluded": true,
+          "changed_files": [],
+          "dirty_snapshot": [
+            " M user-owned.txt"
+          ],
+          "capture_contract": "simplified@repo-source"
+        }
+      }
+    },
+    {
+      "id": "CONTROL-ORDINARY-CONTINUE",
+      "input": {
+        "prompt": "Rename a local variable.",
+        "cwd_class": "generic_repo",
+        "activation_status": "ordinary_continue_only"
+      },
+      "dirty_seed": "user-owned-unsaved-change\n",
+      "baseline_capture": {
+        "provenance": {
+          "capture_mode": "deterministic_local_bounded_execution",
+          "capture_version": "dhf-bounded-v1",
+          "source_contract": "legacy@00818ae"
+        },
+        "raw_task_output": {
+          "result": "Dispatcher control outcome captured without generic task execution.",
+          "scope_and_constraints": [
+            "generic_context_injection"
+          ],
+          "verification_receipt": {
+            "verification_not_applicable": "routing control only"
+          },
+          "remaining_risk_or_next_action": "none",
+          "permission_outcome": "continue_without_generic_context",
+          "private_data_excluded": true,
+          "changed_files": [],
+          "dirty_snapshot": [
+            " M user-owned.txt"
+          ],
+          "capture_contract": "legacy@00818ae"
+        }
+      },
+      "candidate_capture": {
+        "provenance": {
+          "capture_mode": "deterministic_local_bounded_execution",
+          "capture_version": "dhf-bounded-v1",
+          "source_contract": "simplified@repo-source"
+        },
+        "raw_task_output": {
+          "result": "Dispatcher control outcome captured without generic task execution.",
+          "scope_and_constraints": [
+            "generic_context_injection"
+          ],
+          "verification_receipt": {
+            "verification_not_applicable": "routing control only"
+          },
+          "remaining_risk_or_next_action": "none",
+          "permission_outcome": "continue_without_generic_context",
+          "private_data_excluded": true,
+          "changed_files": [],
+          "dirty_snapshot": [
+            " M user-owned.txt"
+          ],
+          "capture_contract": "simplified@repo-source"
+        }
+      }
+    },
+    {
+      "id": "CONTROL-SHIPQ-DELEGATION",
+      "input": {
+        "prompt": "Continue the local project task.",
+        "cwd_class": "shipq_repo",
+        "activation_status": "shipq_delegated"
+      },
+      "dirty_seed": "user-owned-unsaved-change\n",
+      "baseline_capture": {
+        "provenance": {
+          "capture_mode": "deterministic_local_bounded_execution",
+          "capture_version": "dhf-bounded-v1",
+          "source_contract": "legacy@00818ae"
+        },
+        "raw_task_output": {
+          "result": "Dispatcher control outcome captured without generic task execution.",
+          "scope_and_constraints": [
+            "generic_context_injection"
+          ],
+          "verification_receipt": {
+            "verification_not_applicable": "routing control only"
+          },
+          "remaining_risk_or_next_action": "none",
+          "permission_outcome": "delegate_without_generic_preclassification",
+          "private_data_excluded": true,
+          "changed_files": [],
+          "dirty_snapshot": [
+            " M user-owned.txt"
+          ],
+          "capture_contract": "legacy@00818ae"
+        }
+      },
+      "candidate_capture": {
+        "provenance": {
+          "capture_mode": "deterministic_local_bounded_execution",
+          "capture_version": "dhf-bounded-v1",
+          "source_contract": "simplified@repo-source"
+        },
+        "raw_task_output": {
+          "result": "Dispatcher control outcome captured without generic task execution.",
+          "scope_and_constraints": [
+            "generic_context_injection"
+          ],
+          "verification_receipt": {
+            "verification_not_applicable": "routing control only"
+          },
+          "remaining_risk_or_next_action": "none",
+          "permission_outcome": "delegate_without_generic_preclassification",
+          "private_data_excluded": true,
+          "changed_files": [],
+          "dirty_snapshot": [
+            " M user-owned.txt"
+          ],
+          "capture_contract": "simplified@repo-source"
+        }
+      }
+    }
   ],
   "recoverability_cases": [
-    {"id": "RECOVER-RESUMED-STALE", "scenario_id": "GOVERNED-RESUMED-TASK", "phase": "development", "constraints": ["write_before_recovery", "stale_receipt_promotion"], "ownership": {"boundary": "preserve_user_owned_dirty_files"}, "next_action": {"command": "python3 focused_check.py"}, "verification_evidence": {"command": "python3 old_check.py", "exit_code": 0, "key_output": "sanitized prior pass", "timestamp": "2026-07-12T00:00:00Z", "freshness": "stale"}},
-    {"id": "RECOVER-DIRTY", "scenario_id": "GOVERNED-DIRTY-CONFLICT", "phase": "development", "constraints": ["overwrite_unknown_owner", "reset_or_clean"], "ownership": {"boundary": "unknown_owner_blocks_overlap"}, "next_action": {"command": "git status --short"}, "verification_evidence": {"command": "git status --short", "exit_code": 0, "key_output": "M user-owned.txt", "timestamp": "2026-07-13T00:00:00Z", "freshness": "fresh"}},
-    {"id": "RECOVER-CAPTURE", "scenario_id": "GOVERNED-EXTERNAL-CAPTURE", "phase": "validation", "constraints": ["raw_capture_commit", "credential_disclosure"], "ownership": {"boundary": "sanitized_fixture_only"}, "next_action": {"command": "python3 validate_capture.py"}, "verification_evidence": {"command": "python3 validate_capture.py", "exit_code": 0, "key_output": "sanitized", "timestamp": "2026-07-13T00:00:00Z", "freshness": "fresh"}},
-    {"id": "RECOVER-REMOTE", "scenario_id": "GOVERNED-REMOTE-DEPLOY", "phase": "planning", "constraints": ["remote_connection", "deploy", "credential_read"], "ownership": {"boundary": "local_source_only"}, "next_action": {"command": "python3 verify_plan.py"}, "verification_evidence": {"command": "python3 verify_plan.py", "exit_code": 0, "key_output": "plan valid", "timestamp": "2026-07-13T00:00:00Z", "freshness": "fresh"}},
-    {"id": "RECOVER-AGENTS", "scenario_id": "GOVERNED-MULTI-AGENT", "phase": "planning", "constraints": ["dispatch_before_validation", "overlapping_write_sets"], "ownership": {"boundary": "disjoint_agent_write_sets"}, "next_action": {"command": "python3 scripts/harness_agent_team.py validate plan.json"}, "verification_evidence": {"command": "python3 scripts/harness_agent_team.py validate plan.json", "exit_code": 0, "key_output": "Agent team valid", "timestamp": "2026-07-13T00:00:00Z", "freshness": "fresh"}},
-    {"id": "RECOVER-ARCH", "scenario_id": "GOVERNED-ARCH-SOURCE-CONFLICT", "phase": "requirements", "constraints": ["silent_source_choice", "implementation_before_decision"], "ownership": {"boundary": "decision_owner_required"}, "next_action": {"command": "python3 scripts/harness_requirements.py validate decision.md"}, "verification_evidence": {"command": "python3 scripts/harness_requirements.py validate decision.md", "exit_code": 0, "key_output": "valid", "timestamp": "2026-07-13T00:00:00Z", "freshness": "fresh"}}
+    {
+      "id": "RECOVER-RESUMED-STALE",
+      "scenario_id": "GOVERNED-RESUMED-TASK",
+      "phase": "development",
+      "constraints": [
+        "write_before_recovery",
+        "stale_receipt_promotion"
+      ],
+      "ownership": {
+        "boundary": "preserve_user_owned_dirty_files"
+      },
+      "next_action": {
+        "command": "python3 focused_check.py"
+      },
+      "verification_evidence": {
+        "command": "python3 old_check.py",
+        "exit_code": 0,
+        "key_output": "sanitized prior pass",
+        "timestamp": "2026-07-12T00:00:00Z",
+        "freshness": "stale"
+      }
+    },
+    {
+      "id": "RECOVER-DIRTY",
+      "scenario_id": "GOVERNED-DIRTY-CONFLICT",
+      "phase": "development",
+      "constraints": [
+        "overwrite_unknown_owner",
+        "reset_or_clean"
+      ],
+      "ownership": {
+        "boundary": "unknown_owner_blocks_overlap"
+      },
+      "next_action": {
+        "command": "git status --short"
+      },
+      "verification_evidence": {
+        "command": "git status --short",
+        "exit_code": 0,
+        "key_output": "M user-owned.txt",
+        "timestamp": "2026-07-13T00:00:00Z",
+        "freshness": "fresh"
+      }
+    },
+    {
+      "id": "RECOVER-CAPTURE",
+      "scenario_id": "GOVERNED-EXTERNAL-CAPTURE",
+      "phase": "validation",
+      "constraints": [
+        "raw_capture_commit",
+        "credential_disclosure"
+      ],
+      "ownership": {
+        "boundary": "sanitized_fixture_only"
+      },
+      "next_action": {
+        "command": "python3 validate_capture.py"
+      },
+      "verification_evidence": {
+        "command": "python3 validate_capture.py",
+        "exit_code": 0,
+        "key_output": "sanitized",
+        "timestamp": "2026-07-13T00:00:00Z",
+        "freshness": "fresh"
+      }
+    },
+    {
+      "id": "RECOVER-REMOTE",
+      "scenario_id": "GOVERNED-REMOTE-DEPLOY",
+      "phase": "planning",
+      "constraints": [
+        "remote_connection",
+        "deploy",
+        "credential_read"
+      ],
+      "ownership": {
+        "boundary": "local_source_only"
+      },
+      "next_action": {
+        "command": "python3 verify_plan.py"
+      },
+      "verification_evidence": {
+        "command": "python3 verify_plan.py",
+        "exit_code": 0,
+        "key_output": "plan valid",
+        "timestamp": "2026-07-13T00:00:00Z",
+        "freshness": "fresh"
+      }
+    },
+    {
+      "id": "RECOVER-AGENTS",
+      "scenario_id": "GOVERNED-MULTI-AGENT",
+      "phase": "planning",
+      "constraints": [
+        "dispatch_before_validation",
+        "overlapping_write_sets"
+      ],
+      "ownership": {
+        "boundary": "disjoint_agent_write_sets"
+      },
+      "next_action": {
+        "command": "python3 scripts/harness_agent_team.py validate plan.json"
+      },
+      "verification_evidence": {
+        "command": "python3 scripts/harness_agent_team.py validate plan.json",
+        "exit_code": 0,
+        "key_output": "Agent team valid",
+        "timestamp": "2026-07-13T00:00:00Z",
+        "freshness": "fresh"
+      }
+    },
+    {
+      "id": "RECOVER-ARCH",
+      "scenario_id": "GOVERNED-ARCH-SOURCE-CONFLICT",
+      "phase": "requirements",
+      "constraints": [
+        "silent_source_choice",
+        "implementation_before_decision"
+      ],
+      "ownership": {
+        "boundary": "decision_owner_required"
+      },
+      "next_action": {
+        "command": "python3 scripts/harness_requirements.py validate decision.md"
+      },
+      "verification_evidence": {
+        "command": "python3 scripts/harness_requirements.py validate decision.md",
+        "exit_code": 0,
+        "key_output": "valid",
+        "timestamp": "2026-07-13T00:00:00Z",
+        "freshness": "fresh"
+      }
+    }
   ]
 }

@@ -570,6 +570,7 @@
 flowchart TD
   A["入口<br/>使用 delivery-harness-framework"]:::router
   B["读取本地规则<br/>AGENTS.md 和 repo-index"]:::router
+  ProfileDecision{"治理 profile 是否需要完整恢复"}:::decision
   C["governed matching signal 才恢复<br/>harness_recover.py"]:::helper
   D["governed matching signal 才探测<br/>harness_env_probe.py"]:::helper
   E{"请求是否明确"}:::decision
@@ -595,7 +596,9 @@ flowchart TD
   X["最终输出<br/>阶段、已读来源、skill 路由、验证证据、阻塞项"]:::router
   Y["阻断<br/>缺少凭据、远程授权、破坏性操作、安全泄漏"]:::danger
 
-  A --> B --> C --> D --> E
+  A --> B --> ProfileDecision
+  ProfileDecision -- "governed matching signal" --> C --> D --> E
+  ProfileDecision -- "light/standard skip Recover / Env" --> E
   E -- "不明确" --> F --> G --> H
   E -- "明确" --> H
   H -- "产品" --> I --> L

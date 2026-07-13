@@ -210,8 +210,13 @@ def _validate_scenario(scenario: object, index: int) -> list[str]:
         errors.append(f"{prefix}.result_acceptance_checks must be a non-empty list")
     else:
         for check in checks:
-            if not isinstance(check, dict) or not _non_empty_string(check.get("id")) or not _non_empty_string(check.get("assertion")):
-                errors.append(f"{prefix}.result_acceptance_checks entries require id and assertion")
+            if (
+                not isinstance(check, dict)
+                or not _non_empty_string(check.get("id"))
+                or check.get("type") not in {"field_nonempty", "field_equals", "field_contains", "field_forbids"}
+                or not _non_empty_string(check.get("path"))
+            ):
+                errors.append(f"{prefix}.result_acceptance_checks entries require executable id/type/path")
                 break
 
     baseline = scenario["baseline_measurement"]
@@ -371,6 +376,8 @@ def validate_corpus(corpus: object, contract_path: Path) -> list[str]:
                 errors.append(f"{trace_id} references unknown test ID: {test_id}")
         if not _non_empty_string(trace.get("evidence_status")):
             errors.append(f"{trace_id} must declare evidence_status")
+        if trace_id in {"AC-02", "AC-10", "AC-11", "AC-12", "AC-13", "AC-15", "AC-17", "AC-18"} and "deferred" in str(trace.get("evidence_status", "")).lower():
+            errors.append(f"{trace_id} completed-slice evidence must not remain deferred")
     return errors
 
 

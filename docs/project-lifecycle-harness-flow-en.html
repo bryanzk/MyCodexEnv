@@ -236,6 +236,7 @@
         <pre class="mermaid">
 flowchart TD
   Start(["User request enters DHF"])
+  ProfileDecision{"Does the selected profile require governed recovery?"}
   Recover["Governed matching signal only<br/>harness_recover.py"]
   Env["Governed matching signal only<br/>harness_env_probe.py"]
   Clear{"Are goal, scope,<br/>and acceptance clear?"}
@@ -249,7 +250,9 @@ flowchart TD
   Handoff["Governed matching signal only<br/>harness_checkpoint.py append"]
   Done(["DHF output<br/>route, evidence, next safe task"])
 
-  Start --> Recover --> Env --> Clear
+  Start --> ProfileDecision
+  ProfileDecision -- "governed matching signal" --> Recover --> Env --> Clear
+  ProfileDecision -- "light/standard skip Recover / Env" --> Clear
   Clear -- "No" --> Req --> Plan
   Clear -- "Yes" --> Plan
   Plan --> Dev --> Verify

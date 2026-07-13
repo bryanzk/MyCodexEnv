@@ -486,6 +486,7 @@
 flowchart TD
   Start(["User task enters<br/>DHF"])
   AGENTS["Read AGENTS.md<br/>README and docs/repo-index.md"]
+  ProfileDecision{"Does the selected profile require governed recovery?"}
   Recover["Governed matching signal only<br/>harness_recover.py --json"]
   Env["Governed matching signal only<br/>harness_env_probe.py --json"]
   NeedsReq{"Are goal, scope,<br/>and acceptance clear?"}
@@ -507,7 +508,9 @@ flowchart TD
   Handoff["Governed matching signal only<br/>harness_checkpoint.py append"]
   Done(["DHF output<br/>skill routing, verification evidence, next safe task"])
 
-  Start --> AGENTS --> Recover --> Env --> NeedsReq
+  Start --> AGENTS --> ProfileDecision
+  ProfileDecision -- "governed matching signal" --> Recover --> Env --> NeedsReq
+  ProfileDecision -- "light/standard skip Recover / Env" --> NeedsReq
   NeedsReq -- "No" --> Req --> ReqVal --> Classify
   NeedsReq -- "Yes" --> Classify
   Classify --> Repo
