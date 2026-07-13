@@ -320,8 +320,11 @@ def _load_dispatcher(root: Path):
     return module
 
 
-def measure_baseline(corpus: dict[str, Any], root: Path) -> list[dict[str, Any]]:
+def _measure_dispatcher(
+    corpus: dict[str, Any], root: Path, *, simplified_profiles: bool
+) -> list[dict[str, Any]]:
     module = _load_dispatcher(root)
+    module.SIMPLIFIED_PROFILES_ENABLED = simplified_profiles
     with tempfile.TemporaryDirectory() as tmp:
         temp_root = Path(tmp)
         generic_root = temp_root / "GenericRepo"
@@ -349,16 +352,33 @@ def measure_baseline(corpus: dict[str, Any], root: Path) -> list[dict[str, Any]]
             }
             response, route = module.route_response(payload)
             context = response.get("hookSpecificOutput", {}).get("additionalContext", "")
+            selected_profile = route.removeprefix("generic-activated:") if route.startswith("generic-activated:") else None
+            if selected_profile == "legacy":
+                selected_profile = None
+                route = "generic-activated"
             measurements.append(
                 {
                     "id": scenario["id"],
                     "route": route,
                     "injected_context_utf8_bytes_proxy": len(context.encode("utf-8")),
-                    "mandatory_helper_count": len(BASELINE_HELPER_ORACLE[scenario["id"]]),
+                    "mandatory_helper_count": (
+                        len(scenario["mandatory_helpers"])
+                        if simplified_profiles
+                        else len(BASELINE_HELPER_ORACLE[scenario["id"]])
+                    ),
                     "verification_receipt_status": scenario["baseline_measurement"]["verification_receipt_status"],
+                    "selected_profile": selected_profile,
                 }
             )
         return measurements
+
+
+def measure_baseline(corpus: dict[str, Any], root: Path) -> list[dict[str, Any]]:
+    return _measure_dispatcher(corpus, root, simplified_profiles=False)
+
+
+def measure_candidate(corpus: dict[str, Any], root: Path) -> list[dict[str, Any]]:
+    return _measure_dispatcher(corpus, root, simplified_profiles=True)
 
 
 def validate_baseline_measurements(corpus: dict[str, Any], root: Path) -> list[str]:

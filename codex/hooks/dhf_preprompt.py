@@ -8,7 +8,7 @@ import re
 import sys
 from pathlib import Path
 from types import ModuleType
-from typing import Any
+from typing import Any, NamedTuple
 
 
 SHIPQ_ROOT = Path(
@@ -25,6 +25,20 @@ DHF_SKILL = Path(
 )
 TRUSTED_HOOKS_ROOT = Path.home() / ".codex" / "hooks"
 ALLOW_UNTRUSTED_ADAPTER = os.environ.get("DHF_PREPROMPT_ALLOW_UNTRUSTED_TEST_PATHS") == "1"
+# Default-on during source evaluation; set to 0, false, off, or legacy for rollback.
+SIMPLIFIED_PROFILES_ENABLED = os.environ.get("DHF_PREPROMPT_SIMPLIFIED_PROFILES", "1").strip().lower() not in {
+    "0",
+    "false",
+    "off",
+    "legacy",
+}
+
+PROFILE_RANK = {"light": 0, "standard": 1, "governed": 2}
+
+
+class ProfileSelection(NamedTuple):
+    profile: str
+    escalation_signal: str | None
 
 SKIP_PATTERNS = [
     r"\bno\s+dhf\b",
@@ -51,6 +65,44 @@ ACTIVATION_PATTERNS = [
     r"恢复",
     r"交接",
     r"状态冲突",
+]
+
+GOVERNED_SIGNAL_PATTERNS = [
+    (
+        "durable_architecture_source_conflict",
+        [r"\barchitecture\b.*\b(?:source|state)[-\s]+conflict\b", r"架构.*(?:来源|状态)冲突"],
+    ),
+    (
+        "unknown_or_overlapping_worktree_ownership",
+        [r"\b(?:dirty|worktree|ownership)\b.*\b(?:conflict|overlap|unknown)\b", r"\bstate[-\s]+conflict\b"],
+    ),
+    (
+        "external_capture_or_private_data",
+        [r"\bexternal\s+capture\b", r"\b(?:private|customer|credential|secret)\s+(?:data|capture|content)\b"],
+    ),
+    (
+        "remote_or_deployment_action",
+        [r"\bremote\b", r"\bdeploy(?:ment|ed|ing)?\b", r"\bproduction\b", r"\brelease\b"],
+    ),
+    (
+        "multiple_agents_or_overlapping_write_sets",
+        [r"\bmulti(?:ple)?[-\s]+agent", r"\bmultiple\s+agents\b", r"\boverlapping\s+write\s+sets?\b"],
+    ),
+    (
+        "resume_or_handoff",
+        [r"\bresume(?:d)?\b", r"\bhandoff\b", r"\btake\s*over\b", r"\btakeover\b", r"接手", r"恢复", r"交接"],
+    ),
+]
+
+STANDARD_PATTERNS = [
+    r"\bimplement\b",
+    r"\b(?:local|parser)\s+(?:feature|option|change)\b",
+    r"\bfailing\s+(?:unit\s+)?test\b",
+    r"\binvestigat(?:e|ion)\b",
+    r"\bdebug(?:ging)?\b",
+    r"\brefactor\b",
+    r"\bcli\s+(?:flag|change|option)\b",
+    r"\bui\s+(?:behavior|change|empty[-\s]+state)\b",
 ]
 
 
@@ -124,6 +176,30 @@ def generic_activation_requested(text: str) -> bool:
     return any(re.search(pattern, text, flags=re.IGNORECASE) for pattern in ACTIVATION_PATTERNS)
 
 
+def select_governance_profile(text: str, active_profile: str | None = None) -> ProfileSelection:
+    signal = None
+    selected = "light"
+    for candidate_signal, patterns in GOVERNED_SIGNAL_PATTERNS:
+        if any(re.search(pattern, text, flags=re.IGNORECASE) for pattern in patterns):
+            selected = "governed"
+            signal = candidate_signal
+            break
+    if selected == "light" and any(re.search(pattern, text, flags=re.IGNORECASE) for pattern in STANDARD_PATTERNS):
+        selected = "standard"
+
+    if active_profile in PROFILE_RANK and PROFILE_RANK[active_profile] > PROFILE_RANK[selected]:
+        selected = active_profile
+    return ProfileSelection(selected, signal)
+
+
+def active_profile_from_payload(payload: dict[str, Any]) -> str | None:
+    state = payload.get("dhf_profile_state")
+    if not isinstance(state, dict):
+        return None
+    active = state.get("active_profile")
+    return active if active in PROFILE_RANK else None
+
+
 def load_shipq_adapter() -> ModuleType:
     if not SHIPQ_ADAPTER.is_file():
         raise RuntimeError(f"cannot load ShipQ DHF adapter: {SHIPQ_ADAPTER}")
@@ -180,6 +256,34 @@ def generic_response() -> dict[str, Any]:
     }
 
 
+def profile_context(selection: ProfileSelection) -> str:
+    common = (
+        "Activated generic DHF governance profile. "
+        f"profile={selection.profile}. Preserve result, scope_and_constraints, fresh verification_receipt, "
+        "and remaining_risk_or_next_action when applicable."
+    )
+    if selection.profile == "light":
+        return common + " Execute directly and use only the narrowest useful verification; no lifecycle helpers are required."
+    if selection.profile == "standard":
+        return common + " Define done, preserve dirty-worktree ownership, use a runnable focused feedback loop, and verify fresh."
+    signal = selection.escalation_signal or "retained_higher_active_profile"
+    return (
+        common
+        + f" escalation_signal={signal}. Retain the relevant recovery, ownership, permission, evidence, "
+        "checkpoint, deployment-readiness, and agent-team gates before risky action."
+    )
+
+
+def simplified_generic_response(selection: ProfileSelection) -> dict[str, Any]:
+    return {
+        "continue": True,
+        "hookSpecificOutput": {
+            "hookEventName": "UserPromptSubmit",
+            "additionalContext": profile_context(selection),
+        },
+    }
+
+
 def route_response(payload: dict[str, Any]) -> tuple[dict[str, Any], str]:
     cwd = cwd_text(payload)
     text = prompt_text(payload)
@@ -193,7 +297,10 @@ def route_response(payload: dict[str, Any]) -> tuple[dict[str, Any], str]:
         adapter = load_shipq_adapter()
         return adapter.build_response(payload), "shipq-delegated"
     if generic_activation_requested(text):
-        return generic_response(), "generic-activated"
+        if not SIMPLIFIED_PROFILES_ENABLED:
+            return generic_response(), "generic-activated:legacy"
+        selection = select_governance_profile(text, active_profile_from_payload(payload))
+        return simplified_generic_response(selection), f"generic-activated:{selection.profile}"
     return continue_only(), "continue-only"
 
 
