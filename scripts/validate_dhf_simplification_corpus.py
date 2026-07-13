@@ -7,6 +7,7 @@ import copy
 import hashlib
 import importlib.util
 import json
+import re
 import subprocess
 import sys
 import tempfile
@@ -25,6 +26,7 @@ REQUIRED_SCENARIO_FIELDS = {
     "scenario_type",
     "sanitized_prompt",
     "activation_status",
+    "activation_reason",
     "cohort_status",
     "cwd_class",
     "expected_profile",
@@ -133,6 +135,24 @@ def extract_acceptance_criteria(contract_path: Path) -> list[str]:
     return criteria
 
 
+def extract_acceptance_slice_map(plan_path: Path) -> dict[str, str]:
+    text = plan_path.read_text(encoding="utf-8")
+    marker = "## Acceptance Traceability\n"
+    if marker not in text:
+        return {}
+    section = text.split(marker, 1)[1].split("\n## ", 1)[0]
+    result: dict[str, str] = {}
+    for line in section.splitlines():
+        if not line.startswith("|"):
+            continue
+        cells = [cell.strip() for cell in line.strip("|").split("|")]
+        if len(cells) < 3:
+            continue
+        for trace_id in re.findall(r"AC-\d{2}", cells[1]):
+            result[trace_id] = cells[2]
+    return result
+
+
 def _non_empty_string(value: object) -> bool:
     return isinstance(value, str) and bool(value.strip())
 
@@ -174,8 +194,16 @@ def _validate_scenario(scenario: object, index: int) -> list[str]:
     if scenario["activation_status"] != "explicitly_activated_generic":
         if scenario["cohort_status"] != "routing_control_excluded":
             errors.append(f"{prefix}: routing controls must be excluded from the efficiency cohort")
-    elif scenario["cohort_status"] != "efficiency_included":
-        errors.append(f"{prefix}: activated generic scenarios must be included in the efficiency cohort")
+        if scenario["activation_reason"] is not None:
+            errors.append(f"{prefix}.activation_reason must be null for routing controls")
+    else:
+        reason = scenario["activation_reason"]
+        if reason not in {"explicit_opt_in", "compatibility_risk_trigger", "profile_hint"}:
+            errors.append(f"{prefix}.activation_reason is invalid for an activated scenario")
+        if scenario["cohort_status"] == "efficiency_included" and reason != "explicit_opt_in":
+            errors.append(f"{prefix}: efficiency cohort requires explicit_opt_in activation_reason")
+        if reason != "explicit_opt_in" and scenario["cohort_status"] != "routing_control_excluded":
+            errors.append(f"{prefix}: compatibility/profile-hint scenarios must be excluded from the efficiency cohort")
 
     if category == "governed" and not _non_empty_string(scenario["escalation_signal"]):
         errors.append(f"{prefix}.escalation_signal must name the governed trigger")
@@ -332,6 +360,8 @@ def validate_corpus(corpus: object, contract_path: Path) -> list[str]:
         errors.append("authoritative_gate_oracle values must be non-empty string lists")
 
     contract_criteria = extract_acceptance_criteria(contract_path)
+    plan_path = contract_path.with_name("2026-07-12-dhf-simplification-implementation-plan.md")
+    slice_map = extract_acceptance_slice_map(plan_path)
     expected_trace_ids = {f"AC-{index:02d}" for index in range(1, len(contract_criteria) + 1)}
     trace_map = corpus.get("acceptance_trace_map")
     if not isinstance(trace_map, dict):
@@ -361,8 +391,13 @@ def validate_corpus(corpus: object, contract_path: Path) -> list[str]:
         trace = trace_map.get(trace_id)
         if not isinstance(trace, dict):
             continue
+        required_trace_fields = {"criterion", "slice", "scenario_ids", "test_ids", "producer", "evidence_status"}
+        if set(trace) != required_trace_fields:
+            errors.append(f"{trace_id} fields must be exactly {sorted(required_trace_fields)}")
         if trace.get("criterion") != criterion:
             errors.append(f"{trace_id} criterion text does not match the contract")
+        if trace.get("slice") != slice_map.get(trace_id):
+            errors.append(f"{trace_id} slice does not match the implementation plan")
         scenario_ids = trace.get("scenario_ids")
         test_ids = trace.get("test_ids")
         if not isinstance(scenario_ids, list) or not isinstance(test_ids, list) or not (scenario_ids or test_ids):
@@ -374,6 +409,9 @@ def validate_corpus(corpus: object, contract_path: Path) -> list[str]:
         for test_id in test_ids:
             if not _non_empty_string(test_id) or test_id not in test_catalog:
                 errors.append(f"{trace_id} references unknown test ID: {test_id}")
+        producer = trace.get("producer")
+        if not _non_empty_string(producer) or producer not in test_ids or producer not in test_catalog:
+            errors.append(f"{trace_id} producer must name an executable test binding in test_ids")
         evidence_status = trace.get("evidence_status")
         if (
             not isinstance(evidence_status, dict)
@@ -497,7 +535,7 @@ def _measure_dispatcher(
                 }
             )
             observed_helpers = observed_contract["helpers"]
-            selected_profile = route.removeprefix("generic-activated:") if route.startswith("generic-activated:") else None
+            selected_profile = route.split(":")[1] if route.startswith("generic-activated:") else None
             if selected_profile == "legacy":
                 selected_profile = None
                 route = "generic-activated"

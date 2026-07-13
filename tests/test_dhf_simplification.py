@@ -178,10 +178,10 @@ def mirror_contract_errors(text: str, contract: dict[str, object], routes: dict[
         "runtime home remains unsynced",
     ]
     if routes == {
-        "default_generic": "generic-activated:standard",
+        "default_generic": "generic-activated:standard:compatibility_risk_trigger",
         "opt_out": "opt-out",
         "shipq": "shipq-delegated",
-        "explicit_generic": "generic-activated:standard",
+        "explicit_generic": "generic-activated:standard:compatibility_risk_trigger",
         "ordinary": "continue-only",
     }:
         required.extend(
@@ -341,6 +341,27 @@ class DhfSimplificationCorpusTests(unittest.TestCase):
         broken["test_catalog"]["TEST-SCHEMA-COUNTS"] = "tests/test_dhf_simplification.py::load_validator"
         errors = self.validator.validate_corpus(broken, CONTRACT)
         self.assertTrue(any("does not resolve to a test callable" in error for error in errors), errors)
+
+    def test_acceptance_trace_requires_exact_slice_and_executable_producer_binding(self):
+        required_fields = {"criterion", "slice", "scenario_ids", "test_ids", "producer", "evidence_status"}
+        for acceptance_id, trace in self.corpus["acceptance_trace_map"].items():
+            with self.subTest(acceptance_id=acceptance_id):
+                self.assertEqual(set(trace), required_fields)
+                self.assertIn(trace["producer"], trace["test_ids"])
+                self.assertIn(trace["producer"], self.corpus["test_catalog"])
+
+        mutations = (
+            lambda trace: trace.pop("producer"),
+            lambda trace: trace.__setitem__("slice", "99"),
+            lambda trace: trace.__setitem__("producer", "UNKNOWN-PRODUCER"),
+            lambda trace: trace.__setitem__("unexpected", True),
+        )
+        for mutate in mutations:
+            with self.subTest(mutate=mutate):
+                broken = copy.deepcopy(self.corpus)
+                mutate(broken["acceptance_trace_map"]["AC-01"])
+                errors = self.validator.validate_corpus(broken, CONTRACT)
+                self.assertTrue(any("AC-01" in error and ("fields" in error or "slice" in error or "producer" in error) for error in errors), errors)
 
     def test_current_dispatcher_opt_out_precedence(self):
         env = os.environ.copy()
@@ -587,9 +608,9 @@ class DhfGovernanceProfileTests(unittest.TestCase):
         malformed, malformed_route = self.dispatcher.route_response(
             {"cwd": "/tmp/Generic", "prompt": prompt, "dhf_profile_state": "corrupt-state"}
         )
-        self.assertEqual(absent_route, "generic-activated:light")
+        self.assertEqual(absent_route, "generic-activated:light:compatibility_risk_trigger")
         self.assertIn("profile=light", absent["hookSpecificOutput"]["additionalContext"])
-        self.assertEqual(malformed_route, "generic-activated:governed")
+        self.assertEqual(malformed_route, "generic-activated:governed:compatibility_risk_trigger")
         self.assertIn("escalation_signal=malformed_profile_state", malformed["hookSpecificOutput"]["additionalContext"])
 
     def test_route_precedence_and_shipq_profile_ownership(self):
@@ -634,7 +655,7 @@ class DhfGovernanceProfileTests(unittest.TestCase):
             response, route = self.dispatcher.route_response(
                 {"cwd": tmp, "prompt": "Use complex analysis to explain this deterministic function."}
             )
-            self.assertEqual(route, "generic-activated:light")
+            self.assertEqual(route, "generic-activated:light:compatibility_risk_trigger")
             context = response["hookSpecificOutput"]["additionalContext"]
             self.assertIn("profile=light", context)
             self.assertNotIn(marker, context)
@@ -928,23 +949,24 @@ class DhfGovernanceProfileTests(unittest.TestCase):
                     self.assertEqual(proc.returncode, 0, proc.stderr)
                     payload = json.loads(proc.stdout)
                     self.assertIn(marker, payload["hookSpecificOutput"]["additionalContext"])
-                    self.assertIn("diagnostic=generic-activated:legacy", proc.stderr)
+                    self.assertIn("diagnostic=generic-activated:legacy:invalid-switch", proc.stderr)
+                    self.assertNotIn(unrecognized_value or "<empty>", proc.stderr)
 
     def test_adversarial_governed_route_table_and_active_state_continuation(self):
         self.dispatcher.SIMPLIFIED_PROFILES_ENABLED = True
         root = str(ROOT)
         cases = (
-            ("Use DHF to explain this function", None, "generic-activated:light", "profile=light"),
-            ("use delivery harness for this local feature", None, "generic-activated:standard", "profile=standard"),
-            ("请使用交付框架解释这个函数", None, "generic-activated:light", "profile=light"),
-            ("continue the next safe action", {"active_profile": "governed"}, "generic-activated:governed", "profile=governed"),
-            ("continue the next safe action", {"active_profile": "standard"}, "generic-activated:standard", "profile=standard"),
-            ("continue the next safe action", "corrupt", "generic-activated:governed", "malformed_profile_state"),
-            ("Use DHF then git push --force", None, "generic-activated:governed", "destructive_or_irreversible_action"),
-            ("Use DHF then git reset --hard HEAD~1", None, "generic-activated:governed", "destructive_or_irreversible_action"),
-            ("Use DHF then run rm -rf ./cache", None, "generic-activated:governed", "destructive_or_irreversible_action"),
-            ("Use DHF to rotate the API key and inspect private customer records", None, "generic-activated:governed", "external_capture_or_private_data"),
-            ("Use DHF to SSH to production and deploy", None, "generic-activated:governed", "remote_or_deployment_action"),
+            ("Use DHF to explain this function", None, "generic-activated:light:explicit_opt_in", "profile=light"),
+            ("use delivery harness for this local feature", None, "generic-activated:standard:explicit_opt_in", "profile=standard"),
+            ("请使用交付框架解释这个函数", None, "generic-activated:light:explicit_opt_in", "profile=light"),
+            ("continue the next safe action", {"active_profile": "governed"}, "generic-activated:governed:profile_hint", "profile=governed"),
+            ("continue the next safe action", {"active_profile": "standard"}, "generic-activated:standard:profile_hint", "profile=standard"),
+            ("continue the next safe action", "corrupt", "generic-activated:governed:profile_hint", "malformed_profile_state"),
+            ("Use DHF then git push --force", None, "generic-activated:governed:explicit_opt_in", "destructive_or_irreversible_action"),
+            ("Use DHF then git reset --hard HEAD~1", None, "generic-activated:governed:explicit_opt_in", "destructive_or_irreversible_action"),
+            ("Use DHF then run rm -rf ./cache", None, "generic-activated:governed:explicit_opt_in", "destructive_or_irreversible_action"),
+            ("Use DHF to rotate the API key and inspect private customer records", None, "generic-activated:governed:explicit_opt_in", "external_capture_or_private_data"),
+            ("Use DHF to SSH to production and deploy", None, "generic-activated:governed:explicit_opt_in", "remote_or_deployment_action"),
         )
         for prompt, state, expected_route, expected_context in cases:
             with self.subTest(prompt=prompt, state=state):
@@ -963,6 +985,32 @@ class DhfGovernanceProfileTests(unittest.TestCase):
 
         ordinary, route = self.dispatcher.route_response({"cwd": root, "prompt": "continue formatting"})
         self.assertEqual((ordinary, route), ({"continue": True}, "continue-only"))
+
+    def test_activation_reason_distinguishes_explicit_compatibility_and_profile_hint(self):
+        self.dispatcher.SIMPLIFIED_PROFILES_ENABLED = True
+        root = str(ROOT)
+        cases = (
+            ({"cwd": root, "prompt": "Use DHF to explain this function"}, "explicit_opt_in"),
+            ({"cwd": root, "prompt": "Implement this complex local parser option"}, "compatibility_risk_trigger"),
+            ({"cwd": root, "prompt": "continue the next safe action", "dhf_profile_state": {"active_profile": "standard"}}, "profile_hint"),
+        )
+        for payload, reason in cases:
+            with self.subTest(reason=reason):
+                _response, route = self.dispatcher.route_response(payload)
+                self.assertTrue(route.endswith(f":{reason}"), route)
+
+        for prompt in ("Estimate complexity", "Discuss resumption semantics", "Describe handoffs", "Check a stateful conflict"):
+            with self.subTest(prompt=prompt):
+                self.assertEqual(
+                    self.dispatcher.route_response({"cwd": root, "prompt": prompt}),
+                    ({"continue": True}, "continue-only"),
+                )
+
+        broken = copy.deepcopy(self.corpus)
+        scenario = next(item for item in broken["scenarios"] if item["cohort_status"] == "efficiency_included")
+        scenario["activation_reason"] = "compatibility_risk_trigger"
+        errors = load_validator().validate_corpus(broken, CONTRACT)
+        self.assertTrue(any("efficiency cohort requires explicit_opt_in" in error for error in errors), errors)
 
     def test_credential_read_access_and_export_are_governed_without_bare_key_false_positive(self):
         self.dispatcher.SIMPLIFIED_PROFILES_ENABLED = True
@@ -983,7 +1031,7 @@ class DhfGovernanceProfileTests(unittest.TestCase):
         for prompt in governed_prompts:
             with self.subTest(prompt=prompt):
                 response, route = self.dispatcher.route_response({"cwd": str(ROOT), "prompt": prompt})
-                self.assertEqual(route, "generic-activated:governed")
+                self.assertEqual(route, "generic-activated:governed:explicit_opt_in")
                 self.assertIn("external_capture_or_private_data", response["hookSpecificOutput"]["additionalContext"])
 
         response, route = self.dispatcher.route_response(
@@ -1095,7 +1143,8 @@ class DhfGovernanceProfileTests(unittest.TestCase):
             "simplified repo-source default",
             "default-on",
             "only exact value 1 enables",
-            "all other explicit values roll back",
+            "recognized rollback values 0, false, off, and legacy",
+            "all other explicit values fail-safe to legacy with a bounded diagnostic",
             "runtime promotion pending",
             "runtime unsynced",
             f"{contract['switch_name']}={contract['switch_enable']}",

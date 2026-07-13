@@ -27,7 +27,9 @@ TRUSTED_HOOKS_ROOT = Path.home() / ".codex" / "hooks"
 ALLOW_UNTRUSTED_ADAPTER = os.environ.get("DHF_PREPROMPT_ALLOW_UNTRUSTED_TEST_PATHS") == "1"
 # Final governed under-routing review gate is green in repo source. Explicit
 # rollback values remain fail-closed because only exact value 1 enables profiles.
+SIMPLIFIED_PROFILES_VALUE = os.environ.get("DHF_PREPROMPT_SIMPLIFIED_PROFILES", "1")
 SIMPLIFIED_PROFILES_ENABLED = os.environ.get("DHF_PREPROMPT_SIMPLIFIED_PROFILES", "1") == "1"
+SIMPLIFIED_PROFILES_INVALID = SIMPLIFIED_PROFILES_VALUE not in {"1", "0", "false", "off", "legacy"}
 
 PROFILE_RANK = {"light": 0, "standard": 1, "governed": 2}
 
@@ -51,9 +53,13 @@ SKIP_PATTERNS = [
     r"不调用\s*(dhf|delivery[-\s]*harness)",
 ]
 
-ACTIVATION_PATTERNS = [
+EXPLICIT_OPT_IN_PATTERNS = [
     r"\buse\s+dhf\b",
     r"\buse\s+(?:the\s+)?delivery[-\s]+harness(?:\s+framework)?\b",
+    r"(?:使用|启用|调用)\s*(?:dhf|交付(?:治理)?框架|交付(?:治理)?流程)",
+]
+
+COMPATIBILITY_RISK_TRIGGER_PATTERNS = [
     r"\bcomplex\b",
     r"\bresume\b",
     r"\btake\s*over\b",
@@ -64,7 +70,6 @@ ACTIVATION_PATTERNS = [
     r"恢复",
     r"交接",
     r"状态冲突",
-    r"(?:使用|启用|调用)\s*(?:dhf|交付(?:治理)?框架|交付(?:治理)?流程)",
 ]
 
 GOVERNED_SIGNAL_PATTERNS = [
@@ -271,7 +276,17 @@ def skip_requested(text: str) -> bool:
 
 
 def generic_activation_requested(text: str) -> bool:
-    return any(re.search(pattern, text, flags=re.IGNORECASE) for pattern in ACTIVATION_PATTERNS)
+    return activation_reason(text, False) is not None
+
+
+def activation_reason(text: str, has_profile_hint: bool) -> str | None:
+    if any(re.search(pattern, text, flags=re.IGNORECASE) for pattern in EXPLICIT_OPT_IN_PATTERNS):
+        return "explicit_opt_in"
+    if any(re.search(pattern, text, flags=re.IGNORECASE) for pattern in COMPATIBILITY_RISK_TRIGGER_PATTERNS):
+        return "compatibility_risk_trigger"
+    if has_profile_hint:
+        return "profile_hint"
+    return None
 
 
 def select_governance_profile(text: str, active_profile: str | None = None) -> ProfileSelection:
@@ -438,15 +453,21 @@ def route_response(payload: dict[str, Any]) -> tuple[dict[str, Any], str]:
         adapter = load_shipq_adapter()
         return adapter.build_response(payload), "shipq-delegated"
     active_profile, malformed_state = profile_state_from_payload(payload)
-    if generic_activation_requested(text) or active_profile is not None or malformed_state:
+    reason = activation_reason(text, active_profile is not None or malformed_state)
+    if reason is not None:
         if not SIMPLIFIED_PROFILES_ENABLED:
-            return generic_response(), "generic-activated:legacy"
+            route = (
+                f"generic-activated:legacy:invalid-switch:{reason}"
+                if SIMPLIFIED_PROFILES_INVALID
+                else f"generic-activated:legacy:{reason}"
+            )
+            return generic_response(), route
         selection = (
             ProfileSelection("governed", "malformed_profile_state")
             if malformed_state
             else select_governance_profile(text, active_profile)
         )
-        return simplified_generic_response(selection), f"generic-activated:{selection.profile}"
+        return simplified_generic_response(selection), f"generic-activated:{selection.profile}:{reason}"
     return continue_only(), "continue-only"
 
 

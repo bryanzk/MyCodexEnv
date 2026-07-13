@@ -390,6 +390,12 @@ def capture_observations(corpus: dict[str, Any], observations: dict[str, Any]) -
     captured = copy.deepcopy(observations)
     for observation in captured["observations"]:
         scenario = scenarios[observation["id"]]
+        observation["input"] = {
+            "prompt": scenario["sanitized_prompt"],
+            "cwd_class": scenario["cwd_class"],
+            "activation_status": scenario["activation_status"],
+            "activation_reason": scenario["activation_reason"],
+        }
         contexts = capture_contract_contexts(scenario, Path(__file__).resolve().parents[1])
         for profile in ("baseline", "candidate"):
             contract = contexts[profile]
@@ -690,7 +696,7 @@ def _dimension_results(
 
     activated = scenario["activation_status"] == "explicitly_activated_generic"
     expected_route = (
-        f"generic-activated:{scenario['expected_profile']}"
+        f"generic-activated:{scenario['expected_profile']}:{scenario['activation_reason']}"
         if activated
         else scenario["baseline_measurement"]["route"]
     )
@@ -969,6 +975,7 @@ def run_comparison(
             "prompt": scenario["sanitized_prompt"],
             "cwd_class": scenario["cwd_class"],
             "activation_status": scenario["activation_status"],
+            "activation_reason": scenario["activation_reason"],
         }
         if observation.get("input") != expected_input:
             errors.append(f"{scenario_id} paired input identity changed")

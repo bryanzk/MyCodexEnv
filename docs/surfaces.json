@@ -119,7 +119,7 @@
     },
     {
       "path": "codex/hooks/dhf_preprompt.py",
-      "role": "generic DHF dispatcher with explicit generic activation, ordinary continue-only, opt-out precedence, ShipQ lazy delegation directly at the project boundary, default-on simplified repo-source default with DHF_PREPROMPT_SIMPLIFIED_PROFILES=1 profile selection where only exact value 1 enables and all other explicit values roll back, runtime promotion pending, and runtime unsynced",
+      "role": "generic DHF dispatcher with explicit generic activation, ordinary continue-only, opt-out precedence, ShipQ lazy delegation directly at the project boundary, default-on simplified repo-source default with DHF_PREPROMPT_SIMPLIFIED_PROFILES=1 profile selection where only exact value 1 enables, recognized rollback values 0, false, off, and legacy, and all other explicit values fail-safe to legacy with a bounded diagnostic; runtime promotion pending and runtime unsynced",
       "audience": ["runtime", "codex"]
     },
     {
