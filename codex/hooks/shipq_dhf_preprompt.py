@@ -4,7 +4,6 @@ from __future__ import annotations
 import json
 import os
 import re
-import subprocess
 import sys
 from pathlib import Path
 from typing import Any
@@ -12,8 +11,6 @@ from typing import Any
 
 SHIPQ_ROOT = Path("/Users/kezheng/Codes/CursorDeveloper/ShipQ")
 DHF_SKILL = "/Users/kezheng/.codex/skills/delivery-harness-framework/SKILL.md"
-DHF_LOADER = "/Users/kezheng/.codex/superpowers/.codex/superpowers-codex"
-DHF_SKILL_NAME = "delivery-harness-framework"
 
 SKIP_PATTERNS = [
     r"\bno\s+dhf\b",
@@ -79,32 +76,7 @@ def skip_requested(text: str) -> bool:
 
 
 def load_dhf_context() -> str:
-    try:
-        result = subprocess.run(
-            [DHF_LOADER, "use-skill", DHF_SKILL_NAME],
-            check=False,
-            capture_output=True,
-            text=True,
-            timeout=5,
-        )
-    except (OSError, subprocess.SubprocessError) as exc:
-        skill_text = Path(DHF_SKILL).read_text(encoding="utf-8")
-        return (
-            "DHF auto-invocation fallback: skill loader failed with "
-            f"{type(exc).__name__}: {exc}\n\n"
-            f"# Source: {DHF_SKILL}\n\n{skill_text}"
-        )
-
-    output = (result.stdout or "").strip()
-    if result.returncode == 0 and output:
-        return output
-
-    skill_text = Path(DHF_SKILL).read_text(encoding="utf-8")
-    return (
-        "DHF auto-invocation fallback: skill loader returned "
-        f"exit_code={result.returncode} stderr={(result.stderr or '').strip()!r}\n\n"
-        f"# Source: {DHF_SKILL}\n\n{skill_text}"
-    )
+    return Path(DHF_SKILL).read_text(encoding="utf-8")
 
 
 def build_response(payload: dict[str, Any]) -> dict[str, Any]:

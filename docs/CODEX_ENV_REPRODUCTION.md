@@ -24,6 +24,8 @@
 - Harness runtime policy, compatibility evidence schema, and split evidence schemas are synced into `~/.codex/runtime/*`; local evidence logs are written under `~/.codex/harness/evidence/*` and are not committed.
 - `codex/runtime/resolve_codex_cli.sh` validates every candidate with `--version` before use, prefers a functional npm global CLI, and then falls back across the current ChatGPT/Codex app bundle paths, so stale npm/Homebrew shims do not satisfy automation checks.
 - `codex/hooks/model_router.py` is synced as the prompt/subtask model router. It emits a non-blocking JSON recommendation for `gpt-5.4-mini`, `gpt-5.4`, or `gpt-5.5` based on complexity and quality-floor signals; runtimes or wrapper scripts that can switch models may consume the recommendation directly.
+- `codex/hooks/dhf_preprompt.py` is the only global DHF `UserPromptSubmit` dispatcher. It treats malformed, non-dict, or missing-cwd payloads as continue-only, applies `no dhf` / `skip dhf` and Chinese equivalents before any routing, injects generic DHF context only for explicit non-ShipQ activation such as complex/resume/takeover/handoff/state-conflict prompts, and lazily loads the ShipQ adapter only when `cwd` is under the configured ShipQ root.
+- `codex/hooks/shipq_dhf_preprompt.py` remains a synced adapter file for ShipQ cwd only; it is not registered directly in `codex/hooks.json`, and ordinary non-ShipQ prompts must not import, read, execute, or leak adapter-specific context.
 
 ## Skills Source of Truth
 - Repository source of truth is `codex/skills/*`.
@@ -83,7 +85,7 @@ cd MyCodexEnv
 ```bash
 ./scripts/verify_codex_env.sh --repo-root "$(pwd)" --codex-home "$HOME/.codex" --claude-home "$HOME/.claude"
 ./scripts/verify_codex_env.sh --repo-root "$(pwd)" --codex-home "$HOME/.codex" --claude-home "$HOME/.claude" --skip-check app_google_chrome
-python3 scripts/check_skill_compatibility.py --repo-root "$(pwd)" --codex-home "$HOME/.codex" --plugin-root "$HOME/.codex/plugins/cache" --plugin-root "$HOME/.cache/codex-runtimes/codex-primary-runtime/plugins"
+python3 scripts/check_skill_compatibility.py --repo-root "$(pwd)" --codex-home "$HOME/.codex" --claude-home "$HOME/.claude" --plugin-root "$HOME/.codex/plugins/cache" --plugin-root "$HOME/.cache/codex-runtimes/codex-primary-runtime/plugins"
 python3 scripts/check_codex_skill_loader.py --repo-root "$(pwd)" --codex-home "$HOME/.codex"
 ```
 

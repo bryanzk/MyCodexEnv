@@ -55,6 +55,20 @@ When a repo implements a harness runtime, prefer these surfaces after local
 - `codex/runtime/evidence.schema.json`: structured local evidence contract.
 - `codex/hooks.json` and `codex/hooks/*`: runtime guard and observer hooks.
 
+## Prompt Dispatcher Boundary
+
+The global `UserPromptSubmit` hook must register only the generic
+`dhf_preprompt.py` dispatcher. The dispatcher may inject this generic skill for
+non-repo-specific prompts only when the prompt explicitly signals complex,
+resume, takeover, handoff, or state-conflict work. Ordinary non-project prompts
+continue without `additionalContext`.
+
+Opt-out phrases such as `no dhf`, `skip dhf`, and equivalent Chinese wording
+must be evaluated before any route. Repo-specific adapters must stay lazy and
+are loaded only after the dispatcher verifies that `cwd` is under the
+corresponding project. Generic dispatcher output must not include project paths,
+business terms, or private project rules.
+
 Runtime evidence should stay local by default, typically under a Codex home
 evidence directory. Do not commit private transcripts, credentials, auth files,
 or local evidence logs unless the user explicitly asks and the content is
