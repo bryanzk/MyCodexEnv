@@ -141,7 +141,6 @@ def probe_dispatcher_routes(dispatcher) -> dict[str, str]:
             dispatcher.SHIPQ_ROOT = shipq
             dispatcher.SHIPQ_ADAPTER = adapter
             dispatcher.ALLOW_UNTRUSTED_ADAPTER = True
-            dispatcher.SIMPLIFIED_PROFILES_ENABLED = False
             default_generic = dispatcher.route_response(
                 {"cwd": str(generic), "prompt": "complex local feature"}
             )[1]
@@ -174,12 +173,12 @@ def mirror_contract_errors(text: str, contract: dict[str, object], routes: dict[
         *(f"`{profile}`" for profile in contract["profiles"]),
         *(f"`{invariant}`" for invariant in contract["invariants"]),
         f"{contract['switch_name']}={contract['switch_enable']}",
-        f"default remains `{routes['default_generic'].removeprefix('generic-activated:')}`",
+        "repo-source default is now `simplified`",
         "Runtime promotion is pending separate authorization",
         "runtime home remains unsynced",
     ]
     if routes == {
-        "default_generic": "generic-activated:legacy",
+        "default_generic": "generic-activated:standard",
         "opt_out": "opt-out",
         "shipq": "shipq-delegated",
         "explicit_generic": "generic-activated:standard",
@@ -470,9 +469,15 @@ class DhfSimplificationCorpusTests(unittest.TestCase):
         missing = self.validator._observed_candidate_contract("profile=light")
         corrupt = self.validator._observed_candidate_contract("DHF_PROFILE_CONTRACT={broken")
         valid_zero = self.validator._observed_candidate_contract('DHF_PROFILE_CONTRACT={"mandatory_helpers":[]}')
-        self.assertEqual(missing, {"contract_observed": False, "contract_parse_valid": False, "helpers": []})
-        self.assertEqual(corrupt, {"contract_observed": True, "contract_parse_valid": False, "helpers": []})
-        self.assertEqual(valid_zero, {"contract_observed": True, "contract_parse_valid": True, "helpers": []})
+        empty_contract = {
+            "helpers": [],
+            "escalation_signals": [],
+            "required_output_fields": [],
+            "authoritative_gates": [],
+        }
+        self.assertEqual(missing, {"contract_observed": False, "contract_parse_valid": False, **empty_contract})
+        self.assertEqual(corrupt, {"contract_observed": True, "contract_parse_valid": False, **empty_contract})
+        self.assertEqual(valid_zero, {"contract_observed": True, "contract_parse_valid": True, **empty_contract})
 
         measured = self.validator.measure_candidate(self.corpus, ROOT)
         activated = next(item for item in measured if item["id"] == "LIGHT-EXPLANATION")
@@ -848,7 +853,7 @@ class DhfGovernanceProfileTests(unittest.TestCase):
         self.assertEqual(proc.returncode, 1, proc.stdout + proc.stderr)
         self.assertIn("must not include command receipt fields", proc.stderr)
 
-    def test_feature_switch_defaults_legacy_and_requires_explicit_enable(self):
+    def test_feature_switch_defaults_simplified_and_preserves_explicit_rollback(self):
         marker = "LEGACY_FULL_SKILL_MARKER"
         with __import__("tempfile").TemporaryDirectory() as tmp:
             skill = Path(tmp) / "DHF.md"
@@ -873,8 +878,9 @@ class DhfGovernanceProfileTests(unittest.TestCase):
 
             default_proc = run_with(None)
             self.assertEqual(default_proc.returncode, 0, default_proc.stderr)
-            self.assertIn(marker, json.loads(default_proc.stdout)["hookSpecificOutput"]["additionalContext"])
-            self.assertIn("diagnostic=generic-activated:legacy", default_proc.stderr)
+            self.assertIn("profile=standard", json.loads(default_proc.stdout)["hookSpecificOutput"]["additionalContext"])
+            self.assertNotIn(marker, default_proc.stdout)
+            self.assertIn("diagnostic=generic-activated:standard", default_proc.stderr)
 
             enabled_proc = run_with("1")
             self.assertEqual(enabled_proc.returncode, 0, enabled_proc.stderr)
@@ -905,7 +911,7 @@ class DhfGovernanceProfileTests(unittest.TestCase):
             SKILL.read_text(encoding="utf-8"), DISPATCHER.read_text(encoding="utf-8")
         )
         routes = probe_dispatcher_routes(self.dispatcher)
-        self.assertNotEqual(contract["switch_default"], contract["switch_enable"])
+        self.assertEqual(contract["switch_default"], contract["switch_enable"])
         stale_statements = (
             "Use first for complex or resumed work",
             "after a meaningful validated slice",
@@ -933,8 +939,8 @@ class DhfGovernanceProfileTests(unittest.TestCase):
         self.assertIn(f"`{first_invariant}`", mirror_contract_errors(mirror_drift, contract, routes))
 
         switch_drift_text = dispatcher_text.replace(
-            'os.environ.get("DHF_PREPROMPT_SIMPLIFIED_PROFILES", "0") == "1"',
-            'os.environ.get("DHF_PREPROMPT_SIMPLIFIED_PROFILES", "0") == "candidate"',
+            'os.environ.get("DHF_PREPROMPT_SIMPLIFIED_PROFILES", "1") == "1"',
+            'os.environ.get("DHF_PREPROMPT_SIMPLIFIED_PROFILES", "1") == "candidate"',
             1,
         )
         switch_drift_contract = extract_canonical_contract(skill_text, switch_drift_text)

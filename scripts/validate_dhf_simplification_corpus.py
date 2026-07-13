@@ -369,6 +369,12 @@ def _load_dispatcher(root: Path):
 
 
 def _observed_candidate_contract(context: str) -> dict[str, Any]:
+    empty = {
+        "helpers": [],
+        "escalation_signals": [],
+        "required_output_fields": [],
+        "authoritative_gates": [],
+    }
     marker = "DHF_PROFILE_CONTRACT="
     for line in context.splitlines():
         if not line.startswith(marker):
@@ -376,12 +382,22 @@ def _observed_candidate_contract(context: str) -> dict[str, Any]:
         try:
             contract = json.loads(line.removeprefix(marker))
         except json.JSONDecodeError:
-            return {"contract_observed": True, "contract_parse_valid": False, "helpers": []}
-        helpers = contract.get("mandatory_helpers") if isinstance(contract, dict) else None
-        if isinstance(helpers, list) and all(_non_empty_string(item) for item in helpers):
-            return {"contract_observed": True, "contract_parse_valid": True, "helpers": helpers}
-        return {"contract_observed": True, "contract_parse_valid": False, "helpers": []}
-    return {"contract_observed": False, "contract_parse_valid": False, "helpers": []}
+            return {"contract_observed": True, "contract_parse_valid": False, **empty}
+        if not isinstance(contract, dict):
+            return {"contract_observed": True, "contract_parse_valid": False, **empty}
+        fields = {
+            "helpers": contract.get("mandatory_helpers"),
+            "escalation_signals": contract.get("escalation_signals", []),
+            "required_output_fields": contract.get("required_output_fields", []),
+            "authoritative_gates": contract.get("authoritative_gates", []),
+        }
+        if all(
+            isinstance(values, list) and all(_non_empty_string(item) for item in values)
+            for values in fields.values()
+        ):
+            return {"contract_observed": True, "contract_parse_valid": True, **fields}
+        return {"contract_observed": True, "contract_parse_valid": False, **empty}
+    return {"contract_observed": False, "contract_parse_valid": False, **empty}
 
 
 def _measure_dispatcher(
@@ -419,7 +435,14 @@ def _measure_dispatcher(
             observed_contract = (
                 _observed_candidate_contract(context)
                 if simplified_profiles
-                else {"contract_observed": False, "contract_parse_valid": False, "helpers": []}
+                else {
+                    "contract_observed": False,
+                    "contract_parse_valid": False,
+                    "helpers": [],
+                    "escalation_signals": [],
+                    "required_output_fields": [],
+                    "authoritative_gates": [],
+                }
             )
             observed_helpers = observed_contract["helpers"]
             selected_profile = route.removeprefix("generic-activated:") if route.startswith("generic-activated:") else None
@@ -439,6 +462,9 @@ def _measure_dispatcher(
                     "verification_receipt_status": scenario["baseline_measurement"]["verification_receipt_status"],
                     "selected_profile": selected_profile,
                     "observed_mandatory_helpers": observed_helpers,
+                    "escalation_signals": observed_contract["escalation_signals"],
+                    "observed_required_output_fields": observed_contract["required_output_fields"],
+                    "observed_authoritative_gates": observed_contract["authoritative_gates"],
                     "contract_observed": observed_contract["contract_observed"],
                     "contract_parse_valid": observed_contract["contract_parse_valid"],
                 }
@@ -461,6 +487,9 @@ def measure_baseline(corpus: dict[str, Any], root: Path) -> list[dict[str, Any]]
                 "verification_receipt_status": frozen["verification_receipt_status"],
                 "selected_profile": None,
                 "observed_mandatory_helpers": [],
+                "escalation_signals": [],
+                "observed_required_output_fields": [],
+                "observed_authoritative_gates": [],
                 "contract_observed": False,
                 "contract_parse_valid": False,
             }

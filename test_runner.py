@@ -87,6 +87,7 @@ PLAN_GOVERNOR_SCHEMAS = [
     ROOT / "codex" / "runtime" / "evidence" / "plan-governor-receipt.schema.json",
 ]
 DHF_SIMPLIFICATION_TEST = ROOT / "tests" / "test_dhf_simplification.py"
+DHF_SIMPLIFICATION_PAIR_TEST = ROOT / "tests" / "test_dhf_simplification_pair.py"
 
 
 def prepare_test_loaded_readback(prepared: list[str]) -> None:
@@ -2917,6 +2918,12 @@ def test_dhf_simplification_golden_corpus():
     code, out, err = run([sys.executable, str(DHF_SIMPLIFICATION_TEST)], cwd=ROOT)
     require(code == 0, f"DHF simplification golden corpus failed:\n{out}\n{err}")
     print("[PASS] DHF simplification golden corpus")
+
+
+def test_dhf_simplification_paired_gate():
+    code, out, err = run([sys.executable, str(DHF_SIMPLIFICATION_PAIR_TEST)], cwd=ROOT)
+    require(code == 0, f"DHF simplification paired gate failed: {err or out}")
+    print("[PASS] DHF simplification paired gate")
 
 
 def test_harness_agent_brief_template():
@@ -10030,6 +10037,7 @@ TESTS = [
     test_dhf_dispatcher_lazy_import_and_no_write_snapshot,
     test_dhf_dispatcher_stdout_stderr_and_no_leak_output,
     test_dhf_simplification_golden_corpus,
+    test_dhf_simplification_paired_gate,
     test_shipq_dhf_prompt_hook_auto_invokes_skill,
     test_harness_agent_brief_template,
     test_lifecycle_skill_routing_doc_is_discoverable,
