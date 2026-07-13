@@ -50,12 +50,11 @@ NORMATIVE_MIRRORS = [
     ROOT / "docs" / "LIFECYCLE_SKILL_ROUTING.md",
     ROOT / "docs" / "repo-index.md",
 ]
-PUBLIC_ROUTING_MIRRORS = [
-    ROOT / "docs" / "delivery-harness-beginner-guide-cn.html",
-    ROOT / "docs" / "project-lifecycle-harness-flow-skills.html",
-    ROOT / "docs" / "project-lifecycle-harness-flow-skills-zh-status-style.html",
-]
 SURFACES = ROOT / "docs" / "surfaces.json"
+PUBLIC_ROUTING_PREFIXES = (
+    "docs/delivery-harness-beginner-guide-",
+    "docs/project-lifecycle-harness-flow-",
+)
 
 
 def load_validator():
@@ -198,24 +197,43 @@ def public_helper_contract_errors(text: str, contract: dict[str, object]) -> lis
     normalized = " ".join(text.split())
     governed = contract["profiles"][-1]
     light = contract["profiles"][0]
-    required = (
+    required = [
         f"<code>{governed}</code>",
         "matching escalation signal",
         f"<code>{light}</code>",
-        "不要求",
         "harness_recover.py",
         "harness_env_probe.py",
         "harness_checkpoint.py",
-    )
+    ]
+    if "不要求" not in normalized and "does not require" not in normalized:
+        required.append("不要求|does not require")
     stale = (
         "任何复杂任务、恢复会话、dirty 工作树、跨阶段交接或含糊请求",
         "任何复杂任务、恢复中的会话、脏工作区、跨阶段交接，或目标不清的请求",
         "有意义的工作切片结束时",
         "在有意义的工作切片结束时",
+        "Any complex task, resumed session, dirty worktree, cross-stage handoff, or ambiguous request",
+        "At the end of meaningful work slices",
+        "重大实现切片验证后",
     )
     return [f"missing:{term}" for term in required if term not in normalized] + [
         f"stale:{term}" for term in stale if term in normalized
     ]
+
+
+def registered_public_routing_mirrors() -> tuple[Path, ...]:
+    manifest = json.loads(SURFACES.read_text(encoding="utf-8"))
+    paths = []
+    for surface in manifest["surfaces"]:
+        path = surface["path"]
+        if not path.endswith(".html") or not path.startswith(PUBLIC_ROUTING_PREFIXES):
+            continue
+        if "human" not in surface.get("audience", []):
+            raise AssertionError(f"registered public routing surface lacks human audience: {path}")
+        paths.append(ROOT / path)
+    if not paths:
+        raise AssertionError("surfaces manifest registered no lifecycle beginner/flow public pages")
+    return tuple(paths)
 
 
 class DhfSimplificationCorpusTests(unittest.TestCase):
@@ -934,7 +952,10 @@ class DhfGovernanceProfileTests(unittest.TestCase):
         contract = extract_canonical_contract(
             SKILL.read_text(encoding="utf-8"), DISPATCHER.read_text(encoding="utf-8")
         )
-        for mirror in PUBLIC_ROUTING_MIRRORS:
+        mirrors = registered_public_routing_mirrors()
+        manifest_text = SURFACES.read_text(encoding="utf-8")
+        self.assertTrue(all(str(mirror.relative_to(ROOT)) in manifest_text for mirror in mirrors))
+        for mirror in mirrors:
             with self.subTest(mirror=mirror.relative_to(ROOT)):
                 self.assertEqual(
                     public_helper_contract_errors(mirror.read_text(encoding="utf-8"), contract), []

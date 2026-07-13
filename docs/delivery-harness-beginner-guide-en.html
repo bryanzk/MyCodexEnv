@@ -244,7 +244,7 @@
     <section class="hero">
       <div class="eyebrow">Delivery Harness Framework / DHF Beginner Guide</div>
       <h1>What DHF does before an agent starts building.</h1>
-      <p class="lead">DHF is a delivery framework for agentic engineering. It turns a broad request into recovered facts, lifecycle routing, scoped execution, verification evidence, and a handoff that the next session can resume.</p>
+      <p class="lead">DHF is a delivery framework for agentic engineering. It selects a governance profile, routes scoped execution, and preserves verification evidence; full recovery or handoff is conditional rather than universal.</p>
     </section>
 
     <section class="section">
@@ -261,12 +261,13 @@
     <section class="section">
       <div class="label">Five-step flow</div>
       <h2>Five-step flow</h2>
+      <p>This is a checklist, not mandatory ceremony. Only <code>governed</code> work with a matching escalation signal runs <code>harness_recover.py</code>, <code>harness_env_probe.py</code>, or <code>harness_checkpoint.py</code>; <code>light</code> does not require those lifecycle helpers.</p>
       <div class="steps">
-        <div class="step"><div class="step-num">1</div><div><strong>Recover</strong><p>Read durable repo facts and restore phase, dirty state, latest verification, and next safe task.</p></div></div>
+        <div class="step"><div class="step-num">1</div><div><strong>Recover when escalated</strong><p>Restore phase, dirty state, latest verification, and next safe task only when the governed signal requires it.</p></div></div>
         <div class="step"><div class="step-num">2</div><div><strong>Clarify</strong><p>If the goal, scope, vocabulary, or acceptance criteria are unclear, stop and lock requirements first.</p></div></div>
         <div class="step"><div class="step-num">3</div><div><strong>Route</strong><p>Select the lifecycle owner: planner, TDD, QA, security review, ship workflow, docs, or a runtime helper.</p></div></div>
         <div class="step"><div class="step-num">4</div><div><strong>Verify</strong><p>Run the relevant command and capture the evidence fields before saying the work is complete.</p></div></div>
-        <div class="step"><div class="step-num">5</div><div><strong>Handoff</strong><p>Record changed surfaces, verification, blockers, and the next safe task for the next agent.</p></div></div>
+        <div class="step"><div class="step-num">5</div><div><strong>Handoff when escalated</strong><p>Record checkpoint state only when a matching governed signal requires durable handoff.</p></div></div>
       </div>
     </section>
 

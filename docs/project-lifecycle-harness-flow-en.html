@@ -225,18 +225,19 @@
     <section class="hero">
       <div class="eyebrow">Delivery Harness Framework / DHF Lifecycle Flow</div>
       <h1>DHF Lifecycle Flow from intake to handoff.</h1>
-      <p class="lead">Use this Flow Map after the beginner guide. It shows how <code>delivery-harness-framework</code> moves a task through fact recovery, requirements, planning, implementation, verification evidence, review, release, and handoff.</p>
+      <p class="lead">Use this Flow Map after the beginner guide. It shows how <code>delivery-harness-framework</code> selects a governance profile and routes requirements, implementation, verification evidence, review, release, and conditional recovery or handoff.</p>
     </section>
 
     <section class="section">
       <div class="label">Lifecycle Flow</div>
       <h2>Flow Map</h2>
+      <p>Recover / Env / Checkpoint are conditional nodes. Only <code>governed</code> work with a matching escalation signal runs <code>harness_recover.py</code>, <code>harness_env_probe.py</code>, or <code>harness_checkpoint.py</code>; <code>light</code> does not require those helpers.</p>
       <div class="mermaid-wrap">
         <pre class="mermaid">
 flowchart TD
   Start(["User request enters DHF"])
-  Recover["Recover facts<br/>AGENTS.md, README, repo state<br/>harness_recover.py"]
-  Env["Probe runtime<br/>harness_env_probe.py"]
+  Recover["Governed matching signal only<br/>harness_recover.py"]
+  Env["Governed matching signal only<br/>harness_env_probe.py"]
   Clear{"Are goal, scope,<br/>and acceptance clear?"}
   Req["Requirements<br/>planner / req-to-dev<br/>CONTEXT / ADR"]
   Plan["Planning<br/>vertical slice / AFK / HITL"]
@@ -245,7 +246,7 @@ flowchart TD
   Review["QA / security / review<br/>gstack-qa / gstack-cso / gstack-review"]
   Ship["Ship / deploy / canary<br/>gstack-ship / land-and-deploy"]
   Docs["Docs release<br/>document-release / doc-updater"]
-  Handoff["Handoff<br/>harness_checkpoint.py append"]
+  Handoff["Governed matching signal only<br/>harness_checkpoint.py append"]
   Done(["DHF output<br/>route, evidence, next safe task"])
 
   Start --> Recover --> Env --> Clear
@@ -274,10 +275,10 @@ flowchart TD
       <div class="label">How to read it</div>
       <h2>Use the map as a gate, not a poster.</h2>
       <div class="grid">
-        <div class="card"><b>1. Recover</b><span>Start with durable facts, not memory.</span></div>
+        <div class="card"><b>1. Recover when escalated</b><span>Run full recovery only for a matching governed signal; otherwise read the narrowest task sources.</span></div>
         <div class="card"><b>2. Lock scope</b><span>If acceptance is unclear, route to requirements before planning.</span></div>
         <div class="card"><b>3. Build in slices</b><span>Development starts only after the lifecycle stage and owner are clear.</span></div>
-        <div class="card"><b>4. Prove and hand off</b><span>Verification evidence and next safe task are part of the deliverable.</span></div>
+        <div class="card"><b>4. Prove; hand off when escalated</b><span>Verification is required for artifact claims; checkpoint handoff remains signal-conditional.</span></div>
       </div>
     </section>
 

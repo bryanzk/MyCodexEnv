@@ -544,7 +544,7 @@
         <div class="eyebrow">Delivery Harness Framework</div>
         <h1>通用项目生命周期路由流程</h1>
         <p class="subtitle">
-          这张图把 <code>delivery-harness-framework</code> 放在入口层：先恢复状态、确认阶段、对齐领域词和 ADR、选择专门 skill 或 helper，再进入开发、验证、评审、交付和交接。通用 skill 只做跨仓库路由；业务路径交给 repo-specific harness；产品、工程、QA、安全和发布交给 gstack 系列 skill。
+          这张图把 <code>delivery-harness-framework</code> 放在入口层：先选择治理 profile，再确认阶段、对齐领域词和 ADR、选择专门 skill 或 helper。只有 governed escalation 才恢复完整状态或写入交接 checkpoint。
         </p>
       </section>
 
@@ -558,7 +558,7 @@
       <section class="section animate" id="flow" style="--i:2">
         <div class="sec-head"><span class="sec-no">01</span><h2>纵向主流程</h2></div>
         <p class="section-note">
-          主流程自上而下读取。蓝色节点是通用 harness 入口，绿色节点是可执行阶段，琥珀色节点是 gstack 或 repo-specific skill 的接管点，红色节点是安全阻断或需要用户决策的分支。
+          Recover / Env / Checkpoint 是条件节点：只有 <code>governed</code> 且命中 matching escalation signal 时运行 <code>harness_recover.py</code>、<code>harness_env_probe.py</code> 或 <code>harness_checkpoint.py</code>；<code>light</code> 不要求这些 helpers。
         </p>
         <div class="mermaid-wrap" data-zoom="1">
           <div class="zoom-controls" aria-label="图表缩放">
@@ -570,8 +570,8 @@
 flowchart TD
   A["入口<br/>使用 delivery-harness-framework"]:::router
   B["读取本地规则<br/>AGENTS.md 和 repo-index"]:::router
-  C["恢复当前状态<br/>harness_recover.py"]:::helper
-  D["探测运行环境<br/>harness_env_probe.py"]:::helper
+  C["governed matching signal 才恢复<br/>harness_recover.py"]:::helper
+  D["governed matching signal 才探测<br/>harness_env_probe.py"]:::helper
   E{"请求是否明确"}:::decision
   F["Requirements<br/>捕获 DoD、范围、约束<br/>读取 CONTEXT / ADR"]:::stage
   G["验证需求 artifact<br/>harness_requirements.py validate PATH"]:::helper
@@ -591,7 +591,7 @@ flowchart TD
   T["Review<br/>gstack-review / code-reviewer"]:::gstack
   U["Ship / Deploy<br/>gstack-ship<br/>gstack-land-and-deploy<br/>gstack-canary"]:::gstack
   V["Release docs<br/>gstack-document-release / doc-updater"]:::gstack
-  W["Checkpoint / Handoff<br/>harness_checkpoint.py append"]:::helper
+  W["governed matching signal 才执行<br/>harness_checkpoint.py append"]:::helper
   X["最终输出<br/>阶段、已读来源、skill 路由、验证证据、阻塞项"]:::router
   Y["阻断<br/>缺少凭据、远程授权、破坏性操作、安全泄漏"]:::danger
 
@@ -632,7 +632,7 @@ flowchart TD
         <div class="grid">
           <article class="stage-card" style="--card-accent: var(--blue)">
             <h3>启动与恢复</h3>
-            <p>用于新会话、接手 handoff、状态不明或需要先读 repo 事实。</p>
+            <p>仅用于 governed 的 recovery、handoff、ownership、private-data、remote、destructive、malformed 或 retained-profile escalation signal；light 不运行这些 helpers。</p>
             <div class="badges"><span class="badge">delivery-harness-framework</span><span class="badge">harness_recover.py</span><span class="badge">harness_env_probe.py</span></div>
           </article>
           <article class="stage-card" style="--card-accent: var(--green)">
@@ -717,7 +717,7 @@ flowchart TD
               </tr>
               <tr>
                 <td><code>scripts/harness_checkpoint.py</code></td>
-                <td>阶段转换、重大实现切片验证后、远程/发布前、结束会话前。</td>
+                <td>仅在 matching governed escalation signal 要求 durable checkpoint 时。</td>
                 <td>追加 <code>docs/harness-state.md</code>，记录 changed surfaces、验证、blockers、next safe task。</td>
               </tr>
             </tbody>
