@@ -43,7 +43,16 @@ def validate_checkpoint_artifact(value: object) -> list[str]:
     required_evidence = {"command", "exit_code", "key_output", "timestamp", "freshness"}
     if not isinstance(verification, dict) or set(verification) != required_evidence:
         errors.append("verification_evidence must contain all five structured fields")
-    elif verification.get("command") is not None:
+    elif verification.get("command") is None:
+        if value.get("phase") != "handoff":
+            errors.append("unverified evidence is only valid for handoff checkpoints")
+        if verification.get("exit_code") is not None or verification.get("key_output") is not None:
+            errors.append("unverified evidence exit_code and key_output must be null")
+        if not isinstance(verification.get("timestamp"), str) or not verification["timestamp"].strip():
+            errors.append("unverified evidence timestamp must be non-empty")
+        if verification.get("freshness") != "unknown":
+            errors.append("unverified evidence freshness must be unknown")
+    else:
         if not isinstance(verification.get("command"), str) or not verification["command"].strip():
             errors.append("verification_evidence.command must be non-empty")
         if not isinstance(verification.get("exit_code"), int):

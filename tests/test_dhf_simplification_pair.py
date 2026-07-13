@@ -404,6 +404,36 @@ class DhfSimplificationPairTests(unittest.TestCase):
                     self.assertIn("ERROR:", proc.stderr)
                     self.assertEqual(state.read_text(encoding="utf-8"), original)
 
+    def test_checkpoint_writer_accepts_only_exact_verified_or_handoff_unverified_evidence(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            repo = Path(tmp)
+            docs = repo / "docs"
+            docs.mkdir()
+            subprocess.run(["git", "init", "-q"], cwd=repo, check=True)
+            state = docs / "harness-state.md"
+            base_state = "# Harness State\n\n- phase: research\n- next_safe_task: none\n\n## State Log\n"
+            state.write_text(base_state, encoding="utf-8")
+            command = [sys.executable, str(ROOT / "scripts" / "harness_checkpoint.py"), "append",
+                       "--repo-root", str(repo), "--phase", "handoff", "--summary", "blocked",
+                       "--allow-unverified", "--blocker", "credential required", "--next-safe-task", "ask owner"]
+            valid = subprocess.run(command, cwd=repo, capture_output=True, text=True, check=False)
+            self.assertEqual(valid.returncode, 0, valid.stderr)
+            line = next(line for line in reversed(state.read_text(encoding="utf-8").splitlines()) if line.startswith("- checkpoint_data: "))
+            artifact = json.loads(line.removeprefix("- checkpoint_data: "))
+            self.assertEqual(
+                artifact["verification_evidence"],
+                {"command": None, "exit_code": None, "key_output": None,
+                 "timestamp": artifact["verification_evidence"]["timestamp"], "freshness": "unknown"},
+            )
+
+            state.write_text(base_state, encoding="utf-8")
+            invalid = subprocess.run(
+                [*command[:command.index("handoff")], "development", *command[command.index("handoff") + 1:]],
+                cwd=repo, capture_output=True, text=True, check=False,
+            )
+            self.assertEqual(invalid.returncode, 1)
+            self.assertEqual(state.read_text(encoding="utf-8"), base_state)
+
     def test_recover_distinguishes_absent_malformed_checkpoint_and_preserves_latest_event_semantics(self):
         with tempfile.TemporaryDirectory() as tmp:
             repo = Path(tmp) / "repo"
@@ -461,6 +491,9 @@ class DhfSimplificationPairTests(unittest.TestCase):
             {"schema":"dhf_checkpoint_v1","phase":"bogus","constraints":["no_remote"],"ownership":{"boundary":"task"},"next_action":{"command":"python3 next.py"},"verification_evidence":{"command":"python3 check.py","exit_code":0,"key_output":"ok","timestamp":"2026-07-12T00:00:00Z","freshness":"fresh"}},
             {"schema":"dhf_checkpoint_v1","phase":"development","constraints":[""],"ownership":{"boundary":"task"},"next_action":{"command":"python3 next.py"},"verification_evidence":{"command":"python3 check.py","exit_code":0,"key_output":"ok","timestamp":"2026-07-12T00:00:00Z","freshness":"fresh"}},
             {"schema":"dhf_checkpoint_v1","phase":"development","constraints":["no_remote"],"ownership":{},"next_action":{"command":"","args":[]},"verification_evidence":{"command":"python3 check.py","exit_code":"0","key_output":"ok","timestamp":"2026-07-12T00:00:00Z","freshness":"fresh"}},
+            {"schema":"dhf_checkpoint_v1","phase":"development","constraints":[],"ownership":{},"next_action":{"command":"ask owner"},"verification_evidence":{"command":None,"exit_code":None,"key_output":None,"timestamp":"2026-07-12T00:00:00Z","freshness":"unknown"}},
+            {"schema":"dhf_checkpoint_v1","phase":"handoff","constraints":[],"ownership":{},"next_action":{"command":"ask owner"},"verification_evidence":{"command":None,"exit_code":0,"key_output":None,"timestamp":"2026-07-12T00:00:00Z","freshness":"unknown"}},
+            {"schema":"dhf_checkpoint_v1","phase":"handoff","constraints":[],"ownership":{},"next_action":{"command":"ask owner"},"verification_evidence":{"command":None,"exit_code":None,"key_output":"invented","timestamp":"2026-07-12T00:00:00Z","freshness":"unknown"}},
         )
         with tempfile.TemporaryDirectory() as tmp:
             repo = Path(tmp) / "repo"

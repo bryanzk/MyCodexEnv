@@ -19,9 +19,10 @@
     {
       "id": "LIGHT-EXPLANATION",
       "input": {
-        "prompt": "Use a complex analysis to explain why this pure function is deterministic; do not edit files.",
+        "prompt": "Use DHF for this complex task: explain why this pure function is deterministic; do not edit files.",
         "cwd_class": "generic_repo",
-        "activation_status": "explicitly_activated_generic"
+        "activation_status": "explicitly_activated_generic",
+        "activation_reason": "explicit_opt_in"
       },
       "dirty_seed": "user-owned-unsaved-change\n",
       "baseline_capture": {
@@ -67,7 +68,7 @@
             "gates": [],
             "required_output_fields": [],
             "context_sha256": "029be32fad8c41aba63c9408d9c6abef2cc64931e5526036b0a7e5dc2b74a475",
-            "prompt_sha256": "fa99cf85cc5d277ef076528cd5def611e043086b895d63f46554e6d4da4d1af9"
+            "prompt_sha256": "b97786d64d2240c2ab4c09a76eb3589892aa5ae4b9f18ef42ec0d2b27259a728"
           }
         }
       },
@@ -79,9 +80,9 @@
           "base_commit": null,
           "context_sha256": "083d7111f9eb7e81bb4fd533023276f433a03a80a4ecbcfaeaaa46af1f745dd4",
           "context_utf8_bytes": 663,
-          "dispatcher_sha256": "0ac829a831fa5393dd5d18dc175668dada03e24b96c8f89917ceddd155ce498c",
+          "dispatcher_sha256": "574c46668b711d1073c768de86a52911508e6785343086ce073bba1f9c7296d5",
           "skill_sha256": "675f1789d3b492ff3fa84275d73b0ad1dee0bf63655063524d621c15d951bb93",
-          "dispatcher_route": "generic-activated:light",
+          "dispatcher_route": "generic-activated:light:explicit_opt_in",
           "profile_contract": {
             "escalation_signals": [],
             "mandatory_helpers": [],
@@ -119,7 +120,7 @@
             "gates": [],
             "required_output_fields": [],
             "context_sha256": "083d7111f9eb7e81bb4fd533023276f433a03a80a4ecbcfaeaaa46af1f745dd4",
-            "prompt_sha256": "fa99cf85cc5d277ef076528cd5def611e043086b895d63f46554e6d4da4d1af9"
+            "prompt_sha256": "b97786d64d2240c2ab4c09a76eb3589892aa5ae4b9f18ef42ec0d2b27259a728"
           }
         }
       }
@@ -127,9 +128,10 @@
     {
       "id": "LIGHT-BOUNDED-DOCS",
       "input": {
-        "prompt": "Make this complex but bounded spelling correction in one public Markdown paragraph and verify it.",
+        "prompt": "Use DHF for this complex task: make a bounded spelling correction in one public Markdown paragraph and verify it.",
         "cwd_class": "generic_repo",
-        "activation_status": "explicitly_activated_generic"
+        "activation_status": "explicitly_activated_generic",
+        "activation_reason": "explicit_opt_in"
       },
       "dirty_seed": "user-owned-unsaved-change\n",
       "baseline_capture": {
@@ -156,7 +158,7 @@
             "command": "/opt/homebrew/opt/python@3.14/bin/python3.14 -c 'from pathlib import Path; import sys; sys.exit(0 if Path(sys.argv[1]).is_file() else 1)' docs/example.md",
             "exit_code": 0,
             "key_output": "completed",
-            "timestamp": "2026-07-13T23:01:56Z"
+            "timestamp": "2026-07-13T23:34:03Z"
           },
           "remaining_risk_or_next_action": "none",
           "permission_outcome": "scoped_repo_write_allowed",
@@ -181,7 +183,7 @@
             "gates": [],
             "required_output_fields": [],
             "context_sha256": "029be32fad8c41aba63c9408d9c6abef2cc64931e5526036b0a7e5dc2b74a475",
-            "prompt_sha256": "7ed15c65f7446e7c2c2d146e791cfb0d3c48f9bf5a50d2cdcb878a1b803ca7a1"
+            "prompt_sha256": "c34f68ed6ae00364ced21e7ec202a778abb31d051deafcef0cc146098bc5bf27"
           }
         }
       },
@@ -193,9 +195,9 @@
           "base_commit": null,
           "context_sha256": "083d7111f9eb7e81bb4fd533023276f433a03a80a4ecbcfaeaaa46af1f745dd4",
           "context_utf8_bytes": 663,
-          "dispatcher_sha256": "0ac829a831fa5393dd5d18dc175668dada03e24b96c8f89917ceddd155ce498c",
+          "dispatcher_sha256": "574c46668b711d1073c768de86a52911508e6785343086ce073bba1f9c7296d5",
           "skill_sha256": "675f1789d3b492ff3fa84275d73b0ad1dee0bf63655063524d621c15d951bb93",
-          "dispatcher_route": "generic-activated:light",
+          "dispatcher_route": "generic-activated:light:explicit_opt_in",
           "profile_contract": {
             "escalation_signals": [],
             "mandatory_helpers": [],
@@ -214,7 +216,7 @@
             "command": "/opt/homebrew/opt/python@3.14/bin/python3.14 -c 'from pathlib import Path; import sys; sys.exit(0 if Path(sys.argv[1]).is_file() else 1)' docs/example.md",
             "exit_code": 0,
             "key_output": "completed",
-            "timestamp": "2026-07-13T23:01:56Z"
+            "timestamp": "2026-07-13T23:34:03Z"
           },
           "remaining_risk_or_next_action": "none",
           "permission_outcome": "scoped_repo_write_allowed",
@@ -239,7 +241,7 @@
             "gates": [],
             "required_output_fields": [],
             "context_sha256": "083d7111f9eb7e81bb4fd533023276f433a03a80a4ecbcfaeaaa46af1f745dd4",
-            "prompt_sha256": "7ed15c65f7446e7c2c2d146e791cfb0d3c48f9bf5a50d2cdcb878a1b803ca7a1"
+            "prompt_sha256": "c34f68ed6ae00364ced21e7ec202a778abb31d051deafcef0cc146098bc5bf27"
           }
         }
       }
@@ -247,9 +249,10 @@
     {
       "id": "LIGHT-ONE-FILE-SAFE",
       "input": {
-        "prompt": "Apply a complex but safe one-file constant rename with no public API change and run its narrow test.",
+        "prompt": "Use DHF for this complex task: apply a safe one-file constant rename with no public API change and run its narrow test.",
         "cwd_class": "generic_repo",
-        "activation_status": "explicitly_activated_generic"
+        "activation_status": "explicitly_activated_generic",
+        "activation_reason": "explicit_opt_in"
       },
       "dirty_seed": "user-owned-unsaved-change\n",
       "baseline_capture": {
@@ -276,7 +279,7 @@
             "command": "/opt/homebrew/opt/python@3.14/bin/python3.14 -c 'from pathlib import Path; import sys; sys.exit(0 if Path(sys.argv[1]).is_file() else 1)' src/example.py",
             "exit_code": 0,
             "key_output": "completed",
-            "timestamp": "2026-07-13T23:01:56Z"
+            "timestamp": "2026-07-13T23:34:03Z"
           },
           "remaining_risk_or_next_action": "none",
           "permission_outcome": "scoped_repo_write_allowed",
@@ -301,7 +304,7 @@
             "gates": [],
             "required_output_fields": [],
             "context_sha256": "029be32fad8c41aba63c9408d9c6abef2cc64931e5526036b0a7e5dc2b74a475",
-            "prompt_sha256": "046b0136cc37bf9f5b9876015070ef60e5dbb526d7774d88611d893ad3c990c1"
+            "prompt_sha256": "1f2800fe61222d631712389ca2696f08abaaaddee1916a3c13fdaed81da2b38c"
           }
         }
       },
@@ -313,9 +316,9 @@
           "base_commit": null,
           "context_sha256": "083d7111f9eb7e81bb4fd533023276f433a03a80a4ecbcfaeaaa46af1f745dd4",
           "context_utf8_bytes": 663,
-          "dispatcher_sha256": "0ac829a831fa5393dd5d18dc175668dada03e24b96c8f89917ceddd155ce498c",
+          "dispatcher_sha256": "574c46668b711d1073c768de86a52911508e6785343086ce073bba1f9c7296d5",
           "skill_sha256": "675f1789d3b492ff3fa84275d73b0ad1dee0bf63655063524d621c15d951bb93",
-          "dispatcher_route": "generic-activated:light",
+          "dispatcher_route": "generic-activated:light:explicit_opt_in",
           "profile_contract": {
             "escalation_signals": [],
             "mandatory_helpers": [],
@@ -334,7 +337,7 @@
             "command": "/opt/homebrew/opt/python@3.14/bin/python3.14 -c 'from pathlib import Path; import sys; sys.exit(0 if Path(sys.argv[1]).is_file() else 1)' src/example.py",
             "exit_code": 0,
             "key_output": "completed",
-            "timestamp": "2026-07-13T23:01:56Z"
+            "timestamp": "2026-07-13T23:34:03Z"
           },
           "remaining_risk_or_next_action": "none",
           "permission_outcome": "scoped_repo_write_allowed",
@@ -359,7 +362,7 @@
             "gates": [],
             "required_output_fields": [],
             "context_sha256": "083d7111f9eb7e81bb4fd533023276f433a03a80a4ecbcfaeaaa46af1f745dd4",
-            "prompt_sha256": "046b0136cc37bf9f5b9876015070ef60e5dbb526d7774d88611d893ad3c990c1"
+            "prompt_sha256": "1f2800fe61222d631712389ca2696f08abaaaddee1916a3c13fdaed81da2b38c"
           }
         }
       }
@@ -367,9 +370,10 @@
     {
       "id": "LIGHT-TRIVIAL-FORMAT",
       "input": {
-        "prompt": "Perform this complex request only by formatting the supplied local text; preserve every word.",
+        "prompt": "Use DHF for this complex task only to format the supplied local text; preserve every word.",
         "cwd_class": "generic_repo",
-        "activation_status": "explicitly_activated_generic"
+        "activation_status": "explicitly_activated_generic",
+        "activation_reason": "explicit_opt_in"
       },
       "dirty_seed": "user-owned-unsaved-change\n",
       "baseline_capture": {
@@ -415,7 +419,7 @@
             "gates": [],
             "required_output_fields": [],
             "context_sha256": "029be32fad8c41aba63c9408d9c6abef2cc64931e5526036b0a7e5dc2b74a475",
-            "prompt_sha256": "a5ea0c505ed3a62e6b49c7f6bc9c4e76b182e90640c40da8be11d5a38e503f1d"
+            "prompt_sha256": "665ab3c7e5221b7847891ec4bf2a52e3563b6200e74e1731c0e7fee437da7024"
           }
         }
       },
@@ -427,9 +431,9 @@
           "base_commit": null,
           "context_sha256": "083d7111f9eb7e81bb4fd533023276f433a03a80a4ecbcfaeaaa46af1f745dd4",
           "context_utf8_bytes": 663,
-          "dispatcher_sha256": "0ac829a831fa5393dd5d18dc175668dada03e24b96c8f89917ceddd155ce498c",
+          "dispatcher_sha256": "574c46668b711d1073c768de86a52911508e6785343086ce073bba1f9c7296d5",
           "skill_sha256": "675f1789d3b492ff3fa84275d73b0ad1dee0bf63655063524d621c15d951bb93",
-          "dispatcher_route": "generic-activated:light",
+          "dispatcher_route": "generic-activated:light:explicit_opt_in",
           "profile_contract": {
             "escalation_signals": [],
             "mandatory_helpers": [],
@@ -467,7 +471,7 @@
             "gates": [],
             "required_output_fields": [],
             "context_sha256": "083d7111f9eb7e81bb4fd533023276f433a03a80a4ecbcfaeaaa46af1f745dd4",
-            "prompt_sha256": "a5ea0c505ed3a62e6b49c7f6bc9c4e76b182e90640c40da8be11d5a38e503f1d"
+            "prompt_sha256": "665ab3c7e5221b7847891ec4bf2a52e3563b6200e74e1731c0e7fee437da7024"
           }
         }
       }
@@ -475,9 +479,10 @@
     {
       "id": "STANDARD-LOCAL-FEATURE",
       "input": {
-        "prompt": "Implement a complex local-only parser option with tests and no network or runtime sync.",
+        "prompt": "Use DHF for this complex task: implement a local-only parser option with tests and no network or runtime sync.",
         "cwd_class": "generic_repo",
-        "activation_status": "explicitly_activated_generic"
+        "activation_status": "explicitly_activated_generic",
+        "activation_reason": "explicit_opt_in"
       },
       "dirty_seed": "user-owned-unsaved-change\n",
       "baseline_capture": {
@@ -504,7 +509,7 @@
             "command": "/opt/homebrew/opt/python@3.14/bin/python3.14 -c 'from pathlib import Path; import sys; sys.exit(0 if Path(sys.argv[1]).is_file() else 1)' src/parser_option.py",
             "exit_code": 0,
             "key_output": "completed",
-            "timestamp": "2026-07-13T23:01:57Z"
+            "timestamp": "2026-07-13T23:34:04Z"
           },
           "remaining_risk_or_next_action": "none",
           "permission_outcome": "local_repo_write_allowed",
@@ -529,7 +534,7 @@
             "gates": [],
             "required_output_fields": [],
             "context_sha256": "029be32fad8c41aba63c9408d9c6abef2cc64931e5526036b0a7e5dc2b74a475",
-            "prompt_sha256": "cc3962de26e12f1f533837d90985ac6206cc62a80640c070fae856c6514ec2dd"
+            "prompt_sha256": "32fc88646d046d541e3cd33a6588f706440d38af6dd0794ace842b0d78a4fc4b"
           }
         }
       },
@@ -541,9 +546,9 @@
           "base_commit": null,
           "context_sha256": "1c838eef7a3840bc89585fcef0c522282a648ec827baae67482b847df13a2a3f",
           "context_utf8_bytes": 670,
-          "dispatcher_sha256": "0ac829a831fa5393dd5d18dc175668dada03e24b96c8f89917ceddd155ce498c",
+          "dispatcher_sha256": "574c46668b711d1073c768de86a52911508e6785343086ce073bba1f9c7296d5",
           "skill_sha256": "675f1789d3b492ff3fa84275d73b0ad1dee0bf63655063524d621c15d951bb93",
-          "dispatcher_route": "generic-activated:standard",
+          "dispatcher_route": "generic-activated:standard:explicit_opt_in",
           "profile_contract": {
             "escalation_signals": [],
             "mandatory_helpers": [],
@@ -562,7 +567,7 @@
             "command": "/opt/homebrew/opt/python@3.14/bin/python3.14 -c 'from pathlib import Path; import sys; sys.exit(0 if Path(sys.argv[1]).is_file() else 1)' src/parser_option.py",
             "exit_code": 0,
             "key_output": "completed",
-            "timestamp": "2026-07-13T23:01:57Z"
+            "timestamp": "2026-07-13T23:34:04Z"
           },
           "remaining_risk_or_next_action": "none",
           "permission_outcome": "local_repo_write_allowed",
@@ -587,7 +592,7 @@
             "gates": [],
             "required_output_fields": [],
             "context_sha256": "1c838eef7a3840bc89585fcef0c522282a648ec827baae67482b847df13a2a3f",
-            "prompt_sha256": "cc3962de26e12f1f533837d90985ac6206cc62a80640c070fae856c6514ec2dd"
+            "prompt_sha256": "32fc88646d046d541e3cd33a6588f706440d38af6dd0794ace842b0d78a4fc4b"
           }
         }
       }
@@ -595,9 +600,10 @@
     {
       "id": "STANDARD-FAILING-TEST",
       "input": {
-        "prompt": "Investigate this complex local failing unit test, identify the cause, and report evidence without fixing it.",
+        "prompt": "Use DHF for this complex task: investigate a local failing unit test, identify the cause, and report evidence without fixing it.",
         "cwd_class": "generic_repo",
-        "activation_status": "explicitly_activated_generic"
+        "activation_status": "explicitly_activated_generic",
+        "activation_reason": "explicit_opt_in"
       },
       "dirty_seed": "user-owned-unsaved-change\n",
       "baseline_capture": {
@@ -623,8 +629,8 @@
           "verification_receipt": {
             "command": "/opt/homebrew/opt/python@3.14/bin/python3.14 test_failure.py",
             "exit_code": 1,
-            "key_output": "Traceback (most recent call last):   File \"/private/var/folders/mf/lxpn1ltx7t97r1v1k92vly1w0000gn/T/tmppiqx1rqq/test_failure.py\", line 1, in <module>     assert",
-            "timestamp": "2026-07-13T23:01:57Z"
+            "key_output": "Traceback (most recent call last):   File \"/private/var/folders/mf/lxpn1ltx7t97r1v1k92vly1w0000gn/T/tmpdbtpp0xa/test_failure.py\", line 1, in <module>     assert",
+            "timestamp": "2026-07-13T23:34:04Z"
           },
           "remaining_risk_or_next_action": "none",
           "permission_outcome": "read_only_diagnosis_allowed",
@@ -646,7 +652,7 @@
             "gates": [],
             "required_output_fields": [],
             "context_sha256": "029be32fad8c41aba63c9408d9c6abef2cc64931e5526036b0a7e5dc2b74a475",
-            "prompt_sha256": "3aae8a59575e29375ed8deedbed49004ff09ecc12962feaadb1cf9c4378e769d"
+            "prompt_sha256": "52fb55684f2cbf76a0c4241bc74303b923c3f5d175d6cb22cfcfe1654848f7c3"
           }
         }
       },
@@ -658,9 +664,9 @@
           "base_commit": null,
           "context_sha256": "1c838eef7a3840bc89585fcef0c522282a648ec827baae67482b847df13a2a3f",
           "context_utf8_bytes": 670,
-          "dispatcher_sha256": "0ac829a831fa5393dd5d18dc175668dada03e24b96c8f89917ceddd155ce498c",
+          "dispatcher_sha256": "574c46668b711d1073c768de86a52911508e6785343086ce073bba1f9c7296d5",
           "skill_sha256": "675f1789d3b492ff3fa84275d73b0ad1dee0bf63655063524d621c15d951bb93",
-          "dispatcher_route": "generic-activated:standard",
+          "dispatcher_route": "generic-activated:standard:explicit_opt_in",
           "profile_contract": {
             "escalation_signals": [],
             "mandatory_helpers": [],
@@ -678,8 +684,8 @@
           "verification_receipt": {
             "command": "/opt/homebrew/opt/python@3.14/bin/python3.14 test_failure.py",
             "exit_code": 1,
-            "key_output": "Traceback (most recent call last):   File \"/private/var/folders/mf/lxpn1ltx7t97r1v1k92vly1w0000gn/T/tmpi9xjsae6/test_failure.py\", line 1, in <module>     assert",
-            "timestamp": "2026-07-13T23:01:58Z"
+            "key_output": "Traceback (most recent call last):   File \"/private/var/folders/mf/lxpn1ltx7t97r1v1k92vly1w0000gn/T/tmpc9zu3vk9/test_failure.py\", line 1, in <module>     assert",
+            "timestamp": "2026-07-13T23:34:04Z"
           },
           "remaining_risk_or_next_action": "none",
           "permission_outcome": "read_only_diagnosis_allowed",
@@ -701,7 +707,7 @@
             "gates": [],
             "required_output_fields": [],
             "context_sha256": "1c838eef7a3840bc89585fcef0c522282a648ec827baae67482b847df13a2a3f",
-            "prompt_sha256": "3aae8a59575e29375ed8deedbed49004ff09ecc12962feaadb1cf9c4378e769d"
+            "prompt_sha256": "52fb55684f2cbf76a0c4241bc74303b923c3f5d175d6cb22cfcfe1654848f7c3"
           }
         }
       }
@@ -709,9 +715,10 @@
     {
       "id": "STANDARD-SCOPED-REFACTOR",
       "input": {
-        "prompt": "Refactor this complex local module seam without behavior change and run focused regression tests.",
+        "prompt": "Use DHF for this complex task: refactor a local module seam without behavior change and run focused regression tests.",
         "cwd_class": "generic_repo",
-        "activation_status": "explicitly_activated_generic"
+        "activation_status": "explicitly_activated_generic",
+        "activation_reason": "explicit_opt_in"
       },
       "dirty_seed": "user-owned-unsaved-change\n",
       "baseline_capture": {
@@ -738,7 +745,7 @@
             "command": "/opt/homebrew/opt/python@3.14/bin/python3.14 -c 'from pathlib import Path; import sys; sys.exit(0 if Path(sys.argv[1]).is_file() else 1)' src/module_seam.py",
             "exit_code": 0,
             "key_output": "completed",
-            "timestamp": "2026-07-13T23:01:58Z"
+            "timestamp": "2026-07-13T23:34:05Z"
           },
           "remaining_risk_or_next_action": "none",
           "permission_outcome": "scoped_refactor_allowed",
@@ -763,7 +770,7 @@
             "gates": [],
             "required_output_fields": [],
             "context_sha256": "029be32fad8c41aba63c9408d9c6abef2cc64931e5526036b0a7e5dc2b74a475",
-            "prompt_sha256": "daf75df4c1ad9d10af70fc8250ab6b936a33d6772767541f68e228a868c87885"
+            "prompt_sha256": "93a593b75a31fca8db51f5395bfb256466eaf2ea7808b0b2dcdb534a6dc2e2e7"
           }
         }
       },
@@ -775,9 +782,9 @@
           "base_commit": null,
           "context_sha256": "1c838eef7a3840bc89585fcef0c522282a648ec827baae67482b847df13a2a3f",
           "context_utf8_bytes": 670,
-          "dispatcher_sha256": "0ac829a831fa5393dd5d18dc175668dada03e24b96c8f89917ceddd155ce498c",
+          "dispatcher_sha256": "574c46668b711d1073c768de86a52911508e6785343086ce073bba1f9c7296d5",
           "skill_sha256": "675f1789d3b492ff3fa84275d73b0ad1dee0bf63655063524d621c15d951bb93",
-          "dispatcher_route": "generic-activated:standard",
+          "dispatcher_route": "generic-activated:standard:explicit_opt_in",
           "profile_contract": {
             "escalation_signals": [],
             "mandatory_helpers": [],
@@ -796,7 +803,7 @@
             "command": "/opt/homebrew/opt/python@3.14/bin/python3.14 -c 'from pathlib import Path; import sys; sys.exit(0 if Path(sys.argv[1]).is_file() else 1)' src/module_seam.py",
             "exit_code": 0,
             "key_output": "completed",
-            "timestamp": "2026-07-13T23:01:58Z"
+            "timestamp": "2026-07-13T23:34:05Z"
           },
           "remaining_risk_or_next_action": "none",
           "permission_outcome": "scoped_refactor_allowed",
@@ -821,7 +828,7 @@
             "gates": [],
             "required_output_fields": [],
             "context_sha256": "1c838eef7a3840bc89585fcef0c522282a648ec827baae67482b847df13a2a3f",
-            "prompt_sha256": "daf75df4c1ad9d10af70fc8250ab6b936a33d6772767541f68e228a868c87885"
+            "prompt_sha256": "93a593b75a31fca8db51f5395bfb256466eaf2ea7808b0b2dcdb534a6dc2e2e7"
           }
         }
       }
@@ -829,9 +836,10 @@
     {
       "id": "STANDARD-CLI-CHANGE",
       "input": {
-        "prompt": "Add a complex non-sensitive local CLI flag while preserving the existing exit-code contract.",
+        "prompt": "Use DHF for this complex task: add a non-sensitive local CLI flag while preserving the existing exit-code contract.",
         "cwd_class": "generic_repo",
-        "activation_status": "explicitly_activated_generic"
+        "activation_status": "explicitly_activated_generic",
+        "activation_reason": "explicit_opt_in"
       },
       "dirty_seed": "user-owned-unsaved-change\n",
       "baseline_capture": {
@@ -858,7 +866,7 @@
             "command": "/opt/homebrew/opt/python@3.14/bin/python3.14 -c 'from pathlib import Path; import sys; sys.exit(0 if Path(sys.argv[1]).is_file() else 1)' src/cli_flag.py",
             "exit_code": 0,
             "key_output": "completed",
-            "timestamp": "2026-07-13T23:01:58Z"
+            "timestamp": "2026-07-13T23:34:05Z"
           },
           "remaining_risk_or_next_action": "none",
           "permission_outcome": "local_cli_change_allowed",
@@ -883,7 +891,7 @@
             "gates": [],
             "required_output_fields": [],
             "context_sha256": "029be32fad8c41aba63c9408d9c6abef2cc64931e5526036b0a7e5dc2b74a475",
-            "prompt_sha256": "d1fab013d6a41a645b37beb13db46dcf164460f7c1cd3dcf23b05581570a2cf5"
+            "prompt_sha256": "f47ee97ab3c0cb9761e80ea79f7d766e6404f949e36bc0857f2641ddbe1a08df"
           }
         }
       },
@@ -895,9 +903,9 @@
           "base_commit": null,
           "context_sha256": "1c838eef7a3840bc89585fcef0c522282a648ec827baae67482b847df13a2a3f",
           "context_utf8_bytes": 670,
-          "dispatcher_sha256": "0ac829a831fa5393dd5d18dc175668dada03e24b96c8f89917ceddd155ce498c",
+          "dispatcher_sha256": "574c46668b711d1073c768de86a52911508e6785343086ce073bba1f9c7296d5",
           "skill_sha256": "675f1789d3b492ff3fa84275d73b0ad1dee0bf63655063524d621c15d951bb93",
-          "dispatcher_route": "generic-activated:standard",
+          "dispatcher_route": "generic-activated:standard:explicit_opt_in",
           "profile_contract": {
             "escalation_signals": [],
             "mandatory_helpers": [],
@@ -916,7 +924,7 @@
             "command": "/opt/homebrew/opt/python@3.14/bin/python3.14 -c 'from pathlib import Path; import sys; sys.exit(0 if Path(sys.argv[1]).is_file() else 1)' src/cli_flag.py",
             "exit_code": 0,
             "key_output": "completed",
-            "timestamp": "2026-07-13T23:01:58Z"
+            "timestamp": "2026-07-13T23:34:05Z"
           },
           "remaining_risk_or_next_action": "none",
           "permission_outcome": "local_cli_change_allowed",
@@ -941,7 +949,7 @@
             "gates": [],
             "required_output_fields": [],
             "context_sha256": "1c838eef7a3840bc89585fcef0c522282a648ec827baae67482b847df13a2a3f",
-            "prompt_sha256": "d1fab013d6a41a645b37beb13db46dcf164460f7c1cd3dcf23b05581570a2cf5"
+            "prompt_sha256": "f47ee97ab3c0cb9761e80ea79f7d766e6404f949e36bc0857f2641ddbe1a08df"
           }
         }
       }
@@ -949,9 +957,10 @@
     {
       "id": "STANDARD-LOCAL-UI",
       "input": {
-        "prompt": "Change this complex local UI empty-state behavior and verify the focused component interaction.",
+        "prompt": "Use DHF for this complex task: change local UI empty-state behavior and verify the focused component interaction.",
         "cwd_class": "generic_repo",
-        "activation_status": "explicitly_activated_generic"
+        "activation_status": "explicitly_activated_generic",
+        "activation_reason": "explicit_opt_in"
       },
       "dirty_seed": "user-owned-unsaved-change\n",
       "baseline_capture": {
@@ -978,7 +987,7 @@
             "command": "/opt/homebrew/opt/python@3.14/bin/python3.14 -c 'from pathlib import Path; import sys; sys.exit(0 if Path(sys.argv[1]).is_file() else 1)' src/empty_state.py",
             "exit_code": 0,
             "key_output": "completed",
-            "timestamp": "2026-07-13T23:01:59Z"
+            "timestamp": "2026-07-13T23:34:05Z"
           },
           "remaining_risk_or_next_action": "none",
           "permission_outcome": "local_ui_change_allowed",
@@ -1003,7 +1012,7 @@
             "gates": [],
             "required_output_fields": [],
             "context_sha256": "029be32fad8c41aba63c9408d9c6abef2cc64931e5526036b0a7e5dc2b74a475",
-            "prompt_sha256": "3ca0f40c79fc5ca2044c94435fff48170e98fc320ad77ff59806ab2d5b723a20"
+            "prompt_sha256": "54257d4cdaac0b3a009f64997fcce925178d9715725d2d6cb1290539850bcf20"
           }
         }
       },
@@ -1015,9 +1024,9 @@
           "base_commit": null,
           "context_sha256": "1c838eef7a3840bc89585fcef0c522282a648ec827baae67482b847df13a2a3f",
           "context_utf8_bytes": 670,
-          "dispatcher_sha256": "0ac829a831fa5393dd5d18dc175668dada03e24b96c8f89917ceddd155ce498c",
+          "dispatcher_sha256": "574c46668b711d1073c768de86a52911508e6785343086ce073bba1f9c7296d5",
           "skill_sha256": "675f1789d3b492ff3fa84275d73b0ad1dee0bf63655063524d621c15d951bb93",
-          "dispatcher_route": "generic-activated:standard",
+          "dispatcher_route": "generic-activated:standard:explicit_opt_in",
           "profile_contract": {
             "escalation_signals": [],
             "mandatory_helpers": [],
@@ -1036,7 +1045,7 @@
             "command": "/opt/homebrew/opt/python@3.14/bin/python3.14 -c 'from pathlib import Path; import sys; sys.exit(0 if Path(sys.argv[1]).is_file() else 1)' src/empty_state.py",
             "exit_code": 0,
             "key_output": "completed",
-            "timestamp": "2026-07-13T23:01:59Z"
+            "timestamp": "2026-07-13T23:34:05Z"
           },
           "remaining_risk_or_next_action": "none",
           "permission_outcome": "local_ui_change_allowed",
@@ -1061,7 +1070,7 @@
             "gates": [],
             "required_output_fields": [],
             "context_sha256": "1c838eef7a3840bc89585fcef0c522282a648ec827baae67482b847df13a2a3f",
-            "prompt_sha256": "3ca0f40c79fc5ca2044c94435fff48170e98fc320ad77ff59806ab2d5b723a20"
+            "prompt_sha256": "54257d4cdaac0b3a009f64997fcce925178d9715725d2d6cb1290539850bcf20"
           }
         }
       }
@@ -1069,9 +1078,10 @@
     {
       "id": "GOVERNED-RESUMED-TASK",
       "input": {
-        "prompt": "Resume this complex implementation from the durable handoff and preserve the recorded constraints.",
+        "prompt": "Use DHF for this complex task: resume implementation from the durable handoff and preserve the recorded constraints.",
         "cwd_class": "generic_repo",
-        "activation_status": "explicitly_activated_generic"
+        "activation_status": "explicitly_activated_generic",
+        "activation_reason": "explicit_opt_in"
       },
       "dirty_seed": "user-owned-unsaved-change\n",
       "baseline_capture": {
@@ -1098,7 +1108,7 @@
             "command": "git status --short",
             "exit_code": 0,
             "key_output": "M user-owned.txt",
-            "timestamp": "2026-07-13T23:01:59Z"
+            "timestamp": "2026-07-13T23:34:06Z"
           },
           "remaining_risk_or_next_action": "authorization required",
           "permission_outcome": "recover_before_write",
@@ -1132,7 +1142,7 @@
               "ownership"
             ],
             "context_sha256": "029be32fad8c41aba63c9408d9c6abef2cc64931e5526036b0a7e5dc2b74a475",
-            "prompt_sha256": "be0f4bcaba0732f502603d6b1411be76f65ea1e33f619f62b254e389e4ddac86"
+            "prompt_sha256": "57cc5704893fd918007f9bcc506e5cf63990913753303e80c35d76064178c169"
           }
         }
       },
@@ -1144,9 +1154,9 @@
           "base_commit": null,
           "context_sha256": "eba05fb31b6eb7a64a4c70b54a26346f6b4bbc47bba56d231692df8684940168",
           "context_utf8_bytes": 990,
-          "dispatcher_sha256": "0ac829a831fa5393dd5d18dc175668dada03e24b96c8f89917ceddd155ce498c",
+          "dispatcher_sha256": "574c46668b711d1073c768de86a52911508e6785343086ce073bba1f9c7296d5",
           "skill_sha256": "675f1789d3b492ff3fa84275d73b0ad1dee0bf63655063524d621c15d951bb93",
-          "dispatcher_route": "generic-activated:governed",
+          "dispatcher_route": "generic-activated:governed:explicit_opt_in",
           "profile_contract": {
             "escalation_signals": [
               "resume_or_handoff"
@@ -1180,7 +1190,7 @@
             "command": "git status --short",
             "exit_code": 0,
             "key_output": "M user-owned.txt",
-            "timestamp": "2026-07-13T23:01:59Z"
+            "timestamp": "2026-07-13T23:34:06Z"
           },
           "remaining_risk_or_next_action": "authorization required",
           "permission_outcome": "recover_before_write",
@@ -1215,7 +1225,7 @@
               "freshness_state"
             ],
             "context_sha256": "eba05fb31b6eb7a64a4c70b54a26346f6b4bbc47bba56d231692df8684940168",
-            "prompt_sha256": "be0f4bcaba0732f502603d6b1411be76f65ea1e33f619f62b254e389e4ddac86"
+            "prompt_sha256": "57cc5704893fd918007f9bcc506e5cf63990913753303e80c35d76064178c169"
           }
         }
       }
@@ -1223,9 +1233,10 @@
     {
       "id": "GOVERNED-DIRTY-CONFLICT",
       "input": {
-        "prompt": "Resolve this complex state-conflict where the requested file overlaps unknown dirty worktree ownership.",
+        "prompt": "Use DHF for this complex task: resolve a state-conflict where the requested file overlaps unknown dirty worktree ownership.",
         "cwd_class": "generic_repo",
-        "activation_status": "explicitly_activated_generic"
+        "activation_status": "explicitly_activated_generic",
+        "activation_reason": "explicit_opt_in"
       },
       "dirty_seed": "user-owned-unsaved-change\n",
       "baseline_capture": {
@@ -1252,7 +1263,7 @@
             "command": "git status --short",
             "exit_code": 0,
             "key_output": "M user-owned.txt",
-            "timestamp": "2026-07-13T23:01:59Z"
+            "timestamp": "2026-07-13T23:34:06Z"
           },
           "remaining_risk_or_next_action": "authorization required",
           "permission_outcome": "block_overlapping_write",
@@ -1282,7 +1293,7 @@
               "ownership"
             ],
             "context_sha256": "029be32fad8c41aba63c9408d9c6abef2cc64931e5526036b0a7e5dc2b74a475",
-            "prompt_sha256": "5816978b486bf72f2375990013f3ef81332875ac0782159f8720eb42d3bc0b76"
+            "prompt_sha256": "44a39488c9daba69ccf3322665fa6eec92574f98407c072d1defab4ae0b645db"
           }
         }
       },
@@ -1294,9 +1305,9 @@
           "base_commit": null,
           "context_sha256": "09aafd05d29fe8259fadda87aa1f3bdfd420fc3d421f75158a0121df6785ab13",
           "context_utf8_bytes": 974,
-          "dispatcher_sha256": "0ac829a831fa5393dd5d18dc175668dada03e24b96c8f89917ceddd155ce498c",
+          "dispatcher_sha256": "574c46668b711d1073c768de86a52911508e6785343086ce073bba1f9c7296d5",
           "skill_sha256": "675f1789d3b492ff3fa84275d73b0ad1dee0bf63655063524d621c15d951bb93",
-          "dispatcher_route": "generic-activated:governed",
+          "dispatcher_route": "generic-activated:governed:explicit_opt_in",
           "profile_contract": {
             "escalation_signals": [
               "unknown_or_overlapping_worktree_ownership"
@@ -1325,7 +1336,7 @@
             "command": "git status --short",
             "exit_code": 0,
             "key_output": "M user-owned.txt",
-            "timestamp": "2026-07-13T23:01:59Z"
+            "timestamp": "2026-07-13T23:34:06Z"
           },
           "remaining_risk_or_next_action": "authorization required",
           "permission_outcome": "block_overlapping_write",
@@ -1355,7 +1366,7 @@
               "ownership"
             ],
             "context_sha256": "09aafd05d29fe8259fadda87aa1f3bdfd420fc3d421f75158a0121df6785ab13",
-            "prompt_sha256": "5816978b486bf72f2375990013f3ef81332875ac0782159f8720eb42d3bc0b76"
+            "prompt_sha256": "44a39488c9daba69ccf3322665fa6eec92574f98407c072d1defab4ae0b645db"
           }
         }
       }
@@ -1363,9 +1374,10 @@
     {
       "id": "GOVERNED-EXTERNAL-CAPTURE",
       "input": {
-        "prompt": "Perform a complex review that may use a sanitized external capture but must not expose private data.",
+        "prompt": "Use DHF for this complex task: perform a review that may use a sanitized external capture but must not expose private data.",
         "cwd_class": "generic_repo",
-        "activation_status": "explicitly_activated_generic"
+        "activation_status": "explicitly_activated_generic",
+        "activation_reason": "explicit_opt_in"
       },
       "dirty_seed": "user-owned-unsaved-change\n",
       "baseline_capture": {
@@ -1392,7 +1404,7 @@
             "command": "git status --short",
             "exit_code": 0,
             "key_output": "M user-owned.txt",
-            "timestamp": "2026-07-13T23:02:00Z"
+            "timestamp": "2026-07-13T23:34:06Z"
           },
           "remaining_risk_or_next_action": "authorization required",
           "permission_outcome": "sanitized_capture_only",
@@ -1422,7 +1434,7 @@
             ],
             "required_output_fields": [],
             "context_sha256": "029be32fad8c41aba63c9408d9c6abef2cc64931e5526036b0a7e5dc2b74a475",
-            "prompt_sha256": "9f3172771f754d77cd66dcb46142af9ff239bd2b8600ab69fe6739fd746775ba"
+            "prompt_sha256": "fa1af5c8a0045200f90b9de765d9e180a9b507ddc926b0fc270b4f70bd8e90ec"
           }
         }
       },
@@ -1434,9 +1446,9 @@
           "base_commit": null,
           "context_sha256": "8bd0e271af16992c45f41484d677ae7f719872dc3d32c39f9d684a4bd23d9063",
           "context_utf8_bytes": 1012,
-          "dispatcher_sha256": "0ac829a831fa5393dd5d18dc175668dada03e24b96c8f89917ceddd155ce498c",
+          "dispatcher_sha256": "574c46668b711d1073c768de86a52911508e6785343086ce073bba1f9c7296d5",
           "skill_sha256": "675f1789d3b492ff3fa84275d73b0ad1dee0bf63655063524d621c15d951bb93",
-          "dispatcher_route": "generic-activated:governed",
+          "dispatcher_route": "generic-activated:governed:explicit_opt_in",
           "profile_contract": {
             "escalation_signals": [
               "external_capture_or_private_data"
@@ -1467,7 +1479,7 @@
             "command": "git status --short",
             "exit_code": 0,
             "key_output": "M user-owned.txt",
-            "timestamp": "2026-07-13T23:02:00Z"
+            "timestamp": "2026-07-13T23:34:06Z"
           },
           "remaining_risk_or_next_action": "authorization required",
           "permission_outcome": "sanitized_capture_only",
@@ -1499,7 +1511,7 @@
               "data_boundary"
             ],
             "context_sha256": "8bd0e271af16992c45f41484d677ae7f719872dc3d32c39f9d684a4bd23d9063",
-            "prompt_sha256": "9f3172771f754d77cd66dcb46142af9ff239bd2b8600ab69fe6739fd746775ba"
+            "prompt_sha256": "fa1af5c8a0045200f90b9de765d9e180a9b507ddc926b0fc270b4f70bd8e90ec"
           }
         }
       }
@@ -1507,9 +1519,10 @@
     {
       "id": "GOVERNED-REMOTE-DEPLOY",
       "input": {
-        "prompt": "Plan this complex remote deployment but do not connect, deploy, or read credentials without authorization.",
+        "prompt": "Use DHF for this complex task: plan a remote deployment but do not connect, deploy, or read credentials without authorization.",
         "cwd_class": "generic_repo",
-        "activation_status": "explicitly_activated_generic"
+        "activation_status": "explicitly_activated_generic",
+        "activation_reason": "explicit_opt_in"
       },
       "dirty_seed": "user-owned-unsaved-change\n",
       "baseline_capture": {
@@ -1537,7 +1550,7 @@
             "command": "git status --short",
             "exit_code": 0,
             "key_output": "M user-owned.txt",
-            "timestamp": "2026-07-13T23:02:00Z"
+            "timestamp": "2026-07-13T23:34:07Z"
           },
           "remaining_risk_or_next_action": "authorization required",
           "permission_outcome": "plan_only_until_authorized",
@@ -1570,7 +1583,7 @@
               "rollback"
             ],
             "context_sha256": "029be32fad8c41aba63c9408d9c6abef2cc64931e5526036b0a7e5dc2b74a475",
-            "prompt_sha256": "b527670a97ec92014eb96975942880945b180f07b4dbd045d6c4c6d783b79020"
+            "prompt_sha256": "577c3f107d54ab58b064885b04cf56a648cb2b63666de0b8496c890d7202f369"
           }
         }
       },
@@ -1582,9 +1595,9 @@
           "base_commit": null,
           "context_sha256": "5df1bcc9bb3a063af0bc4313baa9ebd88d760d13eb335e62cbd6d383610ef19d",
           "context_utf8_bytes": 1153,
-          "dispatcher_sha256": "0ac829a831fa5393dd5d18dc175668dada03e24b96c8f89917ceddd155ce498c",
+          "dispatcher_sha256": "574c46668b711d1073c768de86a52911508e6785343086ce073bba1f9c7296d5",
           "skill_sha256": "675f1789d3b492ff3fa84275d73b0ad1dee0bf63655063524d621c15d951bb93",
-          "dispatcher_route": "generic-activated:governed",
+          "dispatcher_route": "generic-activated:governed:explicit_opt_in",
           "profile_contract": {
             "escalation_signals": [
               "external_capture_or_private_data",
@@ -1621,7 +1634,7 @@
             "command": "git status --short",
             "exit_code": 0,
             "key_output": "M user-owned.txt",
-            "timestamp": "2026-07-13T23:02:00Z"
+            "timestamp": "2026-07-13T23:34:07Z"
           },
           "remaining_risk_or_next_action": "authorization required",
           "permission_outcome": "plan_only_until_authorized",
@@ -1658,7 +1671,7 @@
               "rollback"
             ],
             "context_sha256": "5df1bcc9bb3a063af0bc4313baa9ebd88d760d13eb335e62cbd6d383610ef19d",
-            "prompt_sha256": "b527670a97ec92014eb96975942880945b180f07b4dbd045d6c4c6d783b79020"
+            "prompt_sha256": "577c3f107d54ab58b064885b04cf56a648cb2b63666de0b8496c890d7202f369"
           }
         }
       }
@@ -1666,9 +1679,10 @@
     {
       "id": "GOVERNED-MULTI-AGENT",
       "input": {
-        "prompt": "Create a complex multi-agent implementation plan with disjoint write sets before any worker dispatch.",
+        "prompt": "Use DHF for this complex task: create a multi-agent implementation plan with disjoint write sets before any worker dispatch.",
         "cwd_class": "generic_repo",
-        "activation_status": "explicitly_activated_generic"
+        "activation_status": "explicitly_activated_generic",
+        "activation_reason": "explicit_opt_in"
       },
       "dirty_seed": "user-owned-unsaved-change\n",
       "baseline_capture": {
@@ -1695,7 +1709,7 @@
             "command": "git status --short",
             "exit_code": 0,
             "key_output": "M user-owned.txt",
-            "timestamp": "2026-07-13T23:02:00Z"
+            "timestamp": "2026-07-13T23:34:07Z"
           },
           "remaining_risk_or_next_action": "authorization required",
           "permission_outcome": "validate_team_before_dispatch",
@@ -1723,7 +1737,7 @@
             ],
             "required_output_fields": [],
             "context_sha256": "029be32fad8c41aba63c9408d9c6abef2cc64931e5526036b0a7e5dc2b74a475",
-            "prompt_sha256": "564c1c63ff46599f971bd948c74baf38eee11a1eb85489c227850319e399eb32"
+            "prompt_sha256": "a4562f9a6982331419065110963102c59cd6b554496cbd05ca2755c1b8d00941"
           }
         }
       },
@@ -1735,9 +1749,9 @@
           "base_commit": null,
           "context_sha256": "f802f3eb057baa4c36ccdc5231e1eb66f15bfa9437a17fb3327cf9e1ea95ea31",
           "context_utf8_bytes": 980,
-          "dispatcher_sha256": "0ac829a831fa5393dd5d18dc175668dada03e24b96c8f89917ceddd155ce498c",
+          "dispatcher_sha256": "574c46668b711d1073c768de86a52911508e6785343086ce073bba1f9c7296d5",
           "skill_sha256": "675f1789d3b492ff3fa84275d73b0ad1dee0bf63655063524d621c15d951bb93",
-          "dispatcher_route": "generic-activated:governed",
+          "dispatcher_route": "generic-activated:governed:explicit_opt_in",
           "profile_contract": {
             "escalation_signals": [
               "multiple_agents_or_overlapping_write_sets"
@@ -1766,7 +1780,7 @@
             "command": "git status --short",
             "exit_code": 0,
             "key_output": "M user-owned.txt",
-            "timestamp": "2026-07-13T23:02:00Z"
+            "timestamp": "2026-07-13T23:34:07Z"
           },
           "remaining_risk_or_next_action": "authorization required",
           "permission_outcome": "validate_team_before_dispatch",
@@ -1796,7 +1810,7 @@
               "agent_write_sets"
             ],
             "context_sha256": "f802f3eb057baa4c36ccdc5231e1eb66f15bfa9437a17fb3327cf9e1ea95ea31",
-            "prompt_sha256": "564c1c63ff46599f971bd948c74baf38eee11a1eb85489c227850319e399eb32"
+            "prompt_sha256": "a4562f9a6982331419065110963102c59cd6b554496cbd05ca2755c1b8d00941"
           }
         }
       }
@@ -1804,9 +1818,10 @@
     {
       "id": "GOVERNED-ARCH-SOURCE-CONFLICT",
       "input": {
-        "prompt": "Resolve this complex architecture state-conflict between two durable source documents before implementation.",
+        "prompt": "Use DHF for this complex task: resolve an architecture state-conflict between two durable source documents before implementation.",
         "cwd_class": "generic_repo",
-        "activation_status": "explicitly_activated_generic"
+        "activation_status": "explicitly_activated_generic",
+        "activation_reason": "explicit_opt_in"
       },
       "dirty_seed": "user-owned-unsaved-change\n",
       "baseline_capture": {
@@ -1833,7 +1848,7 @@
             "command": "git status --short",
             "exit_code": 0,
             "key_output": "M user-owned.txt",
-            "timestamp": "2026-07-13T23:02:01Z"
+            "timestamp": "2026-07-13T23:34:07Z"
           },
           "remaining_risk_or_next_action": "authorization required",
           "permission_outcome": "block_implementation_until_aligned",
@@ -1863,7 +1878,7 @@
             ],
             "required_output_fields": [],
             "context_sha256": "029be32fad8c41aba63c9408d9c6abef2cc64931e5526036b0a7e5dc2b74a475",
-            "prompt_sha256": "35c28253314a9162c26963545dfed33bc039d353820b32fbca75b97903da1cf3"
+            "prompt_sha256": "4c4abd6071ebe054c66c10ec807a0212e4046d13ca2c6c463d437527548e5b14"
           }
         }
       },
@@ -1875,9 +1890,9 @@
           "base_commit": null,
           "context_sha256": "a691eae08cae7c41052a0beabfce8b78a30eac23dda3be407b0bde71ba144eb0",
           "context_utf8_bytes": 1171,
-          "dispatcher_sha256": "0ac829a831fa5393dd5d18dc175668dada03e24b96c8f89917ceddd155ce498c",
+          "dispatcher_sha256": "574c46668b711d1073c768de86a52911508e6785343086ce073bba1f9c7296d5",
           "skill_sha256": "675f1789d3b492ff3fa84275d73b0ad1dee0bf63655063524d621c15d951bb93",
-          "dispatcher_route": "generic-activated:governed",
+          "dispatcher_route": "generic-activated:governed:explicit_opt_in",
           "profile_contract": {
             "escalation_signals": [
               "durable_architecture_source_conflict",
@@ -1912,7 +1927,7 @@
             "command": "git status --short",
             "exit_code": 0,
             "key_output": "M user-owned.txt",
-            "timestamp": "2026-07-13T23:02:01Z"
+            "timestamp": "2026-07-13T23:34:07Z"
           },
           "remaining_risk_or_next_action": "authorization required",
           "permission_outcome": "block_implementation_until_aligned",
@@ -1947,7 +1962,7 @@
               "ownership"
             ],
             "context_sha256": "a691eae08cae7c41052a0beabfce8b78a30eac23dda3be407b0bde71ba144eb0",
-            "prompt_sha256": "35c28253314a9162c26963545dfed33bc039d353820b32fbca75b97903da1cf3"
+            "prompt_sha256": "4c4abd6071ebe054c66c10ec807a0212e4046d13ca2c6c463d437527548e5b14"
           }
         }
       }
@@ -1957,7 +1972,8 @@
       "input": {
         "prompt": "Rename a local variable.",
         "cwd_class": "generic_repo",
-        "activation_status": "ordinary_continue_only"
+        "activation_status": "ordinary_continue_only",
+        "activation_reason": null
       },
       "dirty_seed": "user-owned-unsaved-change\n",
       "baseline_capture": {
@@ -2013,7 +2029,7 @@
           "base_commit": null,
           "context_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
           "context_utf8_bytes": 0,
-          "dispatcher_sha256": "0ac829a831fa5393dd5d18dc175668dada03e24b96c8f89917ceddd155ce498c",
+          "dispatcher_sha256": "574c46668b711d1073c768de86a52911508e6785343086ce073bba1f9c7296d5",
           "skill_sha256": "675f1789d3b492ff3fa84275d73b0ad1dee0bf63655063524d621c15d951bb93",
           "dispatcher_route": "continue-only",
           "profile_contract": {}
@@ -2056,7 +2072,8 @@
       "input": {
         "prompt": "Continue the local project task.",
         "cwd_class": "shipq_repo",
-        "activation_status": "shipq_delegated"
+        "activation_status": "shipq_delegated",
+        "activation_reason": null
       },
       "dirty_seed": "user-owned-unsaved-change\n",
       "baseline_capture": {
@@ -2112,7 +2129,7 @@
           "base_commit": null,
           "context_sha256": "b43f7f817ac17cc9a7c9ae29faa7f7870c2717f02aadaca015bd12bf5e4e9fb5",
           "context_utf8_bytes": 41,
-          "dispatcher_sha256": "0ac829a831fa5393dd5d18dc175668dada03e24b96c8f89917ceddd155ce498c",
+          "dispatcher_sha256": "574c46668b711d1073c768de86a52911508e6785343086ce073bba1f9c7296d5",
           "skill_sha256": "675f1789d3b492ff3fa84275d73b0ad1dee0bf63655063524d621c15d951bb93",
           "dispatcher_route": "shipq-delegated",
           "profile_contract": {}
