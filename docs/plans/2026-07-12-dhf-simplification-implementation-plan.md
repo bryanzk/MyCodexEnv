@@ -9,6 +9,10 @@ cross-session recovery for governed tasks.
 This plan is source-stage only until a separately authorized runtime-promotion
 slice.
 
+**Quick start:** ownership-probe the existing Slice 0-4 surfaces, review them
+against this contract, freeze the post-Slice-3 promotion manifest, and run Slice
+4 integration gates; do not imply Slice 5 or 6 authorization.
+
 ## Planning Artifact Gate
 
 The orchestrator-held external planning gate has been satisfied. Its criterion
@@ -25,7 +29,8 @@ implementation slice, runtime sync, or behavioral parity gate has run.
 - The bounded golden corpus shows no outcome/safety regression and at least 40%
   median of per-scenario relative reductions in both injected DHF context and
   mandatory helper calls for positive-baseline, explicitly activated
-  light/standard scenarios; zero baselines show absolute non-regression.
+  light/standard scenarios, with `n >= 9` for each positive cohort; zero
+  baselines show absolute non-regression.
 - Existing helper entry points and ShipQ lazy delegation remain compatible.
 - Repo gates pass, or any runtime-parity-only failure is explicitly isolated as
   pending the unauthorized runtime-sync boundary.
@@ -114,19 +119,26 @@ authority changes mode to HITL; it does not authorize a broader edit surface.
   `profile_hint` scenarios; add near-miss false-positive controls for `complex`,
   resume, takeover, handoff, and state-conflict trigger families.
 - Freeze `base_commit`, Base dispatcher SHA-256, Base generic skill SHA-256,
-  corpus SHA-256/schema version, and runner name/version/SHA-256. Fail on any
-  later identity drift.
+  paired-corpus SHA-256/schema version, helper-registry version/hash, and runner
+  name/version/SHA-256. Fail on any later identity drift.
+- Capture an informational `initial_candidate_manifest` for ownership/drift
+  diagnosis only; label it forbidden as a Slice 4 candidate input.
 - Add the governed field-level `checkpoint -> recover` fixture here, including a
   stale-evidence case; this fixture is mandatory Slice 0 infrastructure, not
   optional Slice 5 work.
 - Define `acceptance_trace_map` entries keyed by stable `AC-01` through `AC-18`
   with `criterion`, unioned `scenario_ids`/`test_ids`, and per-slice `producers`;
   each producer has `slice`, `producer_id`, fixture, and `evidence_status`. Bind
-  every `test_id` through `test_catalog` to a resolvable test callable.
+  every `test_id` through `test_catalog` and every `producer_id` through the
+  code-lane `producer_catalog`; reject slice/callable/artifact drift. AC-16 has
+  distinct Slice 0 and Slice 4 producer entries.
 - Define evidence states exactly: `planned`/`deferred` are nonterminal;
   `completed`/`blocked`/`not_applicable` are terminal. Slice 0 may initialize
   planned evidence, but each producing slice must terminalize its entries.
 - Add an executable AC-16 assertion that repo-source work did not mutate runtime.
+- Build the Slice 0 runtime observation manifest using the exact managed targets,
+  exclusions, lstat/symlink rules, pre/post hashes, and `changed_paths: []` from
+  the contract.
 
 ### GREEN
 - Validate corpus schema and unique scenario IDs.
@@ -143,7 +155,10 @@ authority changes mode to HITL; it does not authorize a broader edit surface.
 - Encode unverified checkpoints with the contract's exact null receipt fields,
   `status`/`freshness = unverified`, and a non-empty reason.
 
-### Expected surfaces
+### Expected Or Already-Present Surfaces
+Probe ownership and preimages before editing; implementation may already exist
+on the branch.
+
 - `tests/fixtures/dhf_simplification_scenarios.json`
 - Focused tests in `test_runner.py` or `tests/test_dhf_simplification.py`
 - Optional bounded measurement helper under `scripts/`
@@ -155,6 +170,8 @@ authority changes mode to HITL; it does not authorize a broader edit surface.
   field-level recover fixture validate.
 - AC-16's Slice 0 no-runtime assertion is terminal; evidence owned by later
   producing slices may remain `planned` only until those slices execute.
+- The validator derives and emits `gate_pass`; required producers pass only when
+  `completed`, never from `blocked` or an unapproved `not_applicable`.
 
 ## Slice 1 — Introduce Deterministic Governance Profiles
 
@@ -168,12 +185,25 @@ authority changes mode to HITL; it does not authorize a broader edit surface.
   activation reason, and same-dispatch/current-action risk-signal union directly.
 - Assert `DHF_ACTIVATION_V1` explicit opt-in vs compatibility-trigger pattern
   parity, profile-hint current-evaluation behavior, resume/handoff governed
-  routing, malformed-hint governed fallback, and false-positive controls.
+  routing, malformed-hint governed fallback, and false-positive controls. These
+  compatibility/hint/near-miss cases are focused unit controls, not paired-corpus
+  observations.
+- Add a dual-match unit-corpus case proving
+  `explicit_opt_in > compatibility_risk_trigger > profile_hint`.
+- Validate machine-readable `DHF_PROFILE_V1` against dispatcher constants:
+  governed-before-standard-before-light, exact signal IDs/patterns, every
+  standard structural branch, default light, hint max, signal union, and primary
+  signal priority.
+- Test cwd resolution success/failure, ShipQ resolved equality/descendant and
+  sibling rejection, plus adapter regular-file/symlink/trusted-parent rules.
 - Assert the feature switch enables only exact `"1"`; recognizes `"0"`,
   `"false"`, `"off"`, and `"legacy"` as rollback values; and sends every unknown
   value to legacy with a bounded diagnostic.
 - Assert no traceback, full skill leak, secret-path leak, or partial output.
 - Assert existing helper CLI entry points are callable here for AC-09.
+- Validate helper registry version/hash and count semantics: conditional
+  signal-only inclusion, exact-name union/deduplication, before-first-action
+  boundary, and zero-helper rules.
 
 ### GREEN
 - Add the smallest explicit classifier/contract needed by
@@ -230,11 +260,16 @@ authority changes mode to HITL; it does not authorize a broader edit surface.
 - Mark one canonical source for profile semantics and link other documents to it.
 - Keep public beginner documentation changes out of this slice unless a current
   statement becomes false.
+- After all Slice 3 edits and gates, freeze the immutable
+  `promotion_candidate_manifest` with exact dispatcher, skill, profile contract,
+  mirror, and source hashes. It supersedes the informational Slice 0 candidate
+  manifest for promotion purposes.
 
 ### Gate
 - `python3 scripts/check_surfaces.py --repo-root "$(pwd)" --check-public-nav`
 - Focused docs/contract consistency tests.
 - `git diff --check`.
+- Promotion candidate manifest validation passes and no source edit follows it.
 
 ## Slice 4 — Prove Behavioral Parity And Efficiency
 
@@ -242,29 +277,35 @@ authority changes mode to HITL; it does not authorize a broader edit surface.
 boundary change.
 
 ### Verification matrix
-For every scenario compare baseline and candidate on:
+For every paired scenario compare Base and promotion candidate only on:
 
 - accepted result behavior;
 - safety/permission outcome;
 - required verification receipt completeness;
 - dirty-worktree preservation;
 - recoverability when required;
-- selected profile and escalation reason;
-- injected-context measurement;
-- mandatory helper-call count.
+
+Separately compare the candidate's selected profile, `activation_reason`, signal
+union, gates, and helpers against the frozen scenario/`DHF_PROFILE_V1` oracle,
+not against Base labels. Context/helper efficiency remains paired measurement.
 
 Run only same-scenario paired comparisons with identical prompt, cwd class,
 activation, and measurement boundary. Keep context and helper reports separate.
-The bounded runner is deterministic local execution and makes no model call. It
-materializes the frozen Base and current candidate independently in isolated
+The bounded runner is deterministic local execution and makes no model call. Its
+only candidate identity is the immutable post-Slice-3
+`promotion_candidate_manifest`; the Slice 0 `initial_candidate_manifest` is
+rejected. Its only other inputs are frozen Base, paired corpus, and runner
+identities; helper-registry version/hash is embedded in corpus/runner identity.
+It materializes the frozen Base and promotion candidate independently in isolated
 directories, executes both, and derives assertions from raw route/context/task
 outputs. It rejects any handwritten/self-reported pass booleans, shared-module
-execution, Base/current/corpus/runner hash drift, or provenance mismatch. For
+execution, Base/promotion/corpus/helper-registry/runner hash drift, or provenance mismatch. For
 each metric and scenario with `b_i > 0`, compute `r_i = (b_i - c_i) / b_i` and
 use `median(r_i)` as the estimator; do not use a ratio of aggregate or median
-counts. The efficiency denominator includes only `explicit_opt_in` scenarios;
-compatibility-risk-triggered, profile-hint, and false-positive controls are
-reported separately. Put zero-baseline cases in a separate absolute table and
+counts. The paired corpus contains explicit-opt-in scenarios and its declared
+routing controls only; compatibility-risk-triggered, profile-hint, and
+near-miss/false-positive cases remain focused unit controls and are never paired
+observations. Put zero-baseline cases in a separate absolute table and
 require candidate zero; report both sample counts. When a metric's positive
 explicit-opt-in cohort has `n=0`, report `not_applicable` plus a reason and make
 no reduction claim; if promotion requires positive samples, the gate fails. Any
@@ -277,13 +318,16 @@ pre-registers repeats before data collection; it cannot satisfy this gate.
 - At least 40% paired median reduction independently for context and mandatory
   helper calls in the positive-baseline, explicitly activated light/standard
   subset.
+- Both positive-baseline cohorts have `n >= 9`; otherwise promotion fails.
 - Absolute non-regression for every zero-baseline context/helper observation.
 - Report sample count, median calculation, measurement boundary, raw bounded
   scenario results, and any outlier; do not claim population-wide significance.
 - The Slice 0 checkpoint/recover fixture passes field by field and stale evidence
   is not promoted; this is a mandatory Slice 4 parity gate.
 - AC-16's independent Slice 4 no-runtime-mutation assertion is terminal before
-  source promotion; Slice 0 evidence alone is insufficient.
+  source promotion; it is a fresh runtime pre/post observation manifest with the
+  exact managed targets, symlink rules, and `changed_paths: []`. Slice 0 evidence
+  alone is insufficient and cannot be reused.
 - Only after all Slice 4 gates pass may repo source change the absent-value switch
   default from `"0"` to `"1"`. Runtime remains unsynced. Invalid values still
   fail safely to legacy with a diagnostic, and rollback uses any recognized
@@ -341,15 +385,15 @@ The machine-readable corpus is authoritative; this table is its review mirror.
 | Contract area | AC IDs | Slice | Scenario producer | Primary evidence |
 | --- | --- | --- | --- | --- |
 | Result Invariants and completion claims | AC-01 | 2 | Slice 2 eval runner + light/standard/governed outputs | Output Contract evals, structured completion oracle, and taxonomy cases |
-| Profile selection/current hint | AC-02 | 1 | Slice 1 dispatcher runner + explicit/risk/hint/false-positive scenarios | Classifier, activation reason, stateless hint, current-signal union, and golden corpus |
-| Ordinary/opt-out/malformed routing | AC-03, AC-04, AC-06 | 0-1 | Dispatcher subprocess runner + routing controls | Continue-only, precedence, no-leak, and malformed-input assertions |
+| Profile selection/current hint | AC-02 | 1 | Slice 1 focused runner + explicit/risk/hint/false-positive unit controls | `DHF_PROFILE_V1`, activation tie-break, stateless hint, current-signal union, and branch coverage |
+| Ordinary/opt-out/malformed routing | AC-03, AC-04, AC-06 | 0-1 | Dispatcher subprocess runner + routing controls | Continue-only, precedence, cwd resolution, ShipQ boundary/trust, no-leak, and malformed-input assertions |
 | ShipQ lazy delegation | AC-05 | 0-1 | Import-tracing runner + ShipQ control | Lazy-delegation and no-generic-context assertions |
 | Conditional/governed helpers and gates | AC-07, AC-08 | 1-2 | Profile-contract runner + light/governed scenarios | Forbidden-light and mandatory-governed helper/gate assertions |
 | Helper compatibility | AC-09 | 1; optional 5 | Slice 1 CLI runner + governed helper scenarios | Existing helper callability; optional unified-entry compatibility |
 | Behavioral/safety/recovery parity | AC-10, AC-11, AC-17 | 0 fixture; 4 gate | Independent pair runner + all bounded outputs/recover fixture | Derived result, permission, receipt, dirty-preservation, and field-level recovery assertions |
-| Efficiency and bounded reporting | AC-12, AC-13, AC-14 | 0 fixture; 4 gate | Independent pair runner + activated cohort/routing controls | Per-scenario relative-reduction medians, zero table, raw results, and sample counts |
+| Efficiency and bounded reporting | AC-12, AC-13, AC-14 | 0 fixture; 4 gate | Independent pair runner + explicit-opt-in paired corpus | Frozen helper registry/count, `n >= 9` per positive cohort, relative-reduction medians, zero table, and raw results |
 | Source/mirror consistency | AC-15 | 3 | Surface checker + canonical contract fixture | Surface and contract mirror checks |
-| Runtime authorization boundary | AC-16 | 0 and 4 assertions | Slice 0/4 no-runtime runners | Two independently terminal no-runtime assertions; Slice 6 remains separately authorized |
+| Runtime authorization boundary | AC-16 | 0 and 4 assertions | Slice 0/4 independent runtime observers | Exact managed-target pre/post manifests, symlink checks, `changed_paths: []`; Slice 6 separately authorized |
 | Feature rollback | AC-18 | 1; 4 promotion gate | Dispatcher rollback runner + routing/helper controls | Recognized rollback aliases, legacy route/helper smoke, and unknown-value safe-legacy diagnostics |
 
 ## External Planning Review Boundary
@@ -370,13 +414,14 @@ python3 test_runner.py
 git diff --check
 ```
 
-For this planning-only task, a failure caused by unrelated pre-existing dirty
+For this document-review task, a failure caused by unrelated pre-existing dirty
 worktree changes must be isolated with focused checks and reported; it must not
 be hidden or fixed outside the two-file editable scope.
 
 ## Handoff
-- Do not append `docs/harness-state.md` merely for drafting these documents.
-- If implementation is authorized, begin with Slice 0 and the ownership gate.
+- The branch already contains the Slice 0-4 source implementation and expected
+  surfaces may already exist; ownership-probe them rather than recreating them.
+- The next task is review/integration: validate the implementation against this
+  contract, freeze the promotion candidate, and run fresh Slice 4 gates.
 - Do not start Slice 5 or Slice 6 by implication.
-- The next safe task after review is a user decision to authorize source-stage
-  implementation of Slices 0–4.
+- Do not append `docs/harness-state.md` merely for reviewing these documents.

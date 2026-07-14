@@ -169,18 +169,27 @@ using keys `cwd`, `workdir`, and `repo_root`.
 ```
 
 Every activated route records `activation_reason` as exactly
-`explicit_opt_in`, `compatibility_risk_trigger`, or `profile_hint`. Explicit
-opt-in and compatibility triggers share dispatcher precedence but remain
-separate cohorts. Resume/handoff triggers select `governed` from the current
-prompt. Corpus controls include near-miss/false-positive phrases for every broad
-compatibility trigger.
+`explicit_opt_in`, `compatibility_risk_trigger`, or `profile_hint`. If multiple
+reasons match, tie-break order is
+`explicit_opt_in > compatibility_risk_trigger > profile_hint`. Resume/handoff
+triggers select `governed` from the current prompt. A focused activation unit
+control set, outside the paired corpus, covers compatibility triggers, valid and
+malformed hints, near-miss false positives, and explicit-plus-compatibility dual
+matches whose recorded reason must be `explicit_opt_in`.
+
+`valid_cwd` means `Path(cwd).expanduser().resolve()` completes without
+`OSError`/`ValueError`; existence is not separately required. The ShipQ boundary
+uses the same resolution for cwd and `SHIPQ_ROOT` and matches only equality or a
+resolved descendant. Adapter loading follows the dispatcher trust contract:
+reject a symlink, require a regular file, and require its resolved parent to be
+`TRUSTED_HOOKS_ROOT` unless the explicit test-only untrusted-path flag is set.
 
 | Precedence | Input condition | Dispatcher outcome | Profile/context owner |
 | --- | --- | --- | --- |
 | 1 | payload is non-dict, malformed, or `cwd` is missing/invalid | safe continue-only; no traceback, partial output, or DHF context | none |
 | 2 | explicit opt-out is present | continue-only, even if ShipQ or generic activation also matches | none |
 | 3 | valid ShipQ cwd matches the lazy adapter boundary | lazy delegate without importing generic activated context | ShipQ adapter |
-| 4 | explicit opt-in, compatibility risk trigger, or valid current-evaluation profile hint matches | record the activation reason, then select `light`, `standard`, or `governed` from current input/risk signals | generic DHF profile selector |
+| 4 | any `dhf_profile_state` key is present, or explicit opt-in / compatibility risk trigger matches | valid hint joins the current profile max/union; malformed hint selects `governed`; record the tie-broken reason (`profile_hint` for malformed hint unless a higher reason matched) | generic DHF profile selector |
 | 5 | ordinary non-ShipQ request | continue-only with zero injected DHF context | none |
 
 ### Current Host State Boundary
@@ -203,6 +212,106 @@ lifecycle integration could add authoritative task/thread binding, persistence,
 sequence, expiry, and recovery, but that is a separate blocked capability outside
 Slices 0-4 and requires a new contract and host authorization.
 
+### Machine-Readable Profile Contract
+
+`DHF_PROFILE_V1` mirrors the dispatcher source. Governed signal matches take
+priority over standard structural matches; with no governed signal, any standard
+pattern selects `standard`, otherwise the default is `light`. All governed
+signals are retained in source order. A valid hint participates in the
+`PROFILE_RANK` maximum; if a governed hint is retained without a current
+governed match, `retained_higher_active_profile` is added. The primary signal is
+the first present item in `primary_signal_priority`, otherwise the first matched
+signal.
+
+```json
+{
+  "schema": "DHF_PROFILE_V1",
+  "match": "regex_search_ignore_case_any",
+  "profile_rank": {"light": 0, "standard": 1, "governed": 2},
+  "selection_order": ["governed_signals", "standard_patterns", "default_light"],
+  "governed_signal_order": [
+    "durable_architecture_source_conflict",
+    "unknown_or_overlapping_worktree_ownership",
+    "external_capture_or_private_data",
+    "remote_or_deployment_action",
+    "destructive_or_irreversible_action",
+    "multiple_agents_or_overlapping_write_sets",
+    "resume_or_handoff"
+  ],
+  "governed_patterns": {
+    "durable_architecture_source_conflict": [
+      "\\barchitecture\\b.*\\b(?:source|state)[-\\s]+conflict\\b",
+      "架构.*(?:来源|状态)冲突"
+    ],
+    "unknown_or_overlapping_worktree_ownership": [
+      "\\b(?:dirty|worktree|ownership)\\b.*\\b(?:conflict|overlap|unknown)\\b",
+      "\\bstate[-\\s]+conflict\\b"
+    ],
+    "external_capture_or_private_data": [
+      "\\bexternal\\s+capture\\b",
+      "\\b(?:private|customer|credential|secret)\\s+(?:data|capture|content)\\b",
+      "\\b(?:rotate|update|change|write|revoke|delete)\\b.*\\b(?:credential|token|api[-\\s]+key|secret)\\b",
+      "\\b(?:credential|token|api[-\\s]+key|secret)\\b.*\\b(?:rotate|update|change|write|revoke|delete|stored\\s+value)\\b",
+      "\\b(?:show|print|log|dump|expose|disclose|share|reveal)\\b.*\\b(?:credential|token|api[-\\s]+key|secret|private\\s+data)\\b",
+      "\\b(?:private|secret|confidential|customer)\\s+(?:record|records|information|data|content)\\b",
+      "\\b(?:read|access|inspect|fetch|load|export|copy)\\b.{0,48}\\b(?:credentials?|api[-\\s]+keys?|access[-\\s]+tokens?|client[-\\s]+secrets?|tokens?|secrets?)\\b",
+      "\\b(?:credentials?|api[-\\s]+keys?|access[-\\s]+tokens?|client[-\\s]+secrets?|tokens?|secrets?)\\b.{0,48}\\b(?:read|access|inspect|fetch|load|export|copy)\\b",
+      "(?:读取|访问|检查|获取|加载|导出|复制).{0,24}(?:凭据|API\\s*密钥|访问令牌|令牌|密钥|secret|token)"
+    ],
+    "remote_or_deployment_action": [
+      "\\bremote\\b", "\\bssh\\b", "\\bdeploy(?:ment|ed|ing)?\\b",
+      "\\bproduction\\b", "\\brelease\\b"
+    ],
+    "destructive_or_irreversible_action": [
+      "\\b(?:destructive|irreversible)\\b",
+      "\\b(?:delete|drop|truncate|purge|erase)\\b.*\\b(?:data|rows?|records?|table|database)\\b",
+      "\\b(?:data|database|schema)\\s+migration\\b.*\\b(?:delete|drop|truncate|irreversible)\\b",
+      "\\bgit\\s+push\\b[^\\n]*(?:--force(?:-with-lease)?|-f)(?:\\s|$)",
+      "\\bgit\\s+reset\\b[^\\n]*--hard(?:\\s|$)",
+      "\\brm\\s+-[a-z]*r[a-z]*f\\b|\\brm\\s+-[a-z]*f[a-z]*r\\b",
+      "\\b(?:drop|truncate)\\s+(?:table|database|schema)\\b"
+    ],
+    "multiple_agents_or_overlapping_write_sets": [
+      "\\bmulti(?:ple)?[-\\s]+agent", "\\bmultiple\\s+agents\\b",
+      "\\boverlapping\\s+write\\s+sets?\\b"
+    ],
+    "resume_or_handoff": [
+      "\\bresume(?:d)?\\b", "\\bhandoff\\b", "\\btake\\s*over\\b",
+      "\\btakeover\\b", "接手", "恢复", "交接"
+    ]
+  },
+  "standard_patterns": [
+    "\\bimplement\\b",
+    "\\b(?:local|parser)\\s+(?:feature|option|change)\\b",
+    "\\bfailing\\s+(?:unit\\s+)?test\\b",
+    "\\binvestigat(?:e|ion)\\b",
+    "\\bdebug(?:ging)?\\b",
+    "\\brefactor\\b",
+    "\\bcli\\s+(?:flag|change|option)\\b",
+    "\\bui\\s+(?:behavior|change|empty[-\\s]+state)\\b"
+  ],
+  "default_profile": "light",
+  "hint_rule": "max(valid_hint,current_selection); union current governed signals",
+  "synthetic_signal": "retained_higher_active_profile",
+  "primary_signal_priority": [
+    "durable_architecture_source_conflict",
+    "remote_or_deployment_action",
+    "first_matched_signal"
+  ],
+  "boundary_examples": [
+    {"text": "use DHF explain a bounded concept", "profile": "light"},
+    {"text": "use DHF implement local feature", "profile": "standard"},
+    {"text": "use DHF resume this handoff", "profile": "governed", "signal": "resume_or_handoff"},
+    {"text": "use DHF implement local feature", "hint": "governed", "profile": "governed", "signal": "retained_higher_active_profile"}
+  ]
+}
+```
+
+Focused profile tests cover hint maximum, the synthetic retained-governed
+signal, activation boundaries, and primary-signal priority. The paired corpus is
+explicit-opt-in only for activated scenarios and covers default light, every
+standard structural branch, every governed signal ID, and multi-signal union.
+
 ### Feature Switch Contract
 
 `DHF_PREPROMPT_SIMPLIFIED_PROFILES` enables simplified profiles only when its
@@ -213,6 +322,38 @@ simplified only after the Slice 4 promotion gate. Any other value emits a bounde
 diagnostic and fails safely to legacy. Runtime remains unchanged until Slice 6.
 Rollback uses a recognized alias and proves legacy dispatcher/helper callability;
 merely editing prose is not a rollback.
+
+### Mandatory Helper Registry And Count
+
+The helper metric counts distinct required helper CLI names before the first
+task action. For the current signal union, concatenate only registries whose
+signal fired, preserve first occurrence, and deduplicate by exact CLI basename.
+Unmatched signals contribute zero; light/standard scenarios with no governed
+signal have count zero. Calls after the first action and ordinary git/read/test
+commands are outside this metric. The frozen registry is:
+
+```json
+{
+  "schema": "DHF_HELPER_REGISTRY_V1",
+  "registry_version": 1,
+  "canonicalization": "json.dumps(sort_keys=true,separators=(',',':'),ensure_ascii=true) over helpers_by_signal only",
+  "registry_sha256": "34fc4b190508da0c9e143b718e953545cc3f2405e9b3c21e0323d6bbedad8f96",
+  "helpers_by_signal": {
+    "destructive_or_irreversible_action": ["harness_recover.py", "harness_env_probe.py", "harness_report.py", "harness_checkpoint.py"],
+    "durable_architecture_source_conflict": ["harness_recover.py", "harness_requirements.py", "harness_checkpoint.py"],
+    "external_capture_or_private_data": ["harness_env_probe.py", "harness_report.py", "harness_checkpoint.py"],
+    "malformed_profile_state": ["harness_recover.py", "harness_env_probe.py", "harness_report.py", "harness_checkpoint.py"],
+    "multiple_agents_or_overlapping_write_sets": ["harness_agent_team.py", "harness_checkpoint.py"],
+    "remote_or_deployment_action": ["harness_env_probe.py", "harness_report.py", "harness_checkpoint.py"],
+    "resume_or_handoff": ["harness_recover.py", "harness_env_probe.py", "harness_report.py", "harness_checkpoint.py"],
+    "retained_higher_active_profile": ["harness_recover.py", "harness_env_probe.py", "harness_report.py", "harness_checkpoint.py"],
+    "unknown_or_overlapping_worktree_ownership": ["harness_recover.py", "harness_checkpoint.py"]
+  }
+}
+```
+
+Slice 0 freezes this version/hash with the runner. Registry drift fails Slice 4;
+changing the registry requires an explicit version/hash update and re-baseline.
 
 ## Completion Claim Taxonomy
 
@@ -256,21 +397,39 @@ If a metric's positive-baseline explicit-opt-in cohort has `n = 0`, its result i
 `not_applicable` with a non-empty reason and no reduction claim. If the applicable
 promotion target requires positive samples, `n = 0` fails the promotion gate;
 `not_applicable` cannot be treated as passing or as a 0%/100% reduction.
+For this promotion, both the context and helper positive-baseline explicit-opt-in
+cohorts require `n >= 9`; smaller cohorts fail before the median is accepted.
 
-## Frozen Baseline Identity And Independent Execution
+## Frozen Identities And Independent Execution
 
 Slice 0 records one immutable Base identity: `base_commit`, SHA-256 of the Base
-dispatcher and Base generic skill bytes, corpus SHA-256, schema version, and
-runner name/version/SHA-256. The fixture also records the current candidate
-source hashes at capture time. Slice 4 executes Base and current independently
-from those exact bytes in isolated directories; it must not emulate Base by
-toggling the current implementation or accept a shared imported module.
+dispatcher and Base generic skill bytes, paired-corpus SHA-256/schema version,
+helper-registry version/hash, and runner name/version/SHA-256. Slice 0 also writes
+an `initial_candidate_manifest` describing the then-current source only for
+ownership/drift information; it is informational and is never a Slice 4 input.
+
+After Slice 3 gates pass, create and freeze an immutable
+`promotion_candidate_manifest` containing the exact dispatcher, skill, profile
+contract, normative mirrors, and source hashes to be promoted. Slice 4 accepts
+only that promotion manifest plus the frozen Base, paired corpus, and runner
+identities; the helper registry version/hash is embedded in the frozen corpus and
+runner identities, not supplied as a fifth mutable input. Any later source edit invalidates the promotion manifest
+and requires regeneration before Slice 4. Slice 4 executes Base and promotion
+candidate independently from exact bytes in isolated directories; it must not
+emulate Base by toggling the candidate or accept a shared imported module.
 
 Raw route/context/task output is the oracle input. The runner derives pass/fail
 from executable assertions and rejects handwritten/self-reported booleans such
 as `baseline_pass` or `candidate_accepted`. Any Base identity mismatch, current
 source-hash drift, corpus drift, runner drift, or shared execution provenance
 fails the comparison before metrics are accepted.
+
+Base is compared only on five outcome dimensions: accepted result behavior,
+safety/permission outcome, verification-receipt completeness, dirty-worktree
+preservation, and recoverability where required. Base has no obligation to emit
+candidate profile or activation-reason metadata. Candidate profile,
+`activation_reason`, escalation signals, helpers, and gates are evaluated against
+the frozen scenario/profile oracle, never against Base labels.
 
 ## Ownership And Rollback Ledger Contract
 
@@ -285,6 +444,31 @@ isolated task-owned edit, concurrent modification after the task write, and a
 task-created new file. They prove rollback restores `before_hash` only for the
 task-produced `after_hash`, never absorbs pre-existing dirt, and deletes a new
 file only when its current bytes still equal the task-produced bytes.
+
+## Source-Stage Runtime Observation Manifest
+
+AC-16 uses two fresh, independent read-only observations, one in Slice 0 and one
+in Slice 4. The managed targets are exactly:
+
+1. `~/.codex/hooks/dhf_preprompt.py`;
+2. files under `~/.codex/skills/delivery-harness-framework/` whose relative paths
+   exist as regular managed source files under repo
+   `codex/skills/delivery-harness-framework/`.
+
+Everything else is excluded: unmanaged files below the skill target, other
+hooks/skills, `~/.codex/plugins`, caches, evidence/log files, `__pycache__`,
+`*.pyc`, and directory metadata. Before hashing, use `lstat` on each managed root
+and target path. A symlink at a managed root or managed target is an observation
+failure; do not follow or hash through it. Missing managed targets are recorded
+as `absent`, not created.
+
+Each observation records `schema_version`, `slice`, UTC `captured_at`, expanded
+managed target roots, sorted managed relative paths, per-path lstat type and
+SHA-256/`absent`, a deterministic aggregate hash, and exclusions. It takes
+independent pre/post snapshots around that slice and emits `pre_hashes`,
+`post_hashes`, and sorted `changed_paths`. Source-stage gate success requires
+`changed_paths: []`. Slice 4 must recapture from the live runtime; it may not
+reuse Slice 0's manifest or timestamp.
 
 ## Recoverability Oracle
 
@@ -326,7 +510,8 @@ fresh/stale label on an unverified checkpoint fails validation.
 - [ ] **AC-01** The generic DHF Output Contract is reduced from an always-visible routing
       checklist to the four Result Invariants, with conditional governed fields.
 - [ ] **AC-02** A deterministic classifier or equivalent explicit routing contract maps
-      representative prompts to `light`, `standard`, or `governed`.
+      representative prompts to `light`, `standard`, or `governed` and matches
+      `DHF_PROFILE_V1` exactly.
 - [ ] **AC-03** Ordinary non-ShipQ prompts remain continue-only and receive no DHF context.
 - [ ] **AC-04** Explicit opt-out continues to win before all project and generic activation.
 - [ ] **AC-05** ShipQ continues to load only through lazy adapter delegation under its cwd.
@@ -345,7 +530,8 @@ fresh/stale label on an unverified checkpoint fails validation.
 - [ ] **AC-12** On same-scenario paired, explicitly activated light/standard observations
       with baseline greater than zero, the median of per-scenario relative
       reductions is at least 40% independently for injected DHF context and
-      mandatory helper invocations; context and helpers are reported separately.
+      mandatory helper invocations; each positive cohort has `n >= 9`, and
+      context/helpers use the frozen helper registry and are reported separately.
 - [ ] **AC-13** Zero-baseline observations are reported separately and show absolute
       non-regression (`candidate == 0`), not an undefined relative improvement.
 - [ ] **AC-14** Results include raw per-scenario measurements and sample counts; no claim
@@ -354,7 +540,8 @@ fresh/stale label on an unverified checkpoint fails validation.
       agree on the same three-profile contract.
 - [ ] **AC-16** Runtime sync remains blocked until source verification passes and the user
       separately authorizes runtime mutation; Slice 0 and Slice 4 each produce an
-      executable no-runtime-mutation assertion.
+      independent runtime observation manifest over the exact managed targets
+      with `changed_paths: []`.
 - [ ] **AC-17** Governed checkpoint fixtures pass the field-level recoverability oracle.
 - [ ] **AC-18** A feature-switch rollback smoke proves the simplified route can be
       disabled and legacy paths/helper entry points still execute.
@@ -378,6 +565,8 @@ The corpus owns an `acceptance_trace_map` keyed by the stable `AC-01` through
 and a non-empty `producers` array. Each producer contains `slice`, `producer_id`,
 its scenario/output fixture, and its own `evidence_status`; this supports AC-16's
 independent Slice 0 and Slice 4 evidence without flattening lifecycle state.
+`producer_id` resolves through the code-lane `producer_catalog` to its generating
+callable/artifact, and its registered slice must equal the trace slice.
 `test_ids` resolve through `test_catalog` entries in the exact callable form
 `path.py::ClassName.test_method` or `path.py::test_function`. Validation imports
 or otherwise resolves each binding and rejects missing/non-test callables,
@@ -390,7 +579,11 @@ Each producer's `evidence_status.state` is exactly one of `planned`, `deferred`,
 `completed`, `blocked`, and `not_applicable` are terminal and require a non-empty
 `evidence_id` or reason. Slice 0 may initialize a later slice's entry as
 `planned`, but the slice named by that producer must write a terminal state
-before its own gate can pass. `blocked` records a real boundary, not success.
+before its own gate can pass. A required source-stage producer succeeds only in
+`completed`; `blocked` is terminal failure. `not_applicable` is permitted only
+when the criterion explicitly declares that state and gives a reason, and it
+cannot independently satisfy a required AC. The validator emits per-producer and
+per-AC `gate_pass` booleans derived from these rules; stored booleans are rejected.
 AC-16 has two source-stage producers: Slice 0 and Slice 4 each terminally prove
 no runtime mutation. Slice 6 remains separately authorized and is not pre-marked
 as an AC-16 producer.
@@ -408,6 +601,9 @@ as an AC-16 producer.
 
 Runtime parity failures caused solely by the intentionally unsynced source-stage
 change must be reported as an expected pending gate, never presented as green.
+Any review attachment must carry fresh `command`, `exit_code`, `key_output`, and
+`timestamp` receipts for the claim it supports; historical ratings or prior-round
+scores are not evidence and are not included.
 
 ## Risks
 - A shorter skill may silently omit a rare governed route unless the golden
@@ -454,8 +650,10 @@ change must be reported as an expected pending gate, never presented as green.
 ## Handoff Notes
 - Editable scope for this planning task is limited to this contract and
   `docs/plans/2026-07-12-dhf-simplification-implementation-plan.md`.
-- During implementation, append a checkpoint only after a meaningful verified
-  slice or before runtime/remote/handoff boundaries.
+- Slice 0-4 source implementation is present on the branch; the next task is
+  review/integration against this revised contract, not greenfield implementation.
+- Expected implementation surfaces may pre-exist; ownership-probe them before
+  review fixes or manifest regeneration.
 - Preserve all non-task-owned changes found by the fresh worktree probe. Do not
   reset, clean, push, archive, or sync runtime as part of this contract-review
   task; staging/commit coordination follows the task owner.
