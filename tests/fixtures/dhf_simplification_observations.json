@@ -1,10 +1,10 @@
 {
-  "schema_version": 3,
+  "schema_version": 4,
   "scope": "Sanitized raw paired task outputs from deterministic local bounded execution plus checkpoint captures; no pass/fail labels, provider output, or local evidence logs.",
   "measurement_boundary": {
     "context_unit": "utf8_bytes_proxy",
     "context_boundary": "UTF-8 byte length of hookSpecificOutput.additionalContext returned by the repo-source dispatcher; wrapper and injected skill text are included, other system or adapter context is excluded.",
-    "mandatory_helper_boundary": "Count of distinct helper CLI entry points that the frozen Base SHA generic DHF contract required before the scenario's first task action, checked against the validator's fixed BASELINE_HELPER_ORACLE; git and ordinary read commands are not helper CLIs.",
+    "mandatory_helper_boundary": "Count of distinct helper CLI entry points derived from the immutable Base SHA generic DHF SKILL.md Helper Router and Startup Sequence before the scenario first task action; mentioned, available, forbidden, and post-action helpers are excluded.",
     "baseline_provenance": {
       "base_sha": "00818ae174f039899a2757ee4c67fcf9db1effa0",
       "oracle_kind": "frozen_measurement",
@@ -76,11 +76,11 @@
         "provenance": {
           "capture_mode": "deterministic_local_bounded_execution",
           "capture_version": "dhf-bounded-v1",
-          "source_contract": "simplified@repo-source",
+          "source_contract": "simplified@isolated-promotion-bytes",
           "base_commit": null,
           "context_sha256": "083d7111f9eb7e81bb4fd533023276f433a03a80a4ecbcfaeaaa46af1f745dd4",
           "context_utf8_bytes": 663,
-          "dispatcher_sha256": "574c46668b711d1073c768de86a52911508e6785343086ce073bba1f9c7296d5",
+          "dispatcher_sha256": "09ee9e2e4974afa017777357ff951b638feea371808b0568fa1ad765e3fd5724",
           "skill_sha256": "675f1789d3b492ff3fa84275d73b0ad1dee0bf63655063524d621c15d951bb93",
           "dispatcher_route": "generic-activated:light:explicit_opt_in",
           "profile_contract": {
@@ -107,7 +107,7 @@
           "dirty_snapshot": [
             " M user-owned.txt"
           ],
-          "capture_contract": "simplified@repo-source",
+          "capture_contract": "simplified@isolated-promotion-bytes",
           "execution_policy": {
             "intent": "explanation",
             "action": "execute_bounded",
@@ -158,7 +158,7 @@
             "command": "/opt/homebrew/opt/python@3.14/bin/python3.14 -c 'from pathlib import Path; import sys; sys.exit(0 if Path(sys.argv[1]).is_file() else 1)' docs/example.md",
             "exit_code": 0,
             "key_output": "completed",
-            "timestamp": "2026-07-13T23:54:56Z"
+            "timestamp": "2026-07-14T01:44:29Z"
           },
           "remaining_risk_or_next_action": "none",
           "permission_outcome": "scoped_repo_write_allowed",
@@ -191,11 +191,11 @@
         "provenance": {
           "capture_mode": "deterministic_local_bounded_execution",
           "capture_version": "dhf-bounded-v1",
-          "source_contract": "simplified@repo-source",
+          "source_contract": "simplified@isolated-promotion-bytes",
           "base_commit": null,
           "context_sha256": "083d7111f9eb7e81bb4fd533023276f433a03a80a4ecbcfaeaaa46af1f745dd4",
           "context_utf8_bytes": 663,
-          "dispatcher_sha256": "574c46668b711d1073c768de86a52911508e6785343086ce073bba1f9c7296d5",
+          "dispatcher_sha256": "09ee9e2e4974afa017777357ff951b638feea371808b0568fa1ad765e3fd5724",
           "skill_sha256": "675f1789d3b492ff3fa84275d73b0ad1dee0bf63655063524d621c15d951bb93",
           "dispatcher_route": "generic-activated:light:explicit_opt_in",
           "profile_contract": {
@@ -216,7 +216,7 @@
             "command": "/opt/homebrew/opt/python@3.14/bin/python3.14 -c 'from pathlib import Path; import sys; sys.exit(0 if Path(sys.argv[1]).is_file() else 1)' docs/example.md",
             "exit_code": 0,
             "key_output": "completed",
-            "timestamp": "2026-07-13T23:54:57Z"
+            "timestamp": "2026-07-14T01:44:29Z"
           },
           "remaining_risk_or_next_action": "none",
           "permission_outcome": "scoped_repo_write_allowed",
@@ -228,7 +228,7 @@
             " M user-owned.txt",
             "?? docs/"
           ],
-          "capture_contract": "simplified@repo-source",
+          "capture_contract": "simplified@isolated-promotion-bytes",
           "execution_policy": {
             "intent": "bounded_docs_edit",
             "action": "execute_bounded",
@@ -279,7 +279,7 @@
             "command": "/opt/homebrew/opt/python@3.14/bin/python3.14 -c 'from pathlib import Path; import sys; sys.exit(0 if Path(sys.argv[1]).is_file() else 1)' src/example.py",
             "exit_code": 0,
             "key_output": "completed",
-            "timestamp": "2026-07-13T23:54:57Z"
+            "timestamp": "2026-07-14T01:44:29Z"
           },
           "remaining_risk_or_next_action": "none",
           "permission_outcome": "scoped_repo_write_allowed",
@@ -312,11 +312,11 @@
         "provenance": {
           "capture_mode": "deterministic_local_bounded_execution",
           "capture_version": "dhf-bounded-v1",
-          "source_contract": "simplified@repo-source",
+          "source_contract": "simplified@isolated-promotion-bytes",
           "base_commit": null,
           "context_sha256": "083d7111f9eb7e81bb4fd533023276f433a03a80a4ecbcfaeaaa46af1f745dd4",
           "context_utf8_bytes": 663,
-          "dispatcher_sha256": "574c46668b711d1073c768de86a52911508e6785343086ce073bba1f9c7296d5",
+          "dispatcher_sha256": "09ee9e2e4974afa017777357ff951b638feea371808b0568fa1ad765e3fd5724",
           "skill_sha256": "675f1789d3b492ff3fa84275d73b0ad1dee0bf63655063524d621c15d951bb93",
           "dispatcher_route": "generic-activated:light:explicit_opt_in",
           "profile_contract": {
@@ -337,7 +337,7 @@
             "command": "/opt/homebrew/opt/python@3.14/bin/python3.14 -c 'from pathlib import Path; import sys; sys.exit(0 if Path(sys.argv[1]).is_file() else 1)' src/example.py",
             "exit_code": 0,
             "key_output": "completed",
-            "timestamp": "2026-07-13T23:54:57Z"
+            "timestamp": "2026-07-14T01:44:29Z"
           },
           "remaining_risk_or_next_action": "none",
           "permission_outcome": "scoped_repo_write_allowed",
@@ -349,7 +349,7 @@
             " M user-owned.txt",
             "?? src/"
           ],
-          "capture_contract": "simplified@repo-source",
+          "capture_contract": "simplified@isolated-promotion-bytes",
           "execution_policy": {
             "intent": "one_file_safe_change",
             "action": "execute_bounded",
@@ -427,11 +427,11 @@
         "provenance": {
           "capture_mode": "deterministic_local_bounded_execution",
           "capture_version": "dhf-bounded-v1",
-          "source_contract": "simplified@repo-source",
+          "source_contract": "simplified@isolated-promotion-bytes",
           "base_commit": null,
           "context_sha256": "083d7111f9eb7e81bb4fd533023276f433a03a80a4ecbcfaeaaa46af1f745dd4",
           "context_utf8_bytes": 663,
-          "dispatcher_sha256": "574c46668b711d1073c768de86a52911508e6785343086ce073bba1f9c7296d5",
+          "dispatcher_sha256": "09ee9e2e4974afa017777357ff951b638feea371808b0568fa1ad765e3fd5724",
           "skill_sha256": "675f1789d3b492ff3fa84275d73b0ad1dee0bf63655063524d621c15d951bb93",
           "dispatcher_route": "generic-activated:light:explicit_opt_in",
           "profile_contract": {
@@ -458,7 +458,7 @@
           "dirty_snapshot": [
             " M user-owned.txt"
           ],
-          "capture_contract": "simplified@repo-source",
+          "capture_contract": "simplified@isolated-promotion-bytes",
           "execution_policy": {
             "intent": "trivial_format",
             "action": "execute_bounded",
@@ -509,7 +509,7 @@
             "command": "/opt/homebrew/opt/python@3.14/bin/python3.14 -c 'from pathlib import Path; import sys; sys.exit(0 if Path(sys.argv[1]).is_file() else 1)' src/parser_option.py",
             "exit_code": 0,
             "key_output": "completed",
-            "timestamp": "2026-07-13T23:54:57Z"
+            "timestamp": "2026-07-14T01:44:30Z"
           },
           "remaining_risk_or_next_action": "none",
           "permission_outcome": "local_repo_write_allowed",
@@ -542,11 +542,11 @@
         "provenance": {
           "capture_mode": "deterministic_local_bounded_execution",
           "capture_version": "dhf-bounded-v1",
-          "source_contract": "simplified@repo-source",
+          "source_contract": "simplified@isolated-promotion-bytes",
           "base_commit": null,
           "context_sha256": "1c838eef7a3840bc89585fcef0c522282a648ec827baae67482b847df13a2a3f",
           "context_utf8_bytes": 670,
-          "dispatcher_sha256": "574c46668b711d1073c768de86a52911508e6785343086ce073bba1f9c7296d5",
+          "dispatcher_sha256": "09ee9e2e4974afa017777357ff951b638feea371808b0568fa1ad765e3fd5724",
           "skill_sha256": "675f1789d3b492ff3fa84275d73b0ad1dee0bf63655063524d621c15d951bb93",
           "dispatcher_route": "generic-activated:standard:explicit_opt_in",
           "profile_contract": {
@@ -567,7 +567,7 @@
             "command": "/opt/homebrew/opt/python@3.14/bin/python3.14 -c 'from pathlib import Path; import sys; sys.exit(0 if Path(sys.argv[1]).is_file() else 1)' src/parser_option.py",
             "exit_code": 0,
             "key_output": "completed",
-            "timestamp": "2026-07-13T23:54:58Z"
+            "timestamp": "2026-07-14T01:44:30Z"
           },
           "remaining_risk_or_next_action": "none",
           "permission_outcome": "local_repo_write_allowed",
@@ -579,7 +579,7 @@
             " M user-owned.txt",
             "?? src/"
           ],
-          "capture_contract": "simplified@repo-source",
+          "capture_contract": "simplified@isolated-promotion-bytes",
           "execution_policy": {
             "intent": "local_feature",
             "action": "execute_bounded",
@@ -629,8 +629,8 @@
           "verification_receipt": {
             "command": "/opt/homebrew/opt/python@3.14/bin/python3.14 test_failure.py",
             "exit_code": 1,
-            "key_output": "Traceback (most recent call last):   File \"/private/var/folders/mf/lxpn1ltx7t97r1v1k92vly1w0000gn/T/tmpuaeyq894/test_failure.py\", line 1, in <module>     assert",
-            "timestamp": "2026-07-13T23:54:58Z"
+            "key_output": "Traceback (most recent call last):   File \"/private/var/folders/mf/lxpn1ltx7t97r1v1k92vly1w0000gn/T/tmpgd0tovd_/test_failure.py\", line 1, in <module>     assert",
+            "timestamp": "2026-07-14T01:44:30Z"
           },
           "remaining_risk_or_next_action": "none",
           "permission_outcome": "read_only_diagnosis_allowed",
@@ -660,11 +660,11 @@
         "provenance": {
           "capture_mode": "deterministic_local_bounded_execution",
           "capture_version": "dhf-bounded-v1",
-          "source_contract": "simplified@repo-source",
+          "source_contract": "simplified@isolated-promotion-bytes",
           "base_commit": null,
           "context_sha256": "1c838eef7a3840bc89585fcef0c522282a648ec827baae67482b847df13a2a3f",
           "context_utf8_bytes": 670,
-          "dispatcher_sha256": "574c46668b711d1073c768de86a52911508e6785343086ce073bba1f9c7296d5",
+          "dispatcher_sha256": "09ee9e2e4974afa017777357ff951b638feea371808b0568fa1ad765e3fd5724",
           "skill_sha256": "675f1789d3b492ff3fa84275d73b0ad1dee0bf63655063524d621c15d951bb93",
           "dispatcher_route": "generic-activated:standard:explicit_opt_in",
           "profile_contract": {
@@ -684,8 +684,8 @@
           "verification_receipt": {
             "command": "/opt/homebrew/opt/python@3.14/bin/python3.14 test_failure.py",
             "exit_code": 1,
-            "key_output": "Traceback (most recent call last):   File \"/private/var/folders/mf/lxpn1ltx7t97r1v1k92vly1w0000gn/T/tmpkkaoc19w/test_failure.py\", line 1, in <module>     assert",
-            "timestamp": "2026-07-13T23:54:58Z"
+            "key_output": "Traceback (most recent call last):   File \"/private/var/folders/mf/lxpn1ltx7t97r1v1k92vly1w0000gn/T/tmp_fuskt_h/test_failure.py\", line 1, in <module>     assert",
+            "timestamp": "2026-07-14T01:44:30Z"
           },
           "remaining_risk_or_next_action": "none",
           "permission_outcome": "read_only_diagnosis_allowed",
@@ -694,7 +694,7 @@
           "dirty_snapshot": [
             " M user-owned.txt"
           ],
-          "capture_contract": "simplified@repo-source",
+          "capture_contract": "simplified@isolated-promotion-bytes",
           "execution_policy": {
             "intent": "failing_test_investigation",
             "action": "execute_bounded",
@@ -745,7 +745,7 @@
             "command": "/opt/homebrew/opt/python@3.14/bin/python3.14 -c 'from pathlib import Path; import sys; sys.exit(0 if Path(sys.argv[1]).is_file() else 1)' src/module_seam.py",
             "exit_code": 0,
             "key_output": "completed",
-            "timestamp": "2026-07-13T23:54:58Z"
+            "timestamp": "2026-07-14T01:44:30Z"
           },
           "remaining_risk_or_next_action": "none",
           "permission_outcome": "scoped_refactor_allowed",
@@ -778,11 +778,11 @@
         "provenance": {
           "capture_mode": "deterministic_local_bounded_execution",
           "capture_version": "dhf-bounded-v1",
-          "source_contract": "simplified@repo-source",
+          "source_contract": "simplified@isolated-promotion-bytes",
           "base_commit": null,
           "context_sha256": "1c838eef7a3840bc89585fcef0c522282a648ec827baae67482b847df13a2a3f",
           "context_utf8_bytes": 670,
-          "dispatcher_sha256": "574c46668b711d1073c768de86a52911508e6785343086ce073bba1f9c7296d5",
+          "dispatcher_sha256": "09ee9e2e4974afa017777357ff951b638feea371808b0568fa1ad765e3fd5724",
           "skill_sha256": "675f1789d3b492ff3fa84275d73b0ad1dee0bf63655063524d621c15d951bb93",
           "dispatcher_route": "generic-activated:standard:explicit_opt_in",
           "profile_contract": {
@@ -803,7 +803,7 @@
             "command": "/opt/homebrew/opt/python@3.14/bin/python3.14 -c 'from pathlib import Path; import sys; sys.exit(0 if Path(sys.argv[1]).is_file() else 1)' src/module_seam.py",
             "exit_code": 0,
             "key_output": "completed",
-            "timestamp": "2026-07-13T23:54:58Z"
+            "timestamp": "2026-07-14T01:44:31Z"
           },
           "remaining_risk_or_next_action": "none",
           "permission_outcome": "scoped_refactor_allowed",
@@ -815,7 +815,7 @@
             " M user-owned.txt",
             "?? src/"
           ],
-          "capture_contract": "simplified@repo-source",
+          "capture_contract": "simplified@isolated-promotion-bytes",
           "execution_policy": {
             "intent": "scoped_refactor",
             "action": "execute_bounded",
@@ -866,7 +866,7 @@
             "command": "/opt/homebrew/opt/python@3.14/bin/python3.14 -c 'from pathlib import Path; import sys; sys.exit(0 if Path(sys.argv[1]).is_file() else 1)' src/cli_flag.py",
             "exit_code": 0,
             "key_output": "completed",
-            "timestamp": "2026-07-13T23:54:58Z"
+            "timestamp": "2026-07-14T01:44:31Z"
           },
           "remaining_risk_or_next_action": "none",
           "permission_outcome": "local_cli_change_allowed",
@@ -899,11 +899,11 @@
         "provenance": {
           "capture_mode": "deterministic_local_bounded_execution",
           "capture_version": "dhf-bounded-v1",
-          "source_contract": "simplified@repo-source",
+          "source_contract": "simplified@isolated-promotion-bytes",
           "base_commit": null,
           "context_sha256": "1c838eef7a3840bc89585fcef0c522282a648ec827baae67482b847df13a2a3f",
           "context_utf8_bytes": 670,
-          "dispatcher_sha256": "574c46668b711d1073c768de86a52911508e6785343086ce073bba1f9c7296d5",
+          "dispatcher_sha256": "09ee9e2e4974afa017777357ff951b638feea371808b0568fa1ad765e3fd5724",
           "skill_sha256": "675f1789d3b492ff3fa84275d73b0ad1dee0bf63655063524d621c15d951bb93",
           "dispatcher_route": "generic-activated:standard:explicit_opt_in",
           "profile_contract": {
@@ -924,7 +924,7 @@
             "command": "/opt/homebrew/opt/python@3.14/bin/python3.14 -c 'from pathlib import Path; import sys; sys.exit(0 if Path(sys.argv[1]).is_file() else 1)' src/cli_flag.py",
             "exit_code": 0,
             "key_output": "completed",
-            "timestamp": "2026-07-13T23:54:59Z"
+            "timestamp": "2026-07-14T01:44:31Z"
           },
           "remaining_risk_or_next_action": "none",
           "permission_outcome": "local_cli_change_allowed",
@@ -936,7 +936,7 @@
             " M user-owned.txt",
             "?? src/"
           ],
-          "capture_contract": "simplified@repo-source",
+          "capture_contract": "simplified@isolated-promotion-bytes",
           "execution_policy": {
             "intent": "non_sensitive_cli_change",
             "action": "execute_bounded",
@@ -987,7 +987,7 @@
             "command": "/opt/homebrew/opt/python@3.14/bin/python3.14 -c 'from pathlib import Path; import sys; sys.exit(0 if Path(sys.argv[1]).is_file() else 1)' src/empty_state.py",
             "exit_code": 0,
             "key_output": "completed",
-            "timestamp": "2026-07-13T23:54:59Z"
+            "timestamp": "2026-07-14T01:44:31Z"
           },
           "remaining_risk_or_next_action": "none",
           "permission_outcome": "local_ui_change_allowed",
@@ -1020,11 +1020,11 @@
         "provenance": {
           "capture_mode": "deterministic_local_bounded_execution",
           "capture_version": "dhf-bounded-v1",
-          "source_contract": "simplified@repo-source",
+          "source_contract": "simplified@isolated-promotion-bytes",
           "base_commit": null,
           "context_sha256": "1c838eef7a3840bc89585fcef0c522282a648ec827baae67482b847df13a2a3f",
           "context_utf8_bytes": 670,
-          "dispatcher_sha256": "574c46668b711d1073c768de86a52911508e6785343086ce073bba1f9c7296d5",
+          "dispatcher_sha256": "09ee9e2e4974afa017777357ff951b638feea371808b0568fa1ad765e3fd5724",
           "skill_sha256": "675f1789d3b492ff3fa84275d73b0ad1dee0bf63655063524d621c15d951bb93",
           "dispatcher_route": "generic-activated:standard:explicit_opt_in",
           "profile_contract": {
@@ -1045,7 +1045,7 @@
             "command": "/opt/homebrew/opt/python@3.14/bin/python3.14 -c 'from pathlib import Path; import sys; sys.exit(0 if Path(sys.argv[1]).is_file() else 1)' src/empty_state.py",
             "exit_code": 0,
             "key_output": "completed",
-            "timestamp": "2026-07-13T23:54:59Z"
+            "timestamp": "2026-07-14T01:44:31Z"
           },
           "remaining_risk_or_next_action": "none",
           "permission_outcome": "local_ui_change_allowed",
@@ -1057,7 +1057,7 @@
             " M user-owned.txt",
             "?? src/"
           ],
-          "capture_contract": "simplified@repo-source",
+          "capture_contract": "simplified@isolated-promotion-bytes",
           "execution_policy": {
             "intent": "local_ui_behavior",
             "action": "execute_bounded",
@@ -1108,7 +1108,7 @@
             "command": "git status --short",
             "exit_code": 0,
             "key_output": "M user-owned.txt",
-            "timestamp": "2026-07-13T23:54:59Z"
+            "timestamp": "2026-07-14T01:44:32Z"
           },
           "remaining_risk_or_next_action": "authorization required",
           "permission_outcome": "recover_before_write",
@@ -1150,11 +1150,11 @@
         "provenance": {
           "capture_mode": "deterministic_local_bounded_execution",
           "capture_version": "dhf-bounded-v1",
-          "source_contract": "simplified@repo-source",
+          "source_contract": "simplified@isolated-promotion-bytes",
           "base_commit": null,
           "context_sha256": "eba05fb31b6eb7a64a4c70b54a26346f6b4bbc47bba56d231692df8684940168",
           "context_utf8_bytes": 990,
-          "dispatcher_sha256": "574c46668b711d1073c768de86a52911508e6785343086ce073bba1f9c7296d5",
+          "dispatcher_sha256": "09ee9e2e4974afa017777357ff951b638feea371808b0568fa1ad765e3fd5724",
           "skill_sha256": "675f1789d3b492ff3fa84275d73b0ad1dee0bf63655063524d621c15d951bb93",
           "dispatcher_route": "generic-activated:governed:explicit_opt_in",
           "profile_contract": {
@@ -1190,7 +1190,7 @@
             "command": "git status --short",
             "exit_code": 0,
             "key_output": "M user-owned.txt",
-            "timestamp": "2026-07-13T23:54:59Z"
+            "timestamp": "2026-07-14T01:44:32Z"
           },
           "remaining_risk_or_next_action": "authorization required",
           "permission_outcome": "recover_before_write",
@@ -1199,7 +1199,7 @@
           "dirty_snapshot": [
             " M user-owned.txt"
           ],
-          "capture_contract": "simplified@repo-source",
+          "capture_contract": "simplified@isolated-promotion-bytes",
           "execution_policy": {
             "intent": "resumed_task",
             "action": "block_pending_authorization",
@@ -1263,7 +1263,7 @@
             "command": "git status --short",
             "exit_code": 0,
             "key_output": "M user-owned.txt",
-            "timestamp": "2026-07-13T23:54:59Z"
+            "timestamp": "2026-07-14T01:44:32Z"
           },
           "remaining_risk_or_next_action": "authorization required",
           "permission_outcome": "block_overlapping_write",
@@ -1301,11 +1301,11 @@
         "provenance": {
           "capture_mode": "deterministic_local_bounded_execution",
           "capture_version": "dhf-bounded-v1",
-          "source_contract": "simplified@repo-source",
+          "source_contract": "simplified@isolated-promotion-bytes",
           "base_commit": null,
           "context_sha256": "09aafd05d29fe8259fadda87aa1f3bdfd420fc3d421f75158a0121df6785ab13",
           "context_utf8_bytes": 974,
-          "dispatcher_sha256": "574c46668b711d1073c768de86a52911508e6785343086ce073bba1f9c7296d5",
+          "dispatcher_sha256": "09ee9e2e4974afa017777357ff951b638feea371808b0568fa1ad765e3fd5724",
           "skill_sha256": "675f1789d3b492ff3fa84275d73b0ad1dee0bf63655063524d621c15d951bb93",
           "dispatcher_route": "generic-activated:governed:explicit_opt_in",
           "profile_contract": {
@@ -1336,7 +1336,7 @@
             "command": "git status --short",
             "exit_code": 0,
             "key_output": "M user-owned.txt",
-            "timestamp": "2026-07-13T23:54:59Z"
+            "timestamp": "2026-07-14T01:44:32Z"
           },
           "remaining_risk_or_next_action": "authorization required",
           "permission_outcome": "block_overlapping_write",
@@ -1345,7 +1345,7 @@
           "dirty_snapshot": [
             " M user-owned.txt"
           ],
-          "capture_contract": "simplified@repo-source",
+          "capture_contract": "simplified@isolated-promotion-bytes",
           "execution_policy": {
             "intent": "dirty_ownership_conflict",
             "action": "block_pending_authorization",
@@ -1404,7 +1404,7 @@
             "command": "git status --short",
             "exit_code": 0,
             "key_output": "M user-owned.txt",
-            "timestamp": "2026-07-13T23:55:00Z"
+            "timestamp": "2026-07-14T01:44:32Z"
           },
           "remaining_risk_or_next_action": "authorization required",
           "permission_outcome": "sanitized_capture_only",
@@ -1442,11 +1442,11 @@
         "provenance": {
           "capture_mode": "deterministic_local_bounded_execution",
           "capture_version": "dhf-bounded-v1",
-          "source_contract": "simplified@repo-source",
+          "source_contract": "simplified@isolated-promotion-bytes",
           "base_commit": null,
           "context_sha256": "8bd0e271af16992c45f41484d677ae7f719872dc3d32c39f9d684a4bd23d9063",
           "context_utf8_bytes": 1012,
-          "dispatcher_sha256": "574c46668b711d1073c768de86a52911508e6785343086ce073bba1f9c7296d5",
+          "dispatcher_sha256": "09ee9e2e4974afa017777357ff951b638feea371808b0568fa1ad765e3fd5724",
           "skill_sha256": "675f1789d3b492ff3fa84275d73b0ad1dee0bf63655063524d621c15d951bb93",
           "dispatcher_route": "generic-activated:governed:explicit_opt_in",
           "profile_contract": {
@@ -1479,7 +1479,7 @@
             "command": "git status --short",
             "exit_code": 0,
             "key_output": "M user-owned.txt",
-            "timestamp": "2026-07-13T23:55:00Z"
+            "timestamp": "2026-07-14T01:44:32Z"
           },
           "remaining_risk_or_next_action": "authorization required",
           "permission_outcome": "sanitized_capture_only",
@@ -1488,7 +1488,7 @@
           "dirty_snapshot": [
             " M user-owned.txt"
           ],
-          "capture_contract": "simplified@repo-source",
+          "capture_contract": "simplified@isolated-promotion-bytes",
           "execution_policy": {
             "intent": "external_capture",
             "action": "block_pending_authorization",
@@ -1550,7 +1550,7 @@
             "command": "git status --short",
             "exit_code": 0,
             "key_output": "M user-owned.txt",
-            "timestamp": "2026-07-13T23:55:00Z"
+            "timestamp": "2026-07-14T01:44:33Z"
           },
           "remaining_risk_or_next_action": "authorization required",
           "permission_outcome": "plan_only_until_authorized",
@@ -1591,11 +1591,11 @@
         "provenance": {
           "capture_mode": "deterministic_local_bounded_execution",
           "capture_version": "dhf-bounded-v1",
-          "source_contract": "simplified@repo-source",
+          "source_contract": "simplified@isolated-promotion-bytes",
           "base_commit": null,
-          "context_sha256": "5df1bcc9bb3a063af0bc4313baa9ebd88d760d13eb335e62cbd6d383610ef19d",
-          "context_utf8_bytes": 1153,
-          "dispatcher_sha256": "574c46668b711d1073c768de86a52911508e6785343086ce073bba1f9c7296d5",
+          "context_sha256": "7c91cb8ca9181d36650174416d9558410f6a8255a8a7eca44fb53be5666173af",
+          "context_utf8_bytes": 1148,
+          "dispatcher_sha256": "09ee9e2e4974afa017777357ff951b638feea371808b0568fa1ad765e3fd5724",
           "skill_sha256": "675f1789d3b492ff3fa84275d73b0ad1dee0bf63655063524d621c15d951bb93",
           "dispatcher_route": "generic-activated:governed:explicit_opt_in",
           "profile_contract": {
@@ -1622,7 +1622,7 @@
             ]
           }
         },
-        "contract_context": "Activated generic DHF governance profile. profile=governed. Preserve result, scope_and_constraints, verification_receipt, and remaining_risk_or_next_action. Classify completion as implemented_or_fixed, documented_or_configured, diagnosed_or_blocked, or verification_not_applicable; artifact claims need fresh command/exit_code/key_output/timestamp evidence, while pure explanation uses verification_not_applicable without an invented command.\nDHF_PROFILE_CONTRACT={\"escalation_signals\":[\"external_capture_or_private_data\",\"remote_or_deployment_action\"],\"mandatory_helpers\":[\"harness_env_probe.py\",\"harness_report.py\",\"harness_checkpoint.py\"],\"required_output_fields\":[\"data_boundary\",\"authorization_state\",\"rollback\"],\"authoritative_gates\":[\"External Capture Promotion Gate\",\"Evidence And Report Gate\",\"Checkpoint Gate\",\"Execution Lane Gate\",\"Deployment Readiness Gate\"]}\n escalation_signal=external_capture_or_private_data; escalation_signals=external_capture_or_private_data,remote_or_deployment_action. Retain the union of relevant recovery, ownership, permission, evidence, checkpoint, deployment-readiness, and agent-team gates before risky action.",
+        "contract_context": "Activated generic DHF governance profile. profile=governed. Preserve result, scope_and_constraints, verification_receipt, and remaining_risk_or_next_action. Classify completion as implemented_or_fixed, documented_or_configured, diagnosed_or_blocked, or verification_not_applicable; artifact claims need fresh command/exit_code/key_output/timestamp evidence, while pure explanation uses verification_not_applicable without an invented command.\nDHF_PROFILE_CONTRACT={\"escalation_signals\":[\"external_capture_or_private_data\",\"remote_or_deployment_action\"],\"mandatory_helpers\":[\"harness_env_probe.py\",\"harness_report.py\",\"harness_checkpoint.py\"],\"required_output_fields\":[\"data_boundary\",\"authorization_state\",\"rollback\"],\"authoritative_gates\":[\"External Capture Promotion Gate\",\"Evidence And Report Gate\",\"Checkpoint Gate\",\"Execution Lane Gate\",\"Deployment Readiness Gate\"]}\n escalation_signal=remote_or_deployment_action; escalation_signals=external_capture_or_private_data,remote_or_deployment_action. Retain the union of relevant recovery, ownership, permission, evidence, checkpoint, deployment-readiness, and agent-team gates before risky action.",
         "raw_task_output": {
           "result": "Governed action not executed; permission decision=plan_only_until_authorized.",
           "scope_and_constraints": [
@@ -1634,7 +1634,7 @@
             "command": "git status --short",
             "exit_code": 0,
             "key_output": "M user-owned.txt",
-            "timestamp": "2026-07-13T23:55:00Z"
+            "timestamp": "2026-07-14T01:44:33Z"
           },
           "remaining_risk_or_next_action": "authorization required",
           "permission_outcome": "plan_only_until_authorized",
@@ -1643,7 +1643,7 @@
           "dirty_snapshot": [
             " M user-owned.txt"
           ],
-          "capture_contract": "simplified@repo-source",
+          "capture_contract": "simplified@isolated-promotion-bytes",
           "execution_policy": {
             "intent": "remote_deploy_request",
             "action": "block_pending_authorization",
@@ -1670,7 +1670,7 @@
               "authorization_state",
               "rollback"
             ],
-            "context_sha256": "5df1bcc9bb3a063af0bc4313baa9ebd88d760d13eb335e62cbd6d383610ef19d",
+            "context_sha256": "7c91cb8ca9181d36650174416d9558410f6a8255a8a7eca44fb53be5666173af",
             "prompt_sha256": "577c3f107d54ab58b064885b04cf56a648cb2b63666de0b8496c890d7202f369"
           }
         }
@@ -1709,7 +1709,7 @@
             "command": "git status --short",
             "exit_code": 0,
             "key_output": "M user-owned.txt",
-            "timestamp": "2026-07-13T23:55:00Z"
+            "timestamp": "2026-07-14T01:44:33Z"
           },
           "remaining_risk_or_next_action": "authorization required",
           "permission_outcome": "validate_team_before_dispatch",
@@ -1745,11 +1745,11 @@
         "provenance": {
           "capture_mode": "deterministic_local_bounded_execution",
           "capture_version": "dhf-bounded-v1",
-          "source_contract": "simplified@repo-source",
+          "source_contract": "simplified@isolated-promotion-bytes",
           "base_commit": null,
           "context_sha256": "f802f3eb057baa4c36ccdc5231e1eb66f15bfa9437a17fb3327cf9e1ea95ea31",
           "context_utf8_bytes": 980,
-          "dispatcher_sha256": "574c46668b711d1073c768de86a52911508e6785343086ce073bba1f9c7296d5",
+          "dispatcher_sha256": "09ee9e2e4974afa017777357ff951b638feea371808b0568fa1ad765e3fd5724",
           "skill_sha256": "675f1789d3b492ff3fa84275d73b0ad1dee0bf63655063524d621c15d951bb93",
           "dispatcher_route": "generic-activated:governed:explicit_opt_in",
           "profile_contract": {
@@ -1780,7 +1780,7 @@
             "command": "git status --short",
             "exit_code": 0,
             "key_output": "M user-owned.txt",
-            "timestamp": "2026-07-13T23:55:00Z"
+            "timestamp": "2026-07-14T01:44:33Z"
           },
           "remaining_risk_or_next_action": "authorization required",
           "permission_outcome": "validate_team_before_dispatch",
@@ -1789,7 +1789,7 @@
           "dirty_snapshot": [
             " M user-owned.txt"
           ],
-          "capture_contract": "simplified@repo-source",
+          "capture_contract": "simplified@isolated-promotion-bytes",
           "execution_policy": {
             "intent": "multi_agent_plan",
             "action": "block_pending_authorization",
@@ -1848,7 +1848,7 @@
             "command": "git status --short",
             "exit_code": 0,
             "key_output": "M user-owned.txt",
-            "timestamp": "2026-07-13T23:55:01Z"
+            "timestamp": "2026-07-14T01:44:33Z"
           },
           "remaining_risk_or_next_action": "authorization required",
           "permission_outcome": "block_implementation_until_aligned",
@@ -1886,11 +1886,11 @@
         "provenance": {
           "capture_mode": "deterministic_local_bounded_execution",
           "capture_version": "dhf-bounded-v1",
-          "source_contract": "simplified@repo-source",
+          "source_contract": "simplified@isolated-promotion-bytes",
           "base_commit": null,
           "context_sha256": "a691eae08cae7c41052a0beabfce8b78a30eac23dda3be407b0bde71ba144eb0",
           "context_utf8_bytes": 1171,
-          "dispatcher_sha256": "574c46668b711d1073c768de86a52911508e6785343086ce073bba1f9c7296d5",
+          "dispatcher_sha256": "09ee9e2e4974afa017777357ff951b638feea371808b0568fa1ad765e3fd5724",
           "skill_sha256": "675f1789d3b492ff3fa84275d73b0ad1dee0bf63655063524d621c15d951bb93",
           "dispatcher_route": "generic-activated:governed:explicit_opt_in",
           "profile_contract": {
@@ -1927,7 +1927,7 @@
             "command": "git status --short",
             "exit_code": 0,
             "key_output": "M user-owned.txt",
-            "timestamp": "2026-07-13T23:55:01Z"
+            "timestamp": "2026-07-14T01:44:33Z"
           },
           "remaining_risk_or_next_action": "authorization required",
           "permission_outcome": "block_implementation_until_aligned",
@@ -1936,7 +1936,7 @@
           "dirty_snapshot": [
             " M user-owned.txt"
           ],
-          "capture_contract": "simplified@repo-source",
+          "capture_contract": "simplified@isolated-promotion-bytes",
           "execution_policy": {
             "intent": "architecture_source_conflict",
             "action": "block_pending_authorization",
@@ -2025,11 +2025,11 @@
         "provenance": {
           "capture_mode": "deterministic_local_bounded_execution",
           "capture_version": "dhf-bounded-v1",
-          "source_contract": "simplified@repo-source",
+          "source_contract": "simplified@isolated-promotion-bytes",
           "base_commit": null,
           "context_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
           "context_utf8_bytes": 0,
-          "dispatcher_sha256": "574c46668b711d1073c768de86a52911508e6785343086ce073bba1f9c7296d5",
+          "dispatcher_sha256": "09ee9e2e4974afa017777357ff951b638feea371808b0568fa1ad765e3fd5724",
           "skill_sha256": "675f1789d3b492ff3fa84275d73b0ad1dee0bf63655063524d621c15d951bb93",
           "dispatcher_route": "continue-only",
           "profile_contract": {}
@@ -2050,7 +2050,7 @@
           "dirty_snapshot": [
             " M user-owned.txt"
           ],
-          "capture_contract": "simplified@repo-source",
+          "capture_contract": "simplified@isolated-promotion-bytes",
           "execution_policy": {
             "intent": "ordinary_continue_only",
             "action": "route_control",
@@ -2125,11 +2125,11 @@
         "provenance": {
           "capture_mode": "deterministic_local_bounded_execution",
           "capture_version": "dhf-bounded-v1",
-          "source_contract": "simplified@repo-source",
+          "source_contract": "simplified@isolated-promotion-bytes",
           "base_commit": null,
           "context_sha256": "b43f7f817ac17cc9a7c9ae29faa7f7870c2717f02aadaca015bd12bf5e4e9fb5",
           "context_utf8_bytes": 41,
-          "dispatcher_sha256": "574c46668b711d1073c768de86a52911508e6785343086ce073bba1f9c7296d5",
+          "dispatcher_sha256": "09ee9e2e4974afa017777357ff951b638feea371808b0568fa1ad765e3fd5724",
           "skill_sha256": "675f1789d3b492ff3fa84275d73b0ad1dee0bf63655063524d621c15d951bb93",
           "dispatcher_route": "shipq-delegated",
           "profile_contract": {}
@@ -2150,7 +2150,7 @@
           "dirty_snapshot": [
             " M user-owned.txt"
           ],
-          "capture_contract": "simplified@repo-source",
+          "capture_contract": "simplified@isolated-promotion-bytes",
           "execution_policy": {
             "intent": "shipq_lazy_delegation",
             "action": "route_control",
@@ -2302,5 +2302,1179 @@
         "freshness": "fresh"
       }
     }
-  ]
+  ],
+  "artifact_schema": "dhf_simplification_observations_v4",
+  "base_identity": {
+    "base_commit": "00818ae174f039899a2757ee4c67fcf9db1effa0",
+    "dispatcher_sha256": "be0f0f9372cdacd5f03beb60df8269629ecdd07991814ca8dd912b97b4effbb9",
+    "skill_sha256": "18148ab8885fd0920df72a248cef23ff3fa1b73a60b3370098542efb4cfdcd00"
+  },
+  "corpus_identity": {
+    "schema_version": 1,
+    "sha256": "526620d20e6949b815348a5143d56a437a3a2860c50306166266ba2c10e002c6"
+  },
+  "runner_identity": {
+    "name": "run_dhf_simplification_pair.py",
+    "version": "dhf-bounded-v1",
+    "sha256": "1281fc67b8745c34df368eb4d934665cbe7ed8f5728af831245a2858f5d5d0fa"
+  },
+  "helper_registry_identity": {
+    "version": 1,
+    "sha256": "34fc4b190508da0c9e143b718e953545cc3f2405e9b3c21e0323d6bbedad8f96"
+  },
+  "promotion_candidate_manifest": {
+    "schema_version": 1,
+    "kind": "promotion_candidate_manifest",
+    "base_commit": "00818ae174f039899a2757ee4c67fcf9db1effa0",
+    "source_hashes": {
+      "codex/hooks/dhf_preprompt.py": "09ee9e2e4974afa017777357ff951b638feea371808b0568fa1ad765e3fd5724",
+      "codex/skills/delivery-harness-framework/SKILL.md": "675f1789d3b492ff3fa84275d73b0ad1dee0bf63655063524d621c15d951bb93",
+      "codex/skills/delivery-harness-framework/agents/openai.yaml": "e060c7936ecfe93b81d64b3b41c7403c3f15f935c394381ad5af3266567d6930",
+      "codex/skills/delivery-harness-framework/evals/evals.json": "919abf63f6d123eabe00c08882814a4fe0b7ed81afa249e2b75781ef6222adfc",
+      "codex/skills/delivery-harness-framework/evals/validate_completion_output.py": "03f61a72894f80c50f6fbe4b14bc7217e37229dd99f4b2640f3602d3e3be59ea"
+    },
+    "profile_contract_sha256": "3beb74bce1ff60ea447eb96b52286ae94179997b30f7875390fd9e043dd00f24",
+    "normative_mirror_hashes": {
+      "README.md": "16f2ff104567631412eb573f7c2566cccc58ba716025c10f97970014b855f782",
+      "docs/HARNESS_RUNTIME.md": "a22334bbb592faba2b1296f80ab4af13a89057a5887031a2eb1b399e0290cbd9",
+      "docs/LIFECYCLE_SKILL_ROUTING.md": "eb90c19aada1183328e1829cf33993604ceedc8cb2f694bb7111c2c1d22b37c7",
+      "docs/repo-index.md": "5da351e37e458153fc660507558ceab9c3c74793fdc4ef1a91a9b0432c3eec5c",
+      "docs/surfaces.json": "5af7cbcc0be4cb404293aac24d1fe72cc9a0b8ed3c23f6d60850824aa937182d"
+    },
+    "corpus_sha256": "526620d20e6949b815348a5143d56a437a3a2860c50306166266ba2c10e002c6",
+    "runner_sha256": "1281fc67b8745c34df368eb4d934665cbe7ed8f5728af831245a2858f5d5d0fa",
+    "helper_registry_version": 1,
+    "helper_registry_sha256": "34fc4b190508da0c9e143b718e953545cc3f2405e9b3c21e0323d6bbedad8f96",
+    "created_after_slice": 3,
+    "immutable_for_slice_4": true,
+    "manifest_sha256": "d04dbc817d155ecb7e1c788eb766700883a8562211fde2ea8808e84bec575e97"
+  },
+  "initial_candidate_manifest": {
+    "schema_version": 1,
+    "kind": "initial_candidate_manifest",
+    "base_commit": "00818ae174f039899a2757ee4c67fcf9db1effa0",
+    "source_hashes": {
+      "codex/hooks/dhf_preprompt.py": "09ee9e2e4974afa017777357ff951b638feea371808b0568fa1ad765e3fd5724",
+      "codex/skills/delivery-harness-framework/SKILL.md": "675f1789d3b492ff3fa84275d73b0ad1dee0bf63655063524d621c15d951bb93",
+      "codex/skills/delivery-harness-framework/agents/openai.yaml": "e060c7936ecfe93b81d64b3b41c7403c3f15f935c394381ad5af3266567d6930",
+      "codex/skills/delivery-harness-framework/evals/evals.json": "919abf63f6d123eabe00c08882814a4fe0b7ed81afa249e2b75781ef6222adfc",
+      "codex/skills/delivery-harness-framework/evals/validate_completion_output.py": "03f61a72894f80c50f6fbe4b14bc7217e37229dd99f4b2640f3602d3e3be59ea"
+    },
+    "profile_contract_sha256": "3beb74bce1ff60ea447eb96b52286ae94179997b30f7875390fd9e043dd00f24",
+    "normative_mirror_hashes": {
+      "README.md": "16f2ff104567631412eb573f7c2566cccc58ba716025c10f97970014b855f782",
+      "docs/HARNESS_RUNTIME.md": "c8b5824854b7c25ef4959ac568b2d36afc6b2a7921b9235cb103c8741b433764",
+      "docs/LIFECYCLE_SKILL_ROUTING.md": "eb90c19aada1183328e1829cf33993604ceedc8cb2f694bb7111c2c1d22b37c7",
+      "docs/repo-index.md": "bd327fa966b4074c00db229d2f6e2c8b2d8c7c53d328410b28fe84a6cb9f6844",
+      "docs/surfaces.json": "5c2e36228171fb52e61073c3714b2dc701600a5c5f963ac9afce22e354fc0c9c"
+    },
+    "corpus_sha256": "2b76c439d9f2e07b003b601fda0d51a1d01e57600e5bc6c05efbc7fee907f35a",
+    "runner_sha256": "98681f49b8e7fe30c7f7e5e882fafe004c29970ae1b15c15c4091e8138644e85",
+    "helper_registry_version": 1,
+    "helper_registry_sha256": "34fc4b190508da0c9e143b718e953545cc3f2405e9b3c21e0323d6bbedad8f96",
+    "informational_only": true,
+    "manifest_sha256": "076011727b6d0ccbdb14397a36a56c0955b8b3c216f0d4ce4a9ff7003c7b7ddd"
+  },
+  "base_expected_runtime_manifest": {
+    "schema_version": 1,
+    "kind": "base_expected_runtime_manifest",
+    "base_commit": "00818ae174f039899a2757ee4c67fcf9db1effa0",
+    "managed_roots": [
+      "/Users/kezheng/.codex/hooks",
+      "/Users/kezheng/.codex/skills/delivery-harness-framework"
+    ],
+    "managed_relative_paths": [
+      "codex/hooks/dhf_preprompt.py",
+      "codex/skills/delivery-harness-framework/SKILL.md",
+      "codex/skills/delivery-harness-framework/agents/openai.yaml",
+      "codex/skills/delivery-harness-framework/evals/evals.json",
+      "codex/skills/delivery-harness-framework/evals/validate_completion_output.py"
+    ],
+    "records": [
+      {
+        "path": "/Users/kezheng/.codex/hooks/dhf_preprompt.py",
+        "type": "regular",
+        "sha256": "be0f0f9372cdacd5f03beb60df8269629ecdd07991814ca8dd912b97b4effbb9",
+        "source_path": "codex/hooks/dhf_preprompt.py"
+      },
+      {
+        "path": "/Users/kezheng/.codex/skills/delivery-harness-framework/SKILL.md",
+        "type": "regular",
+        "sha256": "18148ab8885fd0920df72a248cef23ff3fa1b73a60b3370098542efb4cfdcd00",
+        "source_path": "codex/skills/delivery-harness-framework/SKILL.md"
+      },
+      {
+        "path": "/Users/kezheng/.codex/skills/delivery-harness-framework/agents/openai.yaml",
+        "type": "regular",
+        "sha256": "e060c7936ecfe93b81d64b3b41c7403c3f15f935c394381ad5af3266567d6930",
+        "source_path": "codex/skills/delivery-harness-framework/agents/openai.yaml"
+      },
+      {
+        "path": "/Users/kezheng/.codex/skills/delivery-harness-framework/evals/evals.json",
+        "type": "regular",
+        "sha256": "651cfe21377981dad9eadc7c6d264935512a9fcce50638ea0545fe4235348f02",
+        "source_path": "codex/skills/delivery-harness-framework/evals/evals.json"
+      },
+      {
+        "path": "/Users/kezheng/.codex/skills/delivery-harness-framework/evals/validate_completion_output.py",
+        "type": "absent",
+        "sha256": "absent",
+        "source_path": "codex/skills/delivery-harness-framework/evals/validate_completion_output.py"
+      }
+    ],
+    "exclusions": [
+      "unmanaged files",
+      "plugins",
+      "caches",
+      "logs",
+      "__pycache__",
+      "*.pyc",
+      "directory metadata"
+    ],
+    "aggregate_sha256": "5634c9a57803154907477d1f13451a9102d95b07528646ddb06fc8f0800b8cdc"
+  },
+  "producer_evidence": {
+    "PRODUCER-AC-01-S2-1": {
+      "binding": {
+        "producer_id": "PRODUCER-AC-01-S2-1",
+        "slice": "2",
+        "callable": "scripts/run_dhf_simplification_pair.py::capture_observations",
+        "artifact": "tests/fixtures/dhf_simplification_observations.json",
+        "artifact_schema": "dhf_simplification_observations_v4"
+      },
+      "evidence": {
+        "kind": "output_contract_evidence",
+        "assertion_count": 85,
+        "slice": "2",
+        "passed_assertion_count": 85,
+        "base_commit": "00818ae174f039899a2757ee4c67fcf9db1effa0",
+        "corpus_sha256": "526620d20e6949b815348a5143d56a437a3a2860c50306166266ba2c10e002c6",
+        "runner_sha256": "1281fc67b8745c34df368eb4d934665cbe7ed8f5728af831245a2858f5d5d0fa",
+        "promotion_manifest_sha256": "d04dbc817d155ecb7e1c788eb766700883a8562211fde2ea8808e84bec575e97",
+        "source_artifact_sha256": "04c80355a835e1f7b1e5209e595fae21ca19b2ed0adf9ee6f068993f96af3b73",
+        "acceptance_id": "AC-01",
+        "registered_assertion_ids": [
+          "scenario:GOVERNED-RESUMED-TASK",
+          "scenario:LIGHT-EXPLANATION",
+          "scenario:STANDARD-LOCAL-FEATURE",
+          "test:TEST-COMPLETION-TAXONOMY",
+          "test:TEST-OUTPUT-INVARIANTS",
+          "test:TEST-STRUCTURED-COMPLETION-ORACLE"
+        ]
+      },
+      "evidence_sha256": "ffe553f4ab8dfa6221d0e93b877f2e05e8dcc9e19e4d509538338a08cf37d638"
+    },
+    "PRODUCER-AC-02-S1-1": {
+      "binding": {
+        "producer_id": "PRODUCER-AC-02-S1-1",
+        "slice": "1",
+        "callable": "scripts/run_dhf_simplification_pair.py::capture_observations",
+        "artifact": "tests/fixtures/dhf_simplification_observations.json",
+        "artifact_schema": "dhf_simplification_observations_v4"
+      },
+      "evidence": {
+        "kind": "routing_contract_evidence",
+        "assertion_count": 85,
+        "slice": "1",
+        "passed_assertion_count": 85,
+        "base_commit": "00818ae174f039899a2757ee4c67fcf9db1effa0",
+        "corpus_sha256": "526620d20e6949b815348a5143d56a437a3a2860c50306166266ba2c10e002c6",
+        "runner_sha256": "1281fc67b8745c34df368eb4d934665cbe7ed8f5728af831245a2858f5d5d0fa",
+        "promotion_manifest_sha256": "d04dbc817d155ecb7e1c788eb766700883a8562211fde2ea8808e84bec575e97",
+        "source_artifact_sha256": "04c80355a835e1f7b1e5209e595fae21ca19b2ed0adf9ee6f068993f96af3b73",
+        "acceptance_id": "AC-02",
+        "registered_assertion_ids": [
+          "scenario:GOVERNED-DIRTY-CONFLICT",
+          "scenario:LIGHT-ONE-FILE-SAFE",
+          "scenario:STANDARD-LOCAL-FEATURE",
+          "test:TEST-ADVERSARIAL-ROUTING"
+        ]
+      },
+      "evidence_sha256": "44356cc8bd8048fb6a715de61e160cb5a123f70bce9f52bd98c43178b8de7f29"
+    },
+    "PRODUCER-AC-03-S0-1": {
+      "binding": {
+        "producer_id": "PRODUCER-AC-03-S0-1",
+        "slice": "0",
+        "callable": "scripts/run_dhf_simplification_pair.py::capture_observations",
+        "artifact": "tests/fixtures/dhf_simplification_observations.json",
+        "artifact_schema": "dhf_simplification_observations_v4"
+      },
+      "evidence": {
+        "kind": "baseline_and_fixture_evidence",
+        "assertion_count": 22,
+        "slice": "0",
+        "passed_assertion_count": 22,
+        "base_commit": "00818ae174f039899a2757ee4c67fcf9db1effa0",
+        "corpus_sha256": "526620d20e6949b815348a5143d56a437a3a2860c50306166266ba2c10e002c6",
+        "runner_sha256": "1281fc67b8745c34df368eb4d934665cbe7ed8f5728af831245a2858f5d5d0fa",
+        "promotion_manifest_sha256": "d04dbc817d155ecb7e1c788eb766700883a8562211fde2ea8808e84bec575e97",
+        "source_artifact_sha256": "04c80355a835e1f7b1e5209e595fae21ca19b2ed0adf9ee6f068993f96af3b73",
+        "acceptance_id": "AC-03",
+        "registered_assertion_ids": [
+          "scenario:CONTROL-ORDINARY-CONTINUE",
+          "test:TEST-BASELINE-MEASUREMENT",
+          "test:TEST-CURRENT-ROUTING-CONTROLS"
+        ]
+      },
+      "evidence_sha256": "a6fb8a98751068528ed23dfebb7246a6d75a97477197494e5759a90036b2992d"
+    },
+    "PRODUCER-AC-03-S1-1": {
+      "binding": {
+        "producer_id": "PRODUCER-AC-03-S1-1",
+        "slice": "1",
+        "callable": "scripts/run_dhf_simplification_pair.py::capture_observations",
+        "artifact": "tests/fixtures/dhf_simplification_observations.json",
+        "artifact_schema": "dhf_simplification_observations_v4"
+      },
+      "evidence": {
+        "kind": "routing_contract_evidence",
+        "assertion_count": 85,
+        "slice": "1",
+        "passed_assertion_count": 85,
+        "base_commit": "00818ae174f039899a2757ee4c67fcf9db1effa0",
+        "corpus_sha256": "526620d20e6949b815348a5143d56a437a3a2860c50306166266ba2c10e002c6",
+        "runner_sha256": "1281fc67b8745c34df368eb4d934665cbe7ed8f5728af831245a2858f5d5d0fa",
+        "promotion_manifest_sha256": "d04dbc817d155ecb7e1c788eb766700883a8562211fde2ea8808e84bec575e97",
+        "source_artifact_sha256": "04c80355a835e1f7b1e5209e595fae21ca19b2ed0adf9ee6f068993f96af3b73",
+        "acceptance_id": "AC-03",
+        "registered_assertion_ids": [
+          "scenario:CONTROL-ORDINARY-CONTINUE",
+          "test:TEST-BASELINE-MEASUREMENT",
+          "test:TEST-CURRENT-ROUTING-CONTROLS"
+        ]
+      },
+      "evidence_sha256": "5bbd64b34e287c5506a898d961b8b0a33453ae375ecc1a08b70156d1fa5b67b7"
+    },
+    "PRODUCER-AC-04-S0-1": {
+      "binding": {
+        "producer_id": "PRODUCER-AC-04-S0-1",
+        "slice": "0",
+        "callable": "scripts/run_dhf_simplification_pair.py::capture_observations",
+        "artifact": "tests/fixtures/dhf_simplification_observations.json",
+        "artifact_schema": "dhf_simplification_observations_v4"
+      },
+      "evidence": {
+        "kind": "baseline_and_fixture_evidence",
+        "assertion_count": 22,
+        "slice": "0",
+        "passed_assertion_count": 22,
+        "base_commit": "00818ae174f039899a2757ee4c67fcf9db1effa0",
+        "corpus_sha256": "526620d20e6949b815348a5143d56a437a3a2860c50306166266ba2c10e002c6",
+        "runner_sha256": "1281fc67b8745c34df368eb4d934665cbe7ed8f5728af831245a2858f5d5d0fa",
+        "promotion_manifest_sha256": "d04dbc817d155ecb7e1c788eb766700883a8562211fde2ea8808e84bec575e97",
+        "source_artifact_sha256": "04c80355a835e1f7b1e5209e595fae21ca19b2ed0adf9ee6f068993f96af3b73",
+        "acceptance_id": "AC-04",
+        "registered_assertion_ids": [
+          "scenario:CONTROL-ORDINARY-CONTINUE",
+          "scenario:CONTROL-SHIPQ-DELEGATION",
+          "test:TEST-OPT-OUT-PRECEDENCE"
+        ]
+      },
+      "evidence_sha256": "5f896703a1936181e8e3f41a033e0bb69cfb46057e69ee7b2f44c172b0c8677a"
+    },
+    "PRODUCER-AC-04-S1-1": {
+      "binding": {
+        "producer_id": "PRODUCER-AC-04-S1-1",
+        "slice": "1",
+        "callable": "scripts/run_dhf_simplification_pair.py::capture_observations",
+        "artifact": "tests/fixtures/dhf_simplification_observations.json",
+        "artifact_schema": "dhf_simplification_observations_v4"
+      },
+      "evidence": {
+        "kind": "routing_contract_evidence",
+        "assertion_count": 85,
+        "slice": "1",
+        "passed_assertion_count": 85,
+        "base_commit": "00818ae174f039899a2757ee4c67fcf9db1effa0",
+        "corpus_sha256": "526620d20e6949b815348a5143d56a437a3a2860c50306166266ba2c10e002c6",
+        "runner_sha256": "1281fc67b8745c34df368eb4d934665cbe7ed8f5728af831245a2858f5d5d0fa",
+        "promotion_manifest_sha256": "d04dbc817d155ecb7e1c788eb766700883a8562211fde2ea8808e84bec575e97",
+        "source_artifact_sha256": "04c80355a835e1f7b1e5209e595fae21ca19b2ed0adf9ee6f068993f96af3b73",
+        "acceptance_id": "AC-04",
+        "registered_assertion_ids": [
+          "scenario:CONTROL-ORDINARY-CONTINUE",
+          "scenario:CONTROL-SHIPQ-DELEGATION",
+          "test:TEST-OPT-OUT-PRECEDENCE"
+        ]
+      },
+      "evidence_sha256": "3778dcec19035faaa54130ebcc0ef5a2ac3833b9ff502e4d40c2fa68415a9044"
+    },
+    "PRODUCER-AC-05-S0-1": {
+      "binding": {
+        "producer_id": "PRODUCER-AC-05-S0-1",
+        "slice": "0",
+        "callable": "scripts/run_dhf_simplification_pair.py::capture_observations",
+        "artifact": "tests/fixtures/dhf_simplification_observations.json",
+        "artifact_schema": "dhf_simplification_observations_v4"
+      },
+      "evidence": {
+        "kind": "baseline_and_fixture_evidence",
+        "assertion_count": 22,
+        "slice": "0",
+        "passed_assertion_count": 22,
+        "base_commit": "00818ae174f039899a2757ee4c67fcf9db1effa0",
+        "corpus_sha256": "526620d20e6949b815348a5143d56a437a3a2860c50306166266ba2c10e002c6",
+        "runner_sha256": "1281fc67b8745c34df368eb4d934665cbe7ed8f5728af831245a2858f5d5d0fa",
+        "promotion_manifest_sha256": "d04dbc817d155ecb7e1c788eb766700883a8562211fde2ea8808e84bec575e97",
+        "source_artifact_sha256": "04c80355a835e1f7b1e5209e595fae21ca19b2ed0adf9ee6f068993f96af3b73",
+        "acceptance_id": "AC-05",
+        "registered_assertion_ids": [
+          "scenario:CONTROL-SHIPQ-DELEGATION",
+          "test:TEST-BASELINE-MEASUREMENT",
+          "test:TEST-CURRENT-ROUTING-CONTROLS"
+        ]
+      },
+      "evidence_sha256": "c4d3197b3670ea6e56fec7bd59396ccb7ab620fdb636d0c1d4cae3da6a2ea0da"
+    },
+    "PRODUCER-AC-05-S1-1": {
+      "binding": {
+        "producer_id": "PRODUCER-AC-05-S1-1",
+        "slice": "1",
+        "callable": "scripts/run_dhf_simplification_pair.py::capture_observations",
+        "artifact": "tests/fixtures/dhf_simplification_observations.json",
+        "artifact_schema": "dhf_simplification_observations_v4"
+      },
+      "evidence": {
+        "kind": "routing_contract_evidence",
+        "assertion_count": 85,
+        "slice": "1",
+        "passed_assertion_count": 85,
+        "base_commit": "00818ae174f039899a2757ee4c67fcf9db1effa0",
+        "corpus_sha256": "526620d20e6949b815348a5143d56a437a3a2860c50306166266ba2c10e002c6",
+        "runner_sha256": "1281fc67b8745c34df368eb4d934665cbe7ed8f5728af831245a2858f5d5d0fa",
+        "promotion_manifest_sha256": "d04dbc817d155ecb7e1c788eb766700883a8562211fde2ea8808e84bec575e97",
+        "source_artifact_sha256": "04c80355a835e1f7b1e5209e595fae21ca19b2ed0adf9ee6f068993f96af3b73",
+        "acceptance_id": "AC-05",
+        "registered_assertion_ids": [
+          "scenario:CONTROL-SHIPQ-DELEGATION",
+          "test:TEST-BASELINE-MEASUREMENT",
+          "test:TEST-CURRENT-ROUTING-CONTROLS"
+        ]
+      },
+      "evidence_sha256": "b7b93a88149c80f2e0f1790411d8243e4daba4cf5cae9e3eb71560b3452ee217"
+    },
+    "PRODUCER-AC-06-S0-1": {
+      "binding": {
+        "producer_id": "PRODUCER-AC-06-S0-1",
+        "slice": "0",
+        "callable": "scripts/run_dhf_simplification_pair.py::capture_observations",
+        "artifact": "tests/fixtures/dhf_simplification_observations.json",
+        "artifact_schema": "dhf_simplification_observations_v4"
+      },
+      "evidence": {
+        "kind": "baseline_and_fixture_evidence",
+        "assertion_count": 22,
+        "slice": "0",
+        "passed_assertion_count": 22,
+        "base_commit": "00818ae174f039899a2757ee4c67fcf9db1effa0",
+        "corpus_sha256": "526620d20e6949b815348a5143d56a437a3a2860c50306166266ba2c10e002c6",
+        "runner_sha256": "1281fc67b8745c34df368eb4d934665cbe7ed8f5728af831245a2858f5d5d0fa",
+        "promotion_manifest_sha256": "d04dbc817d155ecb7e1c788eb766700883a8562211fde2ea8808e84bec575e97",
+        "source_artifact_sha256": "04c80355a835e1f7b1e5209e595fae21ca19b2ed0adf9ee6f068993f96af3b73",
+        "acceptance_id": "AC-06",
+        "registered_assertion_ids": [
+          "scenario:CONTROL-ORDINARY-CONTINUE",
+          "test:TEST-MALFORMED-PAYLOAD-SAFETY"
+        ]
+      },
+      "evidence_sha256": "60b89276e7fc971d6d3eedec5d3a3aca20ad9d9f43516c8c9340249ecb578a7e"
+    },
+    "PRODUCER-AC-06-S1-1": {
+      "binding": {
+        "producer_id": "PRODUCER-AC-06-S1-1",
+        "slice": "1",
+        "callable": "scripts/run_dhf_simplification_pair.py::capture_observations",
+        "artifact": "tests/fixtures/dhf_simplification_observations.json",
+        "artifact_schema": "dhf_simplification_observations_v4"
+      },
+      "evidence": {
+        "kind": "routing_contract_evidence",
+        "assertion_count": 85,
+        "slice": "1",
+        "passed_assertion_count": 85,
+        "base_commit": "00818ae174f039899a2757ee4c67fcf9db1effa0",
+        "corpus_sha256": "526620d20e6949b815348a5143d56a437a3a2860c50306166266ba2c10e002c6",
+        "runner_sha256": "1281fc67b8745c34df368eb4d934665cbe7ed8f5728af831245a2858f5d5d0fa",
+        "promotion_manifest_sha256": "d04dbc817d155ecb7e1c788eb766700883a8562211fde2ea8808e84bec575e97",
+        "source_artifact_sha256": "04c80355a835e1f7b1e5209e595fae21ca19b2ed0adf9ee6f068993f96af3b73",
+        "acceptance_id": "AC-06",
+        "registered_assertion_ids": [
+          "scenario:CONTROL-ORDINARY-CONTINUE",
+          "test:TEST-MALFORMED-PAYLOAD-SAFETY"
+        ]
+      },
+      "evidence_sha256": "20f9738ce6fbd1782087f4fbd9929a53c9e958c01288fbb8190886f70dd0bd7a"
+    },
+    "PRODUCER-AC-07-S1-1": {
+      "binding": {
+        "producer_id": "PRODUCER-AC-07-S1-1",
+        "slice": "1",
+        "callable": "scripts/run_dhf_simplification_pair.py::capture_observations",
+        "artifact": "tests/fixtures/dhf_simplification_observations.json",
+        "artifact_schema": "dhf_simplification_observations_v4"
+      },
+      "evidence": {
+        "kind": "routing_contract_evidence",
+        "assertion_count": 85,
+        "slice": "1",
+        "passed_assertion_count": 85,
+        "base_commit": "00818ae174f039899a2757ee4c67fcf9db1effa0",
+        "corpus_sha256": "526620d20e6949b815348a5143d56a437a3a2860c50306166266ba2c10e002c6",
+        "runner_sha256": "1281fc67b8745c34df368eb4d934665cbe7ed8f5728af831245a2858f5d5d0fa",
+        "promotion_manifest_sha256": "d04dbc817d155ecb7e1c788eb766700883a8562211fde2ea8808e84bec575e97",
+        "source_artifact_sha256": "04c80355a835e1f7b1e5209e595fae21ca19b2ed0adf9ee6f068993f96af3b73",
+        "acceptance_id": "AC-07",
+        "registered_assertion_ids": [
+          "scenario:LIGHT-BOUNDED-DOCS",
+          "scenario:LIGHT-EXPLANATION",
+          "scenario:LIGHT-ONE-FILE-SAFE",
+          "scenario:LIGHT-TRIVIAL-FORMAT",
+          "test:TEST-CONDITIONAL-HELPER-ROUTING",
+          "test:TEST-PROFILE-OUTPUT-CONTRACT"
+        ]
+      },
+      "evidence_sha256": "9c5cfd9ea30a744d1cf66cb1cb00e3babf4e781a2033e0701a2fa12ac0095c0d"
+    },
+    "PRODUCER-AC-07-S2-1": {
+      "binding": {
+        "producer_id": "PRODUCER-AC-07-S2-1",
+        "slice": "2",
+        "callable": "scripts/run_dhf_simplification_pair.py::capture_observations",
+        "artifact": "tests/fixtures/dhf_simplification_observations.json",
+        "artifact_schema": "dhf_simplification_observations_v4"
+      },
+      "evidence": {
+        "kind": "output_contract_evidence",
+        "assertion_count": 85,
+        "slice": "2",
+        "passed_assertion_count": 85,
+        "base_commit": "00818ae174f039899a2757ee4c67fcf9db1effa0",
+        "corpus_sha256": "526620d20e6949b815348a5143d56a437a3a2860c50306166266ba2c10e002c6",
+        "runner_sha256": "1281fc67b8745c34df368eb4d934665cbe7ed8f5728af831245a2858f5d5d0fa",
+        "promotion_manifest_sha256": "d04dbc817d155ecb7e1c788eb766700883a8562211fde2ea8808e84bec575e97",
+        "source_artifact_sha256": "04c80355a835e1f7b1e5209e595fae21ca19b2ed0adf9ee6f068993f96af3b73",
+        "acceptance_id": "AC-07",
+        "registered_assertion_ids": [
+          "scenario:LIGHT-BOUNDED-DOCS",
+          "scenario:LIGHT-EXPLANATION",
+          "scenario:LIGHT-ONE-FILE-SAFE",
+          "scenario:LIGHT-TRIVIAL-FORMAT",
+          "test:TEST-CONDITIONAL-HELPER-ROUTING",
+          "test:TEST-PROFILE-OUTPUT-CONTRACT"
+        ]
+      },
+      "evidence_sha256": "0271bc5565c5b996b651d0fda687bcfb1a1b1e2779761e2cf3ea09480089b02c"
+    },
+    "PRODUCER-AC-08-S1-1": {
+      "binding": {
+        "producer_id": "PRODUCER-AC-08-S1-1",
+        "slice": "1",
+        "callable": "scripts/run_dhf_simplification_pair.py::capture_observations",
+        "artifact": "tests/fixtures/dhf_simplification_observations.json",
+        "artifact_schema": "dhf_simplification_observations_v4"
+      },
+      "evidence": {
+        "kind": "routing_contract_evidence",
+        "assertion_count": 85,
+        "slice": "1",
+        "passed_assertion_count": 85,
+        "base_commit": "00818ae174f039899a2757ee4c67fcf9db1effa0",
+        "corpus_sha256": "526620d20e6949b815348a5143d56a437a3a2860c50306166266ba2c10e002c6",
+        "runner_sha256": "1281fc67b8745c34df368eb4d934665cbe7ed8f5728af831245a2858f5d5d0fa",
+        "promotion_manifest_sha256": "d04dbc817d155ecb7e1c788eb766700883a8562211fde2ea8808e84bec575e97",
+        "source_artifact_sha256": "04c80355a835e1f7b1e5209e595fae21ca19b2ed0adf9ee6f068993f96af3b73",
+        "acceptance_id": "AC-08",
+        "registered_assertion_ids": [
+          "scenario:GOVERNED-ARCH-SOURCE-CONFLICT",
+          "scenario:GOVERNED-DIRTY-CONFLICT",
+          "scenario:GOVERNED-EXTERNAL-CAPTURE",
+          "scenario:GOVERNED-MULTI-AGENT",
+          "scenario:GOVERNED-REMOTE-DEPLOY",
+          "scenario:GOVERNED-RESUMED-TASK",
+          "test:TEST-GOVERNED-GATES",
+          "test:TEST-MULTI-SIGNAL-UNION"
+        ]
+      },
+      "evidence_sha256": "19d5ff6e998e423fd6b0511ecf0bfa2d6e5db1aed1a952354514e831448ae67c"
+    },
+    "PRODUCER-AC-08-S2-1": {
+      "binding": {
+        "producer_id": "PRODUCER-AC-08-S2-1",
+        "slice": "2",
+        "callable": "scripts/run_dhf_simplification_pair.py::capture_observations",
+        "artifact": "tests/fixtures/dhf_simplification_observations.json",
+        "artifact_schema": "dhf_simplification_observations_v4"
+      },
+      "evidence": {
+        "kind": "output_contract_evidence",
+        "assertion_count": 85,
+        "slice": "2",
+        "passed_assertion_count": 85,
+        "base_commit": "00818ae174f039899a2757ee4c67fcf9db1effa0",
+        "corpus_sha256": "526620d20e6949b815348a5143d56a437a3a2860c50306166266ba2c10e002c6",
+        "runner_sha256": "1281fc67b8745c34df368eb4d934665cbe7ed8f5728af831245a2858f5d5d0fa",
+        "promotion_manifest_sha256": "d04dbc817d155ecb7e1c788eb766700883a8562211fde2ea8808e84bec575e97",
+        "source_artifact_sha256": "04c80355a835e1f7b1e5209e595fae21ca19b2ed0adf9ee6f068993f96af3b73",
+        "acceptance_id": "AC-08",
+        "registered_assertion_ids": [
+          "scenario:GOVERNED-ARCH-SOURCE-CONFLICT",
+          "scenario:GOVERNED-DIRTY-CONFLICT",
+          "scenario:GOVERNED-EXTERNAL-CAPTURE",
+          "scenario:GOVERNED-MULTI-AGENT",
+          "scenario:GOVERNED-REMOTE-DEPLOY",
+          "scenario:GOVERNED-RESUMED-TASK",
+          "test:TEST-GOVERNED-GATES",
+          "test:TEST-MULTI-SIGNAL-UNION"
+        ]
+      },
+      "evidence_sha256": "f14bfcc4c4aadd10b9cf917982dc1128c2ae46ae25851a7d1d50dd82221ba724"
+    },
+    "PRODUCER-AC-09-S1-1": {
+      "binding": {
+        "producer_id": "PRODUCER-AC-09-S1-1",
+        "slice": "1",
+        "callable": "scripts/run_dhf_simplification_pair.py::capture_observations",
+        "artifact": "tests/fixtures/dhf_simplification_observations.json",
+        "artifact_schema": "dhf_simplification_observations_v4"
+      },
+      "evidence": {
+        "kind": "routing_contract_evidence",
+        "assertion_count": 85,
+        "slice": "1",
+        "passed_assertion_count": 85,
+        "base_commit": "00818ae174f039899a2757ee4c67fcf9db1effa0",
+        "corpus_sha256": "526620d20e6949b815348a5143d56a437a3a2860c50306166266ba2c10e002c6",
+        "runner_sha256": "1281fc67b8745c34df368eb4d934665cbe7ed8f5728af831245a2858f5d5d0fa",
+        "promotion_manifest_sha256": "d04dbc817d155ecb7e1c788eb766700883a8562211fde2ea8808e84bec575e97",
+        "source_artifact_sha256": "04c80355a835e1f7b1e5209e595fae21ca19b2ed0adf9ee6f068993f96af3b73",
+        "acceptance_id": "AC-09",
+        "registered_assertion_ids": [
+          "scenario:GOVERNED-MULTI-AGENT",
+          "scenario:GOVERNED-RESUMED-TASK",
+          "test:TEST-HELPER-CLI-CALLABILITY"
+        ]
+      },
+      "evidence_sha256": "3a90afdfbf7c2d6f90efe082ed7625285344a805ee808d8d6422bea827eac6da"
+    },
+    "PRODUCER-AC-10-S0-1": {
+      "binding": {
+        "producer_id": "PRODUCER-AC-10-S0-1",
+        "slice": "0",
+        "callable": "scripts/run_dhf_simplification_pair.py::capture_observations",
+        "artifact": "tests/fixtures/dhf_simplification_observations.json",
+        "artifact_schema": "dhf_simplification_observations_v4"
+      },
+      "evidence": {
+        "kind": "baseline_and_fixture_evidence",
+        "assertion_count": 22,
+        "slice": "0",
+        "passed_assertion_count": 22,
+        "base_commit": "00818ae174f039899a2757ee4c67fcf9db1effa0",
+        "corpus_sha256": "526620d20e6949b815348a5143d56a437a3a2860c50306166266ba2c10e002c6",
+        "runner_sha256": "1281fc67b8745c34df368eb4d934665cbe7ed8f5728af831245a2858f5d5d0fa",
+        "promotion_manifest_sha256": "d04dbc817d155ecb7e1c788eb766700883a8562211fde2ea8808e84bec575e97",
+        "source_artifact_sha256": "04c80355a835e1f7b1e5209e595fae21ca19b2ed0adf9ee6f068993f96af3b73",
+        "acceptance_id": "AC-10",
+        "registered_assertion_ids": [
+          "scenario:GOVERNED-DIRTY-CONFLICT",
+          "scenario:GOVERNED-RESUMED-TASK",
+          "scenario:LIGHT-BOUNDED-DOCS",
+          "scenario:STANDARD-LOCAL-FEATURE",
+          "test:TEST-CHECKPOINT-ARTIFACT-ROUNDTRIP",
+          "test:TEST-PAIR-ADVERSARIAL-MUTATIONS",
+          "test:TEST-PAIRED-ACTUAL-OUTCOMES"
+        ]
+      },
+      "evidence_sha256": "88cf7714d10c1cfa95016b75c86ae6468c3115601fa2c82095e8e7747b0e4562"
+    },
+    "PRODUCER-AC-10-S4-1": {
+      "binding": {
+        "producer_id": "PRODUCER-AC-10-S4-1",
+        "slice": "4",
+        "callable": "scripts/run_dhf_simplification_pair.py::capture_observations",
+        "artifact": "tests/fixtures/dhf_simplification_observations.json",
+        "artifact_schema": "dhf_simplification_observations_v4"
+      },
+      "evidence": {
+        "kind": "paired_acceptance_evidence",
+        "assertion_count": 175,
+        "slice": "4",
+        "passed_assertion_count": 175,
+        "base_commit": "00818ae174f039899a2757ee4c67fcf9db1effa0",
+        "corpus_sha256": "526620d20e6949b815348a5143d56a437a3a2860c50306166266ba2c10e002c6",
+        "runner_sha256": "1281fc67b8745c34df368eb4d934665cbe7ed8f5728af831245a2858f5d5d0fa",
+        "promotion_manifest_sha256": "d04dbc817d155ecb7e1c788eb766700883a8562211fde2ea8808e84bec575e97",
+        "source_artifact_sha256": "04c80355a835e1f7b1e5209e595fae21ca19b2ed0adf9ee6f068993f96af3b73",
+        "acceptance_id": "AC-10",
+        "registered_assertion_ids": [
+          "scenario:GOVERNED-DIRTY-CONFLICT",
+          "scenario:GOVERNED-RESUMED-TASK",
+          "scenario:LIGHT-BOUNDED-DOCS",
+          "scenario:STANDARD-LOCAL-FEATURE",
+          "test:TEST-CHECKPOINT-ARTIFACT-ROUNDTRIP",
+          "test:TEST-PAIR-ADVERSARIAL-MUTATIONS",
+          "test:TEST-PAIRED-ACTUAL-OUTCOMES"
+        ]
+      },
+      "evidence_sha256": "55b412dd1b2c41f6bfda69083ca49ac97007e41379e473078ccef57a552da18b"
+    },
+    "PRODUCER-AC-11-S0-1": {
+      "binding": {
+        "producer_id": "PRODUCER-AC-11-S0-1",
+        "slice": "0",
+        "callable": "scripts/run_dhf_simplification_pair.py::capture_observations",
+        "artifact": "tests/fixtures/dhf_simplification_observations.json",
+        "artifact_schema": "dhf_simplification_observations_v4"
+      },
+      "evidence": {
+        "kind": "baseline_and_fixture_evidence",
+        "assertion_count": 22,
+        "slice": "0",
+        "passed_assertion_count": 22,
+        "base_commit": "00818ae174f039899a2757ee4c67fcf9db1effa0",
+        "corpus_sha256": "526620d20e6949b815348a5143d56a437a3a2860c50306166266ba2c10e002c6",
+        "runner_sha256": "1281fc67b8745c34df368eb4d934665cbe7ed8f5728af831245a2858f5d5d0fa",
+        "promotion_manifest_sha256": "d04dbc817d155ecb7e1c788eb766700883a8562211fde2ea8808e84bec575e97",
+        "source_artifact_sha256": "04c80355a835e1f7b1e5209e595fae21ca19b2ed0adf9ee6f068993f96af3b73",
+        "acceptance_id": "AC-11",
+        "registered_assertion_ids": [
+          "scenario:GOVERNED-EXTERNAL-CAPTURE",
+          "scenario:GOVERNED-REMOTE-DEPLOY",
+          "scenario:STANDARD-LOCAL-FEATURE",
+          "test:TEST-PAIR-ADVERSARIAL-MUTATIONS"
+        ]
+      },
+      "evidence_sha256": "52a461f6d40edb5595be0dc2c15a7eddde739928915aed0b10a1513f08d6e0a8"
+    },
+    "PRODUCER-AC-11-S4-1": {
+      "binding": {
+        "producer_id": "PRODUCER-AC-11-S4-1",
+        "slice": "4",
+        "callable": "scripts/run_dhf_simplification_pair.py::capture_observations",
+        "artifact": "tests/fixtures/dhf_simplification_observations.json",
+        "artifact_schema": "dhf_simplification_observations_v4"
+      },
+      "evidence": {
+        "kind": "paired_acceptance_evidence",
+        "assertion_count": 175,
+        "slice": "4",
+        "passed_assertion_count": 175,
+        "base_commit": "00818ae174f039899a2757ee4c67fcf9db1effa0",
+        "corpus_sha256": "526620d20e6949b815348a5143d56a437a3a2860c50306166266ba2c10e002c6",
+        "runner_sha256": "1281fc67b8745c34df368eb4d934665cbe7ed8f5728af831245a2858f5d5d0fa",
+        "promotion_manifest_sha256": "d04dbc817d155ecb7e1c788eb766700883a8562211fde2ea8808e84bec575e97",
+        "source_artifact_sha256": "04c80355a835e1f7b1e5209e595fae21ca19b2ed0adf9ee6f068993f96af3b73",
+        "acceptance_id": "AC-11",
+        "registered_assertion_ids": [
+          "scenario:GOVERNED-EXTERNAL-CAPTURE",
+          "scenario:GOVERNED-REMOTE-DEPLOY",
+          "scenario:STANDARD-LOCAL-FEATURE",
+          "test:TEST-PAIR-ADVERSARIAL-MUTATIONS"
+        ]
+      },
+      "evidence_sha256": "c82d017ccc036fe504b3954a6266974eace750464f1735fc14a2ee09632a001a"
+    },
+    "PRODUCER-AC-12-S0-1": {
+      "binding": {
+        "producer_id": "PRODUCER-AC-12-S0-1",
+        "slice": "0",
+        "callable": "scripts/run_dhf_simplification_pair.py::capture_observations",
+        "artifact": "tests/fixtures/dhf_simplification_observations.json",
+        "artifact_schema": "dhf_simplification_observations_v4"
+      },
+      "evidence": {
+        "kind": "baseline_and_fixture_evidence",
+        "assertion_count": 22,
+        "slice": "0",
+        "passed_assertion_count": 22,
+        "base_commit": "00818ae174f039899a2757ee4c67fcf9db1effa0",
+        "corpus_sha256": "526620d20e6949b815348a5143d56a437a3a2860c50306166266ba2c10e002c6",
+        "runner_sha256": "1281fc67b8745c34df368eb4d934665cbe7ed8f5728af831245a2858f5d5d0fa",
+        "promotion_manifest_sha256": "d04dbc817d155ecb7e1c788eb766700883a8562211fde2ea8808e84bec575e97",
+        "source_artifact_sha256": "04c80355a835e1f7b1e5209e595fae21ca19b2ed0adf9ee6f068993f96af3b73",
+        "acceptance_id": "AC-12",
+        "registered_assertion_ids": [
+          "scenario:LIGHT-BOUNDED-DOCS",
+          "scenario:LIGHT-EXPLANATION",
+          "scenario:LIGHT-ONE-FILE-SAFE",
+          "scenario:LIGHT-TRIVIAL-FORMAT",
+          "scenario:STANDARD-CLI-CHANGE",
+          "scenario:STANDARD-FAILING-TEST",
+          "scenario:STANDARD-LOCAL-FEATURE",
+          "scenario:STANDARD-LOCAL-UI",
+          "scenario:STANDARD-SCOPED-REFACTOR",
+          "test:TEST-BASELINE-MEASUREMENT",
+          "test:TEST-PAIRED-ACTUAL-OUTCOMES"
+        ]
+      },
+      "evidence_sha256": "c707e24120a067c3856fe21010d8c8255a9592848f319d75e9933247f0749f92"
+    },
+    "PRODUCER-AC-12-S4-1": {
+      "binding": {
+        "producer_id": "PRODUCER-AC-12-S4-1",
+        "slice": "4",
+        "callable": "scripts/run_dhf_simplification_pair.py::capture_observations",
+        "artifact": "tests/fixtures/dhf_simplification_observations.json",
+        "artifact_schema": "dhf_simplification_observations_v4"
+      },
+      "evidence": {
+        "kind": "paired_acceptance_evidence",
+        "assertion_count": 175,
+        "slice": "4",
+        "passed_assertion_count": 175,
+        "base_commit": "00818ae174f039899a2757ee4c67fcf9db1effa0",
+        "corpus_sha256": "526620d20e6949b815348a5143d56a437a3a2860c50306166266ba2c10e002c6",
+        "runner_sha256": "1281fc67b8745c34df368eb4d934665cbe7ed8f5728af831245a2858f5d5d0fa",
+        "promotion_manifest_sha256": "d04dbc817d155ecb7e1c788eb766700883a8562211fde2ea8808e84bec575e97",
+        "source_artifact_sha256": "04c80355a835e1f7b1e5209e595fae21ca19b2ed0adf9ee6f068993f96af3b73",
+        "acceptance_id": "AC-12",
+        "registered_assertion_ids": [
+          "scenario:LIGHT-BOUNDED-DOCS",
+          "scenario:LIGHT-EXPLANATION",
+          "scenario:LIGHT-ONE-FILE-SAFE",
+          "scenario:LIGHT-TRIVIAL-FORMAT",
+          "scenario:STANDARD-CLI-CHANGE",
+          "scenario:STANDARD-FAILING-TEST",
+          "scenario:STANDARD-LOCAL-FEATURE",
+          "scenario:STANDARD-LOCAL-UI",
+          "scenario:STANDARD-SCOPED-REFACTOR",
+          "test:TEST-BASELINE-MEASUREMENT",
+          "test:TEST-PAIRED-ACTUAL-OUTCOMES"
+        ]
+      },
+      "evidence_sha256": "77f42194d6232201920b363856208cfb3f4eca1fbfc849ffaace9eb9781ad02d"
+    },
+    "PRODUCER-AC-13-S0-1": {
+      "binding": {
+        "producer_id": "PRODUCER-AC-13-S0-1",
+        "slice": "0",
+        "callable": "scripts/run_dhf_simplification_pair.py::capture_observations",
+        "artifact": "tests/fixtures/dhf_simplification_observations.json",
+        "artifact_schema": "dhf_simplification_observations_v4"
+      },
+      "evidence": {
+        "kind": "baseline_and_fixture_evidence",
+        "assertion_count": 22,
+        "slice": "0",
+        "passed_assertion_count": 22,
+        "base_commit": "00818ae174f039899a2757ee4c67fcf9db1effa0",
+        "corpus_sha256": "526620d20e6949b815348a5143d56a437a3a2860c50306166266ba2c10e002c6",
+        "runner_sha256": "1281fc67b8745c34df368eb4d934665cbe7ed8f5728af831245a2858f5d5d0fa",
+        "promotion_manifest_sha256": "d04dbc817d155ecb7e1c788eb766700883a8562211fde2ea8808e84bec575e97",
+        "source_artifact_sha256": "04c80355a835e1f7b1e5209e595fae21ca19b2ed0adf9ee6f068993f96af3b73",
+        "acceptance_id": "AC-13",
+        "registered_assertion_ids": [
+          "scenario:CONTROL-ORDINARY-CONTINUE",
+          "test:TEST-BASELINE-MEASUREMENT",
+          "test:TEST-PAIRED-ACTUAL-OUTCOMES"
+        ]
+      },
+      "evidence_sha256": "868f4e2beaccc551f6f280bcac985a8288f1dc283cb9d08f2f39466a344171d3"
+    },
+    "PRODUCER-AC-13-S4-1": {
+      "binding": {
+        "producer_id": "PRODUCER-AC-13-S4-1",
+        "slice": "4",
+        "callable": "scripts/run_dhf_simplification_pair.py::capture_observations",
+        "artifact": "tests/fixtures/dhf_simplification_observations.json",
+        "artifact_schema": "dhf_simplification_observations_v4"
+      },
+      "evidence": {
+        "kind": "paired_acceptance_evidence",
+        "assertion_count": 175,
+        "slice": "4",
+        "passed_assertion_count": 175,
+        "base_commit": "00818ae174f039899a2757ee4c67fcf9db1effa0",
+        "corpus_sha256": "526620d20e6949b815348a5143d56a437a3a2860c50306166266ba2c10e002c6",
+        "runner_sha256": "1281fc67b8745c34df368eb4d934665cbe7ed8f5728af831245a2858f5d5d0fa",
+        "promotion_manifest_sha256": "d04dbc817d155ecb7e1c788eb766700883a8562211fde2ea8808e84bec575e97",
+        "source_artifact_sha256": "04c80355a835e1f7b1e5209e595fae21ca19b2ed0adf9ee6f068993f96af3b73",
+        "acceptance_id": "AC-13",
+        "registered_assertion_ids": [
+          "scenario:CONTROL-ORDINARY-CONTINUE",
+          "test:TEST-BASELINE-MEASUREMENT",
+          "test:TEST-PAIRED-ACTUAL-OUTCOMES"
+        ]
+      },
+      "evidence_sha256": "087d6e825288ce6e6d97f9f6a65c44f9a33cddfca81fa70ed82f73bcd42e56c9"
+    },
+    "PRODUCER-AC-14-S0-1": {
+      "binding": {
+        "producer_id": "PRODUCER-AC-14-S0-1",
+        "slice": "0",
+        "callable": "scripts/run_dhf_simplification_pair.py::capture_observations",
+        "artifact": "tests/fixtures/dhf_simplification_observations.json",
+        "artifact_schema": "dhf_simplification_observations_v4"
+      },
+      "evidence": {
+        "kind": "baseline_and_fixture_evidence",
+        "assertion_count": 22,
+        "slice": "0",
+        "passed_assertion_count": 22,
+        "base_commit": "00818ae174f039899a2757ee4c67fcf9db1effa0",
+        "corpus_sha256": "526620d20e6949b815348a5143d56a437a3a2860c50306166266ba2c10e002c6",
+        "runner_sha256": "1281fc67b8745c34df368eb4d934665cbe7ed8f5728af831245a2858f5d5d0fa",
+        "promotion_manifest_sha256": "d04dbc817d155ecb7e1c788eb766700883a8562211fde2ea8808e84bec575e97",
+        "source_artifact_sha256": "04c80355a835e1f7b1e5209e595fae21ca19b2ed0adf9ee6f068993f96af3b73",
+        "acceptance_id": "AC-14",
+        "registered_assertion_ids": [
+          "scenario:CONTROL-ORDINARY-CONTINUE",
+          "scenario:CONTROL-SHIPQ-DELEGATION",
+          "scenario:GOVERNED-RESUMED-TASK",
+          "scenario:LIGHT-EXPLANATION",
+          "scenario:STANDARD-LOCAL-FEATURE",
+          "test:TEST-BASELINE-MEASUREMENT",
+          "test:TEST-SCHEMA-COUNTS"
+        ]
+      },
+      "evidence_sha256": "3ede3fdaa25d369f8a7eac0f692d1fe4559b3922be9842a54d9988c24a4ec00c"
+    },
+    "PRODUCER-AC-14-S4-1": {
+      "binding": {
+        "producer_id": "PRODUCER-AC-14-S4-1",
+        "slice": "4",
+        "callable": "scripts/run_dhf_simplification_pair.py::capture_observations",
+        "artifact": "tests/fixtures/dhf_simplification_observations.json",
+        "artifact_schema": "dhf_simplification_observations_v4"
+      },
+      "evidence": {
+        "kind": "paired_acceptance_evidence",
+        "assertion_count": 175,
+        "slice": "4",
+        "passed_assertion_count": 175,
+        "base_commit": "00818ae174f039899a2757ee4c67fcf9db1effa0",
+        "corpus_sha256": "526620d20e6949b815348a5143d56a437a3a2860c50306166266ba2c10e002c6",
+        "runner_sha256": "1281fc67b8745c34df368eb4d934665cbe7ed8f5728af831245a2858f5d5d0fa",
+        "promotion_manifest_sha256": "d04dbc817d155ecb7e1c788eb766700883a8562211fde2ea8808e84bec575e97",
+        "source_artifact_sha256": "04c80355a835e1f7b1e5209e595fae21ca19b2ed0adf9ee6f068993f96af3b73",
+        "acceptance_id": "AC-14",
+        "registered_assertion_ids": [
+          "scenario:CONTROL-ORDINARY-CONTINUE",
+          "scenario:CONTROL-SHIPQ-DELEGATION",
+          "scenario:GOVERNED-RESUMED-TASK",
+          "scenario:LIGHT-EXPLANATION",
+          "scenario:STANDARD-LOCAL-FEATURE",
+          "test:TEST-BASELINE-MEASUREMENT",
+          "test:TEST-SCHEMA-COUNTS"
+        ]
+      },
+      "evidence_sha256": "14dc07df603e1895592dfa783d913b8f8deb8e9879e20e82129658b4976741d2"
+    },
+    "PRODUCER-AC-15-S3-1": {
+      "binding": {
+        "producer_id": "PRODUCER-AC-15-S3-1",
+        "slice": "3",
+        "callable": "scripts/run_dhf_simplification_pair.py::capture_observations",
+        "artifact": "tests/fixtures/dhf_simplification_observations.json",
+        "artifact_schema": "dhf_simplification_observations_v4"
+      },
+      "evidence": {
+        "kind": "surface_identity_evidence",
+        "assertion_count": 5,
+        "slice": "3",
+        "passed_assertion_count": 5,
+        "base_commit": "00818ae174f039899a2757ee4c67fcf9db1effa0",
+        "corpus_sha256": "526620d20e6949b815348a5143d56a437a3a2860c50306166266ba2c10e002c6",
+        "runner_sha256": "1281fc67b8745c34df368eb4d934665cbe7ed8f5728af831245a2858f5d5d0fa",
+        "promotion_manifest_sha256": "d04dbc817d155ecb7e1c788eb766700883a8562211fde2ea8808e84bec575e97",
+        "source_artifact_sha256": "04c80355a835e1f7b1e5209e595fae21ca19b2ed0adf9ee6f068993f96af3b73",
+        "acceptance_id": "AC-15",
+        "registered_assertion_ids": [
+          "scenario:GOVERNED-RESUMED-TASK",
+          "scenario:LIGHT-EXPLANATION",
+          "scenario:STANDARD-LOCAL-FEATURE",
+          "test:TEST-NORMATIVE-MIRRORS"
+        ]
+      },
+      "evidence_sha256": "7d9a5e3053abaf0c2aaafdb2344e4bd5cd22142a8313030662b62b0cf9af4f2b"
+    },
+    "PRODUCER-AC-16-S0-1": {
+      "binding": {
+        "producer_id": "PRODUCER-AC-16-S0-1",
+        "slice": "0",
+        "callable": "scripts/run_dhf_simplification_pair.py::capture_observations",
+        "artifact": "tests/fixtures/dhf_simplification_observations.json",
+        "artifact_schema": "dhf_simplification_observations_v4"
+      },
+      "evidence": {
+        "kind": "baseline_and_fixture_evidence",
+        "assertion_count": 22,
+        "slice": "0",
+        "passed_assertion_count": 22,
+        "base_commit": "00818ae174f039899a2757ee4c67fcf9db1effa0",
+        "corpus_sha256": "526620d20e6949b815348a5143d56a437a3a2860c50306166266ba2c10e002c6",
+        "runner_sha256": "1281fc67b8745c34df368eb4d934665cbe7ed8f5728af831245a2858f5d5d0fa",
+        "promotion_manifest_sha256": "d04dbc817d155ecb7e1c788eb766700883a8562211fde2ea8808e84bec575e97",
+        "source_artifact_sha256": "04c80355a835e1f7b1e5209e595fae21ca19b2ed0adf9ee6f068993f96af3b73",
+        "acceptance_id": "AC-16",
+        "registered_assertion_ids": [
+          "scenario:GOVERNED-REMOTE-DEPLOY",
+          "test:TEST-ACCEPTANCE-TRACE",
+          "test:TEST-NO-RUNTIME-SLICE-0",
+          "test:TEST-NO-RUNTIME-SLICE-4"
+        ],
+        "base_expected_runtime_manifest": {
+          "schema_version": 1,
+          "kind": "base_expected_runtime_manifest",
+          "base_commit": "00818ae174f039899a2757ee4c67fcf9db1effa0",
+          "managed_roots": [
+            "/Users/kezheng/.codex/hooks",
+            "/Users/kezheng/.codex/skills/delivery-harness-framework"
+          ],
+          "managed_relative_paths": [
+            "codex/hooks/dhf_preprompt.py",
+            "codex/skills/delivery-harness-framework/SKILL.md",
+            "codex/skills/delivery-harness-framework/agents/openai.yaml",
+            "codex/skills/delivery-harness-framework/evals/evals.json",
+            "codex/skills/delivery-harness-framework/evals/validate_completion_output.py"
+          ],
+          "records": [
+            {
+              "path": "/Users/kezheng/.codex/hooks/dhf_preprompt.py",
+              "type": "regular",
+              "sha256": "be0f0f9372cdacd5f03beb60df8269629ecdd07991814ca8dd912b97b4effbb9",
+              "source_path": "codex/hooks/dhf_preprompt.py"
+            },
+            {
+              "path": "/Users/kezheng/.codex/skills/delivery-harness-framework/SKILL.md",
+              "type": "regular",
+              "sha256": "18148ab8885fd0920df72a248cef23ff3fa1b73a60b3370098542efb4cfdcd00",
+              "source_path": "codex/skills/delivery-harness-framework/SKILL.md"
+            },
+            {
+              "path": "/Users/kezheng/.codex/skills/delivery-harness-framework/agents/openai.yaml",
+              "type": "regular",
+              "sha256": "e060c7936ecfe93b81d64b3b41c7403c3f15f935c394381ad5af3266567d6930",
+              "source_path": "codex/skills/delivery-harness-framework/agents/openai.yaml"
+            },
+            {
+              "path": "/Users/kezheng/.codex/skills/delivery-harness-framework/evals/evals.json",
+              "type": "regular",
+              "sha256": "651cfe21377981dad9eadc7c6d264935512a9fcce50638ea0545fe4235348f02",
+              "source_path": "codex/skills/delivery-harness-framework/evals/evals.json"
+            },
+            {
+              "path": "/Users/kezheng/.codex/skills/delivery-harness-framework/evals/validate_completion_output.py",
+              "type": "absent",
+              "sha256": "absent",
+              "source_path": "codex/skills/delivery-harness-framework/evals/validate_completion_output.py"
+            }
+          ],
+          "exclusions": [
+            "unmanaged files",
+            "plugins",
+            "caches",
+            "logs",
+            "__pycache__",
+            "*.pyc",
+            "directory metadata"
+          ],
+          "aggregate_sha256": "5634c9a57803154907477d1f13451a9102d95b07528646ddb06fc8f0800b8cdc"
+        }
+      },
+      "evidence_sha256": "4bcde6ebaa9f0f2d7da8168802e2128d5a7721b564e834a6f743f6690b4e8de1"
+    },
+    "PRODUCER-AC-16-S4-1": {
+      "binding": {
+        "producer_id": "PRODUCER-AC-16-S4-1",
+        "slice": "4",
+        "callable": "scripts/run_dhf_simplification_pair.py::capture_observations",
+        "artifact": "tests/fixtures/dhf_simplification_observations.json",
+        "artifact_schema": "dhf_simplification_observations_v4"
+      },
+      "evidence": {
+        "kind": "paired_acceptance_evidence",
+        "assertion_count": 175,
+        "slice": "4",
+        "passed_assertion_count": 175,
+        "base_commit": "00818ae174f039899a2757ee4c67fcf9db1effa0",
+        "corpus_sha256": "526620d20e6949b815348a5143d56a437a3a2860c50306166266ba2c10e002c6",
+        "runner_sha256": "1281fc67b8745c34df368eb4d934665cbe7ed8f5728af831245a2858f5d5d0fa",
+        "promotion_manifest_sha256": "d04dbc817d155ecb7e1c788eb766700883a8562211fde2ea8808e84bec575e97",
+        "source_artifact_sha256": "04c80355a835e1f7b1e5209e595fae21ca19b2ed0adf9ee6f068993f96af3b73",
+        "acceptance_id": "AC-16",
+        "registered_assertion_ids": [
+          "scenario:GOVERNED-REMOTE-DEPLOY",
+          "test:TEST-ACCEPTANCE-TRACE",
+          "test:TEST-NO-RUNTIME-SLICE-0",
+          "test:TEST-NO-RUNTIME-SLICE-4"
+        ],
+        "current_runtime_snapshot": {
+          "schema_version": 1,
+          "kind": "current_runtime_snapshot",
+          "captured_at": "2026-07-14T01:44:34.838861Z",
+          "managed_roots": [
+            "/Users/kezheng/.codex/hooks",
+            "/Users/kezheng/.codex/skills/delivery-harness-framework"
+          ],
+          "managed_relative_paths": [
+            "codex/hooks/dhf_preprompt.py",
+            "codex/skills/delivery-harness-framework/SKILL.md",
+            "codex/skills/delivery-harness-framework/agents/openai.yaml",
+            "codex/skills/delivery-harness-framework/evals/evals.json",
+            "codex/skills/delivery-harness-framework/evals/validate_completion_output.py"
+          ],
+          "records": [
+            {
+              "path": "/Users/kezheng/.codex/hooks/dhf_preprompt.py",
+              "type": "regular",
+              "sha256": "be0f0f9372cdacd5f03beb60df8269629ecdd07991814ca8dd912b97b4effbb9",
+              "source_path": "codex/hooks/dhf_preprompt.py"
+            },
+            {
+              "path": "/Users/kezheng/.codex/skills/delivery-harness-framework/SKILL.md",
+              "type": "regular",
+              "sha256": "18148ab8885fd0920df72a248cef23ff3fa1b73a60b3370098542efb4cfdcd00",
+              "source_path": "codex/skills/delivery-harness-framework/SKILL.md"
+            },
+            {
+              "path": "/Users/kezheng/.codex/skills/delivery-harness-framework/agents/openai.yaml",
+              "type": "regular",
+              "sha256": "e060c7936ecfe93b81d64b3b41c7403c3f15f935c394381ad5af3266567d6930",
+              "source_path": "codex/skills/delivery-harness-framework/agents/openai.yaml"
+            },
+            {
+              "path": "/Users/kezheng/.codex/skills/delivery-harness-framework/evals/evals.json",
+              "type": "regular",
+              "sha256": "651cfe21377981dad9eadc7c6d264935512a9fcce50638ea0545fe4235348f02",
+              "source_path": "codex/skills/delivery-harness-framework/evals/evals.json"
+            },
+            {
+              "path": "/Users/kezheng/.codex/skills/delivery-harness-framework/evals/validate_completion_output.py",
+              "type": "absent",
+              "sha256": "absent",
+              "source_path": "codex/skills/delivery-harness-framework/evals/validate_completion_output.py"
+            }
+          ],
+          "exclusions": [
+            "unmanaged files",
+            "plugins",
+            "caches",
+            "logs",
+            "__pycache__",
+            "*.pyc",
+            "directory metadata"
+          ],
+          "aggregate_sha256": "5634c9a57803154907477d1f13451a9102d95b07528646ddb06fc8f0800b8cdc"
+        },
+        "changed_paths": [],
+        "promotion_difference_paths": [
+          "codex/hooks/dhf_preprompt.py",
+          "codex/skills/delivery-harness-framework/SKILL.md",
+          "codex/skills/delivery-harness-framework/evals/evals.json",
+          "codex/skills/delivery-harness-framework/evals/validate_completion_output.py"
+        ]
+      },
+      "evidence_sha256": "5b14378fcc1538373acb51858e87194d89b931b6ef26e169607cdc7fd2c6ba10"
+    },
+    "PRODUCER-AC-17-S0-1": {
+      "binding": {
+        "producer_id": "PRODUCER-AC-17-S0-1",
+        "slice": "0",
+        "callable": "scripts/run_dhf_simplification_pair.py::capture_observations",
+        "artifact": "tests/fixtures/dhf_simplification_observations.json",
+        "artifact_schema": "dhf_simplification_observations_v4"
+      },
+      "evidence": {
+        "kind": "baseline_and_fixture_evidence",
+        "assertion_count": 22,
+        "slice": "0",
+        "passed_assertion_count": 22,
+        "base_commit": "00818ae174f039899a2757ee4c67fcf9db1effa0",
+        "corpus_sha256": "526620d20e6949b815348a5143d56a437a3a2860c50306166266ba2c10e002c6",
+        "runner_sha256": "1281fc67b8745c34df368eb4d934665cbe7ed8f5728af831245a2858f5d5d0fa",
+        "promotion_manifest_sha256": "d04dbc817d155ecb7e1c788eb766700883a8562211fde2ea8808e84bec575e97",
+        "source_artifact_sha256": "04c80355a835e1f7b1e5209e595fae21ca19b2ed0adf9ee6f068993f96af3b73",
+        "acceptance_id": "AC-17",
+        "registered_assertion_ids": [
+          "scenario:GOVERNED-RESUMED-TASK",
+          "test:TEST-CHECKPOINT-ARTIFACT-ROUNDTRIP"
+        ]
+      },
+      "evidence_sha256": "f03a08f466d6ec9810c15aae3799c84681e4dc2c1e919be5f26db10d5bb3148c"
+    },
+    "PRODUCER-AC-17-S4-1": {
+      "binding": {
+        "producer_id": "PRODUCER-AC-17-S4-1",
+        "slice": "4",
+        "callable": "scripts/run_dhf_simplification_pair.py::capture_observations",
+        "artifact": "tests/fixtures/dhf_simplification_observations.json",
+        "artifact_schema": "dhf_simplification_observations_v4"
+      },
+      "evidence": {
+        "kind": "paired_acceptance_evidence",
+        "assertion_count": 175,
+        "slice": "4",
+        "passed_assertion_count": 175,
+        "base_commit": "00818ae174f039899a2757ee4c67fcf9db1effa0",
+        "corpus_sha256": "526620d20e6949b815348a5143d56a437a3a2860c50306166266ba2c10e002c6",
+        "runner_sha256": "1281fc67b8745c34df368eb4d934665cbe7ed8f5728af831245a2858f5d5d0fa",
+        "promotion_manifest_sha256": "d04dbc817d155ecb7e1c788eb766700883a8562211fde2ea8808e84bec575e97",
+        "source_artifact_sha256": "04c80355a835e1f7b1e5209e595fae21ca19b2ed0adf9ee6f068993f96af3b73",
+        "acceptance_id": "AC-17",
+        "registered_assertion_ids": [
+          "scenario:GOVERNED-RESUMED-TASK",
+          "test:TEST-CHECKPOINT-ARTIFACT-ROUNDTRIP"
+        ]
+      },
+      "evidence_sha256": "ccb839ae97c0bf0b90314fceadce4370e484104c23fe8fa8bc230c8a39b48f74"
+    },
+    "PRODUCER-AC-18-S1-1": {
+      "binding": {
+        "producer_id": "PRODUCER-AC-18-S1-1",
+        "slice": "1",
+        "callable": "scripts/run_dhf_simplification_pair.py::capture_observations",
+        "artifact": "tests/fixtures/dhf_simplification_observations.json",
+        "artifact_schema": "dhf_simplification_observations_v4"
+      },
+      "evidence": {
+        "kind": "routing_contract_evidence",
+        "assertion_count": 85,
+        "slice": "1",
+        "passed_assertion_count": 85,
+        "base_commit": "00818ae174f039899a2757ee4c67fcf9db1effa0",
+        "corpus_sha256": "526620d20e6949b815348a5143d56a437a3a2860c50306166266ba2c10e002c6",
+        "runner_sha256": "1281fc67b8745c34df368eb4d934665cbe7ed8f5728af831245a2858f5d5d0fa",
+        "promotion_manifest_sha256": "d04dbc817d155ecb7e1c788eb766700883a8562211fde2ea8808e84bec575e97",
+        "source_artifact_sha256": "04c80355a835e1f7b1e5209e595fae21ca19b2ed0adf9ee6f068993f96af3b73",
+        "acceptance_id": "AC-18",
+        "registered_assertion_ids": [
+          "scenario:CONTROL-ORDINARY-CONTINUE",
+          "scenario:CONTROL-SHIPQ-DELEGATION",
+          "test:TEST-HELPER-CLI-CALLABILITY",
+          "test:TEST-PAIRED-ACTUAL-OUTCOMES"
+        ]
+      },
+      "evidence_sha256": "bf6dbcbbc79931fa48b195842a96a2365a20ca1513e310c71e7da1f6f28d32e8"
+    },
+    "PRODUCER-AC-18-S4-1": {
+      "binding": {
+        "producer_id": "PRODUCER-AC-18-S4-1",
+        "slice": "4",
+        "callable": "scripts/run_dhf_simplification_pair.py::capture_observations",
+        "artifact": "tests/fixtures/dhf_simplification_observations.json",
+        "artifact_schema": "dhf_simplification_observations_v4"
+      },
+      "evidence": {
+        "kind": "paired_acceptance_evidence",
+        "assertion_count": 175,
+        "slice": "4",
+        "passed_assertion_count": 175,
+        "base_commit": "00818ae174f039899a2757ee4c67fcf9db1effa0",
+        "corpus_sha256": "526620d20e6949b815348a5143d56a437a3a2860c50306166266ba2c10e002c6",
+        "runner_sha256": "1281fc67b8745c34df368eb4d934665cbe7ed8f5728af831245a2858f5d5d0fa",
+        "promotion_manifest_sha256": "d04dbc817d155ecb7e1c788eb766700883a8562211fde2ea8808e84bec575e97",
+        "source_artifact_sha256": "04c80355a835e1f7b1e5209e595fae21ca19b2ed0adf9ee6f068993f96af3b73",
+        "acceptance_id": "AC-18",
+        "registered_assertion_ids": [
+          "scenario:CONTROL-ORDINARY-CONTINUE",
+          "scenario:CONTROL-SHIPQ-DELEGATION",
+          "test:TEST-HELPER-CLI-CALLABILITY",
+          "test:TEST-PAIRED-ACTUAL-OUTCOMES"
+        ]
+      },
+      "evidence_sha256": "0c86a03021dff740209cb2887aec46aadda17141d722292d73e2504262e95b72"
+    }
+  }
 }

@@ -4,7 +4,7 @@
   "measurement_boundary": {
     "context_unit": "utf8_bytes_proxy",
     "context_boundary": "UTF-8 byte length of hookSpecificOutput.additionalContext returned by the repo-source dispatcher; wrapper and injected skill text are included, other system or adapter context is excluded.",
-    "mandatory_helper_boundary": "Count of distinct helper CLI entry points that the frozen Base SHA generic DHF contract required before the scenario's first task action, checked against the validator's fixed BASELINE_HELPER_ORACLE; git and ordinary read commands are not helper CLIs.",
+    "mandatory_helper_boundary": "Count of distinct helper CLI entry points derived from the immutable Base SHA generic DHF SKILL.md Helper Router and Startup Sequence before the scenario first task action; mentioned, available, forbidden, and post-action helpers are excluded.",
     "baseline_provenance": {
       "base_sha": "00818ae174f039899a2757ee4c67fcf9db1effa0",
       "oracle_kind": "frozen_measurement",
@@ -699,12 +699,13 @@
       ],
       "baseline_mandatory_helpers": [
         "harness_recover.py",
-        "harness_env_probe.py"
+        "harness_env_probe.py",
+        "harness_report.py"
       ],
       "baseline_measurement": {
         "route": "generic-activated",
         "injected_context_utf8_bytes_proxy": 32803,
-        "mandatory_helper_count": 2,
+        "mandatory_helper_count": 3,
         "verification_receipt_status": "not_observed",
         "known_mismatches": [
           "baseline_has_no_governed_profile_selection"
@@ -984,11 +985,11 @@
       "producers": [
         {
           "slice": "2",
-          "producer_id": "TEST-OUTPUT-INVARIANTS",
-          "fixture": "codex/skills/delivery-harness-framework/evals/evals.json",
+          "producer_id": "PRODUCER-AC-01-S2-1",
+          "fixture": "tests/fixtures/dhf_simplification_observations.json",
           "evidence_status": {
             "state": "completed",
-            "evidence_id": "AC-01-slice-2-TEST-OUTPUT-INVARIANTS"
+            "evidence_id": "AC-01-slice-2-PRODUCER-AC-01-S2-1"
           }
         }
       ]
@@ -1006,11 +1007,11 @@
       "producers": [
         {
           "slice": "1",
-          "producer_id": "TEST-ADVERSARIAL-ROUTING",
-          "fixture": "tests/test_dhf_simplification.py",
+          "producer_id": "PRODUCER-AC-02-S1-1",
+          "fixture": "tests/fixtures/dhf_simplification_observations.json",
           "evidence_status": {
             "state": "completed",
-            "evidence_id": "AC-02-slice-1-TEST-ADVERSARIAL-ROUTING"
+            "evidence_id": "AC-02-slice-1-PRODUCER-AC-02-S1-1"
           }
         }
       ]
@@ -1027,20 +1028,20 @@
       "producers": [
         {
           "slice": "0",
-          "producer_id": "TEST-BASELINE-MEASUREMENT",
-          "fixture": "tests/fixtures/dhf_simplification_scenarios.json",
+          "producer_id": "PRODUCER-AC-03-S0-1",
+          "fixture": "tests/fixtures/dhf_simplification_observations.json",
           "evidence_status": {
             "state": "completed",
-            "evidence_id": "AC-03-slice-0-TEST-BASELINE-MEASUREMENT"
+            "evidence_id": "AC-03-slice-0-PRODUCER-AC-03-S0-1"
           }
         },
         {
           "slice": "1",
-          "producer_id": "TEST-CURRENT-ROUTING-CONTROLS",
-          "fixture": "codex/hooks/dhf_preprompt.py",
+          "producer_id": "PRODUCER-AC-03-S1-1",
+          "fixture": "tests/fixtures/dhf_simplification_observations.json",
           "evidence_status": {
             "state": "completed",
-            "evidence_id": "AC-03-slice-1-TEST-CURRENT-ROUTING-CONTROLS"
+            "evidence_id": "AC-03-slice-1-PRODUCER-AC-03-S1-1"
           }
         }
       ]
@@ -1057,20 +1058,20 @@
       "producers": [
         {
           "slice": "0",
-          "producer_id": "TEST-OPT-OUT-PRECEDENCE",
-          "fixture": "tests/test_dhf_simplification.py",
+          "producer_id": "PRODUCER-AC-04-S0-1",
+          "fixture": "tests/fixtures/dhf_simplification_observations.json",
           "evidence_status": {
             "state": "completed",
-            "evidence_id": "AC-04-slice-0-TEST-OPT-OUT-PRECEDENCE"
+            "evidence_id": "AC-04-slice-0-PRODUCER-AC-04-S0-1"
           }
         },
         {
           "slice": "1",
-          "producer_id": "TEST-OPT-OUT-PRECEDENCE",
-          "fixture": "codex/hooks/dhf_preprompt.py",
+          "producer_id": "PRODUCER-AC-04-S1-1",
+          "fixture": "tests/fixtures/dhf_simplification_observations.json",
           "evidence_status": {
             "state": "completed",
-            "evidence_id": "AC-04-slice-1-TEST-OPT-OUT-PRECEDENCE"
+            "evidence_id": "AC-04-slice-1-PRODUCER-AC-04-S1-1"
           }
         }
       ]
@@ -1087,20 +1088,20 @@
       "producers": [
         {
           "slice": "0",
-          "producer_id": "TEST-BASELINE-MEASUREMENT",
-          "fixture": "tests/fixtures/dhf_simplification_scenarios.json",
+          "producer_id": "PRODUCER-AC-05-S0-1",
+          "fixture": "tests/fixtures/dhf_simplification_observations.json",
           "evidence_status": {
             "state": "completed",
-            "evidence_id": "AC-05-slice-0-TEST-BASELINE-MEASUREMENT"
+            "evidence_id": "AC-05-slice-0-PRODUCER-AC-05-S0-1"
           }
         },
         {
           "slice": "1",
-          "producer_id": "TEST-CURRENT-ROUTING-CONTROLS",
-          "fixture": "codex/hooks/dhf_preprompt.py",
+          "producer_id": "PRODUCER-AC-05-S1-1",
+          "fixture": "tests/fixtures/dhf_simplification_observations.json",
           "evidence_status": {
             "state": "completed",
-            "evidence_id": "AC-05-slice-1-TEST-CURRENT-ROUTING-CONTROLS"
+            "evidence_id": "AC-05-slice-1-PRODUCER-AC-05-S1-1"
           }
         }
       ]
@@ -1116,20 +1117,20 @@
       "producers": [
         {
           "slice": "0",
-          "producer_id": "TEST-MALFORMED-PAYLOAD-SAFETY",
-          "fixture": "tests/test_dhf_simplification.py",
+          "producer_id": "PRODUCER-AC-06-S0-1",
+          "fixture": "tests/fixtures/dhf_simplification_observations.json",
           "evidence_status": {
             "state": "completed",
-            "evidence_id": "AC-06-slice-0-TEST-MALFORMED-PAYLOAD-SAFETY"
+            "evidence_id": "AC-06-slice-0-PRODUCER-AC-06-S0-1"
           }
         },
         {
           "slice": "1",
-          "producer_id": "TEST-MALFORMED-PAYLOAD-SAFETY",
-          "fixture": "codex/hooks/dhf_preprompt.py",
+          "producer_id": "PRODUCER-AC-06-S1-1",
+          "fixture": "tests/fixtures/dhf_simplification_observations.json",
           "evidence_status": {
             "state": "completed",
-            "evidence_id": "AC-06-slice-1-TEST-MALFORMED-PAYLOAD-SAFETY"
+            "evidence_id": "AC-06-slice-1-PRODUCER-AC-06-S1-1"
           }
         }
       ]
@@ -1149,20 +1150,20 @@
       "producers": [
         {
           "slice": "1",
-          "producer_id": "TEST-PROFILE-OUTPUT-CONTRACT",
-          "fixture": "codex/hooks/dhf_preprompt.py",
+          "producer_id": "PRODUCER-AC-07-S1-1",
+          "fixture": "tests/fixtures/dhf_simplification_observations.json",
           "evidence_status": {
             "state": "completed",
-            "evidence_id": "AC-07-slice-1-TEST-PROFILE-OUTPUT-CONTRACT"
+            "evidence_id": "AC-07-slice-1-PRODUCER-AC-07-S1-1"
           }
         },
         {
           "slice": "2",
-          "producer_id": "TEST-CONDITIONAL-HELPER-ROUTING",
-          "fixture": "codex/skills/delivery-harness-framework/SKILL.md",
+          "producer_id": "PRODUCER-AC-07-S2-1",
+          "fixture": "tests/fixtures/dhf_simplification_observations.json",
           "evidence_status": {
             "state": "completed",
-            "evidence_id": "AC-07-slice-2-TEST-CONDITIONAL-HELPER-ROUTING"
+            "evidence_id": "AC-07-slice-2-PRODUCER-AC-07-S2-1"
           }
         }
       ]
@@ -1184,20 +1185,20 @@
       "producers": [
         {
           "slice": "1",
-          "producer_id": "TEST-GOVERNED-GATES",
-          "fixture": "codex/hooks/dhf_preprompt.py",
+          "producer_id": "PRODUCER-AC-08-S1-1",
+          "fixture": "tests/fixtures/dhf_simplification_observations.json",
           "evidence_status": {
             "state": "completed",
-            "evidence_id": "AC-08-slice-1-TEST-GOVERNED-GATES"
+            "evidence_id": "AC-08-slice-1-PRODUCER-AC-08-S1-1"
           }
         },
         {
           "slice": "2",
-          "producer_id": "TEST-MULTI-SIGNAL-UNION",
-          "fixture": "codex/skills/delivery-harness-framework/SKILL.md",
+          "producer_id": "PRODUCER-AC-08-S2-1",
+          "fixture": "tests/fixtures/dhf_simplification_observations.json",
           "evidence_status": {
             "state": "completed",
-            "evidence_id": "AC-08-slice-2-TEST-MULTI-SIGNAL-UNION"
+            "evidence_id": "AC-08-slice-2-PRODUCER-AC-08-S2-1"
           }
         }
       ]
@@ -1214,11 +1215,11 @@
       "producers": [
         {
           "slice": "1",
-          "producer_id": "TEST-HELPER-CLI-CALLABILITY",
-          "fixture": "scripts/harness_checkpoint.py",
+          "producer_id": "PRODUCER-AC-09-S1-1",
+          "fixture": "tests/fixtures/dhf_simplification_observations.json",
           "evidence_status": {
             "state": "completed",
-            "evidence_id": "AC-09-slice-1-TEST-HELPER-CLI-CALLABILITY"
+            "evidence_id": "AC-09-slice-1-PRODUCER-AC-09-S1-1"
           }
         }
       ]
@@ -1239,20 +1240,20 @@
       "producers": [
         {
           "slice": "0",
-          "producer_id": "TEST-CHECKPOINT-ARTIFACT-ROUNDTRIP",
-          "fixture": "tests/fixtures/dhf_simplification_scenarios.json",
+          "producer_id": "PRODUCER-AC-10-S0-1",
+          "fixture": "tests/fixtures/dhf_simplification_observations.json",
           "evidence_status": {
             "state": "completed",
-            "evidence_id": "AC-10-slice-0-TEST-CHECKPOINT-ARTIFACT-ROUNDTRIP"
+            "evidence_id": "AC-10-slice-0-PRODUCER-AC-10-S0-1"
           }
         },
         {
           "slice": "4",
-          "producer_id": "TEST-PAIRED-ACTUAL-OUTCOMES",
+          "producer_id": "PRODUCER-AC-10-S4-1",
           "fixture": "tests/fixtures/dhf_simplification_observations.json",
           "evidence_status": {
             "state": "completed",
-            "evidence_id": "AC-10-slice-4-TEST-PAIRED-ACTUAL-OUTCOMES"
+            "evidence_id": "AC-10-slice-4-PRODUCER-AC-10-S4-1"
           }
         }
       ]
@@ -1270,20 +1271,20 @@
       "producers": [
         {
           "slice": "0",
-          "producer_id": "TEST-PAIR-ADVERSARIAL-MUTATIONS",
-          "fixture": "tests/fixtures/dhf_simplification_scenarios.json",
+          "producer_id": "PRODUCER-AC-11-S0-1",
+          "fixture": "tests/fixtures/dhf_simplification_observations.json",
           "evidence_status": {
             "state": "completed",
-            "evidence_id": "AC-11-slice-0-TEST-PAIR-ADVERSARIAL-MUTATIONS"
+            "evidence_id": "AC-11-slice-0-PRODUCER-AC-11-S0-1"
           }
         },
         {
           "slice": "4",
-          "producer_id": "TEST-PAIR-ADVERSARIAL-MUTATIONS",
+          "producer_id": "PRODUCER-AC-11-S4-1",
           "fixture": "tests/fixtures/dhf_simplification_observations.json",
           "evidence_status": {
             "state": "completed",
-            "evidence_id": "AC-11-slice-4-TEST-PAIR-ADVERSARIAL-MUTATIONS"
+            "evidence_id": "AC-11-slice-4-PRODUCER-AC-11-S4-1"
           }
         }
       ]
@@ -1308,20 +1309,20 @@
       "producers": [
         {
           "slice": "0",
-          "producer_id": "TEST-BASELINE-MEASUREMENT",
-          "fixture": "tests/fixtures/dhf_simplification_scenarios.json",
+          "producer_id": "PRODUCER-AC-12-S0-1",
+          "fixture": "tests/fixtures/dhf_simplification_observations.json",
           "evidence_status": {
             "state": "completed",
-            "evidence_id": "AC-12-slice-0-TEST-BASELINE-MEASUREMENT"
+            "evidence_id": "AC-12-slice-0-PRODUCER-AC-12-S0-1"
           }
         },
         {
           "slice": "4",
-          "producer_id": "TEST-PAIRED-ACTUAL-OUTCOMES",
+          "producer_id": "PRODUCER-AC-12-S4-1",
           "fixture": "tests/fixtures/dhf_simplification_observations.json",
           "evidence_status": {
             "state": "completed",
-            "evidence_id": "AC-12-slice-4-TEST-PAIRED-ACTUAL-OUTCOMES"
+            "evidence_id": "AC-12-slice-4-PRODUCER-AC-12-S4-1"
           }
         }
       ]
@@ -1338,20 +1339,20 @@
       "producers": [
         {
           "slice": "0",
-          "producer_id": "TEST-BASELINE-MEASUREMENT",
-          "fixture": "tests/fixtures/dhf_simplification_scenarios.json",
+          "producer_id": "PRODUCER-AC-13-S0-1",
+          "fixture": "tests/fixtures/dhf_simplification_observations.json",
           "evidence_status": {
             "state": "completed",
-            "evidence_id": "AC-13-slice-0-TEST-BASELINE-MEASUREMENT"
+            "evidence_id": "AC-13-slice-0-PRODUCER-AC-13-S0-1"
           }
         },
         {
           "slice": "4",
-          "producer_id": "TEST-PAIRED-ACTUAL-OUTCOMES",
+          "producer_id": "PRODUCER-AC-13-S4-1",
           "fixture": "tests/fixtures/dhf_simplification_observations.json",
           "evidence_status": {
             "state": "completed",
-            "evidence_id": "AC-13-slice-4-TEST-PAIRED-ACTUAL-OUTCOMES"
+            "evidence_id": "AC-13-slice-4-PRODUCER-AC-13-S4-1"
           }
         }
       ]
@@ -1372,20 +1373,20 @@
       "producers": [
         {
           "slice": "0",
-          "producer_id": "TEST-BASELINE-MEASUREMENT",
-          "fixture": "tests/fixtures/dhf_simplification_scenarios.json",
+          "producer_id": "PRODUCER-AC-14-S0-1",
+          "fixture": "tests/fixtures/dhf_simplification_observations.json",
           "evidence_status": {
             "state": "completed",
-            "evidence_id": "AC-14-slice-0-TEST-BASELINE-MEASUREMENT"
+            "evidence_id": "AC-14-slice-0-PRODUCER-AC-14-S0-1"
           }
         },
         {
           "slice": "4",
-          "producer_id": "TEST-SCHEMA-COUNTS",
+          "producer_id": "PRODUCER-AC-14-S4-1",
           "fixture": "tests/fixtures/dhf_simplification_observations.json",
           "evidence_status": {
             "state": "completed",
-            "evidence_id": "AC-14-slice-4-TEST-SCHEMA-COUNTS"
+            "evidence_id": "AC-14-slice-4-PRODUCER-AC-14-S4-1"
           }
         }
       ]
@@ -1403,17 +1404,17 @@
       "producers": [
         {
           "slice": "3",
-          "producer_id": "TEST-NORMATIVE-MIRRORS",
-          "fixture": "docs/surfaces.json",
+          "producer_id": "PRODUCER-AC-15-S3-1",
+          "fixture": "tests/fixtures/dhf_simplification_observations.json",
           "evidence_status": {
             "state": "completed",
-            "evidence_id": "AC-15-slice-3-TEST-NORMATIVE-MIRRORS"
+            "evidence_id": "AC-15-slice-3-PRODUCER-AC-15-S3-1"
           }
         }
       ]
     },
     "AC-16": {
-      "criterion": "**AC-16** Runtime sync remains blocked until source verification passes and the user separately authorizes runtime mutation; Slice 0 and Slice 4 each produce an independent runtime observation manifest over the exact managed targets with `changed_paths: []`.",
+      "criterion": "**AC-16** Runtime sync remains blocked until source verification passes and the user separately authorizes runtime mutation; Slice 0 freezes the Base expected runtime manifest, and Slice 4 freshly proves live managed runtime matches Base (`changed_paths: []`) while differing from promoted repo source.",
       "scenario_ids": [
         "GOVERNED-REMOTE-DEPLOY"
       ],
@@ -1425,20 +1426,20 @@
       "producers": [
         {
           "slice": "0",
-          "producer_id": "TEST-NO-RUNTIME-SLICE-0",
-          "fixture": "docs/surfaces.json",
+          "producer_id": "PRODUCER-AC-16-S0-1",
+          "fixture": "tests/fixtures/dhf_simplification_observations.json",
           "evidence_status": {
             "state": "completed",
-            "evidence_id": "AC-16-slice-0-TEST-NO-RUNTIME-SLICE-0"
+            "evidence_id": "AC-16-slice-0-PRODUCER-AC-16-S0-1"
           }
         },
         {
           "slice": "4",
-          "producer_id": "TEST-NO-RUNTIME-SLICE-4",
-          "fixture": "docs/surfaces.json",
+          "producer_id": "PRODUCER-AC-16-S4-1",
+          "fixture": "tests/fixtures/dhf_simplification_observations.json",
           "evidence_status": {
             "state": "completed",
-            "evidence_id": "AC-16-slice-4-TEST-NO-RUNTIME-SLICE-4"
+            "evidence_id": "AC-16-slice-4-PRODUCER-AC-16-S4-1"
           }
         }
       ]
@@ -1454,20 +1455,20 @@
       "producers": [
         {
           "slice": "0",
-          "producer_id": "TEST-CHECKPOINT-ARTIFACT-ROUNDTRIP",
-          "fixture": "tests/fixtures/dhf_simplification_scenarios.json",
+          "producer_id": "PRODUCER-AC-17-S0-1",
+          "fixture": "tests/fixtures/dhf_simplification_observations.json",
           "evidence_status": {
             "state": "completed",
-            "evidence_id": "AC-17-slice-0-TEST-CHECKPOINT-ARTIFACT-ROUNDTRIP"
+            "evidence_id": "AC-17-slice-0-PRODUCER-AC-17-S0-1"
           }
         },
         {
           "slice": "4",
-          "producer_id": "TEST-CHECKPOINT-ARTIFACT-ROUNDTRIP",
+          "producer_id": "PRODUCER-AC-17-S4-1",
           "fixture": "tests/fixtures/dhf_simplification_observations.json",
           "evidence_status": {
             "state": "completed",
-            "evidence_id": "AC-17-slice-4-TEST-CHECKPOINT-ARTIFACT-ROUNDTRIP"
+            "evidence_id": "AC-17-slice-4-PRODUCER-AC-17-S4-1"
           }
         }
       ]
@@ -1485,22 +1486,472 @@
       "producers": [
         {
           "slice": "1",
-          "producer_id": "TEST-HELPER-CLI-CALLABILITY",
-          "fixture": "codex/hooks/dhf_preprompt.py",
+          "producer_id": "PRODUCER-AC-18-S1-1",
+          "fixture": "tests/fixtures/dhf_simplification_observations.json",
           "evidence_status": {
             "state": "completed",
-            "evidence_id": "AC-18-slice-1-TEST-HELPER-CLI-CALLABILITY"
+            "evidence_id": "AC-18-slice-1-PRODUCER-AC-18-S1-1"
           }
         },
         {
           "slice": "4",
-          "producer_id": "TEST-PAIRED-ACTUAL-OUTCOMES",
+          "producer_id": "PRODUCER-AC-18-S4-1",
           "fixture": "tests/fixtures/dhf_simplification_observations.json",
           "evidence_status": {
             "state": "completed",
-            "evidence_id": "AC-18-slice-4-TEST-PAIRED-ACTUAL-OUTCOMES"
+            "evidence_id": "AC-18-slice-4-PRODUCER-AC-18-S4-1"
           }
         }
+      ]
+    }
+  },
+  "producer_catalog": {
+    "PRODUCER-AC-01-S2-1": {
+      "producer_id": "PRODUCER-AC-01-S2-1",
+      "slice": "2",
+      "callable": "scripts/run_dhf_simplification_pair.py::capture_observations",
+      "artifact": "tests/fixtures/dhf_simplification_observations.json",
+      "artifact_schema": "dhf_simplification_observations_v4",
+      "identity_fields": [
+        "base_identity",
+        "corpus_identity",
+        "runner_identity",
+        "promotion_candidate_manifest",
+        "producer_evidence"
+      ]
+    },
+    "PRODUCER-AC-02-S1-1": {
+      "producer_id": "PRODUCER-AC-02-S1-1",
+      "slice": "1",
+      "callable": "scripts/run_dhf_simplification_pair.py::capture_observations",
+      "artifact": "tests/fixtures/dhf_simplification_observations.json",
+      "artifact_schema": "dhf_simplification_observations_v4",
+      "identity_fields": [
+        "base_identity",
+        "corpus_identity",
+        "runner_identity",
+        "promotion_candidate_manifest",
+        "producer_evidence"
+      ]
+    },
+    "PRODUCER-AC-03-S0-1": {
+      "producer_id": "PRODUCER-AC-03-S0-1",
+      "slice": "0",
+      "callable": "scripts/run_dhf_simplification_pair.py::capture_observations",
+      "artifact": "tests/fixtures/dhf_simplification_observations.json",
+      "artifact_schema": "dhf_simplification_observations_v4",
+      "identity_fields": [
+        "base_identity",
+        "corpus_identity",
+        "runner_identity",
+        "promotion_candidate_manifest",
+        "producer_evidence"
+      ]
+    },
+    "PRODUCER-AC-03-S1-1": {
+      "producer_id": "PRODUCER-AC-03-S1-1",
+      "slice": "1",
+      "callable": "scripts/run_dhf_simplification_pair.py::capture_observations",
+      "artifact": "tests/fixtures/dhf_simplification_observations.json",
+      "artifact_schema": "dhf_simplification_observations_v4",
+      "identity_fields": [
+        "base_identity",
+        "corpus_identity",
+        "runner_identity",
+        "promotion_candidate_manifest",
+        "producer_evidence"
+      ]
+    },
+    "PRODUCER-AC-04-S0-1": {
+      "producer_id": "PRODUCER-AC-04-S0-1",
+      "slice": "0",
+      "callable": "scripts/run_dhf_simplification_pair.py::capture_observations",
+      "artifact": "tests/fixtures/dhf_simplification_observations.json",
+      "artifact_schema": "dhf_simplification_observations_v4",
+      "identity_fields": [
+        "base_identity",
+        "corpus_identity",
+        "runner_identity",
+        "promotion_candidate_manifest",
+        "producer_evidence"
+      ]
+    },
+    "PRODUCER-AC-04-S1-1": {
+      "producer_id": "PRODUCER-AC-04-S1-1",
+      "slice": "1",
+      "callable": "scripts/run_dhf_simplification_pair.py::capture_observations",
+      "artifact": "tests/fixtures/dhf_simplification_observations.json",
+      "artifact_schema": "dhf_simplification_observations_v4",
+      "identity_fields": [
+        "base_identity",
+        "corpus_identity",
+        "runner_identity",
+        "promotion_candidate_manifest",
+        "producer_evidence"
+      ]
+    },
+    "PRODUCER-AC-05-S0-1": {
+      "producer_id": "PRODUCER-AC-05-S0-1",
+      "slice": "0",
+      "callable": "scripts/run_dhf_simplification_pair.py::capture_observations",
+      "artifact": "tests/fixtures/dhf_simplification_observations.json",
+      "artifact_schema": "dhf_simplification_observations_v4",
+      "identity_fields": [
+        "base_identity",
+        "corpus_identity",
+        "runner_identity",
+        "promotion_candidate_manifest",
+        "producer_evidence"
+      ]
+    },
+    "PRODUCER-AC-05-S1-1": {
+      "producer_id": "PRODUCER-AC-05-S1-1",
+      "slice": "1",
+      "callable": "scripts/run_dhf_simplification_pair.py::capture_observations",
+      "artifact": "tests/fixtures/dhf_simplification_observations.json",
+      "artifact_schema": "dhf_simplification_observations_v4",
+      "identity_fields": [
+        "base_identity",
+        "corpus_identity",
+        "runner_identity",
+        "promotion_candidate_manifest",
+        "producer_evidence"
+      ]
+    },
+    "PRODUCER-AC-06-S0-1": {
+      "producer_id": "PRODUCER-AC-06-S0-1",
+      "slice": "0",
+      "callable": "scripts/run_dhf_simplification_pair.py::capture_observations",
+      "artifact": "tests/fixtures/dhf_simplification_observations.json",
+      "artifact_schema": "dhf_simplification_observations_v4",
+      "identity_fields": [
+        "base_identity",
+        "corpus_identity",
+        "runner_identity",
+        "promotion_candidate_manifest",
+        "producer_evidence"
+      ]
+    },
+    "PRODUCER-AC-06-S1-1": {
+      "producer_id": "PRODUCER-AC-06-S1-1",
+      "slice": "1",
+      "callable": "scripts/run_dhf_simplification_pair.py::capture_observations",
+      "artifact": "tests/fixtures/dhf_simplification_observations.json",
+      "artifact_schema": "dhf_simplification_observations_v4",
+      "identity_fields": [
+        "base_identity",
+        "corpus_identity",
+        "runner_identity",
+        "promotion_candidate_manifest",
+        "producer_evidence"
+      ]
+    },
+    "PRODUCER-AC-07-S1-1": {
+      "producer_id": "PRODUCER-AC-07-S1-1",
+      "slice": "1",
+      "callable": "scripts/run_dhf_simplification_pair.py::capture_observations",
+      "artifact": "tests/fixtures/dhf_simplification_observations.json",
+      "artifact_schema": "dhf_simplification_observations_v4",
+      "identity_fields": [
+        "base_identity",
+        "corpus_identity",
+        "runner_identity",
+        "promotion_candidate_manifest",
+        "producer_evidence"
+      ]
+    },
+    "PRODUCER-AC-07-S2-1": {
+      "producer_id": "PRODUCER-AC-07-S2-1",
+      "slice": "2",
+      "callable": "scripts/run_dhf_simplification_pair.py::capture_observations",
+      "artifact": "tests/fixtures/dhf_simplification_observations.json",
+      "artifact_schema": "dhf_simplification_observations_v4",
+      "identity_fields": [
+        "base_identity",
+        "corpus_identity",
+        "runner_identity",
+        "promotion_candidate_manifest",
+        "producer_evidence"
+      ]
+    },
+    "PRODUCER-AC-08-S1-1": {
+      "producer_id": "PRODUCER-AC-08-S1-1",
+      "slice": "1",
+      "callable": "scripts/run_dhf_simplification_pair.py::capture_observations",
+      "artifact": "tests/fixtures/dhf_simplification_observations.json",
+      "artifact_schema": "dhf_simplification_observations_v4",
+      "identity_fields": [
+        "base_identity",
+        "corpus_identity",
+        "runner_identity",
+        "promotion_candidate_manifest",
+        "producer_evidence"
+      ]
+    },
+    "PRODUCER-AC-08-S2-1": {
+      "producer_id": "PRODUCER-AC-08-S2-1",
+      "slice": "2",
+      "callable": "scripts/run_dhf_simplification_pair.py::capture_observations",
+      "artifact": "tests/fixtures/dhf_simplification_observations.json",
+      "artifact_schema": "dhf_simplification_observations_v4",
+      "identity_fields": [
+        "base_identity",
+        "corpus_identity",
+        "runner_identity",
+        "promotion_candidate_manifest",
+        "producer_evidence"
+      ]
+    },
+    "PRODUCER-AC-09-S1-1": {
+      "producer_id": "PRODUCER-AC-09-S1-1",
+      "slice": "1",
+      "callable": "scripts/run_dhf_simplification_pair.py::capture_observations",
+      "artifact": "tests/fixtures/dhf_simplification_observations.json",
+      "artifact_schema": "dhf_simplification_observations_v4",
+      "identity_fields": [
+        "base_identity",
+        "corpus_identity",
+        "runner_identity",
+        "promotion_candidate_manifest",
+        "producer_evidence"
+      ]
+    },
+    "PRODUCER-AC-10-S0-1": {
+      "producer_id": "PRODUCER-AC-10-S0-1",
+      "slice": "0",
+      "callable": "scripts/run_dhf_simplification_pair.py::capture_observations",
+      "artifact": "tests/fixtures/dhf_simplification_observations.json",
+      "artifact_schema": "dhf_simplification_observations_v4",
+      "identity_fields": [
+        "base_identity",
+        "corpus_identity",
+        "runner_identity",
+        "promotion_candidate_manifest",
+        "producer_evidence"
+      ]
+    },
+    "PRODUCER-AC-10-S4-1": {
+      "producer_id": "PRODUCER-AC-10-S4-1",
+      "slice": "4",
+      "callable": "scripts/run_dhf_simplification_pair.py::capture_observations",
+      "artifact": "tests/fixtures/dhf_simplification_observations.json",
+      "artifact_schema": "dhf_simplification_observations_v4",
+      "identity_fields": [
+        "base_identity",
+        "corpus_identity",
+        "runner_identity",
+        "promotion_candidate_manifest",
+        "producer_evidence"
+      ]
+    },
+    "PRODUCER-AC-11-S0-1": {
+      "producer_id": "PRODUCER-AC-11-S0-1",
+      "slice": "0",
+      "callable": "scripts/run_dhf_simplification_pair.py::capture_observations",
+      "artifact": "tests/fixtures/dhf_simplification_observations.json",
+      "artifact_schema": "dhf_simplification_observations_v4",
+      "identity_fields": [
+        "base_identity",
+        "corpus_identity",
+        "runner_identity",
+        "promotion_candidate_manifest",
+        "producer_evidence"
+      ]
+    },
+    "PRODUCER-AC-11-S4-1": {
+      "producer_id": "PRODUCER-AC-11-S4-1",
+      "slice": "4",
+      "callable": "scripts/run_dhf_simplification_pair.py::capture_observations",
+      "artifact": "tests/fixtures/dhf_simplification_observations.json",
+      "artifact_schema": "dhf_simplification_observations_v4",
+      "identity_fields": [
+        "base_identity",
+        "corpus_identity",
+        "runner_identity",
+        "promotion_candidate_manifest",
+        "producer_evidence"
+      ]
+    },
+    "PRODUCER-AC-12-S0-1": {
+      "producer_id": "PRODUCER-AC-12-S0-1",
+      "slice": "0",
+      "callable": "scripts/run_dhf_simplification_pair.py::capture_observations",
+      "artifact": "tests/fixtures/dhf_simplification_observations.json",
+      "artifact_schema": "dhf_simplification_observations_v4",
+      "identity_fields": [
+        "base_identity",
+        "corpus_identity",
+        "runner_identity",
+        "promotion_candidate_manifest",
+        "producer_evidence"
+      ]
+    },
+    "PRODUCER-AC-12-S4-1": {
+      "producer_id": "PRODUCER-AC-12-S4-1",
+      "slice": "4",
+      "callable": "scripts/run_dhf_simplification_pair.py::capture_observations",
+      "artifact": "tests/fixtures/dhf_simplification_observations.json",
+      "artifact_schema": "dhf_simplification_observations_v4",
+      "identity_fields": [
+        "base_identity",
+        "corpus_identity",
+        "runner_identity",
+        "promotion_candidate_manifest",
+        "producer_evidence"
+      ]
+    },
+    "PRODUCER-AC-13-S0-1": {
+      "producer_id": "PRODUCER-AC-13-S0-1",
+      "slice": "0",
+      "callable": "scripts/run_dhf_simplification_pair.py::capture_observations",
+      "artifact": "tests/fixtures/dhf_simplification_observations.json",
+      "artifact_schema": "dhf_simplification_observations_v4",
+      "identity_fields": [
+        "base_identity",
+        "corpus_identity",
+        "runner_identity",
+        "promotion_candidate_manifest",
+        "producer_evidence"
+      ]
+    },
+    "PRODUCER-AC-13-S4-1": {
+      "producer_id": "PRODUCER-AC-13-S4-1",
+      "slice": "4",
+      "callable": "scripts/run_dhf_simplification_pair.py::capture_observations",
+      "artifact": "tests/fixtures/dhf_simplification_observations.json",
+      "artifact_schema": "dhf_simplification_observations_v4",
+      "identity_fields": [
+        "base_identity",
+        "corpus_identity",
+        "runner_identity",
+        "promotion_candidate_manifest",
+        "producer_evidence"
+      ]
+    },
+    "PRODUCER-AC-14-S0-1": {
+      "producer_id": "PRODUCER-AC-14-S0-1",
+      "slice": "0",
+      "callable": "scripts/run_dhf_simplification_pair.py::capture_observations",
+      "artifact": "tests/fixtures/dhf_simplification_observations.json",
+      "artifact_schema": "dhf_simplification_observations_v4",
+      "identity_fields": [
+        "base_identity",
+        "corpus_identity",
+        "runner_identity",
+        "promotion_candidate_manifest",
+        "producer_evidence"
+      ]
+    },
+    "PRODUCER-AC-14-S4-1": {
+      "producer_id": "PRODUCER-AC-14-S4-1",
+      "slice": "4",
+      "callable": "scripts/run_dhf_simplification_pair.py::capture_observations",
+      "artifact": "tests/fixtures/dhf_simplification_observations.json",
+      "artifact_schema": "dhf_simplification_observations_v4",
+      "identity_fields": [
+        "base_identity",
+        "corpus_identity",
+        "runner_identity",
+        "promotion_candidate_manifest",
+        "producer_evidence"
+      ]
+    },
+    "PRODUCER-AC-15-S3-1": {
+      "producer_id": "PRODUCER-AC-15-S3-1",
+      "slice": "3",
+      "callable": "scripts/run_dhf_simplification_pair.py::capture_observations",
+      "artifact": "tests/fixtures/dhf_simplification_observations.json",
+      "artifact_schema": "dhf_simplification_observations_v4",
+      "identity_fields": [
+        "base_identity",
+        "corpus_identity",
+        "runner_identity",
+        "promotion_candidate_manifest",
+        "producer_evidence"
+      ]
+    },
+    "PRODUCER-AC-16-S0-1": {
+      "producer_id": "PRODUCER-AC-16-S0-1",
+      "slice": "0",
+      "callable": "scripts/run_dhf_simplification_pair.py::capture_observations",
+      "artifact": "tests/fixtures/dhf_simplification_observations.json",
+      "artifact_schema": "dhf_simplification_observations_v4",
+      "identity_fields": [
+        "base_identity",
+        "corpus_identity",
+        "runner_identity",
+        "promotion_candidate_manifest",
+        "producer_evidence"
+      ]
+    },
+    "PRODUCER-AC-16-S4-1": {
+      "producer_id": "PRODUCER-AC-16-S4-1",
+      "slice": "4",
+      "callable": "scripts/run_dhf_simplification_pair.py::capture_observations",
+      "artifact": "tests/fixtures/dhf_simplification_observations.json",
+      "artifact_schema": "dhf_simplification_observations_v4",
+      "identity_fields": [
+        "base_identity",
+        "corpus_identity",
+        "runner_identity",
+        "promotion_candidate_manifest",
+        "producer_evidence"
+      ]
+    },
+    "PRODUCER-AC-17-S0-1": {
+      "producer_id": "PRODUCER-AC-17-S0-1",
+      "slice": "0",
+      "callable": "scripts/run_dhf_simplification_pair.py::capture_observations",
+      "artifact": "tests/fixtures/dhf_simplification_observations.json",
+      "artifact_schema": "dhf_simplification_observations_v4",
+      "identity_fields": [
+        "base_identity",
+        "corpus_identity",
+        "runner_identity",
+        "promotion_candidate_manifest",
+        "producer_evidence"
+      ]
+    },
+    "PRODUCER-AC-17-S4-1": {
+      "producer_id": "PRODUCER-AC-17-S4-1",
+      "slice": "4",
+      "callable": "scripts/run_dhf_simplification_pair.py::capture_observations",
+      "artifact": "tests/fixtures/dhf_simplification_observations.json",
+      "artifact_schema": "dhf_simplification_observations_v4",
+      "identity_fields": [
+        "base_identity",
+        "corpus_identity",
+        "runner_identity",
+        "promotion_candidate_manifest",
+        "producer_evidence"
+      ]
+    },
+    "PRODUCER-AC-18-S1-1": {
+      "producer_id": "PRODUCER-AC-18-S1-1",
+      "slice": "1",
+      "callable": "scripts/run_dhf_simplification_pair.py::capture_observations",
+      "artifact": "tests/fixtures/dhf_simplification_observations.json",
+      "artifact_schema": "dhf_simplification_observations_v4",
+      "identity_fields": [
+        "base_identity",
+        "corpus_identity",
+        "runner_identity",
+        "promotion_candidate_manifest",
+        "producer_evidence"
+      ]
+    },
+    "PRODUCER-AC-18-S4-1": {
+      "producer_id": "PRODUCER-AC-18-S4-1",
+      "slice": "4",
+      "callable": "scripts/run_dhf_simplification_pair.py::capture_observations",
+      "artifact": "tests/fixtures/dhf_simplification_observations.json",
+      "artifact_schema": "dhf_simplification_observations_v4",
+      "identity_fields": [
+        "base_identity",
+        "corpus_identity",
+        "runner_identity",
+        "promotion_candidate_manifest",
+        "producer_evidence"
       ]
     }
   }

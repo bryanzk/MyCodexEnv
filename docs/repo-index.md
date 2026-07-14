@@ -30,6 +30,12 @@ behavior live in `codex/hooks/dhf_preprompt.py`.
   and `legacy` explicitly roll back. Runtime
   promotion is pending separate authorization, and runtime home remains
   unsynced.
+- The source-stage acceptance lane uses
+  `scripts/validate_dhf_simplification_corpus.py`,
+  `scripts/dhf_simplification_evidence.py`, and
+  `scripts/run_dhf_simplification_pair.py`; these validate independent producer
+  bindings, frozen identities, parity/efficiency, and the read-only runtime
+  boundary without synchronizing runtime.
 
 ## Read First
 - `AGENTS.md`: repo-local navigation and verification expectations.
@@ -114,6 +120,9 @@ behavior live in `codex/hooks/dhf_preprompt.py`.
 - `scripts/check_dhf_consumer_compatibility.py`: read-only DHF consumer compatibility and helper drift checker.
 - `scripts/compare_dhf_core_snapshot.py`: read-only comparator for an independent DHF checkout, the MyCodexEnv consumer copy, and its immutable pin hashes.
 - `scripts/validate_dhf_packet.py`: standard-library DHF packet validator with field-path errors and fail-close schema handling.
+- `scripts/validate_dhf_simplification_corpus.py`: bounded DHF corpus, independent producer catalog, and derived acceptance-gate validator.
+- `scripts/dhf_simplification_evidence.py`: read-only Base/promotion identity and managed-runtime boundary evidence producer; it never syncs runtime.
+- `scripts/run_dhf_simplification_pair.py`: deterministic frozen-identity DHF parity and efficiency runner.
 - `docs/dhf-consumer-compatibility.json`: machine-readable DHF consumer compatibility matrix for MyCodexEnv, ShipQ, and future consumers.
 - `docs/dhf-core-pin.json`: MyCodexEnv DHF bootstrap snapshot; after the first upstream release it pins the immutable tag and Git revision.
 - `docs/plans/2026-06-15-dhf-incubation-plan.md`: controlled incubation boundary, compatibility, and extraction trigger plan.

@@ -31,6 +31,12 @@ behavior live in `codex/hooks/dhf_preprompt.py`.
   and `legacy` explicitly roll back. Runtime
   promotion is pending separate authorization, and runtime home remains
   unsynced.
+- `scripts/validate_dhf_simplification_corpus.py` validates the bounded corpus,
+  independent test/producer catalogs, and derived per-producer/per-AC gates.
+- `scripts/dhf_simplification_evidence.py` builds the frozen Base runtime
+  expectation, a fresh read-only `lstat`/SHA-256 runtime snapshot, and candidate
+  identity manifests. `scripts/run_dhf_simplification_pair.py` consumes those
+  identities and rejects source, corpus, runner, registry, or boundary drift.
 
 ## Workflow Contract
 The lifecycle router uses these stages:

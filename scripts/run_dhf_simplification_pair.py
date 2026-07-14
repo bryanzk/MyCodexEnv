@@ -135,6 +135,43 @@ def _git_show(root: Path, revision_path: str) -> str:
     return proc.stdout
 
 
+def _evidence_module(root: Path):
+    return _load_module(
+        root / "scripts" / "dhf_simplification_evidence.py",
+        "dhf_simplification_evidence_runtime",
+    )
+
+
+def identity_bundle(corpus: dict[str, Any], root: Path) -> dict[str, Any]:
+    evidence = _evidence_module(root)
+    corpus_path = root / "tests" / "fixtures" / "dhf_simplification_scenarios.json"
+    base_dispatcher = _git_show(root, f"{BASELINE_BASE_SHA}:codex/hooks/dhf_preprompt.py")
+    base_skill = _git_show(
+        root,
+        f"{BASELINE_BASE_SHA}:codex/skills/delivery-harness-framework/SKILL.md",
+    )
+    promotion = evidence.candidate_manifest(root, corpus_path, initial=False)
+    return {
+        "artifact_schema": evidence.SCHEMA,
+        "base_identity": {
+            "base_commit": BASELINE_BASE_SHA,
+            "dispatcher_sha256": _sha256(base_dispatcher),
+            "skill_sha256": _sha256(base_skill),
+        },
+        "corpus_identity": {
+            "schema_version": corpus.get("schema_version"),
+            "sha256": evidence.sha256_file(corpus_path),
+        },
+        "runner_identity": {
+            "name": "run_dhf_simplification_pair.py",
+            "version": CAPTURE_VERSION,
+            "sha256": evidence.sha256_file(Path(__file__)),
+        },
+        "helper_registry_identity": evidence.helper_registry_identity(root),
+        "promotion_candidate_manifest": promotion,
+    }
+
+
 def _invoke_dispatcher(
     dispatcher_path: Path,
     skill_path: Path,
@@ -187,16 +224,26 @@ def _invoke_dispatcher(
 def capture_contract_contexts(scenario: dict[str, Any], root: Path) -> dict[str, dict[str, Any]]:
     base_dispatcher_text = _git_show(root, f"{BASELINE_BASE_SHA}:codex/hooks/dhf_preprompt.py")
     base_skill_text = _git_show(root, f"{BASELINE_BASE_SHA}:codex/skills/delivery-harness-framework/SKILL.md")
-    current_dispatcher = root / "codex" / "hooks" / "dhf_preprompt.py"
-    current_skill = root / "codex" / "skills" / "delivery-harness-framework" / "SKILL.md"
+    current_dispatcher_text = (root / "codex" / "hooks" / "dhf_preprompt.py").read_text(encoding="utf-8")
+    current_skill_text = (root / "codex" / "skills" / "delivery-harness-framework" / "SKILL.md").read_text(encoding="utf-8")
     with tempfile.TemporaryDirectory() as tmp:
         temp = Path(tmp)
-        base_dispatcher = temp / "dhf_preprompt.py"
-        base_skill = temp / "SKILL.md"
+        base_root = temp / "base"
+        candidate_root = temp / "candidate"
+        base_root.mkdir()
+        candidate_root.mkdir()
+        base_dispatcher = base_root / "dhf_preprompt.py"
+        base_skill = base_root / "SKILL.md"
+        candidate_dispatcher = candidate_root / "dhf_preprompt.py"
+        candidate_skill = candidate_root / "SKILL.md"
         base_dispatcher.write_text(base_dispatcher_text, encoding="utf-8")
         base_skill.write_text(base_skill_text, encoding="utf-8")
+        candidate_dispatcher.write_text(current_dispatcher_text, encoding="utf-8")
+        candidate_skill.write_text(current_skill_text, encoding="utf-8")
         baseline_context, baseline_route = _invoke_dispatcher(base_dispatcher, base_skill, scenario, root, simplified=False)
-    candidate_context, candidate_route = _invoke_dispatcher(current_dispatcher, current_skill, scenario, root, simplified=True)
+        candidate_context, candidate_route = _invoke_dispatcher(
+            candidate_dispatcher, candidate_skill, scenario, root, simplified=True
+        )
     return {
         "baseline": {
             "context": baseline_context,
@@ -211,9 +258,9 @@ def capture_contract_contexts(scenario: dict[str, Any], root: Path) -> dict[str,
             "context": candidate_context,
             "route": candidate_route,
             "profile_contract": _profile_contract(candidate_context),
-            "dispatcher_sha256": _sha256(current_dispatcher.read_text(encoding="utf-8")),
-            "skill_sha256": _sha256(current_skill.read_text(encoding="utf-8")),
-            "source_contract": "simplified@repo-source",
+            "dispatcher_sha256": _sha256(current_dispatcher_text),
+            "skill_sha256": _sha256(current_skill_text),
+            "source_contract": "simplified@isolated-promotion-bytes",
         },
     }
 
@@ -388,6 +435,7 @@ def execute_bounded_scenario(scenario: dict[str, Any], contract_capture: dict[st
 def capture_observations(corpus: dict[str, Any], observations: dict[str, Any]) -> dict[str, Any]:
     scenarios = {scenario["id"]: scenario for scenario in corpus["scenarios"]}
     captured = copy.deepcopy(observations)
+    captured["measurement_boundary"] = copy.deepcopy(corpus["measurement_boundary"])
     for observation in captured["observations"]:
         scenario = scenarios[observation["id"]]
         observation["input"] = {
@@ -416,8 +464,142 @@ def capture_observations(corpus: dict[str, Any], observations: dict[str, Any]) -
                 "contract_context": context,
                 "raw_task_output": execute_bounded_scenario(scenario, contract),
             }
-    captured["schema_version"] = 3
+    root = Path(__file__).resolve().parents[1]
+    identities = identity_bundle(corpus, root)
+    evidence = _evidence_module(root)
+    captured.update(identities)
+    captured["schema_version"] = 4
+    captured["artifact_schema"] = evidence.SCHEMA
+    captured["initial_candidate_manifest"] = captured.get(
+        "initial_candidate_manifest",
+        evidence.candidate_manifest(
+            root,
+            root / "tests" / "fixtures" / "dhf_simplification_scenarios.json",
+            initial=True,
+        ),
+    )
+    captured["base_expected_runtime_manifest"] = evidence.base_expected_runtime_manifest(root)
+    captured["producer_evidence"] = {}
+    preliminary = run_comparison(
+        corpus,
+        captured,
+        root,
+        verify_producer_evidence=False,
+    )
+    if not preliminary["pass"]:
+        raise ValueError(
+            "cannot finalize producer evidence from a failing comparison: "
+            + "; ".join(preliminary["errors"])
+        )
+    captured["producer_evidence"] = build_producer_evidence(
+        corpus, preliminary, identities["artifact_schema"], captured
+    )
     return captured
+
+
+def build_producer_evidence(
+    corpus: dict[str, Any],
+    report: dict[str, Any],
+    artifact_schema: str,
+    artifact_payload: dict[str, Any],
+) -> dict[str, dict[str, Any]]:
+    if not report.get("pass"):
+        raise ValueError("producer evidence requires a passing executable comparison")
+    by_slice = {
+        "0": {
+            "kind": "baseline_and_fixture_evidence",
+            "assertion_count": report["scenario_count"] + len(
+                report["runtime_boundary"]["base_expected_runtime_manifest"]["records"]
+            ),
+        },
+        "1": {
+            "kind": "routing_contract_evidence",
+            "assertion_count": report["routing_parity"]["total_checks"],
+        },
+        "2": {
+            "kind": "output_contract_evidence",
+            "assertion_count": report["actual_outcome_parity"]["total_checks"],
+        },
+        "3": {
+            "kind": "surface_identity_evidence",
+            "assertion_count": len(
+                report["identities"]["promotion_candidate_manifest"]["normative_mirror_hashes"]
+            ),
+        },
+        "4": {
+            "kind": "paired_acceptance_evidence",
+            "assertion_count": (
+                report["routing_parity"]["total_checks"]
+                + report["actual_outcome_parity"]["total_checks"]
+                + 5
+            ),
+        },
+    }
+    result: dict[str, dict[str, Any]] = {}
+    semantic_payload = {
+        key: value for key, value in artifact_payload.items() if key != "producer_evidence"
+    }
+    source_artifact_sha256 = hashlib.sha256(
+        json.dumps(
+            semantic_payload,
+            sort_keys=True,
+            separators=(",", ":"),
+            ensure_ascii=True,
+        ).encode("utf-8")
+    ).hexdigest()
+    trace_by_producer = {
+        producer["producer_id"]: (acceptance_id, trace)
+        for acceptance_id, trace in corpus.get("acceptance_trace_map", {}).items()
+        for producer in trace.get("producers", [])
+    }
+    for producer_id, entry in corpus.get("producer_catalog", {}).items():
+        acceptance_id, trace = trace_by_producer[producer_id]
+        evidence = {
+            **by_slice[entry["slice"]],
+            "slice": entry["slice"],
+            "passed_assertion_count": by_slice[entry["slice"]]["assertion_count"],
+            "base_commit": report["identities"]["base_identity"]["base_commit"],
+            "corpus_sha256": report["identities"]["corpus_identity"]["sha256"],
+            "runner_sha256": report["identities"]["runner_identity"]["sha256"],
+            "promotion_manifest_sha256": report["identities"]["promotion_candidate_manifest"]["manifest_sha256"],
+            "source_artifact_sha256": source_artifact_sha256,
+            "acceptance_id": acceptance_id,
+            "registered_assertion_ids": sorted(
+                [f"scenario:{item}" for item in trace.get("scenario_ids", [])]
+                + [f"test:{item}" for item in trace.get("test_ids", [])]
+            ),
+        }
+        if producer_id == "PRODUCER-AC-16-S0-1":
+            evidence["base_expected_runtime_manifest"] = report["runtime_boundary"][
+                "base_expected_runtime_manifest"
+            ]
+        if producer_id == "PRODUCER-AC-16-S4-1":
+            evidence["current_runtime_snapshot"] = report["runtime_boundary"][
+                "current_runtime_snapshot"
+            ]
+            evidence["changed_paths"] = report["runtime_boundary"]["changed_paths"]
+            evidence["promotion_difference_paths"] = report["runtime_boundary"][
+                "promotion_difference_paths"
+            ]
+        result[producer_id] = {
+            "binding": {
+                "producer_id": producer_id,
+                "slice": entry["slice"],
+                "callable": entry["callable"],
+                "artifact": entry["artifact"],
+                "artifact_schema": artifact_schema,
+            },
+            "evidence": evidence,
+            "evidence_sha256": hashlib.sha256(
+                json.dumps(
+                    evidence,
+                    sort_keys=True,
+                    separators=(",", ":"),
+                    ensure_ascii=True,
+                ).encode("utf-8")
+            ).hexdigest(),
+        }
+    return result
 
 
 def assertion_errors(scenario: dict[str, Any], raw: dict[str, Any], label: str) -> list[str]:
@@ -900,8 +1082,65 @@ def run_comparison(
     *,
     candidate_measurements: list[dict[str, Any]] | None = None,
     recovery_results: dict[str, dict[str, Any]] | None = None,
+    verify_producer_evidence: bool = True,
 ) -> dict[str, Any]:
     errors: list[str] = []
+    identities = identity_bundle(corpus, root)
+    evidence_module = _evidence_module(root)
+    initial_expected = evidence_module.candidate_manifest(
+        root,
+        root / "tests" / "fixtures" / "dhf_simplification_scenarios.json",
+        initial=True,
+    )
+    errors.extend(
+        evidence_module.validate_manifest(
+            observations.get("initial_candidate_manifest"), initial_expected, check_current=False
+        )
+    )
+    errors.extend(
+        evidence_module.validate_manifest(
+            observations.get("promotion_candidate_manifest"),
+            identities["promotion_candidate_manifest"],
+            check_current=True,
+        )
+    )
+    for field in (
+        "artifact_schema",
+        "base_identity",
+        "corpus_identity",
+        "runner_identity",
+        "helper_registry_identity",
+    ):
+        if observations.get(field) != identities[field]:
+            errors.append(f"{field} identity drift")
+    expected_base_runtime = evidence_module.base_expected_runtime_manifest(root)
+    if observations.get("base_expected_runtime_manifest") != expected_base_runtime:
+        errors.append("base_expected_runtime_manifest identity drift")
+    runtime_boundary = evidence_module.runtime_boundary_evidence(root)
+    if not runtime_boundary["gate_pass"]:
+        errors.append(
+            "runtime boundary failed: changed_paths="
+            f"{runtime_boundary['changed_paths']} promotion_difference_paths="
+            f"{runtime_boundary['promotion_difference_paths']}"
+        )
+    if verify_producer_evidence:
+        stored_ac16 = (
+            observations.get("producer_evidence", {})
+            .get("PRODUCER-AC-16-S4-1", {})
+            .get("evidence", {})
+        )
+        stored_snapshot = copy.deepcopy(stored_ac16.get("current_runtime_snapshot"))
+        fresh_snapshot = copy.deepcopy(runtime_boundary["current_runtime_snapshot"])
+        if isinstance(stored_snapshot, dict):
+            stored_snapshot.pop("captured_at", None)
+        fresh_snapshot.pop("captured_at", None)
+        if (
+            stored_snapshot != fresh_snapshot
+            or stored_ac16.get("changed_paths") != runtime_boundary["changed_paths"]
+            or stored_ac16.get("promotion_difference_paths")
+            != runtime_boundary["promotion_difference_paths"]
+        ):
+            errors.append("AC-16 producer evidence does not match fresh runtime comparison")
     expected_capture_hashes = {
         "baseline": {
             "dispatcher_sha256": _sha256(
@@ -924,11 +1163,17 @@ def run_comparison(
     }
     validator = _validator(root)
     contract = root / "docs" / "plans" / "2026-07-12-dhf-simplification-implementation-contract.md"
-    errors.extend(validator.validate_corpus(corpus, contract))
+    errors.extend(
+        validator.validate_corpus(
+            corpus,
+            contract,
+            validate_artifacts=verify_producer_evidence,
+        )
+    )
     if observations.get("measurement_boundary") != corpus.get("measurement_boundary"):
         errors.append("measurement boundary changed between oracle and observed output")
-    if observations.get("schema_version") != 3:
-        errors.append("observations schema_version must be 3")
+    if observations.get("schema_version") != 4:
+        errors.append("observations schema_version must be 4")
     observations_by_id = {
         item.get("id"): item for item in observations.get("observations", []) if isinstance(item, dict)
     }
@@ -1132,6 +1377,13 @@ def run_comparison(
         "total_checks": actual_total,
         "rate": actual_passed / actual_total if actual_total else 0.0,
     }
+    trace_gates = validator.derive_trace_gates(
+        corpus,
+        observations if verify_producer_evidence else None,
+        root,
+    )
+    if verify_producer_evidence and not trace_gates["gate_pass"]:
+        errors.append("acceptance trace derived gate failed")
     return {
         "schema_version": 1,
         "pass": not errors and routing_total == len(corpus["scenarios"]) * len(DIMENSIONS) and actual_total == len(corpus["scenarios"]) * len(DIMENSIONS),
@@ -1141,6 +1393,9 @@ def run_comparison(
         "actual_outcome_parity": actual_outcome_parity,
         "governed_under_routing": governed_under_routing,
         "efficiency": {"context": context_summary, "helpers": helper_summary},
+        "identities": identities,
+        "runtime_boundary": runtime_boundary,
+        "acceptance_trace_gates": trace_gates,
         "recoverability": {
             "case_count": len(recovery_oracle_by_id),
             "field_oracle": list(RECOVERABILITY_FIELDS),
@@ -1192,7 +1447,18 @@ def main() -> int:
             f"{report['routing_parity']['total_checks']} actual_outcome_parity="
             f"{report['actual_outcome_parity']['passed_checks']}/{report['actual_outcome_parity']['total_checks']} context_median="
             f"{report['efficiency']['context']['median_relative_reduction']:.6f} helper_median="
-            f"{report['efficiency']['helpers']['median_relative_reduction']:.6f}"
+            f"{report['efficiency']['helpers']['median_relative_reduction']:.6f} "
+            f"context_n={report['efficiency']['context']['positive_baseline_sample_count']} "
+            f"helpers_n={report['efficiency']['helpers']['positive_baseline_sample_count']} "
+            f"helper_registry_sha256={report['identities']['helper_registry_identity']['sha256']} "
+            f"base_commit={report['identities']['base_identity']['base_commit']} "
+            f"base_dispatcher_sha256={report['identities']['base_identity']['dispatcher_sha256']} "
+            f"base_skill_sha256={report['identities']['base_identity']['skill_sha256']} "
+            f"corpus_sha256={report['identities']['corpus_identity']['sha256']} "
+            f"runner_sha256={report['identities']['runner_identity']['sha256']} "
+            f"promotion_manifest_sha256={report['identities']['promotion_candidate_manifest']['manifest_sha256']} "
+            f"promotion_dispatcher_sha256={report['identities']['promotion_candidate_manifest']['source_hashes']['codex/hooks/dhf_preprompt.py']} "
+            f"promotion_skill_sha256={report['identities']['promotion_candidate_manifest']['source_hashes']['codex/skills/delivery-harness-framework/SKILL.md']}"
         )
     if not report["pass"]:
         print("ERROR: " + "; ".join(report["errors"]), file=sys.stderr)
