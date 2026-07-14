@@ -117,6 +117,7 @@ behavior live in `codex/hooks/dhf_preprompt.py`.
 - `scripts/harness_recover.py`: fresh-session recovery smoke check with evidence-kind counts, compact latest decision evidence, freshness-aware boundary verdicts, and pipe-only validated task demand.
 - `scripts/codex_subconscious.py`: local memory build/brief/publish helper with fail-closed routine/derived reflection.
 - `scripts/harness_env_probe.py`: observable Codex runtime config and split evidence schema probe.
+- `scripts/harness_status.py`: unified read-only `status` entry point; `--runtime` and `--evidence` preserve the existing env-probe and report JSON contracts while old helper paths remain callable.
 - `scripts/check_dhf_consumer_compatibility.py`: read-only DHF consumer compatibility and helper drift checker.
 - `scripts/compare_dhf_core_snapshot.py`: read-only comparator for an independent DHF checkout, the MyCodexEnv consumer copy, and its immutable pin hashes.
 - `scripts/validate_dhf_packet.py`: standard-library DHF packet validator with field-path errors and fail-close schema handling.

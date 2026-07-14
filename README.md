@@ -129,6 +129,7 @@ Key entry points:
 - [`docs/MODEL_ROUTER_EVAL_MATRIX.md`](docs/MODEL_ROUTER_EVAL_MATRIX.md) — model-routing evaluation
 - [`docs/harness-state.md`](docs/harness-state.md) — append-only state and next safe task
 - [`docs/AGENT_HARNESS_STATUS.md`](docs/AGENT_HARNESS_STATUS.md) — current capability map
+- [`scripts/harness_status.py`](scripts/harness_status.py) — unified read-only entry point for recovery, runtime probes, and evidence reports
 
 ### Current controls
 

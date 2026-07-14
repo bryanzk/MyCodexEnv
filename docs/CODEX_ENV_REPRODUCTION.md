@@ -215,6 +215,9 @@ events without `evidence_kind` report as `unknown`.
 Harness runtime report and checkpoint helpers:
 
 ```bash
+python3 scripts/harness_status.py status --repo-root "$(pwd)" --codex-home "$HOME/.codex"
+python3 scripts/harness_status.py status --runtime --codex-home "$HOME/.codex" --json
+python3 scripts/harness_status.py status --evidence --phase validation --json
 python3 scripts/harness_report.py --phase validation
 python3 scripts/harness_report.py --json --limit 20
 python3 scripts/harness_report.py --evidence-kind decision --json
@@ -232,6 +235,10 @@ python3 scripts/harness_checkpoint.py append \
   --verification-key-output "[PASS] all tests" \
   --next-safe-task "continue with handoff"
 ```
+
+The three `harness_status.py status` forms are read-only consolidated routes.
+The legacy recovery, environment-probe, and evidence-report commands remain
+supported with unchanged arguments and JSON shapes for existing consumers.
 
 Recovery output includes evidence-kind counts and compact latest decision
 evidence so routine receipts do not bury handoff, approval, or guardrail
