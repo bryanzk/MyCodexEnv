@@ -66,7 +66,9 @@
     "TEST-PAIRED-ACTUAL-OUTCOMES": "tests/test_dhf_simplification_pair.py::DhfSimplificationPairTests.test_focused_cli_generates_all_five_dimensions_from_real_paths",
     "TEST-PAIR-ADVERSARIAL-MUTATIONS": "tests/test_dhf_simplification_pair.py::DhfSimplificationPairTests.test_runner_rejects_raw_result_permission_receipt_and_private_content_mutations",
     "TEST-CHECKPOINT-ARTIFACT-ROUNDTRIP": "tests/test_dhf_simplification_pair.py::DhfSimplificationPairTests.test_checkpoint_artifact_roundtrip_is_self_contained_and_preserves_stale",
-    "TEST-NORMATIVE-MIRRORS": "tests/test_dhf_simplification.py::DhfGovernanceProfileTests.test_normative_mirrors_align_with_simplified_source_stage_contract"
+    "TEST-NORMATIVE-MIRRORS": "tests/test_dhf_simplification.py::DhfGovernanceProfileTests.test_normative_mirrors_align_with_simplified_source_stage_contract",
+    "TEST-NO-RUNTIME-SLICE-0": "tests/test_dhf_simplification.py::DhfSimplificationCorpusTests.test_source_stage_slice_0_runtime_inventory_check_is_read_only",
+    "TEST-NO-RUNTIME-SLICE-4": "tests/test_dhf_simplification.py::DhfSimplificationCorpusTests.test_source_stage_slice_4_compatibility_evidence_keeps_runtime_unsynced"
   },
   "scenarios": [
     {
@@ -75,7 +77,7 @@
       "scenario_type": "explanation",
       "sanitized_prompt": "Use DHF for this complex task: explain why this pure function is deterministic; do not edit files.",
       "activation_status": "explicitly_activated_generic",
-        "activation_reason": "explicit_opt_in",
+      "activation_reason": "explicit_opt_in",
       "cohort_status": "efficiency_included",
       "cwd_class": "generic_repo",
       "expected_profile": "light",
@@ -129,7 +131,7 @@
       "scenario_type": "bounded_docs_edit",
       "sanitized_prompt": "Use DHF for this complex task: make a bounded spelling correction in one public Markdown paragraph and verify it.",
       "activation_status": "explicitly_activated_generic",
-        "activation_reason": "explicit_opt_in",
+      "activation_reason": "explicit_opt_in",
       "cohort_status": "efficiency_included",
       "cwd_class": "generic_repo",
       "expected_profile": "light",
@@ -183,7 +185,7 @@
       "scenario_type": "one_file_safe_change",
       "sanitized_prompt": "Use DHF for this complex task: apply a safe one-file constant rename with no public API change and run its narrow test.",
       "activation_status": "explicitly_activated_generic",
-        "activation_reason": "explicit_opt_in",
+      "activation_reason": "explicit_opt_in",
       "cohort_status": "efficiency_included",
       "cwd_class": "generic_repo",
       "expected_profile": "light",
@@ -237,7 +239,7 @@
       "scenario_type": "trivial_format",
       "sanitized_prompt": "Use DHF for this complex task only to format the supplied local text; preserve every word.",
       "activation_status": "explicitly_activated_generic",
-        "activation_reason": "explicit_opt_in",
+      "activation_reason": "explicit_opt_in",
       "cohort_status": "efficiency_included",
       "cwd_class": "generic_repo",
       "expected_profile": "light",
@@ -291,7 +293,7 @@
       "scenario_type": "local_feature",
       "sanitized_prompt": "Use DHF for this complex task: implement a local-only parser option with tests and no network or runtime sync.",
       "activation_status": "explicitly_activated_generic",
-        "activation_reason": "explicit_opt_in",
+      "activation_reason": "explicit_opt_in",
       "cohort_status": "efficiency_included",
       "cwd_class": "generic_repo",
       "expected_profile": "standard",
@@ -343,7 +345,7 @@
       "scenario_type": "failing_test_investigation",
       "sanitized_prompt": "Use DHF for this complex task: investigate a local failing unit test, identify the cause, and report evidence without fixing it.",
       "activation_status": "explicitly_activated_generic",
-        "activation_reason": "explicit_opt_in",
+      "activation_reason": "explicit_opt_in",
       "cohort_status": "efficiency_included",
       "cwd_class": "generic_repo",
       "expected_profile": "standard",
@@ -395,7 +397,7 @@
       "scenario_type": "scoped_refactor",
       "sanitized_prompt": "Use DHF for this complex task: refactor a local module seam without behavior change and run focused regression tests.",
       "activation_status": "explicitly_activated_generic",
-        "activation_reason": "explicit_opt_in",
+      "activation_reason": "explicit_opt_in",
       "cohort_status": "efficiency_included",
       "cwd_class": "generic_repo",
       "expected_profile": "standard",
@@ -447,7 +449,7 @@
       "scenario_type": "non_sensitive_cli_change",
       "sanitized_prompt": "Use DHF for this complex task: add a non-sensitive local CLI flag while preserving the existing exit-code contract.",
       "activation_status": "explicitly_activated_generic",
-        "activation_reason": "explicit_opt_in",
+      "activation_reason": "explicit_opt_in",
       "cohort_status": "efficiency_included",
       "cwd_class": "generic_repo",
       "expected_profile": "standard",
@@ -499,7 +501,7 @@
       "scenario_type": "local_ui_behavior",
       "sanitized_prompt": "Use DHF for this complex task: change local UI empty-state behavior and verify the focused component interaction.",
       "activation_status": "explicitly_activated_generic",
-        "activation_reason": "explicit_opt_in",
+      "activation_reason": "explicit_opt_in",
       "cohort_status": "efficiency_included",
       "cwd_class": "generic_repo",
       "expected_profile": "standard",
@@ -551,8 +553,8 @@
       "scenario_type": "resumed_task",
       "sanitized_prompt": "Use DHF for this complex task: resume implementation from the durable handoff and preserve the recorded constraints.",
       "activation_status": "explicitly_activated_generic",
-        "activation_reason": "explicit_opt_in",
-      "cohort_status": "efficiency_included",
+      "activation_reason": "explicit_opt_in",
+      "cohort_status": "efficiency_excluded_governed",
       "cwd_class": "generic_repo",
       "expected_profile": "governed",
       "escalation_signal": "resume_or_handoff",
@@ -609,8 +611,8 @@
       "scenario_type": "dirty_ownership_conflict",
       "sanitized_prompt": "Use DHF for this complex task: resolve a state-conflict where the requested file overlaps unknown dirty worktree ownership.",
       "activation_status": "explicitly_activated_generic",
-        "activation_reason": "explicit_opt_in",
-      "cohort_status": "efficiency_included",
+      "activation_reason": "explicit_opt_in",
+      "cohort_status": "efficiency_excluded_governed",
       "cwd_class": "generic_repo",
       "expected_profile": "governed",
       "escalation_signal": "unknown_or_overlapping_worktree_ownership",
@@ -662,8 +664,8 @@
       "scenario_type": "external_capture",
       "sanitized_prompt": "Use DHF for this complex task: perform a review that may use a sanitized external capture but must not expose private data.",
       "activation_status": "explicitly_activated_generic",
-        "activation_reason": "explicit_opt_in",
-      "cohort_status": "efficiency_included",
+      "activation_reason": "explicit_opt_in",
+      "cohort_status": "efficiency_excluded_governed",
       "cwd_class": "generic_repo",
       "expected_profile": "governed",
       "escalation_signal": "external_capture_or_private_data",
@@ -716,8 +718,8 @@
       "scenario_type": "remote_deploy_request",
       "sanitized_prompt": "Use DHF for this complex task: plan a remote deployment but do not connect, deploy, or read credentials without authorization.",
       "activation_status": "explicitly_activated_generic",
-        "activation_reason": "explicit_opt_in",
-      "cohort_status": "efficiency_included",
+      "activation_reason": "explicit_opt_in",
+      "cohort_status": "efficiency_excluded_governed",
       "cwd_class": "generic_repo",
       "expected_profile": "governed",
       "escalation_signal": "remote_or_deployment_action",
@@ -773,8 +775,8 @@
       "scenario_type": "multi_agent_plan",
       "sanitized_prompt": "Use DHF for this complex task: create a multi-agent implementation plan with disjoint write sets before any worker dispatch.",
       "activation_status": "explicitly_activated_generic",
-        "activation_reason": "explicit_opt_in",
-      "cohort_status": "efficiency_included",
+      "activation_reason": "explicit_opt_in",
+      "cohort_status": "efficiency_excluded_governed",
       "cwd_class": "generic_repo",
       "expected_profile": "governed",
       "escalation_signal": "multiple_agents_or_overlapping_write_sets",
@@ -827,8 +829,8 @@
       "scenario_type": "architecture_source_conflict",
       "sanitized_prompt": "Use DHF for this complex task: resolve an architecture state-conflict between two durable source documents before implementation.",
       "activation_status": "explicitly_activated_generic",
-        "activation_reason": "explicit_opt_in",
-      "cohort_status": "efficiency_included",
+      "activation_reason": "explicit_opt_in",
+      "cohort_status": "efficiency_excluded_governed",
       "cwd_class": "generic_repo",
       "expected_profile": "governed",
       "escalation_signal": "durable_architecture_source_conflict",
@@ -883,7 +885,7 @@
       "scenario_type": "ordinary_continue_only",
       "sanitized_prompt": "Rename a local variable.",
       "activation_status": "ordinary_continue_only",
-        "activation_reason": null,
+      "activation_reason": null,
       "cohort_status": "routing_control_excluded",
       "cwd_class": "generic_repo",
       "expected_profile": "not_applicable",
@@ -928,7 +930,7 @@
       "scenario_type": "shipq_lazy_delegation",
       "sanitized_prompt": "Continue the local project task.",
       "activation_status": "shipq_delegated",
-        "activation_reason": null,
+      "activation_reason": null,
       "cohort_status": "routing_control_excluded",
       "cwd_class": "shipq_repo",
       "expected_profile": "not_applicable",
@@ -969,27 +971,30 @@
   "acceptance_trace_map": {
     "AC-01": {
       "criterion": "**AC-01** The generic DHF Output Contract is reduced from an always-visible routing checklist to the four Result Invariants, with conditional governed fields.",
-      "slice": "2",
-      "producer": "TEST-OUTPUT-INVARIANTS",
       "scenario_ids": [
         "LIGHT-EXPLANATION",
         "STANDARD-LOCAL-FEATURE",
         "GOVERNED-RESUMED-TASK"
       ],
       "test_ids": [
-        "TEST-OUTPUT-INVARIANTS",
         "TEST-COMPLETION-TAXONOMY",
+        "TEST-OUTPUT-INVARIANTS",
         "TEST-STRUCTURED-COMPLETION-ORACLE"
       ],
-      "evidence_status": {
-        "state": "completed",
-        "evidence_id": "covered_by_slice_2_output_contract_tests"
-      }
+      "producers": [
+        {
+          "slice": "2",
+          "producer_id": "TEST-OUTPUT-INVARIANTS",
+          "fixture": "codex/skills/delivery-harness-framework/evals/evals.json",
+          "evidence_status": {
+            "state": "completed",
+            "evidence_id": "AC-01-slice-2-TEST-OUTPUT-INVARIANTS"
+          }
+        }
+      ]
     },
     "AC-02": {
-      "criterion": "**AC-02** A deterministic classifier or equivalent explicit routing contract maps representative prompts to `light`, `standard`, or `governed`.",
-      "slice": "1",
-      "producer": "TEST-ADVERSARIAL-ROUTING",
+      "criterion": "**AC-02** A deterministic classifier or equivalent explicit routing contract maps representative prompts to `light`, `standard`, or `governed` and matches `DHF_PROFILE_V1` exactly.",
       "scenario_ids": [
         "LIGHT-ONE-FILE-SAFE",
         "STANDARD-LOCAL-FEATURE",
@@ -998,31 +1003,50 @@
       "test_ids": [
         "TEST-ADVERSARIAL-ROUTING"
       ],
-      "evidence_status": {
-        "state": "completed",
-        "evidence_id": "profile_routing_executed"
-      }
+      "producers": [
+        {
+          "slice": "1",
+          "producer_id": "TEST-ADVERSARIAL-ROUTING",
+          "fixture": "tests/test_dhf_simplification.py",
+          "evidence_status": {
+            "state": "completed",
+            "evidence_id": "AC-02-slice-1-TEST-ADVERSARIAL-ROUTING"
+          }
+        }
+      ]
     },
     "AC-03": {
       "criterion": "**AC-03** Ordinary non-ShipQ prompts remain continue-only and receive no DHF context.",
-      "slice": "0-1",
-      "producer": "TEST-CURRENT-ROUTING-CONTROLS",
       "scenario_ids": [
         "CONTROL-ORDINARY-CONTINUE"
       ],
       "test_ids": [
-        "TEST-CURRENT-ROUTING-CONTROLS",
-        "TEST-BASELINE-MEASUREMENT"
+        "TEST-BASELINE-MEASUREMENT",
+        "TEST-CURRENT-ROUTING-CONTROLS"
       ],
-      "evidence_status": {
-        "state": "completed",
-        "evidence_id": "covered_by_slice_0_baseline"
-      }
+      "producers": [
+        {
+          "slice": "0",
+          "producer_id": "TEST-BASELINE-MEASUREMENT",
+          "fixture": "tests/fixtures/dhf_simplification_scenarios.json",
+          "evidence_status": {
+            "state": "completed",
+            "evidence_id": "AC-03-slice-0-TEST-BASELINE-MEASUREMENT"
+          }
+        },
+        {
+          "slice": "1",
+          "producer_id": "TEST-CURRENT-ROUTING-CONTROLS",
+          "fixture": "codex/hooks/dhf_preprompt.py",
+          "evidence_status": {
+            "state": "completed",
+            "evidence_id": "AC-03-slice-1-TEST-CURRENT-ROUTING-CONTROLS"
+          }
+        }
+      ]
     },
     "AC-04": {
       "criterion": "**AC-04** Explicit opt-out continues to win before all project and generic activation.",
-      "slice": "0-1",
-      "producer": "TEST-OPT-OUT-PRECEDENCE",
       "scenario_ids": [
         "CONTROL-ORDINARY-CONTINUE",
         "CONTROL-SHIPQ-DELEGATION"
@@ -1030,46 +1054,88 @@
       "test_ids": [
         "TEST-OPT-OUT-PRECEDENCE"
       ],
-      "evidence_status": {
-        "state": "completed",
-        "evidence_id": "covered_by_slice_0_current_behavior_test"
-      }
+      "producers": [
+        {
+          "slice": "0",
+          "producer_id": "TEST-OPT-OUT-PRECEDENCE",
+          "fixture": "tests/test_dhf_simplification.py",
+          "evidence_status": {
+            "state": "completed",
+            "evidence_id": "AC-04-slice-0-TEST-OPT-OUT-PRECEDENCE"
+          }
+        },
+        {
+          "slice": "1",
+          "producer_id": "TEST-OPT-OUT-PRECEDENCE",
+          "fixture": "codex/hooks/dhf_preprompt.py",
+          "evidence_status": {
+            "state": "completed",
+            "evidence_id": "AC-04-slice-1-TEST-OPT-OUT-PRECEDENCE"
+          }
+        }
+      ]
     },
     "AC-05": {
       "criterion": "**AC-05** ShipQ continues to load only through lazy adapter delegation under its cwd.",
-      "slice": "0-1",
-      "producer": "TEST-CURRENT-ROUTING-CONTROLS",
       "scenario_ids": [
         "CONTROL-SHIPQ-DELEGATION"
       ],
       "test_ids": [
-        "TEST-CURRENT-ROUTING-CONTROLS",
-        "TEST-BASELINE-MEASUREMENT"
+        "TEST-BASELINE-MEASUREMENT",
+        "TEST-CURRENT-ROUTING-CONTROLS"
       ],
-      "evidence_status": {
-        "state": "completed",
-        "evidence_id": "covered_by_slice_0_baseline"
-      }
+      "producers": [
+        {
+          "slice": "0",
+          "producer_id": "TEST-BASELINE-MEASUREMENT",
+          "fixture": "tests/fixtures/dhf_simplification_scenarios.json",
+          "evidence_status": {
+            "state": "completed",
+            "evidence_id": "AC-05-slice-0-TEST-BASELINE-MEASUREMENT"
+          }
+        },
+        {
+          "slice": "1",
+          "producer_id": "TEST-CURRENT-ROUTING-CONTROLS",
+          "fixture": "codex/hooks/dhf_preprompt.py",
+          "evidence_status": {
+            "state": "completed",
+            "evidence_id": "AC-05-slice-1-TEST-CURRENT-ROUTING-CONTROLS"
+          }
+        }
+      ]
     },
     "AC-06": {
       "criterion": "**AC-06** Malformed, non-dict, and missing-cwd payloads continue safely without leaking traceback, skill text, secrets, or unrelated local context.",
-      "slice": "0-1",
-      "producer": "TEST-MALFORMED-PAYLOAD-SAFETY",
       "scenario_ids": [
         "CONTROL-ORDINARY-CONTINUE"
       ],
       "test_ids": [
         "TEST-MALFORMED-PAYLOAD-SAFETY"
       ],
-      "evidence_status": {
-        "state": "completed",
-        "evidence_id": "covered_by_slice_0_current_behavior_test"
-      }
+      "producers": [
+        {
+          "slice": "0",
+          "producer_id": "TEST-MALFORMED-PAYLOAD-SAFETY",
+          "fixture": "tests/test_dhf_simplification.py",
+          "evidence_status": {
+            "state": "completed",
+            "evidence_id": "AC-06-slice-0-TEST-MALFORMED-PAYLOAD-SAFETY"
+          }
+        },
+        {
+          "slice": "1",
+          "producer_id": "TEST-MALFORMED-PAYLOAD-SAFETY",
+          "fixture": "codex/hooks/dhf_preprompt.py",
+          "evidence_status": {
+            "state": "completed",
+            "evidence_id": "AC-06-slice-1-TEST-MALFORMED-PAYLOAD-SAFETY"
+          }
+        }
+      ]
     },
     "AC-07": {
       "criterion": "**AC-07** Light tasks do not require `harness_recover.py`, `harness_env_probe.py`, `harness_report.py`, lifecycle narration, or a checkpoint.",
-      "slice": "1-2",
-      "producer": "TEST-PROFILE-OUTPUT-CONTRACT",
       "scenario_ids": [
         "LIGHT-EXPLANATION",
         "LIGHT-BOUNDED-DOCS",
@@ -1077,18 +1143,32 @@
         "LIGHT-TRIVIAL-FORMAT"
       ],
       "test_ids": [
-        "TEST-PROFILE-OUTPUT-CONTRACT",
-        "TEST-CONDITIONAL-HELPER-ROUTING"
+        "TEST-CONDITIONAL-HELPER-ROUTING",
+        "TEST-PROFILE-OUTPUT-CONTRACT"
       ],
-      "evidence_status": {
-        "state": "completed",
-        "evidence_id": "covered_by_slice_2_negative_output_contract_tests"
-      }
+      "producers": [
+        {
+          "slice": "1",
+          "producer_id": "TEST-PROFILE-OUTPUT-CONTRACT",
+          "fixture": "codex/hooks/dhf_preprompt.py",
+          "evidence_status": {
+            "state": "completed",
+            "evidence_id": "AC-07-slice-1-TEST-PROFILE-OUTPUT-CONTRACT"
+          }
+        },
+        {
+          "slice": "2",
+          "producer_id": "TEST-CONDITIONAL-HELPER-ROUTING",
+          "fixture": "codex/skills/delivery-harness-framework/SKILL.md",
+          "evidence_status": {
+            "state": "completed",
+            "evidence_id": "AC-07-slice-2-TEST-CONDITIONAL-HELPER-ROUTING"
+          }
+        }
+      ]
     },
     "AC-08": {
       "criterion": "**AC-08** Governed scenarios still select every safety/recovery gate required by their escalation signal.",
-      "slice": "1-2",
-      "producer": "TEST-GOVERNED-GATES",
       "scenario_ids": [
         "GOVERNED-RESUMED-TASK",
         "GOVERNED-DIRTY-CONFLICT",
@@ -1101,15 +1181,29 @@
         "TEST-GOVERNED-GATES",
         "TEST-MULTI-SIGNAL-UNION"
       ],
-      "evidence_status": {
-        "state": "completed",
-        "evidence_id": "covered_by_slice_1_classifier_and_slice_2_governed_gate_tests"
-      }
+      "producers": [
+        {
+          "slice": "1",
+          "producer_id": "TEST-GOVERNED-GATES",
+          "fixture": "codex/hooks/dhf_preprompt.py",
+          "evidence_status": {
+            "state": "completed",
+            "evidence_id": "AC-08-slice-1-TEST-GOVERNED-GATES"
+          }
+        },
+        {
+          "slice": "2",
+          "producer_id": "TEST-MULTI-SIGNAL-UNION",
+          "fixture": "codex/skills/delivery-harness-framework/SKILL.md",
+          "evidence_status": {
+            "state": "completed",
+            "evidence_id": "AC-08-slice-2-TEST-MULTI-SIGNAL-UNION"
+          }
+        }
+      ]
     },
     "AC-09": {
       "criterion": "**AC-09** Existing helper CLI entry points remain callable after the initial slices.",
-      "slice": "1; optional 5",
-      "producer": "TEST-HELPER-CLI-CALLABILITY",
       "scenario_ids": [
         "GOVERNED-RESUMED-TASK",
         "GOVERNED-MULTI-AGENT"
@@ -1117,15 +1211,20 @@
       "test_ids": [
         "TEST-HELPER-CLI-CALLABILITY"
       ],
-      "evidence_status": {
-        "state": "completed",
-        "evidence_id": "covered_by_slice_1_helper_cli_callability"
-      }
+      "producers": [
+        {
+          "slice": "1",
+          "producer_id": "TEST-HELPER-CLI-CALLABILITY",
+          "fixture": "scripts/harness_checkpoint.py",
+          "evidence_status": {
+            "state": "completed",
+            "evidence_id": "AC-09-slice-1-TEST-HELPER-CLI-CALLABILITY"
+          }
+        }
+      ]
     },
     "AC-10": {
       "criterion": "**AC-10** Golden scenarios establish 100% parity for outcome correctness, safety blocking, fresh verification completeness, worktree preservation, and recoverability where required.",
-      "slice": "0 fixture; 4 gate",
-      "producer": "TEST-PAIRED-ACTUAL-OUTCOMES",
       "scenario_ids": [
         "LIGHT-BOUNDED-DOCS",
         "STANDARD-LOCAL-FEATURE",
@@ -1133,19 +1232,33 @@
         "GOVERNED-DIRTY-CONFLICT"
       ],
       "test_ids": [
-        "TEST-PAIRED-ACTUAL-OUTCOMES",
+        "TEST-CHECKPOINT-ARTIFACT-ROUNDTRIP",
         "TEST-PAIR-ADVERSARIAL-MUTATIONS",
-        "TEST-CHECKPOINT-ARTIFACT-ROUNDTRIP"
+        "TEST-PAIRED-ACTUAL-OUTCOMES"
       ],
-      "evidence_status": {
-        "state": "completed",
-        "evidence_id": "routing_and_actual_outcome_parity_executed"
-      }
+      "producers": [
+        {
+          "slice": "0",
+          "producer_id": "TEST-CHECKPOINT-ARTIFACT-ROUNDTRIP",
+          "fixture": "tests/fixtures/dhf_simplification_scenarios.json",
+          "evidence_status": {
+            "state": "completed",
+            "evidence_id": "AC-10-slice-0-TEST-CHECKPOINT-ARTIFACT-ROUNDTRIP"
+          }
+        },
+        {
+          "slice": "4",
+          "producer_id": "TEST-PAIRED-ACTUAL-OUTCOMES",
+          "fixture": "tests/fixtures/dhf_simplification_observations.json",
+          "evidence_status": {
+            "state": "completed",
+            "evidence_id": "AC-10-slice-4-TEST-PAIRED-ACTUAL-OUTCOMES"
+          }
+        }
+      ]
     },
     "AC-11": {
       "criterion": "**AC-11** No scenario improves efficiency by weakening a required verification or permission gate.",
-      "slice": "0 fixture; 4 gate",
-      "producer": "TEST-PAIR-ADVERSARIAL-MUTATIONS",
       "scenario_ids": [
         "STANDARD-LOCAL-FEATURE",
         "GOVERNED-REMOTE-DEPLOY",
@@ -1154,15 +1267,29 @@
       "test_ids": [
         "TEST-PAIR-ADVERSARIAL-MUTATIONS"
       ],
-      "evidence_status": {
-        "state": "completed",
-        "evidence_id": "permission_receipt_private_data_mutations_rejected"
-      }
+      "producers": [
+        {
+          "slice": "0",
+          "producer_id": "TEST-PAIR-ADVERSARIAL-MUTATIONS",
+          "fixture": "tests/fixtures/dhf_simplification_scenarios.json",
+          "evidence_status": {
+            "state": "completed",
+            "evidence_id": "AC-11-slice-0-TEST-PAIR-ADVERSARIAL-MUTATIONS"
+          }
+        },
+        {
+          "slice": "4",
+          "producer_id": "TEST-PAIR-ADVERSARIAL-MUTATIONS",
+          "fixture": "tests/fixtures/dhf_simplification_observations.json",
+          "evidence_status": {
+            "state": "completed",
+            "evidence_id": "AC-11-slice-4-TEST-PAIR-ADVERSARIAL-MUTATIONS"
+          }
+        }
+      ]
     },
     "AC-12": {
-      "criterion": "**AC-12** On same-scenario paired, explicitly activated light/standard observations with baseline greater than zero, the median of per-scenario relative reductions is at least 40% independently for injected DHF context and mandatory helper invocations; context and helpers are reported separately.",
-      "slice": "0 fixture; 4 gate",
-      "producer": "TEST-PAIRED-ACTUAL-OUTCOMES",
+      "criterion": "**AC-12** On same-scenario paired, explicitly activated light/standard observations with baseline greater than zero, the median of per-scenario relative reductions is at least 40% independently for injected DHF context and mandatory helper invocations; each positive cohort has `n >= 9`, and context/helpers use the frozen helper registry and are reported separately.",
       "scenario_ids": [
         "LIGHT-EXPLANATION",
         "LIGHT-BOUNDED-DOCS",
@@ -1175,32 +1302,62 @@
         "STANDARD-LOCAL-UI"
       ],
       "test_ids": [
+        "TEST-BASELINE-MEASUREMENT",
         "TEST-PAIRED-ACTUAL-OUTCOMES"
       ],
-      "evidence_status": {
-        "state": "completed",
-        "evidence_id": "fixed_nine_pair_metrics_executed"
-      }
+      "producers": [
+        {
+          "slice": "0",
+          "producer_id": "TEST-BASELINE-MEASUREMENT",
+          "fixture": "tests/fixtures/dhf_simplification_scenarios.json",
+          "evidence_status": {
+            "state": "completed",
+            "evidence_id": "AC-12-slice-0-TEST-BASELINE-MEASUREMENT"
+          }
+        },
+        {
+          "slice": "4",
+          "producer_id": "TEST-PAIRED-ACTUAL-OUTCOMES",
+          "fixture": "tests/fixtures/dhf_simplification_observations.json",
+          "evidence_status": {
+            "state": "completed",
+            "evidence_id": "AC-12-slice-4-TEST-PAIRED-ACTUAL-OUTCOMES"
+          }
+        }
+      ]
     },
     "AC-13": {
       "criterion": "**AC-13** Zero-baseline observations are reported separately and show absolute non-regression (`candidate == 0`), not an undefined relative improvement.",
-      "slice": "0 fixture; 4 gate",
-      "producer": "TEST-PAIRED-ACTUAL-OUTCOMES",
       "scenario_ids": [
         "CONTROL-ORDINARY-CONTINUE"
       ],
       "test_ids": [
+        "TEST-BASELINE-MEASUREMENT",
         "TEST-PAIRED-ACTUAL-OUTCOMES"
       ],
-      "evidence_status": {
-        "state": "completed",
-        "evidence_id": "zero_baseline_non_regression_executed"
-      }
+      "producers": [
+        {
+          "slice": "0",
+          "producer_id": "TEST-BASELINE-MEASUREMENT",
+          "fixture": "tests/fixtures/dhf_simplification_scenarios.json",
+          "evidence_status": {
+            "state": "completed",
+            "evidence_id": "AC-13-slice-0-TEST-BASELINE-MEASUREMENT"
+          }
+        },
+        {
+          "slice": "4",
+          "producer_id": "TEST-PAIRED-ACTUAL-OUTCOMES",
+          "fixture": "tests/fixtures/dhf_simplification_observations.json",
+          "evidence_status": {
+            "state": "completed",
+            "evidence_id": "AC-13-slice-4-TEST-PAIRED-ACTUAL-OUTCOMES"
+          }
+        }
+      ]
     },
     "AC-14": {
       "criterion": "**AC-14** Results include raw per-scenario measurements and sample counts; no claim of statistical generality is made beyond the bounded corpus.",
-      "slice": "0 fixture; 4 gate",
-      "producer": "TEST-BASELINE-MEASUREMENT",
       "scenario_ids": [
         "LIGHT-EXPLANATION",
         "STANDARD-LOCAL-FEATURE",
@@ -1212,15 +1369,29 @@
         "TEST-BASELINE-MEASUREMENT",
         "TEST-SCHEMA-COUNTS"
       ],
-      "evidence_status": {
-        "state": "completed",
-        "evidence_id": "covered_by_slice_0_fixture_and_summary"
-      }
+      "producers": [
+        {
+          "slice": "0",
+          "producer_id": "TEST-BASELINE-MEASUREMENT",
+          "fixture": "tests/fixtures/dhf_simplification_scenarios.json",
+          "evidence_status": {
+            "state": "completed",
+            "evidence_id": "AC-14-slice-0-TEST-BASELINE-MEASUREMENT"
+          }
+        },
+        {
+          "slice": "4",
+          "producer_id": "TEST-SCHEMA-COUNTS",
+          "fixture": "tests/fixtures/dhf_simplification_observations.json",
+          "evidence_status": {
+            "state": "completed",
+            "evidence_id": "AC-14-slice-4-TEST-SCHEMA-COUNTS"
+          }
+        }
+      ]
     },
     "AC-15": {
       "criterion": "**AC-15** Repo source, documentation mirrors, surface inventory, tests, and evals agree on the same three-profile contract.",
-      "slice": "3",
-      "producer": "TEST-NORMATIVE-MIRRORS",
       "scenario_ids": [
         "LIGHT-EXPLANATION",
         "STANDARD-LOCAL-FEATURE",
@@ -1229,56 +1400,108 @@
       "test_ids": [
         "TEST-NORMATIVE-MIRRORS"
       ],
-      "evidence_status": {
-        "state": "completed",
-        "evidence_id": "canonical_mirror_surface_checks_executed"
-      }
+      "producers": [
+        {
+          "slice": "3",
+          "producer_id": "TEST-NORMATIVE-MIRRORS",
+          "fixture": "docs/surfaces.json",
+          "evidence_status": {
+            "state": "completed",
+            "evidence_id": "AC-15-slice-3-TEST-NORMATIVE-MIRRORS"
+          }
+        }
+      ]
     },
     "AC-16": {
-      "criterion": "**AC-16** Runtime sync remains blocked until source verification passes and the user separately authorizes runtime mutation; Slice 0 and Slice 4 each produce an executable no-runtime-mutation assertion.",
-      "slice": "0 and 4 assertions",
-      "producer": "TEST-ACCEPTANCE-TRACE",
+      "criterion": "**AC-16** Runtime sync remains blocked until source verification passes and the user separately authorizes runtime mutation; Slice 0 and Slice 4 each produce an independent runtime observation manifest over the exact managed targets with `changed_paths: []`.",
       "scenario_ids": [
         "GOVERNED-REMOTE-DEPLOY"
       ],
       "test_ids": [
-        "TEST-ACCEPTANCE-TRACE"
+        "TEST-ACCEPTANCE-TRACE",
+        "TEST-NO-RUNTIME-SLICE-0",
+        "TEST-NO-RUNTIME-SLICE-4"
       ],
-      "evidence_status": {
-        "state": "completed",
-        "evidence_id": "covered_by_slice_0_permission_boundary"
-      }
+      "producers": [
+        {
+          "slice": "0",
+          "producer_id": "TEST-NO-RUNTIME-SLICE-0",
+          "fixture": "docs/surfaces.json",
+          "evidence_status": {
+            "state": "completed",
+            "evidence_id": "AC-16-slice-0-TEST-NO-RUNTIME-SLICE-0"
+          }
+        },
+        {
+          "slice": "4",
+          "producer_id": "TEST-NO-RUNTIME-SLICE-4",
+          "fixture": "docs/surfaces.json",
+          "evidence_status": {
+            "state": "completed",
+            "evidence_id": "AC-16-slice-4-TEST-NO-RUNTIME-SLICE-4"
+          }
+        }
+      ]
     },
     "AC-17": {
       "criterion": "**AC-17** Governed checkpoint fixtures pass the field-level recoverability oracle.",
-      "slice": "0 fixture; 4 gate",
-      "producer": "TEST-CHECKPOINT-ARTIFACT-ROUNDTRIP",
       "scenario_ids": [
         "GOVERNED-RESUMED-TASK"
       ],
       "test_ids": [
         "TEST-CHECKPOINT-ARTIFACT-ROUNDTRIP"
       ],
-      "evidence_status": {
-        "state": "completed",
-        "evidence_id": "checkpoint_artifact_roundtrip_executed"
-      }
+      "producers": [
+        {
+          "slice": "0",
+          "producer_id": "TEST-CHECKPOINT-ARTIFACT-ROUNDTRIP",
+          "fixture": "tests/fixtures/dhf_simplification_scenarios.json",
+          "evidence_status": {
+            "state": "completed",
+            "evidence_id": "AC-17-slice-0-TEST-CHECKPOINT-ARTIFACT-ROUNDTRIP"
+          }
+        },
+        {
+          "slice": "4",
+          "producer_id": "TEST-CHECKPOINT-ARTIFACT-ROUNDTRIP",
+          "fixture": "tests/fixtures/dhf_simplification_observations.json",
+          "evidence_status": {
+            "state": "completed",
+            "evidence_id": "AC-17-slice-4-TEST-CHECKPOINT-ARTIFACT-ROUNDTRIP"
+          }
+        }
+      ]
     },
     "AC-18": {
       "criterion": "**AC-18** A feature-switch rollback smoke proves the simplified route can be disabled and legacy paths/helper entry points still execute.",
-      "slice": "1; 4 promotion gate",
-      "producer": "TEST-PAIRED-ACTUAL-OUTCOMES",
       "scenario_ids": [
         "CONTROL-ORDINARY-CONTINUE",
         "CONTROL-SHIPQ-DELEGATION"
       ],
       "test_ids": [
+        "TEST-HELPER-CLI-CALLABILITY",
         "TEST-PAIRED-ACTUAL-OUTCOMES"
       ],
-      "evidence_status": {
-        "state": "completed",
-        "evidence_id": "legacy_rollback_and_six_helpers_executed"
-      }
+      "producers": [
+        {
+          "slice": "1",
+          "producer_id": "TEST-HELPER-CLI-CALLABILITY",
+          "fixture": "codex/hooks/dhf_preprompt.py",
+          "evidence_status": {
+            "state": "completed",
+            "evidence_id": "AC-18-slice-1-TEST-HELPER-CLI-CALLABILITY"
+          }
+        },
+        {
+          "slice": "4",
+          "producer_id": "TEST-PAIRED-ACTUAL-OUTCOMES",
+          "fixture": "tests/fixtures/dhf_simplification_observations.json",
+          "evidence_status": {
+            "state": "completed",
+            "evidence_id": "AC-18-slice-4-TEST-PAIRED-ACTUAL-OUTCOMES"
+          }
+        }
+      ]
     }
   }
 }

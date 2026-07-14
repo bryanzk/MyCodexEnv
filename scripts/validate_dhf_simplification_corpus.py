@@ -18,7 +18,11 @@ from typing import Any
 
 MINIMUM_CATEGORY_COUNTS = {"light": 4, "standard": 5, "governed": 6}
 ALLOWED_CWD_CLASSES = {"generic_repo", "shipq_repo"}
-ALLOWED_COHORT_STATUSES = {"efficiency_included", "routing_control_excluded"}
+ALLOWED_COHORT_STATUSES = {
+    "efficiency_included",
+    "efficiency_excluded_governed",
+    "routing_control_excluded",
+}
 ALLOWED_RECEIPT_STATUSES = {"required", "verification_not_applicable"}
 REQUIRED_SCENARIO_FIELDS = {
     "id",
@@ -135,21 +139,23 @@ def extract_acceptance_criteria(contract_path: Path) -> list[str]:
     return criteria
 
 
-def extract_acceptance_slice_map(plan_path: Path) -> dict[str, str]:
+def extract_acceptance_slice_map(plan_path: Path) -> dict[str, tuple[str, ...]]:
     text = plan_path.read_text(encoding="utf-8")
     marker = "## Acceptance Traceability\n"
     if marker not in text:
         return {}
     section = text.split(marker, 1)[1].split("\n## ", 1)[0]
-    result: dict[str, str] = {}
+    result: dict[str, tuple[str, ...]] = {}
     for line in section.splitlines():
         if not line.startswith("|"):
             continue
         cells = [cell.strip() for cell in line.strip("|").split("|")]
         if len(cells) < 3:
             continue
+        slice_cell = re.sub(r"optional\s+\d+", "", cells[2], flags=re.IGNORECASE)
+        slices = tuple(dict.fromkeys(re.findall(r"(?<!\d)[0-6](?!\d)", slice_cell)))
         for trace_id in re.findall(r"AC-\d{2}", cells[1]):
-            result[trace_id] = cells[2]
+            result[trace_id] = slices
     return result
 
 
@@ -191,19 +197,25 @@ def _validate_scenario(scenario: object, index: int) -> list[str]:
         errors.append(f"{prefix}.expected_profile must match category {category}")
     if category == "routing_control" and scenario["expected_profile"] != "not_applicable":
         errors.append(f"{prefix}.expected_profile must be not_applicable")
-    if scenario["activation_status"] != "explicitly_activated_generic":
+    if _non_empty_string(category) and category in {"light", "standard"}:
+        if scenario["cohort_status"] != "efficiency_included":
+            errors.append(f"{prefix}: light/standard scenarios must be efficiency_included")
+        if scenario["activation_reason"] != "explicit_opt_in":
+            errors.append(f"{prefix}: efficiency cohort requires explicit_opt_in activation_reason")
+    elif category == "governed":
+        if scenario["cohort_status"] != "efficiency_excluded_governed":
+            errors.append(f"{prefix}: governed scenarios must be efficiency_excluded_governed")
+        if scenario["activation_reason"] != "explicit_opt_in":
+            errors.append(f"{prefix}: governed corpus scenarios must be explicit_opt_in")
+    elif category == "routing_control":
         if scenario["cohort_status"] != "routing_control_excluded":
             errors.append(f"{prefix}: routing controls must be excluded from the efficiency cohort")
         if scenario["activation_reason"] is not None:
             errors.append(f"{prefix}.activation_reason must be null for routing controls")
-    else:
+    if scenario["activation_status"] == "explicitly_activated_generic":
         reason = scenario["activation_reason"]
         if reason not in {"explicit_opt_in", "compatibility_risk_trigger", "profile_hint"}:
             errors.append(f"{prefix}.activation_reason is invalid for an activated scenario")
-        if scenario["cohort_status"] == "efficiency_included" and reason != "explicit_opt_in":
-            errors.append(f"{prefix}: efficiency cohort requires explicit_opt_in activation_reason")
-        if reason != "explicit_opt_in" and scenario["cohort_status"] != "routing_control_excluded":
-            errors.append(f"{prefix}: compatibility/profile-hint scenarios must be excluded from the efficiency cohort")
 
     if category == "governed" and not _non_empty_string(scenario["escalation_signal"]):
         errors.append(f"{prefix}.escalation_signal must name the governed trigger")
@@ -391,13 +403,11 @@ def validate_corpus(corpus: object, contract_path: Path) -> list[str]:
         trace = trace_map.get(trace_id)
         if not isinstance(trace, dict):
             continue
-        required_trace_fields = {"criterion", "slice", "scenario_ids", "test_ids", "producer", "evidence_status"}
+        required_trace_fields = {"criterion", "scenario_ids", "test_ids", "producers"}
         if set(trace) != required_trace_fields:
             errors.append(f"{trace_id} fields must be exactly {sorted(required_trace_fields)}")
         if trace.get("criterion") != criterion:
             errors.append(f"{trace_id} criterion text does not match the contract")
-        if trace.get("slice") != slice_map.get(trace_id):
-            errors.append(f"{trace_id} slice does not match the implementation plan")
         scenario_ids = trace.get("scenario_ids")
         test_ids = trace.get("test_ids")
         if not isinstance(scenario_ids, list) or not isinstance(test_ids, list) or not (scenario_ids or test_ids):
@@ -409,20 +419,35 @@ def validate_corpus(corpus: object, contract_path: Path) -> list[str]:
         for test_id in test_ids:
             if not _non_empty_string(test_id) or test_id not in test_catalog:
                 errors.append(f"{trace_id} references unknown test ID: {test_id}")
-        producer = trace.get("producer")
-        if not _non_empty_string(producer) or producer not in test_ids or producer not in test_catalog:
-            errors.append(f"{trace_id} producer must name an executable test binding in test_ids")
-        evidence_status = trace.get("evidence_status")
-        if (
-            not isinstance(evidence_status, dict)
-            or set(evidence_status) != {"state", "evidence_id"}
-            or evidence_status.get("state") != "completed"
-            or not _non_empty_string(evidence_status.get("evidence_id"))
-        ):
-            errors.append(
-                f"{trace_id} evidence_status must be exactly "
-                "{state: completed, evidence_id: non-empty}"
-            )
+        producers = trace.get("producers")
+        if not isinstance(producers, list) or not producers:
+            errors.append(f"{trace_id} producers must be a non-empty list")
+            continue
+        producer_fields = {"slice", "producer_id", "fixture", "evidence_status"}
+        observed_slices: list[str] = []
+        for producer in producers:
+            if not isinstance(producer, dict) or set(producer) != producer_fields:
+                errors.append(f"{trace_id} producer fields must be exactly {sorted(producer_fields)}")
+                continue
+            slice_id = producer.get("slice")
+            observed_slices.append(str(slice_id))
+            producer_id = producer.get("producer_id")
+            if not _non_empty_string(producer_id) or producer_id not in test_ids or producer_id not in test_catalog:
+                errors.append(f"{trace_id} producer_id must name an executable test binding in test_ids")
+            fixture = producer.get("fixture")
+            fixture_path = contract_path.resolve().parents[2] / str(fixture)
+            if not _non_empty_string(fixture) or Path(str(fixture)).is_absolute() or not fixture_path.exists():
+                errors.append(f"{trace_id} producer fixture must name an existing repo-relative evidence path")
+            evidence_status = producer.get("evidence_status")
+            if (
+                not isinstance(evidence_status, dict)
+                or set(evidence_status) != {"state", "evidence_id"}
+                or evidence_status.get("state") != "completed"
+                or not _non_empty_string(evidence_status.get("evidence_id"))
+            ):
+                errors.append(f"{trace_id} producer gate requires completed evidence_status")
+        if tuple(observed_slices) != slice_map.get(trace_id):
+            errors.append(f"{trace_id} producer slices do not match the implementation plan")
     return errors
 
 
@@ -664,6 +689,7 @@ def summary(corpus: dict[str, Any]) -> dict[str, Any]:
     )
     return {
         "valid": True,
+        "gate_pass": True,
         "scenario_count": len(corpus["scenarios"]),
         "category_counts": {category: counts[category] for category in MINIMUM_CATEGORY_COUNTS},
         "routing_control_count": sum(
@@ -691,6 +717,8 @@ def cmd_validate(args: argparse.Namespace) -> int:
     if not errors and args.check_baseline:
         errors.extend(validate_baseline_measurements(corpus, root))
     if errors:
+        if args.json:
+            print(json.dumps({"valid": False, "gate_pass": False, "errors": errors}, ensure_ascii=False, sort_keys=True))
         print("ERROR: " + "; ".join(errors), file=sys.stderr)
         return 1
     payload = summary(corpus)
