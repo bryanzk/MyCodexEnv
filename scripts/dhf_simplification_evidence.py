@@ -151,12 +151,23 @@ def runtime_boundary_evidence(root: Path) -> dict[str, Any]:
         path for path, item in live_by_path.items()
         if item["type"] != "regular" or item["sha256"] != sha256_file(root / path)
     )
+    source_stage_gate_pass = not changed and bool(promotion_difference)
+    promotion_gate_pass = not promotion_difference
+    if source_stage_gate_pass:
+        runtime_state = "source_stage_unsynced"
+    elif promotion_gate_pass:
+        runtime_state = "runtime_promoted"
+    else:
+        runtime_state = "drifted"
     return {
         "base_expected_runtime_manifest": base,
         "current_runtime_snapshot": live,
         "changed_paths": changed,
         "promotion_difference_paths": promotion_difference,
-        "gate_pass": not changed and bool(promotion_difference),
+        "runtime_state": runtime_state,
+        "source_stage_gate_pass": source_stage_gate_pass,
+        "promotion_gate_pass": promotion_gate_pass,
+        "gate_pass": source_stage_gate_pass or promotion_gate_pass,
     }
 
 

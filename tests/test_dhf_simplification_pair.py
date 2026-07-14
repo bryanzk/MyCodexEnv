@@ -10,6 +10,7 @@ import sys
 import tempfile
 import unittest
 from pathlib import Path
+from unittest import mock
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -77,8 +78,14 @@ class DhfSimplificationPairTests(unittest.TestCase):
             payload["identities"]["promotion_candidate_manifest"]["manifest_sha256"],
             r"^[0-9a-f]{64}$",
         )
-        self.assertEqual(payload["runtime_boundary"]["changed_paths"], [])
-        self.assertTrue(payload["runtime_boundary"]["promotion_difference_paths"])
+        state = payload["runtime_boundary"]["runtime_state"]
+        self.assertIn(state, {"source_stage_unsynced", "runtime_promoted"})
+        if state == "source_stage_unsynced":
+            self.assertEqual(payload["runtime_boundary"]["changed_paths"], [])
+            self.assertTrue(payload["runtime_boundary"]["promotion_difference_paths"])
+        else:
+            self.assertTrue(payload["runtime_boundary"]["changed_paths"])
+            self.assertEqual(payload["runtime_boundary"]["promotion_difference_paths"], [])
         self.assertTrue(payload["runtime_boundary"]["gate_pass"])
         self.assertTrue(payload["acceptance_trace_gates"]["gate_pass"])
 
@@ -103,6 +110,29 @@ class DhfSimplificationPairTests(unittest.TestCase):
         report = self.compare(observations=observations)
         self.assertFalse(report["pass"])
         self.assertFalse(report["acceptance_trace_gates"]["acceptance_gates"]["AC-16"])
+
+    def test_transition_identity_pins_current_runner_and_managed_source(self):
+        identities = self.runner.identity_bundle(self.corpus, ROOT)
+        identity = self.runner.load_transition_identity(ROOT)
+        self.assertEqual(self.runner.validate_transition_identity(identity, identities), [])
+
+        broken_runner = copy.deepcopy(identity)
+        broken_runner["runner_sha256"] = "0" * 64
+        self.assertTrue(
+            any("runner" in error for error in self.runner.validate_transition_identity(broken_runner, identities))
+        )
+
+        broken_source = copy.deepcopy(identity)
+        broken_source["managed_source_hashes_sha256"] = "0" * 64
+        self.assertTrue(
+            any("managed source" in error for error in self.runner.validate_transition_identity(broken_source, identities))
+        )
+
+        broken_authorization = copy.deepcopy(identity)
+        broken_authorization["authorized_slices"] = [5]
+        self.assertTrue(
+            any("authorized slices" in error for error in self.runner.validate_transition_identity(broken_authorization, identities))
+        )
 
     def test_runner_rejects_semantic_producer_forgery_even_with_recomputed_digest(self):
         def resign(record):
@@ -613,6 +643,34 @@ class DhfSimplificationPairTests(unittest.TestCase):
         self.assertRegex(first_timestamp, r"Z$")
         self.assertRegex(second_timestamp, r"Z$")
         self.assertEqual(first, second)
+
+    def test_pair_accepts_exact_runtime_promotion_without_rewriting_slice4_history(self):
+        evidence = self.runner._evidence_module(ROOT)
+        with tempfile.TemporaryDirectory() as tmp:
+            home = Path(tmp)
+            with mock.patch.object(evidence.Path, "home", return_value=home):
+                for source_path in evidence.managed_source_paths(ROOT):
+                    target = (
+                        home / ".codex" / "hooks" / "dhf_preprompt.py"
+                        if source_path == evidence.HOOK_SOURCE
+                        else home
+                        / ".codex"
+                        / "skills"
+                        / "delivery-harness-framework"
+                        / Path(source_path).relative_to(evidence.SKILL_ROOT)
+                    )
+                    target.parent.mkdir(parents=True, exist_ok=True)
+                    target.write_bytes((ROOT / source_path).read_bytes())
+                promoted = evidence.runtime_boundary_evidence(ROOT)
+            with mock.patch.object(self.runner, "_evidence_module", return_value=evidence), mock.patch.object(
+                evidence, "runtime_boundary_evidence", return_value=promoted
+            ):
+                report = self.compare()
+        self.assertTrue(report["pass"], report["errors"])
+        self.assertEqual(report["runtime_boundary"]["runtime_state"], "runtime_promoted")
+        stored = self.observations["producer_evidence"]["PRODUCER-AC-16-S4-1"]["evidence"]
+        self.assertEqual(stored["changed_paths"], [])
+        self.assertTrue(stored["promotion_difference_paths"])
 
 
 if __name__ == "__main__":

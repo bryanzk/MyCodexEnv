@@ -195,6 +195,23 @@ Fresh sessions should be able to recover the next safe task without chat
 history. `scripts/harness_recover.py` reads repo index, harness state, git
 status/log, and local evidence summary.
 
+The unified read-only query entry is `python3 scripts/harness_status.py status`.
+Use `--runtime` for the environment probe or `--evidence` for the evidence
+report. Arguments after the selected mode are forwarded to the corresponding
+legacy CLI, and the JSON payload remains contract-compatible. The original
+`harness_recover.py`, `harness_env_probe.py`, and `harness_report.py` paths are
+retained as compatibility entry points.
+
+For the DHF simplification runtime boundary, the immutable Slice 4 snapshot
+remains historical evidence. Fresh checks classify live managed files as
+`source_stage_unsynced` when they still match Base and differ from current
+source, `runtime_promoted` when every managed file exactly matches current
+source, or `drifted` otherwise. Only the first two states pass; promotion does
+not rewrite the Slice 4 snapshot. The separately checksummed and pinned
+`tests/fixtures/dhf_simplification_transition_identity.json` pins the current
+Slice 5/6 verifier and managed-source identity without replacing historical
+Slice 4 runner provenance.
+
 Recovery behavior:
 - missing repo index or harness state: fail non-zero and print the missing path.
 - no matching local evidence: exit 0 with `evidence_status=empty`.

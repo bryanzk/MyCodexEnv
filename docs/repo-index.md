@@ -91,6 +91,7 @@ behavior live in `codex/hooks/dhf_preprompt.py`.
 - `scripts/harness_requirements.py`: requirements artifact validator.
 - `scripts/harness_recover.py`: fresh-session recovery smoke check with evidence-kind counts and compact latest decision evidence.
 - `scripts/harness_env_probe.py`: observable Codex runtime config and split evidence schema probe.
+- `scripts/harness_status.py`: unified read-only `status` entry point; `--runtime` and `--evidence` preserve the existing env-probe and report JSON contracts while old helper paths remain callable.
 - `scripts/check_dhf_consumer_compatibility.py`: read-only DHF consumer compatibility and helper drift checker.
 - `scripts/validate_dhf_simplification_corpus.py`: bounded DHF corpus, independent producer catalog, and derived acceptance-gate validator.
 - `scripts/dhf_simplification_evidence.py`: read-only Base/promotion identity and managed-runtime boundary evidence producer; it never syncs runtime.

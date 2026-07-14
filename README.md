@@ -135,6 +135,7 @@ Harness Runtime 把 agent 工作从“prompt + 工具”扩展为一套可恢复
 - [`docs/MODEL_ROUTER_EVAL_MATRIX.md`](docs/MODEL_ROUTER_EVAL_MATRIX.md) — 模型路由评估
 - [`docs/harness-state.md`](docs/harness-state.md) — append-only 状态与 next safe task
 - [`docs/AGENT_HARNESS_STATUS.md`](docs/AGENT_HARNESS_STATUS.md) — 当前能力状态图
+- [`scripts/harness_status.py`](scripts/harness_status.py) — 统一只读状态入口，兼容 recovery、runtime probe 与 evidence report
 
 ### 当前控制能力
 

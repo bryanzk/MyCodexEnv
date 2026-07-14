@@ -33,6 +33,7 @@ HARNESS_CHECKPOINT = ROOT / "scripts" / "harness_checkpoint.py"
 HARNESS_REQUIREMENTS = ROOT / "scripts" / "harness_requirements.py"
 HARNESS_RECOVER = ROOT / "scripts" / "harness_recover.py"
 HARNESS_ENV_PROBE = ROOT / "scripts" / "harness_env_probe.py"
+HARNESS_STATUS = ROOT / "scripts" / "harness_status.py"
 CHECK_DHF_CONSUMER_COMPATIBILITY = ROOT / "scripts" / "check_dhf_consumer_compatibility.py"
 HEADROOM_FILTER = ROOT / "scripts" / "headroom_filter.py"
 AUDIT_SKILLS = ROOT / "scripts" / "audit_skills.py"
@@ -5148,6 +5149,69 @@ def test_harness_recovery_smoke():
     print("[PASS] harness recovery smoke")
 
 
+def test_harness_status_compatibility():
+    with tempfile.TemporaryDirectory() as tmp:
+        tmp_path = Path(tmp)
+        repo = tmp_path / "repo"
+        codex_home = tmp_path / ".codex"
+        runtime_dir = codex_home / "runtime"
+        repo.mkdir(parents=True)
+        runtime_dir.mkdir(parents=True)
+        code, out, err = run(["git", "init", str(repo)])
+        require(code == 0, f"temp git init failed: {err or out}")
+        write(repo / "docs" / "repo-index.md", "# Repo Index\n")
+        write(
+            repo / "docs" / "harness-state.md",
+            "# Harness State\n\n"
+            "- phase: validation\n"
+            "- blocked_sources: none\n"
+            "- next_safe_task: verify unified status\n"
+            "- latest_verification: pending\n",
+        )
+        write(codex_home / "config.toml", 'sandbox_mode = "workspace-write"\napproval_policy = "never"\n[features]\nhooks = true\n')
+        write(codex_home / "hooks.json", json.dumps({"hooks": {"SessionStart": [], "PreToolUse": [], "PostToolUse": []}}))
+        write(runtime_dir / "tool-policy.json", (ROOT / "codex" / "runtime" / "tool-policy.json").read_text(encoding="utf-8"))
+        write(runtime_dir / "evidence.schema.json", (ROOT / "codex" / "runtime" / "evidence.schema.json").read_text(encoding="utf-8"))
+        write(runtime_dir / "evidence" / "decision-evidence.schema.json", (ROOT / "codex" / "runtime" / "evidence" / "decision-evidence.schema.json").read_text(encoding="utf-8"))
+        write(runtime_dir / "evidence" / "routine-gate-receipt.schema.json", (ROOT / "codex" / "runtime" / "evidence" / "routine-gate-receipt.schema.json").read_text(encoding="utf-8"))
+
+        recover_args = ["--repo-root", str(repo), "--codex-home", str(codex_home), "--json"]
+        code, legacy_recover, err = run([sys.executable, str(HARNESS_RECOVER), *recover_args])
+        require(code == 0, f"legacy recover fixture failed: {err or legacy_recover}")
+        code, unified_recover, err = run([sys.executable, str(HARNESS_STATUS), "status", *recover_args])
+        require(code == 0, f"unified recover fixture failed: {err or unified_recover}")
+        require(json.loads(unified_recover) == json.loads(legacy_recover), "status JSON must equal legacy recovery JSON")
+
+        runtime_args = ["--codex-home", str(codex_home), "--json"]
+        code, legacy_runtime, err = run([sys.executable, str(HARNESS_ENV_PROBE), *runtime_args])
+        require(code == 0, f"legacy runtime fixture failed: {err or legacy_runtime}")
+        code, unified_runtime, err = run([sys.executable, str(HARNESS_STATUS), "status", "--runtime", *runtime_args])
+        require(code == 0, f"unified runtime fixture failed: {err or unified_runtime}")
+        require(json.loads(unified_runtime) == json.loads(legacy_runtime), "status --runtime JSON must equal legacy env JSON")
+
+        evidence_args = ["--codex-home", str(codex_home), "--cwd", str(repo), "--limit", "5", "--json"]
+        code, legacy_evidence, err = run([sys.executable, str(HARNESS_REPORT), *evidence_args])
+        require(code == 0, f"legacy evidence fixture failed: {err or legacy_evidence}")
+        code, unified_evidence, err = run([sys.executable, str(HARNESS_STATUS), "status", "--evidence", *evidence_args])
+        require(code == 0, f"unified evidence fixture failed: {err or unified_evidence}")
+        require(json.loads(unified_evidence) == json.loads(legacy_evidence), "status --evidence JSON must equal legacy report JSON")
+
+        code, out, err = run([sys.executable, str(HARNESS_STATUS), "status", "--runtime", "--evidence"])
+        require(code != 0, "status runtime and evidence modes must be mutually exclusive")
+
+        for mode, legacy in (([], HARNESS_RECOVER), (["--runtime"], HARNESS_ENV_PROBE), (["--evidence"], HARNESS_REPORT)):
+            code, legacy_help, err = run([sys.executable, str(legacy), "--help"])
+            require(code == 0, f"legacy help failed: {err or legacy_help}")
+            code, unified_help, err = run([sys.executable, str(HARNESS_STATUS), "status", *mode, "--help"])
+            require(code == 0, f"unified mode help failed: {err or unified_help}")
+            require(
+                unified_help.split("\n\n", 1)[1] == legacy_help.split("\n\n", 1)[1],
+                f"status mode {mode} must forward legacy --help content",
+            )
+
+    print("[PASS] harness unified status compatibility")
+
+
 def test_harness_env_probe():
     with tempfile.TemporaryDirectory() as tmp:
         tmp_path = Path(tmp)
@@ -5924,6 +5988,7 @@ def test_runner_preflight():
     require(HARNESS_REQUIREMENTS.exists(), f"missing harness requirements helper: {HARNESS_REQUIREMENTS}")
     require(HARNESS_RECOVER.exists(), f"missing harness recover helper: {HARNESS_RECOVER}")
     require(HARNESS_ENV_PROBE.exists(), f"missing harness env probe helper: {HARNESS_ENV_PROBE}")
+    require(HARNESS_STATUS.exists(), f"missing harness unified status helper: {HARNESS_STATUS}")
     require(CHECK_DHF_CONSUMER_COMPATIBILITY.exists(), f"missing DHF compatibility checker: {CHECK_DHF_CONSUMER_COMPATIBILITY}")
     require(HEADROOM_FILTER.exists(), f"missing headroom filter helper: {HEADROOM_FILTER}")
     require(AUDIT_SKILLS.exists(), f"missing skill governance audit helper: {AUDIT_SKILLS}")
@@ -6736,6 +6801,7 @@ TESTS = [
     test_dhf_dispatcher_stdout_stderr_and_no_leak_output,
     test_dhf_simplification_golden_corpus,
     test_dhf_simplification_paired_gate,
+    test_harness_status_compatibility,
     test_shipq_dhf_prompt_hook_auto_invokes_skill,
     test_harness_agent_brief_template,
     test_lifecycle_skill_routing_doc_is_discoverable,

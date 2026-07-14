@@ -38,6 +38,7 @@ HELPER_CLIS = (
 
 CAPTURE_VERSION = "dhf-bounded-v1"
 BASELINE_BASE_SHA = "00818ae174f039899a2757ee4c67fcf9db1effa0"
+TRANSITION_IDENTITY = "tests/fixtures/dhf_simplification_transition_identity.json"
 PRIVATE_MARKERS = ("SECRET_TOKEN=", "PRIVATE_KEY=", "PASSWORD=", "credential-value")
 
 SIGNAL_BY_INTENT = {
@@ -114,6 +115,39 @@ CONSTRAINTS_BY_INTENT = {
 
 def _sha256(text: str) -> str:
     return hashlib.sha256(text.encode("utf-8")).hexdigest()
+
+
+def _canonical_sha256(value: object) -> str:
+    payload = json.dumps(value, ensure_ascii=True, sort_keys=True, separators=(",", ":"))
+    return _sha256(payload)
+
+
+def load_transition_identity(root: Path) -> dict[str, Any]:
+    payload = json.loads((root / TRANSITION_IDENTITY).read_text(encoding="utf-8"))
+    if not isinstance(payload, dict):
+        raise ValueError("DHF transition identity must be an object")
+    return payload
+
+
+def validate_transition_identity(identity: dict[str, Any], identities: dict[str, Any]) -> list[str]:
+    errors: list[str] = []
+    signed = dict(identity)
+    digest = signed.pop("identity_sha256", None)
+    if digest != _canonical_sha256(signed):
+        errors.append("transition identity canonical hash mismatch")
+    if identity.get("schema_version") != 1 or identity.get("kind") != "dhf_simplification_transition_identity":
+        errors.append("transition identity schema mismatch")
+    if identity.get("authorized_slices") != [5, 6]:
+        errors.append("transition identity authorized slices mismatch")
+    runner = identities["runner_identity"]
+    if identity.get("runner_name") != runner["name"] or identity.get("runner_version") != runner["version"]:
+        errors.append("transition runner name/version mismatch")
+    if identity.get("runner_sha256") != runner["sha256"]:
+        errors.append("transition runner identity drift")
+    source_hashes = identities["promotion_candidate_manifest"]["source_hashes"]
+    if identity.get("managed_source_hashes_sha256") != _canonical_sha256(source_hashes):
+        errors.append("transition managed source identity drift")
+    return errors
 
 
 def _profile_contract(context: str) -> dict[str, Any] | None:
@@ -1086,6 +1120,8 @@ def run_comparison(
 ) -> dict[str, Any]:
     errors: list[str] = []
     identities = identity_bundle(corpus, root)
+    transition_identity = load_transition_identity(root)
+    errors.extend(validate_transition_identity(transition_identity, identities))
     evidence_module = _evidence_module(root)
     initial_expected = evidence_module.candidate_manifest(
         root,
@@ -1101,14 +1137,16 @@ def run_comparison(
         evidence_module.validate_manifest(
             observations.get("promotion_candidate_manifest"),
             identities["promotion_candidate_manifest"],
-            check_current=True,
+            check_current=False,
         )
     )
+    stored_promotion_manifest = observations.get("promotion_candidate_manifest", {})
+    if stored_promotion_manifest.get("source_hashes") != identities["promotion_candidate_manifest"]["source_hashes"]:
+        errors.append("promotion_candidate_manifest managed source identity drift")
     for field in (
         "artifact_schema",
         "base_identity",
         "corpus_identity",
-        "runner_identity",
         "helper_registry_identity",
     ):
         if observations.get(field) != identities[field]:
@@ -1134,13 +1172,17 @@ def run_comparison(
         if isinstance(stored_snapshot, dict):
             stored_snapshot.pop("captured_at", None)
         fresh_snapshot.pop("captured_at", None)
-        if (
-            stored_snapshot != fresh_snapshot
-            or stored_ac16.get("changed_paths") != runtime_boundary["changed_paths"]
-            or stored_ac16.get("promotion_difference_paths")
-            != runtime_boundary["promotion_difference_paths"]
-        ):
-            errors.append("AC-16 producer evidence does not match fresh runtime comparison")
+        if runtime_boundary["runtime_state"] == "source_stage_unsynced":
+            if (
+                stored_snapshot != fresh_snapshot
+                or stored_ac16.get("changed_paths") != runtime_boundary["changed_paths"]
+                or stored_ac16.get("promotion_difference_paths")
+                != runtime_boundary["promotion_difference_paths"]
+            ):
+                errors.append("AC-16 producer evidence does not match fresh runtime comparison")
+        elif runtime_boundary["runtime_state"] == "runtime_promoted":
+            if stored_ac16.get("changed_paths") != [] or not stored_ac16.get("promotion_difference_paths"):
+                errors.append("AC-16 historical source-stage evidence is invalid after promotion")
     expected_capture_hashes = {
         "baseline": {
             "dispatcher_sha256": _sha256(
@@ -1394,6 +1436,7 @@ def run_comparison(
         "governed_under_routing": governed_under_routing,
         "efficiency": {"context": context_summary, "helpers": helper_summary},
         "identities": identities,
+        "transition_identity": transition_identity,
         "runtime_boundary": runtime_boundary,
         "acceptance_trace_gates": trace_gates,
         "recoverability": {

@@ -13,6 +13,7 @@ import sys
 import tempfile
 import unittest
 from pathlib import Path
+from unittest import mock
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -502,13 +503,52 @@ class DhfSimplificationCorpusTests(unittest.TestCase):
             for item in json.loads(SURFACES.read_text(encoding="utf-8"))["surfaces"]
             if item["path"] == "codex/hooks/dhf_preprompt.py"
         )
-        self.assertIn("runtime unsynced", role)
+        self.assertIn("source-stage unsynced or exact promoted", role)
         self.assertIn("only exact value 1 enables", role)
         evidence = load_evidence().runtime_boundary_evidence(ROOT)
-        self.assertEqual(evidence["changed_paths"], [])
-        self.assertTrue(evidence["promotion_difference_paths"])
+        self.assertIn(evidence["runtime_state"], {"source_stage_unsynced", "runtime_promoted"})
+        if evidence["runtime_state"] == "source_stage_unsynced":
+            self.assertTrue(evidence["source_stage_gate_pass"])
+            self.assertFalse(evidence["promotion_gate_pass"])
+            self.assertEqual(evidence["changed_paths"], [])
+            self.assertTrue(evidence["promotion_difference_paths"])
+        else:
+            self.assertFalse(evidence["source_stage_gate_pass"])
+            self.assertTrue(evidence["promotion_gate_pass"])
+            self.assertEqual(evidence["promotion_difference_paths"], [])
         self.assertTrue(evidence["gate_pass"])
         self.assertRegex(evidence["current_runtime_snapshot"]["captured_at"], r"Z$")
+
+    def test_runtime_boundary_accepts_exact_promotion_and_rejects_drift(self):
+        evidence_module = load_evidence()
+        with tempfile.TemporaryDirectory() as tmp:
+            home = Path(tmp)
+            with mock.patch.object(evidence_module.Path, "home", return_value=home):
+                for source_path in evidence_module.managed_source_paths(ROOT):
+                    target = (
+                        home / ".codex" / "hooks" / "dhf_preprompt.py"
+                        if source_path == evidence_module.HOOK_SOURCE
+                        else home
+                        / ".codex"
+                        / "skills"
+                        / "delivery-harness-framework"
+                        / Path(source_path).relative_to(evidence_module.SKILL_ROOT)
+                    )
+                    target.parent.mkdir(parents=True, exist_ok=True)
+                    target.write_bytes((ROOT / source_path).read_bytes())
+
+                promoted = evidence_module.runtime_boundary_evidence(ROOT)
+                self.assertEqual(promoted["runtime_state"], "runtime_promoted")
+                self.assertFalse(promoted["source_stage_gate_pass"])
+                self.assertTrue(promoted["promotion_gate_pass"])
+                self.assertTrue(promoted["gate_pass"])
+                self.assertEqual(promoted["promotion_difference_paths"], [])
+
+                hook = home / ".codex" / "hooks" / "dhf_preprompt.py"
+                hook.write_text("drift\n", encoding="utf-8")
+                drifted = evidence_module.runtime_boundary_evidence(ROOT)
+                self.assertEqual(drifted["runtime_state"], "drifted")
+                self.assertFalse(drifted["gate_pass"])
 
     def test_current_dispatcher_opt_out_precedence(self):
         env = os.environ.copy()
@@ -1393,8 +1433,8 @@ class DhfGovernanceProfileTests(unittest.TestCase):
             "only exact value 1 enables",
             "recognized rollback values 0, false, off, and legacy",
             "all other explicit values fail-safe to legacy with a bounded diagnostic",
-            "runtime promotion pending",
-            "runtime unsynced",
+            "runtime promotion authorized",
+            "source-stage unsynced or exact promoted",
             f"{contract['switch_name']}={contract['switch_enable']}",
         ):
             self.assertIn(term, dispatcher_role)
