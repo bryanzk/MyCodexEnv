@@ -89,11 +89,11 @@ slice-specific values below are normative, not optional status prose.
 
 | Slice | Entry conditions | Stop/escalation conditions | Rollback action | Evidence artifact |
 | --- | --- | --- | --- | --- |
-| 0 | fresh runtime ownership probe captured; editable test/fixture surfaces isolated | ownership overlap cannot be isolated; frozen identity or corpus/trace schema cannot express a contract field | compare-and-swap only when current hash equals task `after_hash`; otherwise stop | sanitized before/after ledger, frozen Base identity, corpus and recover fixtures, acceptance trace map, no-runtime assertion |
+| 0 | fresh runtime ownership probe captured; editable test/fixture surfaces isolated | ownership overlap cannot be isolated; frozen identity or corpus/trace schema cannot express a contract field | compare-and-swap only when current hash equals task `after_hash`; otherwise stop | sanitized before/after ledger, frozen Base identity/expected-runtime manifest, corpus and recover fixtures, acceptance trace map |
 | 1 | Slice 0 schema/baseline green; legacy dispatcher behavior captured | any opt-out, ShipQ, malformed input, no-leak, or ordinary continue-only regression | disable simplified feature switch and restore legacy dispatcher selection | routing truth-table test report and feature-switch rollback smoke receipt |
 | 2 | Slice 1 routing green and feature switch available | governed field/gate loss or completion-claim ambiguity | switch back to legacy Output Contract and revert task-owned skill edits | invariant eval report plus completion-claim taxonomy cases |
 | 3 | canonical profile/output semantics green in Slices 1-2 | mirror disagreement or edits needed outside authorized source scope | revert task-owned mirror changes; retain canonical source behavior | surface/contract consistency report |
-| 4 | independent Base/current runner and identities fixed; Slices 0-3 green | identity/hash drift, self-reported verdict fields, correctness/safety parity below 100%, governed under-route, changed measurement boundary, recover oracle failure, required positive cohort `n=0`, or target miss | keep simplified path disabled; return to failing slice rather than waive gate | raw independently executed paired results, derived assertions, recover oracle, separate context/helper summaries, zero-baseline table, no-runtime assertion |
+| 4 | independent Base/promotion runner and identities fixed; Slices 0-3 green | identity/hash drift, self-reported verdict fields, correctness/safety parity below 100%, governed under-route, changed measurement boundary, recover oracle failure, required positive cohort `n=0`, or target miss | keep simplified path disabled; return to failing slice rather than waive gate | raw independently executed paired results, derived assertions, recover oracle, efficiency summaries, fresh current-runtime comparison |
 | 5 | Slices 0-4 green and explicit user value confirmation | old CLI/JSON consumer incompatibility or mutation-semantics drift | retain old implementations and remove/disable unified entry point | old/new CLI compatibility and consumer report |
 | 6 | source gates and external planning gate satisfied; explicit runtime authorization; backup ready | authorization absent, source/runtime diff changes, or post-sync smoke failure | restore targeted backup and rerun legacy-path smoke | authorization receipt, sync manifest, post-sync and rollback-smoke receipts |
 
@@ -113,6 +113,10 @@ authority changes mode to HITL; it does not authorize a broader edit surface.
 - Add a baseline measurement command that records skill-context UTF-8 bytes or a
   documented deterministic byte/character proxy, plus mandatory helper count.
   Label proxies as proxies; do not label them model tokens.
+- Extract Base helper count only from frozen Base raw structured required-helper
+  output/contract; add required-vs-mentioned, required-vs-forbidden, duplicate,
+  empty, missing, and malformed extraction cases. Never apply the candidate
+  signal registry to Base.
 - Encode ordinary continue-only and ShipQ scenarios as routing controls outside
   the explicitly activated efficiency cohort.
 - Separate `explicit_opt_in` scenarios from `compatibility_risk_trigger` and
@@ -122,7 +126,8 @@ authority changes mode to HITL; it does not authorize a broader edit surface.
   paired-corpus SHA-256/schema version, helper-registry version/hash, and runner
   name/version/SHA-256. Fail on any later identity drift.
 - Capture an informational `initial_candidate_manifest` for ownership/drift
-  diagnosis only; label it forbidden as a Slice 4 candidate input.
+  diagnosis only; populate the contract schema and canonical `manifest_sha256`,
+  set `informational_only: true`, and label it forbidden as a Slice 4 input.
 - Add the governed field-level `checkpoint -> recover` fixture here, including a
   stale-evidence case; this fixture is mandatory Slice 0 infrastructure, not
   optional Slice 5 work.
@@ -135,10 +140,9 @@ authority changes mode to HITL; it does not authorize a broader edit surface.
 - Define evidence states exactly: `planned`/`deferred` are nonterminal;
   `completed`/`blocked`/`not_applicable` are terminal. Slice 0 may initialize
   planned evidence, but each producing slice must terminalize its entries.
-- Add an executable AC-16 assertion that repo-source work did not mutate runtime.
-- Build the Slice 0 runtime observation manifest using the exact managed targets,
-  exclusions, lstat/symlink rules, pre/post hashes, and `changed_paths: []` from
-  the contract.
+- Build AC-16's `base_expected_runtime_manifest` from immutable Base managed
+  bytes using the exact target/exclusion rules. It has Base provenance and no
+  fabricated `captured_at`; it is not a live Slice 0 observation.
 
 ### GREEN
 - Validate corpus schema and unique scenario IDs.
@@ -168,8 +172,8 @@ on the branch.
 - Every acceptance criterion has one or more scenario/test IDs.
 - Frozen hashes, runner version, callable bindings, producer fields, and the
   field-level recover fixture validate.
-- AC-16's Slice 0 no-runtime assertion is terminal; evidence owned by later
-  producing slices may remain `planned` only until those slices execute.
+- AC-16's Slice 0 expected-manifest producer is terminal; the Slice 4 live
+  comparison may remain `planned` only until Slice 4 executes.
 - The validator derives and emits `gate_pass`; required producers pass only when
   `completed`, never from `blocked` or an unapproved `not_applicable`.
 
@@ -188,6 +192,9 @@ on the branch.
   routing, malformed-hint governed fallback, and false-positive controls. These
   compatibility/hint/near-miss cases are focused unit controls, not paired-corpus
   observations.
+- For malformed hints, assert current governed signals retain source order,
+  `malformed_profile_state` is appended once, primary signal is forced to it, and
+  the exact-name-deduped helper oracle includes its four required helpers.
 - Add a dual-match unit-corpus case proving
   `explicit_opt_in > compatibility_risk_trigger > profile_hint`.
 - Validate machine-readable `DHF_PROFILE_V1` against dispatcher constants:
@@ -262,8 +269,9 @@ on the branch.
   statement becomes false.
 - After all Slice 3 edits and gates, freeze the immutable
   `promotion_candidate_manifest` with exact dispatcher, skill, profile contract,
-  mirror, and source hashes. It supersedes the informational Slice 0 candidate
-  manifest for promotion purposes.
+  mirror, corpus, runner, helper-registry, and canonical manifest hashes. Set
+  `created_after_slice: 3` and `immutable_for_slice_4: true`; it supersedes the
+  informational Slice 0 candidate manifest for promotion purposes.
 
 ### Gate
 - `python3 scripts/check_surfaces.py --repo-root "$(pwd)" --check-public-nav`
@@ -312,6 +320,11 @@ no reduction claim; if promotion requires positive samples, the gate fails. Any
 later model-inclusive study is a separate protocol that pins the model and
 pre-registers repeats before data collection; it cannot satisfy this gate.
 
+Base helper observations come only from Base raw structured required-helper
+output. Candidate helper observations come only from fired-signal registry union.
+Mentioned/available/forbidden helper names and post-first-action calls do not
+count on either side.
+
 ### Pass rule
 - 100% parity on the first five correctness/safety dimensions.
 - No governed under-routing.
@@ -324,10 +337,11 @@ pre-registers repeats before data collection; it cannot satisfy this gate.
   scenario results, and any outlier; do not claim population-wide significance.
 - The Slice 0 checkpoint/recover fixture passes field by field and stale evidence
   is not promoted; this is a mandatory Slice 4 parity gate.
-- AC-16's independent Slice 4 no-runtime-mutation assertion is terminal before
-  source promotion; it is a fresh runtime pre/post observation manifest with the
-  exact managed targets, symlink rules, and `changed_paths: []`. Slice 0 evidence
-  alone is insufficient and cannot be reused.
+- AC-16's Slice 4 producer takes one fresh live lstat/hash snapshot. It must match
+  the Base expected managed-runtime hashes (`changed_paths: []`) and differ from
+  immutable promoted repo-source hashes (`promotion_difference_paths` non-empty).
+  This proves no promotion as of capture, not absence of transient writes; no
+  fake pre/post window or reused timestamp is allowed.
 - Only after all Slice 4 gates pass may repo source change the absent-value switch
   default from `"0"` to `"1"`. Runtime remains unsynced. Invalid values still
   fail safely to legacy with a diagnostic, and rollback uses any recognized
@@ -393,7 +407,7 @@ The machine-readable corpus is authoritative; this table is its review mirror.
 | Behavioral/safety/recovery parity | AC-10, AC-11, AC-17 | 0 fixture; 4 gate | Independent pair runner + all bounded outputs/recover fixture | Derived result, permission, receipt, dirty-preservation, and field-level recovery assertions |
 | Efficiency and bounded reporting | AC-12, AC-13, AC-14 | 0 fixture; 4 gate | Independent pair runner + explicit-opt-in paired corpus | Frozen helper registry/count, `n >= 9` per positive cohort, relative-reduction medians, zero table, and raw results |
 | Source/mirror consistency | AC-15 | 3 | Surface checker + canonical contract fixture | Surface and contract mirror checks |
-| Runtime authorization boundary | AC-16 | 0 and 4 assertions | Slice 0/4 independent runtime observers | Exact managed-target pre/post manifests, symlink checks, `changed_paths: []`; Slice 6 separately authorized |
+| Runtime authorization boundary | AC-16 | 0 expected; 4 live | Slice 0 Base-manifest producer + Slice 4 live comparator | Live runtime matches frozen Base, differs from promoted source, symlink checks pass; Slice 6 separately authorized |
 | Feature rollback | AC-18 | 1; 4 promotion gate | Dispatcher rollback runner + routing/helper controls | Recognized rollback aliases, legacy route/helper smoke, and unknown-value safe-legacy diagnostics |
 
 ## External Planning Review Boundary
@@ -413,6 +427,10 @@ python3 scripts/check_surfaces.py --repo-root "$(pwd)" --check-public-nav
 python3 test_runner.py
 git diff --check
 ```
+
+The final receipt must print `context n=9`, `helpers n=9`, helper registry SHA,
+Base commit and Base dispatcher/skill hashes, paired-corpus hash, runner hash,
+and current promotion-manifest/dispatcher/skill hashes with explicit labels.
 
 For this document-review task, a failure caused by unrelated pre-existing dirty
 worktree changes must be isolated with focused checks and reported; it must not

@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import copy
+import hashlib
 import importlib.util
 import json
 import subprocess
@@ -67,6 +68,74 @@ class DhfSimplificationPairTests(unittest.TestCase):
         self.assertGreaterEqual(payload["efficiency"]["context"]["median_relative_reduction"], 0.4)
         self.assertGreaterEqual(payload["efficiency"]["helpers"]["median_relative_reduction"], 0.4)
         self.assertTrue(payload["rollback_smoke"]["pass"])
+        self.assertEqual(payload["efficiency"]["context"]["positive_baseline_sample_count"], 9)
+        self.assertEqual(payload["efficiency"]["helpers"]["positive_baseline_sample_count"], 9)
+        self.assertRegex(payload["identities"]["helper_registry_identity"]["sha256"], r"^[0-9a-f]{64}$")
+        self.assertRegex(payload["identities"]["corpus_identity"]["sha256"], r"^[0-9a-f]{64}$")
+        self.assertRegex(payload["identities"]["runner_identity"]["sha256"], r"^[0-9a-f]{64}$")
+        self.assertRegex(
+            payload["identities"]["promotion_candidate_manifest"]["manifest_sha256"],
+            r"^[0-9a-f]{64}$",
+        )
+        self.assertEqual(payload["runtime_boundary"]["changed_paths"], [])
+        self.assertTrue(payload["runtime_boundary"]["promotion_difference_paths"])
+        self.assertTrue(payload["runtime_boundary"]["gate_pass"])
+        self.assertTrue(payload["acceptance_trace_gates"]["gate_pass"])
+
+    def test_runner_rejects_manifest_producer_and_identity_drift(self):
+        mutations = (
+            lambda value: value["promotion_candidate_manifest"].__setitem__("manifest_sha256", "0" * 64),
+            lambda value: value["runner_identity"].__setitem__("sha256", "0" * 64),
+            lambda value: value["producer_evidence"].pop("PRODUCER-AC-16-S4-1"),
+            lambda value: value["base_expected_runtime_manifest"].__setitem__("aggregate_sha256", "0" * 64),
+        )
+        for mutate in mutations:
+            with self.subTest(mutate=mutate):
+                observations = copy.deepcopy(self.observations)
+                mutate(observations)
+                report = self.compare(observations=observations)
+                self.assertFalse(report["pass"])
+                self.assertTrue(report["errors"])
+
+        observations = copy.deepcopy(self.observations)
+        producer = observations["producer_evidence"]["PRODUCER-AC-16-S4-1"]
+        producer["evidence"]["passed_assertion_count"] -= 1
+        report = self.compare(observations=observations)
+        self.assertFalse(report["pass"])
+        self.assertFalse(report["acceptance_trace_gates"]["acceptance_gates"]["AC-16"])
+
+    def test_runner_rejects_semantic_producer_forgery_even_with_recomputed_digest(self):
+        def resign(record):
+            record["evidence_sha256"] = hashlib.sha256(
+                json.dumps(
+                    record["evidence"],
+                    sort_keys=True,
+                    separators=(",", ":"),
+                    ensure_ascii=True,
+                ).encode("utf-8")
+            ).hexdigest()
+
+        def shrink_assertions(evidence):
+            evidence["assertion_count"] = 1
+            evidence["passed_assertion_count"] = 1
+
+        def corrupt_snapshot(evidence):
+            evidence["current_runtime_snapshot"]["records"][0]["sha256"] = "0" * 64
+
+        def stale_timestamp(evidence):
+            evidence["current_runtime_snapshot"]["captured_at"] = "2026-07-12T00:00:00Z"
+
+        for mutate in (shrink_assertions, corrupt_snapshot, stale_timestamp):
+            with self.subTest(mutate=mutate):
+                observations = copy.deepcopy(self.observations)
+                record = observations["producer_evidence"]["PRODUCER-AC-16-S4-1"]
+                mutate(record["evidence"])
+                resign(record)
+                report = self.compare(observations=observations)
+                self.assertFalse(report["pass"])
+                self.assertFalse(
+                    report["acceptance_trace_gates"]["acceptance_gates"]["AC-16"]
+                )
 
     def test_observation_fixture_contains_no_handwritten_pass_booleans(self):
         forbidden = {
@@ -111,6 +180,10 @@ class DhfSimplificationPairTests(unittest.TestCase):
         )
         self.assertEqual(activated["baseline_capture"]["provenance"]["base_commit"], self.runner.BASELINE_BASE_SHA)
         self.assertTrue(activated["candidate_capture"]["provenance"]["profile_contract"])
+        self.assertEqual(
+            activated["candidate_capture"]["provenance"]["source_contract"],
+            "simplified@isolated-promotion-bytes",
+        )
 
     def test_context_drives_execution_policy_and_permission_oracle_is_not_capture_input(self):
         scenario = next(item for item in self.corpus["scenarios"] if item["id"] == "GOVERNED-REMOTE-DEPLOY")
@@ -533,7 +606,13 @@ class DhfSimplificationPairTests(unittest.TestCase):
         self.assertTrue(any("zero-baseline helpers regression" in error for error in report["errors"]), report)
 
     def test_sanitized_results_are_reproducible(self):
-        self.assertEqual(self.compare(), self.compare())
+        first = self.compare()
+        second = self.compare()
+        first_timestamp = first["runtime_boundary"]["current_runtime_snapshot"].pop("captured_at")
+        second_timestamp = second["runtime_boundary"]["current_runtime_snapshot"].pop("captured_at")
+        self.assertRegex(first_timestamp, r"Z$")
+        self.assertRegex(second_timestamp, r"Z$")
+        self.assertEqual(first, second)
 
 
 if __name__ == "__main__":

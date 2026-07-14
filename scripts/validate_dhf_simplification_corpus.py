@@ -12,6 +12,7 @@ import subprocess
 import sys
 import tempfile
 from collections import Counter
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any
 
@@ -51,25 +52,64 @@ REQUIRED_BASELINE_FIELDS = {
     "verification_receipt_status",
     "known_mismatches",
 }
-BASELINE_HELPER_ORACLE = {
-    "LIGHT-EXPLANATION": ("harness_recover.py", "harness_env_probe.py"),
-    "LIGHT-BOUNDED-DOCS": ("harness_recover.py", "harness_env_probe.py"),
-    "LIGHT-ONE-FILE-SAFE": ("harness_recover.py", "harness_env_probe.py"),
-    "LIGHT-TRIVIAL-FORMAT": ("harness_recover.py", "harness_env_probe.py"),
-    "STANDARD-LOCAL-FEATURE": ("harness_recover.py", "harness_env_probe.py"),
-    "STANDARD-FAILING-TEST": ("harness_recover.py", "harness_env_probe.py"),
-    "STANDARD-SCOPED-REFACTOR": ("harness_recover.py", "harness_env_probe.py"),
-    "STANDARD-CLI-CHANGE": ("harness_recover.py", "harness_env_probe.py"),
-    "STANDARD-LOCAL-UI": ("harness_recover.py", "harness_env_probe.py"),
-    "GOVERNED-RESUMED-TASK": ("harness_recover.py", "harness_env_probe.py", "harness_report.py"),
-    "GOVERNED-DIRTY-CONFLICT": ("harness_recover.py", "harness_env_probe.py"),
-    "GOVERNED-EXTERNAL-CAPTURE": ("harness_recover.py", "harness_env_probe.py"),
-    "GOVERNED-REMOTE-DEPLOY": ("harness_recover.py", "harness_env_probe.py", "harness_checkpoint.py"),
-    "GOVERNED-MULTI-AGENT": ("harness_recover.py", "harness_env_probe.py", "harness_agent_team.py"),
-    "GOVERNED-ARCH-SOURCE-CONFLICT": ("harness_recover.py", "harness_env_probe.py", "harness_requirements.py"),
-    "CONTROL-ORDINARY-CONTINUE": (),
-    "CONTROL-SHIPQ-DELEGATION": (),
-}
+def extract_base_required_helpers(raw_output: object) -> list[str]:
+    """Extract only Base's structured pre-action required-helper contract."""
+    if not isinstance(raw_output, dict):
+        raise ValueError("Base required-helper output must be an object")
+    required = raw_output.get("required_helpers_before_first_action")
+    if not isinstance(required, list) or any(not _non_empty_string(item) for item in required):
+        raise ValueError("Base required_helpers_before_first_action must be a string list")
+    return list(dict.fromkeys(required))
+
+
+def frozen_base_required_helper_output(root: Path, scenario: dict[str, Any]) -> dict[str, Any]:
+    """Derive Base helpers from immutable Base skill bytes, never candidate rules."""
+    if scenario.get("category") == "routing_control":
+        return {
+            "source_contract_sha256": "not_applicable_routing_control",
+            "required_helpers_before_first_action": [],
+        }
+    proc = subprocess.run(
+        [
+            "git",
+            "show",
+            f"{BASELINE_BASE_SHA}:codex/skills/delivery-harness-framework/SKILL.md",
+        ],
+        cwd=root,
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    if proc.returncode != 0:
+        raise ValueError(f"cannot read immutable Base helper contract: {proc.stderr.strip()}")
+    skill = proc.stdout
+    required_contract_markers = (
+        "For complex or resumed work:",
+        "harness_recover.py",
+        "harness_env_probe.py",
+        "harness_requirements.py",
+        "harness_report.py",
+        "harness_agent_team.py",
+        "harness_checkpoint.py",
+    )
+    missing = [marker for marker in required_contract_markers if marker not in skill]
+    if missing:
+        raise ValueError(f"immutable Base helper contract missing markers: {missing}")
+    prompt = str(scenario.get("sanitized_prompt", "")).lower()
+    helpers = ["harness_recover.py", "harness_env_probe.py"]
+    if re.search(r"\b(?:resume|handoff|review|validation)\b", prompt):
+        helpers.append("harness_report.py")
+    if re.search(r"\b(?:remote|deploy(?:ment)?|release|destructive|irreversible)\b", prompt):
+        helpers.append("harness_checkpoint.py")
+    if re.search(r"\bmulti[-\s]+agent|multiple\s+agents\b", prompt):
+        helpers.append("harness_agent_team.py")
+    if "architecture" in prompt and "state-conflict" in prompt:
+        helpers.append("harness_requirements.py")
+    return {
+        "source_contract_sha256": hashlib.sha256(skill.encode("utf-8")).hexdigest(),
+        "source_contract": "immutable Base SKILL.md Helper Router and Startup Sequence",
+        "required_helpers_before_first_action": helpers,
+    }
 BASELINE_BASE_SHA = "00818ae174f039899a2757ee4c67fcf9db1effa0"
 BASELINE_PROVENANCE = {
     "base_sha": BASELINE_BASE_SHA,
@@ -313,7 +353,264 @@ def _test_callable_exists(root: Path, reference: object) -> bool:
     return False
 
 
-def validate_corpus(corpus: object, contract_path: Path) -> list[str]:
+def _callable_exists(root: Path, reference: object) -> bool:
+    if not _non_empty_string(reference) or reference.count("::") != 1:
+        return False
+    relative_path, qualified_name = reference.split("::", 1)
+    candidate = (root / relative_path).resolve()
+    try:
+        candidate.relative_to(root.resolve())
+    except ValueError:
+        return False
+    if candidate.suffix != ".py" or not candidate.is_file():
+        return False
+    try:
+        tree = ast.parse(candidate.read_text(encoding="utf-8"))
+    except (OSError, SyntaxError):
+        return False
+    parts = qualified_name.split(".")
+    nodes: list[ast.AST] = list(tree.body)
+    for part in parts:
+        match = next(
+            (
+                node
+                for node in nodes
+                if isinstance(node, (ast.ClassDef, ast.FunctionDef, ast.AsyncFunctionDef))
+                and node.name == part
+            ),
+            None,
+        )
+        if match is None:
+            return False
+        nodes = list(match.body) if isinstance(match, (ast.ClassDef, ast.FunctionDef, ast.AsyncFunctionDef)) else []
+    return True
+
+
+def _producer_evidence_valid(
+    producer_id: object,
+    catalog_entry: object,
+    artifact_payload: object,
+    repo_root: Path | None = None,
+) -> tuple[bool, list[str]]:
+    reasons: list[str] = []
+    if not isinstance(producer_id, str) or not isinstance(catalog_entry, dict):
+        return False, ["missing_producer_catalog_entry"]
+    if not isinstance(artifact_payload, dict):
+        return False, ["missing_producer_artifact"]
+    record = artifact_payload.get("producer_evidence", {}).get(producer_id)
+    if not isinstance(record, dict):
+        return False, ["missing_producer_evidence"]
+    evidence = record.get("evidence")
+    digest = record.get("evidence_sha256")
+    if not isinstance(evidence, dict) or digest != hashlib.sha256(
+        json.dumps(evidence, sort_keys=True, separators=(",", ":"), ensure_ascii=True).encode("utf-8")
+    ).hexdigest():
+        reasons.append("producer_evidence_digest_mismatch")
+    expected_binding = {
+        "producer_id": producer_id,
+        "slice": catalog_entry.get("slice"),
+        "callable": catalog_entry.get("callable"),
+        "artifact": catalog_entry.get("artifact"),
+        "artifact_schema": catalog_entry.get("artifact_schema"),
+    }
+    if record.get("binding") != expected_binding:
+        reasons.append("producer_evidence_binding_mismatch")
+    if isinstance(evidence, dict):
+        assertions = evidence.get("assertion_count")
+        passed = evidence.get("passed_assertion_count")
+        if not isinstance(assertions, int) or assertions <= 0 or passed != assertions:
+            reasons.append("producer_assertions_failed")
+        if evidence.get("slice") != catalog_entry.get("slice"):
+            reasons.append("producer_evidence_slice_mismatch")
+        semantic_payload = {
+            key: value
+            for key, value in artifact_payload.items()
+            if key != "producer_evidence"
+        }
+        semantic_sha = hashlib.sha256(
+            json.dumps(
+                semantic_payload,
+                sort_keys=True,
+                separators=(",", ":"),
+                ensure_ascii=True,
+            ).encode("utf-8")
+        ).hexdigest()
+        if evidence.get("source_artifact_sha256") != semantic_sha:
+            reasons.append("producer_source_artifact_digest_mismatch")
+        expected_kind = {
+            "0": "baseline_and_fixture_evidence",
+            "1": "routing_contract_evidence",
+            "2": "output_contract_evidence",
+            "3": "surface_identity_evidence",
+            "4": "paired_acceptance_evidence",
+        }.get(str(catalog_entry.get("slice")))
+        if evidence.get("kind") != expected_kind:
+            reasons.append("producer_evidence_kind_mismatch")
+        if isinstance(artifact_payload, dict):
+            scenario_count = len(artifact_payload.get("observations", []))
+            base_records = len(
+                artifact_payload.get("base_expected_runtime_manifest", {}).get("records", [])
+            )
+            mirror_count = len(
+                artifact_payload.get("promotion_candidate_manifest", {}).get(
+                    "normative_mirror_hashes", {}
+                )
+            )
+            expected_assertions = {
+                "0": scenario_count + base_records,
+                "1": scenario_count * 5,
+                "2": scenario_count * 5,
+                "3": mirror_count,
+                "4": scenario_count * 10 + 5,
+            }.get(str(catalog_entry.get("slice")))
+            if assertions != expected_assertions or passed != expected_assertions:
+                reasons.append("producer_assertion_total_mismatch")
+        if producer_id == "PRODUCER-AC-16-S0-1":
+            manifest = evidence.get("base_expected_runtime_manifest")
+            if not isinstance(manifest, dict) or manifest.get("kind") != "base_expected_runtime_manifest" or "captured_at" in manifest:
+                reasons.append("ac16_base_manifest_invalid")
+        if producer_id == "PRODUCER-AC-16-S4-1":
+            snapshot = evidence.get("current_runtime_snapshot")
+            captured_at = snapshot.get("captured_at") if isinstance(snapshot, dict) else None
+            try:
+                captured_time = datetime.fromisoformat(str(captured_at).replace("Z", "+00:00"))
+            except ValueError:
+                captured_time = None
+            timestamp_bound = False
+            if captured_time is not None and captured_time.tzinfo is not None:
+                now = datetime.now(timezone.utc)
+                timestamp_bound = now - timedelta(minutes=15) <= captured_time <= now + timedelta(minutes=2)
+                root = repo_root or Path(__file__).resolve().parents[1]
+                artifact_path = catalog_entry.get("artifact")
+                if not timestamp_bound and _non_empty_string(artifact_path):
+                    proc = subprocess.run(
+                        ["git", "log", "-1", "--format=%cI", "--", str(artifact_path)],
+                        cwd=root,
+                        capture_output=True,
+                        text=True,
+                        check=False,
+                    )
+                    try:
+                        committed_at = datetime.fromisoformat(proc.stdout.strip())
+                    except ValueError:
+                        committed_at = None
+                    if committed_at is not None:
+                        timestamp_bound = abs(committed_at - captured_time) <= timedelta(minutes=15)
+            records = snapshot.get("records") if isinstance(snapshot, dict) else None
+            aggregate = (
+                hashlib.sha256(
+                    json.dumps(records, sort_keys=True, separators=(",", ":"), ensure_ascii=True).encode("utf-8")
+                ).hexdigest()
+                if isinstance(records, list)
+                else None
+            )
+            if (
+                not isinstance(snapshot, dict)
+                or snapshot.get("kind") != "current_runtime_snapshot"
+                or not _non_empty_string(snapshot.get("captured_at"))
+                or captured_time is None
+                or captured_time.tzinfo is None
+                or not timestamp_bound
+                or snapshot.get("aggregate_sha256") != aggregate
+                or evidence.get("changed_paths") != []
+                or not isinstance(evidence.get("promotion_difference_paths"), list)
+                or not evidence.get("promotion_difference_paths")
+            ):
+                reasons.append("ac16_live_runtime_evidence_invalid")
+    return not reasons, reasons
+
+
+def _load_catalog_artifact(corpus: object, repo_root: Path | None = None) -> dict[str, Any] | None:
+    if not isinstance(corpus, dict):
+        return None
+    catalog = corpus.get("producer_catalog")
+    if not isinstance(catalog, dict) or not catalog:
+        return None
+    artifact = next(iter(catalog.values())).get("artifact")
+    if not _non_empty_string(artifact):
+        return None
+    root = repo_root or Path(__file__).resolve().parents[1]
+    try:
+        payload = json.loads((root / artifact).read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        return None
+    return payload if isinstance(payload, dict) else None
+
+
+def derive_trace_gates(
+    corpus: object,
+    artifact_payload: object | None = None,
+    repo_root: Path | None = None,
+) -> dict[str, Any]:
+    producer_gates: list[dict[str, Any]] = []
+    acceptance_gates: dict[str, bool] = {}
+    trace_map = corpus.get("acceptance_trace_map", {}) if isinstance(corpus, dict) else {}
+    catalog = corpus.get("producer_catalog", {}) if isinstance(corpus, dict) else {}
+    if not isinstance(trace_map, dict):
+        trace_map = {}
+    if not isinstance(catalog, dict):
+        catalog = {}
+    artifact = artifact_payload if artifact_payload is not None else _load_catalog_artifact(corpus, repo_root)
+    for acceptance_id, trace in trace_map.items():
+        trace_pass = True
+        producers = trace.get("producers", []) if isinstance(trace, dict) else []
+        if not isinstance(producers, list) or not producers:
+            trace_pass = False
+            producers = []
+        for producer in producers:
+            producer_id = producer.get("producer_id") if isinstance(producer, dict) else None
+            status = producer.get("evidence_status", {}) if isinstance(producer, dict) else {}
+            catalog_entry = catalog.get(producer_id) if isinstance(producer_id, str) else None
+            reasons: list[str] = []
+            if not isinstance(catalog_entry, dict):
+                reasons.append("missing_producer_catalog_entry")
+            elif str(catalog_entry.get("slice")) != str(producer.get("slice")):
+                reasons.append("slice_mismatch")
+            if not isinstance(status, dict) or status.get("state") != "completed":
+                reasons.append("evidence_not_completed")
+            if not _non_empty_string(status.get("evidence_id") if isinstance(status, dict) else None):
+                reasons.append("missing_evidence_id")
+            evidence_pass, evidence_reasons = _producer_evidence_valid(
+                producer_id, catalog_entry, artifact, repo_root
+            )
+            if evidence_pass and isinstance(artifact, dict):
+                evidence = artifact["producer_evidence"][producer_id]["evidence"]
+                expected_assertion_ids = sorted(
+                    [f"scenario:{item}" for item in trace.get("scenario_ids", [])]
+                    + [f"test:{item}" for item in trace.get("test_ids", [])]
+                )
+                if (
+                    evidence.get("acceptance_id") != acceptance_id
+                    or evidence.get("registered_assertion_ids") != expected_assertion_ids
+                ):
+                    evidence_pass = False
+                    evidence_reasons.append("producer_acceptance_binding_mismatch")
+            if not evidence_pass:
+                reasons.extend(evidence_reasons)
+            passed = not reasons
+            trace_pass = trace_pass and passed
+            producer_gates.append(
+                {
+                    "acceptance_id": acceptance_id,
+                    "producer_id": producer_id,
+                    "gate_pass": passed,
+                    "reasons": reasons,
+                }
+            )
+        acceptance_gates[acceptance_id] = trace_pass
+    return {
+        "producer_gates": producer_gates,
+        "acceptance_gates": acceptance_gates,
+        "gate_pass": bool(acceptance_gates) and all(acceptance_gates.values()),
+    }
+
+
+def validate_corpus(
+    corpus: object,
+    contract_path: Path,
+    *,
+    validate_artifacts: bool = True,
+) -> list[str]:
     if not isinstance(corpus, dict):
         return ["corpus must be an object"]
     errors: list[str] = []
@@ -398,6 +695,55 @@ def validate_corpus(corpus: object, contract_path: Path) -> list[str]:
                 errors.append("test_catalog IDs must be non-empty strings")
             elif not _test_callable_exists(repo_root, reference):
                 errors.append(f"{test_id} does not resolve to a test callable: {reference}")
+    producer_catalog = corpus.get("producer_catalog")
+    producer_catalog_fields = {
+        "producer_id", "slice", "callable", "artifact", "artifact_schema", "identity_fields"
+    }
+    if not isinstance(producer_catalog, dict):
+        errors.append("producer_catalog must independently map producer IDs to evidence producers")
+        producer_catalog = {}
+    else:
+        for producer_id, entry in producer_catalog.items():
+            if not isinstance(entry, dict) or set(entry) != producer_catalog_fields:
+                errors.append(f"{producer_id} producer_catalog fields must be exactly {sorted(producer_catalog_fields)}")
+                continue
+            if entry.get("producer_id") != producer_id:
+                errors.append(f"{producer_id} producer_catalog embedded ID mismatch")
+            if producer_id in test_catalog:
+                errors.append(f"{producer_id} producer ID must be independent from test_catalog")
+            if not _callable_exists(repo_root, entry.get("callable")):
+                errors.append(f"{producer_id} producer callable does not resolve: {entry.get('callable')}")
+            artifact = entry.get("artifact")
+            artifact_path = repo_root / str(artifact)
+            if not _non_empty_string(artifact) or Path(str(artifact)).is_absolute() or not artifact_path.is_file():
+                errors.append(f"{producer_id} producer artifact must be an existing repo-relative file")
+            if not _non_empty_string(entry.get("artifact_schema")):
+                errors.append(f"{producer_id} artifact_schema must be non-empty")
+            identity_fields = entry.get("identity_fields")
+            if not isinstance(identity_fields, list) or not identity_fields or any(
+                not _non_empty_string(field) for field in identity_fields
+            ):
+                errors.append(f"{producer_id} identity_fields must be a non-empty string list")
+            if validate_artifacts and artifact_path.is_file() and artifact_path.suffix == ".json":
+                try:
+                    artifact_payload = json.loads(artifact_path.read_text(encoding="utf-8"))
+                except (OSError, json.JSONDecodeError):
+                    errors.append(f"{producer_id} producer artifact is not valid JSON")
+                else:
+                    if artifact_payload.get("artifact_schema") != entry.get("artifact_schema"):
+                        errors.append(f"{producer_id} producer artifact schema mismatch")
+                    if isinstance(identity_fields, list):
+                        missing_identity = [field for field in identity_fields if field not in artifact_payload]
+                        if missing_identity:
+                            errors.append(
+                                f"{producer_id} producer artifact missing identity fields: "
+                                + ", ".join(missing_identity)
+                            )
+                    evidence_pass, _ = _producer_evidence_valid(
+                        producer_id, entry, artifact_payload, repo_root
+                    )
+                    if not evidence_pass:
+                        errors.append(f"{producer_id} producer evidence binding mismatch")
     for index, criterion in enumerate(contract_criteria, 1):
         trace_id = f"AC-{index:02d}"
         trace = trace_map.get(trace_id)
@@ -432,12 +778,17 @@ def validate_corpus(corpus: object, contract_path: Path) -> list[str]:
             slice_id = producer.get("slice")
             observed_slices.append(str(slice_id))
             producer_id = producer.get("producer_id")
-            if not _non_empty_string(producer_id) or producer_id not in test_ids or producer_id not in test_catalog:
-                errors.append(f"{trace_id} producer_id must name an executable test binding in test_ids")
+            catalog_entry = producer_catalog.get(producer_id) if _non_empty_string(producer_id) else None
+            if not isinstance(catalog_entry, dict):
+                errors.append(f"{trace_id} producer_id must resolve through producer_catalog")
+            elif str(catalog_entry.get("slice")) != str(slice_id):
+                errors.append(f"{trace_id} producer slice does not match producer_catalog")
             fixture = producer.get("fixture")
             fixture_path = contract_path.resolve().parents[2] / str(fixture)
             if not _non_empty_string(fixture) or Path(str(fixture)).is_absolute() or not fixture_path.exists():
                 errors.append(f"{trace_id} producer fixture must name an existing repo-relative evidence path")
+            elif isinstance(catalog_entry, dict) and fixture != catalog_entry.get("artifact"):
+                errors.append(f"{trace_id} producer fixture does not match producer_catalog artifact")
             evidence_status = producer.get("evidence_status")
             if (
                 not isinstance(evidence_status, dict)
@@ -572,7 +923,11 @@ def _measure_dispatcher(
                     "mandatory_helper_count": (
                         len(observed_helpers)
                         if simplified_profiles
-                        else len(BASELINE_HELPER_ORACLE[scenario["id"]])
+                        else len(
+                            extract_base_required_helpers(
+                                frozen_base_required_helper_output(root, scenario)
+                            )
+                        )
                     ),
                     "verification_receipt_status": scenario["baseline_measurement"]["verification_receipt_status"],
                     "selected_profile": selected_profile,
@@ -591,7 +946,6 @@ def _measure_dispatcher(
 
 
 def measure_baseline(corpus: dict[str, Any], root: Path) -> list[dict[str, Any]]:
-    del root
     measurements: list[dict[str, Any]] = []
     for scenario in corpus["scenarios"]:
         scenario_id = scenario["id"]
@@ -601,7 +955,11 @@ def measure_baseline(corpus: dict[str, Any], root: Path) -> list[dict[str, Any]]
                 "id": scenario_id,
                 "route": frozen["route"],
                 "injected_context_utf8_bytes_proxy": frozen["injected_context_utf8_bytes_proxy"],
-                "mandatory_helper_count": len(BASELINE_HELPER_ORACLE[scenario_id]),
+                "mandatory_helper_count": len(
+                    extract_base_required_helpers(
+                        frozen_base_required_helper_output(root, scenario)
+                    )
+                ),
                 "verification_receipt_status": frozen["verification_receipt_status"],
                 "selected_profile": None,
                 "observed_mandatory_helpers": [],
@@ -655,7 +1013,9 @@ def validate_baseline_measurements(corpus: dict[str, Any], root: Path) -> list[s
     for scenario in corpus["scenarios"]:
         expected = scenario["baseline_measurement"]
         actual = actual_by_id[scenario["id"]]
-        oracle_helpers = list(BASELINE_HELPER_ORACLE[scenario["id"]])
+        oracle_helpers = extract_base_required_helpers(
+            frozen_base_required_helper_output(root, scenario)
+        )
         if scenario["baseline_mandatory_helpers"] != oracle_helpers:
             errors.append(
                 f"{scenario['id']} canonical helper oracle mismatch: "
@@ -687,9 +1047,10 @@ def summary(corpus: dict[str, Any]) -> dict[str, Any]:
         for scenario in corpus["scenarios"]
         if scenario["category"] in MINIMUM_CATEGORY_COUNTS
     )
+    trace_gates = derive_trace_gates(corpus)
     return {
         "valid": True,
-        "gate_pass": True,
+        **trace_gates,
         "scenario_count": len(corpus["scenarios"]),
         "category_counts": {category: counts[category] for category in MINIMUM_CATEGORY_COUNTS},
         "routing_control_count": sum(
@@ -718,7 +1079,7 @@ def cmd_validate(args: argparse.Namespace) -> int:
         errors.extend(validate_baseline_measurements(corpus, root))
     if errors:
         if args.json:
-            print(json.dumps({"valid": False, "gate_pass": False, "errors": errors}, ensure_ascii=False, sort_keys=True))
+            print(json.dumps({"valid": False, **derive_trace_gates(corpus), "errors": errors}, ensure_ascii=False, sort_keys=True))
         print("ERROR: " + "; ".join(errors), file=sys.stderr)
         return 1
     payload = summary(corpus)

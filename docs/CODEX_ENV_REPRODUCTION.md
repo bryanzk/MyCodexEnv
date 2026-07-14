@@ -26,6 +26,12 @@
 - `codex/hooks/model_router.py` is synced as the prompt/subtask model router. It emits a non-blocking JSON recommendation for `gpt-5.4-mini`, `gpt-5.4`, or `gpt-5.5` based on complexity and quality-floor signals; runtimes or wrapper scripts that can switch models may consume the recommendation directly.
 - `codex/hooks/dhf_preprompt.py` is the only global DHF `UserPromptSubmit` dispatcher. It treats malformed, non-dict, or missing-cwd payloads as continue-only, applies `no dhf` / `skip dhf` and Chinese equivalents before any routing, injects generic DHF context only for explicit non-ShipQ activation such as complex/resume/takeover/handoff/state-conflict prompts, and lazily loads the ShipQ adapter only when `cwd` is under the configured ShipQ root.
 - `DHF_PREPROMPT_ALLOW_UNTRUSTED_TEST_PATHS=1` and the scanner's hidden `--now` argument are deterministic test seams only. Never set the former in a normal Codex hook environment because it disables the adapter trusted-root check.
+- DHF source promotion is checked with
+  `scripts/validate_dhf_simplification_corpus.py`,
+  `scripts/dhf_simplification_evidence.py`, and
+  `scripts/run_dhf_simplification_pair.py`. The evidence producer performs only
+  read-only `lstat`/SHA-256 inspection; a green source-stage gate never performs
+  or authorizes runtime synchronization.
 - `codex/hooks/shipq_dhf_preprompt.py` remains a synced adapter file for ShipQ cwd only; it is not registered directly in `codex/hooks.json`, and ordinary non-ShipQ prompts must not import, read, execute, or leak adapter-specific context.
 
 ## Skills Source of Truth

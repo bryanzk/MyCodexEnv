@@ -204,6 +204,14 @@ A malformed hint selects `governed`; absence of a hint creates no remembered
 state. Resume/handoff language in the current prompt directly selects
 `governed` without relying on prior state.
 
+For a malformed hint, first collect all current governed signals in
+`governed_signal_order`, then append `malformed_profile_state` exactly once as
+the final signal. Regardless of that list position, the primary
+`escalation_signal` is `malformed_profile_state`. The helper oracle unions the
+registry entries in signal-list order and exact-name deduplicates them; therefore
+a malformed hint with no other signal requires exactly `harness_recover.py`,
+`harness_env_probe.py`, `harness_report.py`, and `harness_checkpoint.py`.
+
 The only monotonic guarantee in Slices 0-4 is within one dispatch/current action:
 the selected profile is the maximum of the valid hint, current prompt profile,
 and the union of all current risk signals before that action. No artifact may
@@ -325,12 +333,12 @@ merely editing prose is not a rollback.
 
 ### Mandatory Helper Registry And Count
 
-The helper metric counts distinct required helper CLI names before the first
-task action. For the current signal union, concatenate only registries whose
-signal fired, preserve first occurrence, and deduplicate by exact CLI basename.
-Unmatched signals contribute zero; light/standard scenarios with no governed
-signal have count zero. Calls after the first action and ordinary git/read/test
-commands are outside this metric. The frozen registry is:
+The candidate helper metric counts distinct required helper CLI names before the
+first task action. For the current signal union, concatenate only registries
+whose signal fired, preserve first occurrence, and deduplicate by exact CLI
+basename. Unmatched signals contribute zero; light/standard scenarios with no
+governed signal have count zero. Calls after the first action and ordinary
+git/read/test commands are outside this metric. The frozen registry is:
 
 ```json
 {
@@ -354,6 +362,17 @@ commands are outside this metric. The frozen registry is:
 
 Slice 0 freezes this version/hash with the runner. Registry drift fails Slice 4;
 changing the registry requires an explicit version/hash update and re-baseline.
+
+Base helper count is extracted only from the frozen Base's raw structured
+required-helper output/contract. It is never reconstructed with the candidate
+registry. A CLI counts only when present in the Base structured required-helper
+array; prose mentions, available-helper catalogs, forbidden-helper arrays, and
+observed calls after the first action do not count. Exact duplicate required
+names count once. Extraction tests cover required-vs-mentioned, required-vs-
+forbidden, duplicate required names, empty required array (`0`), and missing or
+malformed structured required-helper output (comparison error, never guessed
+`0`). Candidate extraction tests separately prove fired-signal registry union,
+deduplication, conditional exclusion, and malformed-hint helper ordering.
 
 ## Completion Claim Taxonomy
 
@@ -418,6 +437,17 @@ and requires regeneration before Slice 4. Slice 4 executes Base and promotion
 candidate independently from exact bytes in isolated directories; it must not
 emulate Base by toggling the candidate or accept a shared imported module.
 
+Both candidate manifests use the implementation schema fields
+`schema_version`, `kind`, `base_commit`, `source_hashes`,
+`profile_contract_sha256`, `normative_mirror_hashes`, `corpus_sha256`,
+`runner_sha256`, `helper_registry_version`, `helper_registry_sha256`, and
+`manifest_sha256`. The initial manifest additionally has
+`informational_only: true`; the promotion manifest has
+`created_after_slice: 3` and `immutable_for_slice_4: true`.
+`manifest_sha256` is SHA-256 of canonical sorted-key compact JSON excluding that
+field. Validation recomputes every current source hash and the manifest hash;
+identity drift fails before execution.
+
 Raw route/context/task output is the oracle input. The runner derives pass/fail
 from executable assertions and rejects handwritten/self-reported booleans such
 as `baseline_pass` or `candidate_accepted`. Any Base identity mismatch, current
@@ -447,8 +477,18 @@ file only when its current bytes still equal the task-produced bytes.
 
 ## Source-Stage Runtime Observation Manifest
 
-AC-16 uses two fresh, independent read-only observations, one in Slice 0 and one
-in Slice 4. The managed targets are exactly:
+AC-16 uses two different producers over the same managed targets:
+
+- Slice 0 creates a frozen `base_expected_runtime_manifest` derived only from
+  managed bytes at the immutable Base commit. It is an expected-state artifact,
+  not a historical observation, so it has Base identity/provenance and no
+  `captured_at` field.
+- Slice 4 takes one fresh live `current_runtime_snapshot` using `lstat` and
+  SHA-256. It has a real UTC `captured_at` generated at observation time and is
+  compared independently with both the Base expected manifest and immutable
+  promotion candidate manifest.
+
+The managed targets are exactly:
 
 1. `~/.codex/hooks/dhf_preprompt.py`;
 2. files under `~/.codex/skills/delivery-harness-framework/` whose relative paths
@@ -462,13 +502,20 @@ and target path. A symlink at a managed root or managed target is an observation
 failure; do not follow or hash through it. Missing managed targets are recorded
 as `absent`, not created.
 
-Each observation records `schema_version`, `slice`, UTC `captured_at`, expanded
-managed target roots, sorted managed relative paths, per-path lstat type and
-SHA-256/`absent`, a deterministic aggregate hash, and exclusions. It takes
-independent pre/post snapshots around that slice and emits `pre_hashes`,
-`post_hashes`, and sorted `changed_paths`. Source-stage gate success requires
-`changed_paths: []`. Slice 4 must recapture from the live runtime; it may not
-reuse Slice 0's manifest or timestamp.
+The Base manifest records `schema_version`, `base_commit`, expanded managed
+target roots, sorted managed relative paths, Base per-path type/hash/`absent`,
+aggregate hash, and exclusions. The current snapshot records the same path/type/
+hash fields plus its actual `captured_at`. Slice 4 derives sorted `changed_paths`
+by comparing current runtime hashes to Base expected runtime hashes; source-stage
+gate success requires `changed_paths: []`. It also derives a non-empty
+`promotion_difference_paths` by comparing the same live runtime paths with the
+promotion candidate's repo-source hashes, proving runtime still differs from the
+promoted repo source. Slice 4 must recapture live runtime and may not reuse or
+invent a Slice 0 timestamp.
+
+This evidence proves that the managed runtime was not promoted as of the fresh
+Slice 4 snapshot. It does not claim that no transient write occurred between
+observations; there is no fake pre/post monitoring window.
 
 ## Recoverability Oracle
 
@@ -539,9 +586,9 @@ fresh/stale label on an unverified checkpoint fails validation.
 - [ ] **AC-15** Repo source, documentation mirrors, surface inventory, tests, and evals
       agree on the same three-profile contract.
 - [ ] **AC-16** Runtime sync remains blocked until source verification passes and the user
-      separately authorizes runtime mutation; Slice 0 and Slice 4 each produce an
-      independent runtime observation manifest over the exact managed targets
-      with `changed_paths: []`.
+      separately authorizes runtime mutation; Slice 0 freezes the Base expected
+      runtime manifest, and Slice 4 freshly proves live managed runtime matches
+      Base (`changed_paths: []`) while differing from promoted repo source.
 - [ ] **AC-17** Governed checkpoint fixtures pass the field-level recoverability oracle.
 - [ ] **AC-18** A feature-switch rollback smoke proves the simplified route can be
       disabled and legacy paths/helper entry points still execute.
@@ -566,7 +613,12 @@ and a non-empty `producers` array. Each producer contains `slice`, `producer_id`
 its scenario/output fixture, and its own `evidence_status`; this supports AC-16's
 independent Slice 0 and Slice 4 evidence without flattening lifecycle state.
 `producer_id` resolves through the code-lane `producer_catalog` to its generating
-callable/artifact, and its registered slice must equal the trace slice.
+callable/artifact, and its registered slice must equal the trace slice. Each
+catalog entry has exactly `producer_id`, `slice`, `callable`, `artifact`,
+`artifact_schema`, and `identity_fields`. Validation resolves the callable,
+checks the repo-relative artifact and schema, and requires the artifact to carry
+the declared Base/corpus/runner/promotion identity fields before evaluating its
+status.
 `test_ids` resolve through `test_catalog` entries in the exact callable form
 `path.py::ClassName.test_method` or `path.py::test_function`. Validation imports
 or otherwise resolves each binding and rejects missing/non-test callables,
@@ -584,9 +636,10 @@ before its own gate can pass. A required source-stage producer succeeds only in
 when the criterion explicitly declares that state and gives a reason, and it
 cannot independently satisfy a required AC. The validator emits per-producer and
 per-AC `gate_pass` booleans derived from these rules; stored booleans are rejected.
-AC-16 has two source-stage producers: Slice 0 and Slice 4 each terminally prove
-no runtime mutation. Slice 6 remains separately authorized and is not pre-marked
-as an AC-16 producer.
+AC-16 has two source-stage producers: Slice 0 completes by deriving the frozen
+Base expected-runtime manifest; Slice 4 completes only when its fresh live
+snapshot matches Base and differs from the promotion candidate. Slice 6 remains
+separately authorized and is not pre-marked as an AC-16 producer.
 
 ## Verification Gate
 - `python3 -m py_compile codex/hooks/dhf_preprompt.py`
@@ -604,6 +657,11 @@ change must be reported as an expected pending gate, never presented as green.
 Any review attachment must carry fresh `command`, `exit_code`, `key_output`, and
 `timestamp` receipts for the claim it supports; historical ratings or prior-round
 scores are not evidence and are not included.
+The final integration receipt also surfaces both positive cohort counts
+(`context n=9`, `helpers n=9`), helper registry SHA-256, Base commit plus Base
+dispatcher/skill hashes, paired-corpus hash, runner hash, and current promotion
+manifest/dispatcher/skill hashes. Hash labels must identify exactly which bytes
+were measured.
 
 ## Risks
 - A shorter skill may silently omit a rare governed route unless the golden

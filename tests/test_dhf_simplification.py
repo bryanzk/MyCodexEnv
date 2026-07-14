@@ -18,6 +18,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 CORPUS = ROOT / "tests" / "fixtures" / "dhf_simplification_scenarios.json"
 VALIDATOR = ROOT / "scripts" / "validate_dhf_simplification_corpus.py"
+EVIDENCE = ROOT / "scripts" / "dhf_simplification_evidence.py"
 CONTRACT = ROOT / "docs" / "plans" / "2026-07-12-dhf-simplification-implementation-contract.md"
 DISPATCHER = ROOT / "codex" / "hooks" / "dhf_preprompt.py"
 SKILL = ROOT / "codex" / "skills" / "delivery-harness-framework" / "SKILL.md"
@@ -73,6 +74,15 @@ def load_dispatcher():
     spec = importlib.util.spec_from_file_location("dhf_simplification_candidate_dispatcher", DISPATCHER)
     if spec is None or spec.loader is None:
         raise AssertionError("DHF dispatcher is not importable")
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
+
+
+def load_evidence():
+    spec = importlib.util.spec_from_file_location("dhf_simplification_evidence", EVIDENCE)
+    if spec is None or spec.loader is None:
+        raise AssertionError("DHF evidence producer is not importable")
     module = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(module)
     return module
@@ -381,14 +391,21 @@ class DhfSimplificationCorpusTests(unittest.TestCase):
                 self.assertTrue(trace["producers"])
                 for producer in trace["producers"]:
                     self.assertEqual(set(producer), producer_fields)
-                    self.assertIn(producer["producer_id"], trace["test_ids"])
-                    self.assertIn(producer["producer_id"], self.corpus["test_catalog"])
+                    self.assertNotIn(producer["producer_id"], trace["test_ids"])
+                    self.assertIn(producer["producer_id"], self.corpus["producer_catalog"])
+                    catalog = self.corpus["producer_catalog"][producer["producer_id"]]
+                    self.assertEqual(
+                        set(catalog),
+                        {"producer_id", "slice", "callable", "artifact", "artifact_schema", "identity_fields"},
+                    )
+                    self.assertEqual(catalog["slice"], producer["slice"])
+                    self.assertEqual(catalog["artifact"], producer["fixture"])
 
         ac16 = self.corpus["acceptance_trace_map"]["AC-16"]
         self.assertEqual({item["slice"] for item in ac16["producers"]}, {"0", "4"})
         self.assertEqual(
             {item["producer_id"] for item in ac16["producers"]},
-            {"TEST-NO-RUNTIME-SLICE-0", "TEST-NO-RUNTIME-SLICE-4"},
+            {"PRODUCER-AC-16-S0-1", "PRODUCER-AC-16-S4-1"},
         )
         self.assertTrue(all(item["evidence_status"]["state"] == "completed" for item in ac16["producers"]))
 
@@ -407,6 +424,63 @@ class DhfSimplificationCorpusTests(unittest.TestCase):
                 errors = self.validator.validate_corpus(broken, CONTRACT)
                 self.assertTrue(any("AC-01" in error and ("fields" in error or "slice" in error or "producer" in error or "fixture" in error or "gate" in error) for error in errors), errors)
 
+        broken = copy.deepcopy(self.corpus)
+        producer_id = broken["acceptance_trace_map"]["AC-01"]["producers"][0]["producer_id"]
+        broken["producer_catalog"][producer_id]["callable"] = "README.md::not_callable"
+        errors = self.validator.validate_corpus(broken, CONTRACT)
+        self.assertTrue(any("producer callable does not resolve" in error for error in errors), errors)
+
+        broken = copy.deepcopy(self.corpus)
+        broken["producer_catalog"][producer_id]["callable"] = (
+            "scripts/run_dhf_simplification_pair.py::run_comparison"
+        )
+        errors = self.validator.validate_corpus(broken, CONTRACT)
+        self.assertTrue(any("producer evidence binding mismatch" in error for error in errors), errors)
+
+    def test_gate_results_are_derived_per_producer_and_acceptance_criterion(self):
+        gates = self.validator.derive_trace_gates(self.corpus)
+        self.assertTrue(gates["gate_pass"])
+        self.assertEqual(set(gates["acceptance_gates"]), {f"AC-{index:02d}" for index in range(1, 19)})
+        self.assertTrue(all(gates["acceptance_gates"].values()))
+        self.assertTrue(all(item["gate_pass"] for item in gates["producer_gates"]))
+
+        broken = copy.deepcopy(self.corpus)
+        broken["acceptance_trace_map"]["AC-16"]["producers"][1]["evidence_status"]["state"] = "blocked"
+        gates = self.validator.derive_trace_gates(broken)
+        self.assertFalse(gates["gate_pass"])
+        self.assertFalse(gates["acceptance_gates"]["AC-16"])
+        failed = next(item for item in gates["producer_gates"] if item["producer_id"] == "PRODUCER-AC-16-S4-1")
+        self.assertFalse(failed["gate_pass"])
+        self.assertIn("evidence_not_completed", failed["reasons"])
+
+        declarations_only = self.validator.derive_trace_gates(
+            self.corpus, artifact_payload={}
+        )
+        self.assertFalse(declarations_only["gate_pass"])
+        self.assertFalse(declarations_only["acceptance_gates"]["AC-16"])
+
+        artifact = json.loads(
+            (ROOT / "tests" / "fixtures" / "dhf_simplification_observations.json").read_text(
+                encoding="utf-8"
+            )
+        )
+        artifact["producer_evidence"]["PRODUCER-AC-16-S4-1"]["evidence"].pop(
+            "current_runtime_snapshot"
+        )
+        gates = self.validator.derive_trace_gates(self.corpus, artifact_payload=artifact)
+        self.assertFalse(gates["acceptance_gates"]["AC-16"])
+
+        artifact = json.loads(
+            (ROOT / "tests" / "fixtures" / "dhf_simplification_observations.json").read_text(
+                encoding="utf-8"
+            )
+        )
+        artifact["observations"][0]["candidate_capture"]["raw_task_output"]["result"] = ""
+        gates = self.validator.derive_trace_gates(self.corpus, artifact_payload=artifact)
+        self.assertFalse(gates["gate_pass"])
+        self.assertFalse(gates["acceptance_gates"]["AC-01"])
+        self.assertFalse(gates["acceptance_gates"]["AC-10"])
+
     def test_source_stage_slice_0_runtime_inventory_check_is_read_only(self):
         manifest = json.loads(SURFACES.read_text(encoding="utf-8"))
         runtime_paths = {
@@ -415,12 +489,12 @@ class DhfSimplificationCorpusTests(unittest.TestCase):
         self.assertIn("codex/hooks/dhf_preprompt.py", runtime_paths)
         self.assertIn("codex/runtime/tool-policy.json", runtime_paths)
         self.assertTrue(all(not Path(path).is_absolute() for path in runtime_paths))
-        manifest = runtime_observation_manifest()
-        self.assertEqual(manifest["changed_paths"], [])
-        self.assertEqual(
-            manifest["managed_targets"],
-            ["codex/hooks/dhf_preprompt.py", "codex/skills/delivery-harness-framework"],
-        )
+        evidence = load_evidence()
+        manifest = evidence.base_expected_runtime_manifest(ROOT)
+        self.assertNotIn("captured_at", manifest)
+        self.assertEqual(manifest["base_commit"], BASELINE_BASE_SHA)
+        self.assertTrue(manifest["managed_relative_paths"])
+        self.assertRegex(manifest["aggregate_sha256"], r"^[0-9a-f]{64}$")
 
     def test_source_stage_slice_4_compatibility_evidence_keeps_runtime_unsynced(self):
         role = next(
@@ -430,7 +504,11 @@ class DhfSimplificationCorpusTests(unittest.TestCase):
         )
         self.assertIn("runtime unsynced", role)
         self.assertIn("only exact value 1 enables", role)
-        self.assertEqual(runtime_observation_manifest()["changed_paths"], [])
+        evidence = load_evidence().runtime_boundary_evidence(ROOT)
+        self.assertEqual(evidence["changed_paths"], [])
+        self.assertTrue(evidence["promotion_difference_paths"])
+        self.assertTrue(evidence["gate_pass"])
+        self.assertRegex(evidence["current_runtime_snapshot"]["captured_at"], r"Z$")
 
     def test_current_dispatcher_opt_out_precedence(self):
         env = os.environ.copy()
@@ -613,6 +691,61 @@ class DhfSimplificationCorpusTests(unittest.TestCase):
         errors = self.validator.validate_baseline_measurements(broken, ROOT)
         self.assertTrue(any("canonical helper oracle mismatch" in error for error in errors), errors)
 
+    def test_base_helper_contract_is_recomputed_from_immutable_base_skill_bytes(self):
+        scenario = next(
+            item for item in self.corpus["scenarios"] if item["id"] == "GOVERNED-REMOTE-DEPLOY"
+        )
+        raw = self.validator.frozen_base_required_helper_output(ROOT, scenario)
+        base_skill = subprocess.run(
+            [
+                "git",
+                "show",
+                f"{BASELINE_BASE_SHA}:codex/skills/delivery-harness-framework/SKILL.md",
+            ],
+            cwd=ROOT,
+            capture_output=True,
+            text=True,
+            check=True,
+        ).stdout
+        self.assertEqual(
+            raw["source_contract_sha256"],
+            hashlib.sha256(base_skill.encode("utf-8")).hexdigest(),
+        )
+        self.assertEqual(
+            self.validator.extract_base_required_helpers(raw),
+            ["harness_recover.py", "harness_env_probe.py", "harness_checkpoint.py"],
+        )
+
+    def test_base_helper_extraction_counts_required_only_and_rejects_missing_or_malformed(self):
+        extract = self.validator.extract_base_required_helpers
+        self.assertEqual(
+            extract(
+                {
+                    "required_helpers_before_first_action": [
+                        "harness_recover.py",
+                        "harness_recover.py",
+                        "harness_env_probe.py",
+                    ],
+                    "mentioned_helpers": ["harness_report.py"],
+                    "available_helpers": ["harness_agent_team.py"],
+                    "forbidden_helpers": ["harness_checkpoint.py"],
+                    "calls_after_first_action": ["harness_requirements.py"],
+                }
+            ),
+            ["harness_recover.py", "harness_env_probe.py"],
+        )
+        self.assertEqual(extract({"required_helpers_before_first_action": []}), [])
+        for malformed in (
+            None,
+            {},
+            {"required_helpers_before_first_action": "harness_recover.py"},
+            {"required_helpers_before_first_action": ["harness_recover.py", 1]},
+            {"required_helpers_before_first_action": [""]},
+        ):
+            with self.subTest(malformed=malformed):
+                with self.assertRaises(ValueError):
+                    extract(malformed)
+
     def test_non_string_identity_fields_return_structured_errors(self):
         broken = copy.deepcopy(self.corpus)
         broken["scenarios"][0]["id"] = ["not", "hashable"]
@@ -681,6 +814,52 @@ class DhfGovernanceProfileTests(unittest.TestCase):
         self.assertIn("profile=light", absent["hookSpecificOutput"]["additionalContext"])
         self.assertEqual(malformed_route, "generic-activated:governed:compatibility_risk_trigger")
         self.assertIn("escalation_signal=malformed_profile_state", malformed["hookSpecificOutput"]["additionalContext"])
+        contract = json.loads(
+            next(
+                line.removeprefix("DHF_PROFILE_CONTRACT=")
+                for line in malformed["hookSpecificOutput"]["additionalContext"].splitlines()
+                if line.startswith("DHF_PROFILE_CONTRACT=")
+            )
+        )
+        self.assertEqual(contract["escalation_signals"], ["malformed_profile_state"])
+        self.assertEqual(
+            contract["mandatory_helpers"],
+            [
+                "harness_recover.py",
+                "harness_env_probe.py",
+                "harness_report.py",
+                "harness_checkpoint.py",
+            ],
+        )
+
+    def test_malformed_profile_state_appends_after_current_signals_but_is_primary(self):
+        self.dispatcher.SIMPLIFIED_PROFILES_ENABLED = True
+        response, route = self.dispatcher.route_response(
+            {
+                "cwd": "/tmp/Generic",
+                "prompt": "Use DHF to inspect private customer data, deploy remotely, and coordinate multiple agents.",
+                "dhf_profile_state": {"active_profile": "corrupt"},
+            }
+        )
+        self.assertEqual(route, "generic-activated:governed:explicit_opt_in")
+        context = response["hookSpecificOutput"]["additionalContext"]
+        contract = json.loads(
+            next(
+                line.removeprefix("DHF_PROFILE_CONTRACT=")
+                for line in context.splitlines()
+                if line.startswith("DHF_PROFILE_CONTRACT=")
+            )
+        )
+        self.assertEqual(
+            contract["escalation_signals"],
+            [
+                "external_capture_or_private_data",
+                "remote_or_deployment_action",
+                "multiple_agents_or_overlapping_write_sets",
+                "malformed_profile_state",
+            ],
+        )
+        self.assertIn("escalation_signal=malformed_profile_state", context)
 
     def test_route_precedence_and_shipq_profile_ownership(self):
         with __import__("tempfile").TemporaryDirectory() as tmp:

@@ -24,6 +24,12 @@ behavior live in `codex/hooks/dhf_preprompt.py`.
   and `legacy` explicitly roll back. Runtime
   promotion is pending separate authorization, and runtime home remains
   unsynced.
+- The source-stage acceptance lane uses
+  `scripts/validate_dhf_simplification_corpus.py`,
+  `scripts/dhf_simplification_evidence.py`, and
+  `scripts/run_dhf_simplification_pair.py`; these validate independent producer
+  bindings, frozen identities, parity/efficiency, and the read-only runtime
+  boundary without synchronizing runtime.
 
 ## Read First
 - `AGENTS.md`: repo-local navigation and verification expectations.
@@ -86,6 +92,9 @@ behavior live in `codex/hooks/dhf_preprompt.py`.
 - `scripts/harness_recover.py`: fresh-session recovery smoke check with evidence-kind counts and compact latest decision evidence.
 - `scripts/harness_env_probe.py`: observable Codex runtime config and split evidence schema probe.
 - `scripts/check_dhf_consumer_compatibility.py`: read-only DHF consumer compatibility and helper drift checker.
+- `scripts/validate_dhf_simplification_corpus.py`: bounded DHF corpus, independent producer catalog, and derived acceptance-gate validator.
+- `scripts/dhf_simplification_evidence.py`: read-only Base/promotion identity and managed-runtime boundary evidence producer; it never syncs runtime.
+- `scripts/run_dhf_simplification_pair.py`: deterministic frozen-identity DHF parity and efficiency runner.
 - `docs/dhf-consumer-compatibility.json`: machine-readable DHF consumer compatibility matrix for MyCodexEnv, ShipQ, and future consumers.
 - `docs/plans/2026-06-15-dhf-incubation-plan.md`: controlled incubation boundary, compatibility, and extraction trigger plan.
 - `scripts/headroom_filter.py`: optional stdin filter for compressing large command outputs with Headroom before sending them into agent context.

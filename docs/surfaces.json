@@ -12,6 +12,21 @@
       "audience": ["codex", "human"]
     },
     {
+      "path": "scripts/validate_dhf_simplification_corpus.py",
+      "role": "bounded DHF corpus, independent producer catalog, and derived acceptance-gate validator",
+      "audience": ["codex", "human"]
+    },
+    {
+      "path": "scripts/dhf_simplification_evidence.py",
+      "role": "read-only Base and promotion identity plus managed-runtime boundary evidence producer",
+      "audience": ["codex", "human"]
+    },
+    {
+      "path": "scripts/run_dhf_simplification_pair.py",
+      "role": "deterministic frozen-identity DHF parity and efficiency runner",
+      "audience": ["codex", "human"]
+    },
+    {
       "path": "docs/repo-index.md",
       "role": "low-token repo navigation and checked runtime surface mirror",
       "audience": ["codex", "human"]

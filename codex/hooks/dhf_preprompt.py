@@ -424,7 +424,8 @@ def profile_context(selection: ProfileSelection) -> str:
         return common + " Define done, preserve dirty-worktree ownership, use a runnable focused feedback loop, and verify fresh."
     return (
         common
-        + f" escalation_signal={signals[0]}; escalation_signals={','.join(signals)}. "
+        + f" escalation_signal={selection.escalation_signal or signals[0]}; "
+        f"escalation_signals={','.join(signals)}. "
         "Retain the union of relevant recovery, ownership, permission, evidence, "
         "checkpoint, deployment-readiness, and agent-team gates before risky action."
     )
@@ -462,11 +463,18 @@ def route_response(payload: dict[str, Any]) -> tuple[dict[str, Any], str]:
                 else f"generic-activated:legacy:{reason}"
             )
             return generic_response(), route
-        selection = (
-            ProfileSelection("governed", "malformed_profile_state")
-            if malformed_state
-            else select_governance_profile(text, active_profile)
-        )
+        if malformed_state:
+            current = select_governance_profile(text)
+            signals = tuple(
+                dict.fromkeys((*current.escalation_signals, "malformed_profile_state"))
+            )
+            selection = ProfileSelection(
+                "governed",
+                "malformed_profile_state",
+                signals,
+            )
+        else:
+            selection = select_governance_profile(text, active_profile)
         return simplified_generic_response(selection), f"generic-activated:{selection.profile}:{reason}"
     return continue_only(), "continue-only"
 
