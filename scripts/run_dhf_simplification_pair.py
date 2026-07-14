@@ -791,7 +791,9 @@ def _metric_summary(
     cohort_ids = {
         scenario["id"]
         for scenario in corpus["scenarios"]
-        if scenario["cohort_status"] == "efficiency_included" and scenario["category"] in {"light", "standard"}
+        if scenario["cohort_status"] == "efficiency_included"
+        and scenario["activation_reason"] == "explicit_opt_in"
+        and scenario["category"] in {"light", "standard"}
     }
     positive = []
     zero = []
@@ -942,10 +944,24 @@ def run_comparison(
     expected_ids = {scenario["id"] for scenario in corpus.get("scenarios", [])}
     if set(observations_by_id) != expected_ids:
         errors.append("observations must cover exactly all corpus scenario IDs")
+    expected_labels = {
+        "light": "efficiency_included",
+        "standard": "efficiency_included",
+        "governed": "efficiency_excluded_governed",
+        "routing_control": "routing_control_excluded",
+    }
+    for scenario in corpus.get("scenarios", []):
+        expected_label = expected_labels.get(scenario.get("category"))
+        if scenario.get("cohort_status") != expected_label:
+            errors.append(
+                f"{scenario.get('id')} efficiency cohort label mismatch: "
+                f"{scenario.get('cohort_status')} != {expected_label}"
+            )
     actual_cohort = {
         scenario["id"]
         for scenario in corpus.get("scenarios", [])
         if scenario.get("cohort_status") == "efficiency_included"
+        and scenario.get("activation_reason") == "explicit_opt_in"
         and scenario.get("category") in {"light", "standard"}
     }
     if actual_cohort != EXPECTED_EFFICIENCY_IDS:

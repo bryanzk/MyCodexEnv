@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import ast
 import copy
+import hashlib
 import importlib.util
 import json
 import os
@@ -75,6 +76,32 @@ def load_dispatcher():
     module = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(module)
     return module
+
+
+def runtime_observation_manifest() -> dict[str, object]:
+    targets = {
+        "codex/hooks/dhf_preprompt.py": Path.home() / ".codex" / "hooks" / "dhf_preprompt.py",
+        "codex/skills/delivery-harness-framework": Path.home() / ".codex" / "skills" / "delivery-harness-framework",
+    }
+
+    def digest(path: Path) -> str:
+        if not path.exists():
+            return "missing"
+        if path.is_file():
+            return hashlib.sha256(path.read_bytes()).hexdigest()
+        payload = b"".join(
+            relative.as_posix().encode() + b"\0" + (path / relative).read_bytes()
+            for relative in sorted(item.relative_to(path) for item in path.rglob("*") if item.is_file())
+        )
+        return hashlib.sha256(payload).hexdigest()
+
+    before = {source: digest(runtime) for source, runtime in targets.items()}
+    after = {source: digest(runtime) for source, runtime in targets.items()}
+    return {
+        "managed_targets": sorted(targets),
+        "observed_state": after,
+        "changed_paths": sorted(path for path in targets if before[path] != after[path]),
+    }
 
 
 def extract_canonical_contract(skill_text: str, dispatcher_text: str) -> dict[str, object]:
@@ -266,6 +293,7 @@ class DhfSimplificationCorpusTests(unittest.TestCase):
         self.assertEqual(payload["routing_control_count"], 2)
         self.assertEqual(payload["acceptance_criterion_count"], 18)
         self.assertEqual(payload["baseline_mismatch_count"], 15)
+        self.assertIs(payload["gate_pass"], True)
 
     def test_validation_rejects_schema_and_identity_failures(self):
         broken = copy.deepcopy(self.corpus)
@@ -319,9 +347,11 @@ class DhfSimplificationCorpusTests(unittest.TestCase):
         for acceptance_id in completed:
             with self.subTest(acceptance_id=acceptance_id):
                 trace = self.corpus["acceptance_trace_map"][acceptance_id]
-                self.assertEqual(set(trace["evidence_status"]), {"state", "evidence_id"})
-                self.assertEqual(trace["evidence_status"]["state"], "completed")
-                self.assertTrue(trace["evidence_status"]["evidence_id"])
+                self.assertTrue(trace["producers"])
+                for producer in trace["producers"]:
+                    self.assertEqual(set(producer["evidence_status"]), {"state", "evidence_id"})
+                    self.assertEqual(producer["evidence_status"]["state"], "completed")
+                    self.assertTrue(producer["evidence_status"]["evidence_id"])
                 self.assertTrue(trace["test_ids"])
                 for test_id in trace["test_ids"]:
                     self.assertIn(test_id, self.corpus["test_catalog"])
@@ -330,7 +360,7 @@ class DhfSimplificationCorpusTests(unittest.TestCase):
         for invalid_state in ("stale", "pending", "banana", "deferred"):
             with self.subTest(invalid_state=invalid_state):
                 broken = copy.deepcopy(self.corpus)
-                broken["acceptance_trace_map"]["AC-10"]["evidence_status"] = {
+                broken["acceptance_trace_map"]["AC-10"]["producers"][0]["evidence_status"] = {
                     "state": invalid_state,
                     "evidence_id": "TEST-PAIRED-ACTUAL-OUTCOMES",
                 }
@@ -342,18 +372,32 @@ class DhfSimplificationCorpusTests(unittest.TestCase):
         errors = self.validator.validate_corpus(broken, CONTRACT)
         self.assertTrue(any("does not resolve to a test callable" in error for error in errors), errors)
 
-    def test_acceptance_trace_requires_exact_slice_and_executable_producer_binding(self):
-        required_fields = {"criterion", "slice", "scenario_ids", "test_ids", "producer", "evidence_status"}
+    def test_acceptance_trace_requires_exact_producer_schema_and_executable_bindings(self):
+        required_fields = {"criterion", "scenario_ids", "test_ids", "producers"}
+        producer_fields = {"slice", "producer_id", "fixture", "evidence_status"}
         for acceptance_id, trace in self.corpus["acceptance_trace_map"].items():
             with self.subTest(acceptance_id=acceptance_id):
                 self.assertEqual(set(trace), required_fields)
-                self.assertIn(trace["producer"], trace["test_ids"])
-                self.assertIn(trace["producer"], self.corpus["test_catalog"])
+                self.assertTrue(trace["producers"])
+                for producer in trace["producers"]:
+                    self.assertEqual(set(producer), producer_fields)
+                    self.assertIn(producer["producer_id"], trace["test_ids"])
+                    self.assertIn(producer["producer_id"], self.corpus["test_catalog"])
+
+        ac16 = self.corpus["acceptance_trace_map"]["AC-16"]
+        self.assertEqual({item["slice"] for item in ac16["producers"]}, {"0", "4"})
+        self.assertEqual(
+            {item["producer_id"] for item in ac16["producers"]},
+            {"TEST-NO-RUNTIME-SLICE-0", "TEST-NO-RUNTIME-SLICE-4"},
+        )
+        self.assertTrue(all(item["evidence_status"]["state"] == "completed" for item in ac16["producers"]))
 
         mutations = (
-            lambda trace: trace.pop("producer"),
-            lambda trace: trace.__setitem__("slice", "99"),
-            lambda trace: trace.__setitem__("producer", "UNKNOWN-PRODUCER"),
+            lambda trace: trace.__setitem__("producer", "OLD-FLATTENED"),
+            lambda trace: trace["producers"][0].__setitem__("slice", "99"),
+            lambda trace: trace["producers"][0].__setitem__("producer_id", "UNKNOWN-PRODUCER"),
+            lambda trace: trace["producers"][0].__setitem__("fixture", ""),
+            lambda trace: trace["producers"][0]["evidence_status"].__setitem__("state", "blocked"),
             lambda trace: trace.__setitem__("unexpected", True),
         )
         for mutate in mutations:
@@ -361,7 +405,32 @@ class DhfSimplificationCorpusTests(unittest.TestCase):
                 broken = copy.deepcopy(self.corpus)
                 mutate(broken["acceptance_trace_map"]["AC-01"])
                 errors = self.validator.validate_corpus(broken, CONTRACT)
-                self.assertTrue(any("AC-01" in error and ("fields" in error or "slice" in error or "producer" in error) for error in errors), errors)
+                self.assertTrue(any("AC-01" in error and ("fields" in error or "slice" in error or "producer" in error or "fixture" in error or "gate" in error) for error in errors), errors)
+
+    def test_source_stage_slice_0_runtime_inventory_check_is_read_only(self):
+        manifest = json.loads(SURFACES.read_text(encoding="utf-8"))
+        runtime_paths = {
+            item["path"] for item in manifest["surfaces"] if "runtime" in item.get("audience", [])
+        }
+        self.assertIn("codex/hooks/dhf_preprompt.py", runtime_paths)
+        self.assertIn("codex/runtime/tool-policy.json", runtime_paths)
+        self.assertTrue(all(not Path(path).is_absolute() for path in runtime_paths))
+        manifest = runtime_observation_manifest()
+        self.assertEqual(manifest["changed_paths"], [])
+        self.assertEqual(
+            manifest["managed_targets"],
+            ["codex/hooks/dhf_preprompt.py", "codex/skills/delivery-harness-framework"],
+        )
+
+    def test_source_stage_slice_4_compatibility_evidence_keeps_runtime_unsynced(self):
+        role = next(
+            item["role"]
+            for item in json.loads(SURFACES.read_text(encoding="utf-8"))["surfaces"]
+            if item["path"] == "codex/hooks/dhf_preprompt.py"
+        )
+        self.assertIn("runtime unsynced", role)
+        self.assertIn("only exact value 1 enables", role)
+        self.assertEqual(runtime_observation_manifest()["changed_paths"], [])
 
     def test_current_dispatcher_opt_out_precedence(self):
         env = os.environ.copy()
@@ -990,7 +1059,7 @@ class DhfGovernanceProfileTests(unittest.TestCase):
         self.dispatcher.SIMPLIFIED_PROFILES_ENABLED = True
         root = str(ROOT)
         cases = (
-            ({"cwd": root, "prompt": "Use DHF to explain this function"}, "explicit_opt_in"),
+            ({"cwd": root, "prompt": "Use DHF for this complex task: explain this function"}, "explicit_opt_in"),
             ({"cwd": root, "prompt": "Implement this complex local parser option"}, "compatibility_risk_trigger"),
             ({"cwd": root, "prompt": "continue the next safe action", "dhf_profile_state": {"active_profile": "standard"}}, "profile_hint"),
         )
