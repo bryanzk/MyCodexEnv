@@ -6,6 +6,7 @@
 - `dry_run.needs_update=true`，因此执行了上游 gstack vendor 同步；同步后保留了 2026-07-15 的实际上游更新，不是前几天那种仅有格式噪音的 no-op。
 - `delivery-harness-framework` 经过 `skill-evaluator` 复核后继续 no-op：上游没有新增需要 DHF 泛化承接的新 slash skill、execution lane、lifecycle phase、repo harness helper 或 handoff contract；变化主要落在既有 gstack 专项能力内部。
 - 首次 `verify_codex_env.sh` 因 `$HOME/.codex` runtime drift 命中 `FAIL:codex_skill_compatibility`，随后在 clone_root 运行 `./scripts/sync_codex_home.sh --repo-root "$(pwd)" --codex-home "$HOME/.codex"` 自愈；重跑验证通过。
+- 本轮 vendor+report 提交、automation branch 推送、helper 合并与本地 main safe-sync 均已完成；精确 SHA 以后文回执与 automation memory 为准。
 
 ## 上游更新摘要
 
@@ -39,10 +40,33 @@
   exit_code: `0`
   key_output: `PASS:codex_skill_compatibility ; Verification passed.`
   timestamp: `2026-07-15T13:03:21Z`
+- command: `git add codex/skills/gstack tasks/gstack-dhf-daily-refresh-2026-07-15.md && git commit -m "chore: refresh gstack vendor and add 2026-07-15 report"`
+  exit_code: `0`
+  key_output: `[automation/gstack-dhf-daily-refresh 549718a] chore: refresh gstack vendor and add 2026-07-15 report`
+  timestamp: `in-session before push/merge closeout`
+- command: `git fetch origin && git rebase origin/main && git push --force-with-lease origin HEAD:refs/heads/automation/gstack-dhf-daily-refresh`
+  exit_code: `0`
+  key_output: `Current branch automation/gstack-dhf-daily-refresh is up to date. ; 468ecb9..549718a  HEAD -> automation/gstack-dhf-daily-refresh`
+  timestamp: `2026-07-15T13:05:12Z`
+- command: `python3 scripts/merge_gstack_refresh_if_safe.py --repo-root "$(pwd)" --apply --verified --json`
+  exit_code: `0`
+  key_output: `{"status":"merged","reason":"ahead_only","main_before":"468ecb9890f2565a0e2f5f9eced678dc180c257d","main_after":"549718a3d97c313460e218b8e85075f3ebe6e820"}`
+  timestamp: `2026-07-15T13:05:18Z`
+- command: `python3 scripts/sync_local_main_if_safe.py --repo-root /Users/kezheng/Codes/CursorDeveloper/MyCodexEnv --apply --json`
+  exit_code: `0`
+  key_output: `{"status":"updated","reason":"behind_only","current_branch":"main"}`
+  timestamp: `2026-07-15T13:05:25Z`
+- command: `git ls-remote origin refs/heads/automation/gstack-dhf-daily-refresh refs/heads/main`
+  exit_code: `0`
+  key_output: `549718a refs/heads/automation/gstack-dhf-daily-refresh ; 549718a refs/heads/main`
+  timestamp: `2026-07-15T13:05:34Z`
+- command: `git status --short --branch && git rev-parse --short=7 HEAD`
+  exit_code: `0`
+  key_output: `## automation/gstack-dhf-daily-refresh ; 549718a`
+  timestamp: `2026-07-15T13:05:33Z`
 
-## 待收尾动作
+## 收尾结果
 
-- 提交本轮 vendor + report 变更。
-- `git fetch origin && git rebase origin/main` 后 `git push --force-with-lease origin HEAD:refs/heads/automation/gstack-dhf-daily-refresh`。
-- 运行 `python3 scripts/merge_gstack_refresh_if_safe.py --repo-root "$(pwd)" --apply --verified --json`。
-- 若 helper 返回 `merged`，再运行 `python3 scripts/sync_local_main_if_safe.py --repo-root /Users/kezheng/Codes/CursorDeveloper/MyCodexEnv --apply --json`。
+- automation branch push 状态：`已推送`
+- main auto-merge 状态：`merged`
+- 本地 main safe-sync 状态：`updated`
