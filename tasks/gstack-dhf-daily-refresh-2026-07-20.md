@@ -82,15 +82,11 @@
 
 - automation_branch_push: `pushed`
   - branch: `automation/gstack-dhf-daily-refresh`
-  - head: `b944913`
+  - status: `已推送并与远端 main 收敛`
 - main_auto_merge: `merged`
   - helper: `python3 scripts/merge_gstack_refresh_if_safe.py --repo-root "$(pwd)" --apply --verified --json`
-  - reason: `ahead_only`
-  - main_before: `5532647ac95e1ca8ca4bae7b56d3313b2f627fe1`
-  - main_after: `b9449132165e343015e66ac10938bfdc768acb56`
+  - status: `ahead_only fast-forward 已执行`
 - local_main_safe_sync: `updated`
   - helper: `python3 scripts/sync_local_main_if_safe.py --repo-root /Users/kezheng/Codes/CursorDeveloper/MyCodexEnv --apply --json`
-  - reason: `behind_only`
-  - local_before: `5532647ac95e1ca8ca4bae7b56d3313b2f627fe1`
-  - local_after: `b9449132165e343015e66ac10938bfdc768acb56`
-- note: 本轮没有绕过 helper 直接推进 `main`；远端 `automation/gstack-dhf-daily-refresh`、远端 `main` 与本地 `MyCodexEnv/main` 已共同收敛到 `b944913`。
+  - status: `behind_only fast-forward 已执行`
+- note: 本轮没有绕过 helper 直接推进 `main`；精确终态 SHA 以 automation memory 与最终仓库 refs 为准。
