@@ -52,10 +52,44 @@
   exit_code: `0`
   key_output: `PASS:codex_skill_compatibility ; Verification passed.`
   timestamp: `2026-07-21T13:02:09Z`
+- command: `git add tasks/gstack-dhf-daily-refresh-2026-07-21.md && git commit -m "chore: add 2026-07-21 gstack daily refresh report"`
+  exit_code: `0`
+  key_output: `[automation/gstack-dhf-daily-refresh d424d65] chore: add 2026-07-21 gstack daily refresh report`
+  timestamp: `2026-07-21T13:03:05Z`
+- command: `git fetch origin && git rebase origin/main && git push --force-with-lease origin HEAD:refs/heads/automation/gstack-dhf-daily-refresh`
+  exit_code: `0`
+  key_output: `Current branch automation/gstack-dhf-daily-refresh is up to date. ; 510381c..d424d65  HEAD -> automation/gstack-dhf-daily-refresh`
+  timestamp: `2026-07-21T13:03:08Z`
+- command: `python3 scripts/merge_gstack_refresh_if_safe.py --repo-root "$(pwd)" --apply --verified --json`
+  exit_code: `0`
+  key_output: `{"status":"merged","reason":"ahead_only","main_before":"510381c6ec4d980a038e260b15f7866088aa7b15","main_after":"d424d65de2e659e12afdd5603b06acf49022da95"}`
+  timestamp: `2026-07-21T13:03:20Z`
+- command: `python3 scripts/sync_local_main_if_safe.py --repo-root /Users/kezheng/Codes/CursorDeveloper/MyCodexEnv --apply --json`
+  exit_code: `0`
+  key_output: `{"status":"updated","reason":"behind_only","current_branch":"main"}`
+  timestamp: `2026-07-21T13:03:26Z`
+- command: `git ls-remote origin refs/heads/automation/gstack-dhf-daily-refresh refs/heads/main`
+  exit_code: `0`
+  key_output: `d424d65 refs/heads/automation/gstack-dhf-daily-refresh ; d424d65 refs/heads/main`
+  timestamp: `2026-07-21T13:03:36Z`
+- command: `git status --short --branch && git rev-parse --short=7 HEAD`
+  exit_code: `0`
+  key_output: `## automation/gstack-dhf-daily-refresh ; d424d65`
+  timestamp: `2026-07-21T13:03:36Z`
 
 ## Closeout
 
-- automation_branch_push: `pending`
-- main_auto_merge: `pending`
-- local_main_safe_sync: `pending`
-- note: 本节在提交、push、helper merge 与本地 main safe-sync 完成后回填精确状态。
+- automation_branch_push: `pushed`
+  - branch: `automation/gstack-dhf-daily-refresh`
+  - sha: `d424d65de2e659e12afdd5603b06acf49022da95`
+- main_auto_merge: `merged`
+  - helper: `python3 scripts/merge_gstack_refresh_if_safe.py --repo-root "$(pwd)" --apply --verified --json`
+  - status: `ahead_only fast-forward 已执行`
+  - main_before: `510381c6ec4d980a038e260b15f7866088aa7b15`
+  - main_after: `d424d65de2e659e12afdd5603b06acf49022da95`
+- local_main_safe_sync: `updated`
+  - helper: `python3 scripts/sync_local_main_if_safe.py --repo-root /Users/kezheng/Codes/CursorDeveloper/MyCodexEnv --apply --json`
+  - status: `behind_only fast-forward 已执行`
+  - local_before: `510381c6ec4d980a038e260b15f7866088aa7b15`
+  - local_after: `d424d65de2e659e12afdd5603b06acf49022da95`
+- note: 本轮没有绕过 helper 直接推进 `main`；远端 `automation/gstack-dhf-daily-refresh`、远端 `main` 与本地 `MyCodexEnv/main` 已共同收敛到 `d424d65`。
