@@ -52,7 +52,9 @@
 ## Thread Discipline
 
 - At task start, freeze a THREAD_DISCIPLINE_V1 envelope containing task_name,
-  repo_anchor, repo_anchor_provenance, mode_anchor, and compaction_ordinal.
+  repo_anchor, repo_anchor_provenance, mode_anchor, compaction_ordinal, and
+  automatic_transition_count. Initialize automatic_transition_count to 0 unless
+  a trusted parent handoff provides the inherited count.
 - repo_anchor is a canonical absolute root proven by git top-level or a
   registered project; otherwise use explicit projectless scope. Never infer it
   from a cwd basename.
@@ -62,12 +64,40 @@
   1. resolve request_repo and request_mode from direct request and already-available workspace evidence
   2. compare both values with the frozen anchors
   3. on mismatch or unknown mismatch, forbid new-direction tool calls and edits
-  4. set next_action=terminal_chat_handoff and return the bounded terminal chat handoff
-  5. recommend <project>-<YYYYMMDD>-<summary>
+  4. create a bounded terminal chat handoff containing the resolved anchors,
+     completed work, exact artifacts, constraints, verification evidence, and
+     one next-safe task
+  5. on a confirmed mismatch, continue automatically only when
+     automatic_transition_count is less than 3
+  6. use task-lifecycle tools only to resolve the exact registered project,
+     create exactly one new task with that handoff as its initial prompt, record
+     automatic_transition_count + 1 in the child handoff, and set
+     next_action=created_task
+  7. run the new task in the registered project's local environment by default;
+     use a worktree only when the user explicitly requested one and the project
+     supports it
+  8. rename the new task to <project>-<YYYYMMDD>-<summary>, where <project> is a
+     stable abbreviation proven by the direct request, repo instructions,
+     registered project metadata, or existing conforming task titles
+  9. return the created-task directive in the original task; creation and
+     dispatch count as startup, so do not wait for completion unless requested
+  10. if automatic_transition_count is already 3, the mismatch is unknown, the
+      project or stable abbreviation cannot be resolved exactly, task-lifecycle
+      tools are unavailable, or creation fails, set
+      next_action=terminal_chat_handoff and return the handoff
+  11. if creation succeeds but renaming fails, return the created-task directive,
+      report the naming failure, and never create a replacement task for the same
+      mismatch
 - The resolver must not probe or partially start the new direction. If available
   evidence cannot safely resolve either anchor, treat it as an unknown mismatch.
+- The automatic transition above is a standing, explicit authorization for up to
+  three automatic task creations across one inherited transition chain, with no
+  more than one new task per confirmed anchor mismatch. It does not authorize repo
+  inspection, implementation, external writes, or other new-direction work in the
+  original task. Project listing, task creation, and task renaming are the only
+  permitted tool calls after the mismatch is detected.
 - Carry THREAD_DISCIPLINE_SUMMARY_V1 with repo_anchor, mode_anchor,
-  compaction_ordinal, and next_action across summaries.
+  compaction_ordinal, automatic_transition_count, and next_action across summaries.
 - After a confirmed first compaction, refresh a concise checkpoint.
 - At a confirmed second compaction, stop normal work and return a terminal chat
   handoff. If the ordinal is missing, conflicting, or untrusted, conservatively
@@ -78,8 +108,9 @@
   does not imply file-write authorization. Without that exact-path
   authorization, keep the task active and do not archive it.
 - The weekly scanner is a deterministic audit, not an immediate trigger. A hard
-  trigger requires a future Codex Desktop lifecycle API.
-- Do not automatically create, archive, or delete a task.
+  trigger outside an active task still requires a Codex Desktop lifecycle API.
+- Never automatically archive or delete a task. Automatic task creation is
+  permitted only by the confirmed-anchor-mismatch sequence above.
 
 ## Workflow Hooks
 - 开始复杂任务前，优先使用当前 Codex session 已暴露的 `superpowers:*` skills；旧版 checkout 若仍存在 `~/.codex/superpowers/.codex/superpowers-codex`，可将它作为条件 fallback。

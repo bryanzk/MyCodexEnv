@@ -59,14 +59,21 @@ Thread discipline and old-session triage are guaranteed in three layers:
 
 1. **Agent policy (best effort, immediate).** `codex/AGENTS.md` owns the
    global contract: each task freezes a `THREAD_DISCIPLINE_V1` anchor envelope
-   (one task, one evidence-backed `repo_anchor`, one `mode_anchor`) and carries
-   a `THREAD_DISCIPLINE_SUMMARY_V1` marker across summaries. A confirmed first
-   compaction refreshes a concise checkpoint; a confirmed second compaction, or
-   an unknown/conflicting compaction ordinal, stops normal work and returns a
-   terminal chat handoff. Chat handoff is the default: a repo-native handoff
-   file requires the original task to have explicitly authorized the exact
-   documentation path, and archive or apply authorization does not imply
-   file-write authorization.
+   (one task, one evidence-backed `repo_anchor`, one `mode_anchor`, plus an
+   inherited `automatic_transition_count`) and carries a
+   `THREAD_DISCIPLINE_SUMMARY_V1` marker across summaries. On each confirmed
+   anchor mismatch, the original task may use only project lookup, task creation,
+   and task renaming to create exactly one successor task, incrementing the
+   inherited count. The chain stops after three automatic task creations; an
+   unknown mismatch, exhausted count, unavailable lifecycle tools, unresolved
+   project identity, or creation failure falls back to a terminal chat handoff.
+   A confirmed first compaction refreshes a concise checkpoint; a confirmed
+   second compaction, or an unknown/conflicting compaction ordinal, stops normal
+   work and returns a terminal chat handoff. Chat handoff is the default: a
+   repo-native handoff file requires the original task to have explicitly
+   authorized the exact documentation path, and archive or apply authorization
+   does not imply file-write authorization. Tasks are never automatically
+   archived or deleted.
 2. **Deterministic weekly audit (report-only).** The scanner
    `codex/skills/codex-fluent/scripts/report_active_sessions.py` reads only
    `CODEX_HOME/sessions/**/*.jsonl` and `CODEX_HOME/session_index.jsonl`,

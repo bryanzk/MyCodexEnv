@@ -6135,16 +6135,21 @@ def test_global_agents_thread_discipline_contract():
         "repo_anchor_provenance",
         "mode_anchor",
         "compaction_ordinal",
+        "automatic_transition_count",
         "checkpoint",
         "terminal chat handoff",
         "unknown",
-        "future Codex Desktop lifecycle API",
+        "Codex Desktop lifecycle API",
         "ANCHOR_MISMATCH_SEQUENCE_V1",
         "resolve request_repo and request_mode from direct request and already-available workspace evidence",
         "unknown mismatch",
         "next_action=terminal_chat_handoff",
+        "next_action=created_task",
         "forbid new-direction tool calls and edits",
         "must not probe or partially start the new direction",
+        "create exactly one new task",
+        "automatic_transition_count is less than 3",
+        "automatic_transition_count is already 3",
         "<project>-<YYYYMMDD>-<summary>",
     ]
     for term in required:
@@ -6160,18 +6165,30 @@ def test_global_agents_thread_discipline_contract():
         "keep the task active",
     ]:
         require(term in normalized, f"global AGENTS missing handoff authorization term: {term}")
-    require(
-        "Do not automatically create, archive, or delete a task" in text,
-        "global AGENTS must preserve the no-mutation boundary",
-    )
+    require("Never automatically archive or delete a task" in text,
+            "global AGENTS must preserve the archive/delete boundary")
+    require("up to three automatic task creations" in normalized,
+            "confirmed mismatch chains must allow at most three automatic transitions")
+    require("no more than one new task per confirmed anchor mismatch" in normalized,
+            "each confirmed mismatch must create at most one task")
+    require("Project listing, task creation, and task renaming are the only permitted tool calls" in normalized,
+            "mismatch handling must retain its narrow lifecycle-tool allowlist")
+    require("never create a replacement task for the same mismatch" in normalized,
+            "rename failure must not create a duplicate replacement task")
     sequence_start = text.index("ANCHOR_MISMATCH_SEQUENCE_V1")
     sequence = text[sequence_start:]
     ordered_terms = [
         "1. resolve request_repo and request_mode from direct request and already-available workspace evidence",
         "2. compare both values with the frozen anchors",
         "3. on mismatch or unknown mismatch, forbid new-direction tool calls and edits",
-        "4. set next_action=terminal_chat_handoff and return the bounded terminal chat handoff",
-        "5. recommend <project>-<YYYYMMDD>-<summary>",
+        "4. create a bounded terminal chat handoff containing the resolved anchors",
+        "5. on a confirmed mismatch, continue automatically only when",
+        "6. use task-lifecycle tools only to resolve the exact registered project",
+        "7. run the new task in the registered project's local environment by default",
+        "8. rename the new task to <project>-<YYYYMMDD>-<summary>",
+        "9. return the created-task directive in the original task",
+        "10. if automatic_transition_count is already 3, the mismatch is unknown",
+        "11. if creation succeeds but renaming fails, return the created-task directive",
     ]
     positions = [sequence.index(term) for term in ordered_terms]
     require(positions == sorted(positions), "anchor mismatch handling must preserve its fail-closed order")
