@@ -32,11 +32,11 @@
 - command: `python3 scripts/prepare_gstack_dhf_daily_refresh.py --json`
   exit_code: `0`
   key_output: `{"status":"ready","automation_branch":"automation/gstack-dhf-daily-refresh","dry_run":{"needs_update":true,"diff_files":2,"version":"1.60.1.0"}}`
-  timestamp: `2026-07-22T13:00:48Z`
-- command: `python3 scripts/sync_gstack_vendor.py --repo-root "$(pwd)" --source https://github.com/garrytan/gstack.git --json`
+  timestamp: `2026-07-22T13:08:11Z`
+- command: `python3 scripts/sync_gstack_vendor.py --repo-root "$(pwd)" --source https://github.com/garrytan/gstack.git --dry-run --json`
   exit_code: `0`
   key_output: `{"needs_update":true,"diff_files":2,"version":"1.60.1.0"}`
-  timestamp: `2026-07-22T13:00:55Z`
+  timestamp: `2026-07-22T13:08:10Z`
 - command: `python3 /Users/kezheng/.codex/skills/.system/skill-creator/scripts/quick_validate.py codex/skills/delivery-harness-framework`
   exit_code: `0`
   key_output: `Skill is valid!`
