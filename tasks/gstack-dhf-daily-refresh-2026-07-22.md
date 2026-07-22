@@ -60,7 +60,13 @@
 
 ## Closeout
 
-- automation_branch_push: `pending`
-- main_auto_merge: `pending`
-- local_main_safe_sync: `pending`
-- note: 下一步仅按规定执行 `quick_validate.py`、仓库验证、非交互式 `git add` / `git commit`、`git fetch origin && git rebase origin/main`、`git push --force-with-lease origin HEAD:refs/heads/automation/gstack-dhf-daily-refresh`、`merge_gstack_refresh_if_safe.py` 与必要的 `sync_local_main_if_safe.py`；不会绕过 helper 直接推进 `main`。
+- automation_branch_push: `pushed`
+  - branch: `automation/gstack-dhf-daily-refresh`
+  - status: `已按要求先推送 automation branch`
+- main_auto_merge: `merged`
+  - helper: `python3 scripts/merge_gstack_refresh_if_safe.py --repo-root "$(pwd)" --apply --verified --json`
+  - status: `ahead_only fast-forward 已执行`
+- local_main_safe_sync: `updated`
+  - helper: `python3 scripts/sync_local_main_if_safe.py --repo-root /Users/kezheng/Codes/CursorDeveloper/MyCodexEnv --apply --json`
+  - status: `behind_only fast-forward 已执行`
+- note: 本轮未绕过 helper 直接推进 `main`；精确终态 SHA、helper JSON 回执与最终 refs 以后续 automation memory 记录为准。
