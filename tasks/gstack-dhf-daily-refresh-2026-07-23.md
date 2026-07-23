@@ -29,11 +29,54 @@
 
 ## Verification Evidence
 
-- 待 closeout 后补记本轮 fresh verification receipts。
+- command: `python3 scripts/prepare_gstack_dhf_daily_refresh.py --json`
+  exit_code: `0`
+  key_output: `{"status":"ready","automation_branch":"automation/gstack-dhf-daily-refresh","dry_run":{"needs_update":true,"diff_files":2,"version":"1.60.1.0"}}`
+  timestamp: `2026-07-23T13:05:07Z`
+- command: `python3 scripts/sync_gstack_vendor.py --repo-root "$(pwd)" --source https://github.com/garrytan/gstack.git --json`
+  exit_code: `0`
+  key_output: `{"needs_update":true,"diff_files":2,"version":"1.60.1.0"}`
+  timestamp: `2026-07-23T13:03:26Z`
+- command: `python3 /Users/kezheng/.codex/skills/.system/skill-creator/scripts/quick_validate.py codex/skills/delivery-harness-framework`
+  exit_code: `0`
+  key_output: `Skill is valid!`
+  timestamp: `2026-07-23T13:03:54Z`
+- command: `python3 test_runner.py`
+  exit_code: `0`
+  key_output: `ran=85 passed=83 skipped=2 failed=0 ; [PASS] all tests`
+  timestamp: `2026-07-23T13:07:51Z`
+- command: `git diff --check`
+  exit_code: `0`
+  key_output: `无输出`
+  timestamp: `2026-07-23T13:04:51Z`
+- command: `./scripts/sync_codex_home.sh --repo-root "$(pwd)" --codex-home "$HOME/.codex"`
+  exit_code: `0`
+  key_output: `Codex home synchronized: /Users/kezheng/.codex`
+  timestamp: `2026-07-23T13:08:31Z`
+- command: `./scripts/verify_codex_env.sh --repo-root "$(pwd)" --codex-home "$HOME/.codex" --claude-home "$HOME/.claude" --skip-check app_google_chrome`
+  exit_code: `0`
+  key_output: `PASS:codex_skill_compatibility ; Verification passed.`
+  timestamp: `2026-07-23T13:08:31Z`
 
 ## Closeout
 
-- automation_branch_push: `pending`
-- main_auto_merge: `pending`
-- local_main_safe_sync: `pending`
-- note: 本轮不会绕过 helper 直接推进 `main`；精确终态 SHA、helper JSON 回执与最终 refs 将在 closeout 后补记。
+- automation_branch_push: `pushed`
+  - branch: `automation/gstack-dhf-daily-refresh`
+  - commit: `51c9dfa`
+  - command: `git fetch origin && git rebase origin/main && git push --force-with-lease origin HEAD:refs/heads/automation/gstack-dhf-daily-refresh`
+  - exit_code: `0`
+  - key_output: `53e153a..51c9dfa  HEAD -> automation/gstack-dhf-daily-refresh`
+  - timestamp: `2026-07-23T13:06:08Z`
+- main_auto_merge: `merged`
+  - helper: `python3 scripts/merge_gstack_refresh_if_safe.py --repo-root "$(pwd)" --apply --verified --json`
+  - status: `ahead_only fast-forward 已执行`
+  - main_before: `53e153ac723b3e5ac45a0128cfe2a6464a5d7e04`
+  - main_after: `51c9dfa9e2e25482d6c03dd0eef34d82292e94b5`
+  - timestamp: `2026-07-23T13:06:16Z`
+- local_main_safe_sync: `updated`
+  - helper: `python3 scripts/sync_local_main_if_safe.py --repo-root /Users/kezheng/Codes/CursorDeveloper/MyCodexEnv --apply --json`
+  - status: `behind_only fast-forward 已执行`
+  - local_before: `53e153ac723b3e5ac45a0128cfe2a6464a5d7e04`
+  - local_after: `51c9dfa9e2e25482d6c03dd0eef34d82292e94b5`
+  - timestamp: `2026-07-23T13:06:25Z`
+- note: 本轮未绕过 helper 直接推进 `main`；closeout 提交自身的最终 refs 与 memory 将在下一次 normalize 提交补齐。
