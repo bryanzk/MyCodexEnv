@@ -60,6 +60,23 @@
 
 ## Closeout
 
-- automation_branch_push: `pending`
-- main_auto_merge: `pending`
-- local_main_safe_sync: `pending`
+- automation_branch_push: `pushed`
+  - branch: `automation/gstack-dhf-daily-refresh`
+  - commit: `0fa0adb`
+  - command: `git fetch origin && git rebase origin/main && git push --force-with-lease origin HEAD:refs/heads/automation/gstack-dhf-daily-refresh`
+  - exit_code: `0`
+  - key_output: `48e957f..0fa0adb  HEAD -> automation/gstack-dhf-daily-refresh`
+  - timestamp: `2026-07-24T13:05:40Z`
+- main_auto_merge: `merged`
+  - helper: `python3 scripts/merge_gstack_refresh_if_safe.py --repo-root "$(pwd)" --apply --verified --json`
+  - status: `ahead_only fast-forward 已执行`
+  - main_before: `48e957fd3429a13a8fd61490d165636c7c917391`
+  - main_after: `0fa0adb4319128ea6d532a6f6e5cdd8e91fb792c`
+  - timestamp: `2026-07-24T13:05:49Z`
+- local_main_safe_sync: `updated`
+  - helper: `python3 scripts/sync_local_main_if_safe.py --repo-root /Users/kezheng/Codes/CursorDeveloper/MyCodexEnv --apply --json`
+  - status: `behind_only fast-forward 已执行`
+  - local_before: `48e957fd3429a13a8fd61490d165636c7c917391`
+  - local_after: `0fa0adb4319128ea6d532a6f6e5cdd8e91fb792c`
+  - timestamp: `2026-07-24T13:06:01Z`
+- note: 本轮未绕过 helper 直接推进 `main`；automation branch / remote main / 本地 main 的最终 refs 与 automation memory 将在下一笔 normalize 提交后统一补齐。
