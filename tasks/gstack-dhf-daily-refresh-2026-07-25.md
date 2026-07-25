@@ -60,6 +60,32 @@
 
 ## Closeout
 
-- automation_branch_push: `pending`
-- main_auto_merge: `pending`
-- local_main_safe_sync: `pending`
+- automation_branch_push: `pushed`
+  - branch: `automation/gstack-dhf-daily-refresh`
+  - commit: `77fb0bf`
+  - command: `git fetch origin && git rebase origin/main && git push --force-with-lease origin HEAD:refs/heads/automation/gstack-dhf-daily-refresh`
+  - exit_code: `0`
+  - key_output: `bcb98ec..77fb0bf  HEAD -> automation/gstack-dhf-daily-refresh`
+  - timestamp: `2026-07-25T13:05:29Z`
+- main_auto_merge: `merged`
+  - helper: `python3 scripts/merge_gstack_refresh_if_safe.py --repo-root "$(pwd)" --apply --verified --json`
+  - status: `ahead_only fast-forward 已执行`
+  - main_before: `bcb98ecf918483ca624f0aa74ce2d05c73375cbd`
+  - main_after: `77fb0bfedd80301c9d62094cf545456e267bd078`
+  - timestamp: `2026-07-25T13:05:46Z`
+- local_main_safe_sync: `updated`
+  - helper: `python3 scripts/sync_local_main_if_safe.py --repo-root /Users/kezheng/Codes/CursorDeveloper/MyCodexEnv --apply --json`
+  - status: `behind_only fast-forward 已执行`
+  - local_before: `bcb98ecf918483ca624f0aa74ce2d05c73375cbd`
+  - local_after: `77fb0bfedd80301c9d62094cf545456e267bd078`
+  - timestamp: `2026-07-25T13:05:53Z`
+- final_refs:
+  - command: `git ls-remote origin refs/heads/automation/gstack-dhf-daily-refresh refs/heads/main`
+  - exit_code: `0`
+  - key_output: `77fb0bf refs/heads/automation/gstack-dhf-daily-refresh ; 77fb0bf refs/heads/main`
+  - timestamp: `2026-07-25T13:06:05Z`
+- local_main_receipt:
+  - command: `git -C /Users/kezheng/Codes/CursorDeveloper/MyCodexEnv status --short --branch && git -C /Users/kezheng/Codes/CursorDeveloper/MyCodexEnv rev-parse --short=7 HEAD`
+  - exit_code: `0`
+  - key_output: `## main...origin/main ; 77fb0bf`
+  - timestamp: `2026-07-25T13:06:05Z`
