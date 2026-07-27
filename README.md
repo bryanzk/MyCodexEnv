@@ -1,6 +1,14 @@
+<p align="center">
+  <img src="./assets/readme/hero.svg" width="100%" alt="MyCodexEnv：从一个 Git 仓库构建可验证的 Codex 与 Claude 双环境">
+</p>
+
 # MyCodexEnv
 
-通过 Git clone + 一条命令在新机器复现 Codex + Claude 双环境工作流。
+通过 **Git clone + 一条 bootstrap 命令**，在新的 Apple Silicon Mac 上复现 Codex 与 Claude 双环境工作流。
+
+它不是一份零散的 dotfiles 备份，而是一套可审查、可同步、可验证的 agentic engineering 控制面：规则、skills、hooks、runtime policy、工作流与验证脚本都以仓库文件为 source of truth；认证与本地运行态数据始终留在机器上。
+
+[快速开始](#快速开始) · [工作原理](#工作原理) · [托管内容](#托管内容) · [常用工作流](#常用工作流) · [文档导航](#文档导航) · [验证](#验证)
 
 ## 快速开始
 
@@ -10,133 +18,177 @@ cd MyCodexEnv
 ./bootstrap.sh
 ```
 
-## 说明
+bootstrap 会安装或配置仓库声明的本机依赖，将托管内容同步到 Codex 与 Claude home，并保留认证、会话、memory 等本地数据。新机器仍需单独完成登录：
 
-- 目标平台：macOS ARM（Apple Silicon）
-- 认证不随仓库迁移；新机器执行 `codex login`
-- superpowers 固定版本见 `locks/superpowers.lock`；同步后通过本地 marketplace `superpowers-dev` 安装 `superpowers@superpowers-dev`
-- bootstrap 会安装固定版本 `chrome-devtools-mcp@0.20.0`；默认关闭 usage statistics 与 performance CrUX URL 查询
-- EigenPhi MCP server 默认禁用；`--eigenphi-backend-root` 仅作为兼容旧命令的可选参数保留
-- 若本机缺少 Google Chrome，bootstrap 会补装 `google-chrome`
-- Codex skills 单一来源：`codex/skills/*`（同步到 `~/.codex/skills/*`），其中 `gstack` 也作为全局 skill 集合由本仓库托管
-- Codex 通用层入口源码：`codex/AGENTS.md`（同步到 `~/.codex/AGENTS.md`）
-- Codex 远程访问流程规则：`codex/remote-access.md`（同步到 `~/.codex/remote-access.md`）；远程主机登记表：`codex/remote-hosts.md`（同步到 `~/.codex/remote-hosts.md`）
-- Codex hooks 来源：`codex/hooks.json` 与 `codex/hooks/*`（同步到 `~/.codex/hooks.json` 与 `~/.codex/hooks/*`）
-- Codex harness runtime 来源：`codex/runtime/*`（同步到 `~/.codex/runtime/*`），当前包含阶段化工具权限策略与 evidence schema
-- `codex/runtime/resolve_codex_cli.sh` 会实际执行候选 CLI 的 `--version` 后再返回路径；优先使用可用的 npm global CLI，launchd 或旧 shim 失效时再回退到当前 ChatGPT/Codex app bundle CLI
-- Codex zsh 标题钩子来源：`codex/zsh/*`（同步到 `~/.codex/zsh/*`）
-- Codex / Claude workflow 来源分别为 `codex/workflow/*`、`claude/workflow/*`，但都排除 `workflow/memory/` 这类运行态热数据
-- Claude workflow 同步到 `~/.claude/workflow/*`，通过注入块挂到 `~/.claude/CLAUDE.md`
-- 默认启用 Codex hooks；全局 `SessionStart` hook 会在新会话启动时提醒会话名采用 `<项目缩写>-<YYYYMMDD>-<概要>` 格式
-- Harness runtime 默认启用薄 hooks：`UserPromptSubmit` 运行 `model_router.py` 给出 prompt/subtask 级模型路由建议，并运行 `dhf_preprompt.py` 作为 generic DHF dispatcher；`shipq_dhf_preprompt.py` 只在 ShipQ cwd 下延迟加载；`PreToolUse` 读取 `tool-policy.json` 做客观 guardrail，`PostToolUse` 尝试把工具事件写入本机 `~/.codex/harness/evidence/*.jsonl`
-- 全局 zsh 会话标题钩子默认生成 `<项目缩写>-<YYYYMMDD>-summary`，避免被旧的 `[Repo] zsh` 标题覆盖
-- 若 Codex Desktop 在新建会话时对 `~/Documents` 或 `~/Desktop` 报 `EPERM: operation not permitted, mkdir`，优先将会话根目录切到 `~/Codes/Codex` 这类非受保护目录，或在 macOS `隐私与安全性 -> 文件与文件夹 / 完全磁盘访问权限` 中授权 `Codex`
+```bash
+codex login
+```
 
-## 全局技能
+### 运行前提
 
-仓库托管两类全局 Codex skills：
+- macOS on Apple Silicon
+- Git
+- 可访问 Homebrew 与所需软件源
+- Codex 与 Claude 的认证凭据不进入本仓库
 
-- 本仓库维护的通用 skills，例如 `planner`、`verification-loop`、`thread-topic-guard`、`delivery-harness-framework`、`codex-goalsmith`
-- 从 `garrytan/gstack` 同步的完整全局 skill 集合，包括 `gstack` 根支持目录和 `gstack-*` namespaced skills
+可用参数：
 
-`delivery-harness-framework` 是通用生命周期路由 skill，只定义跨项目的状态读取、阶段分类、错误处理与验证协议；项目专属路径、命令和安全边界应放在 repo-specific adapter skill 中，例如 `shipq-lifecycle-harness`。
+```text
+./bootstrap.sh \
+  [--codex-home <path>] \
+  [--claude-home <path>] \
+  [--non-interactive]
+```
 
-## Harness Runtime
+## 为什么存在
 
-本仓库新增一层 generic Harness Runtime，用来把规则、技能、hooks、验证脚本组织成可恢复、可观测、可验证的运行时系统：
+通常，agent 环境会逐渐散落在 home 目录、插件状态、prompt 文件、skills、hooks 和个人脚本里。换机或排障时，很难回答三个问题：
 
-- `docs/repo-index.md`：低 token 项目导航，作为 Codex 开局读取入口
-- `docs/harness-state.md`：append-only 状态日志，记录 phase、source of truth、next safe task、latest verification 和 checkpoint
-- `docs/HARNESS_RUNTIME.md`：Workflow + Infra 合同，覆盖生命周期、权限、证据、checkpoint 与 subagent team
-- `docs/AGENT_HARNESS_STATUS.md`：参照 Agent Harness 架构图维护当前状态图谱
-- `docs/MODEL_ROUTER_EVAL_MATRIX.md`：prompt/subtask 模型路由评估矩阵，覆盖正例、负例、forbidden upgrade、渐进切换和端到端断言
-- `codex/runtime/tool-policy.json`：按 `research / requirements / planning / development / validation / review / ship / handoff` 定义工具和权限策略
-- `codex/runtime/evidence.schema.json`：本机 evidence JSONL 事件结构
-- `scripts/harness_evidence.py`：验证并追加结构化 evidence
-- `scripts/harness_report.py`：汇总本机 evidence JSONL，支持 Markdown 与 JSON 输出
-- `scripts/harness_agent_team.py`：校验 subagent team 的 role、scope、write set 和 verification contract
-- `scripts/harness_checkpoint.py`：追加 `docs/harness-state.md` checkpoint，不自动 commit
-- `docs/templates/harness-requirements.md`：Harness 需求 artifact 模板
-- `docs/templates/harness-agent-brief.md`：可选 worker durable brief 模板，记录 current/desired behavior、key interfaces、acceptance criteria 和 out of scope
-- `scripts/harness_requirements.py`：校验需求 artifact 的字段、验收标准和验证命令
-- `scripts/harness_recover.py`：从 repo index、state、git 和 evidence 恢复 next safe task
-- `scripts/harness_env_probe.py`：观测本机 Codex runtime 配置、hooks、policy 和 schema 状态
-- `scripts/check_skill_compatibility.py`：离线检查全部本地 skill manifest、helper 语法和相对链接，并对常驻托管 skill 做 repo/runtime 完整文件一致性检查；临时 `.system` 投影的加载状态由 loader gate 负责
-- `scripts/check_codex_skill_loader.py`：在禁网 sandbox 中调用 Codex `app-server skills/list`，确认预期 skill path 全部 loaded/enabled 且 loader error 为零
-- `scripts/headroom_filter.py`：可选 Headroom stdin 过滤器，用于在把大型 `rg` 输出、测试日志、JSON 工具结果送入 agent context 前先做本地压缩
-- `codex/hooks/model_router.py`：`UserPromptSubmit` prompt 复杂度路由器，按 simple/medium/complex 和质量地板选择 `gpt-5.4-mini`、`gpt-5.4` 或 `gpt-5.5`，复杂任务可在阶段或 subtask 边界重复调用以自动下探或升级；当 hook payload 或环境变量提供 token / 5 小时 limit 字段时，同步输出 telemetry，缺失时显式写 `unavailable`
-- `codex/hooks/dhf_preprompt.py`：全局 DHF prompt dispatcher；无效 payload 或缺少 cwd 只返回 continue，opt-out 优先，非 ShipQ 只有 complex/resume/takeover/handoff/state-conflict 等明确 activation 才注入 generic DHF context，ShipQ cwd 才延迟调用 `shipq_dhf_preprompt.py`
-- `codex/hooks/harness_guard.py`：`PreToolUse` guardrail，处理 destructive、secret、remote、dynamic execution 和越阶段写入
-- `codex/hooks/harness_observer.py`：`PostToolUse` observer，非阻塞记录工具事件
+1. 哪些文件才是 source of truth？
+2. 当前 runtime 是否真的与仓库一致？
+3. 一次修改是否破坏了 loader、hooks、策略或其他工作流？
 
-运行态证据默认保存在 `~/.codex/harness/evidence/`，不进入 Git。`docs/harness-state.md` 只保存可公开的阶段、验证与 handoff 事实。Memory / subconscious 只能作为提示，行动前必须回查 repo 文件、git 状态或 fresh verification。
+MyCodexEnv 把这三个问题变成一条可重复的闭环：
 
-GitHub Actions CI 入口为 `.github/workflows/ci.yml`。它在 `push` 到 `main`、`pull_request` 和手动 `workflow_dispatch` 时运行 portable green gate：`python3 test_runner.py`、`git diff --check` 和 `python3 scripts/check_surfaces.py --repo-root "$(pwd)" --check-public-nav`。本机 Codex runtime sync 验证仍通过 `test_runner.py` 里的 skip-aware 场景覆盖，不在 CI 中直接执行。
+- **仓库可审查**：Codex 与 Claude 的托管配置都在 Git 中。
+- **同步有边界**：凭据和运行态数据不随仓库迁移。
+- **结果可证明**：测试、skill loader、兼容性检查和环境验证提供 fresh evidence。
 
-生命周期阶段、覆盖流程、对应 skill 和 helper 用途见 `docs/LIFECYCLE_SKILL_ROUTING.md`。中文公开页面入口见 `docs/index.html`，英文公开页面入口见 `docs/index-en.html`；面向 PM、Tech Lead 与 agent 使用者的中文手册草稿见 `docs/delivery-harness-framework-manual-cn.md`；面向 agentic engineering beginner 的中文入门说明见 `docs/delivery-harness-beginner-guide-cn.html`；中文可视化说明见 `docs/project-lifecycle-harness-flow-cn.html` 和 `docs/project-lifecycle-harness-flow-skills-zh-status-style.html`。
+## 工作原理
 
-相关文档互链入口：
+<p align="center">
+  <img src="./assets/readme/runtime-flow.svg" width="100%" alt="MyCodexEnv 从仓库 source of truth 经过 bootstrap 和定向同步，生成本机 Codex 与 Claude runtime，最后由测试与环境检查验证">
+</p>
 
-- `docs/repo-index.md`：低 token 项目导航与 runtime surface 索引
-- `docs/index.html`：Delivery Harness Framework (DHF) 中文公共页面入口
-- `docs/index-en.html`：Delivery Harness Framework (DHF) 英文公共页面入口
-- `docs/delivery-harness-framework-manual-cn.md`：面向 PM、Tech Lead 与 agent 使用者的 DHF 中文手册草稿
-- `docs/delivery-harness-beginner-guide-cn.html`：面向 agentic engineering beginner 的中文入门指南
-- `docs/HARNESS_RUNTIME.md`：生命周期、证据、checkpoint、权限和 subagent 合同
-- `docs/AGENT_HARNESS_STATUS.md`：Agent Harness workflow/infra 状态图谱
-- `docs/CODEX_ENV_REPRODUCTION.md`：Codex + Claude 环境复现说明
-- `docs/LIFECYCLE_SKILL_ROUTING.md`：生命周期阶段、workflow、skill 和 helper 路由
-- `docs/project-lifecycle-harness-flow-cn.html`：中文纵向生命周期流程图
-- `docs/project-lifecycle-harness-flow-skills.html`：中文 skill/helper 路由可视化速查页
-- `docs/project-lifecycle-harness-flow-skills-zh-status-style.html`：新版 DHF 技能路由可视化速查页
+1. **Source** — `codex/`、`claude/`、`docs/`、`scripts/` 与 lock 文件定义期望状态。
+2. **Build & sync** — `bootstrap.sh` 和定向同步脚本安装依赖、复制托管文件并保留本地状态。
+3. **Runtime** — `~/.codex` 与 `~/.claude` 获得可运行的 rules、skills、hooks 和 workflow。
+4. **Evidence** — `test_runner.py`、loader gate、兼容性检查和环境验证确认结果，而不是依赖“脚本运行过”的假设。
 
-早期已适配的短名 gstack skills 仍保留：
+## 托管内容
 
-- `plan-ceo-review`
-- `plan-eng-review`
-- `review`
-- `ship`
-- `retro`
-- `browse`
-- `qa`
-- `setup-browser-cookies`
+| Surface | 仓库 source of truth | 本机目标 / 用途 |
+| --- | --- | --- |
+| Codex rules | `codex/AGENTS.md` | `~/.codex/AGENTS.md` |
+| Codex config | `codex/config.template.toml` | Codex runtime 配置模板 |
+| Hooks | `codex/hooks.json`、`codex/hooks/` | session、prompt、policy 与 evidence hooks |
+| Runtime policy | `codex/runtime/` | tool policy、schemas、CLI resolver |
+| Skills | `codex/skills/` | `~/.codex/skills/` |
+| Codex workflow | `codex/workflow/` | `~/.codex/workflow/` |
+| Shell integration | `codex/zsh/` | session title 与 shell 辅助 |
+| Claude workflow | `claude/workflow/` | `~/.claude/workflow/` |
+| Claude integration | `claude/CLAUDE_INTEGRATION_BLOCK.md` | 注入 `~/.claude/CLAUDE.md` |
+| Version pins | `locks/` | 可复现的第三方组件版本 |
 
-完整 gstack 集合使用 namespaced 目录，例如 `gstack-qa`、`gstack-ship`、`gstack-review`、`gstack-design-review`、`gstack-investigate`，以及新增的 `gstack-ios-qa`、`gstack-ios-design-review`、`gstack-ios-fix`。它们依赖 `codex/skills/gstack/*` 中的共享支持文件。首次使用需要在同步后执行：
+### Skills
+
+`codex/skills/*` 是持久托管 skill 的唯一仓库来源。同步后，loader gate 会确认每个预期路径都已加载、启用且没有 loader error。
+
+仓库同时维护：
+
+- 本项目的通用 workflow skills，例如 planning、verification、delivery harness、skill evaluation 与 session continuity；
+- vendored `garrytan/gstack` skill 集合及其共享支持文件；
+- 第三方 skill 的受控副本、许可证和运行时同步。
+
+首次同步 gstack 后，构建它的本地支持组件：
 
 ```bash
 ~/.codex/skills/gstack/setup
 ```
 
-该 setup 只在 `~/.codex/skills/gstack` 内构建本地支持二进制，不会把 skill 迁移成指向 `/Users/kezheng/gstack` 的本机 symlink。早期短名 `browse` 也带 supporting files，首次使用前可在 `codex/skills/browse` 或同步后的 `~/.codex/skills/browse` 下执行一次 `./setup`。上游来源为 MIT License。
+### Harness Runtime
 
-Superpowers startup uses the Codex plugin path on current pins:
+Harness Runtime 把 agent 工作从“prompt + 工具”扩展为一套可恢复、可观察、可验证的交付系统：
 
-```bash
-./scripts/sync_codex_home.sh --repo-root "$(pwd)" --codex-home "$HOME/.codex"
-codex plugin marketplace list --json
-codex plugin list
+- 生命周期与 skill 路由；
+- 分阶段工具权限与 destructive/secret/remote guardrails；
+- prompt/subtask 模型建议；
+- decision 与 routine evidence schemas；
+- checkpoint、recovery、requirements 与 agent-team validation；
+- 全局 generic dispatcher 与按仓库延迟加载的 adapter。
+- Runtime Plan Governor v1 的本地 CLI、三份 schema 与 managed skills 合同；Phase 0 当前为 `payload_capable=false`，因此仅支持 source-stage Shadow evidence，Production no-go，未激活 hook enforcement 或真实 runtime。
+
+关键入口：
+
+- [`docs/HARNESS_RUNTIME.md`](docs/HARNESS_RUNTIME.md) — workflow 与 infra 合同
+- [`docs/LIFECYCLE_SKILL_ROUTING.md`](docs/LIFECYCLE_SKILL_ROUTING.md) — 生命周期到 skill 的路由
+- [`docs/MODEL_ROUTER_EVAL_MATRIX.md`](docs/MODEL_ROUTER_EVAL_MATRIX.md) — 模型路由评估
+- [`docs/harness-state.md`](docs/harness-state.md) — append-only 状态与 next safe task
+- [`docs/AGENT_HARNESS_STATUS.md`](docs/AGENT_HARNESS_STATUS.md) — 当前能力状态图
+
+### 当前控制能力
+
+- **Thread discipline**：每个任务冻结 repo、mode 与 compaction anchors；确认发生 anchor mismatch 时，只能创建一个边界明确的继任任务，整条继承链最多自动迁移三次，且绝不自动归档或删除任务。
+- **Codex Fluent**：以 report-only scanner 对活跃任务做大小排序与 handoff 审计；任何维护操作仍需要独立授权、备份和可恢复 handoff。
+- **gbrain-aware planning**：配置后，gstack planning skills 可以使用缓存的产品、目标、developer persona、品牌、竞品与用户画像；generic Harness 仍只负责 repo state、lane 与验证边界。
+- **iOS QA bridge**：vendored gstack 包含面向真实设备与 SwiftUI 的 QA、同步、修复和清理工作流；它们保留在 specialist skill 范围内，不扩大普通 prompt 的默认权限。
+
+## 项目地图
+
+```text
+MyCodexEnv/
+├── bootstrap.sh          # 新机器入口
+├── codex/                # Codex rules、config、hooks、runtime、skills、workflow
+├── claude/               # Claude workflow 与 integration block
+├── scripts/              # 同步、验证、恢复、报告与维护工具
+├── docs/                 # 架构、指南、状态、公开文档与可视化
+├── locks/                # 第三方组件版本锁
+├── tasks/                # 运行与维护证据
+└── test_runner.py        # 仓库 canonical test suite
 ```
 
-Then restart/open a new Codex session and use the session-exposed `superpowers:*` skills. Older checkouts may still expose `~/.codex/superpowers/.codex/superpowers-codex`; treat that binary only as a conditional fallback when it exists.
+低 token、机器友好的完整入口索引见 [`docs/repo-index.md`](docs/repo-index.md)。
 
-当前 vendored gstack `1.52.x` 的 planning skills 支持配置后的 gbrain preflight：`office-hours`、`plan-ceo-review`、`plan-eng-review`、`plan-design-review`、`plan-devex-review` 可以读取缓存的产品、目标、developer persona、品牌、竞品、skill-run、user profile 和 take 摘要。`delivery-harness-framework` 仍只负责 repo state、lane、checkpoint 与 verification 边界；显式 gbrain 配置/刷新仍路由到 `setup-gbrain` / `sync-gbrain`，重复提问和 developer profile 偏好治理路由到 `gstack-plan-tune`。
+## 常用工作流
 
-批量刷新仓库内 vendored gstack 快照时，使用：
+### 同步 Codex runtime
+
+```bash
+./scripts/sync_codex_home.sh \
+  --repo-root "$(pwd)" \
+  --codex-home "$HOME/.codex"
+```
+
+该入口会同步仓库托管的 Codex surfaces。对高风险目录或单一 skill 的修改，优先采用明确的定向同步并验证 source/runtime parity，避免无关 runtime 漂移。
+
+### 验证完整环境
+
+```bash
+python3 test_runner.py
+
+./scripts/verify_codex_env.sh \
+  --repo-root "$(pwd)" \
+  --codex-home "$HOME/.codex" \
+  --claude-home "$HOME/.claude"
+```
+
+### 检查 skills
+
+```bash
+python3 scripts/check_skill_compatibility.py \
+  --repo-root "$(pwd)"
+
+python3 scripts/check_codex_skill_loader.py \
+  --repo-root "$(pwd)" \
+  --codex-home "$HOME/.codex"
+```
+
+兼容性检查验证 manifest、helper 语法、相对链接与持久托管 skill 的完整 parity；loader gate 在禁网环境中调用 Codex app-server，检查 loaded/enabled 状态和 loader errors。
+
+### 刷新 vendored gstack
 
 ```bash
 python3 scripts/prepare_gstack_dhf_daily_refresh.py --json
-python3 scripts/sync_gstack_vendor.py --repo-root "$(pwd)" --source https://github.com/garrytan/gstack.git --dry-run --json
-python3 scripts/sync_gstack_vendor.py --repo-root "$(pwd)" --source https://github.com/garrytan/gstack.git
-python3 test_runner.py
-./scripts/sync_codex_home.sh --repo-root "$(pwd)" --codex-home "$HOME/.codex" --skip-superpowers-sync
-~/.codex/skills/gstack/setup
+python3 scripts/sync_gstack_vendor.py \
+  --repo-root "$(pwd)" \
+  --source https://github.com/garrytan/gstack.git \
+  --dry-run \
+  --json
 ```
 
-可先用 `python3 scripts/prepare_gstack_dhf_daily_refresh.py --json` 为 daily refresh automation 预热 standalone clone、用约 2 分钟窗口重试 DNS 并拿到 fresh dry-run 结果，再决定是否真正同步。`sync_gstack_vendor.py --dry-run --json` 会额外返回 `needs_update` 和 `diff_files`，用于判断这次是否真的需要改写 `codex/skills/gstack`。脚本会删除旧快照中上游已移除的 stale 文件，并且不会保留上游 `.git` 元数据。
+只有 dry-run 返回 `needs_update=true` 时才执行实际同步。同步后重新运行仓库测试、runtime sync、gstack setup 与环境验证。
 
-## 多仓库 AGENTS 管理
-
-如果你需要为 `/Users/kezheng/Codes/CursorDeveloper` 下多个 repo 批量扫描、备份、生成、恢复与校验 `AGENTS.md`，使用：
+### 管理多仓库 AGENTS
 
 ```bash
 python3 scripts/manage_agents.py scan
@@ -145,58 +197,81 @@ python3 scripts/manage_agents.py generate --backup-id "<backup_id>"
 python3 scripts/manage_agents.py verify
 ```
 
-- 统一备份目录：`/Users/kezheng/Codes/CursorDeveloper/.agents-backups/`
-- 运行时 Codex 通用层副本：`~/.codex/AGENTS.md`
-- 远程访问运行时规则：`~/.codex/remote-access.md`
-- 远程主机运行时登记表：`~/.codex/remote-hosts.md`
-- 若只需同步 Codex 通用层到本机运行时：
+### 可选辅助工具
+
+| 目标 | 入口 |
+| --- | --- |
+| 记录命令、prompt 或对话文本 | `python3 scripts/capture_text.py "要记录的文本"` |
+| 构建本地 Codex subconscious 索引 | `python3 scripts/codex_subconscious.py build --emit-briefs` |
+| 恢复当前仓库的 next safe task | `python3 scripts/harness_recover.py` |
+| 汇总本机 evidence | `python3 scripts/harness_report.py` |
+| 压缩大型命令输出 | `some-command \| python3 scripts/headroom_filter.py --mode auto --stats` |
+
+这些工具的运行态输出默认保留在本机，不进入 Git。
+
+## 文档导航
+
+| 文档 | 用途 |
+| --- | --- |
+| [`docs/CODEX_ENV_REPRODUCTION.md`](docs/CODEX_ENV_REPRODUCTION.md) | Codex + Claude 环境复现细节 |
+| [`docs/repo-index.md`](docs/repo-index.md) | source of truth 与 runtime surface 索引 |
+| [`docs/HARNESS_RUNTIME.md`](docs/HARNESS_RUNTIME.md) | Harness Runtime 设计合同 |
+| [`docs/LIFECYCLE_SKILL_ROUTING.md`](docs/LIFECYCLE_SKILL_ROUTING.md) | 生命周期、workflow 与 skill 路由 |
+| [`docs/project-lifecycle-harness-flow-cn.html`](docs/project-lifecycle-harness-flow-cn.html) | 中文纵向 lifecycle flow |
+| [`docs/project-lifecycle-harness-flow-skills.html`](docs/project-lifecycle-harness-flow-skills.html) | 中文 skill/helper 路由可视化 |
+| [`docs/HEADROOM_WORKFLOW.md`](docs/HEADROOM_WORKFLOW.md) | Headroom 输出压缩工作流 |
+| [`docs/CODEX_SUBCONSCIOUS.md`](docs/CODEX_SUBCONSCIOUS.md) | 本地 subconscious companion |
+| [`docs/index.html`](docs/index.html) / [`docs/index-en.html`](docs/index-en.html) | GitHub Pages 中英文入口 |
+| [`docs/delivery-harness-beginner-guide-cn.html`](docs/delivery-harness-beginner-guide-cn.html) / [`docs/delivery-harness-beginner-guide-en.html`](docs/delivery-harness-beginner-guide-en.html) | 中英文 beginner guide |
+
+## 验证
+
+仓库的 portable CI green gate 与本地验证入口保持一致：
 
 ```bash
-./scripts/sync_codex_home.sh --repo-root "$(pwd)" --sync-agents-only
+python3 test_runner.py
+git diff --check
+python3 scripts/check_surfaces.py \
+  --repo-root "$(pwd)" \
+  --check-public-nav
 ```
 
-## 常用文本记录
+任何“完成”结论都应附带本次运行的：
 
-如果你需要记录命令、提示、对话等文本，可直接使用：
-
-```bash
-python scripts/capture_text.py "要记录的文本"
+```text
+command
+exit_code
+key_output
+timestamp
 ```
 
-分类规则与输出目录见 `docs/USAGE_TEXT_RECORDING.md`。
+## 安全边界
 
-详细说明见：`docs/CODEX_ENV_REPRODUCTION.md`
+- 不同步或提交密钥、token、认证文件、会话与本地 memory。
+- 外部 URL、第三方 skill、MCP 与动态执行入口必须先经过安全审查。
+- `scripts/`、`codex/hooks/`、`codex/runtime/` 与 `codex/skills/` 属于高影响面；修改后需要 fresh verification。
+- SSH、远程服务或 tunnel 操作前，先遵循 `codex/remote-access.md`。
+- 认证不随仓库迁移；新机器必须自行完成登录。
 
-## Codex Subconscious
+## 常见问题
 
-仓库内新增一个轻量级 Codex companion 原型：`scripts/codex_subconscious.py`。
+<details>
+<summary>Codex Desktop 无法在 Documents 或 Desktop 创建目录</summary>
 
-它会读取本机 `~/.codex/archived_sessions/*.jsonl` 与 `~/.codex/session_index.jsonl`，构建：
-- `~/.codex/subconscious/index.json`
-- `~/.codex/subconscious/memory.md`
-- `~/.codex/subconscious/briefs/*.md`
+将任务根目录切换到 `~/Codes/...` 这类非受保护目录，或在 macOS 的“隐私与安全性 → 文件与文件夹 / 完全磁盘访问权限”中授权 Codex。
 
-常用命令：
+</details>
 
-```bash
-python3 scripts/codex_subconscious.py build --emit-briefs
-python3 scripts/codex_subconscious.py brief --cwd /absolute/project/path
-python3 scripts/codex_subconscious.py publish-inbox --cwd /absolute/project/path
-python3 scripts/codex_subconscious.py publish-inbox --limit 3
-python3 scripts/codex_subconscious.py publish-inbox --limit 3 --dedupe-hours 8
-```
+<details>
+<summary>旧版 superpowers checkout 还能使用吗？</summary>
 
-背景说明与 automation 接法见：`docs/CODEX_SUBCONSCIOUS.md`
+当前入口使用 Codex plugin 安装路径。旧环境中若仍存在 `~/.codex/superpowers/.codex/superpowers-codex`，只能把它当作条件 fallback，不应作为新的 source of truth。
 
-## Headroom 输出压缩
+</details>
 
-如果命令输出太长，先用可选 Headroom 过滤器压缩再贴给 agent：
+<details>
+<summary>EigenPhi MCP 默认会启用吗？</summary>
 
-```bash
-/opt/homebrew/bin/python3.12 -m venv /tmp/headroom
-/tmp/headroom/bin/pip install headroom-ai
-rg -n "gmail|quote|extract" src tests docs \
-  | /tmp/headroom/bin/python scripts/headroom_filter.py --mode auto --stats
-```
+不会。EigenPhi MCP 默认禁用；`--eigenphi-backend-root` 只作为旧命令的兼容参数保留。
 
-详细工作流见 `docs/HEADROOM_WORKFLOW.md`。
+</details>
