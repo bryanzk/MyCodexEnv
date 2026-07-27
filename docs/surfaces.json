@@ -83,6 +83,21 @@
       "audience": ["runtime", "codex"]
     },
     {
+      "path": "codex/runtime/evidence/plan-scope-envelope.schema.json",
+      "role": "plan governor frozen scope envelope schema",
+      "audience": ["runtime", "codex", "human"]
+    },
+    {
+      "path": "codex/runtime/evidence/plan-finding-decision.schema.json",
+      "role": "plan governor structured finding decision schema",
+      "audience": ["runtime", "codex", "human"]
+    },
+    {
+      "path": "codex/runtime/evidence/plan-governor-receipt.schema.json",
+      "role": "plan governor bounded round receipt schema",
+      "audience": ["runtime", "codex", "human"]
+    },
+    {
       "path": "codex/hooks",
       "role": "Codex lifecycle hook source directory copied into runtime",
       "audience": ["runtime", "codex"]
@@ -115,6 +130,11 @@
     {
       "path": "scripts/harness_evidence.py",
       "role": "evidence validation, kind inference, and append helper",
+      "audience": ["codex", "human"]
+    },
+    {
+      "path": "scripts/plan_governor.py",
+      "role": "local plan scope, finding, receipt, and shadow evidence CLI",
       "audience": ["codex", "human"]
     },
     {

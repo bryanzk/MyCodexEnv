@@ -39,12 +39,15 @@
 - `codex/skills/delivery-harness-framework/`: lifecycle router skill.
 - `codex/skills/committee-review-loop/`: explicit expert-committee review and revision loop skill.
 - `codex/skills/codex-fluent/scripts/report_active_sessions.py`: read-only active Codex session ranking and handoff audit.
-- `codex/runtime/tool-policy.json`: stage-aware tool and permission policy, including unknown-phase read-only fallback, handoff repo-write ask-gate, and configured agent-dispatch tool patterns.
+- `codex/runtime/tool-policy.json`: stage-aware tool and permission policy, including unknown-phase read-only fallback, handoff repo-write ask-gate, configured agent-dispatch tool patterns, and the Plan Governor capability/Shadow source-stage status.
 - `codex/runtime/resolve_codex_cli.sh`: resolve a Codex CLI only after its `--version` smoke passes, preferring the npm global CLI before ChatGPT/Codex app bundle fallbacks for launchd and stale-shim recovery.
 - `codex/runtime/dhf-packet.schema.json`: portable DHF packet schema for incubation, consumer handoff, and future extraction boundaries.
 - `codex/runtime/evidence.schema.json`: compatibility local evidence JSONL event contract, including `agent_team_validated` receipts.
 - `codex/runtime/evidence/decision-evidence.schema.json`: focused schema for state, handoff, approval, guardrail, sandbox, agent-team validation, and durable recovery evidence.
 - `codex/runtime/evidence/routine-gate-receipt.schema.json`: focused schema for test receipts, browser smoke, startup probes, ordinary tool calls, and routine subagent reports.
+- `codex/runtime/evidence/plan-scope-envelope.schema.json`: plan governor frozen scope envelope schema.
+- `codex/runtime/evidence/plan-finding-decision.schema.json`: plan governor structured finding decision schema.
+- `codex/runtime/evidence/plan-governor-receipt.schema.json`: plan governor bounded round receipt schema.
 - `codex/hooks/`: Codex lifecycle hooks copied to `~/.codex/hooks/`.
 - `codex/hooks/harness_guard.py`: PreToolUse permission and guardrail hook.
 - `codex/hooks/harness_observer.py`: PostToolUse evidence observer hook.
@@ -52,6 +55,7 @@
 - `codex/hooks/dhf_preprompt.py`: generic `UserPromptSubmit` DHF dispatcher; malformed or missing-cwd payloads continue, opt-out wins first, non-ShipQ prompts need explicit generic activation, and ShipQ cwd delegates lazily to the adapter.
 - `codex/hooks/shipq_dhf_preprompt.py`: ShipQ-only DHF preprompt adapter, never registered globally and loaded only by the generic dispatcher for ShipQ cwd.
 - `scripts/harness_evidence.py`: evidence validation, kind inference, and append helper.
+- `scripts/plan_governor.py`: local plan scope, finding, receipt, and shadow evidence CLI.
 - `scripts/harness_feedback.py`: conversion-health helper for local evidence reports and recovery.
 - `scripts/harness_report.py`: local evidence summary CLI with evidence-kind counts and filters.
 - `scripts/harness_agent_team.py`: agent team, write-set, worker task demand, demand-matched green gate, optional durable brief validator, and `--emit-evidence` validation receipt helper.

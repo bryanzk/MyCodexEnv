@@ -166,8 +166,8 @@
         "If the target is not reached, the final result reports the current rating and unresolved findings as incomplete."
       ]
     },
-    {
-      "id": "end-to-end-committee-worker-loop",
+        {
+            "id": "end-to-end-committee-worker-loop",
       "category": "end_to_end",
       "name": "runs committee, revision, verification, and final report",
       "prompt": "For this local documentation page, use a 3-expert committee and a revision worker to improve it until the committee rating reaches 10/10, then report evidence.",
@@ -176,8 +176,73 @@
       "assertions": [
         "The output includes three expert domains and their ratings.",
         "The output makes or delegates concrete revisions based on committee findings.",
-        "The final report includes changed files and verification evidence with command, exit_code, key_output, and timestamp."
-      ]
-    }
-  ]
+                "The final report includes changed files and verification evidence with command, exit_code, key_output, and timestamp."
+            ]
+        },
+        {
+            "id": "plan-governor-excluded-severe-scenario",
+            "category": "end_to_end",
+            "name": "excluded severe scenario does not reduce scoped MVP score",
+            "prompt": "Review a frozen single-tenant MVP. A reviewer raises a severe cross-tenant compromise that the envelope explicitly excludes.",
+            "expected_load": true,
+            "expected_output": "Register the finding as DEFERRED or UNSUPPORTED without turning it into mandatory v1 architecture or reducing the scoped score.",
+            "assertions": [
+                "The current frozen scope envelope remains authoritative.",
+                "The excluded scenario is recorded as DEFERRED or UNSUPPORTED.",
+                "No cross-tenant service or trust root becomes a mandatory v1 requirement."
+            ]
+        },
+        {
+            "id": "plan-governor-speculative-catastrophe",
+            "category": "end_to_end",
+            "name": "speculative catastrophe needs evidence",
+            "prompt": "A reviewer asserts a catastrophic risk but names no current in-scope asset, causal path, or concrete preconditions.",
+            "expected_load": true,
+            "expected_output": "Return NEEDS_EVIDENCE and keep the claim from changing v1 architecture.",
+            "assertions": [
+                "The finding is non-terminal.",
+                "The disposition is NEEDS_EVIDENCE.",
+                "The score is not manipulated by speculative severity."
+            ]
+        },
+        {
+            "id": "plan-governor-credible-catastrophe",
+            "category": "end_to_end",
+            "name": "credible current catastrophe is positive control",
+            "prompt": "A reproduced current-scope failure can irreversibly overwrite the MVP's authoritative local state under concrete preconditions.",
+            "expected_load": true,
+            "expected_output": "Admit the finding as MITIGATE_IN_V1.",
+            "assertions": [
+                "The affected asset is current and in scope.",
+                "The causal path and preconditions are concrete.",
+                "The disposition is MITIGATE_IN_V1."
+            ]
+        },
+        {
+            "id": "plan-governor-evidence-laundering",
+            "category": "end_to_end",
+            "name": "structured contradiction remains non-terminal",
+            "prompt": "A finding calls a manual control adequate while declaring that no manual control is available.",
+            "expected_load": true,
+            "expected_output": "Detect the machine-readable contradiction and return NEEDS_EVIDENCE without claiming semantic intent proof.",
+            "assertions": [
+                "The contradiction remains non-terminal.",
+                "The disposition is NEEDS_EVIDENCE.",
+                "The engine does not claim to detect every semantically wrong label."
+            ]
+        },
+        {
+            "id": "plan-governor-repeat-simplification",
+            "category": "loop_control",
+            "name": "repeated category triggers simplification review",
+            "prompt": "The same unresolved security category has repeated for two committee rounds without new evidence.",
+            "expected_load": true,
+            "expected_output": "Run a simplification review before further revision and require a scope decision or rebase.",
+            "assertions": [
+                "The loop does not add another architecture layer automatically.",
+                "A simplification review occurs after two non-converging rounds.",
+                "The unresolved finding remains visible."
+            ]
+        }
+    ]
 }

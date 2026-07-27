@@ -10,6 +10,7 @@ Use this skill to turn a broad quality target into a structured review-and-revis
 ## Preconditions
 
 - Confirm the task output, editable scope, non-goals, rating target, and `max_rounds`. Defaults: `committee.rating >= 10/10` and `max_rounds=5`.
+- For complex product plans, review against the current frozen scope envelope. Score only the supported scenario and register severe excluded scenarios without reducing the scoped score.
 - The user does not need to supply a complete verification rubric. When checks are incomplete, the first committee round must generate them before revision begins.
 - Use subagents only when the user explicitly asks for subagents, a committee, delegation, or parallel agent work.
 - Do not use this skill for one-off reviews, ordinary QA, or normal polish passes. Route those to the relevant review, QA, or design skill.
@@ -48,6 +49,15 @@ Before asking a worker to revise anything, the first committee round must produc
 - `acceptance_ledger`: findings with `finding_id`, `severity`, `claim`, `evidence`, `closure_condition`, and `status`.
 
 Freeze `review_rubric` after round 1. Later reviewers may append a new finding with a stable ID, but must not silently change the scoring criteria or remove unresolved ledger items. A blind reviewer may return `rubric_challenges` when a material domain or criterion is missing; the main agent must record a versioned rubric amendment with evidence and reopen the affected ledger instead of mutating the rubric invisibly.
+
+## Plan Governor Contract
+
+- Admit each structured finding before it can drive a revision. Finding admission may result in `MITIGATE_IN_V1`, `MANUAL_CONTROL`, `ACCEPTED_RISK`, `DEFERRED`, `UNSUPPORTED`, `NEEDS_EVIDENCE`, `SCOPE_DECISION_REQUIRED`, or `SCOPE_REBASE_REQUIRED`.
+- Treat `MANUAL_CONTROL`, `ACCEPTED_RISK`, `DEFERRED`, and `UNSUPPORTED` as legitimate outcomes; do not convert them into mandatory architecture merely to improve a score.
+- Product-plan committees must include product or operations representation alongside the relevant engineering and risk perspectives.
+- After the same unresolved category repeats for two rounds, run a simplification review before any further revision.
+- The blind final reviewer must not receive prior history or scores, but must receive the current scope envelope so the review remains scoped.
+- Structured admission checks declared-contract consistency only. Internally consistent but semantically wrong scope, evidence, or manual-control labels remain reviewer/user challenges.
 
 ## Roles
 

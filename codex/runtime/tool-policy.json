@@ -3,6 +3,13 @@
   "default_phase": "development",
   "unknown_phase_behavior": "read_only",
   "evidence_dir": "~/.codex/harness/evidence",
+  "plan_governor": {
+    "version": 1,
+    "payload_capable": false,
+    "mode": "shadow",
+    "production_status": "no_go",
+    "reason": "dispatch command is observable but PreToolUse permissionDecision ask is unsupported and fails open"
+  },
   "agent_dispatch_tool_names": [
     "spawn_agent",
     "multi_agent_v1.spawn_agent",
