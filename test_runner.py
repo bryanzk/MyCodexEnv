@@ -3526,9 +3526,13 @@ def test_plan_governor_skill_and_capability_branch_contract():
     require(governor and governor["payload_capable"] is False and governor["mode"] == "shadow",
             "Phase 0 false branch must be explicit and fixed to Shadow")
     require(governor["production_status"] == "no_go", "payload-capability false must keep production no-go")
-    require((ROOT / "codex" / "hooks" / "harness_guard.py").read_bytes()
-            == (Path.home() / ".codex" / "hooks" / "harness_guard.py").read_bytes(),
-            "payload-capability false branch must not introduce an unsynced hook implementation")
+    source_guard = (ROOT / "codex" / "hooks" / "harness_guard.py").read_bytes()
+    require(b"plan_governor" not in source_guard,
+            "payload-capability false branch must not introduce source hook integration")
+    runtime_guard = Path.home() / ".codex" / "hooks" / "harness_guard.py"
+    if runtime_guard.exists():
+        require(source_guard == runtime_guard.read_bytes(),
+                "payload-capability false branch must not introduce an unsynced hook implementation")
     print("[PASS] plan governor skill and capability branch contract")
 
 
