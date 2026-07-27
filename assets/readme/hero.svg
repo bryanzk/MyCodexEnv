@@ -1,0 +1,60 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 560" role="img" aria-labelledby="title desc">
+  <title id="title">MyCodexEnv</title>
+  <desc id="desc">A reproducible control plane that syncs one Git repository into verified Codex and Claude runtimes.</desc>
+
+  <rect width="1200" height="560" rx="32" fill="#0b0f14"/>
+  <rect x="1" y="1" width="1198" height="558" rx="31" fill="none" stroke="#26313d" stroke-width="2"/>
+
+  <g fill="#7f8b99" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="18" letter-spacing="2">
+    <text x="64" y="64">REPRODUCIBLE AGENT ENVIRONMENT</text>
+    <text x="1018" y="64">MACOS · ARM64</text>
+  </g>
+
+  <g font-family="-apple-system, BlinkMacSystemFont, Segoe UI, PingFang SC, sans-serif">
+    <text x="60" y="166" fill="#f4f1ea" font-size="76" font-weight="750">MyCodexEnv</text>
+    <text x="64" y="220" fill="#c5ced8" font-size="28" font-weight="520">One repository. One bootstrap.</text>
+    <text x="64" y="258" fill="#c5ced8" font-size="28" font-weight="520">Two verified agent runtimes.</text>
+  </g>
+
+  <g transform="translate(64 324)">
+    <rect width="496" height="156" rx="18" fill="#111821" stroke="#2b3948" stroke-width="2"/>
+    <circle cx="28" cy="28" r="6" fill="#ff6b6b"/>
+    <circle cx="50" cy="28" r="6" fill="#f5c451"/>
+    <circle cx="72" cy="28" r="6" fill="#52d273"/>
+    <text x="28" y="78" fill="#7f8b99" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="19">$ git clone bryanzk/MyCodexEnv</text>
+    <text x="28" y="116" fill="#f4f1ea" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="23">$ ./bootstrap.sh</text>
+    <rect x="28" y="132" width="216" height="3" rx="1.5" fill="#48d7c5"/>
+  </g>
+
+  <g transform="translate(650 112)" font-family="ui-monospace, SFMono-Regular, Menlo, monospace">
+    <rect width="486" height="368" rx="24" fill="#0f151d" stroke="#2b3948" stroke-width="2"/>
+
+    <text x="32" y="48" fill="#7f8b99" font-size="17" letter-spacing="1.8">SOURCE OF TRUTH</text>
+    <rect x="32" y="70" width="422" height="64" rx="12" fill="#151e28"/>
+    <text x="56" y="111" fill="#f4f1ea" font-size="24">repo/</text>
+    <text x="152" y="109" fill="#7f8b99" font-size="18">rules · skills · hooks · policy</text>
+
+    <path d="M243 142 V174" stroke="#647386" stroke-width="2"/>
+    <path d="M237 168 L243 176 L249 168" fill="none" stroke="#647386" stroke-width="2"/>
+
+    <rect x="32" y="184" width="196" height="82" rx="14" fill="#11242a" stroke="#48d7c5" stroke-width="2"/>
+    <text x="54" y="218" fill="#48d7c5" font-size="17">CODEX</text>
+    <text x="54" y="247" fill="#f4f1ea" font-size="22">~/.codex</text>
+
+    <rect x="258" y="184" width="196" height="82" rx="14" fill="#20182c" stroke="#ad86ff" stroke-width="2"/>
+    <text x="280" y="218" fill="#ad86ff" font-size="17">CLAUDE</text>
+    <text x="280" y="247" fill="#f4f1ea" font-size="22">~/.claude</text>
+
+    <path d="M130 276 V304 M356 276 V304 M130 304 H356" fill="none" stroke="#647386" stroke-width="2"/>
+    <path d="M243 304 V322" stroke="#647386" stroke-width="2"/>
+
+    <rect x="92" y="322" width="302" height="22" rx="11" fill="#163122"/>
+    <circle cx="112" cy="333" r="5" fill="#52d273"/>
+    <text x="132" y="339" fill="#8be7a1" font-size="16">FRESH VERIFICATION · PASS</text>
+  </g>
+
+  <g transform="translate(64 520)">
+    <rect width="1072" height="1" fill="#26313d"/>
+    <text x="0" y="24" fill="#647386" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="15">GIT-CONTROLLED CONFIGURATION · LOCAL CREDENTIALS STAY LOCAL · EVIDENCE OVER ASSUMPTION</text>
+  </g>
+</svg>

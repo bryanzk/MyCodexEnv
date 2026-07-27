@@ -14,13 +14,13 @@ Stable rules belong in `AGENTS.md`, `README.md`, `docs/repo-index.md`, or
   - `codex/skills/delivery-harness-framework/SKILL.md`
 - blocked_sources: none
 - unsafe_inputs: none
-- next_safe_task: Review and checkpoint the 22 user-owned changes in the primary worktree, then reconcile their overlapping test_runner.py and scripts/verify_codex_env.sh edits with origin/main and fast-forward or rebase safely; do not force-update the dirty local main ref.
+- next_safe_task: Repeat Phase 0 only after the Codex host implements an enforceable PreToolUse Ask response; then resume Phase 2 TDD, Shadow-to-Ask rollout, narrow Enforce, and separately verified runtime activation
 - required_commands:
   - `python3 test_runner.py`
   - `git diff --check`
   - `./scripts/verify_codex_env.sh --repo-root "$(pwd)" --codex-home "$HOME/.codex" --claude-home "$HOME/.claude"`
-- latest_checkpoint: 2026-07-13T11:12:48-04:00 Merged the isolated freeze-review rebuild into origin/main and deleted the superseded local diverged branch
-- latest_verification: 2026-07-13T11:12:48-04:00 command=git push origin HEAD:main; git merge-base --is-ancestor 76d12ed origin/main; git ls-remote --heads origin codex/mce-20260608-freeze-review-policy; git show-ref refs/heads/codex/mce-20260608-freeze-review-policy; exit_code=0; key_output=origin/main=ef3e6994925742f9047101e97161e5b3247c4323 contains implementation 76d12ed; old branch absent locally and remotely
+- latest_checkpoint: 2026-07-26T20:57:35-04:00 Runtime Plan Governor Phase 0 repeated with real desktop and on-request CLI dispatch probes: command marker is observable and deny is enforceable, but PreToolUse ask is unsupported and fails open; keep payload_capable=false, Shadow-only source, and Production no-go
+- latest_verification: 2026-07-26T20:57:35-04:00 command=python3 test_runner.py; git diff --check; python3 scripts/check_surfaces.py --repo-root "$(pwd)" --check-public-nav; python3 scripts/check_skill_compatibility.py --repo-root "$(pwd)"; exit_code=0; key_output=ran=90 passed=90 skipped=0 failed=0; surfaces manifest consistent; skill compatibility errors=0; diff check clean
 
 ## State Log
 
@@ -1935,3 +1935,58 @@ Stable rules belong in `AGENTS.md`, `README.md`, `docs/repo-index.md`, or
 - blockers:
   - Primary local main worktree still contains 22 user-owned dirty items and intentionally remains behind origin/main; it was not stashed, overwritten, or switched during isolated delivery.
 - next_safe_task: Review and checkpoint the 22 user-owned changes in the primary worktree, then reconcile their overlapping test_runner.py and scripts/verify_codex_env.sh edits with origin/main and fast-forward or rebase safely; do not force-update the dirty local main ref.
+
+### 2026-07-26T20:27:11-04:00
+- phase: handoff
+- event: checkpoint
+- summary: Runtime Plan Governor v1 source implementation validated; Phase 0 payload_capable=false keeps Shadow-only source and Production no-go
+- git:
+  - branch: main
+  - latest_commit: 989fb27
+  - dirty_status: dirty
+  - dirty_count: 17
+- changed_surfaces:
+  - `scripts/plan_governor.py`
+  - `codex/runtime/evidence/plan-scope-envelope.schema.json`
+  - `codex/runtime/evidence/plan-finding-decision.schema.json`
+  - `codex/runtime/evidence/plan-governor-receipt.schema.json`
+  - `codex/runtime/tool-policy.json`
+  - `codex/skills/planner/SKILL.md`
+  - `codex/skills/committee-review-loop/SKILL.md`
+  - `codex/skills/committee-review-loop/evals/evals.json`
+  - `test_runner.py`
+  - `README.md`
+  - `docs/HARNESS_RUNTIME.md`
+  - `docs/AGENT_HARNESS_STATUS.md`
+  - `docs/repo-index.md`
+  - `docs/surfaces.json`
+  - `docs/harness-state.md`
+- verification:
+  - command: `python3 test_runner.py`
+  - exit_code: 0
+  - key_output: ran=90 passed=90 skipped=0 failed=0; [PASS] all tests
+- blockers:
+  - Phase 0 could not prove an observable dispatch message marker or response handshake; Phase 2, Ask/Enforce, Phase 6, and runtime activation remain stopped
+- next_safe_task: Review the source-stage diff; repeat Phase 0 only after the host exposes an actual configured planning/review dispatch message marker and supported response handshake, otherwise keep Shadow and Production no-go
+
+### 2026-07-26T20:57:35-04:00
+- phase: handoff
+- event: checkpoint
+- summary: Runtime Plan Governor Phase 0 repeated with real desktop and on-request CLI dispatch probes: command marker is observable and deny is enforceable, but PreToolUse ask is unsupported and fails open; keep payload_capable=false, Shadow-only source, and Production no-go
+- git:
+  - branch: main
+  - latest_commit: 989fb27
+  - dirty_status: dirty
+  - dirty_count: 19
+- changed_surfaces:
+  - `codex/runtime/tool-policy.json`
+  - `docs/HARNESS_RUNTIME.md`
+  - `docs/AGENT_HARNESS_STATUS.md`
+  - `docs/harness-state.md`
+- verification:
+  - command: `python3 test_runner.py; git diff --check; python3 scripts/check_surfaces.py --repo-root "$(pwd)" --check-public-nav; python3 scripts/check_skill_compatibility.py --repo-root "$(pwd)"`
+  - exit_code: 0
+  - key_output: ran=90 passed=90 skipped=0 failed=0; surfaces manifest consistent; skill compatibility errors=0; diff check clean
+- blockers:
+  - Current official Codex PreToolUse parser explicitly treats permissionDecision=ask as unsupported and fail-open; actual desktop and approval_policy=on-request CLI probes both reached argparse instead of requesting approval
+- next_safe_task: Repeat Phase 0 only after the Codex host implements an enforceable PreToolUse Ask response; then resume Phase 2 TDD, Shadow-to-Ask rollout, narrow Enforce, and separately verified runtime activation

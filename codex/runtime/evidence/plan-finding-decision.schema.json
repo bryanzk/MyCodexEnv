@@ -1,0 +1,97 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.local/codex/harness/evidence/plan-finding-decision.schema.json",
+  "title": "Plan Governor Finding Decision",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "finding_id",
+    "category",
+    "claim",
+    "in_scope",
+    "evidence_level",
+    "affected_asset",
+    "required_preconditions",
+    "likelihood",
+    "impact",
+    "irreversibility",
+    "manual_control_available",
+    "manual_control_adequate",
+    "complexity_delta",
+    "disposition",
+    "rationale",
+    "owner",
+    "future_trigger",
+    "status"
+  ],
+  "properties": {
+    "finding_id": {"type": "string", "minLength": 1, "maxLength": 128},
+    "category": {"type": "string", "minLength": 1, "maxLength": 128},
+    "claim": {"type": "string", "minLength": 1, "maxLength": 2048},
+    "in_scope": {"type": "boolean"},
+    "evidence_level": {
+      "type": "string",
+      "enum": [
+        "observed",
+        "reproduced",
+        "provider_or_standard_documented",
+        "reasoned_current_scope_counterexample",
+        "speculative"
+      ]
+    },
+    "affected_asset": {"type": "string", "minLength": 1, "maxLength": 512},
+    "required_preconditions": {
+      "type": "array",
+      "items": {"type": "string", "minLength": 1, "maxLength": 512}
+    },
+    "likelihood": {"type": "string", "enum": ["low", "medium", "high", "unknown"]},
+    "impact": {"type": "string", "enum": ["low", "medium", "high", "catastrophic"]},
+    "irreversibility": {"type": "boolean"},
+    "manual_control_available": {"type": "boolean"},
+    "manual_control_adequate": {"type": "boolean"},
+    "complexity_delta": {"$ref": "#/$defs/architectureDelta"},
+    "disposition": {
+      "type": "string",
+      "enum": [
+        "MITIGATE_IN_V1",
+        "MANUAL_CONTROL",
+        "ACCEPTED_RISK",
+        "DEFERRED",
+        "UNSUPPORTED",
+        "NEEDS_EVIDENCE",
+        "SCOPE_DECISION_REQUIRED",
+        "SCOPE_REBASE_REQUIRED"
+      ]
+    },
+    "rationale": {"type": "string", "maxLength": 2048},
+    "owner": {"type": "string", "maxLength": 256},
+    "future_trigger": {"type": "string", "maxLength": 512},
+    "status": {"type": "string", "enum": ["terminal", "non_terminal"]}
+  },
+  "$defs": {
+    "architectureDelta": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "new_services",
+        "new_trust_roots",
+        "new_identity_systems",
+        "new_state_machines",
+        "new_states",
+        "new_operational_roles",
+        "new_external_dependencies",
+        "repeated_finding_category_count"
+      ],
+      "properties": {
+        "new_services": {"type": "integer", "minimum": 0},
+        "new_trust_roots": {"type": "integer", "minimum": 0},
+        "new_identity_systems": {"type": "integer", "minimum": 0},
+        "new_state_machines": {"type": "integer", "minimum": 0},
+        "new_states": {"type": "integer", "minimum": 0},
+        "new_operational_roles": {"type": "integer", "minimum": 0},
+        "new_external_dependencies": {"type": "integer", "minimum": 0},
+        "repeated_finding_category_count": {"type": "integer", "minimum": 0}
+      }
+    }
+  }
+}

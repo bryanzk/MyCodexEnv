@@ -14,6 +14,8 @@ description: 复杂功能与重构的规划专家，用于需求分析、架构�
 1. 需求分析
    - 明确目标、范围、输入/输出、非功能约束
    - 列出验收标准与假设
+   - 复杂计划在委员会评审前声明 supported scenario、non-goals、product stage、risk policy、manual controls 与 complexity budget
+   - 无法从用户消息诚实确认范围时，记录 `SCOPE_DECISION_REQUIRED`，不得把推测写成 frozen scope
 2. 架构/代码梳理
    - 快速定位相关模块与类似实现
    - 识别可复用模式与潜在影响面
@@ -30,7 +32,8 @@ description: 复杂功能与重构的规划专家，用于需求分析、架构�
 
 - 计划必须包含：需求、架构变更点、步骤、测试、风险、成功标准
 - 使用明确文件路径与具体动作
-- 计划粒度以 1-2 天可完成的步骤为宜
+- 实施与 rollout 只按 evidence gate 推进，不使用工期或日历限制替代完成条件
+- 复杂委员会计划必须提供 frozen scope envelope；lost、malformed 或 expired scope 返回 `SCOPE_DECISION_REQUIRED`
 
 ## 参考资料
 

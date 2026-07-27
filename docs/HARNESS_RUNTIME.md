@@ -118,6 +118,40 @@ Evidence helper behavior:
 - state logs should promote compact decision evidence summaries instead of
   copying every routine gate receipt into handoff state.
 
+## Runtime Plan Governor Contract
+
+Runtime Plan Governor v1 is a local stdlib CLI at `scripts/plan_governor.py`.
+It freezes a bounded scope envelope, evaluates structured findings, records
+complexity drift, and emits time-bound receipts. Its three managed schemas are:
+
+- `codex/runtime/evidence/plan-scope-envelope.schema.json`
+- `codex/runtime/evidence/plan-finding-decision.schema.json`
+- `codex/runtime/evidence/plan-governor-receipt.schema.json`
+
+The CLI exposes only `freeze`, `evaluate-round`, `status`, and
+`verify-receipt`. State lives under
+`~/.codex/harness/plan-governor/<session-binding>/state.json`, uses owner-only
+permissions and atomic replacement, and stores only hashes, enums, counters,
+and bounded reason codes. Governor decisions reuse
+`event_type=guardrail_decision`; no evidence event type or taxonomy is added.
+
+Phase 0 on 2026-07-26 established `payload_capable=false`. A real Bash dispatch
+probe exposed `session_id`, `cwd`, tool name, and the exact command marker, and
+an enforceable `deny` was demonstrated after emitting the current Codex wire
+shape. However, both the desktop session and an independent
+`approval_policy=on-request` CLI session executed a command after the hook
+returned `permissionDecision=ask`. The current official Codex implementation
+also classifies that decision as unsupported and fails open. Because Ask is a
+required response capability, the managed source fixes
+`plan_governor.mode=shadow` and
+`production_status=no_go`. Phase 2 hook integration, Ask/Enforce behavior, and
+runtime activation are not implemented in this branch. Shadow classification
+and evidence never alter an existing tool result.
+
+`source_implemented`, `rollout_observed`, and `runtime_active` are independent
+milestones. Source tests or temporary-home evidence do not imply either rollout
+observation or runtime activation.
+
 ## DHF Packet Contract
 `codex/runtime/dhf-packet.schema.json` is the incubation contract for future DHF
 extraction. It defines the smallest portable packet a consumer can exchange
