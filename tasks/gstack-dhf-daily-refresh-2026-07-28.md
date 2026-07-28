@@ -64,7 +64,42 @@
 
 ## Closeout
 
-- automation_branch_push: `pending`
-- main_auto_merge: `pending`
-- local_main_safe_sync: `pending`
+- automation_branch_push: `pushed`
+  - branch: `automation/gstack-dhf-daily-refresh`
+  - status: 首次 closeout commit 已推送到 automation branch；本文件所在定稿 commit 推送后，最终 SHA 以 automation memory 与最终回执为准。
+- main_auto_merge: `merged`
+  - helper: `python3 scripts/merge_gstack_refresh_if_safe.py --repo-root "$(pwd)" --apply --verified --json`
+  - first_main_before: `6b28e549131d8e092e3661c5ea391faae1ffbc92`
+  - first_main_after: `032ec52fa0bb1412cef005e6eb1f3c1437b4b9bb`
+  - reason: `ahead_only`
+- local_main_safe_sync: `skipped`
+  - helper: `python3 scripts/sync_local_main_if_safe.py --repo-root /Users/kezheng/Codes/CursorDeveloper/MyCodexEnv --apply --json`
+  - reason: `dirty_worktree`
+  - detail: `README.md、codex/AGENTS.md、docs/CODEX_ENV_REPRODUCTION.md、test_runner.py 以及 docs/decisions/2026-07-28-runtime-plan-governor-runtime-blocker-review.md 等用户工作树改动仍在；helper 未做任何手动同步`
 
+## Closeout Evidence
+
+- command: `git add tasks/gstack-dhf-daily-refresh-2026-07-28.md && git commit -m "chore: add 2026-07-28 daily refresh report"`
+  exit_code: `0`
+  key_output: `[automation/gstack-dhf-daily-refresh 032ec52] chore: add 2026-07-28 daily refresh report`
+  timestamp: `2026-07-28T13:05:59Z`
+- command: `git fetch origin && git rebase origin/main && git push --force-with-lease origin HEAD:refs/heads/automation/gstack-dhf-daily-refresh`
+  exit_code: `0`
+  key_output: `Current branch automation/gstack-dhf-daily-refresh is up to date. ; 81e921d..032ec52  HEAD -> automation/gstack-dhf-daily-refresh`
+  timestamp: `2026-07-28T13:06:11Z`
+- command: `python3 scripts/merge_gstack_refresh_if_safe.py --repo-root "$(pwd)" --apply --verified --json`
+  exit_code: `0`
+  key_output: `{"status":"merged","reason":"ahead_only","main_before":"6b28e549131d8e092e3661c5ea391faae1ffbc92","main_after":"032ec52fa0bb1412cef005e6eb1f3c1437b4b9bb"}`
+  timestamp: `2026-07-28T13:06:23Z`
+- command: `python3 scripts/sync_local_main_if_safe.py --repo-root /Users/kezheng/Codes/CursorDeveloper/MyCodexEnv --apply --json`
+  exit_code: `0`
+  key_output: `{"status":"skipped","reason":"dirty_worktree","current_branch":"main"}`
+  timestamp: `2026-07-28T13:06:23Z`
+- command: `git ls-remote origin refs/heads/automation/gstack-dhf-daily-refresh refs/heads/main`
+  exit_code: `0`
+  key_output: `032ec52 refs/heads/automation/gstack-dhf-daily-refresh ; 032ec52 refs/heads/main`
+  timestamp: `2026-07-28T13:06:35Z`
+- command: `git -C /Users/kezheng/Codes/CursorDeveloper/MyCodexEnv status --short --branch && git -C /Users/kezheng/Codes/CursorDeveloper/MyCodexEnv rev-parse --short=7 HEAD`
+  exit_code: `0`
+  key_output: `## main...origin/main ; M README.md ; M codex/AGENTS.md ; M docs/CODEX_ENV_REPRODUCTION.md ; M test_runner.py ; ?? docs/decisions/2026-07-28-runtime-plan-governor-runtime-blocker-review.md ; 6b28e54`
+  timestamp: `2026-07-28T13:06:35Z`
