@@ -14,6 +14,7 @@ from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
 import os
+import time
 import traceback
 
 
@@ -37,6 +38,7 @@ HARNESS_ENV_PROBE = ROOT / "scripts" / "harness_env_probe.py"
 CODEX_SUBCONSCIOUS = ROOT / "scripts" / "codex_subconscious.py"
 HARNESS_EVAL = ROOT / "scripts" / "harness_eval.py"
 HARNESS_TRANSITION = ROOT / "scripts" / "harness_transition.py"
+COMPACTION_PROBE = ROOT / "codex" / "hooks" / "compaction_probe.py"
 CHECK_DHF_CONSUMER_COMPATIBILITY = ROOT / "scripts" / "check_dhf_consumer_compatibility.py"
 HEADROOM_FILTER = ROOT / "scripts" / "headroom_filter.py"
 AUDIT_SKILLS = ROOT / "scripts" / "audit_skills.py"
@@ -5222,6 +5224,155 @@ def test_harness_transition_record_and_query():
     print("[PASS] harness transition record and query")
 
 
+def test_compaction_probe_session_resolution():
+    with tempfile.TemporaryDirectory() as tmp:
+        tmp_path = Path(tmp)
+        codex_home = tmp_path / ".codex"
+        sessions = codex_home / "sessions" / "2026" / "08" / "02"
+        sessions.mkdir(parents=True)
+        exact_cwd = tmp_path / "exact-repo"
+        heuristic_cwd = tmp_path / "heuristic-repo"
+        exact_cwd.mkdir()
+        heuristic_cwd.mkdir()
+
+        def session_text(session_id, cwd, compactions):
+            rows = [
+                {
+                    "timestamp": "2026-08-02T20:00:00Z",
+                    "type": "session_meta",
+                    "payload": {"id": session_id, "cwd": str(cwd), "timestamp": "2026-08-02T20:00:00Z"},
+                }
+            ]
+            rows.extend({"type": "compacted", "payload": {}} for _ in range(compactions))
+            return "\n".join(json.dumps(row) for row in rows) + "\n"
+
+        exact = sessions / "rollout-2026-08-02-exact-session.jsonl"
+        write(exact, session_text("exact-session", exact_cwd, 2))
+        old_mtime = time.time() - 600
+        os.utime(exact, (old_mtime, old_mtime))
+        env = {**os.environ, "CODEX_HOME": str(codex_home), "COMPACTION_PROBE_MTIME_WINDOW_SECONDS": "120"}
+
+        started = time.perf_counter()
+        code, out, err = run_with_input(
+            [sys.executable, str(COMPACTION_PROBE)],
+            json.dumps({"session_id": "exact-session", "cwd": str(exact_cwd)}),
+            env=env,
+        )
+        elapsed = time.perf_counter() - started
+        require(code == 0 and err == "", f"exact-id probe should fail silently only on error: {err or out}")
+        exact_response = json.loads(out)
+        require("compaction_ordinal=2 (host-observed)" in exact_response["hookSpecificOutput"]["additionalContext"],
+                "exact session id should inject its host-observed ordinal")
+        require(elapsed < 0.2, f"exact-id probe should stay near the 100ms budget, got {elapsed:.3f}s")
+
+        heuristic = sessions / "rollout-2026-08-02-heuristic-session.jsonl"
+        write(heuristic, session_text("heuristic-session", heuristic_cwd, 1))
+        now = time.time()
+        os.utime(heuristic, (now, now))
+        code, out, err = run_with_input(
+            [sys.executable, str(COMPACTION_PROBE)],
+            json.dumps({"cwd": str(heuristic_cwd)}),
+            env=env,
+        )
+        require(code == 0 and err == "", f"unique heuristic probe should succeed silently: {err or out}")
+        heuristic_response = json.loads(out)
+        require("compaction_ordinal=1 (host-observed)" in heuristic_response["hookSpecificOutput"]["additionalContext"],
+                "cwd + fresh mtime + unique candidate should inject")
+
+        ambiguous = sessions / "rollout-2026-08-02-ambiguous-session.jsonl"
+        write(ambiguous, session_text("ambiguous-session", heuristic_cwd, 4))
+        os.utime(ambiguous, (now, now))
+        code, out, err = run_with_input(
+            [sys.executable, str(COMPACTION_PROBE)],
+            json.dumps({"cwd": str(heuristic_cwd)}),
+            env=env,
+        )
+        require(code == 0 and json.loads(out) == {"continue": True},
+                "ambiguous heuristic candidates must inject nothing")
+
+        code, out, err = run_with_input(
+            [sys.executable, str(COMPACTION_PROBE)],
+            json.dumps({"transcript_path": str(heuristic)}),
+            env=env,
+        )
+        require(code == 0 and json.loads(out) == {"continue": True},
+                "payload without session id must not bypass missing cwd via transcript path")
+
+        code, out, err = run_with_input([sys.executable, str(COMPACTION_PROBE)], "not-json", env=env)
+        require(code == 0 and err == "" and json.loads(out) == {"continue": True},
+                "malformed payload must fail silently without blocking the prompt")
+        evidence_text = "\n".join(
+            path.read_text(encoding="utf-8")
+            for path in (codex_home / "harness" / "evidence").glob("*.jsonl")
+        )
+        require("probe_inconclusive" in evidence_text, "inconclusive resolution should leave routine evidence")
+
+        hooks = json.loads((ROOT / "codex" / "hooks.json").read_text(encoding="utf-8"))
+        commands = [entry["command"] for entry in hooks["hooks"]["UserPromptSubmit"][0]["hooks"]]
+        require("/usr/bin/python3 ~/.codex/hooks/compaction_probe.py" in commands,
+                "UserPromptSubmit source chain should register the compaction probe")
+        source = COMPACTION_PROBE.read_text(encoding="utf-8")
+        require("from compaction_counter import compaction_event_increment" in source,
+                "prompt probe should consume the shared compaction counter")
+
+    print("[PASS] compaction probe session resolution")
+
+
+def test_compaction_probe_incremental_scan():
+    spec = importlib.util.spec_from_file_location("compaction_probe_test", COMPACTION_PROBE)
+    require(spec is not None and spec.loader is not None, "compaction probe should be importable")
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+
+    with tempfile.TemporaryDirectory() as tmp:
+        tmp_path = Path(tmp)
+        session_file = tmp_path / "large-session.jsonl"
+        state_file = tmp_path / "harness" / "probe_state.json"
+        meta = json.dumps({"type": "session_meta", "payload": {"id": "large", "cwd": str(tmp_path)}}) + "\n"
+        padding = json.dumps({"type": "event_msg", "payload": {"text": "x" * 2_000_000}}) + "\n"
+        compacted = json.dumps({"type": "compacted", "payload": {}}) + "\n"
+        write(session_file, meta + padding + compacted + compacted)
+
+        first = module.scan_session_incremental(session_file, state_file)
+        require(first["scan_mode"] == "full_missing_state" and first["compaction_ordinal"] == 2,
+                f"missing state should trigger one full rebuild: {first}")
+        require(first["bytes_read"] == session_file.stat().st_size, "initial rebuild should read the full fixture once")
+
+        append_bytes = compacted.encode("utf-8")
+        with session_file.open("ab") as handle:
+            handle.write(append_bytes)
+        second = module.scan_session_incremental(session_file, state_file)
+        require(second["scan_mode"] == "incremental" and second["compaction_ordinal"] == 3,
+                f"steady state should count only appended bytes: {second}")
+        require(second["bytes_read"] == len(append_bytes),
+                "large-fixture incremental path must read exactly the append, not the full file")
+        require(second["bytes_read"] < first["bytes_read"] // 1000,
+                "incremental read should be materially smaller than the 2MB fixture")
+        state = json.loads(state_file.read_text(encoding="utf-8"))
+        state_key = str(session_file.resolve())
+        require(state["sessions"][state_key]["offset"] == session_file.stat().st_size,
+                "probe state should cache the last complete-line offset by absolute session path")
+
+        write(session_file, meta + compacted)
+        shrunk = module.scan_session_incremental(session_file, state_file)
+        require(shrunk["scan_mode"] == "full_shrunk" and shrunk["compaction_ordinal"] == 1,
+                "file shrink should permit one full rescan and rebuild")
+
+        write(state_file, "{corrupt\n")
+        corrupt = module.scan_session_incremental(session_file, state_file)
+        require(corrupt["scan_mode"] == "full_corrupt_state" and corrupt["compaction_ordinal"] == 1,
+                "corrupt state should permit one full rescan and rebuild")
+        rebuilt = json.loads(state_file.read_text(encoding="utf-8"))
+        require(rebuilt["sessions"][state_key]["compaction_ordinal"] == 1,
+                "corrupt-state recovery should persist a valid rebuilt state")
+
+        source = COMPACTION_PROBE.read_text(encoding="utf-8")
+        require(".seek(offset)" in source and ".read_bytes()" not in source,
+                "incremental implementation must seek to the cached offset and avoid Path.read_bytes full scans")
+
+    print("[PASS] compaction probe incremental scan")
+
+
 def test_harness_recovery_smoke():
     with tempfile.TemporaryDirectory() as tmp:
         tmp_path = Path(tmp)
@@ -7208,6 +7359,8 @@ TESTS = [
     test_subconscious_reflect,
     test_harness_eval_tier1,
     test_harness_transition_record_and_query,
+    test_compaction_probe_session_resolution,
+    test_compaction_probe_incremental_scan,
     test_harness_recovery_smoke,
     test_harness_env_probe,
     test_sync_claude_injects_integration_block,

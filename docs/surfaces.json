@@ -103,6 +103,11 @@
       "audience": ["runtime", "codex"]
     },
     {
+      "path": "codex/hooks.json",
+      "role": "source lifecycle hook registration chain",
+      "audience": ["runtime", "codex"]
+    },
+    {
       "path": "codex/hooks/harness_guard.py",
       "role": "PreToolUse guard with legacy block shape and tier-tagged decision reasons",
       "audience": ["runtime", "codex"]
@@ -110,6 +115,11 @@
     {
       "path": "codex/hooks/compaction_counter.py",
       "role": "shared decoded top-level compacted event counter",
+      "audience": ["runtime", "codex"]
+    },
+    {
+      "path": "codex/hooks/compaction_probe.py",
+      "role": "incremental UserPromptSubmit host-observed compaction ordinal probe",
       "audience": ["runtime", "codex"]
     },
     {

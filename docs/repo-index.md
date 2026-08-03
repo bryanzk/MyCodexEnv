@@ -49,8 +49,10 @@
 - `codex/runtime/evidence/plan-finding-decision.schema.json`: plan governor structured finding decision schema.
 - `codex/runtime/evidence/plan-governor-receipt.schema.json`: plan governor bounded round receipt schema.
 - `codex/hooks/`: Codex lifecycle hooks copied to `~/.codex/hooks/`.
+- `codex/hooks.json`: source lifecycle-hook registration chain deployed only by approved sync.
 - `codex/hooks/harness_guard.py`: PreToolUse guard with legacy block wire shape and risk-tier-tagged decision reasons.
 - `codex/hooks/compaction_counter.py`: shared decoded top-level `compacted` event counter for scanner and prompt probe.
+- `codex/hooks/compaction_probe.py`: incremental UserPromptSubmit host-observed compaction ordinal probe.
 - `codex/hooks/harness_observer.py`: PostToolUse evidence observer hook.
 - `codex/hooks/model_router.py`: prompt/subtask complexity router for cheapest quality-safe model recommendations.
 - `codex/hooks/dhf_preprompt.py`: generic `UserPromptSubmit` DHF dispatcher; malformed or missing-cwd payloads continue, opt-out wins first, non-ShipQ prompts need explicit generic activation, and ShipQ cwd delegates lazily to the adapter.

@@ -138,6 +138,21 @@ while retaining the strict three-condition heuristic for payloads without it.
 Because no usage/token field was observed, R4 must use only the host-observed
 compaction ordinal as its pressure signal and must not synthesize capacity.
 
+W2b implements that source-stage probe in `codex/hooks/compaction_probe.py` and
+registers it in the `UserPromptSubmit` chain without deploying it. Resolution
+prefers an exact session id. Without an id it injects only when the payload cwd
+matches session metadata, the file mtime is inside the configured window, and
+exactly one candidate remains; otherwise it returns continue-only and records
+routine `probe_inconclusive` evidence.
+
+The per-session cache is `~/.codex/harness/probe_state.json`, keyed by canonical
+session-file path. Missing/corrupt state, a missing entry, file replacement, or
+file shrink permits one full scan and rebuild. Stable rounds seek to the cached
+complete-line offset and read only appended bytes. Partial trailing lines remain
+unconsumed until completed. Every successful match injects only
+`compaction_ordinal=N (host-observed)`; exceptions and budget overruns are
+silent, and no usage estimate is created.
+
 ## Evidence Contract
 Evidence events are JSON objects that match `codex/runtime/evidence.schema.json`.
 That file remains the compatibility entrypoint. Focused schemas live under
