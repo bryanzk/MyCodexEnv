@@ -61,19 +61,23 @@ Thread discipline and old-session triage are guaranteed in three layers:
    global contract: each task freezes a `THREAD_DISCIPLINE_V1` anchor envelope
    (one task, one evidence-backed `repo_anchor`, one `mode_anchor`, plus an
    inherited `automatic_transition_count`) and carries a
-   `THREAD_DISCIPLINE_SUMMARY_V1` marker across summaries. On each confirmed
-   anchor mismatch, the original task may use only project lookup, task creation,
-   and task renaming to create exactly one successor task, incrementing the
-   inherited count. The chain stops after three automatic task creations; an
-   unknown mismatch, exhausted count, unavailable lifecycle tools, unresolved
-   project identity, or creation failure falls back to a terminal chat handoff.
-   A confirmed first compaction refreshes a concise checkpoint; a confirmed
-   second compaction, or an unknown/conflicting compaction ordinal, stops normal
-   work and returns a terminal chat handoff. Chat handoff is the default: a
-   repo-native handoff file requires the original task to have explicitly
-   authorized the exact documentation path, and archive or apply authorization
-   does not imply file-write authorization. Tasks are never automatically
-   archived or deleted.
+   `THREAD_DISCIPLINE_SUMMARY_V1` marker across summaries. A confirmed anchor
+   mismatch keeps its existing bounded successor sequence. A confirmed second
+   compaction now stops normal work, builds a complete standalone handoff, and
+   may create exactly one successor only when the registered project, known
+   mode, lifecycle tools, transition count, trusted compaction identity, and
+   idempotency state are all safe and unambiguous. The child inherits the repo
+   and mode, increments `automatic_transition_count`, resets its task-local
+   `compaction_ordinal` to `0`, and records `parent_compaction_ordinal: 2`.
+   Anchor-mismatch and compaction successors share the same three-transition
+   chain limit. Unknown or conflicting state, an unresolved project, unavailable
+   lifecycle tools, exhausted count, uncertain prior creation, or creation
+   failure falls back to the complete terminal chat handoff. A rename failure
+   retains the created task and never creates a replacement. A confirmed first
+   compaction remains checkpoint-only. Chat handoff is the default: a repo-native
+   handoff file requires the original task to have explicitly authorized the
+   exact documentation path, and archive or apply authorization does not imply
+   file-write authorization. Tasks are never automatically archived or deleted.
 2. **Deterministic weekly audit (report-only).** The scanner
    `codex/skills/codex-fluent/scripts/report_active_sessions.py` reads only
    `CODEX_HOME/sessions/**/*.jsonl` and `CODEX_HOME/session_index.jsonl`,
@@ -98,11 +102,15 @@ Thread discipline and old-session triage are guaranteed in three layers:
    operationally usable and Markdown metadata is escaped, but reports can
    still contain thread titles, IDs, and local paths. Do not publish or paste
    them into shared systems without review and redaction.
-3. **Future Desktop lifecycle hard trigger.** An immediate hard guarantee at
-   compaction time requires a future Codex Desktop lifecycle API exposing the
-   thread ID and compaction ordinal. The weekly scanner is a deterministic
-   audit, not a lifecycle hook, and is not represented as an equivalent
-   trigger.
+3. **Desktop lifecycle runtime boundary.** This repository does not contain an
+   executable compaction detector, durable lifecycle state machine, or direct
+   `create_thread` caller. It supplies agent policy that can use lifecycle tools
+   exposed by the Codex Desktop host when the host provides a trusted parent task
+   identity and second-compaction event. Therefore source tests prove the policy
+   contract, not automatic runtime activation. A hard guarantee still requires
+   host-observed compaction metadata plus idempotent lifecycle state. The weekly
+   scanner is a deterministic audit, not a lifecycle hook, and is not represented
+   as an equivalent trigger.
 
 Source and runtime ownership: `codex/AGENTS.md` and
 `codex/skills/codex-fluent` are the repo sources; `~/.codex/AGENTS.md` and
@@ -114,6 +122,14 @@ appendix that runs the scanner in report-only mode with
 `--older-than-days 30 --limit 30`, displays the primary size ranking and the
 bounded `returned_handoff_queue`, and never calls apply behavior or archives
 or deletes anything.
+
+For Thread Discipline specifically, `codex/AGENTS.md` is the unique policy
+source of truth. `scripts/sync_codex_home.sh` (and `bootstrap.sh` through that
+sync path) copies it to `~/.codex/AGENTS.md`; a new Codex task then consumes that
+runtime copy as its global instructions. `test_runner.py` verifies the policy
+contract and `scripts/verify_codex_env.sh` checks source/runtime byte parity.
+None of those repository entries itself observes a compaction event or invokes
+the Codex Desktop lifecycle API.
 
 ## Related Documentation
 - `README.md`: top-level quick start and Harness Runtime overview.

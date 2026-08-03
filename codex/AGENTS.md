@@ -60,6 +60,55 @@
   from a cwd basename.
 - mode_anchor is exactly one of plan, review, implementation, report-only, or
   handoff. Research and verification do not change mode_anchor.
+- COMPACTION_SUCCESSOR_SEQUENCE_V1
+  1. on a confirmed second compaction, stop normal work and preserve the trusted
+     parent compaction state; a missing, conflicting, or untrusted ordinal must
+     fail closed without lifecycle probing
+  2. create a complete, independently executable bounded handoff containing the
+     frozen anchors, completed work, exact artifacts, constraints, verification
+     evidence, one next-safe task, and the parent compaction provenance
+  3. establish the exact parent task ID and trusted compaction event identity,
+     derive a stable compaction_transition_key from both, and inspect
+     already-available lifecycle state before creation; the same parent task and
+     same compaction event cannot create more than one successor task. If state
+     confirms that this key already created a successor, return its existing
+     created-task directive and do not create another task; if existing state
+     cannot determine whether a successor was already created, set
+     next_action=terminal_chat_handoff and return the complete handoff
+  4. continue automatically only when repo_anchor resolves exactly to a
+     registered project, mode_anchor is known, task-lifecycle creation tools are
+     available, automatic_transition_count is less than 3, and lifecycle state
+     proves that compaction_transition_key has not already created a successor
+  5. use task-lifecycle tools only to resolve the exact registered project and
+     check the idempotency state; after this trigger, project listing, task
+     creation, task renaming, and returning the result are the only permitted
+     actions
+  6. create exactly one successor task with the complete handoff as its initial
+     prompt and run it in the registered project's local environment by default;
+     use a worktree only when the user explicitly requested one and the project
+     supports it
+  7. record compaction_ordinal: 0, parent_compaction_ordinal: 2, the inherited
+     repo_anchor and mode_anchor, compaction_transition_key,
+     automatic_transition_count + 1, and next_action=created_task in the child
+     handoff so the child starts a fresh task-local compaction lifecycle while
+     the cross-task transition chain remains traceable
+  8. rename the successor to <project>-<YYYYMMDD>-<summary>, where <project> is a
+     stable abbreviation proven by the direct request, repo instructions,
+     registered project metadata, or existing conforming task titles
+  9. return the created-task directive in the parent task and preserve the
+     compaction_transition_key with the created task identity; creation and
+     dispatch count as startup, so do not wait for successor execution unless
+     requested
+  10. if automatic_transition_count is already 3 or greater, the project cannot
+      be resolved exactly, the compaction state is missing, conflicting, or
+      untrusted, task-lifecycle creation tools are unavailable, task creation
+      fails, or idempotency state is uncertain, set
+      next_action=terminal_chat_handoff and return the complete handoff without
+      guessing or partially starting
+  11. if creation succeeds but renaming fails, return the created-task directive,
+      report the naming failure, retain the created successor and its
+      compaction_transition_key, and never create a replacement task for the same
+      compaction event
 - ANCHOR_MISMATCH_SEQUENCE_V1
   1. resolve request_repo and request_mode from direct request and already-available workspace evidence
   2. compare both values with the frozen anchors
@@ -90,18 +139,23 @@
       mismatch
 - The resolver must not probe or partially start the new direction. If available
   evidence cannot safely resolve either anchor, treat it as an unknown mismatch.
-- The automatic transition above is a standing, explicit authorization for up to
-  three automatic task creations across one inherited transition chain, with no
-  more than one new task per confirmed anchor mismatch. It does not authorize repo
-  inspection, implementation, external writes, or other new-direction work in the
-  original task. Project listing, task creation, and task renaming are the only
-  permitted tool calls after the mismatch is detected.
+- The automatic transitions above are a standing, explicit authorization for up
+  to three automatic task creations total across one inherited transition
+  chain. The shared limit covers both confirmed anchor mismatches and confirmed
+  second-compaction successors, with no more than one new task per confirmed
+  anchor mismatch and no more than one successor per confirmed compaction event.
+  They do not authorize repo inspection, implementation, external writes, or
+  other new-direction work in the parent task. The applicable sequence defines
+  the narrow lifecycle-tool allowlist after its trigger.
+- For ANCHOR_MISMATCH_SEQUENCE_V1, Project listing, task creation, and task
+  renaming are the only permitted tool calls after the mismatch is detected.
 - Carry THREAD_DISCIPLINE_SUMMARY_V1 with repo_anchor, mode_anchor,
   compaction_ordinal, automatic_transition_count, and next_action across summaries.
-- After a confirmed first compaction, refresh a concise checkpoint.
-- At a confirmed second compaction, stop normal work and return a terminal chat
-  handoff. If the ordinal is missing, conflicting, or untrusted, conservatively
-  return the same terminal chat handoff.
+- After a confirmed first compaction, refresh a concise checkpoint and do not
+  create a task.
+- At a confirmed second compaction, execute
+  COMPACTION_SUCCESSOR_SEQUENCE_V1; ordinary non-compaction paths must not create
+  a task.
 - Chat handoff is the default. Write a repo-native handoff only when the
   original task explicitly authorized the exact documentation path. Archive
   authorization does not imply file-write authorization. Apply authorization
@@ -110,7 +164,8 @@
 - The weekly scanner is a deterministic audit, not an immediate trigger. A hard
   trigger outside an active task still requires a Codex Desktop lifecycle API.
 - Never automatically archive or delete a task. Automatic task creation is
-  permitted only by the confirmed-anchor-mismatch sequence above.
+  permitted only by COMPACTION_SUCCESSOR_SEQUENCE_V1 or
+  ANCHOR_MISMATCH_SEQUENCE_V1.
 
 ## Workflow Hooks
 - 开始复杂任务前，优先使用当前 Codex session 已暴露的 `superpowers:*` skills；旧版 checkout 若仍存在 `~/.codex/superpowers/.codex/superpowers-codex`，可将它作为条件 fallback。

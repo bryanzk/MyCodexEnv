@@ -6659,6 +6659,108 @@ def test_global_agents_thread_discipline_contract():
     print("[PASS] global AGENTS thread discipline contract")
 
 
+def test_global_agents_second_compaction_successor_contract():
+    text = (ROOT / "codex" / "AGENTS.md").read_text(encoding="utf-8")
+    reproduction = (
+        ROOT / "docs" / "CODEX_ENV_REPRODUCTION.md"
+    ).read_text(encoding="utf-8")
+    normalized = " ".join(text.split())
+    reproduction_normalized = " ".join(reproduction.split())
+    required = [
+        "COMPACTION_SUCCESSOR_SEQUENCE_V1",
+        "confirmed second compaction",
+        "complete, independently executable bounded handoff",
+        "exact parent task ID and trusted compaction event identity",
+        "same parent task and same compaction event",
+        "cannot create more than one successor task",
+        "return its existing created-task directive and do not create another task",
+        "repo_anchor resolves exactly to a registered project",
+        "mode_anchor is known",
+        "task-lifecycle creation tools are available",
+        "automatic_transition_count is less than 3",
+        "compaction_ordinal: 0",
+        "parent_compaction_ordinal: 2",
+        "automatic_transition_count + 1",
+        "next_action=created_task",
+        "registered project's local environment",
+        "creation and dispatch count as startup",
+        "do not wait for successor execution",
+        "return the created-task directive",
+        "next_action=terminal_chat_handoff",
+        "cannot determine whether a successor was already created",
+        "never create a replacement task for the same compaction event",
+        "ordinary non-compaction paths must not create a task",
+    ]
+    for term in required:
+        require(term in normalized,
+                f"global AGENTS missing second-compaction successor term: {term}")
+    require(
+        "After a confirmed first compaction, refresh a concise checkpoint and do not create a task"
+        in normalized,
+        "first compaction must remain checkpoint-only",
+    )
+    require(
+        "automatic_transition_count is already 3 or greater" in normalized,
+        "second-compaction successor creation must retain the shared transition cap",
+    )
+    require(
+        "the project cannot be resolved exactly" in normalized,
+        "unknown projects must fall back to terminal handoff",
+    )
+    require(
+        "task-lifecycle creation tools are unavailable" in normalized,
+        "unavailable lifecycle tools must fall back to terminal handoff",
+    )
+    require(
+        "task creation fails" in normalized,
+        "creation failure must fall back to terminal handoff",
+    )
+    require(
+        "if creation succeeds but renaming fails" in normalized,
+        "rename failure must preserve the created successor",
+    )
+    sequence_start = text.index("COMPACTION_SUCCESSOR_SEQUENCE_V1")
+    sequence_end = text.index("ANCHOR_MISMATCH_SEQUENCE_V1")
+    sequence = text[sequence_start:sequence_end]
+    ordered_terms = [
+        "1. on a confirmed second compaction",
+        "2. create a complete, independently executable bounded handoff",
+        "3. establish the exact parent task ID and trusted compaction event identity",
+        "4. continue automatically only when repo_anchor resolves exactly",
+        "5. use task-lifecycle tools only to resolve the exact registered project",
+        "6. create exactly one successor task",
+        "7. record compaction_ordinal: 0",
+        "8. rename the successor to <project>-<YYYYMMDD>-<summary>",
+        "9. return the created-task directive",
+        "10. if automatic_transition_count is already 3 or greater",
+        "11. if creation succeeds but renaming fails",
+    ]
+    positions = [sequence.index(term) for term in ordered_terms]
+    require(
+        positions == sorted(positions),
+        "second-compaction successor handling must preserve its fail-closed order",
+    )
+    require(
+        "ANCHOR_MISMATCH_SEQUENCE_V1" in text,
+        "second-compaction policy must preserve anchor-mismatch routing",
+    )
+    for term in [
+        "`codex/AGENTS.md` is the unique policy source of truth",
+        "does not contain an executable compaction detector",
+        "source tests prove the policy contract, not automatic runtime activation",
+        "`compaction_ordinal` to `0`",
+        "`parent_compaction_ordinal: 2`",
+        "`automatic_transition_count`",
+        "`scripts/sync_codex_home.sh`",
+        "`~/.codex/AGENTS.md`",
+        "`test_runner.py`",
+        "`scripts/verify_codex_env.sh`",
+    ]:
+        require(term in reproduction_normalized,
+                f"Thread Discipline reproduction docs missing boundary term: {term}")
+    print("[PASS] global AGENTS second-compaction successor contract")
+
+
 def test_runner_registry_complete():
     registered = [fn.__name__ for fn in TESTS]
     defined = defined_test_names()
@@ -6756,6 +6858,7 @@ TESTS = [
     test_headroom_filter_detects_modes_and_reports_stats,
     test_manage_agents_scan_backup_generate_restore,
     test_global_agents_thread_discipline_contract,
+    test_global_agents_second_compaction_successor_contract,
     test_codex_fluent_active_session_report,
     test_codex_fluent_active_session_boundaries,
     test_codex_fluent_selection_contract,

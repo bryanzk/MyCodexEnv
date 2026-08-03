@@ -118,7 +118,7 @@ Harness Runtime 把 agent 工作从“prompt + 工具”扩展为一套可恢复
 
 ### 当前控制能力
 
-- **Thread discipline**：每个任务冻结 repo、mode 与 compaction anchors；确认发生 anchor mismatch 时，只能创建一个边界明确的继任任务，整条继承链最多自动迁移三次，且绝不自动归档或删除任务。
+- **Thread discipline**：每个任务冻结 repo、mode 与 compaction anchors；确认发生 anchor mismatch 或第二次 compaction 时，在项目、工具、计数与幂等状态均可安全确认的前提下，只创建一个边界明确的继任任务。跨任务链合计最多自动迁移三次，且绝不自动归档或删除任务。
 - **Codex Fluent**：以 report-only scanner 对活跃任务做大小排序与 handoff 审计；任何维护操作仍需要独立授权、备份和可恢复 handoff。
 - **gbrain-aware planning**：配置后，gstack planning skills 可以使用缓存的产品、目标、developer persona、品牌、竞品与用户画像；generic Harness 仍只负责 repo state、lane 与验证边界。
 - **iOS QA bridge**：vendored gstack 包含面向真实设备与 SwiftUI 的 QA、同步、修复和清理工作流；它们保留在 specialist skill 范围内，不扩大普通 prompt 的默认权限。
