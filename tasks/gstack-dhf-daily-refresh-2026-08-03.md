@@ -5,7 +5,7 @@
 - 本轮先读取 automation memory，再从 controller repo 运行 `python3 scripts/prepare_gstack_dhf_daily_refresh.py --json`；返回 `status=ready`，`automation_branch=automation/gstack-dhf-daily-refresh`，后续全部仓库操作仅在 standalone clone `/Users/kezheng/.codex/automations/gstack-dhf-daily-refresh/repo` 内完成。
 - `dry_run.needs_update=true`，因此执行了上游 gstack vendor 同步；实际落地后仍只有 2 处 vendor 格式噪音，没有保留任何上游功能更新。
 - `delivery-harness-framework` 按 `skill-evaluator` 评估标准复核后继续 generic no-op：本轮没有新增需要 DHF 泛化承接的 lifecycle phase、execution lane、runtime helper、handoff surface 或 verification contract。
-- vendor 噪音已在 clone_root 内全部回收，不带入最终提交；本轮 repo 预期实际变更仅为今日日报 `tasks/gstack-dhf-daily-refresh-2026-08-03.md`。
+- vendor 噪音已在 clone_root 内全部回收，不带入最终提交；本轮 repo 预期实际变更仅为今日日报 `tasks/gstack-dhf-daily-refresh-2026-08-03.md` 与本节 closeout 证据补记。
 - `verify_codex_env.sh` 首轮命中 runtime/source 漂移：`codex_agents_runtime_matches_source`、`codex_hooks_runtime_matches_source`、`codex_hook_harness_guard_runtime_matches_source`、`codex_runtime_tool_policy_matches_source`、`codex_runtime_evidence_schema_matches_source`、`codex_runtime_decision_evidence_schema_matches_source` 与 `codex_skill_compatibility` 失败；已仅通过 clone_root source 执行 `./scripts/sync_codex_home.sh --repo-root "$(pwd)" --codex-home "$HOME/.codex"` 修复后重跑通过。
 
 ## 上游与技能评估结论
@@ -68,9 +68,41 @@
 
 ## Closeout
 
-- automation_branch_push: `pending`
-- main_auto_merge: `pending`
-- local_main_safe_sync: `pending`
+- automation_branch_push: `pushed`
+  - branch: `automation/gstack-dhf-daily-refresh`
+  - sha: `244f567`
+- main_auto_merge: `merged`
+  - helper: `python3 scripts/merge_gstack_refresh_if_safe.py --repo-root "$(pwd)" --apply --verified --json`
+  - main_before: `befa97f5f6b962af0ed4edb927c37ecf3e0ba85b`
+  - main_after: `244f5677bffdc789c06697af918541d05c1ab04f`
+  - reason: `ahead_only`
+- local_main_safe_sync: `skipped`
+  - helper: `python3 scripts/sync_local_main_if_safe.py --repo-root /Users/kezheng/Codes/CursorDeveloper/MyCodexEnv --apply --json`
+  - reason: `dirty_worktree`
+  - detail: `docs/harness-state.md、docs/repo-index.md、docs/surfaces.json 以及 docs/decisions、docs/plans、scripts、tests 下多个用户工作树改动仍存在；helper 未做任何手动同步`
+
+## Closeout Evidence
+
+- command: `git add tasks/gstack-dhf-daily-refresh-2026-08-03.md && git commit -m "chore: add 2026-08-03 daily refresh report"`
+  exit_code: `0`
+  key_output: `[automation/gstack-dhf-daily-refresh 244f567] chore: add 2026-08-03 daily refresh report`
+  timestamp: `2026-08-03T13:06:13Z`
+- command: `git fetch origin && git rebase origin/main && git push --force-with-lease origin HEAD:refs/heads/automation/gstack-dhf-daily-refresh`
+  exit_code: `0`
+  key_output: `Current branch automation/gstack-dhf-daily-refresh is up to date. ; befa97f..244f567  HEAD -> automation/gstack-dhf-daily-refresh`
+  timestamp: `2026-08-03T13:06:28Z`
+- command: `python3 scripts/merge_gstack_refresh_if_safe.py --repo-root "$(pwd)" --apply --verified --json`
+  exit_code: `0`
+  key_output: `{"status":"merged","reason":"ahead_only","main_before":"befa97f5f6b962af0ed4edb927c37ecf3e0ba85b","main_after":"244f5677bffdc789c06697af918541d05c1ab04f"}`
+  timestamp: `2026-08-03T13:06:47Z`
+- command: `python3 scripts/sync_local_main_if_safe.py --repo-root /Users/kezheng/Codes/CursorDeveloper/MyCodexEnv --apply --json`
+  exit_code: `0`
+  key_output: `{"status":"skipped","reason":"dirty_worktree","current_branch":"main"}`
+  timestamp: `2026-08-03T13:06:55Z`
+- command: `git ls-remote origin refs/heads/automation/gstack-dhf-daily-refresh refs/heads/main`
+  exit_code: `0`
+  key_output: `244f567 refs/heads/automation/gstack-dhf-daily-refresh ; 244f567 refs/heads/main`
+  timestamp: `2026-08-03T13:06:55Z`
 
 ## Next Auto Retry
 
