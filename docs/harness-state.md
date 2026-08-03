@@ -5,7 +5,7 @@ Stable rules belong in `AGENTS.md`, `README.md`, `docs/repo-index.md`, or
 `docs/HARNESS_RUNTIME.md`; session facts and phase transitions are appended here.
 
 ## Current Snapshot
-- phase: validation
+- phase: handoff
 - source_of_truth:
   - `AGENTS.md`
   - `docs/repo-index.md`
@@ -14,13 +14,16 @@ Stable rules belong in `AGENTS.md`, `README.md`, `docs/repo-index.md`, or
   - `codex/skills/delivery-harness-framework/SKILL.md`
 - blocked_sources: none
 - unsafe_inputs: none
-- next_safe_task: Rerun the 2026-07-28 isolated guard probe against landed harness_guard.py and record decision evidence
+- next_safe_task: On explicit approval only: implement W6a parity verification coverage, targeted-sync the disclosed runtime files, deploy compaction/session hooks, then run test_runner.py and verify_codex_env.sh
 - required_commands:
   - `python3 test_runner.py`
   - `git diff --check`
   - `./scripts/verify_codex_env.sh --repo-root "$(pwd)" --codex-home "$HOME/.codex" --claude-home "$HOME/.claude"`
-- latest_checkpoint: 2026-08-02T21:19:33-04:00 Recorded shared compaction governance baseline after landing commits A-C
-- latest_verification: 2026-08-02T21:19:33-04:00 command=python3 test_runner.py; exit_code=1; key_output=ran=91 passed=89 skipped=0 failed=2; failing=test_live_runtime_harness_guard_smoke,test_plan_governor_skill_and_capability_branch_contract
+- latest_checkpoint: 2026-08-02T23:19:22-04:00 All infra and roles acceptance criteria passed except user-gated W6a; final gate is green relative to baseline and runtime remains unsynced
+- latest_verification: 2026-08-02T23:19:22-04:00 command=bash /tmp/final_mce_compaction_gate.sh; exit_code=0; key_output=FINAL_GATE zero_new_failures=1 contracts_valid=2 surfaces=consistent tier1=2/2 tier2=2/2 ledgers_valid=2 guard_probe=18/18
+- compaction_ordinal: 1
+- transition_key: MCE-20260802-harness-compaction-governance:W6a-approval-gate
+- gate_decision: none
 
 ## State Log
 
@@ -2009,3 +2012,361 @@ Stable rules belong in `AGENTS.md`, `README.md`, `docs/repo-index.md`, or
 - blockers:
   - none
 - next_safe_task: Rerun the 2026-07-28 isolated guard probe against landed harness_guard.py and record decision evidence
+
+### 2026-08-02T21:36:07-04:00
+- phase: validation
+- event: checkpoint
+- summary: W6b reran landed guard isolation probe and corrected the documented enforcement boundary
+- git:
+  - branch: main
+  - latest_commit: d20138b
+  - dirty_status: dirty
+  - dirty_count: 10
+- changed_surfaces:
+  - `docs/HARNESS_RUNTIME.md`
+  - `/tmp/codex-landed-guard-probe.Bp2pbD/codex-home/harness/evidence/2026-08-02.jsonl`
+- verification:
+  - command: `/tmp/verify_mce_compaction_baseline.sh`
+  - exit_code: 0
+  - key_output: ZERO_NEW_FAILURES ran=91 passed=89 skipped=0 failed=2; 18-round probe hook_delta=1 each; all classified block cases executed_delta=0; G4 secret classifier gap executed_delta=1
+- blockers:
+  - Command-form secret-path matching can fail open when cmd and candidate paths are concatenated before the end-anchored auth.json pattern; not fixed in W6b verification-only scope
+- next_safe_task: Implement R2 harness ledger with failing contract tests first
+
+### 2026-08-02T21:45:57-04:00
+- phase: development
+- event: checkpoint
+- summary: R2 task ledger landed in 67ac2b5 with init/pass/verify, immutable body hashing, idempotent init, and complete verification receipts.
+- git:
+  - branch: main
+  - latest_commit: 67ac2b5
+  - dirty_status: dirty
+  - dirty_count: 10
+- changed_surfaces:
+  - `scripts/harness_ledger.py`
+  - `test_runner.py`
+  - `docs/HARNESS_RUNTIME.md`
+  - `docs/AGENT_HARNESS_STATUS.md`
+  - `docs/repo-index.md`
+  - `docs/surfaces.json`
+- verification:
+  - command: `bash /tmp/verify_mce_compaction_baseline.sh`
+  - exit_code: 0
+  - key_output: ZERO_NEW_FAILURES ran=92 passed=90 skipped=0 failed=2; baseline failures unchanged
+- blockers:
+  - none
+- next_safe_task: Implement R5 subconscious reflect with RED-first contract coverage and decision-record preservation.
+
+### 2026-08-02T21:52:11-04:00
+- phase: development
+- event: checkpoint
+- summary: R5 memory reflection landed in d0ca8e7; reflect merges duplicate routine/derived records, prunes only expired routine/derived records, and preserves decision/unknown records unchanged.
+- git:
+  - branch: main
+  - latest_commit: d0ca8e7
+  - dirty_status: dirty
+  - dirty_count: 10
+- changed_surfaces:
+  - `scripts/codex_subconscious.py`
+  - `test_runner.py`
+  - `docs/CODEX_SUBCONSCIOUS.md`
+  - `docs/HARNESS_RUNTIME.md`
+  - `docs/AGENT_HARNESS_STATUS.md`
+  - `docs/repo-index.md`
+  - `docs/surfaces.json`
+  - `codex/skills/codex-fluent/references/maintenance-checklist.md`
+- verification:
+  - command: `bash /tmp/verify_mce_compaction_baseline.sh`
+  - exit_code: 0
+  - key_output: ZERO_NEW_FAILURES ran=93 passed=91 skipped=0 failed=2; decision preservation and malformed-input atomicity covered
+- blockers:
+  - none
+- next_safe_task: Implement R1 tier-1 recovery eval and handoff lint with fixture-driven receipts.
+
+### 2026-08-02T21:58:58-04:00
+- phase: development
+- event: checkpoint
+- summary: R1 tier-1 behavior evaluator landed in 2f0a4dd with fixture-driven recovery assertions, strict handoff lint, complete PASS/FAIL receipts, and no compaction-infra dependency.
+- git:
+  - branch: main
+  - latest_commit: 2f0a4dd
+  - dirty_status: dirty
+  - dirty_count: 10
+- changed_surfaces:
+  - `scripts/harness_eval.py`
+  - `docs/evals`
+  - `test_runner.py`
+  - `docs/HARNESS_RUNTIME.md`
+  - `docs/AGENT_HARNESS_STATUS.md`
+  - `docs/repo-index.md`
+  - `docs/surfaces.json`
+  - `codex/skills/codex-fluent/references/maintenance-checklist.md`
+- verification:
+  - command: `bash /tmp/verify_mce_compaction_baseline.sh`
+  - exit_code: 0
+  - key_output: ZERO_NEW_FAILURES ran=94 passed=92 skipped=0 failed=2; recovery and handoff_lint receipts PASS
+- blockers:
+  - none
+- next_safe_task: Implement R6 risk_tier annotations and tier evidence; record a new isolated guard probe before committing harness_guard.py.
+
+### 2026-08-02T22:09:19-04:00
+- phase: development
+- event: checkpoint
+- summary: R6 risk tiers landed in 4d114df as policy annotations and reason-only decision evidence; exact legacy block keys were preserved after the first probe exposed top-level-field fail-open.
+- git:
+  - branch: main
+  - latest_commit: 4d114df
+  - dirty_status: dirty
+  - dirty_count: 10
+- changed_surfaces:
+  - `codex/runtime/tool-policy.json`
+  - `codex/hooks/harness_guard.py`
+  - `test_runner.py`
+  - `docs/HARNESS_RUNTIME.md`
+  - `docs/AGENT_HARNESS_STATUS.md`
+  - `docs/repo-index.md`
+  - `docs/surfaces.json`
+  - `/tmp/codex-landed-guard-probe.SAZv9K/codex-home/harness/evidence/2026-08-02.jsonl`
+  - `/tmp/codex-landed-guard-probe.h0DUjC/codex-home/harness/evidence/2026-08-02.jsonl`
+- verification:
+  - command: `bash /tmp/landed_guard_probe_v4.sh && bash /tmp/verify_mce_compaction_baseline.sh`
+  - exit_code: 0
+  - key_output: probe attempt 2: 18/18 W6b matrix match, exact decision/reason block keys; ZERO_NEW_FAILURES ran=94 passed=92 skipped=0 failed=2
+- blockers:
+  - Existing command-form secret-path classifier gap remains intentionally unchanged; repair requires a separate fresh isolated probe.
+- next_safe_task: Implement W1 append-only harness transition store with O_APPEND, post-append reread, and first-record-wins semantics.
+
+### 2026-08-02T22:14:50-04:00
+- phase: development
+- event: checkpoint
+- summary: W1 transition idempotency store landed in 0c7d30f with single-write O_APPEND, post-append reread, first-record-wins CAS, explicit conflicts, and malformed-line counts.
+- git:
+  - branch: main
+  - latest_commit: 0c7d30f
+  - dirty_status: dirty
+  - dirty_count: 10
+- changed_surfaces:
+  - `scripts/harness_transition.py`
+  - `test_runner.py`
+  - `docs/HARNESS_RUNTIME.md`
+  - `docs/AGENT_HARNESS_STATUS.md`
+  - `docs/repo-index.md`
+  - `docs/surfaces.json`
+- verification:
+  - command: `bash /tmp/verify_mce_compaction_baseline.sh`
+  - exit_code: 0
+  - key_output: ZERO_NEW_FAILURES ran=95 passed=93 skipped=0 failed=2; concurrent first-record-wins test passed three consecutive focused runs
+- blockers:
+  - none
+- next_safe_task: Execute W2a Phase-0 UserPromptSubmit payload probe, record session-id and usage-field presence, then extract the shared compaction counter and refactor the scanner.
+
+### 2026-08-02T22:21:53-04:00
+- phase: development
+- event: checkpoint
+- summary: W2a landed in 5b093c3 after Phase-0 evidence: real UserPromptSubmit has top-level session_id and cwd, no usage/token fields; scanner now uses the shared decoded-event compaction counter.
+- git:
+  - branch: main
+  - latest_commit: 5b093c3
+  - dirty_status: dirty
+  - dirty_count: 10
+- changed_surfaces:
+  - `codex/hooks/compaction_counter.py`
+  - `codex/skills/codex-fluent/scripts/report_active_sessions.py`
+  - `test_runner.py`
+  - `docs/HARNESS_RUNTIME.md`
+  - `docs/AGENT_HARNESS_STATUS.md`
+  - `docs/repo-index.md`
+  - `docs/surfaces.json`
+  - `/tmp/mce-user-prompt-phase0.u5JYTJ/codex-home/harness/evidence/2026-08-02.jsonl`
+- verification:
+  - command: `bash /tmp/run_mce_phase0_user_prompt_probe.sh && bash /tmp/verify_mce_compaction_baseline.sh`
+  - exit_code: 0
+  - key_output: session_id present; cwd present; usage/token absent; ZERO_NEW_FAILURES ran=95 passed=93 skipped=0 failed=2
+- blockers:
+  - none
+- next_safe_task: Implement W2b compaction_probe.py with exact-id resolution, strict three-condition heuristic, per-file offset cache, incremental-only steady state, and source-only UserPromptSubmit registration.
+
+### 2026-08-02T22:30:57-04:00
+- phase: development
+- event: checkpoint
+- summary: W2b incremental compaction probe landed source-only in a9cf548 with exact-id preference, strict cwd+mtime+unique fallback, complete-line offsets, and one-time rebuild modes.
+- git:
+  - branch: main
+  - latest_commit: a9cf548
+  - dirty_status: dirty
+  - dirty_count: 10
+- changed_surfaces:
+  - `codex/hooks/compaction_probe.py`
+  - `codex/hooks.json`
+  - `test_runner.py`
+  - `docs/HARNESS_RUNTIME.md`
+  - `docs/AGENT_HARNESS_STATUS.md`
+  - `docs/repo-index.md`
+  - `docs/surfaces.json`
+- verification:
+  - command: `bash /tmp/verify_mce_compaction_baseline.sh`
+  - exit_code: 0
+  - key_output: ZERO_NEW_FAILURES ran=97 passed=95 skipped=0 failed=2; 2MB steady-state scan read only appended line; source registered, runtime undeployed
+- blockers:
+  - none
+- next_safe_task: Implement W3 additive optional compaction_ordinal, transition_key, and gate_decision fields in checkpoint and decision evidence schemas with old-format interoperability.
+
+### 2026-08-02T22:40:21-04:00
+- phase: validation
+- event: checkpoint
+- summary: W3 additive compaction transition checkpoint fields landed in bfa7e93
+- git:
+  - branch: main
+  - latest_commit: bfa7e93
+  - dirty_status: dirty
+  - dirty_count: 10
+- compaction_ordinal: 1
+- transition_key: MCE-20260802-harness-compaction-governance:W3
+- gate_decision: continue-to-boundary
+- changed_surfaces:
+  - `scripts/harness_checkpoint.py`
+  - `scripts/harness_evidence.py`
+  - `codex/runtime/evidence.schema.json`
+  - `codex/runtime/evidence/decision-evidence.schema.json`
+- verification:
+  - command: `bash /tmp/verify_mce_compaction_baseline.sh`
+  - exit_code: 0
+  - key_output: ZERO_NEW_FAILURES ran=97 passed=95 skipped=0 failed=2
+- blockers:
+  - none
+- next_safe_task: Implement W4 recover --boundary with clean JSON exit 0 and freshness-aware unknown fallback
+
+### 2026-08-02T22:45:53-04:00
+- phase: validation
+- event: checkpoint
+- summary: W4 freshness-aware recovery boundary landed in 0653709
+- git:
+  - branch: main
+  - latest_commit: 0653709
+  - dirty_status: dirty
+  - dirty_count: 10
+- compaction_ordinal: 1
+- transition_key: MCE-20260802-harness-compaction-governance:W4
+- gate_decision: continue-to-boundary
+- changed_surfaces:
+  - `scripts/harness_recover.py`
+- verification:
+  - command: `bash /tmp/verify_mce_compaction_baseline.sh`
+  - exit_code: 0
+  - key_output: ZERO_NEW_FAILURES ran=97 passed=95 skipped=0 failed=2
+- blockers:
+  - none
+- next_safe_task: Implement W5 task_demand recovery payload from latest validated requirements artifact without policy logic
+
+### 2026-08-02T22:50:52-04:00
+- phase: validation
+- event: checkpoint
+- summary: W5 validated task-demand recovery pipe landed in 47a8147
+- git:
+  - branch: main
+  - latest_commit: 47a8147
+  - dirty_status: dirty
+  - dirty_count: 10
+- compaction_ordinal: 1
+- transition_key: MCE-20260802-harness-compaction-governance:W5
+- gate_decision: continue-to-boundary
+- changed_surfaces:
+  - `scripts/harness_recover.py`
+- verification:
+  - command: `bash /tmp/verify_mce_compaction_baseline.sh`
+  - exit_code: 0
+  - key_output: ZERO_NEW_FAILURES ran=97 passed=95 skipped=0 failed=2
+- blockers:
+  - none
+- next_safe_task: Run dependent-role entrance check for W2b compaction probe and W4 recovery boundary, then implement R3 session bearing
+
+### 2026-08-02T22:57:28-04:00
+- phase: validation
+- event: checkpoint
+- summary: R3 bounded silent-failure SessionStart bearing landed in bfc765b
+- git:
+  - branch: main
+  - latest_commit: bfc765b
+  - dirty_status: dirty
+  - dirty_count: 10
+- compaction_ordinal: 1
+- transition_key: MCE-20260802-harness-compaction-governance:R3
+- gate_decision: continue-to-boundary
+- changed_surfaces:
+  - `codex/hooks/session_bearing.py`
+  - `codex/hooks.json`
+- verification:
+  - command: `bash /tmp/verify_mce_compaction_baseline.sh`
+  - exit_code: 0
+  - key_output: ZERO_NEW_FAILURES ran=98 passed=96 skipped=0 failed=2
+- blockers:
+  - none
+- next_safe_task: Implement R4 ordinal-only context pressure degradation from W2a usage-absent probe and record decision evidence
+
+### 2026-08-02T23:03:50-04:00
+- phase: validation
+- event: checkpoint
+- summary: R4 ordinal-only context pressure degradation landed in 59bd6df
+- git:
+  - branch: main
+  - latest_commit: 59bd6df
+  - dirty_status: dirty
+  - dirty_count: 10
+- compaction_ordinal: 1
+- transition_key: MCE-20260802-harness-compaction-governance:R4
+- gate_decision: continue-to-boundary
+- changed_surfaces:
+  - `codex/hooks/context_meter.py`
+  - `codex/hooks/compaction_probe.py`
+- verification:
+  - command: `bash /tmp/verify_mce_compaction_baseline.sh`
+  - exit_code: 0
+  - key_output: ZERO_NEW_FAILURES ran=99 passed=97 skipped=0 failed=2
+- blockers:
+  - none
+- next_safe_task: Implement R1 tier-2 transition idempotency and compaction probe agreement evals
+
+### 2026-08-02T23:09:59-04:00
+- phase: validation
+- event: checkpoint
+- summary: R1 tier-2 transition idempotency and probe agreement evals landed in c75f12d
+- git:
+  - branch: main
+  - latest_commit: c75f12d
+  - dirty_status: dirty
+  - dirty_count: 10
+- compaction_ordinal: 1
+- transition_key: MCE-20260802-harness-compaction-governance:R1-tier2
+- gate_decision: continue-to-boundary
+- changed_surfaces:
+  - `scripts/harness_eval.py`
+  - `docs/evals`
+- verification:
+  - command: `bash /tmp/verify_mce_compaction_baseline.sh`
+  - exit_code: 0
+  - key_output: ZERO_NEW_FAILURES ran=100 passed=98 skipped=0 failed=2
+- blockers:
+  - none
+- next_safe_task: Run final contract acceptance audit, per-commit protected-path audit, state checkpoint commit, then stop at W6a approval gate with exact sync file list
+
+### 2026-08-02T23:19:22-04:00
+- phase: handoff
+- event: checkpoint
+- summary: All infra and roles acceptance criteria passed except user-gated W6a; final gate is green relative to baseline and runtime remains unsynced
+- git:
+  - branch: main
+  - latest_commit: c75f12d
+  - dirty_status: dirty
+  - dirty_count: 10
+- compaction_ordinal: 1
+- transition_key: MCE-20260802-harness-compaction-governance:W6a-approval-gate
+- gate_decision: none
+- changed_surfaces:
+  - `docs/harness-state.md`
+- verification:
+  - command: `bash /tmp/final_mce_compaction_gate.sh`
+  - exit_code: 0
+  - key_output: FINAL_GATE zero_new_failures=1 contracts_valid=2 surfaces=consistent tier1=2/2 tier2=2/2 ledgers_valid=2 guard_probe=18/18
+- blockers:
+  - W6a runtime parity repair and ~/.codex sync require explicit user approval
+- next_safe_task: On explicit approval only: implement W6a parity verification coverage, targeted-sync the disclosed runtime files, deploy compaction/session hooks, then run test_runner.py and verify_codex_env.sh
