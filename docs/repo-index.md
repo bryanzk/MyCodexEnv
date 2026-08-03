@@ -42,8 +42,8 @@
 - `codex/runtime/tool-policy.json`: stage-aware tool and permission policy with low/medium/high annotations for every guard category, unknown-phase read-only fallback, configured agent-dispatch patterns, and Plan Governor Shadow status.
 - `codex/runtime/resolve_codex_cli.sh`: resolve a Codex CLI only after its `--version` smoke passes, preferring the npm global CLI before ChatGPT/Codex app bundle fallbacks for launchd and stale-shim recovery.
 - `codex/runtime/dhf-packet.schema.json`: portable DHF packet schema for incubation, consumer handoff, and future extraction boundaries.
-- `codex/runtime/evidence.schema.json`: compatibility local evidence JSONL event contract, including `agent_team_validated` receipts.
-- `codex/runtime/evidence/decision-evidence.schema.json`: focused schema for state, handoff, approval, guardrail, sandbox, agent-team validation, and durable recovery evidence.
+- `codex/runtime/evidence.schema.json`: compatibility local evidence JSONL event contract, including `agent_team_validated` receipts and optional compaction transition decision fields.
+- `codex/runtime/evidence/decision-evidence.schema.json`: focused schema for state, handoff, approval, guardrail, sandbox, agent-team validation, durable recovery evidence, and optional compaction transition fields.
 - `codex/runtime/evidence/routine-gate-receipt.schema.json`: focused schema for test receipts, browser smoke, startup probes, ordinary tool calls, and routine subagent reports.
 - `codex/runtime/evidence/plan-scope-envelope.schema.json`: plan governor frozen scope envelope schema.
 - `codex/runtime/evidence/plan-finding-decision.schema.json`: plan governor structured finding decision schema.
@@ -57,12 +57,12 @@
 - `codex/hooks/model_router.py`: prompt/subtask complexity router for cheapest quality-safe model recommendations.
 - `codex/hooks/dhf_preprompt.py`: generic `UserPromptSubmit` DHF dispatcher; malformed or missing-cwd payloads continue, opt-out wins first, non-ShipQ prompts need explicit generic activation, and ShipQ cwd delegates lazily to the adapter.
 - `codex/hooks/shipq_dhf_preprompt.py`: ShipQ-only DHF preprompt adapter, never registered globally and loaded only by the generic dispatcher for ShipQ cwd.
-- `scripts/harness_evidence.py`: evidence validation, kind inference, and append helper.
+- `scripts/harness_evidence.py`: evidence validation, kind inference, append helper, and decision-only compaction transition field validation.
 - `scripts/plan_governor.py`: local plan scope, finding, receipt, and shadow evidence CLI.
 - `scripts/harness_feedback.py`: conversion-health helper for local evidence reports and recovery.
 - `scripts/harness_report.py`: local evidence summary CLI with evidence-kind counts and filters.
 - `scripts/harness_agent_team.py`: agent team, write-set, worker task demand, demand-matched green gate, optional durable brief validator, and `--emit-evidence` validation receipt helper.
-- `scripts/harness_checkpoint.py`: append-only state checkpoint helper.
+- `scripts/harness_checkpoint.py`: append-only state checkpoint helper with optional compaction transition decision fields.
 - `scripts/harness_transition.py`: append-only first-record-wins transition idempotency store.
 - `scripts/harness_ledger.py`: tamper-evident acceptance ledger init/pass/verify helper.
 - `scripts/harness_eval.py`: fixture-driven tiered recovery, handoff, transition, and probe behavior evaluator.

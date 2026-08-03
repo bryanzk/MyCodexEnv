@@ -9,6 +9,7 @@ from pathlib import Path
 
 
 PHASES = {"research", "requirements", "planning", "development", "validation", "review", "ship", "handoff"}
+GATE_DECISIONS = {"continue-to-boundary", "immediate-successor", "none"}
 
 
 def now_iso() -> str:
@@ -50,6 +51,10 @@ def validate_args(args: argparse.Namespace) -> list[str]:
         errors.append("--summary is required")
     if not args.next_safe_task.strip():
         errors.append("--next-safe-task is required")
+    if args.compaction_ordinal is not None and args.compaction_ordinal < 0:
+        errors.append("--compaction-ordinal must be non-negative")
+    if args.transition_key is not None and not args.transition_key.strip():
+        errors.append("--transition-key must be non-empty")
 
     verification_values = [
         args.verification_command,
@@ -79,6 +84,25 @@ def replace_snapshot_line(lines: list[str], prefix: str, value: str) -> bool:
     return False
 
 
+def upsert_snapshot_line(lines: list[str], prefix: str, value: str) -> None:
+    if replace_snapshot_line(lines, prefix, value):
+        return
+    snapshot_start = next(
+        (index for index, line in enumerate(lines) if line.strip().lower() == "## current snapshot"),
+        None,
+    )
+    if snapshot_start is None:
+        return
+    section_end = next(
+        (index for index in range(snapshot_start + 1, len(lines)) if lines[index].startswith("## ")),
+        len(lines),
+    )
+    insert_at = section_end
+    while insert_at > snapshot_start + 1 and not lines[insert_at - 1].strip():
+        insert_at -= 1
+    lines.insert(insert_at, f"{prefix}{value}")
+
+
 def update_current_snapshot(content: str, args: argparse.Namespace, timestamp: str) -> str:
     lines = content.splitlines()
     replace_snapshot_line(lines, "- phase: ", args.phase)
@@ -92,6 +116,12 @@ def update_current_snapshot(content: str, args: argparse.Namespace, timestamp: s
     else:
         latest_verification = f"{timestamp} unverified handoff; blockers={'; '.join(args.blocker)}"
     replace_snapshot_line(lines, "- latest_verification: ", latest_verification)
+    if args.compaction_ordinal is not None:
+        upsert_snapshot_line(lines, "- compaction_ordinal: ", str(args.compaction_ordinal))
+    if args.transition_key is not None:
+        upsert_snapshot_line(lines, "- transition_key: ", args.transition_key)
+    if args.gate_decision is not None:
+        upsert_snapshot_line(lines, "- gate_decision: ", args.gate_decision)
     return "\n".join(lines).rstrip() + "\n"
 
 
@@ -107,6 +137,12 @@ def render_checkpoint(args: argparse.Namespace, timestamp: str, git: dict[str, s
         f"  - dirty_status: {git['dirty_status']}",
         f"  - dirty_count: {git['dirty_count']}",
     ]
+    if args.compaction_ordinal is not None:
+        lines.append(f"- compaction_ordinal: {args.compaction_ordinal}")
+    if args.transition_key is not None:
+        lines.append(f"- transition_key: {args.transition_key}")
+    if args.gate_decision is not None:
+        lines.append(f"- gate_decision: {args.gate_decision}")
     lines.append("- changed_surfaces:")
     if args.changed_surface:
         for surface in args.changed_surface:
@@ -179,6 +215,9 @@ def main() -> int:
     append_parser.add_argument("--verification-exit-code", type=int)
     append_parser.add_argument("--verification-key-output")
     append_parser.add_argument("--next-safe-task", required=True)
+    append_parser.add_argument("--compaction-ordinal", type=int)
+    append_parser.add_argument("--transition-key")
+    append_parser.add_argument("--gate-decision", choices=sorted(GATE_DECISIONS))
     append_parser.add_argument("--blocker", action="append", default=[])
     append_parser.add_argument("--allow-unverified", action="store_true")
     append_parser.set_defaults(func=append_checkpoint)

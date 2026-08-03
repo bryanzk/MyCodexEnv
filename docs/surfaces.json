@@ -69,12 +69,12 @@
     },
     {
       "path": "codex/runtime/evidence.schema.json",
-      "role": "compatibility local evidence JSONL event contract",
+      "role": "compatibility local evidence JSONL contract with optional compaction transition decision fields",
       "audience": ["runtime", "codex"]
     },
     {
       "path": "codex/runtime/evidence/decision-evidence.schema.json",
-      "role": "focused decision evidence schema",
+      "role": "focused decision evidence schema with optional compaction transition fields",
       "audience": ["runtime", "codex"]
     },
     {
@@ -144,7 +144,7 @@
     },
     {
       "path": "scripts/harness_evidence.py",
-      "role": "evidence validation, kind inference, and append helper",
+      "role": "evidence validation, kind inference, append helper, and decision-only compaction transition field validation",
       "audience": ["codex", "human"]
     },
     {
@@ -169,7 +169,7 @@
     },
     {
       "path": "scripts/harness_checkpoint.py",
-      "role": "append-only state checkpoint helper",
+      "role": "append-only state checkpoint helper with optional compaction transition decision fields",
       "audience": ["codex", "human"]
     },
     {

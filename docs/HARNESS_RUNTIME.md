@@ -164,6 +164,10 @@ Runtime events are written to local files under `~/.codex/harness/evidence`.
 Local logs are not migrated when the schema evolves. Old events that do not
 carry `evidence_kind` are read as `unknown`.
 
+Decision evidence may add the optional `compaction_ordinal`, `transition_key`,
+and `gate_decision` fields. They are accepted only for decision evidence;
+existing events and append calls remain valid without them.
+
 Evidence kinds:
 - `decision`: state, handoff, approvals, guardrails, sandbox failures, agent-team
   validation receipts, and durable recovery decisions.
@@ -342,6 +346,9 @@ Checkpoint helper:
   appends a checkpoint entry.
 - it records git branch, latest commit, dirty status, changed surfaces, blockers,
   latest verification, and next safe task.
+- when explicitly supplied, `--compaction-ordinal`, `--transition-key`, and
+  `--gate-decision` add the transition decision to both the current snapshot and
+  appended checkpoint; old invocations continue to omit these fields.
 - it does not create git commits or push changes.
 - missing verification fields fail non-zero before writing.
 - `--allow-unverified` is only valid for `handoff` checkpoints with an explicit

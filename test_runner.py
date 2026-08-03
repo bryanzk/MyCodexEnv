@@ -3720,6 +3720,10 @@ def test_harness_evidence_append_and_observer_failure_mode():
         event = json.loads(evidence_file.read_text(encoding="utf-8").strip())
         require(event["event_type"] == "verification_result", "evidence event type mismatch")
         require(event["evidence_kind"] == "routine", "verification evidence should include routine evidence kind")
+        require(
+            not {"compaction_ordinal", "transition_key", "gate_decision"}.intersection(event),
+            "old-format evidence append should omit optional compaction fields",
+        )
 
         code, out, err = run(
             [
@@ -3736,6 +3740,12 @@ def test_harness_evidence_append_and_observer_failure_mode():
                 str(ROOT),
                 "--message",
                 "decision checkpoint",
+                "--compaction-ordinal",
+                "2",
+                "--transition-key",
+                "transition-fixture",
+                "--gate-decision",
+                "immediate-successor",
             ]
         )
         require(code == 0, f"checkpoint evidence append failed: {err or out}")
@@ -3748,6 +3758,24 @@ def test_harness_evidence_append_and_observer_failure_mode():
             checkpoint_events[-1]["evidence_kind"] == "decision",
             "checkpoint evidence should include decision evidence kind",
         )
+        require(checkpoint_events[-1]["compaction_ordinal"] == 2, "decision evidence should retain compaction ordinal")
+        require(checkpoint_events[-1]["transition_key"] == "transition-fixture",
+                "decision evidence should retain transition key")
+        require(checkpoint_events[-1]["gate_decision"] == "immediate-successor",
+                "decision evidence should retain gate decision")
+        for schema_path in (
+            ROOT / "codex" / "runtime" / "evidence.schema.json",
+            ROOT / "codex" / "runtime" / "evidence" / "decision-evidence.schema.json",
+        ):
+            schema = json.loads(schema_path.read_text(encoding="utf-8"))
+            require(
+                {"compaction_ordinal", "transition_key", "gate_decision"}.issubset(schema["properties"]),
+                f"schema should expose additive compaction fields: {schema_path}",
+            )
+            require(
+                not {"compaction_ordinal", "transition_key", "gate_decision"}.intersection(schema["required"]),
+                f"new compaction fields must remain optional: {schema_path}",
+            )
 
         code, out, err = run(
             [
@@ -4647,6 +4675,45 @@ def test_harness_checkpoint_helper():
         require("- phase: validation" in state_text, "current snapshot phase should update")
         require("dirty_status: dirty" in state_text, "dirty git status should be captured")
         require("command=python3 test_runner.py" in state_text, "latest verification should be updated")
+        require(
+            "compaction_ordinal" not in state_text and "transition_key" not in state_text and "gate_decision" not in state_text,
+            "old checkpoint invocation should remain old-format compatible",
+        )
+
+        code, out, err = run(
+            [
+                sys.executable,
+                str(HARNESS_CHECKPOINT),
+                "append",
+                "--repo-root",
+                str(repo),
+                "--state-file",
+                str(state_file),
+                "--phase",
+                "validation",
+                "--summary",
+                "compaction checkpoint smoke",
+                "--verification-command",
+                "python3 test_runner.py",
+                "--verification-exit-code",
+                "0",
+                "--verification-key-output",
+                "[PASS] compaction checkpoint",
+                "--compaction-ordinal",
+                "2",
+                "--transition-key",
+                "transition-fixture",
+                "--gate-decision",
+                "continue-to-boundary",
+                "--next-safe-task",
+                "continue to boundary",
+            ]
+        )
+        require(code == 0, f"compaction checkpoint append failed: {err or out}")
+        compaction_state = state_file.read_text(encoding="utf-8")
+        require("- compaction_ordinal: 2" in compaction_state, "checkpoint should persist compaction ordinal")
+        require("- transition_key: transition-fixture" in compaction_state, "checkpoint should persist transition key")
+        require("- gate_decision: continue-to-boundary" in compaction_state, "checkpoint should persist gate decision")
 
         code, out, err = run(["git", "add", "dirty.txt", "docs/harness-state.md"], cwd=repo)
         require(code == 0, f"temp git add failed: {err or out}")

@@ -66,6 +66,7 @@ FAILURE_CLASSES = {
     "sandbox_blocked",
     "unknown",
 }
+GATE_DECISIONS = {"continue-to-boundary", "immediate-successor", "none"}
 
 
 def now_iso() -> str:
@@ -128,6 +129,18 @@ def validate_event(event: dict[str, Any]) -> None:
                 raise ValueError(f"verification_result missing {key}")
     if "exit_code" in event and not isinstance(event["exit_code"], int):
         raise ValueError("exit_code must be an integer")
+    if "compaction_ordinal" in event:
+        ordinal = event["compaction_ordinal"]
+        if isinstance(ordinal, bool) or not isinstance(ordinal, int) or ordinal < 0:
+            raise ValueError("compaction_ordinal must be a non-negative integer")
+    if "transition_key" in event and (
+        not isinstance(event["transition_key"], str) or not event["transition_key"].strip()
+    ):
+        raise ValueError("transition_key must be a non-empty string")
+    if "gate_decision" in event and event["gate_decision"] not in GATE_DECISIONS:
+        raise ValueError("invalid gate_decision")
+    if {"compaction_ordinal", "transition_key", "gate_decision"}.intersection(event) and infer_evidence_kind(event) != "decision":
+        raise ValueError("compaction transition fields require decision evidence")
 
 
 def append_event(home: Path, event: dict[str, Any]) -> Path:
@@ -159,6 +172,9 @@ def build_event(args: argparse.Namespace) -> dict[str, Any]:
         "key_output": args.key_output,
         "message": args.message,
         "metadata": metadata,
+        "compaction_ordinal": args.compaction_ordinal,
+        "transition_key": args.transition_key,
+        "gate_decision": args.gate_decision,
     }
     for key, value in optional.items():
         if value is not None:
@@ -212,6 +228,9 @@ def main() -> int:
     append_parser.add_argument("--failure-class", default="none", choices=sorted(FAILURE_CLASSES))
     append_parser.add_argument("--message")
     append_parser.add_argument("--metadata", help="JSON object string")
+    append_parser.add_argument("--compaction-ordinal", type=int)
+    append_parser.add_argument("--transition-key")
+    append_parser.add_argument("--gate-decision", choices=sorted(GATE_DECISIONS))
     append_parser.set_defaults(func=cmd_append)
 
     validate_parser = subparsers.add_parser("validate", help="Validate one JSON event file")

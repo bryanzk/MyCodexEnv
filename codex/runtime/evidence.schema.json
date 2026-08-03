@@ -69,6 +69,18 @@
     "message": {
       "type": "string"
     },
+    "compaction_ordinal": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "transition_key": {
+      "type": "string",
+      "minLength": 1
+    },
+    "gate_decision": {
+      "type": "string",
+      "enum": ["continue-to-boundary", "immediate-successor", "none"]
+    },
     "metadata": {
       "type": "object"
     }
