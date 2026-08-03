@@ -16,6 +16,7 @@ if str(HOOKS_DIR) not in sys.path:
     sys.path.insert(0, str(HOOKS_DIR))
 
 from compaction_counter import compaction_event_increment
+from context_meter import USAGE_FIELDS_PRESENT, build_context
 
 
 STATE_VERSION = 1
@@ -302,12 +303,22 @@ def continue_response() -> dict[str, Any]:
     return {"continue": True}
 
 
-def inject_response(ordinal: int) -> dict[str, Any]:
+def inject_response(
+    ordinal: int,
+    payload: dict[str, Any] | None = None,
+    home: Path | None = None,
+) -> dict[str, Any]:
+    meter = build_context(
+        payload or {},
+        ordinal=ordinal,
+        codex_home=home or codex_home(),
+        usage_fields_present=USAGE_FIELDS_PRESENT,
+    )
     return {
         "continue": True,
         "hookSpecificOutput": {
             "hookEventName": "UserPromptSubmit",
-            "additionalContext": f"compaction_ordinal={ordinal} (host-observed)",
+            "additionalContext": meter["additional_context"],
         },
     }
 
@@ -365,7 +376,7 @@ def main() -> int:
                 codex_home() / "harness" / "probe_state.json",
             )
             check_deadline(deadline)
-            response = inject_response(result["compaction_ordinal"])
+            response = inject_response(result["compaction_ordinal"], payload, codex_home())
     except Exception:
         response = continue_response()
     json.dump(response, sys.stdout, ensure_ascii=False)

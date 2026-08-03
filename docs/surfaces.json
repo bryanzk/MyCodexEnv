@@ -123,6 +123,11 @@
       "audience": ["runtime", "codex"]
     },
     {
+      "path": "codex/hooks/context_meter.py",
+      "role": "W2a-capability-gated context pressure helper with ordinal-only no-persistence degradation",
+      "audience": ["runtime", "codex"]
+    },
+    {
       "path": "codex/hooks/session_bearing.py",
       "role": "bounded silent-failure SessionStart recovery and boundary-context injector",
       "audience": ["runtime", "codex"]

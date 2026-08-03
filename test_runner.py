@@ -39,6 +39,7 @@ CODEX_SUBCONSCIOUS = ROOT / "scripts" / "codex_subconscious.py"
 HARNESS_EVAL = ROOT / "scripts" / "harness_eval.py"
 HARNESS_TRANSITION = ROOT / "scripts" / "harness_transition.py"
 COMPACTION_PROBE = ROOT / "codex" / "hooks" / "compaction_probe.py"
+CONTEXT_METER = ROOT / "codex" / "hooks" / "context_meter.py"
 SESSION_BEARING = ROOT / "codex" / "hooks" / "session_bearing.py"
 CHECK_DHF_CONSUMER_COMPATIBILITY = ROOT / "scripts" / "check_dhf_consumer_compatibility.py"
 HEADROOM_FILTER = ROOT / "scripts" / "headroom_filter.py"
@@ -5441,6 +5442,83 @@ def test_compaction_probe_incremental_scan():
     print("[PASS] compaction probe incremental scan")
 
 
+def test_context_meter_persistence():
+    spec = importlib.util.spec_from_file_location("context_meter_test", CONTEXT_METER)
+    require(spec is not None and spec.loader is not None, "context meter should be importable")
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    require(module.USAGE_FIELDS_PRESENT is False, "R4 must consume the W2a usage-fields-absent conclusion")
+
+    with tempfile.TemporaryDirectory() as tmp:
+        tmp_path = Path(tmp)
+        absent_home = tmp_path / "absent-home"
+        observed_payload = {
+            "usage": {
+                "input_tokens": 100,
+                "output_tokens": 50,
+                "total_tokens": 150,
+                "context_window": 1000,
+            }
+        }
+        degraded = module.build_context(
+            observed_payload,
+            ordinal=3,
+            codex_home=absent_home,
+            usage_fields_present=False,
+        )
+        require(degraded["signal"] == "ordinal-only", "usage-absent conclusion must degrade to ordinal-only")
+        require(degraded["token_usage"] == "unknown", "degraded context must not consume unproven usage")
+        require(degraded["remaining_capacity"] == "unknown", "degraded context must not invent capacity")
+        require("compaction_ordinal=3 (host-observed)" in degraded["additional_context"],
+                "degraded context should preserve the host-observed ordinal")
+        require(not (absent_home / "harness" / "meter.json").exists(),
+                "usage-absent path must not create meter.json")
+
+        present_home = tmp_path / "present-home"
+        metered = module.build_context(
+            observed_payload,
+            ordinal=4,
+            codex_home=present_home,
+            usage_fields_present=True,
+        )
+        meter_path = present_home / "harness" / "meter.json"
+        require(meter_path.is_file(), "usage-present path should persist observed meter data")
+        meter = json.loads(meter_path.read_text(encoding="utf-8"))
+        require(
+            meter["token_usage"] == {"input_tokens": 100, "output_tokens": 50, "total_tokens": 150},
+            "meter should persist only observed token usage",
+        )
+        require(meter["context_window"] == 1000 and meter["remaining_capacity"] == 850,
+                "meter should calculate capacity only from observed total and window")
+        require(metered["remaining_capacity"] == 850, "metered context should expose observed remaining capacity")
+
+        missing_usage_home = tmp_path / "missing-usage-home"
+        unavailable = module.build_context(
+            {},
+            ordinal=5,
+            codex_home=missing_usage_home,
+            usage_fields_present=True,
+        )
+        require(unavailable["token_usage"] == "unknown" and unavailable["remaining_capacity"] == "unknown",
+                "a usage-capable shape without values must stay unknown")
+        require(not (missing_usage_home / "harness" / "meter.json").exists(),
+                "missing usage values must not persist fabricated meter data")
+
+        probe_spec = importlib.util.spec_from_file_location("compaction_probe_meter_test", COMPACTION_PROBE)
+        require(probe_spec is not None and probe_spec.loader is not None, "compaction probe should be importable")
+        probe_module = importlib.util.module_from_spec(probe_spec)
+        probe_spec.loader.exec_module(probe_module)
+        response = probe_module.inject_response(6, observed_payload, absent_home)
+        context = response["hookSpecificOutput"]["additionalContext"]
+        require("context_pressure_signal=ordinal-only" in context, "compaction probe should inject ordinal pressure")
+        require("token_usage=unknown" in context and "remaining_capacity=unknown" in context,
+                "source integration must not invent usage or capacity")
+        require(not (absent_home / "harness" / "meter.json").exists(),
+                "source integration must follow the usage-absent conclusion")
+
+    print("[PASS] context meter persistence")
+
+
 def test_session_bearing_hook():
     hooks = json.loads((ROOT / "codex" / "hooks.json").read_text(encoding="utf-8"))
     session_commands = [
@@ -7670,6 +7748,7 @@ TESTS = [
     test_harness_transition_record_and_query,
     test_compaction_probe_session_resolution,
     test_compaction_probe_incremental_scan,
+    test_context_meter_persistence,
     test_session_bearing_hook,
     test_harness_recovery_smoke,
     test_harness_env_probe,
