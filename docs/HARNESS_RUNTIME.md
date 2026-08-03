@@ -83,7 +83,7 @@ For the current project workflow and skill routing map, read
 - `Session State`: `docs/harness-state.md` records durable phase and handoff facts.
 - `Task Ledger`: `scripts/harness_ledger.py` creates and verifies tamper-evident acceptance ledgers from validated requirements.
 - `Behavior Evaluator`: `scripts/harness_eval.py tier1` executes fixture-driven recovery and handoff-lint end-state assertions from `docs/evals/`.
-- `Permissions`: `codex/runtime/tool-policy.json` declares stage-level tool permissions; unknown phases fall back to read-only, and `handoff` repo writes require approval because the guard is category-level, not path-scoped.
+- `Permissions`: `codex/runtime/tool-policy.json` declares stage-level tool permissions and low/medium/high risk annotations for every guard category; unknown phases fall back to read-only, and `handoff` repo writes require approval because the guard is category-level, not path-scoped.
 - `Hooks`: `codex/hooks/*` implements thin objective guardrails, prompt model routing recommendations, and evidence plumbing.
 - `Observability`: local JSONL evidence records lifecycle and verification events.
 - `Surface Inventory`: `docs/surfaces.json` is the canonical runtime surface inventory; `scripts/check_surfaces.py` keeps it consistent with files on disk, the `docs/repo-index.md` `## Runtime Surfaces` mirror, and opt-in public landing nav links declared with `public_nav`.
@@ -99,6 +99,15 @@ a classifier gap: an `exec_command` command ending in `auth.json` can miss the
 secret-path pattern after the command is concatenated with candidate-path
 text. Until that matcher is repaired and re-probed, command-form secret-path
 access must not be described as guaranteed blocked.
+
+R6 adds risk tiers as evidence-only annotations. Block responses keep the exact
+legacy `decision`/`reason` key set and append `risk_tier=<tier>` inside the
+reason. A first 2026-08-02 pre-commit probe proved that adding a top-level
+`risk_tier` field invalidates the host response and lets a planning write run;
+that shape was rejected. The corrected reason-only shape then matched all 18
+W6b reference rounds: every hook ran once, G0/G4 retained their known allowed
+outcomes, and G1/G2/G3/G5/G6/G7/G8 remained blocked. Risk tiers do not change
+block/allow behavior.
 
 ## Evidence Contract
 Evidence events are JSON objects that match `codex/runtime/evidence.schema.json`.

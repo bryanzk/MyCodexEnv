@@ -39,7 +39,7 @@
 - `codex/skills/delivery-harness-framework/`: lifecycle router skill.
 - `codex/skills/committee-review-loop/`: explicit expert-committee review and revision loop skill.
 - `codex/skills/codex-fluent/scripts/report_active_sessions.py`: read-only active Codex session ranking and handoff audit.
-- `codex/runtime/tool-policy.json`: stage-aware tool and permission policy, including unknown-phase read-only fallback, handoff repo-write ask-gate, configured agent-dispatch tool patterns, and the Plan Governor capability/Shadow source-stage status.
+- `codex/runtime/tool-policy.json`: stage-aware tool and permission policy with low/medium/high annotations for every guard category, unknown-phase read-only fallback, configured agent-dispatch patterns, and Plan Governor Shadow status.
 - `codex/runtime/resolve_codex_cli.sh`: resolve a Codex CLI only after its `--version` smoke passes, preferring the npm global CLI before ChatGPT/Codex app bundle fallbacks for launchd and stale-shim recovery.
 - `codex/runtime/dhf-packet.schema.json`: portable DHF packet schema for incubation, consumer handoff, and future extraction boundaries.
 - `codex/runtime/evidence.schema.json`: compatibility local evidence JSONL event contract, including `agent_team_validated` receipts.
@@ -49,7 +49,7 @@
 - `codex/runtime/evidence/plan-finding-decision.schema.json`: plan governor structured finding decision schema.
 - `codex/runtime/evidence/plan-governor-receipt.schema.json`: plan governor bounded round receipt schema.
 - `codex/hooks/`: Codex lifecycle hooks copied to `~/.codex/hooks/`.
-- `codex/hooks/harness_guard.py`: PreToolUse permission and guardrail hook.
+- `codex/hooks/harness_guard.py`: PreToolUse guard with legacy block wire shape and risk-tier-tagged decision reasons.
 - `codex/hooks/harness_observer.py`: PostToolUse evidence observer hook.
 - `codex/hooks/model_router.py`: prompt/subtask complexity router for cheapest quality-safe model recommendations.
 - `codex/hooks/dhf_preprompt.py`: generic `UserPromptSubmit` DHF dispatcher; malformed or missing-cwd payloads continue, opt-out wins first, non-ShipQ prompts need explicit generic activation, and ShipQ cwd delegates lazily to the adapter.

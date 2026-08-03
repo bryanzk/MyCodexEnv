@@ -54,7 +54,7 @@
     },
     {
       "path": "codex/runtime/tool-policy.json",
-      "role": "stage-aware tool and permission policy",
+      "role": "stage-aware tool and permission policy with per-category risk tiers",
       "audience": ["runtime", "codex"]
     },
     {
@@ -104,7 +104,7 @@
     },
     {
       "path": "codex/hooks/harness_guard.py",
-      "role": "PreToolUse permission and guardrail hook",
+      "role": "PreToolUse guard with legacy block shape and tier-tagged decision reasons",
       "audience": ["runtime", "codex"]
     },
     {

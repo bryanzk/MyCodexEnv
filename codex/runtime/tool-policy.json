@@ -21,6 +21,16 @@
   "agent_dispatch_command_patterns": [
     "\\bharness_agent_team\\.py\\b.*\\bdispatch\\b"
   ],
+  "categories": {
+    "read": {"risk_tier": "low"},
+    "repo_write": {"risk_tier": "medium"},
+    "network": {"risk_tier": "medium"},
+    "remote": {"risk_tier": "high"},
+    "secret": {"risk_tier": "high"},
+    "destructive": {"risk_tier": "high"},
+    "dynamic_exec": {"risk_tier": "high"},
+    "agent_dispatch": {"risk_tier": "medium"}
+  },
   "phases": {
     "research": {
       "allow_repo_write": false,

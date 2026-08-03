@@ -242,6 +242,12 @@ def classify(payload: dict[str, Any], policy: dict[str, Any]) -> tuple[str, str 
     return "read", None
 
 
+def category_risk_tier(policy: dict[str, Any], category: str) -> str:
+    category_policy = policy.get("categories", {}).get(category, {})
+    tier = category_policy.get("risk_tier") if isinstance(category_policy, dict) else None
+    return tier if tier in {"low", "medium", "high"} else "high"
+
+
 def git_root(cwd: str) -> Path | None:
     try:
         result = subprocess.run(
@@ -257,7 +263,7 @@ def git_root(cwd: str) -> Path | None:
     return Path(root) if root else None
 
 
-def block(reason: str) -> dict[str, Any]:
+def block(reason: str, risk_tier: str) -> dict[str, Any]:
     # Codex-supported PreToolUse legacy block shape. Isolated probe on
     # 2026-07-28 (codex-cli 0.144.1) proved: this shape and the
     # hookSpecificOutput deny shape intercept; the previous top-level
@@ -265,7 +271,7 @@ def block(reason: str) -> dict[str, Any]:
     # as invalid/unsupported, the hook run is marked failed, and the tool
     # call continues (fail-open). Former ask categories are therefore
     # upgraded to block until the host supports a real ask.
-    return {"decision": "block", "reason": reason}
+    return {"decision": "block", "reason": f"{reason} [risk_tier={risk_tier}]"}
 
 
 def decision(payload: dict[str, Any], policy: dict[str, Any]) -> dict[str, Any]:
@@ -280,11 +286,13 @@ def decision(payload: dict[str, Any], policy: dict[str, Any]) -> dict[str, Any]:
         phase_policy = unknown_phase_policy(policy)
 
     category, reason = classify(payload, policy)
+    risk_tier = category_risk_tier(policy, category)
     if category == "agent_dispatch":
         if has_fresh_validation_receipt(payload, policy, root):
             return {}
         return block(
-            "[harness] validate the worker plan with scripts/harness_agent_team.py validate --emit-evidence before dispatch."
+            "[harness] validate the worker plan with scripts/harness_agent_team.py validate --emit-evidence before dispatch.",
+            risk_tier,
         )
     if category == "read":
         return {}
@@ -296,7 +304,7 @@ def decision(payload: dict[str, Any], policy: dict[str, Any]) -> dict[str, Any]:
     if category == "remote" and phase_policy.get("allow_remote") is True:
         return {}
 
-    return block(f"[harness] {category} is restricted during phase '{phase}': {reason or category}.")
+    return block(f"[harness] {category} is restricted during phase '{phase}': {reason or category}.", risk_tier)
 
 
 def main() -> int:
