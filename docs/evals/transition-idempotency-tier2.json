@@ -1,0 +1,7 @@
+{
+  "name": "transition_idempotency",
+  "transition_key": "tier2-fixture-transition",
+  "first_task_id": "successor-a",
+  "second_task_id": "successor-b",
+  "expected_task_id": "successor-a"
+}

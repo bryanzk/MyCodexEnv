@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import re
 import shlex
 import subprocess
@@ -191,8 +192,238 @@ def handoff_fixture_eval(fixtures: Path) -> dict[str, Any]:
         return receipt("handoff_lint", "FAIL", eval_command, 1, str(exc))
 
 
+def tier2_command(
+    fixtures: Path,
+    transition_script: Path,
+    probe_script: Path,
+    scanner_script: Path,
+) -> str:
+    return shlex.join(
+        [
+            sys.executable,
+            str(Path(__file__).resolve()),
+            "tier2",
+            "--fixtures",
+            str(fixtures),
+            "--transition-script",
+            str(transition_script),
+            "--probe-script",
+            str(probe_script),
+            "--scanner-script",
+            str(scanner_script),
+        ]
+    )
+
+
+def transition_idempotency_eval(
+    fixtures: Path,
+    transition_script: Path,
+    eval_command: str,
+) -> dict[str, Any]:
+    try:
+        fixture = load_object(fixtures / "transition-idempotency-tier2.json")
+        required = ("transition_key", "first_task_id", "second_task_id", "expected_task_id")
+        if any(not isinstance(fixture.get(key), str) or not fixture[key].strip() for key in required):
+            raise ValueError("transition idempotency fixture requires non-empty string fields")
+
+        with tempfile.TemporaryDirectory() as tmp:
+            store = Path(tmp) / "harness" / "transitions.jsonl"
+            base = [sys.executable, str(transition_script), "record", "--store", str(store), "--key",
+                    fixture["transition_key"], "--task-id"]
+            first = subprocess.run([*base, fixture["first_task_id"]], capture_output=True, text=True, check=False)
+            if first.returncode != 0:
+                return receipt("transition_idempotency", "FAIL", eval_command, first.returncode,
+                               first.stderr.strip() or first.stdout.strip())
+            conflict = subprocess.run([*base, fixture["second_task_id"]], capture_output=True, text=True, check=False)
+            if conflict.returncode == 0:
+                return receipt("transition_idempotency", "FAIL", eval_command, 1,
+                               "second task unexpectedly created another successor")
+            query = subprocess.run(
+                [sys.executable, str(transition_script), "query", "--store", str(store), "--key",
+                 fixture["transition_key"]],
+                capture_output=True,
+                text=True,
+                check=False,
+            )
+            try:
+                first_payload = json.loads(first.stdout)
+                conflict_payload = json.loads(conflict.stdout)
+                query_payload = json.loads(query.stdout)
+            except json.JSONDecodeError as exc:
+                return receipt("transition_idempotency", "FAIL", eval_command, 1,
+                               f"transition output is not JSON: {exc}")
+            winners = [
+                first_payload.get("record", {}).get("task_id"),
+                conflict_payload.get("record", {}).get("task_id"),
+                query_payload.get("record", {}).get("task_id"),
+            ]
+            records = [
+                json.loads(line)
+                for line in store.read_text(encoding="utf-8").splitlines()
+                if line.strip()
+            ]
+            matching = [record for record in records if record.get("key") == fixture["transition_key"]]
+            if query.returncode != 0 or winners != [fixture["expected_task_id"]] * 3 or len(matching) != 1:
+                return receipt(
+                    "transition_idempotency",
+                    "FAIL",
+                    eval_command,
+                    1,
+                    f"winner mismatch winners={winners} matching_records={len(matching)}",
+                )
+        return receipt(
+            "transition_idempotency",
+            "PASS",
+            eval_command,
+            0,
+            f"single successor task_id={fixture['expected_task_id']} transition_key={fixture['transition_key']}",
+        )
+    except (OSError, ValueError) as exc:
+        return receipt("transition_idempotency", "FAIL", eval_command, 1, str(exc))
+
+
+def probe_agreement_eval(
+    fixtures: Path,
+    probe_script: Path,
+    scanner_script: Path,
+    eval_command: str,
+) -> dict[str, Any]:
+    try:
+        fixture = load_object(fixtures / "probe-agreement-tier2.json")
+        session_id = fixture.get("session_id")
+        started_at = fixture.get("started_at")
+        now = fixture.get("now")
+        events = fixture.get("events")
+        expected = fixture.get("expected_ordinal")
+        if (
+            not isinstance(session_id, str)
+            or not session_id
+            or not isinstance(started_at, str)
+            or not isinstance(now, str)
+            or not isinstance(events, list)
+            or not all(isinstance(event, dict) for event in events)
+            or isinstance(expected, bool)
+            or not isinstance(expected, int)
+            or expected < 0
+        ):
+            raise ValueError("probe agreement fixture has invalid fields")
+
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            codex_home = root / "codex-home"
+            repo_root = root / "repo"
+            sessions = codex_home / "sessions" / "2026" / "07" / "01"
+            sessions.mkdir(parents=True)
+            repo_root.mkdir()
+            session_file = sessions / f"rollout-{session_id}.jsonl"
+            rows = [
+                {
+                    "timestamp": started_at,
+                    "type": "session_meta",
+                    "payload": {
+                        "id": session_id,
+                        "cwd": str(repo_root),
+                        "timestamp": started_at,
+                    },
+                },
+                *events,
+            ]
+            session_file.write_text(
+                "".join(json.dumps(row, ensure_ascii=False, sort_keys=True) + "\n" for row in rows),
+                encoding="utf-8",
+            )
+
+            environment = os.environ.copy()
+            environment["CODEX_HOME"] = str(codex_home)
+            probe = subprocess.run(
+                [sys.executable, str(probe_script)],
+                input=json.dumps({"session_id": session_id, "cwd": str(repo_root)}),
+                capture_output=True,
+                text=True,
+                check=False,
+                env=environment,
+            )
+            if probe.returncode != 0:
+                return receipt("probe_agreement", "FAIL", eval_command, probe.returncode,
+                               probe.stderr.strip() or probe.stdout.strip())
+            try:
+                probe_payload = json.loads(probe.stdout)
+                context = probe_payload["hookSpecificOutput"]["additionalContext"]
+            except (json.JSONDecodeError, KeyError, TypeError) as exc:
+                return receipt("probe_agreement", "FAIL", eval_command, 1,
+                               f"probe injection missing: {exc}")
+            ordinal_match = re.search(r"\bcompaction_ordinal=(\d+)\b", context)
+            if ordinal_match is None:
+                return receipt("probe_agreement", "FAIL", eval_command, 1,
+                               "probe context has no compaction ordinal")
+            probe_ordinal = int(ordinal_match.group(1))
+
+            scanner = subprocess.run(
+                [
+                    sys.executable,
+                    str(scanner_script),
+                    "--codex-home",
+                    str(codex_home),
+                    "--older-than-days",
+                    "0",
+                    "--limit",
+                    "20",
+                    "--format",
+                    "json",
+                    "--now",
+                    now,
+                ],
+                capture_output=True,
+                text=True,
+                check=False,
+            )
+            if scanner.returncode != 0:
+                return receipt("probe_agreement", "FAIL", eval_command, scanner.returncode,
+                               scanner.stderr.strip() or scanner.stdout.strip())
+            try:
+                report = json.loads(scanner.stdout)
+                candidate = next(item for item in report["candidates"] if item["thread_id"] == session_id)
+                scanner_ordinal = candidate["compaction_count"]
+            except (json.JSONDecodeError, KeyError, StopIteration, TypeError) as exc:
+                return receipt("probe_agreement", "FAIL", eval_command, 1,
+                               f"scanner candidate missing: {exc}")
+            if probe_ordinal != expected or scanner_ordinal != expected or probe_ordinal != scanner_ordinal:
+                return receipt(
+                    "probe_agreement",
+                    "FAIL",
+                    eval_command,
+                    1,
+                    f"ordinal mismatch probe={probe_ordinal} scanner={scanner_ordinal} expected={expected}",
+                )
+        return receipt(
+            "probe_agreement",
+            "PASS",
+            eval_command,
+            0,
+            f"probe ordinal={expected} scanner ordinal={expected} for session={session_id}",
+        )
+    except (OSError, ValueError) as exc:
+        return receipt("probe_agreement", "FAIL", eval_command, 1, str(exc))
+
+
 def command_tier1(args: argparse.Namespace) -> int:
     receipts = [recovery_eval(args.fixtures, args.recover_script), handoff_fixture_eval(args.fixtures)]
+    for item in receipts:
+        print(json.dumps(item, ensure_ascii=False, sort_keys=False))
+    return 0 if all(item["status"] == "PASS" for item in receipts) else 1
+
+
+def command_tier2(args: argparse.Namespace) -> int:
+    eval_command = tier2_command(
+        args.fixtures,
+        args.transition_script,
+        args.probe_script,
+        args.scanner_script,
+    )
+    receipts = [
+        transition_idempotency_eval(args.fixtures, args.transition_script, eval_command),
+        probe_agreement_eval(args.fixtures, args.probe_script, args.scanner_script, eval_command),
+    ]
     for item in receipts:
         print(json.dumps(item, ensure_ascii=False, sort_keys=False))
     return 0 if all(item["status"] == "PASS" for item in receipts) else 1
@@ -216,6 +447,17 @@ def build_parser() -> argparse.ArgumentParser:
     tier1_parser.add_argument("--fixtures", type=Path, default=Path("docs/evals"))
     tier1_parser.add_argument("--recover-script", type=Path, default=Path("scripts/harness_recover.py"))
     tier1_parser.set_defaults(func=command_tier1)
+
+    tier2_parser = subparsers.add_parser("tier2", help="Run transition idempotency and probe agreement evals")
+    tier2_parser.add_argument("--fixtures", type=Path, default=Path("docs/evals"))
+    tier2_parser.add_argument("--transition-script", type=Path, default=Path("scripts/harness_transition.py"))
+    tier2_parser.add_argument("--probe-script", type=Path, default=Path("codex/hooks/compaction_probe.py"))
+    tier2_parser.add_argument(
+        "--scanner-script",
+        type=Path,
+        default=Path("codex/skills/codex-fluent/scripts/report_active_sessions.py"),
+    )
+    tier2_parser.set_defaults(func=command_tier2)
 
     lint_parser = subparsers.add_parser("handoff-lint", help="Lint one handoff document")
     lint_parser.add_argument("--path", type=Path, required=True)

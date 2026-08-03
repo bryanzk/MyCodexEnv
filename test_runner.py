@@ -5213,9 +5213,46 @@ def test_harness_eval_tier1():
     require("verification" in json.loads(out)["key_output"], "handoff lint should name missing verification")
 
     source = HARNESS_EVAL.read_text(encoding="utf-8")
-    require("harness_transition" not in source and "compaction_probe" not in source,
-            "tier-1 evaluator must have zero compaction infra dependency")
+    tier1_body = source[source.index("def command_tier1"):source.index("def command_tier2")]
+    require("transition_script" not in tier1_body and "probe_script" not in tier1_body,
+            "tier-1 command must retain zero compaction infra dependency")
     print("[PASS] harness eval tier1")
+
+
+def test_harness_eval_tier2():
+    fixtures = ROOT / "docs" / "evals"
+    scanner = ROOT / "codex" / "skills" / "codex-fluent" / "scripts" / "report_active_sessions.py"
+    command = [
+        sys.executable,
+        str(HARNESS_EVAL),
+        "tier2",
+        "--fixtures",
+        str(fixtures),
+        "--transition-script",
+        str(HARNESS_TRANSITION),
+        "--probe-script",
+        str(COMPACTION_PROBE),
+        "--scanner-script",
+        str(scanner),
+    ]
+    code, out, err = run(command)
+    require(code == 0, f"harness tier-2 evals should pass: {err or out}")
+    receipts = [json.loads(line) for line in out.splitlines() if line.strip()]
+    require([item["eval"] for item in receipts] == ["transition_idempotency", "probe_agreement"],
+            "tier-2 should run transition idempotency then probe agreement")
+    for item in receipts:
+        require(item["status"] == "PASS", f"tier-2 eval should pass: {item}")
+        require(set(item) == {"eval", "status", "command", "exit_code", "key_output", "timestamp"},
+                "tier-2 receipts should expose the exact verification receipt shape")
+        require(item["exit_code"] == 0 and item["command"] and item["key_output"],
+                "tier-2 PASS receipts require complete evidence")
+        require(dt.datetime.fromisoformat(item["timestamp"].replace("Z", "+00:00")),
+                "tier-2 receipt timestamp should be ISO-8601")
+    require("single successor" in receipts[0]["key_output"],
+            "idempotency receipt should assert a single successor")
+    require("ordinal=2" in receipts[1]["key_output"],
+            "agreement receipt should report the matching ordinal")
+    print("[PASS] harness eval tier2")
 
 
 def test_harness_transition_record_and_query():
@@ -7745,6 +7782,7 @@ TESTS = [
     test_harness_ledger_contract,
     test_subconscious_reflect,
     test_harness_eval_tier1,
+    test_harness_eval_tier2,
     test_harness_transition_record_and_query,
     test_compaction_probe_session_resolution,
     test_compaction_probe_incremental_scan,

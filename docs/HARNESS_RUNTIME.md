@@ -50,6 +50,13 @@ non-empty artifact list, complete verification evidence, and exactly one
 next-safe task. Each eval emits PASS/FAIL with command, exit code, key output,
 and timestamp.
 
+Tier 2 runs only after W1/W2. Its transition fixture executes the real
+first-record-wins helper and asserts that a conflicting task id, the query, and
+the JSONL end state all resolve to one successor. Its probe-agreement fixture
+runs the real incremental prompt probe and codex-fluent scanner over the same
+session JSONL and requires identical host-observed ordinals. Tier 1 remains
+callable without either infra script; tier 3 remains weekly audit-only.
+
 Validated requirements artifacts must include `## Task Demand (D_task)`.
 The validator requires `estimated_level` to be exactly `low`, `medium`, or
 `high`, and requires non-empty `L`, `H_tool`, `S_state`, and `N_obs` fields.

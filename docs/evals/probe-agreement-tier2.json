@@ -1,0 +1,27 @@
+{
+  "name": "probe_agreement",
+  "session_id": "tier2-fixture-session",
+  "started_at": "2026-07-01T00:00:00Z",
+  "now": "2026-08-02T12:00:00Z",
+  "events": [
+    {
+      "type": "compacted",
+      "payload": {}
+    },
+    {
+      "type": "event_msg",
+      "payload": {
+        "type": "compacted"
+      }
+    },
+    {
+      "type": "compacted_backup",
+      "payload": {}
+    },
+    {
+      "type": "compacted",
+      "payload": {}
+    }
+  ],
+  "expected_ordinal": 2
+}
