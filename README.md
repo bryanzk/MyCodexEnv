@@ -54,9 +54,11 @@ behavior live in `codex/hooks/dhf_preprompt.py`.
 - The source simplified route uses the exact enabled value
   `DHF_PREPROMPT_SIMPLIFIED_PROFILES=1`; the repo-source default is `simplified`
   after the second final-fix gate. Values `0`, `false`, `off`,
-  and `legacy` explicitly roll back. Runtime
-  promotion is pending separate authorization, and runtime home remains
-  unsynced.
+  and `legacy` explicitly roll back. Runtime state is evidence-dependent: the
+  live boundary accepts either a source-stage unsynced state or an exact
+  promoted state and rejects drift. `source_stage_unsynced` proves source
+  acceptance without runtime activation; `runtime_promoted` is required before
+  claiming managed runtime activation.
 
 ## Why this repository exists
 
@@ -232,6 +234,7 @@ Runtime output from these tools remains local by default and is not committed to
 | [`docs/repo-index.md`](docs/repo-index.md) | Source-of-truth and runtime-surface index |
 | [`docs/HARNESS_RUNTIME.md`](docs/HARNESS_RUNTIME.md) | Harness Runtime design contract |
 | [`docs/LIFECYCLE_SKILL_ROUTING.md`](docs/LIFECYCLE_SKILL_ROUTING.md) | Lifecycle, workflow, and skill routing |
+| [`docs/DHF_SIMPLIFICATION_PRODUCT_GUIDE.md`](docs/DHF_SIMPLIFICATION_PRODUCT_GUIDE.md) | Business changes, activation, daily use, and rollback for simplified DHF |
 | [`docs/project-lifecycle-harness-flow-cn.html`](docs/project-lifecycle-harness-flow-cn.html) | Chinese vertical lifecycle flow |
 | [`docs/project-lifecycle-harness-flow-skills.html`](docs/project-lifecycle-harness-flow-skills.html) | Chinese skill/helper routing visualization |
 | [`docs/HEADROOM_WORKFLOW.md`](docs/HEADROOM_WORKFLOW.md) | Headroom output-compression workflow |

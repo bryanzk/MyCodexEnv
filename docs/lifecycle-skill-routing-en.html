@@ -49,6 +49,16 @@ planning/testing/review skills, and deterministic helper scripts.</li>
 <p>The generic lifecycle skill should stay generic. Project-only paths, fixtures,
 checks, smoke matrices, and business safety boundaries belong in repo-specific
 adapter skills.</p>
+<h2>DHF Source-Stage Contract Mirror</h2>
+<p>Canonical profile and Result Invariant semantics live in
+<code>codex/skills/delivery-harness-framework/SKILL.md</code>; routing and rollout-switch
+behavior live in <code>codex/hooks/dhf_preprompt.py</code>.</p>
+<ul>
+<li>Governance profiles are <code>light</code>, <code>standard</code>, and <code>governed</code>.</li>
+<li>Generic injection requires explicit generic activation; an ordinary non-project prompt stays continue-only. Opt-out is evaluated before every route. The dispatcher recognizes the ShipQ project boundary and directly lazy-delegates; generic DHF must not recover, read shared state, or pre-classify before the ShipQ adapter owns the task.</li>
+<li>Every completion preserves exactly <code>result</code>, <code>scope_and_constraints</code>, <code>verification_receipt</code>, and <code>remaining_risk_or_next_action</code>; profile-specific ceremony is conditional rather than repeated by default.</li>
+<li>The source simplified route uses <code>DHF_PREPROMPT_SIMPLIFIED_PROFILES=1</code>; values <code>0</code>, <code>false</code>, <code>off</code>, and <code>legacy</code> roll back. Runtime evidence must report either <code>source_stage_unsynced</code> or <code>runtime_promoted</code> and reject drift.</li>
+</ul>
 <h2>Visual Guides</h2>
 <ul>
 <li><code>docs/dhf-architecture-status-en.html</code>: canonical English source/runtime/publication status.</li>

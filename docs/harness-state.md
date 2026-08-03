@@ -2737,3 +2737,101 @@ Stable rules belong in `AGENTS.md`, `README.md`, `docs/repo-index.md`, or
 - blockers:
   - none
 - next_safe_task: Operator may review and push the completed public-site audience upgrade, then verify the listed GitHub Pages URLs after deployment.
+
+### 2026-08-02T16:37:15-04:00
+- phase: development
+- event: checkpoint
+- summary: Rebased DHF simplification branch onto current main; preserved autostash after checkpoint-only apply conflict
+- git:
+  - branch: codex/mce-20260713-dhf-simplification
+  - latest_commit: d5412c8
+  - dirty_status: clean
+  - dirty_count: 0
+- changed_surfaces:
+  - `branch:codex/mce-20260713-dhf-simplification`
+  - `docs/harness-state.md`
+- verification:
+  - command: `git rev-list --left-right --count main...HEAD; git rev-parse HEAD; git diff --name-only --diff-filter=U`
+  - exit_code: 0
+  - key_output: main...HEAD=0/26; HEAD=d5412c806cf5587a98d36402c354f7077e429297; no unresolved paths
+- blockers:
+  - none
+- next_safe_task: Run focused DHF simplification tests and full repository gate before restoring the preserved user-owned stash
+- checkpoint_data: {"constraints":[],"next_action":{"command":"Run focused DHF simplification tests and full repository gate before restoring the preserved user-owned stash"},"ownership":{},"phase":"development","schema":"dhf_checkpoint_v1","verification_evidence":{"command":"git rev-list --left-right --count main...HEAD; git rev-parse HEAD; git diff --name-only --diff-filter=U","exit_code":0,"freshness":"fresh","key_output":"main...HEAD=0/26; HEAD=d5412c806cf5587a98d36402c354f7077e429297; no unresolved paths","timestamp":"2026-08-02T16:37:15-04:00"}}
+
+### 2026-08-02T16:51:02-04:00
+- phase: handoff
+- event: checkpoint
+- summary: Rebase completed and rebase-stable evidence timestamp fix validated; full gate remains blocked by source/runtime parity drift
+- git:
+  - branch: codex/mce-20260713-dhf-simplification
+  - latest_commit: d5412c8
+  - dirty_status: dirty
+  - dirty_count: 3
+- changed_surfaces:
+  - `branch:codex/mce-20260713-dhf-simplification`
+  - `scripts/validate_dhf_simplification_corpus.py`
+  - `tests/test_dhf_simplification.py`
+  - `docs/harness-state.md`
+- verification:
+  - command: `python3 test_runner.py; ./scripts/verify_codex_env.sh --repo-root "/Users/kezheng/.codex/worktrees/mce-dhf-simplification/MyCodexEnv" --codex-home "/Users/kezheng/.codex" --claude-home "/Users/kezheng/.claude"; git diff --check`
+  - exit_code: 1
+  - key_output: targeted rebase regression 4/4 passed; full gate ran=93 passed=89 failed=4; environment verification failed 4 parity checks; diff check clean
+- blockers:
+  - Managed runtime differs from rebased source; runtime sync is outside this task authorization
+- next_safe_task: Review the isolated source/runtime parity drift before deciding whether to authorize targeted runtime synchronization
+- checkpoint_data: {"constraints":[],"next_action":{"command":"Review the isolated source/runtime parity drift before deciding whether to authorize targeted runtime synchronization"},"ownership":{},"phase":"handoff","schema":"dhf_checkpoint_v1","verification_evidence":{"command":"python3 test_runner.py; ./scripts/verify_codex_env.sh --repo-root \"/Users/kezheng/.codex/worktrees/mce-dhf-simplification/MyCodexEnv\" --codex-home \"/Users/kezheng/.codex\" --claude-home \"/Users/kezheng/.claude\"; git diff --check","exit_code":1,"freshness":"fresh","key_output":"targeted rebase regression 4/4 passed; full gate ran=93 passed=89 failed=4; environment verification failed 4 parity checks; diff check clean","timestamp":"2026-08-02T16:51:02-04:00"}}
+
+### 2026-08-02T17:32:19-04:00
+- phase: handoff
+- event: checkpoint
+- summary: Targeted runtime parity promoted and all baseline gates passed; user stash restore blocked by overlapping local test change after materializing one untracked user file
+- git:
+  - branch: codex/mce-20260713-dhf-simplification
+  - latest_commit: d5412c8
+  - dirty_status: dirty
+  - dirty_count: 4
+- changed_surfaces:
+  - `runtime:/Users/kezheng/.codex/AGENTS.md`
+  - `runtime:/Users/kezheng/.codex/hooks/harness_guard.py`
+  - `runtime:/Users/kezheng/.codex/hooks/dhf_preprompt.py`
+  - `runtime:/Users/kezheng/.codex/skills/delivery-harness-framework/SKILL.md`
+  - `runtime:/Users/kezheng/.codex/skills/delivery-harness-framework/evals/evals.json`
+  - `docs/DHF_SIMPLIFICATION_PRODUCT_GUIDE.md`
+  - `docs/harness-state.md`
+- verification:
+  - command: `git stash apply b2a5383996ac1ed6af6a1cadd42b6d3423d405ac`
+  - exit_code: 1
+  - key_output: Git refused to overwrite tests/test_dhf_simplification.py; docs/DHF_SIMPLIFICATION_PRODUCT_GUIDE.md was materialized and hash-matches stash; all six stash objects remain
+- blockers:
+  - User stash and validated repair both modify tests/test_dhf_simplification.py; git stash apply aborted to avoid overwrite
+- next_safe_task: Obtain explicit user direction for reconciling the overlapping tests/test_dhf_simplification.py changes; preserve the materialized guide and all stashes, and do not reapply or resolve before authorization
+- checkpoint_data: {"constraints":["Do not commit, push, pop/delete stashes, remove the materialized guide, or resolve the overlapping test file without explicit authorization"],"next_action":{"args":[],"command":"git diff -- tests/test_dhf_simplification.py","requires_user_direction":true},"ownership":{"boundary":"Runtime writes are limited to the five promoted allowlist files; feature repair files remain agent-owned, the materialized guide is user-owned, and the overlapping test file is mixed ownership pending user direction","files":{"docs/DHF_SIMPLIFICATION_PRODUCT_GUIDE.md":"user_owned_partial_restore","docs/harness-state.md":"agent_owned_checkpoint","scripts/validate_dhf_simplification_corpus.py":"agent_owned_repair","tests/test_dhf_simplification.py":"mixed_overlap_blocker"}},"phase":"handoff","schema":"dhf_checkpoint_v1","verification_evidence":{"command":"git stash apply b2a5383996ac1ed6af6a1cadd42b6d3423d405ac","exit_code":1,"freshness":"fresh","key_output":"Git refused to overwrite tests/test_dhf_simplification.py; docs/DHF_SIMPLIFICATION_PRODUCT_GUIDE.md was materialized and hash-matches stash; all six stash objects remain","timestamp":"2026-08-02T21:30:41Z"}}
+
+### 2026-08-02T18:03:07-04:00
+- phase: handoff
+- event: checkpoint
+- summary: Targeted runtime parity is promoted, validated repair and user-owned feature changes are reconciled, and all focused/full/runtime/Git gates pass
+- git:
+  - branch: codex/mce-20260713-dhf-simplification
+  - latest_commit: d5412c8
+  - dirty_status: dirty
+  - dirty_count: 8
+- changed_surfaces:
+  - `README.md`
+  - `docs/DHF_SIMPLIFICATION_PRODUCT_GUIDE.md`
+  - `docs/HARNESS_RUNTIME.md`
+  - `docs/LIFECYCLE_SKILL_ROUTING.md`
+  - `docs/harness-state.md`
+  - `docs/repo-index.md`
+  - `scripts/validate_dhf_simplification_corpus.py`
+  - `tests/test_dhf_simplification.py`
+  - `runtime-backup:/Users/kezheng/.codex/runtime-backups/targeted-dhf-parity-20260802T212153Z/manifest.json`
+- verification:
+  - command: `python3 tests/test_dhf_simplification.py && python3 scripts/validate_dhf_simplification_corpus.py validate tests/fixtures/dhf_simplification_scenarios.json --contract docs/plans/2026-07-12-dhf-simplification-implementation-contract.md --check-baseline --json && python3 scripts/dhf_simplification_evidence.py --repo-root "$(pwd)" && python3 scripts/check_skill_compatibility.py --repo-root "$(pwd)" --codex-home "$HOME/.codex" --claude-home "$HOME/.claude" --strict-runtime-parity --json && python3 scripts/check_codex_skill_loader.py --repo-root "$(pwd)" --codex-home "$HOME/.codex" --json && python3 test_runner.py && ./scripts/verify_codex_env.sh --repo-root "$(pwd)" --codex-home "$HOME/.codex" --claude-home "$HOME/.claude" && git diff --check`
+  - exit_code: 0
+  - key_output: DHF=49/49; acceptance=18/18; test_runner=93/93; Verification passed; compatibility errors=0; loader errors=0; runtime_state=runtime_promoted; promotion_difference_paths=[]; diff check clean
+- blockers:
+  - none
+- next_safe_task: Review the reconciled eight-path dirty diff and request commit/push only if desired; keep all recovery stashes and runtime backup until that decision
+- checkpoint_data: {"constraints":["Do not commit, push, pop/delete stashes, remove worktrees, or delete the runtime backup without explicit authorization"],"next_action":{"args":[],"command":"git diff --stat","requires_user_direction_for_commit":true},"ownership":{"boundary":"The five documentation/product-guide paths are restored user-owned changes, the validator is the validated repair, the test file is a verified minimal merge of both, and harness-state is the append-only integrator checkpoint","files":{"README.md":"user_owned_restored","docs/DHF_SIMPLIFICATION_PRODUCT_GUIDE.md":"user_owned_restored","docs/HARNESS_RUNTIME.md":"user_owned_restored","docs/LIFECYCLE_SKILL_ROUTING.md":"user_owned_restored","docs/harness-state.md":"agent_owned_checkpoint","docs/repo-index.md":"user_owned_restored","scripts/validate_dhf_simplification_corpus.py":"agent_owned_repair","tests/test_dhf_simplification.py":"verified_mixed_merge"}},"phase":"handoff","schema":"dhf_checkpoint_v1","verification_evidence":{"command":"python3 tests/test_dhf_simplification.py && python3 scripts/validate_dhf_simplification_corpus.py validate tests/fixtures/dhf_simplification_scenarios.json --contract docs/plans/2026-07-12-dhf-simplification-implementation-contract.md --check-baseline --json && python3 scripts/dhf_simplification_evidence.py --repo-root \"$(pwd)\" && python3 scripts/check_skill_compatibility.py --repo-root \"$(pwd)\" --codex-home \"$HOME/.codex\" --claude-home \"$HOME/.claude\" --strict-runtime-parity --json && python3 scripts/check_codex_skill_loader.py --repo-root \"$(pwd)\" --codex-home \"$HOME/.codex\" --json && python3 test_runner.py && ./scripts/verify_codex_env.sh --repo-root \"$(pwd)\" --codex-home \"$HOME/.codex\" --claude-home \"$HOME/.claude\" && git diff --check","exit_code":0,"freshness":"fresh","key_output":"DHF=49/49; acceptance=18/18; test_runner=93/93; Verification passed; compatibility errors=0; loader errors=0; runtime_state=runtime_promoted; promotion_difference_paths=[]; diff check clean","timestamp":"2026-08-02T22:02:46Z"}}

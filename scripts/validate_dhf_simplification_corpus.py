@@ -484,7 +484,7 @@ def _producer_evidence_valid(
                 artifact_path = catalog_entry.get("artifact")
                 if not timestamp_bound and _non_empty_string(artifact_path):
                     proc = subprocess.run(
-                        ["git", "log", "-1", "--format=%cI", "--", str(artifact_path)],
+                        ["git", "log", "-1", "--format=%aI", "--", str(artifact_path)],
                         cwd=root,
                         capture_output=True,
                         text=True,

@@ -27,9 +27,11 @@ behavior live in `codex/hooks/dhf_preprompt.py`.
 - The source simplified route uses the exact enabled value
   `DHF_PREPROMPT_SIMPLIFIED_PROFILES=1`; the repo-source default is `simplified`
   after the second final-fix gate. Values `0`, `false`, `off`,
-  and `legacy` explicitly roll back. Runtime
-  promotion is pending separate authorization, and runtime home remains
-  unsynced.
+  and `legacy` explicitly roll back. Runtime state is evidence-dependent: the
+  live boundary accepts either a source-stage unsynced state or an exact
+  promoted state and rejects drift. `source_stage_unsynced` proves source
+  acceptance without runtime activation; `runtime_promoted` is required before
+  claiming managed runtime activation.
 - The source-stage acceptance lane uses
   `scripts/validate_dhf_simplification_corpus.py`,
   `scripts/dhf_simplification_evidence.py`, and
@@ -51,6 +53,7 @@ behavior live in `codex/hooks/dhf_preprompt.py`.
 - `docs/dhf-architecture-status-cn.html`: canonical Chinese DHF architecture and source/runtime/publication status.
 - `docs/dhf-architecture-status-en.html`: canonical English DHF architecture and source/runtime/publication status.
 - `docs/delivery-harness-framework-manual-cn.md`: Chinese PM-facing Delivery Harness Framework manual draft.
+- `docs/DHF_SIMPLIFICATION_PRODUCT_GUIDE.md`: Chinese product guide for simplified DHF behavior, activation, daily usage, verification, and rollback.
 - `docs/dhf-workflow-skills-cn.html`: Chinese DHF workflow skill inventory with GitHub source links.
 - `docs/dhf-workflow-skills-en.html`: English DHF workflow skill inventory with GitHub source links.
 - `docs/dhf-for-product-and-field-en.html`: English diagram-first DHF overview for product managers and field engineers.
@@ -162,6 +165,7 @@ behavior live in `codex/hooks/dhf_preprompt.py`.
 
 ## Related Documentation
 - `README.md`: top-level quick start and Harness Runtime overview.
+- `docs/DHF_SIMPLIFICATION_PRODUCT_GUIDE.md`: business-facing guide to the simplified DHF profiles, activation, daily usage, verification, and rollback.
 - `codex/skills/grilling/`: vendored grilling skill, context format, ADR format, and upstream MIT license.
 - `docs/HARNESS_RUNTIME.md`: lifecycle, evidence, checkpoint, permission, and subagent contracts.
 - `docs/MODEL_ROUTER_EVAL_MATRIX.md`: model routing existence, positive/negative, progressive-switching, and end-to-end evals.
