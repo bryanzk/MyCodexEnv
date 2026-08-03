@@ -18,6 +18,13 @@ from dataclasses import asdict, dataclass
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
+
+HOOKS_DIR = Path(__file__).resolve().parents[3] / "hooks"
+if str(HOOKS_DIR) not in sys.path:
+    sys.path.insert(0, str(HOOKS_DIR))
+
+from compaction_counter import compaction_event_increment
+
 QUEUE_SCOPE = "returned-window-only"
 DATA_CLASSIFICATION = "sensitive-local"
 TERMINAL_ESCAPE = re.compile(
@@ -159,9 +166,8 @@ def scan_sessions(
                 malformed += 1
                 continue
             event_type = event.get("type")
-            if event_type == "compacted":
-                compaction_count += 1
-            elif event_type == "session_meta" and meta_payload is None:
+            compaction_count += compaction_event_increment(event)
+            if event_type == "session_meta" and meta_payload is None:
                 payload = event.get("payload")
                 if isinstance(payload, dict) and isinstance(payload.get("id"), str):
                     meta_event = event

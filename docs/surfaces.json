@@ -108,6 +108,11 @@
       "audience": ["runtime", "codex"]
     },
     {
+      "path": "codex/hooks/compaction_counter.py",
+      "role": "shared decoded top-level compacted event counter",
+      "audience": ["runtime", "codex"]
+    },
+    {
       "path": "codex/hooks/harness_observer.py",
       "role": "PostToolUse evidence observer hook",
       "audience": ["runtime", "codex"]

@@ -6374,7 +6374,14 @@ def test_runner_reports_skips_distinctly():
 
 def test_codex_fluent_active_session_report():
     script = ROOT / "codex" / "skills" / "codex-fluent" / "scripts" / "report_active_sessions.py"
+    counter = ROOT / "codex" / "hooks" / "compaction_counter.py"
     require(script.exists(), "codex-fluent active-session scanner missing")
+    require(counter.exists(), "shared compaction counter missing")
+    scanner_source = script.read_text(encoding="utf-8")
+    require("from compaction_counter import compaction_event_increment" in scanner_source,
+            "active-session scanner should import the shared compaction counter")
+    require('event_type == "compacted"' not in scanner_source,
+            "active-session scanner must not keep a second compaction classifier")
     with tempfile.TemporaryDirectory() as tmp:
         codex_home = Path(tmp) / ".codex"
         sessions = codex_home / "sessions" / "2026" / "05" / "01"

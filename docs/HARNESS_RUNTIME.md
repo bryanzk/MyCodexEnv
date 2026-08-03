@@ -117,6 +117,27 @@ W6b reference rounds: every hook ran once, G0/G4 retained their known allowed
 outcomes, and G1/G2/G3/G5/G6/G7/G8 remained blocked. Risk tiers do not change
 block/allow behavior.
 
+## Compaction Observation
+
+`codex/hooks/compaction_counter.py` is the single decoded-event classifier for
+top-level `type=compacted` events. The codex-fluent active-session scanner uses
+it without changing report output; the prompt-time probe will consume the same
+function after W2b lands.
+
+W2 Phase-0 captured one real Codex CLI 0.144.1 `UserPromptSubmit` payload shape
+in an isolated Codex home before any probe implementation existed. The logger
+retained keys and presence flags only, never prompt or identifier values.
+
+- command: `bash /tmp/run_mce_phase0_user_prompt_probe.sh`
+- exit_code: 0
+- key_output: `session_or_thread_id_present=true path=session_id; usage_or_token_fields_present=false; cwd_present=true path=cwd`
+- timestamp: `2026-08-02T22:16:30-04:00`
+
+Therefore W2b may resolve the observed payload by its top-level `session_id`,
+while retaining the strict three-condition heuristic for payloads without it.
+Because no usage/token field was observed, R4 must use only the host-observed
+compaction ordinal as its pressure signal and must not synthesize capacity.
+
 ## Evidence Contract
 Evidence events are JSON objects that match `codex/runtime/evidence.schema.json`.
 That file remains the compatibility entrypoint. Focused schemas live under
