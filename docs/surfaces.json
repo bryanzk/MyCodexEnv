@@ -199,7 +199,7 @@
     },
     {
       "path": "scripts/harness_recover.py",
-      "role": "fresh-session recovery smoke helper",
+      "role": "fresh-session recovery and freshness-aware boundary verdict helper",
       "audience": ["codex", "human"]
     },
     {

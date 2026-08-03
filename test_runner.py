@@ -5678,6 +5678,123 @@ def test_harness_recovery_smoke():
         require(code == 0, f"markdown recovery should succeed: {err or out}")
         require("conversion_health:" in out, "markdown recovery should include conversion health")
 
+        code, out, err = run(["git", "add", "docs", "dirty.txt"], cwd=repo)
+        require(code == 0, f"boundary fixture git add failed: {err or out}")
+        code, out, err = run(["git", "commit", "-m", "boundary fixture"], cwd=repo)
+        if code != 0:
+            code, out, err = run(
+                [
+                    "git",
+                    "-c",
+                    "user.name=Harness Test",
+                    "-c",
+                    "user.email=harness-test@example.invalid",
+                    "commit",
+                    "-m",
+                    "boundary fixture",
+                ],
+                cwd=repo,
+            )
+        require(code == 0, f"boundary fixture git commit failed: {err or out}")
+
+        empty_boundary_home = tmp_path / "empty-boundary-home"
+        boundary_cmd = [
+            sys.executable,
+            str(HARNESS_RECOVER),
+            "--repo-root",
+            str(repo),
+            "--codex-home",
+            str(empty_boundary_home),
+            "--boundary",
+            "--json",
+        ]
+        code, out, err = run(boundary_cmd)
+        require(code == 0, f"boundary recovery without evidence should succeed: {err or out}")
+        no_evidence_boundary = json.loads(out)
+        require(no_evidence_boundary["boundary_verdict"] == "unknown",
+                "boundary without verification evidence must be unknown")
+
+        boundary_home = tmp_path / "boundary-home"
+        stale_timestamp = "2000-01-01T00:00:00+00:00"
+        code, out, err = run(
+            [
+                sys.executable,
+                str(HARNESS_EVIDENCE),
+                "append",
+                "--codex-home",
+                str(boundary_home),
+                "--event-type",
+                "verification_result",
+                "--phase",
+                "validation",
+                "--cwd",
+                str(repo),
+                "--command",
+                "python3 test_runner.py",
+                "--exit-code",
+                "0",
+                "--key-output",
+                "[PASS] stale boundary fixture",
+                "--timestamp",
+                stale_timestamp,
+            ]
+        )
+        require(code == 0, f"stale boundary evidence append failed: {err or out}")
+        stale_boundary_cmd = [
+            sys.executable,
+            str(HARNESS_RECOVER),
+            "--repo-root",
+            str(repo),
+            "--codex-home",
+            str(boundary_home),
+            "--boundary",
+            "--max-verification-age",
+            "24",
+            "--json",
+        ]
+        code, out, err = run(stale_boundary_cmd)
+        require(code == 0, f"stale boundary recovery should succeed: {err or out}")
+        stale_boundary = json.loads(out)
+        require(stale_boundary["boundary_verdict"] == "unknown",
+                "stale verification evidence must produce unknown boundary")
+
+        code, out, err = run(
+            [
+                sys.executable,
+                str(HARNESS_EVIDENCE),
+                "append",
+                "--codex-home",
+                str(boundary_home),
+                "--event-type",
+                "verification_result",
+                "--phase",
+                "validation",
+                "--cwd",
+                str(repo),
+                "--command",
+                "python3 test_runner.py",
+                "--exit-code",
+                "0",
+                "--key-output",
+                "[PASS] fresh boundary fixture",
+            ]
+        )
+        require(code == 0, f"fresh boundary evidence append failed: {err or out}")
+        code, out, err = run(stale_boundary_cmd)
+        require(code == 0, f"safe boundary recovery should succeed: {err or out}")
+        safe_boundary = json.loads(out)
+        require(safe_boundary["boundary_verdict"] == "safe", "clean repo with fresh green evidence must be safe")
+        require("verification_is_fresh" in safe_boundary["boundary_reason"],
+                "safe boundary should explain evidence freshness")
+
+        write(repo / "dirty-after-boundary.txt", "dirty\n")
+        code, out, err = run(stale_boundary_cmd)
+        require(code == 0, f"dirty boundary recovery should succeed: {err or out}")
+        dirty_boundary = json.loads(out)
+        require(dirty_boundary["boundary_verdict"] == "unsafe", "dirty repo boundary must be unsafe")
+        require("dirty_worktree" in dirty_boundary["boundary_reason"],
+                "unsafe boundary should identify the dirty worktree")
+
         missing_state_repo = tmp_path / "missing-state"
         missing_state_repo.mkdir()
         write(missing_state_repo / "docs" / "repo-index.md", "# Repo Index\n")

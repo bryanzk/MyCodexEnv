@@ -7,6 +7,7 @@ import os
 import subprocess
 import sys
 from collections import Counter
+from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Any
 
@@ -28,6 +29,16 @@ def run_git(repo_root: Path, args: list[str], empty_value: str = "unknown") -> s
     return proc.stdout.strip() or empty_value
 
 
+def positive_hours(value: str) -> float:
+    try:
+        hours = float(value)
+    except ValueError as exc:
+        raise argparse.ArgumentTypeError("must be a number of hours") from exc
+    if hours <= 0:
+        raise argparse.ArgumentTypeError("must be greater than zero")
+    return hours
+
+
 def normalize_path(value: str | Path) -> str:
     return str(Path(value).expanduser().resolve(strict=False))
 
@@ -43,6 +54,61 @@ def parse_state_value(text: str, key: str) -> str:
 def compact_decision_event(event: dict[str, Any]) -> dict[str, Any]:
     keys = ["timestamp", "event_type", "phase", "message", "key_output", "failure_class"]
     return {key: event[key] for key in keys if key in event}
+
+
+def parse_aware_timestamp(value: Any) -> datetime | None:
+    if not isinstance(value, str) or not value.strip():
+        return None
+    normalized = value.strip()
+    if normalized.endswith("Z"):
+        normalized = normalized[:-1] + "+00:00"
+    try:
+        parsed = datetime.fromisoformat(normalized)
+    except ValueError:
+        return None
+    if parsed.tzinfo is None:
+        return None
+    return parsed
+
+
+def evaluate_boundary(
+    repo_root: Path,
+    dirty_status: str,
+    latest_verification: dict[str, Any] | None,
+    max_verification_age_hours: float,
+) -> tuple[str, str]:
+    if dirty_status == "dirty":
+        return "unsafe", "dirty_worktree"
+    if dirty_status != "clean":
+        return "unknown", "dirty_status_unavailable"
+    if not latest_verification:
+        return "unknown", "verification_evidence_unavailable"
+
+    exit_code = latest_verification.get("exit_code")
+    if isinstance(exit_code, bool) or not isinstance(exit_code, int):
+        return "unknown", "verification_exit_code_unavailable"
+    if exit_code != 0:
+        return "unsafe", "latest_verification_failed"
+
+    verification_time = parse_aware_timestamp(latest_verification.get("timestamp"))
+    if verification_time is None:
+        return "unknown", "verification_timestamp_unavailable"
+    current_time = datetime.now().astimezone()
+    if verification_time > current_time:
+        return "unknown", "verification_timestamp_in_future"
+    if current_time - verification_time > timedelta(hours=max_verification_age_hours):
+        return "unknown", "verification_too_old"
+
+    latest_commit_time = parse_aware_timestamp(run_git(repo_root, ["log", "-1", "--format=%cI"]))
+    if latest_commit_time is None:
+        return "unknown", "latest_commit_timestamp_unavailable"
+    if verification_time < latest_commit_time:
+        return "unknown", "verification_predates_latest_commit"
+    return (
+        "safe",
+        "clean_worktree;latest_verification_exit_zero;verification_is_fresh;"
+        "verification_not_older_than_latest_commit",
+    )
 
 
 def latest_evidence(codex: Path, repo_root: Path) -> tuple[str, dict[str, Any] | None, int, list[dict[str, Any]]]:
@@ -106,13 +172,14 @@ def build_recovery(args: argparse.Namespace) -> tuple[int, dict[str, Any] | None
         "unknown": evidence_kind_counter.get("unknown", 0),
     }
     decision_events = [event for event in evidence_events if event.get("evidence_kind") == "decision"]
+    dirty_status = "unknown" if git_status == "unknown" else ("dirty" if dirty_lines else "clean")
     payload = {
         "repo_root": str(repo_root),
         "phase": parse_state_value(state_text, "phase"),
         "blocked_sources": parse_state_value(state_text, "blocked_sources"),
         "next_safe_task": parse_state_value(state_text, "next_safe_task"),
         "latest_verification_state": parse_state_value(state_text, "latest_verification"),
-        "dirty_status": "unknown" if git_status == "unknown" else ("dirty" if dirty_lines else "clean"),
+        "dirty_status": dirty_status,
         "dirty_count": len(dirty_lines),
         "latest_commit": run_git(repo_root, ["log", "--max-count=1", "--pretty=format:%h %ad %s", "--date=short"]),
         "evidence_status": evidence_status,
@@ -122,6 +189,15 @@ def build_recovery(args: argparse.Namespace) -> tuple[int, dict[str, Any] | None
         "evidence_kind_counts": evidence_kind_counts,
         "latest_decision_evidence": compact_decision_event(decision_events[0]) if decision_events else {},
     }
+    if args.boundary:
+        boundary_verdict, boundary_reason = evaluate_boundary(
+            repo_root,
+            dirty_status,
+            latest,
+            args.max_verification_age,
+        )
+        payload["boundary_verdict"] = boundary_verdict
+        payload["boundary_reason"] = boundary_reason
     return 0, payload, None
 
 
@@ -143,6 +219,13 @@ def render_markdown(payload: dict[str, Any]) -> str:
         f"- next_safe_task: {payload['next_safe_task']}",
         f"- latest_verification_state: {payload['latest_verification_state']}",
     ]
+    if "boundary_verdict" in payload:
+        lines.extend(
+            [
+                f"- boundary_verdict: `{payload['boundary_verdict']}`",
+                f"- boundary_reason: {payload['boundary_reason']}",
+            ]
+        )
     decision = payload.get("latest_decision_evidence") or {}
     if decision:
         lines.extend(
@@ -179,6 +262,8 @@ def main() -> int:
     parser = argparse.ArgumentParser(description="Recover Harness Runtime state for a fresh Codex session.")
     parser.add_argument("--repo-root")
     parser.add_argument("--codex-home")
+    parser.add_argument("--boundary", action="store_true")
+    parser.add_argument("--max-verification-age", type=positive_hours, default=24.0, metavar="HOURS")
     parser.add_argument("--json", action="store_true", dest="json_output")
     args = parser.parse_args()
 

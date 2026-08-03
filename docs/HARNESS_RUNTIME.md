@@ -271,6 +271,12 @@ Recovery behavior:
   handoff and guardrail decisions.
 - conversion health: JSON and markdown output include the advisory
   `conversion_health` status and reason for matching local evidence.
+- boundary check: `--boundary` adds `boundary_verdict` and `boundary_reason`.
+  `safe` requires a clean worktree plus a zero-exit verification whose timestamp
+  is no older than the latest commit and no older than
+  `--max-verification-age` (24 hours by default). A dirty worktree or failed
+  verification is `unsafe`; unavailable, invalid, future, stale, or pre-commit
+  timestamps are `unknown` and callers must treat them as unsafe.
 - JSON output: use `--json` for automation and visual reports.
 
 ## Environment Probe Contract
