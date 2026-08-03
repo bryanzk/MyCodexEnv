@@ -56,9 +56,11 @@ behavior live in `codex/hooks/dhf_preprompt.py`.
 - The source simplified route uses the exact enabled value
   `DHF_PREPROMPT_SIMPLIFIED_PROFILES=1`; the repo-source default is `simplified`
   after the second final-fix gate. Values `0`, `false`, `off`,
-  and `legacy` explicitly roll back. Runtime
-  promotion is pending separate authorization, and runtime home remains
-  unsynced.
+  and `legacy` explicitly roll back. Runtime state is evidence-dependent: the
+  live boundary accepts either a source-stage unsynced state or an exact
+  promoted state and rejects drift. `source_stage_unsynced` proves source
+  acceptance without runtime activation; `runtime_promoted` is required before
+  claiming managed runtime activation.
 
 ## 为什么存在
 
@@ -238,6 +240,7 @@ python3 scripts/manage_agents.py verify
 | [`docs/repo-index.md`](docs/repo-index.md) | source of truth 与 runtime surface 索引 |
 | [`docs/HARNESS_RUNTIME.md`](docs/HARNESS_RUNTIME.md) | Harness Runtime 设计合同 |
 | [`docs/LIFECYCLE_SKILL_ROUTING.md`](docs/LIFECYCLE_SKILL_ROUTING.md) | 生命周期、workflow 与 skill 路由 |
+| [`docs/DHF_SIMPLIFICATION_PRODUCT_GUIDE.md`](docs/DHF_SIMPLIFICATION_PRODUCT_GUIDE.md) | DHF 简化版的业务变化、生效方式、日常使用与回退指南 |
 | [`docs/project-lifecycle-harness-flow-cn.html`](docs/project-lifecycle-harness-flow-cn.html) | 中文纵向 lifecycle flow |
 | [`docs/project-lifecycle-harness-flow-skills.html`](docs/project-lifecycle-harness-flow-skills.html) | 中文 skill/helper 路由可视化 |
 | [`docs/HEADROOM_WORKFLOW.md`](docs/HEADROOM_WORKFLOW.md) | Headroom 输出压缩工作流 |

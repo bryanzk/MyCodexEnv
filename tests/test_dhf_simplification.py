@@ -8,6 +8,8 @@ import importlib.util
 import json
 import os
 import re
+import shlex
+import shutil
 import subprocess
 import sys
 import tempfile
@@ -21,6 +23,8 @@ CORPUS = ROOT / "tests" / "fixtures" / "dhf_simplification_scenarios.json"
 VALIDATOR = ROOT / "scripts" / "validate_dhf_simplification_corpus.py"
 EVIDENCE = ROOT / "scripts" / "dhf_simplification_evidence.py"
 CONTRACT = ROOT / "docs" / "plans" / "2026-07-12-dhf-simplification-implementation-contract.md"
+HARNESS_STATE = ROOT / "docs" / "harness-state.md"
+PRODUCT_GUIDE = ROOT / "docs" / "DHF_SIMPLIFICATION_PRODUCT_GUIDE.md"
 DISPATCHER = ROOT / "codex" / "hooks" / "dhf_preprompt.py"
 SKILL = ROOT / "codex" / "skills" / "delivery-harness-framework" / "SKILL.md"
 EVALS = ROOT / "codex" / "skills" / "delivery-harness-framework" / "evals" / "evals.json"
@@ -57,6 +61,28 @@ SURFACES = ROOT / "docs" / "surfaces.json"
 PUBLIC_ROUTING_PREFIXES = (
     "docs/delivery-harness-beginner-guide-",
     "docs/project-lifecycle-harness-flow-",
+)
+RECONCILIATION_VERIFICATION_COMMAND = (
+    "python3 tests/test_dhf_simplification.py && "
+    "python3 scripts/validate_dhf_simplification_corpus.py validate "
+    "tests/fixtures/dhf_simplification_scenarios.json --contract "
+    "docs/plans/2026-07-12-dhf-simplification-implementation-contract.md "
+    "--check-baseline --json && "
+    'python3 scripts/dhf_simplification_evidence.py --repo-root "$(pwd)" && '
+    'python3 scripts/check_skill_compatibility.py --repo-root "$(pwd)" '
+    '--codex-home "$HOME/.codex" --claude-home "$HOME/.claude" '
+    "--strict-runtime-parity --json && "
+    'python3 scripts/check_codex_skill_loader.py --repo-root "$(pwd)" '
+    '--codex-home "$HOME/.codex" --json && '
+    "python3 test_runner.py && "
+    './scripts/verify_codex_env.sh --repo-root "$(pwd)" '
+    '--codex-home "$HOME/.codex" --claude-home "$HOME/.claude" && '
+    "git diff --check"
+)
+RECONCILIATION_VERIFICATION_OUTPUT = (
+    "DHF=49/49; acceptance=18/18; test_runner=93/93; Verification passed; "
+    "compatibility errors=0; loader errors=0; runtime_state=runtime_promoted; "
+    "promotion_difference_paths=[]; diff check clean"
 )
 
 
@@ -212,8 +238,10 @@ def mirror_contract_errors(text: str, contract: dict[str, object], routes: dict[
         *(f"`{invariant}`" for invariant in contract["invariants"]),
         f"{contract['switch_name']}={contract['switch_enable']}",
         "repo-source default is `simplified`",
-        "Runtime promotion is pending separate authorization",
-        "runtime home remains unsynced",
+        "Runtime state is evidence-dependent",
+        "`source_stage_unsynced` proves source acceptance without runtime activation",
+        "`runtime_promoted` is required before claiming managed runtime activation",
+        "rejects drift",
     ]
     if routes == {
         "default_generic": "generic-activated:standard:compatibility_risk_trigger",
@@ -470,6 +498,27 @@ class DhfSimplificationCorpusTests(unittest.TestCase):
         )
         gates = self.validator.derive_trace_gates(self.corpus, artifact_payload=artifact)
         self.assertFalse(gates["acceptance_gates"]["AC-16"])
+
+    def test_historical_runtime_evidence_uses_rebase_stable_author_timestamp(self):
+        artifact = json.loads(
+            (ROOT / "tests" / "fixtures" / "dhf_simplification_observations.json").read_text(
+                encoding="utf-8"
+            )
+        )
+        entry = self.corpus["producer_catalog"]["PRODUCER-AC-16-S4-1"]
+        committed_at = subprocess.CompletedProcess(
+            args=[],
+            returncode=0,
+            stdout="2026-07-13T21:50:02-04:00\n",
+            stderr="",
+        )
+        with mock.patch.object(self.validator.subprocess, "run", return_value=committed_at) as run:
+            valid, reasons = self.validator._producer_evidence_valid(
+                "PRODUCER-AC-16-S4-1", entry, artifact, ROOT
+            )
+
+        self.assertTrue(valid, reasons)
+        self.assertIn("--format=%aI", run.call_args.args[0])
 
         artifact = json.loads(
             (ROOT / "tests" / "fixtures" / "dhf_simplification_observations.json").read_text(
@@ -1340,6 +1389,10 @@ class DhfGovernanceProfileTests(unittest.TestCase):
             "after a meaningful validated slice",
             "after validation passes for a meaningful implementation slice",
             "candidate is ready for runtime promotion",
+            "Runtime promotion is pending separate authorization",
+            "runtime home remains unsynced",
+            "Runtime promotion is authorized",
+            "managed runtime is promoted",
         )
         for mirror in NORMATIVE_MIRRORS:
             text = mirror.read_text(encoding="utf-8")
@@ -1348,6 +1401,59 @@ class DhfGovernanceProfileTests(unittest.TestCase):
                 self.assertEqual(mirror_contract_errors(text, contract, routes), [])
                 for statement in stale_statements:
                     self.assertNotIn(statement, normalized)
+
+    def test_product_guide_keeps_runtime_activation_claim_evidence_dependent(self):
+        guide = PRODUCT_GUIDE.read_text(encoding="utf-8")
+        normalized = " ".join(guide.split())
+        for term in (
+            "source_stage_unsynced",
+            "runtime_promoted",
+            "不代表当前机器已激活",
+            "fresh evidence",
+        ):
+            self.assertIn(term, normalized)
+        self.assertNotIn("当前机器的受管 Codex runtime 已完成推广", normalized)
+        self.assertNotIn("不需要再次运行全量同步", normalized)
+
+    def test_harness_state_keeps_checkpoint_metadata_with_its_owner_entry(self):
+        state = HARNESS_STATE.read_text(encoding="utf-8")
+        july_checkpoint = state.split("### 2026-07-26T20:57:35-04:00", 1)[1].split("\n### ", 1)[0]
+        for field in ("constraints", "ownership", "next_action"):
+            self.assertNotIn(f"- {field}:", july_checkpoint)
+
+        august_checkpoint = state.split("### 2026-08-02T18:03:07-04:00", 1)[1].split("\n### ", 1)[0]
+        checkpoint_line = next(
+            line for line in august_checkpoint.splitlines() if line.startswith("- checkpoint_data: ")
+        )
+        checkpoint_data = json.loads(checkpoint_line.split(": ", 1)[1])
+        self.assertTrue(checkpoint_data["constraints"])
+        self.assertTrue(checkpoint_data["ownership"]["files"])
+        self.assertEqual(checkpoint_data["next_action"]["command"], "git diff --stat")
+
+    def test_harness_state_reconciliation_receipt_uses_a_reproducible_command(self):
+        state = HARNESS_STATE.read_text(encoding="utf-8")
+        snapshot = state.split("## State Log", 1)[0]
+        self.assertIn(
+            f"command={RECONCILIATION_VERIFICATION_COMMAND}; exit_code=0; "
+            f"key_output={RECONCILIATION_VERIFICATION_OUTPUT}",
+            snapshot,
+        )
+
+        august_checkpoint = state.split("### 2026-08-02T18:03:07-04:00", 1)[1].split("\n### ", 1)[0]
+        self.assertIn(f"- command: `{RECONCILIATION_VERIFICATION_COMMAND}`", august_checkpoint)
+        self.assertIn(f"- key_output: {RECONCILIATION_VERIFICATION_OUTPUT}", august_checkpoint)
+        checkpoint_line = next(
+            line for line in august_checkpoint.splitlines() if line.startswith("- checkpoint_data: ")
+        )
+        verification = json.loads(checkpoint_line.split(": ", 1)[1])["verification_evidence"]
+        self.assertEqual(verification["command"], RECONCILIATION_VERIFICATION_COMMAND)
+        self.assertEqual(verification["key_output"], RECONCILIATION_VERIFICATION_OUTPUT)
+        for stage in RECONCILIATION_VERIFICATION_COMMAND.split(" && "):
+            executable = shlex.split(stage, posix=True)[0]
+            if "/" in executable:
+                self.assertTrue((ROOT / executable).is_file(), executable)
+            else:
+                self.assertIsNotNone(shutil.which(executable), executable)
 
     def test_consistency_oracle_detects_canonical_and_mirror_drift(self):
         skill_text = SKILL.read_text(encoding="utf-8")
@@ -1370,6 +1476,16 @@ class DhfGovernanceProfileTests(unittest.TestCase):
         self.assertIn(
             f"{switch_drift_contract['switch_name']}={switch_drift_contract['switch_enable']}",
             mirror_contract_errors(mirror, switch_drift_contract, routes),
+        )
+
+        promotion_drift = mirror.replace(
+            "Runtime state is evidence-dependent",
+            "The managed runtime is promoted",
+            1,
+        )
+        self.assertIn(
+            "Runtime state is evidence-dependent",
+            mirror_contract_errors(promotion_drift, contract, routes),
         )
 
         governed_profile = contract["profiles"][-1]
