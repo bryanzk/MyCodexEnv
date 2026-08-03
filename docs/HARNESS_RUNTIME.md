@@ -70,6 +70,7 @@ For the current project workflow and skill routing map, read
 ## Infra Contract
 - `Sandbox`: Codex sandboxing and approval rules remain the primary technical boundary; `scripts/harness_env_probe.py` reports the observable runtime configuration.
 - `Memory`: `docs/harness-state.md` is the repo-visible memory surface; `scripts/harness_recover.py` proves recovery from state, git, and local evidence.
+- `Memory Reflection`: `scripts/codex_subconscious.py reflect` merges duplicate routine/derived JSONL records and prunes only expired routine/derived records; decision and unknown records remain unchanged.
 - `Skills`: `codex/skills/*` is the source copied into runtime `~/.codex/skills/*`.
 - `Session State`: `docs/harness-state.md` records durable phase and handoff facts.
 - `Task Ledger`: `scripts/harness_ledger.py` creates and verifies tamper-evident acceptance ledgers from validated requirements.
@@ -127,6 +128,7 @@ Evidence helper behavior:
   `conversion_health` signal from already-filtered evidence events; report and
   recover outputs include status, reason, productive event counts, repeated
   command counts, and low-conversion signals.
+
 - stalled conversion health is advisory for planning and recovery, not an
   automatic failure gate.
 - empty evidence: report exits 0 with an explicit empty summary.
@@ -134,6 +136,12 @@ Evidence helper behavior:
   lists file and line.
 - state logs should promote compact decision evidence summaries instead of
   copying every routine gate receipt into handoff state.
+
+Memory reflection is fail-closed and atomic. A malformed JSONL record, missing
+timestamp on a routine/derived record, or invalid timezone prevents every
+rewrite. Duplicate detection ignores only record identity and timestamp fields,
+keeps the newest routine/derived copy, and never deduplicates or expires a
+decision-kind record.
 
 ## Runtime Plan Governor Contract
 

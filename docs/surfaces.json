@@ -173,6 +173,11 @@
       "audience": ["codex", "human"]
     },
     {
+      "path": "scripts/codex_subconscious.py",
+      "role": "local memory build, briefing, publishing, and decision-preserving reflection helper",
+      "audience": ["codex", "human"]
+    },
+    {
       "path": "scripts/harness_env_probe.py",
       "role": "observable Codex runtime configuration probe",
       "audience": ["codex", "human"]

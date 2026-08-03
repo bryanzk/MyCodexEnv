@@ -47,6 +47,7 @@ For each candidate the report surfaced, explicitly decide:
 - [ ] Started a fresh test thread to verify "snappy" feel
 - [ ] Can still find and read all archived material if needed
 - [ ] (If using the optional metadata repair) Verified that full transcripts are still intact
+- [ ] Ran the weekly subconscious `reflect` report and confirmed decision records were preserved
 
 ## After First Successful Maintenance
 

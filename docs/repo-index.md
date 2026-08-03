@@ -65,6 +65,7 @@
 - `docs/templates/harness-agent-brief.md`: worker durable brief template with optional Task Demand and Green Gate companion fields.
 - `scripts/harness_requirements.py`: requirements artifact validator.
 - `scripts/harness_recover.py`: fresh-session recovery smoke check with evidence-kind counts and compact latest decision evidence.
+- `scripts/codex_subconscious.py`: local memory build/brief/publish helper with fail-closed routine/derived reflection.
 - `scripts/harness_env_probe.py`: observable Codex runtime config and split evidence schema probe.
 - `scripts/check_dhf_consumer_compatibility.py`: read-only DHF consumer compatibility and helper drift checker.
 - `docs/dhf-consumer-compatibility.json`: machine-readable DHF consumer compatibility matrix for MyCodexEnv, ShipQ, and future consumers.
@@ -146,7 +147,7 @@
 
 ## Harness Infra Map
 - Sandbox: Codex sandbox and approval rules, repo high-risk path guidance, and env probe output.
-- Memory: `docs/harness-state.md`, recovery smoke output, and local subconscious briefs as hints only.
+- Memory: `docs/harness-state.md`, recovery smoke output, local subconscious briefs as hints, and decision-preserving routine/derived reflection.
 - Skills: `codex/skills/*` copied into `~/.codex/skills/*`.
 - Session State: `docs/harness-state.md` plus local evidence JSONL.
 - Permissions: `codex/runtime/tool-policy.json` and guard hooks.

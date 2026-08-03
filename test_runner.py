@@ -34,6 +34,7 @@ HARNESS_REQUIREMENTS = ROOT / "scripts" / "harness_requirements.py"
 HARNESS_LEDGER = ROOT / "scripts" / "harness_ledger.py"
 HARNESS_RECOVER = ROOT / "scripts" / "harness_recover.py"
 HARNESS_ENV_PROBE = ROOT / "scripts" / "harness_env_probe.py"
+CODEX_SUBCONSCIOUS = ROOT / "scripts" / "codex_subconscious.py"
 CHECK_DHF_CONSUMER_COMPATIBILITY = ROOT / "scripts" / "check_dhf_consumer_compatibility.py"
 HEADROOM_FILTER = ROOT / "scripts" / "headroom_filter.py"
 AUDIT_SKILLS = ROOT / "scripts" / "audit_skills.py"
@@ -4982,6 +4983,100 @@ def test_harness_ledger_contract():
     print("[PASS] harness ledger contract")
 
 
+def test_subconscious_reflect():
+    with tempfile.TemporaryDirectory() as tmp:
+        records_path = Path(tmp) / "records.jsonl"
+        decision_one = {
+            "id": "decision-1",
+            "kind": "decision",
+            "created_at": "2025-01-01T00:00:00Z",
+            "content": {"choice": "keep"},
+        }
+        decision_two = {
+            "id": "decision-2",
+            "kind": "decision",
+            "created_at": "2025-01-01T00:00:00Z",
+            "content": {"choice": "keep"},
+        }
+        records = [
+            decision_one,
+            decision_two,
+            {
+                "id": "routine-old-copy",
+                "kind": "routine",
+                "created_at": "2026-07-30T00:00:00Z",
+                "content": {"gate": "focused"},
+            },
+            {
+                "id": "routine-new-copy",
+                "kind": "routine",
+                "created_at": "2026-08-01T00:00:00Z",
+                "content": {"gate": "focused"},
+            },
+            {
+                "id": "routine-expired",
+                "kind": "routine",
+                "created_at": "2026-06-01T00:00:00Z",
+                "content": {"gate": "obsolete"},
+            },
+            {
+                "id": "derived-expired",
+                "kind": "derived",
+                "created_at": "2026-06-01T00:00:00Z",
+                "content": {"summary": "obsolete"},
+            },
+            {
+                "id": "unknown-old",
+                "kind": "unknown",
+                "created_at": "2025-01-01T00:00:00Z",
+                "content": {"legacy": True},
+            },
+            {
+                "id": "routine-fresh",
+                "kind": "routine",
+                "created_at": "2026-08-02T00:00:00Z",
+                "content": {"gate": "fresh"},
+            },
+        ]
+        raw_lines = [json.dumps(record, separators=(",", ":")) for record in records]
+        write(records_path, "\n".join(raw_lines) + "\n")
+
+        reflect_cmd = [
+            sys.executable,
+            str(CODEX_SUBCONSCIOUS),
+            "reflect",
+            "--records",
+            str(records_path),
+            "--retention-days",
+            "30",
+            "--now",
+            "2026-08-02T22:00:00Z",
+        ]
+        code, out, err = run(reflect_cmd)
+        require(code == 0, f"subconscious reflect should succeed: {err or out}")
+        report = json.loads(out)
+        require(report == {"merged": 1, "pruned": 2, "kept": 5}, "reflect should report exact counts")
+
+        reflected_text = records_path.read_text(encoding="utf-8")
+        reflected = [json.loads(line) for line in reflected_text.splitlines() if line]
+        reflected_ids = [record["id"] for record in reflected]
+        require(reflected_ids[:2] == ["decision-1", "decision-2"], "all decision records must survive in order")
+        require(raw_lines[0] in reflected_text and raw_lines[1] in reflected_text, "decision records must remain unchanged")
+        require("routine-new-copy" in reflected_ids and "routine-old-copy" not in reflected_ids,
+                "duplicate routine records should merge to the newest record")
+        require("routine-expired" not in reflected_ids and "derived-expired" not in reflected_ids,
+                "expired routine and derived records should be pruned")
+        require("unknown-old" in reflected_ids, "unknown records must not be pruned")
+
+        malformed_before = b'{"kind":"routine"}\nnot-json\n'
+        records_path.write_bytes(malformed_before)
+        code, out, err = run(reflect_cmd)
+        require(code != 0, "malformed reflection input must fail closed")
+        require(records_path.read_bytes() == malformed_before, "failed reflection must not partially rewrite records")
+
+    print("[PASS] subconscious reflect")
+
+
 def test_harness_recovery_smoke():
     with tempfile.TemporaryDirectory() as tmp:
         tmp_path = Path(tmp)
@@ -6958,6 +7053,7 @@ TESTS = [
     test_harness_checkpoint_helper,
     test_harness_requirements_validator,
     test_harness_ledger_contract,
+    test_subconscious_reflect,
     test_harness_recovery_smoke,
     test_harness_env_probe,
     test_sync_claude_injects_integration_block,

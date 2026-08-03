@@ -10,7 +10,7 @@ import sqlite3
 import uuid
 from collections import Counter, defaultdict
 from dataclasses import dataclass
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Dict, Iterable, List, Optional
 
@@ -515,6 +515,114 @@ def command_publish_inbox(args: argparse.Namespace) -> int:
     return 0
 
 
+def reflection_kind(record: dict) -> str:
+    kinds = [record.get("kind"), record.get("evidence_kind")]
+    normalized = [kind.strip().lower() for kind in kinds if isinstance(kind, str) and kind.strip()]
+    if "decision" in normalized:
+        return "decision"
+    return normalized[0] if normalized else "unknown"
+
+
+def reflection_timestamp(record: dict) -> datetime:
+    raw = record.get("updated_at") or record.get("created_at") or record.get("timestamp")
+    if not isinstance(raw, str) or not raw.strip():
+        raise ValueError("routine/derived record is missing a timestamp")
+    try:
+        parsed = datetime.fromisoformat(raw.replace("Z", "+00:00"))
+    except ValueError as exc:
+        raise ValueError(f"invalid routine/derived timestamp: {raw}") from exc
+    if parsed.tzinfo is None:
+        raise ValueError(f"routine/derived timestamp must include a timezone: {raw}")
+    return parsed.astimezone(timezone.utc)
+
+
+def reflection_fingerprint(record: dict) -> str:
+    semantic = {
+        key: value
+        for key, value in record.items()
+        if key not in {"id", "created_at", "updated_at", "timestamp"}
+    }
+    return json.dumps(semantic, ensure_ascii=False, sort_keys=True, separators=(",", ":"))
+
+
+def command_reflect(args: argparse.Namespace) -> int:
+    if args.retention_days < 0:
+        raise SystemExit("--retention-days must be non-negative")
+    try:
+        now = datetime.now(tz=timezone.utc) if args.now is None else datetime.fromisoformat(
+            args.now.replace("Z", "+00:00")
+        )
+    except ValueError as exc:
+        raise SystemExit(f"invalid --now timestamp: {args.now}") from exc
+    if now.tzinfo is None:
+        raise SystemExit("--now must include a timezone")
+    cutoff = now.astimezone(timezone.utc) - timedelta(days=args.retention_days)
+
+    try:
+        source_text = args.records.read_text(encoding="utf-8")
+    except OSError as exc:
+        raise SystemExit(f"cannot read reflection records: {exc}") from exc
+
+    parsed_records: list[tuple[dict, str]] = []
+    for line_number, raw_line in enumerate(source_text.splitlines(), start=1):
+        if not raw_line.strip():
+            continue
+        try:
+            record = json.loads(raw_line)
+        except json.JSONDecodeError as exc:
+            raise SystemExit(f"malformed JSONL at line {line_number}: {exc.msg}") from exc
+        if not isinstance(record, dict):
+            raise SystemExit(f"reflection record at line {line_number} must be an object")
+        parsed_records.append((record, raw_line))
+
+    candidates: dict[str, list[tuple[datetime, int]]] = defaultdict(list)
+    timestamps: dict[int, datetime] = {}
+    try:
+        for index, (record, _) in enumerate(parsed_records):
+            if reflection_kind(record) not in {"routine", "derived"}:
+                continue
+            record_timestamp = reflection_timestamp(record)
+            timestamps[index] = record_timestamp
+            candidates[reflection_fingerprint(record)].append((record_timestamp, index))
+    except (TypeError, ValueError) as exc:
+        raise SystemExit(str(exc)) from exc
+
+    winners: set[int] = set()
+    merged = 0
+    for versions in candidates.values():
+        winners.add(max(versions)[1])
+        merged += len(versions) - 1
+
+    kept_lines: list[str] = []
+    pruned = 0
+    for index, (record, raw_line) in enumerate(parsed_records):
+        kind = reflection_kind(record)
+        if kind not in {"routine", "derived"}:
+            kept_lines.append(raw_line)
+            continue
+        if index not in winners:
+            continue
+        if timestamps[index] < cutoff:
+            pruned += 1
+            continue
+        kept_lines.append(raw_line)
+
+    replacement = args.records.with_name(f".{args.records.name}.reflect.{uuid.uuid4().hex}.tmp")
+    try:
+        replacement.write_text("\n".join(kept_lines) + ("\n" if kept_lines else ""), encoding="utf-8")
+        replacement.replace(args.records)
+    except OSError as exc:
+        raise SystemExit(f"cannot write reflected records: {exc}") from exc
+    finally:
+        try:
+            replacement.unlink()
+        except FileNotFoundError:
+            pass
+
+    print(json.dumps({"merged": merged, "pruned": pruned, "kept": len(kept_lines)}))
+    return 0
+
+
 def build_parser() -> argparse.ArgumentParser:
     default_codex_home = Path.home() / ".codex"
     default_state_dir = default_codex_home / "subconscious"
@@ -564,6 +672,25 @@ def build_parser() -> argparse.ArgumentParser:
         help="Skip publishing if an inbox item with the same title already exists within this many hours.",
     )
     inbox_parser.set_defaults(func=command_publish_inbox)
+
+    reflect_parser = subparsers.add_parser(
+        "reflect",
+        help="Merge duplicate routine/derived records and prune only expired routine/derived records",
+    )
+    reflect_parser.add_argument(
+        "--records",
+        type=Path,
+        default=default_state_dir / "records.jsonl",
+        help="JSONL memory records to reflect in place.",
+    )
+    reflect_parser.add_argument("--retention-days", type=int, default=30)
+    reflect_parser.add_argument(
+        "--now",
+        type=str,
+        default=None,
+        help="ISO-8601 clock override for deterministic verification.",
+    )
+    reflect_parser.set_defaults(func=command_reflect)
 
     return parser
 

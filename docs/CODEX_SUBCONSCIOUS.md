@@ -20,6 +20,7 @@
 - `~/.codex/subconscious/index.json`
 - `~/.codex/subconscious/memory.md`
 - `~/.codex/subconscious/briefs/*.md`（启用 `--emit-briefs` 时）
+- `~/.codex/subconscious/records.jsonl`（可选的 reflect 记录集）
 
 ## Commands
 全量刷新：
@@ -61,6 +62,19 @@ python3 scripts/codex_subconscious.py publish-inbox --limit 3
 python3 scripts/codex_subconscious.py publish-inbox --limit 3 --dedupe-hours 8
 ```
 
+整理 JSONL 记忆记录：
+
+```bash
+python3 scripts/codex_subconscious.py reflect \
+  --records ~/.codex/subconscious/records.jsonl \
+  --retention-days 30
+```
+
+`reflect` 只会合并或修剪 `routine` / `derived` 记录，重复项保留时间最新的
+一条，超出保留期的记录被修剪；`decision` 与未知类型逐条原样保留。输入含
+畸形 JSON、或可修剪记录缺少有效带时区时间戳时会失败且不改原文件。输出为
+`merged`、`pruned`、`kept` 三项计数。
+
 ## Background Mode
 推荐用 Codex automations 每小时刷新一次：
 - 周期性执行 `build --emit-briefs`
@@ -68,6 +82,7 @@ python3 scripts/codex_subconscious.py publish-inbox --limit 3 --dedupe-hours 8
 - 若希望后台主动冒泡，可追加 `publish-inbox --cwd ...`
 - 全局模式建议直接使用 `publish-inbox --limit 3`
 - 全局模式建议保留默认 `--dedupe-hours 8`，避免每小时重复提醒同一项目
+- 周度运行一次 `reflect`，并审查 merged/pruned/kept 计数；decision 必须零丢失
 
 这样做的好处：
 - 不依赖未公开 hook
