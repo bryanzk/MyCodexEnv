@@ -35,6 +35,13 @@ successful transition, and it requires `command`, `exit_code`, `key_output`,
 and `timestamp`. Run `harness_ledger.py verify` to reject added, removed, or
 edited criterion bodies.
 
+Automatic successor creation uses `scripts/harness_transition.py`. Its runtime
+store is `~/.codex/harness/transitions.jsonl`: `record` performs one single-line
+`O_APPEND` write and then re-reads the store, while `query` returns the first
+valid record for a key. The first record wins under concurrent writers; a later
+different task id exits non-zero and prints that prior record. Missing files are
+explicit not-found results, and malformed lines are skipped and counted.
+
 Behavior evaluation uses `scripts/harness_eval.py` with versioned scenarios in
 `docs/evals/`. Tier 1 runs without compaction infrastructure: the recovery eval
 builds an isolated fixture repo and asserts recovered phase, next-safe task, and
@@ -82,6 +89,7 @@ For the current project workflow and skill routing map, read
 - `Skills`: `codex/skills/*` is the source copied into runtime `~/.codex/skills/*`.
 - `Session State`: `docs/harness-state.md` records durable phase and handoff facts.
 - `Task Ledger`: `scripts/harness_ledger.py` creates and verifies tamper-evident acceptance ledgers from validated requirements.
+- `Transition Store`: `scripts/harness_transition.py` provides append-only first-record-wins CAS semantics for successor task ids.
 - `Behavior Evaluator`: `scripts/harness_eval.py tier1` executes fixture-driven recovery and handoff-lint end-state assertions from `docs/evals/`.
 - `Permissions`: `codex/runtime/tool-policy.json` declares stage-level tool permissions and low/medium/high risk annotations for every guard category; unknown phases fall back to read-only, and `handoff` repo writes require approval because the guard is category-level, not path-scoped.
 - `Hooks`: `codex/hooks/*` implements thin objective guardrails, prompt model routing recommendations, and evidence plumbing.

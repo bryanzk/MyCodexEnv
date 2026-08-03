@@ -158,6 +158,11 @@
       "audience": ["codex", "human"]
     },
     {
+      "path": "scripts/harness_transition.py",
+      "role": "append-only first-record-wins transition idempotency store",
+      "audience": ["codex", "human"]
+    },
+    {
       "path": "scripts/harness_ledger.py",
       "role": "tamper-evident acceptance ledger helper",
       "audience": ["codex", "human"]

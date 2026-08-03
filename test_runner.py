@@ -36,6 +36,7 @@ HARNESS_RECOVER = ROOT / "scripts" / "harness_recover.py"
 HARNESS_ENV_PROBE = ROOT / "scripts" / "harness_env_probe.py"
 CODEX_SUBCONSCIOUS = ROOT / "scripts" / "codex_subconscious.py"
 HARNESS_EVAL = ROOT / "scripts" / "harness_eval.py"
+HARNESS_TRANSITION = ROOT / "scripts" / "harness_transition.py"
 CHECK_DHF_CONSUMER_COMPATIBILITY = ROOT / "scripts" / "check_dhf_consumer_compatibility.py"
 HEADROOM_FILTER = ROOT / "scripts" / "headroom_filter.py"
 AUDIT_SKILLS = ROOT / "scripts" / "audit_skills.py"
@@ -5146,6 +5147,81 @@ def test_harness_eval_tier1():
     print("[PASS] harness eval tier1")
 
 
+def test_harness_transition_record_and_query():
+    with tempfile.TemporaryDirectory() as tmp:
+        tmp_path = Path(tmp)
+        store = tmp_path / "harness" / "transitions.jsonl"
+        query_base = [sys.executable, str(HARNESS_TRANSITION), "query", "--store", str(store), "--key"]
+        record_base = [sys.executable, str(HARNESS_TRANSITION), "record", "--store", str(store), "--key"]
+
+        code, out, err = run(query_base + ["missing-key"])
+        require(code == 0, f"missing transition query should not error: {err or out}")
+        missing = json.loads(out)
+        require(missing == {"status": "not_found", "key": "missing-key", "malformed_count": 0},
+                "missing transition file should return explicit not_found")
+
+        store.parent.mkdir(parents=True)
+        write(store, "not-json\n")
+        code, out, err = run(record_base + ["K", "--task-id", "T1"])
+        require(code == 0, f"transition record should succeed: {err or out}")
+        recorded = json.loads(out)
+        require(recorded["status"] == "recorded" and recorded["record"]["task_id"] == "T1",
+                "record should report the winning task")
+        require(recorded["malformed_count"] == 1, "record reread should count malformed lines")
+
+        code, out, err = run(query_base + ["K"])
+        require(code == 0, f"transition query should succeed: {err or out}")
+        queried = json.loads(out)
+        require(queried["status"] == "found" and queried["record"] == recorded["record"],
+                "record then query should round-trip the first record")
+        require(queried["malformed_count"] == 1, "query should skip and count malformed lines")
+
+        before_same = store.read_bytes()
+        code, out, err = run(record_base + ["K", "--task-id", "T1"])
+        require(code == 0 and json.loads(out)["status"] == "existing", "same task record should be idempotent")
+        require(store.read_bytes() == before_same, "same task id should not append a duplicate")
+
+        code, out, err = run(record_base + ["K", "--task-id", "T2"])
+        require(code != 0, "different task id for an existing key must fail")
+        conflict = json.loads(out)
+        require(conflict["status"] == "conflict" and conflict["record"] == recorded["record"],
+                "conflict should print the prior winning record")
+
+        race_store = tmp_path / "race" / "transitions.jsonl"
+        race_commands = [
+            [
+                sys.executable,
+                str(HARNESS_TRANSITION),
+                "record",
+                "--store",
+                str(race_store),
+                "--key",
+                "race-key",
+                "--task-id",
+                task_id,
+            ]
+            for task_id in ("race-A", "race-B")
+        ]
+        racers = [subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True) for command in race_commands]
+        race_results = [(proc.wait(), proc.stdout.read().strip(), proc.stderr.read().strip()) for proc in racers]
+        require(sorted(code for code, _, _ in race_results) == [0, 1],
+                f"concurrent different task ids should have one winner: {race_results}")
+        race_payloads = [json.loads(out) for _, out, _ in race_results]
+        winner_records = [payload["record"] for payload in race_payloads]
+        require(winner_records[0] == winner_records[1], "both racers should observe the same first record")
+        code, out, err = run(
+            [sys.executable, str(HARNESS_TRANSITION), "query", "--store", str(race_store), "--key", "race-key"]
+        )
+        require(code == 0 and json.loads(out)["record"] == winner_records[0],
+                "race query should retain the first append winner")
+
+        source = HARNESS_TRANSITION.read_text(encoding="utf-8")
+        require("os.O_APPEND" in source and "os.write" in source,
+                "transition record must use one O_APPEND write")
+
+    print("[PASS] harness transition record and query")
+
+
 def test_harness_recovery_smoke():
     with tempfile.TemporaryDirectory() as tmp:
         tmp_path = Path(tmp)
@@ -7124,6 +7200,7 @@ TESTS = [
     test_harness_ledger_contract,
     test_subconscious_reflect,
     test_harness_eval_tier1,
+    test_harness_transition_record_and_query,
     test_harness_recovery_smoke,
     test_harness_env_probe,
     test_sync_claude_injects_integration_block,
