@@ -158,6 +158,11 @@
       "audience": ["codex", "human"]
     },
     {
+      "path": "scripts/harness_ledger.py",
+      "role": "tamper-evident acceptance ledger helper",
+      "audience": ["codex", "human"]
+    },
+    {
       "path": "scripts/harness_requirements.py",
       "role": "requirements artifact validator",
       "audience": ["codex", "human"]

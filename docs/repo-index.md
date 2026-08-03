@@ -60,6 +60,7 @@
 - `scripts/harness_report.py`: local evidence summary CLI with evidence-kind counts and filters.
 - `scripts/harness_agent_team.py`: agent team, write-set, worker task demand, demand-matched green gate, optional durable brief validator, and `--emit-evidence` validation receipt helper.
 - `scripts/harness_checkpoint.py`: append-only state checkpoint helper.
+- `scripts/harness_ledger.py`: tamper-evident acceptance ledger init/pass/verify helper.
 - `docs/templates/harness-requirements.md`: task requirements artifact template.
 - `docs/templates/harness-agent-brief.md`: worker durable brief template with optional Task Demand and Green Gate companion fields.
 - `scripts/harness_requirements.py`: requirements artifact validator.

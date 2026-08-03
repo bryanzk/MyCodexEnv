@@ -31,6 +31,7 @@ HARNESS_REPORT = ROOT / "scripts" / "harness_report.py"
 HARNESS_AGENT_TEAM = ROOT / "scripts" / "harness_agent_team.py"
 HARNESS_CHECKPOINT = ROOT / "scripts" / "harness_checkpoint.py"
 HARNESS_REQUIREMENTS = ROOT / "scripts" / "harness_requirements.py"
+HARNESS_LEDGER = ROOT / "scripts" / "harness_ledger.py"
 HARNESS_RECOVER = ROOT / "scripts" / "harness_recover.py"
 HARNESS_ENV_PROBE = ROOT / "scripts" / "harness_env_probe.py"
 CHECK_DHF_CONSUMER_COMPATIBILITY = ROOT / "scripts" / "check_dhf_consumer_compatibility.py"
@@ -4872,6 +4873,115 @@ def test_harness_requirements_validator():
     print("[PASS] harness requirements validator")
 
 
+def test_harness_ledger_contract():
+    with tempfile.TemporaryDirectory() as tmp:
+        tmp_path = Path(tmp)
+        requirements = tmp_path / "requirements.md"
+        ledger_path = tmp_path / "ledger.json"
+        write(
+            requirements,
+            "# Ledger Contract\n\n"
+            "## Goal\nShip a verifiable slice.\n\n"
+            "## Audience\nOperator.\n\n"
+            "## Scope\nLocal test.\n\n"
+            "## Non-Goals\nNo runtime writes.\n\n"
+            "## Constraints\nStandard library only.\n\n"
+            "## Task Demand (D_task)\n"
+            "- estimated_level: low\n"
+            "- L (reasoning/action steps): two\n"
+            "- H_tool (tool-selection ambiguity): low\n"
+            "- S_state (cross-module state tracking): low\n"
+            "- N_obs (observation/external noise): low\n\n"
+            "## Source Of Truth\n- contract\n\n"
+            "## Acceptance Criteria\n"
+            "- [ ] First behavior\n"
+            "  - run focused gate\n"
+            "- [ ] Second behavior\n\n"
+            "## Verification Gate\n- `python3 test_runner.py`\n\n"
+            "## Risks\nNone.\n\n"
+            "## Handoff Notes\nContinue.\n",
+        )
+
+        init_cmd = [
+            sys.executable,
+            str(HARNESS_LEDGER),
+            "init",
+            "--from",
+            str(requirements),
+            "--ledger",
+            str(ledger_path),
+        ]
+        code, out, err = run(init_cmd)
+        require(code == 0, f"ledger init should succeed: {err or out}")
+        ledger = json.loads(ledger_path.read_text(encoding="utf-8"))
+        require(ledger["schema_version"] == 1, "ledger schema version should be 1")
+        require(len(ledger["entries"]) == 2, "ledger should derive both acceptance criteria")
+        require(all(entry["passes"] is False for entry in ledger["entries"]), "new ledger entries must start false")
+        require(ledger["entries"][0]["steps"] == ["run focused gate"], "ledger should preserve criterion steps")
+        require(len(ledger["content_sha256"]) == 64, "ledger should include a sha256 content hash")
+
+        before = ledger_path.read_bytes()
+        before_mtime = ledger_path.stat().st_mtime_ns
+        code, out, err = run(init_cmd)
+        require(code == 0, f"idempotent ledger init should succeed: {err or out}")
+        require(ledger_path.read_bytes() == before, "idempotent init must not rewrite ledger content")
+        require(ledger_path.stat().st_mtime_ns == before_mtime, "idempotent init must be a no-op")
+
+        incomplete_pass = [
+            sys.executable,
+            str(HARNESS_LEDGER),
+            "pass",
+            "--ledger",
+            str(ledger_path),
+            "--id",
+            "AC001",
+            "--verification-command",
+            "python3 focused_test.py",
+        ]
+        code, out, err = run(incomplete_pass)
+        require(code != 0, "ledger pass without four verification fields must fail")
+        require(ledger_path.read_bytes() == before, "failed pass must not partially write the ledger")
+
+        complete_pass = incomplete_pass + [
+            "--exit-code",
+            "0",
+            "--key-output",
+            "focused gate passed",
+            "--timestamp",
+            "2026-08-02T21:00:00-04:00",
+        ]
+        code, out, err = run(complete_pass)
+        require(code == 0, f"ledger pass with complete receipt should succeed: {err or out}")
+        passed = json.loads(ledger_path.read_text(encoding="utf-8"))
+        require(passed["entries"][0]["passes"] is True, "pass should flip exactly the requested entry")
+        require(passed["entries"][1]["passes"] is False, "pass must not flip another entry")
+        require(
+            set(passed["entries"][0]["verification"]) == {"command", "exit_code", "key_output", "timestamp"},
+            "passed entry should retain all four verification fields",
+        )
+
+        verify_cmd = [sys.executable, str(HARNESS_LEDGER), "verify", "--ledger", str(ledger_path)]
+        code, out, err = run(verify_cmd)
+        require(code == 0, f"untampered ledger should verify: {err or out}")
+
+        tampered = json.loads(ledger_path.read_text(encoding="utf-8"))
+        tampered["entries"][0]["description"] = "Tampered behavior"
+        write(ledger_path, json.dumps(tampered, indent=2) + "\n")
+        code, out, err = run(verify_cmd)
+        require(code != 0 and "content hash mismatch" in (err or out), "body edits must fail hash verification")
+
+        write(ledger_path, json.dumps(passed, indent=2) + "\n")
+        added = json.loads(ledger_path.read_text(encoding="utf-8"))
+        added["entries"].append(
+            {"id": "AC003", "description": "Injected", "steps": [], "passes": False, "verification": None}
+        )
+        write(ledger_path, json.dumps(added, indent=2) + "\n")
+        code, out, err = run(verify_cmd)
+        require(code != 0 and "content hash mismatch" in (err or out), "entry additions must fail hash verification")
+
+    print("[PASS] harness ledger contract")
+
+
 def test_harness_recovery_smoke():
     with tempfile.TemporaryDirectory() as tmp:
         tmp_path = Path(tmp)
@@ -6847,6 +6957,7 @@ TESTS = [
     test_agent_dispatch_gate,
     test_harness_checkpoint_helper,
     test_harness_requirements_validator,
+    test_harness_ledger_contract,
     test_harness_recovery_smoke,
     test_harness_env_probe,
     test_sync_claude_injects_integration_block,

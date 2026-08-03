@@ -27,6 +27,14 @@ Requirements artifacts use `docs/templates/harness-requirements.md`. Validate
 them with `scripts/harness_requirements.py validate PATH` before treating them
 as source of truth.
 
+For execution tracking, `scripts/harness_ledger.py init --from PATH` derives a
+JSON ledger from a validated requirements artifact. The ledger starts every
+criterion at `passes:false`, hashes the ordered descriptions and steps, and is
+idempotent when the source is unchanged. Only `harness_ledger.py pass` records a
+successful transition, and it requires `command`, `exit_code`, `key_output`,
+and `timestamp`. Run `harness_ledger.py verify` to reject added, removed, or
+edited criterion bodies.
+
 Validated requirements artifacts must include `## Task Demand (D_task)`.
 The validator requires `estimated_level` to be exactly `low`, `medium`, or
 `high`, and requires non-empty `L`, `H_tool`, `S_state`, and `N_obs` fields.
@@ -64,6 +72,7 @@ For the current project workflow and skill routing map, read
 - `Memory`: `docs/harness-state.md` is the repo-visible memory surface; `scripts/harness_recover.py` proves recovery from state, git, and local evidence.
 - `Skills`: `codex/skills/*` is the source copied into runtime `~/.codex/skills/*`.
 - `Session State`: `docs/harness-state.md` records durable phase and handoff facts.
+- `Task Ledger`: `scripts/harness_ledger.py` creates and verifies tamper-evident acceptance ledgers from validated requirements.
 - `Permissions`: `codex/runtime/tool-policy.json` declares stage-level tool permissions; unknown phases fall back to read-only, and `handoff` repo writes require approval because the guard is category-level, not path-scoped.
 - `Hooks`: `codex/hooks/*` implements thin objective guardrails, prompt model routing recommendations, and evidence plumbing.
 - `Observability`: local JSONL evidence records lifecycle and verification events.
