@@ -1,0 +1,13 @@
+{
+  "name": "handoff_lint",
+  "cases": [
+    {
+      "path": "handoff-valid.md",
+      "expected_valid": true
+    },
+    {
+      "path": "handoff-missing-verification.md",
+      "expected_valid": false
+    }
+  ]
+}

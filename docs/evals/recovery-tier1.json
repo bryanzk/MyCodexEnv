@@ -1,0 +1,28 @@
+{
+  "name": "recovery",
+  "state": {
+    "phase": "validation",
+    "blocked_sources": "none",
+    "next_safe_task": "Run the fixture verification gate",
+    "latest_verification": "pending"
+  },
+  "evidence": {
+    "timestamp": "2026-08-02T20:00:00Z",
+    "event_type": "verification_result",
+    "evidence_kind": "routine",
+    "phase": "validation",
+    "command": "python3 fixture_gate.py",
+    "exit_code": 0,
+    "key_output": "fixture gate passed"
+  },
+  "expected": {
+    "phase": "validation",
+    "next_safe_task": "Run the fixture verification gate",
+    "latest_verification": {
+      "command": "python3 fixture_gate.py",
+      "exit_code": 0,
+      "key_output": "fixture gate passed",
+      "timestamp": "2026-08-02T20:00:00Z"
+    }
+  }
+}

@@ -35,6 +35,7 @@ HARNESS_LEDGER = ROOT / "scripts" / "harness_ledger.py"
 HARNESS_RECOVER = ROOT / "scripts" / "harness_recover.py"
 HARNESS_ENV_PROBE = ROOT / "scripts" / "harness_env_probe.py"
 CODEX_SUBCONSCIOUS = ROOT / "scripts" / "codex_subconscious.py"
+HARNESS_EVAL = ROOT / "scripts" / "harness_eval.py"
 CHECK_DHF_CONSUMER_COMPATIBILITY = ROOT / "scripts" / "check_dhf_consumer_compatibility.py"
 HEADROOM_FILTER = ROOT / "scripts" / "headroom_filter.py"
 AUDIT_SKILLS = ROOT / "scripts" / "audit_skills.py"
@@ -5077,6 +5078,46 @@ def test_subconscious_reflect():
     print("[PASS] subconscious reflect")
 
 
+def test_harness_eval_tier1():
+    fixtures = ROOT / "docs" / "evals"
+    tier1_cmd = [
+        sys.executable,
+        str(HARNESS_EVAL),
+        "tier1",
+        "--fixtures",
+        str(fixtures),
+        "--recover-script",
+        str(HARNESS_RECOVER),
+    ]
+    code, out, err = run(tier1_cmd)
+    require(code == 0, f"harness tier-1 evals should pass: {err or out}")
+    receipts = [json.loads(line) for line in out.splitlines() if line.strip()]
+    require([receipt["eval"] for receipt in receipts] == ["recovery", "handoff_lint"],
+            "tier-1 should run recovery then handoff lint")
+    for receipt in receipts:
+        require(receipt["status"] == "PASS", f"tier-1 eval should pass: {receipt}")
+        require(set(receipt) == {"eval", "status", "command", "exit_code", "key_output", "timestamp"},
+                "each eval receipt should expose exactly the verification fields plus eval/status")
+        require(receipt["exit_code"] == 0, "passing eval receipt should carry exit_code 0")
+        require(receipt["command"] and receipt["key_output"], "eval receipt command/output must be non-empty")
+        require(dt.datetime.fromisoformat(receipt["timestamp"].replace("Z", "+00:00")),
+                "eval receipt timestamp should be ISO-8601")
+
+    valid_handoff = fixtures / "handoff-valid.md"
+    invalid_handoff = fixtures / "handoff-missing-verification.md"
+    lint_base = [sys.executable, str(HARNESS_EVAL), "handoff-lint", "--path"]
+    code, out, err = run(lint_base + [str(valid_handoff)])
+    require(code == 0 and json.loads(out)["status"] == "PASS", "complete handoff fixture should lint PASS")
+    code, out, err = run(lint_base + [str(invalid_handoff)])
+    require(code != 0 and json.loads(out)["status"] == "FAIL", "incomplete handoff fixture should lint FAIL")
+    require("verification" in json.loads(out)["key_output"], "handoff lint should name missing verification")
+
+    source = HARNESS_EVAL.read_text(encoding="utf-8")
+    require("harness_transition" not in source and "compaction_probe" not in source,
+            "tier-1 evaluator must have zero compaction infra dependency")
+    print("[PASS] harness eval tier1")
+
+
 def test_harness_recovery_smoke():
     with tempfile.TemporaryDirectory() as tmp:
         tmp_path = Path(tmp)
@@ -7054,6 +7095,7 @@ TESTS = [
     test_harness_requirements_validator,
     test_harness_ledger_contract,
     test_subconscious_reflect,
+    test_harness_eval_tier1,
     test_harness_recovery_smoke,
     test_harness_env_probe,
     test_sync_claude_injects_integration_block,

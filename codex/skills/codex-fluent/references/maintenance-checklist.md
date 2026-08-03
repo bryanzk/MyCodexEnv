@@ -48,6 +48,7 @@ For each candidate the report surfaced, explicitly decide:
 - [ ] Can still find and read all archived material if needed
 - [ ] (If using the optional metadata repair) Verified that full transcripts are still intact
 - [ ] Ran the weekly subconscious `reflect` report and confirmed decision records were preserved
+- [ ] Ran the tier-3 weekly compaction recovery-quality audit against real-session fixtures (audit-only, never a merge gate)
 
 ## After First Successful Maintenance
 

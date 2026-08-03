@@ -163,6 +163,16 @@
       "audience": ["codex", "human"]
     },
     {
+      "path": "scripts/harness_eval.py",
+      "role": "fixture-driven tiered Harness behavior evaluator",
+      "audience": ["codex", "human"]
+    },
+    {
+      "path": "docs/evals",
+      "role": "versioned Harness behavior evaluation fixtures",
+      "audience": ["codex", "human"]
+    },
+    {
       "path": "scripts/harness_requirements.py",
       "role": "requirements artifact validator",
       "audience": ["codex", "human"]

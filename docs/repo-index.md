@@ -61,7 +61,9 @@
 - `scripts/harness_agent_team.py`: agent team, write-set, worker task demand, demand-matched green gate, optional durable brief validator, and `--emit-evidence` validation receipt helper.
 - `scripts/harness_checkpoint.py`: append-only state checkpoint helper.
 - `scripts/harness_ledger.py`: tamper-evident acceptance ledger init/pass/verify helper.
+- `scripts/harness_eval.py`: fixture-driven tiered recovery, handoff, transition, and probe behavior evaluator.
 - `docs/templates/harness-requirements.md`: task requirements artifact template.
+- `docs/evals`: versioned Harness behavior-evaluation scenarios and handoff fixtures.
 - `docs/templates/harness-agent-brief.md`: worker durable brief template with optional Task Demand and Green Gate companion fields.
 - `scripts/harness_requirements.py`: requirements artifact validator.
 - `scripts/harness_recover.py`: fresh-session recovery smoke check with evidence-kind counts and compact latest decision evidence.
@@ -144,6 +146,7 @@
 - Planning: use lifecycle routing and keep planning read-only unless implementation is explicitly requested.
 - Development: edit only scoped repo files and preserve unrelated user changes.
 - Validation: run fresh gates and record evidence with command, exit code, key output, and timestamp.
+- Behavior Evaluator: `scripts/harness_eval.py` with versioned scenarios under `docs/evals`.
 
 ## Harness Infra Map
 - Sandbox: Codex sandbox and approval rules, repo high-risk path guidance, and env probe output.

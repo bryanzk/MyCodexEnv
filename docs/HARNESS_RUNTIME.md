@@ -35,6 +35,14 @@ successful transition, and it requires `command`, `exit_code`, `key_output`,
 and `timestamp`. Run `harness_ledger.py verify` to reject added, removed, or
 edited criterion bodies.
 
+Behavior evaluation uses `scripts/harness_eval.py` with versioned scenarios in
+`docs/evals/`. Tier 1 runs without compaction infrastructure: the recovery eval
+builds an isolated fixture repo and asserts recovered phase, next-safe task, and
+latest verification; the handoff lint requires the frozen thread anchors, a
+non-empty artifact list, complete verification evidence, and exactly one
+next-safe task. Each eval emits PASS/FAIL with command, exit code, key output,
+and timestamp.
+
 Validated requirements artifacts must include `## Task Demand (D_task)`.
 The validator requires `estimated_level` to be exactly `low`, `medium`, or
 `high`, and requires non-empty `L`, `H_tool`, `S_state`, and `N_obs` fields.
@@ -74,6 +82,7 @@ For the current project workflow and skill routing map, read
 - `Skills`: `codex/skills/*` is the source copied into runtime `~/.codex/skills/*`.
 - `Session State`: `docs/harness-state.md` records durable phase and handoff facts.
 - `Task Ledger`: `scripts/harness_ledger.py` creates and verifies tamper-evident acceptance ledgers from validated requirements.
+- `Behavior Evaluator`: `scripts/harness_eval.py tier1` executes fixture-driven recovery and handoff-lint end-state assertions from `docs/evals/`.
 - `Permissions`: `codex/runtime/tool-policy.json` declares stage-level tool permissions; unknown phases fall back to read-only, and `handoff` repo writes require approval because the guard is category-level, not path-scoped.
 - `Hooks`: `codex/hooks/*` implements thin objective guardrails, prompt model routing recommendations, and evidence plumbing.
 - `Observability`: local JSONL evidence records lifecycle and verification events.
