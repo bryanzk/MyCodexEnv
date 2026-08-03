@@ -39,6 +39,7 @@ CODEX_SUBCONSCIOUS = ROOT / "scripts" / "codex_subconscious.py"
 HARNESS_EVAL = ROOT / "scripts" / "harness_eval.py"
 HARNESS_TRANSITION = ROOT / "scripts" / "harness_transition.py"
 COMPACTION_PROBE = ROOT / "codex" / "hooks" / "compaction_probe.py"
+SESSION_BEARING = ROOT / "codex" / "hooks" / "session_bearing.py"
 CHECK_DHF_CONSUMER_COMPATIBILITY = ROOT / "scripts" / "check_dhf_consumer_compatibility.py"
 HEADROOM_FILTER = ROOT / "scripts" / "headroom_filter.py"
 AUDIT_SKILLS = ROOT / "scripts" / "audit_skills.py"
@@ -5440,6 +5441,75 @@ def test_compaction_probe_incremental_scan():
     print("[PASS] compaction probe incremental scan")
 
 
+def test_session_bearing_hook():
+    hooks = json.loads((ROOT / "codex" / "hooks.json").read_text(encoding="utf-8"))
+    session_commands = [
+        hook["command"]
+        for group in hooks["hooks"]["SessionStart"]
+        for hook in group.get("hooks", [])
+    ]
+    require(
+        "/usr/bin/python3 ~/.codex/hooks/session_bearing.py" in session_commands,
+        "SessionStart chain should register session_bearing.py",
+    )
+    source = SESSION_BEARING.read_text(encoding="utf-8")
+    require("BUDGET_SECONDS = 0.18" in source, "session bearing should keep an explicit sub-200ms budget")
+
+    with tempfile.TemporaryDirectory() as tmp:
+        repo = Path(tmp) / "repo"
+        scripts_dir = repo / "scripts"
+        scripts_dir.mkdir(parents=True)
+        code, out, err = run(["git", "init", str(repo)])
+        require(code == 0, f"session bearing fixture git init failed: {err or out}")
+        recover = scripts_dir / "harness_recover.py"
+
+        write(
+            recover,
+            "import json\n"
+            "print(json.dumps({'phase': 'validation', 'next_safe_task': 'run gate', "
+            "'boundary_verdict': 'safe', 'dirty_status': 'clean'}))\n",
+        )
+        started = time.monotonic()
+        code, out, err = run_with_input([sys.executable, str(SESSION_BEARING)], json.dumps({"cwd": str(repo)}))
+        elapsed = time.monotonic() - started
+        require(code == 0, f"session bearing injection failed: {err or out}")
+        require(elapsed < 1.0, f"session bearing should stay bounded, elapsed={elapsed:.3f}s")
+        response = json.loads(out)
+        require(response["continue"] is True, "session bearing must not block SessionStart")
+        hook_output = response["hookSpecificOutput"]
+        require(hook_output["hookEventName"] == "SessionStart", "session bearing hook event shape mismatch")
+        context = hook_output["additionalContext"]
+        for expected in ["phase=validation", "next_safe_task=run gate", "boundary_verdict=safe", "dirty_status=clean"]:
+            require(expected in context, f"session bearing context missing {expected}")
+
+        write(
+            recover,
+            "import json, sys\n"
+            "if '--boundary' in sys.argv:\n"
+            "    print('error: unrecognized arguments: --boundary', file=sys.stderr)\n"
+            "    raise SystemExit(2)\n"
+            "print(json.dumps({'phase': 'development', 'next_safe_task': 'continue safely', "
+            "'dirty_status': 'dirty'}))\n",
+        )
+        code, out, err = run_with_input([sys.executable, str(SESSION_BEARING)], json.dumps({"cwd": str(repo)}))
+        require(code == 0, f"degraded session bearing should succeed: {err or out}")
+        degraded_context = json.loads(out)["hookSpecificOutput"]["additionalContext"]
+        for expected in [
+            "phase=development",
+            "next_safe_task=continue safely",
+            "boundary_verdict=unknown",
+            "dirty_status=dirty",
+        ]:
+            require(expected in degraded_context, f"degraded session bearing context missing {expected}")
+
+        write(recover, "import time\ntime.sleep(1)\n")
+        code, out, err = run_with_input([sys.executable, str(SESSION_BEARING)], json.dumps({"cwd": str(repo)}))
+        require(code == 0, f"failed session bearing must leave SessionStart unaffected: {err or out}")
+        require(out == "" and err == "", "session bearing failures must be silent")
+
+    print("[PASS] session bearing hook")
+
+
 def test_harness_recovery_smoke():
     with tempfile.TemporaryDirectory() as tmp:
         tmp_path = Path(tmp)
@@ -7600,6 +7670,7 @@ TESTS = [
     test_harness_transition_record_and_query,
     test_compaction_probe_session_resolution,
     test_compaction_probe_incremental_scan,
+    test_session_bearing_hook,
     test_harness_recovery_smoke,
     test_harness_env_probe,
     test_sync_claude_injects_integration_block,

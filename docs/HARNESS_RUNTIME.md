@@ -117,6 +117,18 @@ W6b reference rounds: every hook ran once, G0/G4 retained their known allowed
 outcomes, and G1/G2/G3/G5/G6/G7/G8 remained blocked. Risk tiers do not change
 block/allow behavior.
 
+## Session Bearing
+
+`codex/hooks/session_bearing.py` is registered in the source `SessionStart`
+chain without runtime deployment. For a cwd inside this repo it runs
+`scripts/harness_recover.py --boundary --json` and injects `phase`,
+`next_safe_task`, `boundary_verdict`, and `dirty_status`. The hook shares one
+180ms deadline across the boundary call and its compatibility fallback; only an
+explicitly unsupported `--boundary` argument triggers plain recovery, which
+reports `boundary_verdict=unknown`. Missing repo helpers, malformed results,
+timeouts, and other failures exit zero without output so session start remains
+unaffected. Runtime deployment remains behind W6a approval.
+
 ## Compaction Observation
 
 `codex/hooks/compaction_counter.py` is the single decoded-event classifier for

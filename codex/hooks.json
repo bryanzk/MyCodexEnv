@@ -8,6 +8,11 @@
             "type": "command",
             "command": "/usr/bin/python3 ~/.codex/hooks/session_start_require_naming.py",
             "statusMessage": "Loading session naming rule"
+          },
+          {
+            "type": "command",
+            "command": "/usr/bin/python3 ~/.codex/hooks/session_bearing.py",
+            "statusMessage": "Recovering session bearing"
           }
         ]
       }
