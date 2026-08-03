@@ -71,7 +71,15 @@ For the current project workflow and skill routing map, read
 - `Tool Router`: lifecycle stage determines allowed read/write/network/remote behavior. The guard resolves phase in order from top-level payload, `tool_input.phase`, `CODEX_HARNESS_PHASE`, `docs/harness-state.md` `## Current Snapshot`, then `unknown`.
 - `Model Router`: `codex/hooks/model_router.py` classifies each prompt or subtask as `simple`, `medium`, or `complex` and recommends the cheapest quality-safe model tier. It intentionally stays non-blocking; runtimes or wrapper scripts that can switch models may consume the JSON `routing` object, while plain Codex hooks inject the recommendation and response telemetry requirement as additional context.
 - `Checkpoints`: use git commits, state log entries, and handoff docs as recovery points.
-- `Guardrails`: repo-write phase violations, destructive commands, secret access, remote operations, and dynamic-execution actions are blocked. The guard emits the Codex-supported legacy block shape; a 2026-07-28 isolated probe proved that the former top-level `permissionDecision` shape and every `ask` variant fail open, so former ask categories are upgraded to block until the host supports a real ask.
+- `Guardrails`: recognized repo-write phase violations, destructive commands, secret access, remote operations, and dynamic-execution actions are blocked. The guard emits the Codex-supported legacy block shape; a 2026-07-28 isolated probe proved that the former top-level `permissionDecision` shape and every `ask` variant fail open, so former ask categories are upgraded to block until the host supports a real ask.
+
+The 2026-08-02 landed-guard isolation rerun confirmed that the legacy block
+shape prevents execution for repo-write, dynamic-execution, remote,
+destructive, agent-dispatch, network, and unknown-phase cases. It also exposed
+a classifier gap: an `exec_command` command ending in `auth.json` can miss the
+secret-path pattern after the command is concatenated with candidate-path
+text. Until that matcher is repaired and re-probed, command-form secret-path
+access must not be described as guaranteed blocked.
 
 ## Evidence Contract
 Evidence events are JSON objects that match `codex/runtime/evidence.schema.json`.
@@ -335,7 +343,7 @@ Agent team validator:
 - missing state file: fail or warn at startup, then read repo AGENTS and README before acting.
 - unknown lifecycle stage: default to restrictive read-only behavior.
 - missing or malformed `## Current Snapshot` phase: treat the phase as unknown and require approval for repo writes.
-- secret path access: deny unless the user explicitly requests and approves safe handling.
+- secret path access: deny unless the user explicitly requests and approves safe handling; the current command-form classifier gap above is fail-open, so an unclassified result must be treated as unsafe rather than as evidence of protection.
 - remote operation: require `~/.codex/remote-access.md` review and approval.
 - dynamic download execution: deny or require explicit approval.
 - evidence write failure in observer hook: print a warning and allow the original tool result.
