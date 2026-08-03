@@ -5,7 +5,7 @@ Stable rules belong in `AGENTS.md`, `README.md`, `docs/repo-index.md`, or
 `docs/HARNESS_RUNTIME.md`; session facts and phase transitions are appended here.
 
 ## Current Snapshot
-- phase: handoff
+- phase: validation
 - source_of_truth:
   - `AGENTS.md`
   - `docs/repo-index.md`
@@ -14,13 +14,13 @@ Stable rules belong in `AGENTS.md`, `README.md`, `docs/repo-index.md`, or
   - `codex/skills/delivery-harness-framework/SKILL.md`
 - blocked_sources: none
 - unsafe_inputs: none
-- next_safe_task: Repeat Phase 0 only after the Codex host implements an enforceable PreToolUse Ask response; then resume Phase 2 TDD, Shadow-to-Ask rollout, narrow Enforce, and separately verified runtime activation
+- next_safe_task: Rerun the 2026-07-28 isolated guard probe against landed harness_guard.py and record decision evidence
 - required_commands:
   - `python3 test_runner.py`
   - `git diff --check`
   - `./scripts/verify_codex_env.sh --repo-root "$(pwd)" --codex-home "$HOME/.codex" --claude-home "$HOME/.claude"`
-- latest_checkpoint: 2026-07-26T20:57:35-04:00 Runtime Plan Governor Phase 0 repeated with real desktop and on-request CLI dispatch probes: command marker is observable and deny is enforceable, but PreToolUse ask is unsupported and fails open; keep payload_capable=false, Shadow-only source, and Production no-go
-- latest_verification: 2026-07-26T20:57:35-04:00 command=python3 test_runner.py; git diff --check; python3 scripts/check_surfaces.py --repo-root "$(pwd)" --check-public-nav; python3 scripts/check_skill_compatibility.py --repo-root "$(pwd)"; exit_code=0; key_output=ran=90 passed=90 skipped=0 failed=0; surfaces manifest consistent; skill compatibility errors=0; diff check clean
+- latest_checkpoint: 2026-08-02T21:19:33-04:00 Recorded shared compaction governance baseline after landing commits A-C
+- latest_verification: 2026-08-02T21:19:33-04:00 command=python3 test_runner.py; exit_code=1; key_output=ran=91 passed=89 skipped=0 failed=2; failing=test_live_runtime_harness_guard_smoke,test_plan_governor_skill_and_capability_branch_contract
 
 ## State Log
 
@@ -1990,3 +1990,22 @@ Stable rules belong in `AGENTS.md`, `README.md`, `docs/repo-index.md`, or
 - blockers:
   - Current official Codex PreToolUse parser explicitly treats permissionDecision=ask as unsupported and fail-open; actual desktop and approval_policy=on-request CLI probes both reached argparse instead of requesting approval
 - next_safe_task: Repeat Phase 0 only after the Codex host implements an enforceable PreToolUse Ask response; then resume Phase 2 TDD, Shadow-to-Ask rollout, narrow Enforce, and separately verified runtime activation
+
+### 2026-08-02T21:19:33-04:00
+- phase: validation
+- event: checkpoint
+- summary: Recorded shared compaction governance baseline after landing commits A-C
+- git:
+  - branch: main
+  - latest_commit: 673f35c
+  - dirty_status: dirty
+  - dirty_count: 10
+- changed_surfaces:
+  - `docs/harness-state.md`
+- verification:
+  - command: `python3 test_runner.py`
+  - exit_code: 1
+  - key_output: ran=91 passed=89 skipped=0 failed=2; failing=test_live_runtime_harness_guard_smoke,test_plan_governor_skill_and_capability_branch_contract
+- blockers:
+  - none
+- next_safe_task: Rerun the 2026-07-28 isolated guard probe against landed harness_guard.py and record decision evidence
