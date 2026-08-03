@@ -12,6 +12,10 @@ from pathlib import Path
 from typing import Any
 
 from harness_feedback import compute_conversion_health, with_malformed_evidence_signal
+from harness_requirements import TASK_DEMAND_FIELDS, meaningful_lines, parse_sections, validate_requirements
+
+
+UNKNOWN_TASK_DEMAND = {"estimated_level": "unknown", "S_state": "unknown"}
 
 
 def codex_home(value: str | None) -> Path:
@@ -54,6 +58,40 @@ def parse_state_value(text: str, key: str) -> str:
 def compact_decision_event(event: dict[str, Any]) -> dict[str, Any]:
     keys = ["timestamp", "event_type", "phase", "message", "key_output", "failure_class"]
     return {key: event[key] for key in keys if key in event}
+
+
+def latest_validated_task_demand(repo_root: Path) -> dict[str, str]:
+    plans_dir = repo_root / "docs" / "plans"
+    if not plans_dir.is_dir():
+        return dict(UNKNOWN_TASK_DEMAND)
+
+    candidates: list[tuple[int, str, Path]] = []
+    for path in plans_dir.rglob("*.md"):
+        try:
+            modified_ns = path.stat().st_mtime_ns
+        except OSError:
+            continue
+        candidates.append((modified_ns, str(path), path))
+
+    for _, _, path in sorted(candidates, reverse=True):
+        if validate_requirements(path):
+            continue
+        try:
+            sections = parse_sections(path.read_text(encoding="utf-8"))
+        except OSError:
+            continue
+        values: dict[str, str] = {}
+        for raw_line in meaningful_lines(sections.get("Task Demand (D_task)", [])):
+            line = raw_line.removeprefix("- ").strip()
+            if ":" not in line:
+                continue
+            label, value = line.split(":", 1)
+            field = TASK_DEMAND_FIELDS.get(label.strip())
+            if field in {"estimated_level", "S_state"}:
+                values[field] = value.strip()
+        if values.get("estimated_level") and values.get("S_state"):
+            return {"estimated_level": values["estimated_level"], "S_state": values["S_state"]}
+    return dict(UNKNOWN_TASK_DEMAND)
 
 
 def parse_aware_timestamp(value: Any) -> datetime | None:
@@ -185,6 +223,7 @@ def build_recovery(args: argparse.Namespace) -> tuple[int, dict[str, Any] | None
         "evidence_status": evidence_status,
         "evidence_malformed_count": malformed_count,
         "conversion_health": conversion_health,
+        "task_demand": latest_validated_task_demand(repo_root),
         "latest_verification": latest or {},
         "evidence_kind_counts": evidence_kind_counts,
         "latest_decision_evidence": compact_decision_event(decision_events[0]) if decision_events else {},
@@ -215,6 +254,8 @@ def render_markdown(payload: dict[str, Any]) -> str:
         "- evidence_kind_counts: "
         + ", ".join(f"{kind}={count}" for kind, count in payload["evidence_kind_counts"].items()),
         f"- conversion_health: `{payload['conversion_health']['status']}` - {payload['conversion_health']['reason']}",
+        f"- task_demand.estimated_level: `{payload['task_demand']['estimated_level']}`",
+        f"- task_demand.S_state: {payload['task_demand']['S_state']}",
         f"- blocked_sources: {payload['blocked_sources']}",
         f"- next_safe_task: {payload['next_safe_task']}",
         f"- latest_verification_state: {payload['latest_verification_state']}",

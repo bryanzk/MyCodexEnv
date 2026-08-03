@@ -70,7 +70,7 @@
 - `docs/evals`: versioned Harness behavior-evaluation scenarios and handoff fixtures.
 - `docs/templates/harness-agent-brief.md`: worker durable brief template with optional Task Demand and Green Gate companion fields.
 - `scripts/harness_requirements.py`: requirements artifact validator.
-- `scripts/harness_recover.py`: fresh-session recovery smoke check with evidence-kind counts, compact latest decision evidence, and freshness-aware boundary verdicts.
+- `scripts/harness_recover.py`: fresh-session recovery smoke check with evidence-kind counts, compact latest decision evidence, freshness-aware boundary verdicts, and pipe-only validated task demand.
 - `scripts/codex_subconscious.py`: local memory build/brief/publish helper with fail-closed routine/derived reflection.
 - `scripts/harness_env_probe.py`: observable Codex runtime config and split evidence schema probe.
 - `scripts/check_dhf_consumer_compatibility.py`: read-only DHF consumer compatibility and helper drift checker.

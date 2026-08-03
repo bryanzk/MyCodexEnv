@@ -5483,6 +5483,61 @@ def test_harness_recovery_smoke():
             empty_payload["conversion_health"]["status"] == "insufficient_evidence",
             "empty recovery evidence should report insufficient conversion evidence",
         )
+        require(
+            empty_payload["task_demand"] == {"estimated_level": "unknown", "S_state": "unknown"},
+            "recovery without a validated requirements artifact should expose unknown task demand",
+        )
+
+        def recovery_requirements(level: str, state: str) -> str:
+            return (
+                "# Recovery Requirements\n\n"
+                "## Goal\nRecover task demand.\n\n"
+                "## Audience\n- Codex\n\n"
+                "## Scope\n- Recovery payload.\n\n"
+                "## Non-Goals\n- Policy.\n\n"
+                "## Constraints\n- Pipe only.\n\n"
+                "## Task Demand (D_task)\n"
+                f"- estimated_level: {level}\n"
+                "- L (reasoning/action steps): bounded local steps\n"
+                "- H_tool (tool-selection ambiguity): low\n"
+                f"- S_state (cross-module state tracking): {state}\n"
+                "- N_obs (observation/external noise): low\n\n"
+                "## Source Of Truth\n- Contract.\n\n"
+                "## Acceptance Criteria\n- [ ] Payload exposed.\n\n"
+                "## Verification Gate\n- `python3 test_runner.py`\n\n"
+                "## Risks\n- Invalid artifacts.\n\n"
+                "## Handoff Notes\n- Continue locally.\n"
+            )
+
+        plans_dir = repo / "docs" / "plans"
+        old_requirements = plans_dir / "old-requirements.md"
+        latest_requirements = plans_dir / "latest-requirements.md"
+        invalid_requirements = plans_dir / "invalid-newer-requirements.md"
+        write(old_requirements, recovery_requirements("low", "old state"))
+        write(latest_requirements, recovery_requirements("high", "latest validated state"))
+        write(invalid_requirements, "# Invalid newer artifact\n")
+        os.utime(old_requirements, (100, 100))
+        os.utime(latest_requirements, (200, 200))
+        os.utime(invalid_requirements, (300, 300))
+
+        code, out, err = run(
+            [
+                sys.executable,
+                str(HARNESS_RECOVER),
+                "--repo-root",
+                str(repo),
+                "--codex-home",
+                str(codex_home),
+                "--json",
+            ]
+        )
+        require(code == 0, f"task-demand recovery should succeed: {err or out}")
+        demand_payload = json.loads(out)
+        require(
+            demand_payload["task_demand"]
+            == {"estimated_level": "high", "S_state": "latest validated state"},
+            "recovery should skip newer invalid requirements and expose the latest validated task demand",
+        )
 
         code, out, err = run(
             [

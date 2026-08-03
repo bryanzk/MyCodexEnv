@@ -277,6 +277,11 @@ Recovery behavior:
   `--max-verification-age` (24 hours by default). A dirty worktree or failed
   verification is `unsafe`; unavailable, invalid, future, stale, or pre-commit
   timestamps are `unknown` and callers must treat them as unsafe.
+- task demand: recovery scans `docs/plans/**/*.md` by modification time and
+  exposes `task_demand.estimated_level` and `task_demand.S_state` from the latest
+  artifact that passes `harness_requirements.py`; newer invalid artifacts are
+  skipped, and no validated artifact yields `unknown` for both fields. Recovery
+  only transports these values and applies no policy to them.
 - JSON output: use `--json` for automation and visual reports.
 
 ## Environment Probe Contract
