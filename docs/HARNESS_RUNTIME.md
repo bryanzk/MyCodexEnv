@@ -71,7 +71,7 @@ For the current project workflow and skill routing map, read
 - `Tool Router`: lifecycle stage determines allowed read/write/network/remote behavior. The guard resolves phase in order from top-level payload, `tool_input.phase`, `CODEX_HARNESS_PHASE`, `docs/harness-state.md` `## Current Snapshot`, then `unknown`.
 - `Model Router`: `codex/hooks/model_router.py` classifies each prompt or subtask as `simple`, `medium`, or `complex` and recommends the cheapest quality-safe model tier. It intentionally stays non-blocking; runtimes or wrapper scripts that can switch models may consume the JSON `routing` object, while plain Codex hooks inject the recommendation and response telemetry requirement as additional context.
 - `Checkpoints`: use git commits, state log entries, and handoff docs as recovery points.
-- `Guardrails`: repo-write phase violations, destructive commands, secret access, remote operations, and dynamic-execution actions are blocked or require approval.
+- `Guardrails`: repo-write phase violations, destructive commands, secret access, remote operations, and dynamic-execution actions are blocked. The guard emits the Codex-supported legacy block shape; a 2026-07-28 isolated probe proved that the former top-level `permissionDecision` shape and every `ask` variant fail open, so former ask categories are upgraded to block until the host supports a real ask.
 
 ## Evidence Contract
 Evidence events are JSON objects that match `codex/runtime/evidence.schema.json`.
@@ -323,9 +323,10 @@ Agent team validator:
 - worker write sets must not overlap protected integrator state surfaces,
   currently `docs/harness-state.md`.
 - empty paths, `..` traversal, and absolute paths outside the repo fail.
-- configured dispatch tool names and command patterns are ask-gated by
-  `codex/hooks/harness_guard.py` unless the payload includes `plan_sha256` and a
-  matching local receipt less than 10 minutes old.
+- configured dispatch tool names and command patterns are block-gated by
+  `codex/hooks/harness_guard.py` (legacy `{"decision":"block"}` shape) unless the
+  payload includes `plan_sha256` and a matching local receipt less than 10
+  minutes old.
 - this is an honest configured-shape gate: runtime dispatch paths not exposed to
   `PreToolUse` or not named in `tool-policy.json` cannot be intercepted by this
   repo hook.
@@ -339,4 +340,5 @@ Agent team validator:
 - dynamic download execution: deny or require explicit approval.
 - evidence write failure in observer hook: print a warning and allow the original tool result.
 - missing, stale, cross-repo, worker-count-mismatched, or malformed agent-team
-  validation receipt: ask before configured multi-agent dispatch.
+  validation receipt: block configured multi-agent dispatch until a fresh
+  receipt exists (ask is unsupported by the host and fails open).

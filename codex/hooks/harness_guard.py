@@ -257,6 +257,17 @@ def git_root(cwd: str) -> Path | None:
     return Path(root) if root else None
 
 
+def block(reason: str) -> dict[str, Any]:
+    # Codex-supported PreToolUse legacy block shape. Isolated probe on
+    # 2026-07-28 (codex-cli 0.144.1) proved: this shape and the
+    # hookSpecificOutput deny shape intercept; the previous top-level
+    # {"permissionDecision": ...} shape and every "ask" variant are parsed
+    # as invalid/unsupported, the hook run is marked failed, and the tool
+    # call continues (fail-open). Former ask categories are therefore
+    # upgraded to block until the host supports a real ask.
+    return {"decision": "block", "reason": reason}
+
+
 def decision(payload: dict[str, Any], policy: dict[str, Any]) -> dict[str, Any]:
     if not policy:
         return {}
@@ -272,10 +283,9 @@ def decision(payload: dict[str, Any], policy: dict[str, Any]) -> dict[str, Any]:
     if category == "agent_dispatch":
         if has_fresh_validation_receipt(payload, policy, root):
             return {}
-        return {
-            "permissionDecision": "ask",
-            "message": "[harness] validate the worker plan with scripts/harness_agent_team.py validate --emit-evidence before dispatch.",
-        }
+        return block(
+            "[harness] validate the worker plan with scripts/harness_agent_team.py validate --emit-evidence before dispatch."
+        )
     if category == "read":
         return {}
 
@@ -286,13 +296,7 @@ def decision(payload: dict[str, Any], policy: dict[str, Any]) -> dict[str, Any]:
     if category == "remote" and phase_policy.get("allow_remote") is True:
         return {}
 
-    approval_required = set(phase_policy.get("require_approval", []))
-    message = f"[harness] {category} is restricted during phase '{phase}': {reason or category}."
-    if category in {"secret", "dynamic_exec"}:
-        return {"permissionDecision": "deny", "message": message}
-    if category in approval_required or category in {"destructive", "remote"}:
-        return {"permissionDecision": "ask", "message": message}
-    return {"permissionDecision": "deny", "message": message}
+    return block(f"[harness] {category} is restricted during phase '{phase}': {reason or category}.")
 
 
 def main() -> int:
