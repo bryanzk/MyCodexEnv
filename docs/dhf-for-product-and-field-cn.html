@@ -64,9 +64,18 @@
     .diagram svg { display: block; width: 100%; height: auto; font-family: var(--font-body); }
     .diagram figcaption { margin-top: 10px; color: var(--text-dim); font-size: 13.5px; line-height: 1.5; font-family: var(--font-mono); }
     figure { margin: 0; }
+    .evidence-example { background: color-mix(in srgb, var(--surface) 86%, var(--blue) 14%); border: 1px solid color-mix(in srgb, var(--border) 68%, var(--blue) 32%); border-radius: 16px; padding: 18px 20px; }
+    .evidence-example summary { cursor: pointer; color: var(--blue); font-family: var(--font-mono); font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; }
+    .example-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; margin-top: 16px; }
+    .example-panel { min-width: 0; padding: 18px; background: var(--surface); border: 1px solid var(--border); border-radius: 12px; }
+    .example-panel h3 { margin: 0 0 12px; font-family: var(--font-display); font-size: 22px; }
+    .example-panel dl { margin: 0; display: grid; grid-template-columns: minmax(110px, .5fr) 1.5fr; gap: 8px 12px; }
+    .example-panel dt { color: var(--green); font-family: var(--font-mono); font-size: 12px; }
+    .example-panel dd { margin: 0; color: var(--text-dim); line-height: 1.45; }
+    .example-panel pre { margin: 0; white-space: pre-wrap; color: var(--text-dim); font-family: var(--font-mono); font-size: 12px; line-height: 1.6; }
     .footer { display: flex; justify-content: space-between; gap: 16px; color: var(--text-dim); border-top: 1px solid var(--border); padding-top: 18px; font-family: var(--font-mono); font-size: 12px; line-height: 1.5; }
     .footer a { color: var(--green); }
-    @media (max-width: 860px) { body { padding: 18px; } .card-row { grid-template-columns: 1fr; } .footer { flex-direction: column; } }
+    @media (max-width: 860px) { body { padding: 18px; } .card-row, .example-grid { grid-template-columns: 1fr; } .footer { flex-direction: column; } }
   </style>
   <link rel="stylesheet" href="./dhf-site-status.css">
 </head>
@@ -115,6 +124,27 @@
         </svg>
         <figcaption>一份凭据证明一项结论。昨天通过的检查不能认证今天的系统；变更后必须重新验证。</figcaption>
       </figure>
+      <details class="evidence-example">
+        <summary>看一份真的</summary>
+        <div class="example-grid">
+          <div class="example-panel">
+            <h3>脱敏验证示例</h3>
+            <dl>
+              <dt>做了什么检查</dt><dd>公开导航、内容与响应式布局检查。</dd>
+              <dt>如何结束</dt><dd>顺利完成，没有失败项。</dd>
+              <dt>显示了什么</dt><dd>所有登记页面均可访问，移动布局没有超出视口。</dd>
+              <dt>何时完成</dt><dd>文档更新后立即执行。</dd>
+            </dl>
+          </div>
+          <div class="example-panel">
+            <h3>只读刷新报告形态</h3>
+            <pre>状态：需要关注
+观察：已部署版本与获准来源不同
+变更：无
+下一步：操作员核对版本方向与证据</pre>
+          </div>
+        </div>
+      </details>
     </section>
 
     <section class="section-block" aria-labelledby="lane-heading">
