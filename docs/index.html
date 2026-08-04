@@ -348,6 +348,7 @@
       <a class="tag" href="./project-lifecycle-harness-flow-cn.html">生命周期流程</a>
       <a class="tag" href="./project-lifecycle-harness-flow-skills-zh-status-style.html">Skill 路由图</a>
       <a class="tag" href="./dhf-workflow-skills-cn.html">Workflow Skills</a>
+      <a class="tag" href="./dhf-for-product-and-field-cn.html">产品与交付团队</a>
       <a class="tag" href="./index-en.html">English guide</a>
       <a class="tag" href="./LIFECYCLE_SKILL_ROUTING.md">文字规范</a>
     </nav>
@@ -388,7 +389,43 @@
       </div>
     </section>
 
-    <section class="section-block" aria-labelledby="learn-heading" style="--i:3">
+    <section class="section-block" aria-labelledby="governance-heading" style="--i:3">
+      <div class="section-heading">
+        <div>
+          <div class="label">运行治理 · 2026-08-04</div>
+          <h2 id="governance-heading">会话容量治理与回退预防</h2>
+        </div>
+        <p>DHF 把会话容量变化和运行时部署当作受治理的控制流：由宿主观察信号、确保后继只创建一次，并用版本守卫阻止旧来源覆盖更新的运行时。</p>
+      </div>
+      <div class="card-row three">
+        <div class="card">
+          <div>
+            <div class="label">会话容量治理</div>
+            <h2>容量边界属于控制流</h2>
+            <p>宿主增量观察会话变化，持久记录每次边界裁定；恢复时先核对新鲜度，再由会话开场提示明确当前阶段和下一项安全任务。</p>
+          </div>
+          <div class="meta">观察 / 唯一后继 / 恢复 / 定位</div>
+        </div>
+        <div class="card">
+          <div>
+            <div class="label">回退预防</div>
+            <h2>旧来源不能覆盖新运行时</h2>
+            <p>部署前比较来源版本：相同版本无需动作，向前部署要求已经发布的最新来源；过时、分叉或降级请求均关闭式失败。删除项保留备份，定时刷新只报告。</p>
+          </div>
+          <div class="meta">版本比较 / 备份 / 只读报告</div>
+        </div>
+        <div class="card">
+          <div>
+            <div class="label">可执行护栏</div>
+            <h2>守卫会真正阻止越界</h2>
+            <p>工具调用前的守卫能返回明确阻断，裁定按风险分层，验收标准写入防篡改记录，行为评估覆盖恢复、交接完整性与后继唯一性。</p>
+          </div>
+          <div class="meta">阻断 / 风险分层 / 记录 / 行为评估</div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section-block" aria-labelledby="learn-heading" style="--i:4">
       <div class="section-heading">
         <div>
           <div class="label">Start Here</div>
@@ -427,6 +464,14 @@
           </div>
           <div class="meta">适合 agentic engineering beginner</div>
         </a>
+        <a class="card" href="./dhf-for-product-and-field-cn.html">
+          <div>
+            <div class="label">非开发者从这里开始</div>
+            <h2>面向产品与交付团队</h2>
+            <p>用五张图解释 DHF 的交付闭环、验证凭据、环境门禁、长周期工作与只向前的部署，适合无需阅读代码的读者。</p>
+          </div>
+          <div class="meta">图解优先的受众概览</div>
+        </a>
         <a class="card" href="./project-lifecycle-harness-flow-cn.html">
           <div>
             <div class="label">生命周期流程</div>
@@ -446,7 +491,7 @@
       </div>
     </section>
 
-    <section class="section-block" aria-labelledby="reference-heading" style="--i:4">
+    <section class="section-block" aria-labelledby="reference-heading" style="--i:5">
       <div class="section-heading">
         <div>
           <div class="label">Reference</div>
