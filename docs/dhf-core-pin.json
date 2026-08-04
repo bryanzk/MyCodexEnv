@@ -1,0 +1,64 @@
+{
+  "manifest_version": 1,
+  "consumer": "MyCodexEnv",
+  "pin": {
+    "kind": "bootstrap_snapshot",
+    "release": null,
+    "source_revision": null,
+    "packet_schema_version": 1,
+    "baseline_repository": "MyCodexEnv",
+    "baseline_revision": "6b28e549131d8e092e3661c5ea391faae1ffbc92"
+  },
+  "files": [
+    {
+      "source": "schemas/dhf-packet.schema.json",
+      "consumer": "codex/runtime/dhf-packet.schema.json",
+      "sha256": "00b2103fea2e7e69268e4e0cc28cd977988f370f2f6b53b1547d3a97ad9d8270"
+    },
+    {
+      "source": "schemas/evidence.schema.json",
+      "consumer": "codex/runtime/evidence.schema.json",
+      "sha256": "cf9a3b52d6a6cbcf0129fc66429bf35003a56b590eb72df0d5af74025534b07e"
+    },
+    {
+      "source": "schemas/evidence/decision-evidence.schema.json",
+      "consumer": "codex/runtime/evidence/decision-evidence.schema.json",
+      "sha256": "60d009f234b47aac82cf4afb4d99588701f4406a5ead3dcabe4d3ae01ac2194c"
+    },
+    {
+      "source": "schemas/evidence/routine-gate-receipt.schema.json",
+      "consumer": "codex/runtime/evidence/routine-gate-receipt.schema.json",
+      "sha256": "81c28967755d12678360d28278cce8bcecccf57940f24a5ee37869ad8b2e5519"
+    },
+    {
+      "source": "skills/delivery-harness-framework/evals/evals.json",
+      "consumer": "codex/skills/delivery-harness-framework/evals/evals.json",
+      "sha256": "651cfe21377981dad9eadc7c6d264935512a9fcce50638ea0545fe4235348f02"
+    },
+    {
+      "source": "scripts/harness_evidence.py",
+      "consumer": "scripts/harness_evidence.py",
+      "sha256": "81014cf2794c8f2c29817c2f1e717fa84138abda012092c15c491b722b247ee6"
+    },
+    {
+      "source": "scripts/harness_requirements.py",
+      "consumer": "scripts/harness_requirements.py",
+      "sha256": "9fa04e18ed79788ff048b84b52c2df15d8e0112fdeb7446bf5fc89f7259f0796"
+    },
+    {
+      "source": "scripts/validate_dhf_packet.py",
+      "consumer": "scripts/validate_dhf_packet.py",
+      "sha256": "e5ba4feeb17ed4fbdcf3a1f71fe9291300f18869886eec040f225de3ee4ee820"
+    },
+    {
+      "source": "templates/harness-requirements.md",
+      "consumer": "docs/templates/harness-requirements.md",
+      "sha256": "c8c4c6ee1e98a91da48ed6115040dca7934014cb5f043416ac3cb3b602357544"
+    },
+    {
+      "source": "templates/harness-agent-brief.md",
+      "consumer": "docs/templates/harness-agent-brief.md",
+      "sha256": "2e2b37639e76c08c89b27094eb41f29b88101ffbe75924177f95ecbf62e6785c"
+    }
+  ]
+}

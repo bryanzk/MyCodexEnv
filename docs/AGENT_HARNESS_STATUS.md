@@ -1,9 +1,17 @@
 # Agent Harness Status
 
+> **DHF_PUBLIC_STATUS_V1 · 2026-08-03:** This table separates implemented
+> source from the installed runtime. The approved W6a snapshot passed 15/15 on
+> 2026-08-02; a fresh comparison now detects runtime drift. Canonical status:
+> [English](./dhf-architecture-status-en.html) ·
+> [中文](./dhf-architecture-status-cn.html).
+
 This status map follows the Agent Harness diagram: Workflow is cognitive
 orchestration, Infra is runtime governance.
 
 ## Related Documentation
+- `docs/dhf-architecture-status-en.html`: canonical English source/runtime/publication status.
+- `docs/dhf-architecture-status-cn.html`: canonical Chinese source/runtime/publication status.
 - `README.md`: top-level quick start and Harness Runtime overview.
 - `docs/repo-index.md`: low-token repo navigation and runtime surface index.
 - `docs/HARNESS_RUNTIME.md`: lifecycle, evidence, checkpoint, permission, and subagent contracts.
@@ -35,9 +43,9 @@ orchestration, Infra is runtime governance.
 | Transition Store | done | `scripts/harness_transition.py` O_APPEND record/query, post-append reread, first-record-wins CAS | lifecycle callers must invoke the helper; runtime store is local and undeployed | query before successor creation and treat conflicts as an existing successor |
 | Task Ledger | done | `scripts/harness_ledger.py` init/pass/verify contract, content hash, complete verification receipts | ledger integrity still requires an explicit verify gate | run `harness_ledger.py verify` before accepting tracked criteria |
 | Permissions | done | `codex/runtime/tool-policy.json`, `harness_guard.py`, per-category risk tiers in decision reasons, state snapshot phase fallback, unknown-phase read-only fallback | phase inference is still category-level, not path-scoped; tier annotations cannot add top-level block fields | keep the exact legacy block key shape and add explicit phase markers only when the host exposes them |
-| Hooks | source-stage done | `SessionStart` naming plus 180ms silent-failure session bearing, `UserPromptSubmit` including compaction probe, `PreToolUse`, `PostToolUse`, hook tests | completion hook not available; session bearing and compaction probe are not deployed before W6a approval | keep final verification gate and defer real runtime activation to W6a |
-| Compaction Probe | W2b source done | Phase-0 evidence, shared counter, exact-id/strict-heuristic resolution, incremental offset state, large-fixture non-full-read proof | source is registered but live `~/.codex` remains undeployed; usage fields were absent | consume ordinal only, then deploy at W6a solely after approval |
-| Context Meter | ordinal-only source done | W2a usage-absent decision evidence, `context_meter.py`, ordinal pressure injection, unknown token/capacity output, no-persistence false path | host payload exposed no usage fields; source remains undeployed before W6a | retain ordinal-only signal; enable persistence only after a new probe proves observed usage fields |
+| Hooks | source done; runtime drift | `SessionStart` naming plus 180ms silent-failure session bearing, `UserPromptSubmit` including compaction probe, `PreToolUse`, `PostToolUse`, hook tests; approved W6a snapshot passed 15/15 | fresh 2026-08-03 comparison finds 8 drifted and 4 missing approved runtime targets, including missing session bearing and compaction probe | treat source and runtime separately; require a fresh, explicitly authorized targeted sync before claiming activation |
+| Compaction Probe | W2b source done; runtime missing | Phase-0 evidence, shared counter, exact-id/strict-heuristic resolution, incremental offset state, large-fixture non-full-read proof; historical W6a deployment | current live `~/.codex` hook is missing; usage fields were absent in Phase 0 | consume ordinal only in source semantics; do not claim live injection until runtime parity is restored and verified |
+| Context Meter | ordinal-only source done; runtime missing | W2a usage-absent decision evidence, `context_meter.py`, ordinal pressure injection, unknown token/capacity output, no-persistence false path; historical W6a deployment | current live `~/.codex` hook is missing and host payload exposed no usage fields | retain ordinal-only signal; never synthesize capacity; require fresh runtime parity evidence before activation claims |
 | Observability | done | `evidence.schema.json`, `harness_evidence.py`, `harness_observer.py`, `scripts/harness_report.py`, optional decision-only compaction transition fields, verify PASS/FAIL/SKIP evidence for missing `codex` without early shell exit | no browser dashboard | generate optional visual report from `harness_report.py --json` |
 | Docs Drift | done | `docs/surfaces.json`, `scripts/check_surfaces.py --check-public-nav`, `test_check_surfaces_validates_public_nav()` | public HTML nav generation is still manual | optionally generate HTML nav blocks from the manifest |
 | Tool Router | done | phase-based policy, guard classifier, payload/env/state phase resolution order, and configured `agent_dispatch` category | not all Codex tools expose identical payload shape | keep payload parser permissive and test common forms |

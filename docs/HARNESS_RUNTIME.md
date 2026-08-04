@@ -1,5 +1,11 @@
 # Harness Runtime
 
+> **DHF_PUBLIC_STATUS_V1 · 2026-08-03:** This file is the source contract, not
+> proof of the currently installed runtime. Current source/runtime/publication
+> status: [English](./dhf-architecture-status-en.html) ·
+> [中文](./dhf-architecture-status-cn.html). The approved W6a sync passed
+> historically, but a fresh comparison now detects runtime drift.
+
 ## Purpose
 MyCodexEnv treats the model as only one part of the agent system. The harness
 runtime provides the surrounding workflow and infrastructure: state, tool
@@ -72,6 +78,8 @@ For the current project workflow and skill routing map, read
 `docs/LIFECYCLE_SKILL_ROUTING.md`.
 
 ## Related Documentation
+- `docs/dhf-architecture-status-en.html`: canonical English source/runtime/publication status.
+- `docs/dhf-architecture-status-cn.html`: canonical Chinese source/runtime/publication status.
 - `README.md`: top-level quick start and Harness Runtime overview.
 - `docs/repo-index.md`: low-token repo navigation and runtime surface index.
 - `docs/surfaces.json`: canonical machine-readable runtime surface inventory.
@@ -128,14 +136,17 @@ block/allow behavior.
 ## Session Bearing
 
 `codex/hooks/session_bearing.py` is registered in the source `SessionStart`
-chain without runtime deployment. For a cwd inside this repo it runs
+chain. W6a deployed the approved snapshot on 2026-08-02, but a fresh
+2026-08-03 comparison finds the current runtime copy missing; therefore this
+section describes source behavior, not current activation. For a cwd inside
+this repo the source hook runs
 `scripts/harness_recover.py --boundary --json` and injects `phase`,
 `next_safe_task`, `boundary_verdict`, and `dirty_status`. The hook shares one
 180ms deadline across the boundary call and its compatibility fallback; only an
 explicitly unsupported `--boundary` argument triggers plain recovery, which
 reports `boundary_verdict=unknown`. Missing repo helpers, malformed results,
 timeouts, and other failures exit zero without output so session start remains
-unaffected. Runtime deployment remains behind W6a approval.
+unaffected. Restore of runtime parity requires a new, explicit sync action.
 
 ## Compaction Observation
 
@@ -167,7 +178,9 @@ R4 records that degradation as decision evidence before meter code exists:
 - isolated evidence file: `/tmp/mce-r4-evidence.aUpBFW/harness/evidence/2026-08-02.jsonl`
 
 W2b implements that source-stage probe in `codex/hooks/compaction_probe.py` and
-registers it in the `UserPromptSubmit` chain without deploying it. Resolution
+registers it in the source `UserPromptSubmit` chain. W6a deployed the approved
+snapshot on 2026-08-02; the current 2026-08-03 runtime comparison finds this
+hook missing, so it must not be described as runtime-active. Resolution
 prefers an exact session id. Without an id it injects only when the payload cwd
 matches session metadata, the file mtime is inside the configured window, and
 exactly one candidate remains; otherwise it returns continue-only and records

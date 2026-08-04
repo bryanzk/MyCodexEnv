@@ -1,5 +1,11 @@
 # MyCodexEnv Repo Index
 
+> **DHF_PUBLIC_STATUS_V1 · 2026-08-03:** Canonical current architecture and
+> source/runtime/publication status:
+> [English](./dhf-architecture-status-en.html) ·
+> [中文](./dhf-architecture-status-cn.html). Source availability is not proof
+> of runtime activation.
+
 ## Purpose
 - Reproduce a Codex + Claude dual-agent environment from a Git clone.
 - Keep generic Codex runtime rules, skills, hooks, workflow files, and verification scripts under source control.
@@ -15,6 +21,8 @@
 - `docs/MODEL_ROUTER_EVAL_MATRIX.md`: prompt/subtask model router eval matrix and routing assertions.
 - `docs/index.html`: Chinese public Delivery Harness Framework docs landing page for GitHub Pages.
 - `docs/index-en.html`: English public Delivery Harness Framework docs landing page for GitHub Pages.
+- `docs/dhf-architecture-status-cn.html`: canonical Chinese DHF architecture and source/runtime/publication status.
+- `docs/dhf-architecture-status-en.html`: canonical English DHF architecture and source/runtime/publication status.
 - `docs/delivery-harness-framework-manual-cn.md`: Chinese PM-facing Delivery Harness Framework manual draft.
 - `docs/dhf-workflow-skills-cn.html`: Chinese DHF workflow skill inventory with GitHub source links.
 - `docs/dhf-workflow-skills-en.html`: English DHF workflow skill inventory with GitHub source links.
@@ -36,6 +44,9 @@
 - `docs/harness-state.md`: append-only harness state, checkpoint, and next-safe-task log.
 - `docs/HARNESS_RUNTIME.md`: runtime workflow, evidence, permission, checkpoint, and agent-team contract.
 - `docs/AGENT_HARNESS_STATUS.md`: Agent Harness workflow and runtime governance status map.
+- `docs/dhf-site-status.css`: shared status banner and canonical architecture-page styling.
+- `docs/dhf-architecture-status-cn.html`: canonical Chinese DHF architecture and source/runtime/publication status.
+- `docs/dhf-architecture-status-en.html`: canonical English DHF architecture and source/runtime/publication status.
 - `codex/skills/delivery-harness-framework/`: lifecycle router skill.
 - `codex/skills/committee-review-loop/`: explicit expert-committee review and revision loop skill.
 - `codex/skills/codex-fluent/scripts/report_active_sessions.py`: read-only active Codex session ranking and handoff audit.
@@ -76,8 +87,12 @@
 - `scripts/codex_subconscious.py`: local memory build/brief/publish helper with fail-closed routine/derived reflection.
 - `scripts/harness_env_probe.py`: observable Codex runtime config and split evidence schema probe.
 - `scripts/check_dhf_consumer_compatibility.py`: read-only DHF consumer compatibility and helper drift checker.
+- `scripts/compare_dhf_core_snapshot.py`: read-only comparator for an independent DHF checkout, the MyCodexEnv consumer copy, and its immutable pin hashes.
+- `scripts/validate_dhf_packet.py`: standard-library DHF packet validator with field-path errors and fail-close schema handling.
 - `docs/dhf-consumer-compatibility.json`: machine-readable DHF consumer compatibility matrix for MyCodexEnv, ShipQ, and future consumers.
+- `docs/dhf-core-pin.json`: MyCodexEnv DHF bootstrap snapshot; after the first upstream release it pins the immutable tag and Git revision.
 - `docs/plans/2026-06-15-dhf-incubation-plan.md`: controlled incubation boundary, compatibility, and extraction trigger plan.
+- `docs/plans/2026-06-15-dhf-independent-core-requirements.md`: reviewed copy/adapt/exclude, installer, doctor, packet, pin-bump, CI, privacy, and rollback contract for independent extraction.
 - `scripts/headroom_filter.py`: optional stdin filter for compressing large command outputs with Headroom before sending them into agent context.
 - `scripts/audit_skills.py`: report-only skill governance audit for repo/global/.agents skill sources and local usage traces.
 - `scripts/check_skill_compatibility.py`: offline compatibility gate for all local skill manifests, helper syntax, and relative links, plus complete repo/runtime parity for persistent managed skills; ephemeral `.system` projections are loader-gated separately.

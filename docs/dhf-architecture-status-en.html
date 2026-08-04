@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Current MyCodexEnv and Delivery Harness Framework architecture, source, runtime, publication, and extraction status.">
+  <title>DHF Architecture and Current Status</title>
+  <link rel="stylesheet" href="./dhf-site-status.css">
+  <style>
+    :root {
+      --bg: #f4f1e8;
+      --surface: #fffdf8;
+      --ink: #1e2924;
+      --muted: #637068;
+      --line: rgba(30, 41, 36, 0.14);
+      --green: #147a62;
+      --amber: #a15f22;
+      --red: #a9475b;
+      --blue: #2f6f92;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      background: radial-gradient(circle at top right, rgba(47,111,146,.11), transparent 32%), var(--bg);
+      color: var(--ink);
+      font: 16px/1.65 system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+    .wrap { width: min(1120px, calc(100% - 2rem)); margin: 0 auto; padding: 1.25rem 0 4rem; }
+    .hero, .section { margin-bottom: 1rem; padding: clamp(1.2rem, 3vw, 2.2rem); border: 1px solid var(--line); border-radius: 20px; background: var(--surface); }
+    .eyebrow { color: var(--green); font-size: .8rem; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; }
+    h1, h2, h3 { line-height: 1.18; }
+    h1 { margin: .5rem 0 .8rem; font-size: clamp(2rem, 5vw, 4rem); }
+    h2 { margin-top: 0; font-size: clamp(1.35rem, 3vw, 2rem); }
+    h3 { margin: 0 0 .35rem; }
+    p { color: var(--muted); }
+    code { padding: .12rem .3rem; border-radius: 5px; background: rgba(47,111,146,.09); color: var(--ink); }
+    a { color: var(--blue); }
+    .pill { display: inline-flex; margin: .3rem .35rem .3rem 0; padding: .3rem .65rem; border-radius: 999px; background: rgba(20,122,98,.11); color: var(--green); font-weight: 750; }
+    .status-source { border-top: 4px solid var(--green); }
+    .status-runtime { border-top: 4px solid var(--red); }
+    .status-public { border-top: 4px solid var(--blue); }
+    .status-extract { border-top: 4px solid var(--amber); }
+    .stack { display: grid; gap: .7rem; }
+    .layer { padding: 1rem; border: 1px solid var(--line); border-left: 6px solid var(--blue); border-radius: 12px; background: rgba(47,111,146,.045); }
+    .layer strong { display: block; margin-bottom: .25rem; }
+    table { width: 100%; border-collapse: collapse; }
+    th, td { padding: .75rem; border-bottom: 1px solid var(--line); text-align: left; vertical-align: top; }
+    th { color: var(--green); }
+    .warning { padding: 1rem; border-radius: 12px; background: rgba(169,71,91,.09); border: 1px solid rgba(169,71,91,.24); }
+    @media (max-width: 700px) { table { display: block; overflow-x: auto; } }
+  </style>
+</head>
+<body>
+  <main class="wrap">
+    <aside class="dhf-status-bar" data-dhf-status="2026-08-03" aria-label="Current DHF status">
+      <strong>Architecture status · 2026-08-03</strong>
+      <span>Canonical source, runtime, publication, and independent-core status.</span>
+      <a href="./dhf-architecture-status-en.html" aria-current="page">Current English status</a>
+      <a href="./dhf-architecture-status-cn.html">中文状态页</a>
+    </aside>
+
+    <section class="hero">
+      <div class="eyebrow">DHF_PUBLIC_STATUS_V1 / Current truth boundary</div>
+      <h1>DHF architecture and current status.</h1>
+      <p>This page is the canonical public snapshot for MyCodexEnv and Delivery Harness Framework. It separates repository source, one machine's active runtime, published documentation, and the proposed independent DHF core. <strong>Source available is not runtime active.</strong></p>
+      <a class="pill" href="./index-en.html">English guide</a>
+      <a class="pill" href="./project-lifecycle-harness-flow-en.html">Lifecycle flow</a>
+      <a class="pill" href="./project-lifecycle-harness-flow-skills-en-status-style.html">Skill routing</a>
+    </section>
+
+    <section class="section">
+      <h2>Four statuses, never one vague “done”</h2>
+      <div class="dhf-status-grid">
+        <article class="dhf-status-card status-source"><h3>Repository source: implemented</h3><p>The audited local <code>main</code> contains the lifecycle router, hooks, guard, evidence schemas, recovery, checkpoint, ledger, transition store, compaction observation, session bearing, context meter, and tier-1/2 behavior evals.</p></article>
+        <article class="dhf-status-card status-runtime"><h3>Runtime parity: drift detected</h3><p>W6a reached 15/15 parity and a 100/100 suite on 2026-08-02. A later 2026-08-03 audit found 3 equal, 8 drifted, and 4 missing approved runtime targets. Active-runtime parity is therefore not currently claimed.</p></article>
+        <article class="dhf-status-card status-public"><h3>Public pages: documentation only</h3><p>GitHub Pages explains source architecture and verification boundaries. A reachable page is not proof that hooks are installed, tests are green, or a particular machine is running the same source.</p></article>
+        <article class="dhf-status-card status-extract"><h3>Independent DHF core: not published</h3><p>Staged extraction has a reviewed direction and prerequisite design, but no independent repository, immutable release, tag, or runtime activation is asserted. MyCodexEnv remains the working source and consumer boundary.</p></article>
+      </div>
+    </section>
+
+    <section class="section">
+      <h2>Current architecture</h2>
+      <div class="stack" role="list" aria-label="DHF architecture layers">
+        <div class="layer" role="listitem"><strong>1 · Host and runtime hooks</strong><span><code>SessionStart</code>: naming → <code>session_bearing.py</code>. <code>UserPromptSubmit</code>: <code>compaction_probe.py</code> → <code>model_router.py</code> → <code>dhf_preprompt.py</code>. <code>PreToolUse</code>: <code>harness_guard.py</code>. <code>PostToolUse</code>: <code>harness_observer.py</code>.</span></div>
+        <div class="layer" role="listitem"><strong>2 · Generic router and repo adapters</strong><span>The generic dispatcher honors opt-out first, lazily delegates known repositories, and otherwise routes explicit DHF work by lifecycle stage. Project paths, fixtures, commands, and business boundaries stay in repo-specific adapters.</span></div>
+        <div class="layer" role="listitem"><strong>3 · Lifecycle and specialist workflows</strong><span>Eight normalized stages—research, requirements, planning, development, validation, review, ship, handoff—select planning, TDD, QA, security, release, documentation, or deterministic helpers.</span></div>
+        <div class="layer" role="listitem"><strong>4 · Durable governance and evidence</strong><span><code>harness_recover.py</code>, <code>harness_checkpoint.py</code>, <code>harness_ledger.py</code>, <code>harness_transition.py</code>, <code>harness_eval.py</code>, schemas, state logs, and fresh four-field verification receipts make work recoverable and auditable.</span></div>
+        <div class="layer" role="listitem"><strong>5 · Distribution boundary</strong><span><code>codex/</code> is repository source. <code>~/.codex</code> is machine runtime. Promotion is explicit, targeted, reversible, and followed by byte parity plus full verification. Public docs and future independent-core releases are separate publication lanes.</span></div>
+      </div>
+    </section>
+
+    <section class="section">
+      <h2>What is implemented now</h2>
+      <table>
+        <thead><tr><th>Capability</th><th>Source state</th><th>Runtime / remaining boundary</th></tr></thead>
+        <tbody>
+          <tr><td>Lifecycle routing and recovery</td><td>Implemented with durable source order, dirty ownership, execution lanes, and explicit helper routing.</td><td>Recovery is evidence, not permission; runtime config remains machine-specific.</td></tr>
+          <tr><td>Guard and evidence</td><td>Guard categories, risk-tier annotations, observer events, split schemas, report and reflection helpers are implemented.</td><td>The legacy block shape is host-compatible; a documented command-form secret classifier gap remains.</td></tr>
+          <tr><td>Compaction governance</td><td>Shared counter, incremental probe, ordinal-only pressure, transition CAS, W3 checkpoint fields, boundary verdict, and tier-2 agreement eval are implemented.</td><td><code>compaction_probe.py</code> and <code>session_bearing.py</code> were deployed by W6a, but the current machine later lost parity.</td></tr>
+          <tr><td>Acceptance and behavior</td><td>Requirements validation, tamper-evident ledger, tier-1/2 evals, focused tests, surfaces checks, and a full test runner exist.</td><td>The pre-change baseline was 98/100. The aligned documentation branch is 99/101 with the same two runtime-parity failures and zero new failures; the W6a completion receipt was historically 100/100.</td></tr>
+          <tr><td>Simplification profiles</td><td>A thin-core / progressive-governance contract exists as a separate implementation direction.</td><td>The committed router on this snapshot remains stage-based; do not describe light/standard/governed profiles as active runtime behavior until their source and runtime land together.</td></tr>
+          <tr><td>Independent core</td><td>Extraction evaluation and prerequisite design define copy/adapt/exclude, packet, pin, doctor, privacy, and rollback boundaries.</td><td>No independent release or upstream pin exists yet.</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section class="section">
+      <h2>Verification boundary</h2>
+      <p class="warning"><strong>Current warning:</strong> do not use the historical W6a green receipt as proof of today's runtime. Re-run source tests, file-by-file parity, and environment verification after any runtime sync or host rewrite.</p>
+      <p>Primary checks: <code>python3 test_runner.py</code>, <code>python3 scripts/check_surfaces.py --check-public-nav</code>, and <code>./scripts/verify_codex_env.sh ...</code>. Every completion claim carries <code>command</code>, <code>exit_code</code>, <code>key_output</code>, and <code>timestamp</code>.</p>
+    </section>
+  </main>
+</body>
+</html>

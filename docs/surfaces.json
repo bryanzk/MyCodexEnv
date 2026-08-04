@@ -228,13 +228,33 @@
       "audience": ["codex", "human"]
     },
     {
+      "path": "scripts/compare_dhf_core_snapshot.py",
+      "role": "read-only pinned DHF core source and consumer snapshot comparator",
+      "audience": ["codex", "human"]
+    },
+    {
+      "path": "scripts/validate_dhf_packet.py",
+      "role": "portable fail-close DHF packet schema validator",
+      "audience": ["codex", "human"]
+    },
+    {
       "path": "docs/dhf-consumer-compatibility.json",
       "role": "machine-readable DHF consumer compatibility matrix",
       "audience": ["codex", "human"]
     },
     {
+      "path": "docs/dhf-core-pin.json",
+      "role": "MyCodexEnv pinned DHF core bootstrap and release snapshot manifest",
+      "audience": ["codex", "human"]
+    },
+    {
       "path": "docs/plans/2026-06-15-dhf-incubation-plan.md",
       "role": "controlled DHF incubation boundary and extraction trigger plan",
+      "audience": ["codex", "human"]
+    },
+    {
+      "path": "docs/plans/2026-06-15-dhf-independent-core-requirements.md",
+      "role": "independent DHF core extraction, distribution, pin, and rollback requirements",
       "audience": ["codex", "human"]
     },
     {
@@ -319,6 +339,23 @@
       "role": "English public docs landing page",
       "audience": ["human"],
       "public_nav": ["docs/index.html"]
+    },
+    {
+      "path": "docs/dhf-site-status.css",
+      "role": "shared public DHF status banner and architecture page styles",
+      "audience": ["human"]
+    },
+    {
+      "path": "docs/dhf-architecture-status-cn.html",
+      "role": "canonical Chinese DHF architecture and source runtime publication status",
+      "audience": ["human"],
+      "public_nav": ["docs/index.html"]
+    },
+    {
+      "path": "docs/dhf-architecture-status-en.html",
+      "role": "canonical English DHF architecture and source runtime publication status",
+      "audience": ["human"],
+      "public_nav": ["docs/index-en.html"]
     },
     {
       "path": "docs/dhf-workflow-skills-cn.html",

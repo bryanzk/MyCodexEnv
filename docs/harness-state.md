@@ -5,7 +5,7 @@ Stable rules belong in `AGENTS.md`, `README.md`, `docs/repo-index.md`, or
 `docs/HARNESS_RUNTIME.md`; session facts and phase transitions are appended here.
 
 ## Current Snapshot
-- phase: handoff
+- phase: validation
 - source_of_truth:
   - `AGENTS.md`
   - `docs/repo-index.md`
@@ -14,15 +14,15 @@ Stable rules belong in `AGENTS.md`, `README.md`, `docs/repo-index.md`, or
   - `codex/skills/delivery-harness-framework/SKILL.md`
 - blocked_sources: none
 - unsafe_inputs: none
-- next_safe_task: On explicit approval only: implement W6a parity verification coverage, targeted-sync the disclosed runtime files, deploy compaction/session hooks, then run test_runner.py and verify_codex_env.sh
+- next_safe_task: Review final W6a receipts and retain /tmp/mce-w6a-backup.j4AxHE until the operator chooses recovery or cleanup
 - required_commands:
   - `python3 test_runner.py`
   - `git diff --check`
   - `./scripts/verify_codex_env.sh --repo-root "$(pwd)" --codex-home "$HOME/.codex" --claude-home "$HOME/.claude"`
-- latest_checkpoint: 2026-08-02T23:19:22-04:00 All infra and roles acceptance criteria passed except user-gated W6a; final gate is green relative to baseline and runtime remains unsynced
-- latest_verification: 2026-08-02T23:19:22-04:00 command=bash /tmp/final_mce_compaction_gate.sh; exit_code=0; key_output=FINAL_GATE zero_new_failures=1 contracts_valid=2 surfaces=consistent tier1=2/2 tier2=2/2 ledgers_valid=2 guard_probe=18/18
-- compaction_ordinal: 1
-- transition_key: MCE-20260802-harness-compaction-governance:W6a-approval-gate
+- latest_checkpoint: 2026-08-02T23:45:23-04:00 W6a completed after explicit approval: 15-file targeted runtime sync is byte-identical, full suite is green, and runtime parity verification passes
+- latest_verification: 2026-08-02T23:45:23-04:00 command=PYTHONDONTWRITEBYTECODE=1 python3 test_runner.py && PYTHONDONTWRITEBYTECODE=1 ./scripts/verify_codex_env.sh --repo-root "$(pwd)" --codex-home /Users/kezheng/.codex --claude-home /Users/kezheng/.claude; exit_code=0; key_output=15/15 cmp; ran=100 passed=100 skipped=0 failed=0; Verification passed.; infra ledger valid entries=26
+- compaction_ordinal: 2
+- transition_key: MCE-20260802-harness-compaction-governance:W6a
 - gate_decision: none
 
 ## State Log
@@ -1994,6 +1994,45 @@ Stable rules belong in `AGENTS.md`, `README.md`, `docs/repo-index.md`, or
   - Current official Codex PreToolUse parser explicitly treats permissionDecision=ask as unsupported and fail-open; actual desktop and approval_policy=on-request CLI probes both reached argparse instead of requesting approval
 - next_safe_task: Repeat Phase 0 only after the Codex host implements an enforceable PreToolUse Ask response; then resume Phase 2 TDD, Shadow-to-Ask rollout, narrow Enforce, and separately verified runtime activation
 
+### 2026-08-02T16:33:45-04:00
+- phase: development
+- event: checkpoint
+- summary: User explicitly resumed protected feature-branch governance; main checkout records the host-visible execution phase
+- git:
+  - branch: main
+  - latest_commit: befa97f
+  - dirty_status: dirty
+  - dirty_count: 15
+- changed_surfaces:
+  - `docs/harness-state.md`
+- verification:
+  - command: `git status --short; git rev-parse HEAD; git rev-parse origin/main`
+  - exit_code: 0
+  - key_output: 15 pre-existing user-owned items; main=origin/main=befa97f5f6b962af0ed4edb927c37ecf3e0ba85b
+- blockers:
+  - none
+- next_safe_task: Rebase protected DHF simplification branch onto current main; stop on ambiguous conflicts
+
+### 2026-08-02T16:51:17-04:00
+- phase: handoff
+- event: checkpoint
+- summary: Feature branch rebased and frozen clean; source/runtime parity drift prevents restoring user stash
+- git:
+  - branch: main
+  - latest_commit: befa97f
+  - dirty_status: dirty
+  - dirty_count: 17
+- changed_surfaces:
+  - `branch:codex/mce-20260713-dhf-simplification`
+  - `docs/harness-state.md`
+- verification:
+  - command: `python3 test_runner.py; ./scripts/verify_codex_env.sh --repo-root "/Users/kezheng/.codex/worktrees/mce-dhf-simplification/MyCodexEnv" --codex-home "/Users/kezheng/.codex" --claude-home "/Users/kezheng/.claude"; git diff --check`
+  - exit_code: 1
+  - key_output: rebased branch main...HEAD=0/26; targeted timestamp regression passed; full gate 89/93; runtime parity verification failed 4 checks; diff check clean
+- blockers:
+  - Managed runtime differs from rebased source; no runtime sync authorized
+- next_safe_task: Decide whether to authorize targeted runtime parity synchronization before applying preserved feature user changes
+
 ### 2026-08-02T21:19:33-04:00
 - phase: validation
 - event: checkpoint
@@ -2370,3 +2409,39 @@ Stable rules belong in `AGENTS.md`, `README.md`, `docs/repo-index.md`, or
 - blockers:
   - W6a runtime parity repair and ~/.codex sync require explicit user approval
 - next_safe_task: On explicit approval only: implement W6a parity verification coverage, targeted-sync the disclosed runtime files, deploy compaction/session hooks, then run test_runner.py and verify_codex_env.sh
+
+### 2026-08-02T23:45:23-04:00
+- phase: validation
+- event: checkpoint
+- summary: W6a completed after explicit approval: 15-file targeted runtime sync is byte-identical, full suite is green, and runtime parity verification passes
+- git:
+  - branch: main
+  - latest_commit: 010e894
+  - dirty_status: dirty
+  - dirty_count: 10
+- compaction_ordinal: 2
+- transition_key: MCE-20260802-harness-compaction-governance:W6a
+- gate_decision: none
+- changed_surfaces:
+  - `~/.codex/AGENTS.md`
+  - `~/.codex/hooks.json`
+  - `~/.codex/hooks/compaction_counter.py`
+  - `~/.codex/hooks/compaction_probe.py`
+  - `~/.codex/hooks/context_meter.py`
+  - `~/.codex/hooks/dhf_preprompt.py`
+  - `~/.codex/hooks/harness_guard.py`
+  - `~/.codex/hooks/session_bearing.py`
+  - `~/.codex/runtime/evidence.schema.json`
+  - `~/.codex/runtime/evidence/decision-evidence.schema.json`
+  - `~/.codex/runtime/tool-policy.json`
+  - `~/.codex/skills/codex-fluent/references/maintenance-checklist.md`
+  - `~/.codex/skills/codex-fluent/scripts/report_active_sessions.py`
+  - `~/.codex/skills/delivery-harness-framework/SKILL.md`
+  - `~/.codex/skills/delivery-harness-framework/evals/evals.json`
+- verification:
+  - command: `PYTHONDONTWRITEBYTECODE=1 python3 test_runner.py && PYTHONDONTWRITEBYTECODE=1 ./scripts/verify_codex_env.sh --repo-root "$(pwd)" --codex-home /Users/kezheng/.codex --claude-home /Users/kezheng/.claude`
+  - exit_code: 0
+  - key_output: 15/15 cmp; ran=100 passed=100 skipped=0 failed=0; Verification passed.; infra ledger valid entries=26
+- blockers:
+  - none
+- next_safe_task: Review final W6a receipts and retain /tmp/mce-w6a-backup.j4AxHE until the operator chooses recovery or cleanup

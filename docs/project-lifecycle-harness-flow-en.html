@@ -67,6 +67,10 @@
       gap: 22px;
     }
 
+    .wrap > * {
+      min-width: 0;
+    }
+
     .hero, .section {
       background: color-mix(in srgb, var(--surface) 88%, transparent);
       border: 1px solid var(--border);
@@ -219,9 +223,15 @@
       .grid, .links { grid-template-columns: 1fr; }
     }
   </style>
+  <link rel="stylesheet" href="./dhf-site-status.css">
 </head>
 <body>
   <main class="wrap">
+    <aside class="dhf-status-bar" data-dhf-status="2026-08-03" aria-label="Current DHF status">
+      <strong>Architecture status · 2026-08-03</strong>
+      <span>Source, runtime, publication, and independent-core status are separate.</span>
+      <a href="./dhf-architecture-status-en.html">Open current status</a>
+    </aside>
     <section class="hero">
       <div class="eyebrow">Delivery Harness Framework / DHF Lifecycle Flow</div>
       <h1>DHF Lifecycle Flow from intake to handoff.</h1>

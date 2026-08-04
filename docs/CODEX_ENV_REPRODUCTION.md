@@ -1,5 +1,12 @@
 # Codex + Claude Environment Reproduction (Git Clone + One Command)
 
+> **DHF_PUBLIC_STATUS_V1 · 2026-08-03:** The paths below describe repository
+> source and intended sync behavior; they do not prove that a particular
+> `~/.codex` currently matches. The approved W6a snapshot passed historically,
+> while a fresh comparison now detects runtime drift. Current status:
+> [English](./dhf-architecture-status-en.html) ·
+> [中文](./dhf-architecture-status-cn.html).
+
 ## Scope
 - Target OS: macOS ARM (Apple Silicon)
 - One command after clone:

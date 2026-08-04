@@ -8054,6 +8054,83 @@ def test_global_agents_second_compaction_successor_contract():
     print("[PASS] global AGENTS second-compaction successor contract")
 
 
+def test_public_dhf_architecture_status_alignment():
+    english_pages = [
+        "index-en.html",
+        "delivery-harness-beginner-guide-en.html",
+        "project-lifecycle-harness-flow-en.html",
+        "project-lifecycle-harness-flow-skills-en-status-style.html",
+        "dhf-workflow-skills-en.html",
+        "project-lifecycle-harness-flow-skills-en.html",
+        "dhf-architecture-status-en.html",
+    ]
+    chinese_pages = [
+        "index.html",
+        "delivery-harness-beginner-guide-cn.html",
+        "project-lifecycle-harness-flow-cn.html",
+        "project-lifecycle-harness-flow-skills-zh-status-style.html",
+        "dhf-workflow-skills-cn.html",
+        "project-lifecycle-harness-flow-skills.html",
+        "dhf-architecture-status-cn.html",
+    ]
+    for filename in english_pages + chinese_pages:
+        path = ROOT / "docs" / filename
+        require(path.is_file(), f"public DHF page missing: {filename}")
+        text = path.read_text(encoding="utf-8")
+        require('href="./dhf-site-status.css"' in text,
+                f"public DHF page missing shared status styles: {filename}")
+        require('data-dhf-status="2026-08-03"' in text,
+                f"public DHF page missing current status marker: {filename}")
+        expected_status = (
+            "./dhf-architecture-status-en.html"
+            if filename in english_pages
+            else "./dhf-architecture-status-cn.html"
+        )
+        require(expected_status in text,
+                f"public DHF page missing canonical architecture status link: {filename}")
+
+    english_status = (ROOT / "docs" / "dhf-architecture-status-en.html").read_text(encoding="utf-8")
+    chinese_status = (ROOT / "docs" / "dhf-architecture-status-cn.html").read_text(encoding="utf-8")
+    for term in [
+        "Source available is not runtime active",
+        "Runtime parity: drift detected",
+        "Independent DHF core: not published",
+        "compaction_probe.py",
+        "session_bearing.py",
+        "harness_ledger.py",
+        "harness_transition.py",
+        "harness_eval.py",
+    ]:
+        require(term in english_status, f"English DHF status page missing truth boundary: {term}")
+    for term in [
+        "源码存在不等于运行时已激活",
+        "运行时一致性：已发现漂移",
+        "独立 DHF 核心：尚未发布",
+        "compaction_probe.py",
+        "session_bearing.py",
+        "harness_ledger.py",
+        "harness_transition.py",
+        "harness_eval.py",
+    ]:
+        require(term in chinese_status, f"Chinese DHF status page missing truth boundary: {term}")
+
+    public_markdown = [
+        "LIFECYCLE_SKILL_ROUTING.md",
+        "HARNESS_RUNTIME.md",
+        "AGENT_HARNESS_STATUS.md",
+        "CODEX_ENV_REPRODUCTION.md",
+        "repo-index.md",
+    ]
+    for filename in public_markdown:
+        text = (ROOT / "docs" / filename).read_text(encoding="utf-8")
+        require("DHF_PUBLIC_STATUS_V1" in text,
+                f"public Markdown page missing status contract marker: {filename}")
+        require("dhf-architecture-status-en.html" in text and "dhf-architecture-status-cn.html" in text,
+                f"public Markdown page missing bilingual status links: {filename}")
+
+    print("[PASS] public DHF architecture status alignment")
+
+
 def test_runner_registry_complete():
     registered = [fn.__name__ for fn in TESTS]
     defined = defined_test_names()
@@ -8172,6 +8249,7 @@ TESTS = [
     test_codex_fluent_markdown_golden,
     test_codex_fluent_markdown_metadata_is_inert,
     test_codex_fluent_report_only_contract,
+    test_public_dhf_architecture_status_alignment,
     test_runner_registry_complete,
 ]
 

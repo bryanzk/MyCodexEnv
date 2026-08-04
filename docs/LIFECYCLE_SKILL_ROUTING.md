@@ -1,5 +1,12 @@
 # Lifecycle And Skill Routing
 
+> **DHF_PUBLIC_STATUS_V1 · 2026-08-03:** This router documents the current
+> stage-based source architecture. Source availability does not prove runtime
+> activation or publication. See the canonical status in
+> [English](./dhf-architecture-status-en.html) or
+> [中文](./dhf-architecture-status-cn.html). The proposed
+> light/standard/governed simplification profiles are not active.
+
 ## Purpose
 
 This document explains which workflows MyCodexEnv covers, how the Harness
@@ -21,6 +28,8 @@ adapter skills.
 
 ## Visual Guides
 
+- `docs/dhf-architecture-status-en.html`: canonical English source/runtime/publication status.
+- `docs/dhf-architecture-status-cn.html`: canonical Chinese source/runtime/publication status.
 - `docs/index.html`: Chinese Delivery Harness Framework public landing page for GitHub Pages.
 - `docs/index-en.html`: English Delivery Harness Framework public landing page for English readers.
 - `docs/dhf-workflow-skills-cn.html`: 中文 DHF workflow skills matrix，逐步列出每个阶段使用的 skill、职责说明和 GitHub 源码链接。

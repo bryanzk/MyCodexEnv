@@ -1,0 +1,72 @@
+:root {
+  --dhf-status-bg: #17241f;
+  --dhf-status-text: #f4fbf7;
+  --dhf-status-muted: #bed4c9;
+  --dhf-status-link: #7ce2ca;
+  --dhf-status-border: rgba(124, 226, 202, 0.3);
+}
+
+.dhf-status-bar {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  gap: 0.75rem 1rem;
+  align-items: center;
+  margin: 0 0 1rem;
+  padding: 0.85rem 1rem;
+  border: 1px solid var(--dhf-status-border);
+  border-radius: 14px;
+  background: var(--dhf-status-bg);
+  color: var(--dhf-status-text);
+  font: 500 0.92rem/1.45 system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  box-shadow: 0 10px 28px rgba(10, 28, 22, 0.16);
+}
+
+.dhf-status-bar strong {
+  color: var(--dhf-status-text);
+  white-space: nowrap;
+}
+
+.dhf-status-bar span {
+  color: var(--dhf-status-muted);
+}
+
+.dhf-status-bar a {
+  color: var(--dhf-status-link);
+  font-weight: 700;
+  white-space: nowrap;
+  text-underline-offset: 0.2em;
+}
+
+.dhf-status-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 1rem;
+}
+
+.dhf-status-card {
+  padding: 1rem;
+  border: 1px solid var(--dhf-status-border);
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.035);
+}
+
+.dhf-status-card > :first-child { margin-top: 0; }
+.dhf-status-card > :last-child { margin-bottom: 0; }
+
+@media (max-width: 760px) {
+  .dhf-status-bar { grid-template-columns: 1fr; }
+  .dhf-status-bar strong,
+  .dhf-status-bar a { white-space: normal; }
+}
+
+@media print {
+  .dhf-status-bar {
+    background: #fff;
+    color: #111;
+    border-color: #777;
+    box-shadow: none;
+  }
+  .dhf-status-bar strong,
+  .dhf-status-bar span,
+  .dhf-status-bar a { color: #111; }
+}
