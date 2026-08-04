@@ -421,6 +421,16 @@
       .kpis, .grid { grid-template-columns: 1fr 1fr; }
       .link-groups { grid-template-columns: 1fr; }
     }
+    .archive-banner {
+      margin-bottom: 18px;
+      padding: 14px 18px;
+      color: var(--text);
+      background: var(--amber-dim);
+      border: 1px solid var(--amber);
+      border-radius: 12px;
+      line-height: 1.5;
+    }
+    .archive-banner a { color: var(--amber); font-weight: 700; }
     @media (max-width: 680px) {
       .kpis, .grid { grid-template-columns: 1fr; }
       .hero { padding: 22px; }
@@ -447,6 +457,7 @@
         <span>仓库源码、当前运行态、公开站点与独立核心分别判定。</span>
         <a href="./dhf-architecture-status-cn.html">查看当前状态</a>
       </aside>
+      <aside class="archive-banner" aria-label="已归档页面"><strong>已归档。</strong>这个经典版保留用于对比。<a href="./project-lifecycle-harness-flow-skills-zh-status-style.html">打开当前 Skill Routing Map。</a></aside>
       <section class="hero" id="overview">
         <div class="eyebrow">Delivery Harness Framework / 仅归档</div>
         <h1>每个生命周期阶段该用哪个 skill。</h1>
