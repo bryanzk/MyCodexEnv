@@ -320,39 +320,6 @@ def run_manage_agents(*args):
     return run([sys.executable, str(MANAGE_AGENTS), *args])
 
 
-def test_bootstrap_eigenphi_argument_is_optional():
-    code, out, err = run([str(BOOTSTRAP), "--help"])
-    require(code == 0, "bootstrap help should render successfully")
-    text = f"{out}\n{err}"
-    require("[--eigenphi-backend-root <path>]" in text, "eigenphi argument should be optional in usage")
-    require("默认禁用" in text, "help should explain EigenPhi MCP is disabled by default")
-    bootstrap_text = BOOTSTRAP.read_text(encoding="utf-8")
-    require("resolve_codex_cli.sh" in bootstrap_text, "bootstrap should use the functional Codex CLI resolver")
-    print("[PASS] bootstrap optional EigenPhi argument check")
-
-
-def test_sync_ignores_legacy_eigenphi_argument():
-    with tempfile.TemporaryDirectory() as tmp:
-        missing_backend = Path(tmp) / "missing-backend"
-        codex_home = Path(tmp) / ".codex"
-        code, out, err = run(
-            [
-                str(SYNC),
-                "--repo-root",
-                str(ROOT),
-                "--eigenphi-backend-root",
-                str(missing_backend),
-                "--codex-home",
-                str(codex_home),
-                "--skip-superpowers-sync",
-            ]
-        )
-        require(code == 0, f"sync should ignore legacy EigenPhi path: {err or out}")
-        rendered = (codex_home / "config.toml").read_text(encoding="utf-8")
-        require('[mcp_servers."eigenphi-blockchain"]' not in active_toml_lines(rendered), "EigenPhi MCP should not be active")
-    print("[PASS] sync ignores legacy EigenPhi argument")
-
-
 def test_verify_supports_skip_check_argument():
     code, out, err = run([str(VERIFY), "--help"])
     require(code == 0, "verify help should render successfully")
@@ -649,8 +616,6 @@ def test_sync_renders_template_and_copies_skills():
 
         rendered = (codex_home / "config.toml").read_text(encoding="utf-8")
         require("${NPM_GLOBAL_BIN}" not in rendered, "npm global bin placeholder should be replaced")
-        require('[mcp_servers."eigenphi-blockchain"]' not in active_toml_lines(rendered), "EigenPhi MCP should not be active")
-        require('# [mcp_servers."eigenphi-blockchain"]' in rendered, "disabled EigenPhi MCP block should remain documented")
         require('[mcp_servers."chrome-devtools"]' in rendered, "chrome-devtools MCP should be rendered")
         require("--no-usage-statistics" in rendered, "chrome-devtools MCP should disable usage statistics")
         require("--no-performance-crux" in rendered, "chrome-devtools MCP should disable CrUX lookups")
@@ -8171,8 +8136,6 @@ TESTS = [
     test_runner_harness_catches_system_exit,
     test_runner_main_failure_contract,
     test_runner_reports_skips_distinctly,
-    test_bootstrap_eigenphi_argument_is_optional,
-    test_sync_ignores_legacy_eigenphi_argument,
     test_verify_supports_skip_check_argument,
     test_verify_skips_managed_skill_presence_behavior,
     test_codex_version_policy_accepts_current_cli,

@@ -7,7 +7,7 @@ description: Use when a MEVScan arbitrage label looks wrong or missing and you n
 
 ## Overview
 
-用 `MEVScan` 的 Go 源码解释某笔交易为什么被识别成 arbitrage，或者为什么漏判。主线不是先看 protocol action，也不是先猜业务角色，而是先用 `[$eigenphi-address-tag](/Users/kezheng/.codex/skills/eigenphi-address-tag/SKILL.md)` 给关键地址补 tag，再按 `trace/logs -> transfers -> simplify -> SCC/cycle -> nearest node -> balance rule` 逐层定位。
+用 `MEVScan` 的 Go 源码解释某笔交易为什么被识别成 arbitrage，或者为什么漏判。主线不是先看 protocol action，也不是先猜业务角色，而是先用可验证的本地证据核实关键地址标签，再按 `trace/logs -> transfers -> simplify -> SCC/cycle -> nearest node -> balance rule` 逐层定位。
 
 ## Required Inputs
 
@@ -29,8 +29,8 @@ description: Use when a MEVScan arbitrage label looks wrong or missing and you n
 1. 读取 arbitrage 主链路。
    - `pkg/domain/transforms/analyze_mevs.go`
    - 先确认 `FindGraphCycles`、`FindNearestNodes`、`CheckNodeBalanceDelta` 的串联关系。
-2. 先给关键地址补 tag，再写业务描述。
-   - 调用 `[$eigenphi-address-tag](/Users/kezheng/.codex/skills/eigenphi-address-tag/SKILL.md)`
+2. 先核实关键地址标签，再写业务描述。
+   - 使用当前任务提供的本地标签、合约元数据或可复核的链上证据
    - 优先查询：`tx.from`、`tx.to`、miner / coinbase、raw transfer 里的关键节点、疑似 router / pool / vault / wrapper / NFT / LP 合约
    - 需要上下文角色时必须带 `--tx`，不要只查静态 tag
    - 在没有 tag 之前，不要把地址直接说成 searcher、router、PoolManager、Vault 或 LP
@@ -89,8 +89,7 @@ description: Use when a MEVScan arbitrage label looks wrong or missing and you n
 
 - 主入口：
   - `pkg/domain/transforms/analyze_mevs.go`
-- 地址 tag：
-  - `[$eigenphi-address-tag](/Users/kezheng/.codex/skills/eigenphi-address-tag/SKILL.md)`
+- 地址标签：使用当前任务内可复核的本地证据；没有证据时保持 unknown
 - transfer 构造：
   - `pkg/parser/converter.go`
 - simplify：
@@ -157,7 +156,7 @@ flowchart LR
 ## Common Mistakes
 
 - 用 protocol action 直接解释 arbitrage 结果
-- 没先调用 `eigenphi-address-tag` 就开始写业务角色或问题描述
+- 没有可复核的地址标签就开始写业务角色或问题描述
 - 只拿静态 tag 就断言交易上下文角色，没有补 `--tx`
 - 只看 simplify 后的图，不看前后差分
 - 忽略 native ETH transfer

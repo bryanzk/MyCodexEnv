@@ -26,7 +26,6 @@
 - `~/.codex/superpowers` pinned by `locks/superpowers.lock`, then registered as marketplace `superpowers-dev` and installed as `superpowers@superpowers-dev`
 - `scripts/install_prereqs.sh` installs pinned `chrome-devtools-mcp@0.20.0` globally via npm
 - `chrome-devtools-mcp` is rendered into `~/.codex/config.toml` with `--no-usage-statistics` and `--no-performance-crux`
-- EigenPhi MCP server is kept as a commented template block and is disabled by default.
 - If Google Chrome is missing, bootstrap installs `google-chrome`
 - Harness runtime policy, compatibility evidence schema, and split evidence schemas are synced into `~/.codex/runtime/*`; local evidence logs are written under `~/.codex/harness/evidence/*` and are not committed.
 - `codex/runtime/resolve_codex_cli.sh` validates every candidate with `--version` before use, prefers a functional npm global CLI, and then falls back across the current ChatGPT/Codex app bundle paths, so stale npm/Homebrew shims do not satisfy automation checks.
@@ -237,10 +236,7 @@ every routine gate receipt.
 1. `Homebrew not found`
 - Run interactive bootstrap without `--non-interactive`, or install Homebrew manually.
 
-2. `Need EigenPhi MCP locally`
-- Uncomment the `eigenphi-blockchain` block in `codex/config.template.toml`, set the backend path, then rerun sync.
-
-3. `codex login status` not authenticated
+2. `codex login status` not authenticated
 - Run `codex login`.
 
 4. `chrome-devtools-mcp` not found

@@ -85,7 +85,6 @@ High-impact old project groups:
 
 | CWD | Active Count | Size | Old Count | Initial Classification |
 |---|---:|---:|---:|---|
-| `eigenphi-cli-arb-mvp` | 55 | 362.8 MiB | 55 | Good archive candidate after repo continuity check |
 | `fp-detector` | 90 | 288.7 MiB | 90 | Good archive candidate after repo continuity check |
 | `MEVScan` | 95 | 248.4 MiB | 95 | Good archive candidate after repo continuity check |
 | `CallTraceSniffer` | 44 | 151.9 MiB | 44 | Good archive candidate; includes metadata-bloat row |
@@ -109,7 +108,6 @@ These 20 files alone account for `1.2 GiB`. They should be reviewed before broad
 | `019dd40c-efc3-7b21-ac67-9157568c3271` | `Downloads/Startup4Chinese` | 29d | 64.5 MiB | Owner decision |
 | `019e4597-2942-7503-a85a-8d147957bb85` | `Downloads/Startup4Chinese` | 4d | 40.2 MiB | Recent; handoff first |
 | `019e55c1-9ab4-7543-afec-c7e85d7d8afb` | `ShipQ` | 9d | 38.1 MiB | Do not archive without current ShipQ handoff |
-| `019c9017-87be-7581-8bce-b73025f83a8b` | `eigenphi-cli-arb-mvp` | 99d | 35.8 MiB | Good archive candidate after repo continuity check |
 
 ## Active Project Handoff Priority
 
@@ -149,9 +147,6 @@ Do not archive these until individually inspected:
 | Path | Reason |
 |---|---|
 | `~/.codex/worktrees/a649/MyCodexEnv` | Dirty: `README.md`, DHF skill/docs/harness files modified |
-| `~/.codex/worktrees/f6ea/eigenphi-cli-arb-mvp` | Git status unresolved in scan; 89.4 MiB |
-| `~/.codex/worktrees/b6fb/eigenphi-cli-arb-mvp` | Git status unresolved in scan; 89.4 MiB |
-| `~/.codex/worktrees/7372/eigenphi-cli-arb-mvp` | Git status unresolved in scan; 89.4 MiB |
 | `~/.codex/worktrees/stash-recovery/fp-detector` | Git status unresolved in scan; likely intentional recovery state |
 | `~/.codex/worktrees/Transreader-gh-pages/pdfs` | Not a repo root in scan; inspect manually |
 | `~/.codex/worktrees/0402/out` | Not a repo root in scan; inspect manually |

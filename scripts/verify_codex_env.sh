@@ -172,7 +172,6 @@ results+=("$(check codex_runtime_evidence_schema_exists '[[ -f "'"${CODEX_HOME}"
 results+=("$(check codex_runtime_decision_evidence_schema_exists '[[ -f "'"${CODEX_HOME}"'"/runtime/evidence/decision-evidence.schema.json ]]')")
 results+=("$(check codex_runtime_routine_gate_receipt_schema_exists '[[ -f "'"${CODEX_HOME}"'"/runtime/evidence/routine-gate-receipt.schema.json ]]')")
 results+=("$(check codex_zsh_title_hook_exists '[[ -f "'"${CODEX_HOME}"'"/zsh/codex-session-title.zsh ]]')")
-results+=("$(check codex_config_eigenphi_mcp_disabled '! rg -n "^[[:space:]]*\[mcp_servers\.\"eigenphi-blockchain\"\]" "'"${CODEX_HOME}"'"/config.toml')")
 results+=("$(check codex_config_has_chrome_devtools_mcp 'rg -n "\[mcp_servers\.\"chrome-devtools\"\]" "'"${CODEX_HOME}"'"/config.toml')")
 results+=("$(check codex_config_chrome_devtools_no_usage_statistics 'rg -n -- "--no-usage-statistics" "'"${CODEX_HOME}"'"/config.toml')")
 results+=("$(check codex_config_chrome_devtools_no_performance_crux 'rg -n -- "--no-performance-crux" "'"${CODEX_HOME}"'"/config.toml')")

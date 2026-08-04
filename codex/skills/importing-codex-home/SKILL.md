@@ -68,14 +68,6 @@ codex/skills/importing-codex-home/scripts/import_codex_home.sh \
   --repo-root "$(pwd)"
 ```
 
-如果当前 `~/.codex/config.toml` 里写死了 EigenPhi 后端路径，可显式传入：
-
-```bash
-codex/skills/importing-codex-home/scripts/import_codex_home.sh \
-  --repo-root "$(pwd)" \
-  --eigenphi-backend-root /absolute/path/to/eigenphi-backend-go
-```
-
 ## Workflow
 
 ### 1. 先确认仓库边界
@@ -112,7 +104,7 @@ codex/skills/importing-codex-home/scripts/import_codex_home.sh --help
 - 默认合并，不删除仓库已有内容
 - `skills/` 自动排除 `.backup-skills`、`__pycache__`、`.DS_Store`
 - `workflow/` 自动排除 `memory/`
-- `config.toml` 会尽量把 EigenPhi 绝对路径还原成 `${EIGENPHI_BACKEND_ROOT}`
+- `config.toml` 按当前内容导入，不重写项目专用绝对路径
 
 ## Common Mistakes
 

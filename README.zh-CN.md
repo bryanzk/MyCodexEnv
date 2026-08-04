@@ -270,10 +270,3 @@ timestamp
 当前入口使用 Codex plugin 安装路径。旧环境中若仍存在 `~/.codex/superpowers/.codex/superpowers-codex`，只能把它当作条件 fallback，不应作为新的 source of truth。
 
 </details>
-
-<details>
-<summary>EigenPhi MCP 默认会启用吗？</summary>
-
-不会。EigenPhi MCP 默认禁用；`--eigenphi-backend-root` 只作为旧命令的兼容参数保留。
-
-</details>

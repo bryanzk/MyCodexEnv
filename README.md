@@ -262,10 +262,3 @@ Move the task root to an unprotected location such as `~/Codes/...`, or grant Co
 The current entry point uses the Codex plugin installation path. If an older environment still contains the legacy Superpowers checkout, treat it only as a conditional fallback, not as the new source of truth.
 
 </details>
-
-<details>
-<summary>Is EigenPhi MCP enabled by default?</summary>
-
-No. EigenPhi MCP is disabled by default; `--eigenphi-backend-root` remains only as a compatibility option for legacy commands.
-
-</details>

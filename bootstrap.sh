@@ -4,17 +4,15 @@ set -euo pipefail
 # 入口脚本：clone 后只需执行本脚本即可完成环境复现。
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
-EIGENPHI_BACKEND_ROOT=""
 CODEX_HOME="${HOME}/.codex"
 CLAUDE_HOME="${HOME}/.claude"
 NON_INTERACTIVE="false"
 
 usage() {
   cat <<USAGE
-Usage: ./bootstrap.sh [--eigenphi-backend-root <path>] [--codex-home <path>] [--claude-home <path>] [--non-interactive]
+Usage: ./bootstrap.sh [--codex-home <path>] [--claude-home <path>] [--non-interactive]
 
 Options:
-  --eigenphi-backend-root   本地 eigenphi backend 源码根目录（可选；EigenPhi MCP 默认禁用）
   --codex-home              Codex home 目录（默认: ~/.codex）
   --claude-home             Claude home 目录（默认: ~/.claude）
   --non-interactive         非交互模式（缺少 Homebrew 时直接失败）
@@ -23,10 +21,6 @@ USAGE
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
-    --eigenphi-backend-root)
-      EIGENPHI_BACKEND_ROOT="${2:-}"
-      shift 2
-      ;;
     --codex-home)
       CODEX_HOME="${2:-}"
       shift 2
@@ -69,9 +63,6 @@ sync_args=(
   --repo-root "${SCRIPT_DIR}" \
   --codex-home "${CODEX_HOME}"
 )
-if [[ -n "${EIGENPHI_BACKEND_ROOT}" ]]; then
-  sync_args+=(--eigenphi-backend-root "${EIGENPHI_BACKEND_ROOT}")
-fi
 "${SCRIPT_DIR}/scripts/sync_codex_home.sh" "${sync_args[@]}"
 
 echo "[3/5] Syncing Claude workflow content..."

@@ -38,7 +38,7 @@
 ### B6 降噪与核对(🟡)
 - B6a 三个 archive 页(`project-lifecycle-harness-flow-skills-en.html`、`project-lifecycle-harness-flow-skills.html`、`project-lifecycle-harness-flow-skills-zh-status-style.html` 如属旧版)页顶加"Archived / 已归档"横幅,指回现行版。注意:仅加横幅,不动被契约测试引用的内容。
 - B6b EN/CN beginner 内容差异审计:输出差异清单到 commit message 或 plan 附注;EN 缺实质内容才补写,否则记录"差异为合理精简"结论。
-- B6c 孤儿页 `eigenphi-project-architecture.html`:**操作员决策项**——删除 / 移出 docs / 保留并加"项目案例"入口,三选一;到达时停下来问,默认不动。
+- B6c 孤儿项目页:**操作员决策项**——删除 / 移出 docs / 保留并加"项目案例"入口,三选一;到达时停下来问,默认不动。
 
 ### B7 契约测试协调批(🔴 前置门:test_runner.py 脏改动已由操作员处理)
 - 状态页字面更新:EN/CN"已发现漂移"改为当前事实(恢复于 2026-08-04,持续按部署验证),同步改 alignment 测试词条与全站 `data-dhf-status` 日期。

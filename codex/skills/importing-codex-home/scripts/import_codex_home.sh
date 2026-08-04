@@ -3,7 +3,6 @@ set -euo pipefail
 
 REPO_ROOT=""
 CODEX_HOME="${HOME}/.codex"
-EIGENPHI_BACKEND_ROOT=""
 DRY_RUN="false"
 SKIP_AGENTS="false"
 SKIP_SKILLS="false"
@@ -12,7 +11,7 @@ SKIP_CONFIG="false"
 
 usage() {
   cat <<'USAGE'
-Usage: import_codex_home.sh --repo-root <path> [--codex-home <path>] [--eigenphi-backend-root <path>] [--dry-run] [--skip-agents] [--skip-skills] [--skip-workflow] [--skip-config]
+Usage: import_codex_home.sh --repo-root <path> [--codex-home <path>] [--dry-run] [--skip-agents] [--skip-skills] [--skip-workflow] [--skip-config]
 USAGE
 }
 
@@ -47,32 +46,6 @@ sync_file() {
   log "SYNC ${label}: ${dst}"
 }
 
-render_config_template() {
-  local src="$1"
-  local root_hint="$2"
-
-  python3 - "$src" "$root_hint" <<'PY'
-from pathlib import Path
-import re
-import sys
-
-src = Path(sys.argv[1])
-root_hint = sys.argv[2]
-content = src.read_text()
-root = root_hint.strip()
-
-if not root:
-    match = re.search(r'args = \["run", "(.+?)/cmd/mcp-server/main\.go"\]', content)
-    if match:
-        root = match.group(1)
-
-if root:
-    content = content.replace(root, "${EIGENPHI_BACKEND_ROOT}")
-
-sys.stdout.write(content)
-PY
-}
-
 sync_rendered_config() {
   local src="$1"
   local dst="$2"
@@ -83,24 +56,18 @@ sync_rendered_config() {
   fi
 
   mkdir -p "$(dirname "$dst")"
-  local rendered_tmp
-  rendered_tmp="$(mktemp)"
-  render_config_template "$src" "$EIGENPHI_BACKEND_ROOT" > "$rendered_tmp"
-
   if [[ "$DRY_RUN" == "true" ]]; then
     if [[ ! -f "$dst" ]]; then
       log "CREATE config.template.toml: ${dst}"
-    elif cmp -s "$rendered_tmp" "$dst"; then
+    elif cmp -s "$src" "$dst"; then
       log "UNCHANGED config.template.toml: ${dst}"
     else
       log "UPDATE config.template.toml: ${dst}"
     fi
-    rm -f "$rendered_tmp"
     return 0
   fi
 
-  cp "$rendered_tmp" "$dst"
-  rm -f "$rendered_tmp"
+  cp "$src" "$dst"
   log "SYNC config.template.toml: ${dst}"
 }
 
@@ -139,10 +106,6 @@ while [[ $# -gt 0 ]]; do
       ;;
     --codex-home)
       CODEX_HOME="${2:-}"
-      shift 2
-      ;;
-    --eigenphi-backend-root)
-      EIGENPHI_BACKEND_ROOT="${2:-}"
       shift 2
       ;;
     --dry-run)

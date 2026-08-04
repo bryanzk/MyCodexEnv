@@ -4,7 +4,6 @@ set -euo pipefail
 # 同步仓库配置到目标 Codex home，并固定 superpowers 版本。
 REPO_ROOT=""
 CODEX_HOME="${HOME}/.codex"
-EIGENPHI_BACKEND_ROOT=""
 SKIP_SUPERPOWERS_SYNC="false"
 SYNC_AGENTS_ONLY="false"
 FORCE_DOWNGRADE="false"
@@ -12,10 +11,9 @@ OPERATOR_CHECKPOINT=""
 
 usage() {
   cat <<USAGE
-Usage: sync_codex_home.sh --repo-root <path> [--eigenphi-backend-root <path>] [--codex-home <path>] [--skip-superpowers-sync] [--sync-agents-only] [--force-downgrade --operator-checkpoint <path>]
+Usage: sync_codex_home.sh --repo-root <path> [--codex-home <path>] [--skip-superpowers-sync] [--sync-agents-only] [--force-downgrade --operator-checkpoint <path>]
 
 Options:
-  --eigenphi-backend-root   Optional legacy argument; EigenPhi MCP is disabled by default.
   --force-downgrade         Allow an ancestor source only with a same-operation operator checkpoint.
   --operator-checkpoint     JSON receipt with command, exit_code, key_output, and timestamp.
 USAGE
@@ -29,10 +27,6 @@ while [[ $# -gt 0 ]]; do
       ;;
     --codex-home)
       CODEX_HOME="${2:-}"
-      shift 2
-      ;;
-    --eigenphi-backend-root)
-      EIGENPHI_BACKEND_ROOT="${2:-}"
       shift 2
       ;;
     --skip-superpowers-sync)
