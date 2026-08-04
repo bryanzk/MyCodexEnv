@@ -5,7 +5,7 @@ Stable rules belong in `AGENTS.md`, `README.md`, `docs/repo-index.md`, or
 `docs/HARNESS_RUNTIME.md`; session facts and phase transitions are appended here.
 
 ## Current Snapshot
-- phase: validation
+- phase: development
 - source_of_truth:
   - `AGENTS.md`
   - `docs/repo-index.md`
@@ -14,14 +14,14 @@ Stable rules belong in `AGENTS.md`, `README.md`, `docs/repo-index.md`, or
   - `codex/skills/delivery-harness-framework/SKILL.md`
 - blocked_sources: none
 - unsafe_inputs: none
-- next_safe_task: Observe next 09:00 report-only refresh output
+- next_safe_task: Operator may review and push the completed public-site audience upgrade, then verify the listed GitHub Pages URLs after deployment.
 - required_commands:
   - `python3 test_runner.py`
   - `git diff --check`
   - `./scripts/verify_codex_env.sh --repo-root "$(pwd)" --codex-home "$HOME/.codex" --claude-home "$HOME/.claude"`
-- latest_checkpoint: 2026-08-03T22:23:43-04:00 Runtime parity restored under v0 transition guard: bootstrap sync from pushed main, 15/15 cmp, full suite green
-- latest_verification: 2026-08-03T22:23:43-04:00 command=sync_codex_home.sh + 15-path cmp + test_runner.py + verify_codex_env.sh; exit_code=0; key_output=15/15; suite green; manifest source_commit=63baf6d2fed35cfc13631e8f99687d518095eeff
-- compaction_ordinal: 2
+- latest_checkpoint: 2026-08-04T11:35:59-04:00 B7 complete: updated the bilingual runtime parity status to the verified 2026-08-04 recovery, advanced all 19 public status banners, added five new audience pages to alignment coverage, replaced legacy Markdown-link expectations, and asserted source-heading parity for the rendered lifecycle routing specification.
+- latest_verification: 2026-08-04T11:35:59-04:00 command=python3 scripts/check_surfaces.py --check-public-nav && PYTHONDONTWRITEBYTECODE=1 python3 test_runner.py && git diff --check; exit_code=0; key_output=surfaces manifest consistent; ran=105 passed=105 skipped=0 failed=0; 19 status banners use 2026-08-04; five new pages are alignment-tested; all source headings appear in rendered HTML
+- compaction_ordinal: 1
 - transition_key: MCE-20260802-harness-compaction-governance:W6a
 - gate_decision: none
 
@@ -2464,3 +2464,319 @@ Stable rules belong in `AGENTS.md`, `README.md`, `docs/repo-index.md`, or
 - blockers:
   - none
 - next_safe_task: Observe next 09:00 report-only refresh output
+
+### 2026-08-04T09:12:49-04:00
+- phase: development
+- event: checkpoint
+- summary: Public site audience upgrade baseline: full repository test suite passed before B1a.
+- git:
+  - branch: main
+  - latest_commit: cf846c0
+  - dirty_status: dirty
+  - dirty_count: 1
+- compaction_ordinal: 0
+- gate_decision: none
+- changed_surfaces:
+  - `docs/harness-state.md`
+- verification:
+  - command: `PYTHONDONTWRITEBYTECODE=1 python3 test_runner.py`
+  - exit_code: 0
+  - key_output: ran=105 passed=105 skipped=0 failed=0; [PASS] all tests
+- blockers:
+  - none
+- next_safe_task: B1a: add the Chinese product and field audience page, register its public surface, and verify without touching runtime files.
+
+### 2026-08-04T09:19:33-04:00
+- phase: development
+- event: checkpoint
+- summary: B1a complete: added the Chinese product and field audience page, bilingual footer links, and public surface registrations.
+- git:
+  - branch: main
+  - latest_commit: 85231a7
+  - dirty_status: dirty
+  - dirty_count: 2
+- compaction_ordinal: 0
+- gate_decision: none
+- changed_surfaces:
+  - `docs/dhf-for-product-and-field-cn.html`
+  - `docs/dhf-for-product-and-field-en.html`
+  - `docs/index.html`
+  - `docs/surfaces.json`
+  - `docs/repo-index.md`
+- verification:
+  - command: `python3 scripts/check_surfaces.py --check-public-nav && PYTHONDONTWRITEBYTECODE=1 python3 test_runner.py && git diff --check`
+  - exit_code: 0
+  - key_output: surfaces manifest consistent; ran=105 passed=105 skipped=0 failed=0; mobile 390px no horizontal overflow; dark color scheme active
+- blockers:
+  - none
+- next_safe_task: B1b: add Chinese governance cards, the product and field navigation tag, and the Start Here card.
+
+### 2026-08-04T09:22:59-04:00
+- phase: development
+- event: checkpoint
+- summary: B1b complete: added the Chinese governance section, audience navigation tag, and product and field Start Here card.
+- git:
+  - branch: main
+  - latest_commit: 5e5a14d
+  - dirty_status: dirty
+  - dirty_count: 2
+- compaction_ordinal: 0
+- gate_decision: none
+- changed_surfaces:
+  - `docs/index.html`
+- verification:
+  - command: `python3 scripts/check_surfaces.py --check-public-nav && PYTHONDONTWRITEBYTECODE=1 python3 test_runner.py && git diff --check`
+  - exit_code: 0
+  - key_output: surfaces manifest consistent; ran=105 passed=105 skipped=0 failed=0; 3 governance cards; mobile dark-mode audit passed
+- blockers:
+  - none
+- next_safe_task: B2a: add the English engineering notes page with public-safe compaction governance, transition matrix, incident review, and contract testing guidance.
+
+### 2026-08-04T09:29:18-04:00
+- phase: development
+- event: checkpoint
+- summary: B2a complete: published English engineering notes with compaction derivation, six deployment verdicts, a sanitized incident review, and documentation contract guidance.
+- git:
+  - branch: main
+  - latest_commit: 997b85a
+  - dirty_status: dirty
+  - dirty_count: 2
+- compaction_ordinal: 0
+- gate_decision: none
+- changed_surfaces:
+  - `docs/dhf-engineering-notes-en.html`
+  - `docs/index-en.html`
+  - `docs/surfaces.json`
+  - `docs/repo-index.md`
+- verification:
+  - command: `python3 scripts/check_surfaces.py --check-public-nav && PYTHONDONTWRITEBYTECODE=1 python3 test_runner.py && git diff --check`
+  - exit_code: 0
+  - key_output: surfaces manifest consistent; ran=105 passed=105 skipped=0 failed=0; 390px dark-mode audit passed; six matrix verdicts rendered
+- blockers:
+  - none
+- next_safe_task: B2b: add the fully localized Chinese engineering notes mirror and bilingual cross-links.
+
+### 2026-08-04T10:26:34-04:00
+- phase: development
+- event: checkpoint
+- summary: B2b complete: published the fully localized Chinese engineering notes mirror with bilingual links and Chinese SVG labels.
+- git:
+  - branch: main
+  - latest_commit: 2386693
+  - dirty_status: dirty
+  - dirty_count: 2
+- compaction_ordinal: 0
+- gate_decision: none
+- changed_surfaces:
+  - `docs/dhf-engineering-notes-cn.html`
+  - `docs/dhf-engineering-notes-en.html`
+  - `docs/index.html`
+  - `docs/surfaces.json`
+  - `docs/repo-index.md`
+- verification:
+  - command: `python3 scripts/check_surfaces.py --check-public-nav && PYTHONDONTWRITEBYTECODE=1 python3 test_runner.py && git diff --check`
+  - exit_code: 0
+  - key_output: surfaces manifest consistent; ran=105 passed=105 skipped=0 failed=0; 390px dark-mode audit passed; two SVGs have zero English text
+- blockers:
+  - none
+- next_safe_task: B2c: turn the three governance cards on both landing pages into links to the language-matched engineering notes pages.
+
+### 2026-08-04T10:28:55-04:00
+- phase: development
+- event: checkpoint
+- summary: B2c complete: linked all three governance cards on each landing page to its language-matched engineering notes page.
+- git:
+  - branch: main
+  - latest_commit: cb1e000
+  - dirty_status: dirty
+  - dirty_count: 2
+- compaction_ordinal: 0
+- gate_decision: none
+- changed_surfaces:
+  - `docs/index-en.html`
+  - `docs/index.html`
+- verification:
+  - command: `python3 scripts/check_surfaces.py --check-public-nav && PYTHONDONTWRITEBYTECODE=1 python3 test_runner.py && git diff --check`
+  - exit_code: 0
+  - key_output: surfaces manifest consistent; ran=105 passed=105 skipped=0 failed=0; three governance links per language; 390px no horizontal overflow
+- blockers:
+  - none
+- next_safe_task: B3: render the lifecycle skill routing specification as HTML, redirect eight public links, and add the source synchronization note.
+
+### 2026-08-04T10:37:46-04:00
+- phase: development
+- event: checkpoint
+- summary: B3 complete: rendered the lifecycle routing specification as audience-safe HTML, redirected 17 current public HTML references, retained maintainer Markdown access, and added pre-B7 compatibility markers for locked tests.
+- git:
+  - branch: main
+  - latest_commit: 9d7bff8
+  - dirty_status: dirty
+  - dirty_count: 2
+- compaction_ordinal: 0
+- gate_decision: none
+- changed_surfaces:
+  - `docs/lifecycle-skill-routing-en.html`
+  - `docs/LIFECYCLE_SKILL_ROUTING.md`
+  - `docs/surfaces.json`
+  - `docs/repo-index.md`
+- verification:
+  - command: `python3 scripts/check_surfaces.py --check-public-nav && PYTHONDONTWRITEBYTECODE=1 python3 test_runner.py && git diff --check`
+  - exit_code: 0
+  - key_output: surfaces manifest consistent; ran=105 passed=105 skipped=0 failed=0; 17 live links redirected; 10 headings and 5 tables rendered; 390px dark-mode audit passed
+- blockers:
+  - none
+- next_safe_task: B4: add three audience-routing strips beneath the hero on both landing pages.
+
+### 2026-08-04T10:39:56-04:00
+- phase: development
+- event: checkpoint
+- summary: B4 complete: added product, field engineering, and engineering-depth routing strips beneath both landing heroes.
+- git:
+  - branch: main
+  - latest_commit: 9b7c341
+  - dirty_status: dirty
+  - dirty_count: 2
+- compaction_ordinal: 0
+- gate_decision: none
+- changed_surfaces:
+  - `docs/index-en.html`
+  - `docs/index.html`
+- verification:
+  - command: `python3 scripts/check_surfaces.py --check-public-nav && PYTHONDONTWRITEBYTECODE=1 python3 test_runner.py && git diff --check`
+  - exit_code: 0
+  - key_output: surfaces manifest consistent; ran=105 passed=105 skipped=0 failed=0; three paths and four links per language; 390px dark-mode audit passed
+- blockers:
+  - none
+- next_safe_task: B5: add sanitized verification and report-only examples after Guarantee 2 on the English and Chinese product and field pages.
+
+### 2026-08-04T10:42:52-04:00
+- phase: development
+- event: checkpoint
+- summary: B5 complete: added bilingual expandable verification and report-only examples after Guarantee 2 using audience-safe conceptual fields.
+- git:
+  - branch: main
+  - latest_commit: acb805a
+  - dirty_status: dirty
+  - dirty_count: 2
+- compaction_ordinal: 0
+- gate_decision: none
+- changed_surfaces:
+  - `docs/dhf-for-product-and-field-en.html`
+  - `docs/dhf-for-product-and-field-cn.html`
+- verification:
+  - command: `python3 scripts/check_surfaces.py --check-public-nav && PYTHONDONTWRITEBYTECODE=1 python3 test_runner.py && git diff --check`
+  - exit_code: 0
+  - key_output: surfaces manifest consistent; ran=105 passed=105 skipped=0 failed=0; expandable examples open in both languages; 390px no horizontal overflow; forbidden receipt fields absent
+- blockers:
+  - none
+- next_safe_task: B6a: add archived banners to the three legacy flow-skill pages without changing contract-locked content.
+
+### 2026-08-04T10:45:21-04:00
+- phase: development
+- event: checkpoint
+- summary: B6a complete: added top archived banners to the two classic skill maps and left the current Chinese status-style map unchanged.
+- git:
+  - branch: main
+  - latest_commit: 9381f6d
+  - dirty_status: dirty
+  - dirty_count: 2
+- compaction_ordinal: 0
+- gate_decision: none
+- changed_surfaces:
+  - `docs/project-lifecycle-harness-flow-skills-en.html`
+  - `docs/project-lifecycle-harness-flow-skills.html`
+- verification:
+  - command: `python3 scripts/check_surfaces.py --check-public-nav && PYTHONDONTWRITEBYTECODE=1 python3 test_runner.py && git diff --check`
+  - exit_code: 0
+  - key_output: surfaces manifest consistent; ran=105 passed=105 skipped=0 failed=0; two archive banners rendered; current Chinese map has no archive banner; 390px no overflow
+- blockers:
+  - none
+- next_safe_task: B6b: audit substantive differences between the English and Chinese beginner guides and record the conclusion in the commit message.
+
+### 2026-08-04T10:48:16-04:00
+- phase: development
+- event: checkpoint
+- summary: B6b complete: audited beginner-guide parity and filled three substantive English gaps: audience motivation, the three-layer model, and the glossary. Remaining differences are reasonable localization and depth choices.
+- git:
+  - branch: main
+  - latest_commit: 424c8f0
+  - dirty_status: dirty
+  - dirty_count: 2
+- compaction_ordinal: 0
+- gate_decision: none
+- changed_surfaces:
+  - `docs/delivery-harness-beginner-guide-en.html`
+- verification:
+  - command: `python3 scripts/check_surfaces.py --check-public-nav && PYTHONDONTWRITEBYTECODE=1 python3 test_runner.py && git diff --check`
+  - exit_code: 0
+  - key_output: surfaces manifest consistent; ran=105 passed=105 skipped=0 failed=0; English now has seven teaching sections; 390px dark-mode audit passed
+- blockers:
+  - none
+- next_safe_task: B6c: present operator options for the orphan eigenphi-project-architecture.html page and stop without changing it.
+
+### 2026-08-04T10:50:41-04:00
+- phase: handoff
+- event: checkpoint
+- summary: B6c stopped for operator decision: eigenphi-project-architecture.html is a tracked 705-line, 39378-byte orphan page with no incoming public link, surfaces registration, repository index entry, or current status banner.
+- git:
+  - branch: main
+  - latest_commit: 424c8f0
+  - dirty_status: dirty
+  - dirty_count: 2
+- compaction_ordinal: 1
+- gate_decision: none
+- changed_surfaces:
+  - `docs/harness-state.md`
+- verification:
+  - command: `git ls-files --error-unmatch docs/eigenphi-project-architecture.html && test -z "$(rg -l 'eigenphi-project-architecture\.html' docs/surfaces.json docs/repo-index.md || true)"`
+  - exit_code: 0
+  - key_output: The orphan page is tracked and absent from both public navigation registration and the repository index.
+- blockers:
+  - B6c requires an operator decision among the plan's three orphan-page dispositions; default is no change. B7 also remains locked pending the required operator confirmation for test_runner.py.
+- next_safe_task: Operator chooses delete, move outside docs, or retain with a public entry; do not change the orphan page before that decision.
+
+### 2026-08-04T11:21:47-04:00
+- phase: development
+- event: checkpoint
+- summary: B6c complete by operator choice 2: moved the EigenPhi project architecture page from docs to the root archive directory with byte-identical content, removing it from the GitHub Pages artifact without adding a public entry.
+- git:
+  - branch: main
+  - latest_commit: 96f03b3
+  - dirty_status: dirty
+  - dirty_count: 2
+- compaction_ordinal: 1
+- gate_decision: none
+- changed_surfaces:
+  - `archive/eigenphi-project-architecture.html`
+  - `docs/eigenphi-project-architecture.html`
+- verification:
+  - command: `python3 scripts/check_surfaces.py --check-public-nav && PYTHONDONTWRITEBYTECODE=1 python3 test_runner.py && git diff --check`
+  - exit_code: 0
+  - key_output: surfaces manifest consistent; ran=105 passed=105 skipped=0 failed=0; git recorded a 100% rename with zero content changes
+- blockers:
+  - B7 prerequisite is still awaiting explicit operator confirmation that the 78-line test_runner.py work has been handled.
+- next_safe_task: B7 remains stopped until the operator explicitly confirms the test_runner.py changes are handled; then update the status literals, alignment lists, synchronization assertion, and status dates together.
+
+### 2026-08-04T11:35:59-04:00
+- phase: development
+- event: checkpoint
+- summary: B7 complete: updated the bilingual runtime parity status to the verified 2026-08-04 recovery, advanced all 19 public status banners, added five new audience pages to alignment coverage, replaced legacy Markdown-link expectations, and asserted source-heading parity for the rendered lifecycle routing specification.
+- git:
+  - branch: main
+  - latest_commit: f028ddf
+  - dirty_status: dirty
+  - dirty_count: 2
+- compaction_ordinal: 1
+- gate_decision: none
+- changed_surfaces:
+  - `test_runner.py`
+  - `docs/dhf-architecture-status-en.html`
+  - `docs/dhf-architecture-status-cn.html`
+  - `docs/lifecycle-skill-routing-en.html`
+- verification:
+  - command: `python3 scripts/check_surfaces.py --check-public-nav && PYTHONDONTWRITEBYTECODE=1 python3 test_runner.py && git diff --check`
+  - exit_code: 0
+  - key_output: surfaces manifest consistent; ran=105 passed=105 skipped=0 failed=0; 19 status banners use 2026-08-04; five new pages are alignment-tested; all source headings appear in rendered HTML
+- blockers:
+  - none
+- next_safe_task: Operator may review and push the completed public-site audience upgrade, then verify the listed GitHub Pages URLs after deployment.
