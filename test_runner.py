@@ -961,6 +961,57 @@ def test_sync_transition_matrix_v0():
     print("[PASS] sync transition matrix v0")
 
 
+def test_sync_backup_dir_v0():
+    require_tool_or_skip("rsync")
+    with tempfile.TemporaryDirectory() as tmp:
+        tmp_path = Path(tmp)
+        repo, _ = seed_runtime_sync_repo(tmp_path / "repo")
+        write(repo / "codex" / "hooks" / "keep.py", "# managed hook\n")
+        code, out, err = run(["git", "add", "codex/hooks/keep.py"], cwd=repo)
+        require(code == 0, f"backup fixture add should work: {err or out}")
+        code, out, err = run(["git", "commit", "-m", "fixture hook"], cwd=repo)
+        require(code == 0, f"backup fixture commit should work: {err or out}")
+        origin = make_bare_origin_from(repo, tmp_path / "origin.git")
+        code, out, err = run(["git", "remote", "add", "origin", str(origin)], cwd=repo)
+        require(code == 0, f"backup fixture origin should be configured: {err or out}")
+
+        test_home = tmp_path / "home"
+        codex_home = test_home / ".codex"
+        deleted_target = codex_home / "hooks" / "deleted-by-sync.txt"
+        write(deleted_target, "restore me\n")
+        env = os.environ.copy()
+        env["HOME"] = str(test_home)
+        proc = subprocess.run(
+            [
+                str(SYNC),
+                "--repo-root",
+                str(repo),
+                "--codex-home",
+                str(codex_home),
+                "--sync-agents-only",
+            ],
+            capture_output=True,
+            text=True,
+            check=False,
+            env=env,
+        )
+        require(proc.returncode == 0, f"backup fixture sync should work: {proc.stderr or proc.stdout}")
+        require(
+            not deleted_target.exists(),
+            f"rsync --delete fixture should remove the unmanaged target: tree={snapshot_tree(codex_home)} output={proc.stdout}",
+        )
+        backup_root = codex_home / "runtime-backups"
+        restored_candidates = list(backup_root.glob("*/deleted-by-sync.txt"))
+        require(len(restored_candidates) == 1, "deleted runtime file should be retained in one timestamped backup-dir")
+        require(restored_candidates[0].read_text(encoding="utf-8") == "restore me\n",
+                "backup-dir should retain the deleted file bytes")
+        deleted_target.write_bytes(restored_candidates[0].read_bytes())
+        require(deleted_target.read_text(encoding="utf-8") == "restore me\n",
+                "deleted runtime file should be restorable from backup-dir")
+
+    print("[PASS] sync backup dir v0")
+
+
 def test_delivery_harness_framework_stays_generic():
     skill_root = ROOT / "codex" / "skills" / "delivery-harness-framework"
     skill_text = (skill_root / "SKILL.md").read_text(encoding="utf-8")
@@ -7816,6 +7867,7 @@ TESTS = [
     test_sync_preserves_runtime_plugin_state,
     test_sync_registers_and_installs_superpowers_plugin,
     test_sync_transition_matrix_v0,
+    test_sync_backup_dir_v0,
     test_delivery_harness_framework_stays_generic,
     test_delivery_harness_framework_routes_runtime_helpers,
     test_delivery_harness_framework_eval_matrix,

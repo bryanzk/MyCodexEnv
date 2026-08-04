@@ -290,6 +290,45 @@ PY
 }
 
 mkdir -p "${CODEX_HOME}"
+RUNTIME_BACKUP_DIR="${CODEX_HOME}/runtime-backups/$(date -u +%Y%m%dT%H%M%SZ)/"
+mkdir -p "${RUNTIME_BACKUP_DIR}"
+
+rsync_runtime_dir() {
+  local source="$1"
+  local target="$2"
+  shift 2
+  rsync -a --delete --backup --backup-dir="${RUNTIME_BACKUP_DIR}" "$@" "${source}/" "${target}/"
+  # openrsync 2.6.9 can leave deleted entries in place when --backup-dir is
+  # active. Move only those residual stale entries into the same backup root.
+  python3 - "${source}" "${target}" "${RUNTIME_BACKUP_DIR}" <<'PY'
+import os
+from pathlib import Path
+import sys
+
+source = Path(sys.argv[1])
+target = Path(sys.argv[2])
+backup_root = Path(sys.argv[3])
+stale = []
+for current, directories, files in os.walk(target, topdown=True, followlinks=False):
+    current_path = Path(current)
+    relative_root = current_path.relative_to(target)
+    for name in list(directories) + files:
+        relative = relative_root / name
+        if os.path.lexists(source / relative):
+            continue
+        stale.append(relative)
+        if name in directories:
+            directories.remove(name)
+
+for relative in stale:
+    old_path = target / relative
+    backup_path = backup_root / relative
+    if os.path.lexists(backup_path):
+        raise SystemExit(f"backup collision for stale runtime path: {relative}")
+    backup_path.parent.mkdir(parents=True, exist_ok=True)
+    os.replace(old_path, backup_path)
+PY
+}
 
 sync_codex_remote_docs() {
   local source target backup
@@ -331,17 +370,17 @@ if [[ "${SYNC_AGENTS_ONLY}" == "true" ]]; then
   fi
   if [[ -d "${REPO_ROOT}/codex/hooks" ]]; then
     mkdir -p "${CODEX_HOME}/hooks"
-    rsync -a --delete "${REPO_ROOT}/codex/hooks/" "${CODEX_HOME}/hooks/"
+    rsync_runtime_dir "${REPO_ROOT}/codex/hooks" "${CODEX_HOME}/hooks"
     echo "Codex hook scripts synchronized: ${CODEX_HOME}/hooks/"
   fi
   if [[ -d "${REPO_ROOT}/codex/runtime" ]]; then
     mkdir -p "${CODEX_HOME}/runtime"
-    rsync -a --delete "${REPO_ROOT}/codex/runtime/" "${CODEX_HOME}/runtime/"
+    rsync_runtime_dir "${REPO_ROOT}/codex/runtime" "${CODEX_HOME}/runtime"
     echo "Codex runtime policy synchronized: ${CODEX_HOME}/runtime/"
   fi
   if [[ -d "${REPO_ROOT}/codex/zsh" ]]; then
     mkdir -p "${CODEX_HOME}/zsh"
-    rsync -a --delete "${REPO_ROOT}/codex/zsh/" "${CODEX_HOME}/zsh/"
+    rsync_runtime_dir "${REPO_ROOT}/codex/zsh" "${CODEX_HOME}/zsh"
     echo "Codex zsh helpers synchronized: ${CODEX_HOME}/zsh/"
   fi
   CONFIG_TARGET="${CODEX_HOME}/config.toml"
@@ -516,7 +555,7 @@ rsync -a "${REPO_ROOT}/codex/skills/" "${CODEX_HOME}/skills/"
 if [[ -d "${REPO_ROOT}/codex/workflow" ]]; then
   mkdir -p "${CODEX_HOME}/workflow"
   # workflow/memory 属于运行态热数据，不从仓库模板回灌。
-  rsync -a --delete --exclude 'memory/' "${REPO_ROOT}/codex/workflow/" "${CODEX_HOME}/workflow/"
+  rsync_runtime_dir "${REPO_ROOT}/codex/workflow" "${CODEX_HOME}/workflow" --exclude 'memory/'
 fi
 
 if [[ -f "${REPO_ROOT}/codex/AGENTS.md" ]]; then
@@ -541,17 +580,17 @@ fi
 
 if [[ -d "${REPO_ROOT}/codex/hooks" ]]; then
   mkdir -p "${CODEX_HOME}/hooks"
-  rsync -a --delete "${REPO_ROOT}/codex/hooks/" "${CODEX_HOME}/hooks/"
+  rsync_runtime_dir "${REPO_ROOT}/codex/hooks" "${CODEX_HOME}/hooks"
 fi
 
 if [[ -d "${REPO_ROOT}/codex/runtime" ]]; then
   mkdir -p "${CODEX_HOME}/runtime"
-  rsync -a --delete "${REPO_ROOT}/codex/runtime/" "${CODEX_HOME}/runtime/"
+  rsync_runtime_dir "${REPO_ROOT}/codex/runtime" "${CODEX_HOME}/runtime"
 fi
 
 if [[ -d "${REPO_ROOT}/codex/zsh" ]]; then
   mkdir -p "${CODEX_HOME}/zsh"
-  rsync -a --delete "${REPO_ROOT}/codex/zsh/" "${CODEX_HOME}/zsh/"
+  rsync_runtime_dir "${REPO_ROOT}/codex/zsh" "${CODEX_HOME}/zsh"
 fi
 
 if [[ "${SKIP_SUPERPOWERS_SYNC}" == "true" ]]; then
