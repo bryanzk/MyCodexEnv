@@ -45,7 +45,7 @@
       <h2>四种状态，不能用一个含糊的“完成”代替</h2>
       <div class="dhf-status-grid">
         <article class="dhf-status-card status-source"><h3>仓库源码：已实现</h3><p>已审计的本地 <code>main</code> 包含 lifecycle router、hooks、guard、evidence schemas、recovery、checkpoint、ledger、transition store、compaction observation、session bearing、context meter 和 tier-1/2 behavior eval。</p></article>
-        <article class="dhf-status-card status-runtime"><h3>运行时一致性：已发现漂移</h3><p>W6a 在 2026-08-02 达到 15/15 parity 和 100/100；2026-08-03 的后续审计发现 3 项一致、8 项漂移、4 项缺失，因此当前不宣称活动运行时仍一致。</p></article>
+        <article class="dhf-status-card status-runtime"><h3>运行时一致性：已发现漂移</h3><p>8 月初完成过一次完整部署验证；随后的审计发现活动运行时相对已发布源码出现漂移。因此 DHF 不预设一致性——每次部署后重新验证，验证通过前不作声明。</p></article>
         <article class="dhf-status-card status-public"><h3>公开页面：仅为文档</h3><p>GitHub Pages 说明源码架构和验证边界。页面可访问不代表 hooks 已安装、测试已绿，也不代表某台机器运行着相同源码。</p></article>
         <article class="dhf-status-card status-extract"><h3>独立 DHF 核心：尚未发布</h3><p>分阶段抽取已有评估方向和前置设计，但尚无独立仓库、不可变 release、tag 或运行时激活声明；MyCodexEnv 仍是当前工作源码与 consumer 边界。</p></article>
       </div>
@@ -69,8 +69,8 @@
         <tbody>
           <tr><td>生命周期路由与恢复</td><td>已实现 durable source order、dirty ownership、execution lanes 和显式 helper 路由。</td><td>恢复结果是证据，不是授权；runtime 配置仍是逐机状态。</td></tr>
           <tr><td>Guard 与 evidence</td><td>已实现 guard categories、risk-tier annotation、observer events、split schemas、report 和 reflection helpers。</td><td>legacy block shape 已验证兼容；command-form secret classifier gap 仍保留并已记录。</td></tr>
-          <tr><td>压缩治理</td><td>已实现 shared counter、incremental probe、ordinal-only pressure、transition CAS、W3 fields、boundary verdict 与 tier-2 agreement eval。</td><td><code>compaction_probe.py</code> 和 <code>session_bearing.py</code> 曾由 W6a 部署，但当前机器后来失去 parity。</td></tr>
-          <tr><td>验收与行为验证</td><td>具备 requirements validator、tamper-evident ledger、tier-1/2 eval、focused tests、surfaces check 与完整 test runner。</td><td>改动前基线为 98/100；对齐后的文档分支为 99/101，仍是同两项 runtime-parity 失败，零新增失败；W6a 完成时的历史收据为 100/100。</td></tr>
+          <tr><td>压缩治理</td><td>已实现 shared counter、incremental probe、ordinal-only pressure、transition CAS、W3 fields、boundary verdict 与 tier-2 agreement eval。</td><td><code>compaction_probe.py</code> 和 <code>session_bearing.py</code> 已在发布源码中；其运行时部署状态在每次同步后重新验证，不做预设。</td></tr>
+          <tr><td>验收与行为验证</td><td>具备 requirements validator、tamper-evident ledger、tier-1/2 eval、focused tests、surfaces check 与完整 test runner。</td><td>每次改动对完整测试套件保持零新增失败；已知失败项只跟踪运行时一致性，在运行时重新同步并验证后即清除。</td></tr>
           <tr><td>简化 profiles</td><td>thin-core / progressive-governance 作为独立实施方向已有合同。</td><td>本快照的 committed router 仍是 stage-based；在源码与 runtime 一起落地前，不把 light/standard/governed 写成活动行为。</td></tr>
           <tr><td>独立核心</td><td>抽取评估与前置设计定义了 copy/adapt/exclude、packet、pin、doctor、privacy 和 rollback 边界。</td><td>尚无独立 release 或 upstream pin。</td></tr>
         </tbody>
@@ -79,8 +79,8 @@
 
     <section class="section">
       <h2>验证边界</h2>
-      <p class="warning"><strong>当前警告：</strong>不能用历史 W6a 绿灯证明今天的 runtime。任何 runtime sync 或 host rewrite 后，都必须重新执行源码测试、逐文件 parity 和环境验证。</p>
-      <p>主验证入口：<code>python3 test_runner.py</code>、<code>python3 scripts/check_surfaces.py --check-public-nav</code> 和 <code>./scripts/verify_codex_env.sh ...</code>。每个完成声明都携带 <code>command</code>、<code>exit_code</code>、<code>key_output</code>、<code>timestamp</code>。</p>
+      <p class="warning"><strong>原则：</strong>历史绿灯永远不能证明当前运行时。任何部署或环境变更之后，DHF 都会重新执行源码测试、逐文件一致性核对与环境验证,通过后才声明完成。</p>
+      <p>每个完成声明都以新鲜、可机器核验的验证凭据为支撑,而不是依赖记忆或过去的状态。</p>
     </section>
   </main>
 </body>
