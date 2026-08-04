@@ -47,6 +47,7 @@ AUDIT_SKILLS = ROOT / "scripts" / "audit_skills.py"
 SYNC_GSTACK_VENDOR = ROOT / "scripts" / "sync_gstack_vendor.py"
 PREPARE_GSTACK_DAILY_REFRESH = ROOT / "scripts" / "prepare_gstack_dhf_daily_refresh.py"
 MERGE_GSTACK_DAILY_REFRESH = ROOT / "scripts" / "merge_gstack_refresh_if_safe.py"
+DAILY_REFRESH_DEFINITION_DENYLIST = ROOT / "codex" / "runtime" / "daily-refresh-definition-denylist.json"
 SYNC_LOCAL_MAIN_IF_SAFE = ROOT / "scripts" / "sync_local_main_if_safe.py"
 HARNESS_REQUIREMENTS_TEMPLATE = ROOT / "docs" / "templates" / "harness-requirements.md"
 HARNESS_AGENT_BRIEF_TEMPLATE = ROOT / "docs" / "templates" / "harness-agent-brief.md"
@@ -2704,18 +2705,10 @@ def test_prepare_gstack_daily_refresh_creates_standalone_clone():
     with tempfile.TemporaryDirectory() as tmp:
         tmp_path = Path(tmp)
 
-        upstream_gstack = make_real_git_repo(tmp_path / "upstream-gstack")
-        write(upstream_gstack / "VERSION", "4.0.0.0\n")
-        write(upstream_gstack / "package.json", '{"name":"gstack","version":"4.0.0.0"}\n')
-        write(upstream_gstack / "setup", "#!/usr/bin/env bash\necho setup\n")
-        os.chmod(upstream_gstack / "setup", 0o755)
-        code, out, err = run(["git", "add", "."], cwd=upstream_gstack)
-        require(code == 0, f"git add should work: {err or out}")
-        code, out, err = run(["git", "commit", "-m", "seed gstack upstream"], cwd=upstream_gstack)
-        require(code == 0, f"git commit should work: {err or out}")
-
         origin = make_real_git_repo(tmp_path / "origin")
         write(origin / "scripts" / "sync_gstack_vendor.py", SYNC_GSTACK_VENDOR.read_text(encoding="utf-8"))
+        write(origin / "test_runner.py", "print('fixture reproduction gate')\n")
+        write_executable(origin / "scripts" / "verify_codex_env.sh", "#!/usr/bin/env bash\nexit 0\n")
         write(origin / "codex" / "skills" / "gstack" / "VERSION", "0.1.0.0\n")
         code, out, err = run(["git", "add", "."], cwd=origin)
         require(code == 0, f"git add should work: {err or out}")
@@ -2724,6 +2717,10 @@ def test_prepare_gstack_daily_refresh_creates_standalone_clone():
 
         controller = make_real_git_repo(tmp_path / "controller")
         write(controller / "scripts" / "sync_gstack_vendor.py", SYNC_GSTACK_VENDOR.read_text(encoding="utf-8"))
+        write(
+            controller / "codex" / "runtime" / "daily-refresh-definition-denylist.json",
+            DAILY_REFRESH_DEFINITION_DENYLIST.read_text(encoding="utf-8"),
+        )
         code, out, err = run(["git", "remote", "add", "origin", str(origin)], cwd=controller)
         require(code == 0, f"git remote add should work: {err or out}")
 
@@ -2739,26 +2736,19 @@ def test_prepare_gstack_daily_refresh_creates_standalone_clone():
                 str(clone_root),
                 "--memory-file",
                 str(memory_file),
-                "--gstack-source",
-                str(upstream_gstack),
                 "--json",
             ]
         )
         require(code == 0, f"prepare script should succeed: {err or out}")
         payload = json.loads(out)
-        require(payload["status"] == "ready", "prepare script should report ready status")
+        require(payload["status"] == "report_only_ready", "prepare script should report report-only readiness")
         require(payload["clone_root"] == str(clone_root.resolve()), "prepare script should return clone path")
         require((clone_root / ".git").is_dir(), "prepare should create a standalone clone with a .git directory")
-        require(payload["dry_run"]["dry_run"] is True, "prepare should include dry-run payload")
-        require(payload["dry_run"]["needs_update"] is True, "prepare should report vendor update need when versions differ")
-        require(payload["local_version"] == "0.1.0.0", "prepare should report current local vendor version")
-        require(
-            payload["automation_branch"] == "automation/gstack-dhf-daily-refresh",
-            "prepare should return the dedicated automation branch",
-        )
+        require(payload["live_parity_audit"]["read_only"] is True, "prepare should emit only a read-only live audit")
+        require(Path(payload["temporary_home"]).is_dir(), "prepare should create an empty temporary reproduction home")
         code, branch, err = run(["git", "branch", "--show-current"], cwd=clone_root)
         require(code == 0, f"git branch should work in automation clone: {err or branch}")
-        require(branch == "automation/gstack-dhf-daily-refresh", "prepare should check out the dedicated automation branch")
+        require(branch == "", "prepare should keep the report-only clone detached")
 
     print("[PASS] prepare gstack daily refresh creates standalone clone")
 
@@ -2851,7 +2841,125 @@ def test_prepare_gstack_daily_refresh_resolves_duplicate_dns_hosts_once():
     print("[PASS] prepare gstack daily refresh resolves duplicate DNS hosts once")
 
 
-def test_merge_gstack_daily_refresh_fast_forwards_main_when_ahead_only():
+def test_daily_refresh_report_only_v0():
+    require(DAILY_REFRESH_DEFINITION_DENYLIST.is_file(), "daily refresh denylist should exist at the unique repo path")
+    denylist = json.loads(DAILY_REFRESH_DEFINITION_DENYLIST.read_text(encoding="utf-8"))
+    denied_digests = denylist.get("denied_definition_digests", [])
+    require(denied_digests, "daily refresh denylist should contain the legacy live-sync definition digest")
+    denied_digest = denied_digests[0]
+
+    with tempfile.TemporaryDirectory() as tmp:
+        tmp_path = Path(tmp)
+        blocked_clone = tmp_path / "blocked-clone"
+        code, out, err = run(
+            [
+                sys.executable,
+                str(PREPARE_GSTACK_DAILY_REFRESH),
+                "--controller-repo-root",
+                str(ROOT),
+                "--clone-root",
+                str(blocked_clone),
+                "--definition-digest",
+                denied_digest,
+                "--json",
+            ]
+        )
+        require(code != 0, "denylisted daily refresh definition should be rejected")
+        payload = json.loads(out)
+        require(payload["reason"] == "definition_digest_denylisted", "denylist rejection should identify its blocker")
+        require(not blocked_clone.exists(), "denylist rejection must occur before clone writes")
+
+        malformed_clone = tmp_path / "malformed-clone"
+        code, out, err = run(
+            [
+                sys.executable,
+                str(PREPARE_GSTACK_DAILY_REFRESH),
+                "--controller-repo-root",
+                str(ROOT),
+                "--clone-root",
+                str(malformed_clone),
+                "--definition-digest",
+                "not-a-digest",
+                "--json",
+            ]
+        )
+        require(code != 0, "unparseable daily refresh definition digest should be rejected")
+        require(json.loads(out)["reason"] == "definition_digest_invalid", "invalid digest should identify its blocker")
+        require(not malformed_clone.exists(), "invalid digest rejection must occur before clone writes")
+
+        origin = make_real_git_repo(tmp_path / "origin")
+        write(origin / "test_runner.py", "print('fixture reproduction gate')\n")
+        write_executable(origin / "scripts" / "verify_codex_env.sh", "#!/usr/bin/env bash\nexit 0\n")
+        code, out, err = run(["git", "add", "."], cwd=origin)
+        require(code == 0, f"report-only origin add should work: {err or out}")
+        code, out, err = run(["git", "commit", "-m", "report-only fixture"], cwd=origin)
+        require(code == 0, f"report-only origin commit should work: {err or out}")
+
+        controller = make_real_git_repo(tmp_path / "controller")
+        write(
+            controller / "codex" / "runtime" / "daily-refresh-definition-denylist.json",
+            DAILY_REFRESH_DEFINITION_DENYLIST.read_text(encoding="utf-8"),
+        )
+        code, out, err = run(["git", "remote", "add", "origin", str(origin)], cwd=controller)
+        require(code == 0, f"report-only controller origin should be configured: {err or out}")
+        clone_root = tmp_path / "report-only-clone"
+        test_home = tmp_path / "operator-home"
+        test_home.mkdir()
+        env = os.environ.copy()
+        env["HOME"] = str(test_home)
+        proc = subprocess.run(
+            [
+                sys.executable,
+                str(PREPARE_GSTACK_DAILY_REFRESH),
+                "--controller-repo-root",
+                str(controller),
+                "--clone-root",
+                str(clone_root),
+                "--json",
+            ],
+            capture_output=True,
+            text=True,
+            check=False,
+            env=env,
+        )
+        require(proc.returncode == 0, f"report-only prepare should succeed: {proc.stderr or proc.stdout}")
+        payload = json.loads(proc.stdout)
+        require(payload["status"] == "report_only_ready", "daily refresh should report report-only readiness")
+        require((clone_root / ".git").is_dir(), "report-only prepare should use a standalone clone")
+        require(run(["git", "branch", "--show-current"], cwd=clone_root)[1] == "",
+                "report-only clone should stay detached instead of using an automation branch")
+        reproduction = payload["reproduction_verification"]
+        parity = payload["live_parity_audit"]
+        require(reproduction["env"]["HOME"] == payload["temporary_home"],
+                "reproduction verification should use the empty temporary home")
+        require(Path(payload["temporary_home"]).is_dir() and not any(Path(payload["temporary_home"]).iterdir()),
+                "reproduction verification home should start empty")
+        require(reproduction["command"][-1].endswith("/test_runner.py"), "standalone clone should run its reproduction gate")
+        require("verify_codex_env.sh" in parity["command"][0], "live parity audit should use the read-only verifier")
+        require(parity["codex_home"] == str(test_home / ".codex"), "parity audit should read the live Codex home")
+        constructed = json.dumps(payload, sort_keys=True)
+        for forbidden in ["sync_codex_home.sh", "git push", "git rebase", "git merge", "--apply"]:
+            require(forbidden not in constructed, f"report-only daily refresh must not construct: {forbidden}")
+
+        merge_code, merge_out, merge_err = run(
+            [
+                sys.executable,
+                str(MERGE_GSTACK_DAILY_REFRESH),
+                "--repo-root",
+                str(clone_root),
+                "--apply",
+                "--verified",
+                "--json",
+            ]
+        )
+        require(merge_code != 0, "report-only merge helper should reject --apply")
+        require(json.loads(merge_out)["reason"] == "report_only_apply_forbidden",
+                "merge helper should name the report-only mutation blocker")
+
+    print("[PASS] daily refresh report only v0")
+
+
+def test_merge_gstack_daily_refresh_rejects_apply_when_ahead_only():
     with tempfile.TemporaryDirectory() as tmp:
         tmp_path = Path(tmp)
         seed = make_real_git_repo(tmp_path / "seed")
@@ -2888,20 +2996,19 @@ def test_merge_gstack_daily_refresh_fast_forwards_main_when_ahead_only():
                 "--json",
             ]
         )
-        require(code == 0, f"safe merge should succeed: {err or out}")
+        require(code != 0, "report-only daily refresh should reject apply")
         payload = json.loads(out)
-        require(payload["status"] == "merged", "ahead-only automation branch should merge")
-        require(payload["counts"] == {"main_only": 0, "automation_only": 1}, "payload should report ahead-only counts")
+        require(payload["reason"] == "report_only_apply_forbidden", "apply rejection should identify report-only policy")
         code, main_head, err = run(["git", "rev-parse", "refs/heads/main"], cwd=origin)
         require(code == 0, f"bare origin main rev-parse should work: {err or main_head}")
         code, automation_head, err = run(["git", "rev-parse", "refs/heads/automation/gstack-dhf-daily-refresh"], cwd=origin)
         require(code == 0, f"bare origin automation rev-parse should work: {err or automation_head}")
-        require(main_head == automation_head, "safe merge should fast-forward origin/main to automation head")
+        require(main_head != automation_head, "report-only apply rejection must not move origin/main")
 
-    print("[PASS] merge gstack daily refresh fast-forwards ahead-only branch")
+    print("[PASS] merge gstack daily refresh rejects apply when ahead only")
 
 
-def test_merge_gstack_daily_refresh_skips_diverged_branch():
+def test_merge_gstack_daily_refresh_audits_diverged_branch():
     with tempfile.TemporaryDirectory() as tmp:
         tmp_path = Path(tmp)
         seed = make_real_git_repo(tmp_path / "seed")
@@ -2948,12 +3055,10 @@ def test_merge_gstack_daily_refresh_skips_diverged_branch():
                 str(MERGE_GSTACK_DAILY_REFRESH),
                 "--repo-root",
                 str(automation_work),
-                "--apply",
-                "--verified",
                 "--json",
             ]
         )
-        require(code == 0, f"diverged branch should be skipped without failing: {err or out}")
+        require(code == 0, f"diverged branch should be audited without failing: {err or out}")
         payload = json.loads(out)
         require(payload["status"] == "skipped", "diverged automation branch should skip merge")
         require(payload["reason"] == "not_ahead_only", "skip reason should explain non-ahead-only branch")
@@ -2962,7 +3067,7 @@ def test_merge_gstack_daily_refresh_skips_diverged_branch():
         require(code == 0, f"bare origin main rev-parse should work: {err or main_after}")
         require(main_after == main_before, "skipped merge should not push origin/main")
 
-    print("[PASS] merge gstack daily refresh skips diverged branch")
+    print("[PASS] merge gstack daily refresh audits diverged branch")
 
 
 def test_sync_local_main_fast_forwards_when_clean_and_behind_only():
@@ -7902,8 +8007,9 @@ TESTS = [
     test_prepare_gstack_daily_refresh_retries_transient_dns_failures,
     test_prepare_gstack_daily_refresh_dns_defaults_cover_slow_startup,
     test_prepare_gstack_daily_refresh_resolves_duplicate_dns_hosts_once,
-    test_merge_gstack_daily_refresh_fast_forwards_main_when_ahead_only,
-    test_merge_gstack_daily_refresh_skips_diverged_branch,
+    test_daily_refresh_report_only_v0,
+    test_merge_gstack_daily_refresh_rejects_apply_when_ahead_only,
+    test_merge_gstack_daily_refresh_audits_diverged_branch,
     test_sync_local_main_fast_forwards_when_clean_and_behind_only,
     test_sync_local_main_skips_dirty_worktree,
     test_harness_guard_policy_decisions,

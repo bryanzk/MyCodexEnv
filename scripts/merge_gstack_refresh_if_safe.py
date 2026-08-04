@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Fast-forward main from the gstack daily refresh branch only when it is safe."""
+"""Audit gstack daily refresh branch parity without merging or pushing."""
 
 from __future__ import annotations
 
@@ -51,8 +51,8 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--remote", default="origin")
     parser.add_argument("--main-branch", default="main")
     parser.add_argument("--automation-branch", default=DEFAULT_AUTOMATION_BRANCH)
-    parser.add_argument("--apply", action="store_true", help="Push the fast-forwarded result to the remote main branch.")
-    parser.add_argument("--verified", action="store_true", help="Required with --apply after caller completed the verification gate.")
+    parser.add_argument("--apply", action="store_true", help="Legacy flag; always rejected because daily refresh is report-only.")
+    parser.add_argument("--verified", action="store_true", help="Legacy compatibility flag; does not authorize mutation.")
     parser.add_argument("--json", action="store_true", help="Emit machine-readable JSON.")
     return parser.parse_args()
 
@@ -68,12 +68,12 @@ def main() -> int:
             detail="repo root must be a standalone clone with a .git directory",
         )
 
-    if args.apply and not args.verified:
+    if args.apply:
         return fail(
-            "verification_not_confirmed",
+            "report_only_apply_forbidden",
             args.json,
             repo_root=str(repo_root),
-            detail="--apply requires --verified so unattended runs cannot merge before their verification gate",
+            detail="daily refresh is report-only and cannot merge or push",
         )
 
     code, out, err = run(["git", "status", "--porcelain"], repo_root)
@@ -127,27 +127,7 @@ def main() -> int:
         emit(make_payload("skipped", reason="not_ahead_only", pushed=False, **base_payload), args.json)
         return 0
 
-    if not args.apply:
-        emit(make_payload("would_merge", reason="ahead_only", pushed=False, **base_payload), args.json)
-        return 0
-
-    commands = [
-        ["git", "switch", "--detach", main_ref],
-        ["git", "merge", "--ff-only", automation_ref],
-        ["git", "push", args.remote, f"HEAD:refs/heads/{args.main_branch}"],
-        ["git", "fetch", args.remote, "--prune"],
-        ["git", "switch", "--no-track", "-C", args.automation_branch, automation_ref],
-    ]
-    for cmd in commands:
-        code, out, err = run(cmd, repo_root)
-        if code != 0:
-            return fail("merge_command_failed", args.json, command=" ".join(cmd), detail=err or out, **base_payload)
-
-    code, main_after, err = run(["git", "rev-parse", main_ref], repo_root)
-    if code != 0:
-        return fail("rev_parse_failed", args.json, ref=main_ref, detail=err or main_after, **base_payload)
-
-    emit(make_payload("merged", reason="ahead_only", pushed=True, main_after=main_after, **base_payload), args.json)
+    emit(make_payload("audit", reason="ahead_only", pushed=False, **base_payload), args.json)
     return 0
 
 

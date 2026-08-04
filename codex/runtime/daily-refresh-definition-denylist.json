@@ -1,0 +1,7 @@
+{
+  "schema_version": 1,
+  "digest_algorithm": "sha256",
+  "denied_definition_digests": [
+    "sha256:c9debfd814c42bc13a14d90d5c88ecda101a3e1c441225f6956783ea18476bcc"
+  ]
+}

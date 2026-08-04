@@ -1,21 +1,23 @@
 #!/usr/bin/env python3
-"""Prepare a standalone repo clone and fresh dry-run evidence for the daily refresh automation."""
+"""Prepare standalone reproduction and live parity audit commands for report-only daily refresh."""
 
 from __future__ import annotations
 
 import argparse
 import json
+import re
 import socket
 import subprocess
 import sys
+import tempfile
 import time
 from pathlib import Path
 from urllib.parse import urlparse
 
 
 DEFAULT_AUTOMATION_ID = "gstack-dhf-daily-refresh"
-DEFAULT_GSTACK_SOURCE = "https://github.com/garrytan/gstack.git"
-DEFAULT_AUTOMATION_BRANCH = "automation/gstack-dhf-daily-refresh"
+DEFAULT_REPORT_ONLY_DEFINITION_DIGEST = "sha256:68acbfc89311a085661cfd9e73f4f0aa26538f5ca9235c73856a06fc21b20226"
+DEFINITION_DENYLIST_RELATIVE_PATH = Path("codex/runtime/daily-refresh-definition-denylist.json")
 DNS_RESOLVE_ATTEMPTS = 25
 DNS_RESOLVE_RETRY_SECONDS = 5.0
 
@@ -90,11 +92,6 @@ def is_standalone_clone(path: Path) -> bool:
     return (path / ".git").is_dir()
 
 
-def ref_exists(repo_root: Path, ref: str) -> bool:
-    code, _, _ = run(["git", "rev-parse", "--verify", "--quiet", ref], cwd=repo_root)
-    return code == 0
-
-
 def make_payload(status: str, **extra: object) -> dict[str, object]:
     payload: dict[str, object] = {"status": status}
     payload.update(extra)
@@ -105,21 +102,51 @@ def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--controller-repo-root", default=".", help="Repo that contains this script and the automation prompt.")
     parser.add_argument("--automation-id", default=DEFAULT_AUTOMATION_ID)
-    parser.add_argument("--clone-root", default="", help="Standalone clone path used by the automation. Defaults to $CODEX_HOME/automations/<id>/repo.")
-    parser.add_argument("--memory-file", default="", help="Automation memory file. Defaults to $CODEX_HOME/automations/<id>/memory.md.")
-    parser.add_argument("--gstack-source", default=DEFAULT_GSTACK_SOURCE)
-    parser.add_argument("--automation-branch", default=DEFAULT_AUTOMATION_BRANCH, help="Dedicated branch for automation commits; main is only used as the rebase base.")
+    parser.add_argument("--clone-root", default="", help="Standalone report-only clone path; defaults under the system temp directory.")
+    parser.add_argument("--memory-file", default="", help="Report-only evidence note path; the helper does not write it.")
+    parser.add_argument("--definition-digest", default=DEFAULT_REPORT_ONLY_DEFINITION_DIGEST)
     parser.add_argument("--json", action="store_true", help="Emit machine-readable JSON.")
     return parser.parse_args()
+
+
+def validate_definition_digest(controller_repo_root: Path, definition_digest: str) -> tuple[bool, str]:
+    if not re.fullmatch(r"sha256:[0-9a-f]{64}", definition_digest):
+        return False, "definition_digest_invalid"
+    denylist_path = controller_repo_root / DEFINITION_DENYLIST_RELATIVE_PATH
+    try:
+        payload = json.loads(denylist_path.read_text(encoding="utf-8"))
+    except (OSError, UnicodeDecodeError, json.JSONDecodeError):
+        return False, "definition_denylist_invalid"
+    if set(payload) != {"schema_version", "digest_algorithm", "denied_definition_digests"}:
+        return False, "definition_denylist_invalid"
+    denied = payload.get("denied_definition_digests")
+    if payload.get("schema_version") != 1 or payload.get("digest_algorithm") != "sha256" or not isinstance(denied, list):
+        return False, "definition_denylist_invalid"
+    if len(denied) != len(set(denied)) or any(not isinstance(item, str) or not re.fullmatch(r"sha256:[0-9a-f]{64}", item) for item in denied):
+        return False, "definition_denylist_invalid"
+    if definition_digest in denied:
+        return False, "definition_digest_denylisted"
+    return True, ""
 
 
 def main() -> int:
     args = parse_args()
     controller_repo_root = Path(args.controller_repo_root).expanduser().resolve()
     codex_home = Path.home() / ".codex"
-    automation_root = codex_home / "automations" / args.automation_id
+    automation_root = Path(tempfile.gettempdir()) / "mycodexenv-automations" / args.automation_id
     clone_root = Path(args.clone_root).expanduser().resolve() if args.clone_root else automation_root / "repo"
     memory_file = Path(args.memory_file).expanduser().resolve() if args.memory_file else automation_root / "memory.md"
+
+    definition_valid, definition_reason = validate_definition_digest(controller_repo_root, args.definition_digest)
+    if not definition_valid:
+        payload = make_payload(
+            "blocked",
+            reason=definition_reason,
+            definition_digest=args.definition_digest,
+            denylist_path=str(controller_repo_root / DEFINITION_DENYLIST_RELATIVE_PATH),
+        )
+        print(json.dumps(payload, ensure_ascii=False, sort_keys=True))
+        return 1
 
     try:
         repo_origin = git_origin(controller_repo_root)
@@ -136,7 +163,7 @@ def main() -> int:
         return 1
 
     hosts = []
-    for label, source in (("repo_origin", repo_origin), ("gstack_source", args.gstack_source)):
+    for label, source in (("repo_origin", repo_origin),):
         host = extract_host(source)
         if host:
             hosts.append((label, source, host))
@@ -153,7 +180,7 @@ def main() -> int:
             clone_root=str(clone_root),
             memory_file=str(memory_file),
             repo_origin=repo_origin,
-            gstack_source=args.gstack_source,
+            definition_digest=args.definition_digest,
         )
         print(json.dumps(payload, ensure_ascii=False, sort_keys=True))
         return 0
@@ -214,7 +241,6 @@ def main() -> int:
             clone_root=str(clone_root),
             memory_file=str(memory_file),
             repo_origin=repo_origin,
-            automation_branch=args.automation_branch,
         )
         print(json.dumps(payload, ensure_ascii=False, sort_keys=True))
         return 1
@@ -229,77 +255,67 @@ def main() -> int:
             clone_root=str(clone_root),
             memory_file=str(memory_file),
             repo_origin=repo_origin,
-            automation_branch=args.automation_branch,
         )
         print(json.dumps(payload, ensure_ascii=False, sort_keys=True))
         return 1
 
-    remote_branch_ref = f"refs/remotes/origin/{args.automation_branch}"
-    start_point = f"origin/{args.automation_branch}" if ref_exists(clone_root, remote_branch_ref) else "origin/main"
-    branch_commands = [
-        ["git", "switch", "--no-track", "-C", args.automation_branch, start_point],
-    ]
-    if start_point != "origin/main":
-        branch_commands.append(["git", "rebase", "origin/main"])
-
-    for cmd in branch_commands:
-        code, out, err = retry_run(cmd, cwd=clone_root)
-        if code != 0:
-            payload = make_payload(
-                "blocked",
-                reason="git_sync_failed",
-                command=" ".join(cmd),
-                detail=err or out,
-                controller_repo_root=str(controller_repo_root),
-                clone_root=str(clone_root),
-                memory_file=str(memory_file),
-                repo_origin=repo_origin,
-                automation_branch=args.automation_branch,
-            )
-            print(json.dumps(payload, ensure_ascii=False, sort_keys=True))
-            return 1
-
-    local_version_path = clone_root / "codex" / "skills" / "gstack" / "VERSION"
-    local_version = local_version_path.read_text(encoding="utf-8").strip() if local_version_path.exists() else ""
-    sync_script = controller_repo_root / "scripts" / "sync_gstack_vendor.py"
-    code, out, err = retry_run(
-        [
-            sys.executable,
-            str(sync_script),
-            "--repo-root",
-            str(clone_root),
-            "--source",
-            args.gstack_source,
-            "--dry-run",
-            "--json",
-        ],
-        cwd=clone_root,
-    )
+    code, out, err = retry_run(["git", "switch", "--detach", "origin/main"], cwd=clone_root)
     if code != 0:
         payload = make_payload(
             "blocked",
-            reason="dry_run_failed",
+            reason="git_sync_failed",
+            command="git switch --detach origin/main",
             detail=err or out,
             controller_repo_root=str(controller_repo_root),
             clone_root=str(clone_root),
             memory_file=str(memory_file),
             repo_origin=repo_origin,
-            gstack_source=args.gstack_source,
         )
         print(json.dumps(payload, ensure_ascii=False, sort_keys=True))
         return 1
 
-    dry_run_payload = json.loads(out)
+    reproduction_gate = clone_root / "test_runner.py"
+    parity_gate = clone_root / "scripts" / "verify_codex_env.sh"
+    if not reproduction_gate.is_file() or not parity_gate.is_file():
+        payload = make_payload(
+            "blocked",
+            reason="report_only_gate_missing",
+            controller_repo_root=str(controller_repo_root),
+            clone_root=str(clone_root),
+            reproduction_gate=str(reproduction_gate),
+            parity_gate=str(parity_gate),
+        )
+        print(json.dumps(payload, ensure_ascii=False, sort_keys=True))
+        return 1
+
+    temporary_home = Path(tempfile.mkdtemp(prefix="mce-daily-refresh-home-"))
     payload = make_payload(
-        "ready",
+        "report_only_ready",
         controller_repo_root=str(controller_repo_root),
         clone_root=str(clone_root),
         memory_file=str(memory_file),
         repo_origin=repo_origin,
-        gstack_source=args.gstack_source,
-        automation_branch=args.automation_branch,
-        local_version=local_version,
-        dry_run=dry_run_payload,
+        definition_digest=args.definition_digest,
+        temporary_home=str(temporary_home),
+        reproduction_verification={
+            "command": [sys.executable, str(reproduction_gate)],
+            "cwd": str(clone_root),
+            "env": {"HOME": str(temporary_home), "PYTHONDONTWRITEBYTECODE": "1"},
+        },
+        live_parity_audit={
+            "command": [
+                str(parity_gate),
+                "--repo-root",
+                str(clone_root),
+                "--codex-home",
+                str(codex_home),
+                "--claude-home",
+                str(Path.home() / ".claude"),
+            ],
+            "cwd": str(clone_root),
+            "codex_home": str(codex_home),
+            "read_only": True,
+        },
     )
     print(json.dumps(payload, ensure_ascii=False, sort_keys=True) if args.json else json.dumps(payload, ensure_ascii=False, sort_keys=True, indent=2))
     return 0
