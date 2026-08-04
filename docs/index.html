@@ -398,30 +398,30 @@
         <p>DHF 把会话容量变化和运行时部署当作受治理的控制流：由宿主观察信号、确保后继只创建一次，并用版本守卫阻止旧来源覆盖更新的运行时。</p>
       </div>
       <div class="card-row three">
-        <div class="card">
+        <a class="card" href="./dhf-engineering-notes-cn.html">
           <div>
             <div class="label">会话容量治理</div>
             <h2>容量边界属于控制流</h2>
             <p>宿主增量观察会话变化，持久记录每次边界裁定；恢复时先核对新鲜度，再由会话开场提示明确当前阶段和下一项安全任务。</p>
           </div>
           <div class="meta">观察 / 唯一后继 / 恢复 / 定位</div>
-        </div>
-        <div class="card">
+        </a>
+        <a class="card" href="./dhf-engineering-notes-cn.html">
           <div>
             <div class="label">回退预防</div>
             <h2>旧来源不能覆盖新运行时</h2>
             <p>部署前比较来源版本：相同版本无需动作，向前部署要求已经发布的最新来源；过时、分叉或降级请求均关闭式失败。删除项保留备份，定时刷新只报告。</p>
           </div>
           <div class="meta">版本比较 / 备份 / 只读报告</div>
-        </div>
-        <div class="card">
+        </a>
+        <a class="card" href="./dhf-engineering-notes-cn.html">
           <div>
             <div class="label">可执行护栏</div>
             <h2>守卫会真正阻止越界</h2>
             <p>工具调用前的守卫能返回明确阻断，裁定按风险分层，验收标准写入防篡改记录，行为评估覆盖恢复、交接完整性与后继唯一性。</p>
           </div>
           <div class="meta">阻断 / 风险分层 / 记录 / 行为评估</div>
-        </div>
+        </a>
       </div>
     </section>
 

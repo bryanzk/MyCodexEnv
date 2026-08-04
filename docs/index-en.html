@@ -397,30 +397,30 @@
         <p>The harness now treats context compaction and runtime deployment as governed control flow: host-observed signals, idempotent successor transitions, and a source transition guard that refuses to let an older source overwrite a newer runtime.</p>
       </div>
       <div class="card-row three">
-        <div class="card">
+        <a class="card" href="./dhf-engineering-notes-en.html">
           <div>
             <div class="label">Compaction Governance</div>
             <h2>Second compaction is control flow</h2>
             <p>A host-observed compaction probe with incremental JSONL scanning, an append-only transition store for exactly-one successor tasks, a freshness-aware recovery boundary verdict, and a session bearing hook that injects phase and next safe task at session start.</p>
           </div>
           <div class="meta">probe / transition store / boundary / bearing</div>
-        </div>
-        <div class="card">
+        </a>
+        <a class="card" href="./dhf-engineering-notes-en.html">
           <div>
             <div class="label">Rollback Prevention v0</div>
             <h2>Old sources cannot overwrite new runtimes</h2>
             <p>Runtime sync now checks a source transition matrix against a schema-v2 manifest: equal is a no-op, forward requires the pushed remote tip, and stale, diverged, or downgrade transitions fail closed. Deleted files are retained in backups, and the daily refresh is report-only with a quarantined-definition denylist.</p>
           </div>
           <div class="meta">transition matrix / manifest v2 / report-only refresh</div>
-        </div>
-        <div class="card">
+        </a>
+        <a class="card" href="./dhf-engineering-notes-en.html">
           <div>
             <div class="label">Enforceable Guardrails</div>
             <h2>Guards that actually block</h2>
             <p>The live PreToolUse guard emits the enforceable block shape proven by isolated probes, guard decisions carry risk tiers, acceptance criteria live in a tamper-evident ledger, and behavior evals verify recovery, handoff completeness, and successor idempotency.</p>
           </div>
           <div class="meta">block shape / risk tiers / ledger / behavior evals</div>
-        </div>
+        </a>
       </div>
     </section>
 
