@@ -255,6 +255,19 @@
     </section>
 
     <section class="section">
+      <div class="label">Why it exists</div>
+      <h2>Why beginners need a harness</h2>
+      <div class="grid">
+        <article class="card"><div class="label">Memory</div><h3>Conversation is not durable state</h3><p>Long tasks outlive a single working window. Decisions and the next safe step must survive outside chat memory.</p></article>
+        <article class="card"><div class="label">Ambiguity</div><h3>Broad requests hide decisions</h3><p>Audience, scope, acceptance criteria, and domain language need to be explicit before implementation begins.</p></article>
+        <article class="card"><div class="label">Routing</div><h3>More tools do not mean better choices</h3><p>The lifecycle stage determines whether the next owner is requirements, planning, development, validation, review, or handoff.</p></article>
+        <article class="card"><div class="label">Evidence</div><h3>“Done” must be checkable</h3><p>A completion claim needs a fresh check, a clear outcome, the important observation, and evidence of when it ran.</p></article>
+        <article class="card"><div class="label">Continuity</div><h3>The next session must be able to resume</h3><p>A durable handoff records what changed, what was verified, what is blocked, and one next safe task.</p></article>
+        <article class="card"><div class="label">Orientation</div><h3>Ask where the work is first</h3><p>Recovering the current lifecycle stage prevents a resumed task from repeating work or jumping into a new direction.</p></article>
+      </div>
+    </section>
+
+    <section class="section">
       <div class="label">Plain Definition</div>
       <h2>What DHF Does</h2>
       <p>DHF answers five questions before it claims progress: what facts were read, which lifecycle stage the work is in, which skill or helper owns the next step, how the result will be verified, and what the next safe task is.</p>
@@ -262,6 +275,16 @@
         <article class="card"><div class="label">Recover</div><h3>Facts first</h3><p>Read repo instructions, durable state, git status, and recent evidence before trusting chat memory.</p></article>
         <article class="card"><div class="label">Route</div><h3>Stage-aware work</h3><p>Choose requirements, planning, development, validation, review, ship, or handoff before choosing tools.</p></article>
         <article class="card"><div class="label">Prove</div><h3>Evidence over vibes</h3><p>Completion needs <code>command</code>, <code>exit_code</code>, <code>key_output</code>, and <code>timestamp</code>.</p></article>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="label">Three-layer model</div>
+      <h2>Three layers keep responsibilities clear</h2>
+      <div class="grid">
+        <article class="card"><div class="label">Runtime layer</div><h3>Rules and observable state</h3><p>Global and repository instructions, permissions, durable evidence, and environment checks define what work is allowed and what is currently true.</p></article>
+        <article class="card"><div class="label">Router layer</div><h3>Lifecycle ownership</h3><p>The router recovers state, identifies the current stage, and chooses the workflow that owns the next bounded step.</p></article>
+        <article class="card"><div class="label">Specialist layer</div><h3>Focused execution</h3><p>Planning, testing, QA, security, documentation, and release specialists perform the work inside the chosen boundary.</p></article>
       </div>
     </section>
 
@@ -295,6 +318,19 @@
             <li><code>timestamp</code>: <code>2026-05-14T00:00:00-04:00</code></li>
           </ul>
         </div>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="label">Glossary</div>
+      <h2>Terms you will see on the next pages</h2>
+      <div class="grid">
+        <article class="card"><h3>Lifecycle stage</h3><p>The current kind of work—such as requirements, planning, development, validation, review, ship, or handoff.</p></article>
+        <article class="card"><h3>Gate</h3><p>An observable condition that must pass before work is allowed to move to the next stage.</p></article>
+        <article class="card"><h3>Vertical slice</h3><p>A small outcome that can be implemented, checked, and accepted independently.</p></article>
+        <article class="card"><h3>Feedback loop</h3><p>A repeatable way to observe the problem or result before forming conclusions.</p></article>
+        <article class="card"><h3>Durable handoff</h3><p>A written state package that lets another session resume without relying on conversation history.</p></article>
+        <article class="card"><h3>Next safe task</h3><p>One bounded action that respects current scope, permissions, blockers, and verified state.</p></article>
       </div>
     </section>
 
