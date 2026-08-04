@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DHF 工程札记：治理会话容量与部署方向</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,650;9..144,760&family=IBM+Plex+Mono:wght@400;500;600&family=Atkinson+Hyperlegible:wght@400;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --font-body: 'Atkinson Hyperlegible', Verdana, sans-serif; --font-display: 'Fraunces', Georgia, serif; --font-mono: 'IBM Plex Mono', monospace;
+      --bg: #f7f4ec; --surface: #fffdf8; --surface2: #ebe6da; --border: rgba(51, 42, 33, 0.14); --text: #231f1a; --text-dim: #665f55;
+      --green: #147a62; --green-dim: rgba(20, 122, 98, 0.11); --amber: #a15f22; --amber-dim: rgba(161, 95, 34, 0.12); --rose: #a9475b; --rose-dim: rgba(169, 71, 91, 0.10); --blue: #2f6f92; --blue-dim: rgba(47, 111, 146, 0.10); --shadow: 0 18px 44px rgba(51, 42, 33, 0.10), 0 2px 10px rgba(51, 42, 33, 0.06);
+    }
+    @media (prefers-color-scheme: dark) { :root { --bg: #15120f; --surface: #211c18; --surface2: #2b251f; --border: rgba(255, 239, 218, 0.13); --text: #f6eee3; --text-dim: #b8aa9a; --green: #5cd0b2; --green-dim: rgba(92, 208, 178, 0.13); --amber: #f3b36b; --amber-dim: rgba(243, 179, 107, 0.13); --rose: #f095a5; --rose-dim: rgba(240, 149, 165, 0.12); --blue: #91c8e6; --blue-dim: rgba(145, 200, 230, 0.12); } }
+    * { box-sizing: border-box; }
+    body { margin: 0; min-height: 100vh; color: var(--text); font-family: var(--font-body); background-color: var(--bg); background-image: radial-gradient(circle at 12% 8%, var(--green-dim) 0 18%, transparent 38%), radial-gradient(circle at 90% 18%, var(--amber-dim) 0 18%, transparent 36%), radial-gradient(circle at 48% 100%, var(--rose-dim) 0 22%, transparent 46%), linear-gradient(135deg, transparent 0 28px, var(--border) 29px, transparent 30px); background-size: auto, auto, auto, 42px 42px; padding: 38px; overflow-wrap: break-word; }
+    @keyframes fadeUp { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: translateY(0); } }
+    .wrap { max-width: 1180px; margin: 0 auto; display: grid; gap: 24px; } .wrap > * { min-width: 0; }
+    .hero, .card, .strip, .section-block { animation: fadeUp 0.42s ease-out both; animation-delay: calc(var(--i, 0) * 0.05s); }
+    .hero { min-height: 390px; display: grid; align-content: center; background: color-mix(in srgb, var(--surface) 88%, var(--green) 12%); border: 1px solid color-mix(in srgb, var(--border) 70%, var(--green) 30%); border-radius: 22px; padding: clamp(28px, 5vw, 58px); box-shadow: var(--shadow); }
+    .eyebrow, .label, .meta, .tag { font-family: var(--font-mono); letter-spacing: 0.11em; text-transform: uppercase; }
+    .eyebrow { color: var(--green); font-size: 13px; font-weight: 600; margin-bottom: 18px; }
+    h1 { margin: 0; max-width: 980px; font-family: var(--font-display); font-size: clamp(38px, 5.4vw, 70px); line-height: 0.98; }
+    .lead { max-width: 860px; margin: 24px 0 0; color: var(--text-dim); font-size: clamp(18px, 2.2vw, 24px); line-height: 1.5; }
+    .strip { display: flex; flex-wrap: wrap; gap: 10px; padding: 14px; background: color-mix(in srgb, var(--surface) 76%, transparent); border: 1px solid var(--border); border-radius: 16px; }
+    .tag { display: inline-flex; align-items: center; min-height: 34px; padding: 7px 12px; color: var(--green); background: var(--green-dim); border: 1px solid color-mix(in srgb, var(--green) 24%, transparent); border-radius: 999px; font-size: 11px; text-decoration: none; }
+    .section-block { display: grid; gap: 14px; padding-top: 6px; }
+    .section-heading { display: flex; justify-content: space-between; gap: 20px; align-items: end; border-top: 1px solid var(--border); padding-top: 20px; }
+    .section-heading h2 { margin: 0; font-family: var(--font-display); font-size: clamp(28px, 3vw, 42px); line-height: 1; }
+    .section-heading p { max-width: 560px; margin: 0; color: var(--text-dim); line-height: 1.5; }
+    .label { color: var(--amber); font-size: 11px; font-weight: 600; margin-bottom: 12px; }
+    .card-row { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; } .card-row.four { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+    .card { min-width: 0; background: var(--surface); border: 1px solid var(--border); border-radius: 18px; padding: 24px; color: inherit; text-decoration: none; box-shadow: 0 8px 26px rgba(51, 42, 33, 0.07); }
+    .card h3 { margin: 0 0 10px; font-family: var(--font-display); font-size: 25px; line-height: 1.05; }
+    .card p, .card li { color: var(--text-dim); line-height: 1.55; font-size: 15.5px; } .card p { margin: 0; } .card ol, .card ul { margin: 0; padding-left: 20px; display: grid; gap: 8px; }
+    .meta { margin-top: 18px; color: var(--text-dim); font-size: 11px; }
+    .diagram { background: var(--surface); border: 1px solid var(--border); border-radius: 18px; padding: 18px; overflow-x: auto; }
+    .diagram svg { display: block; width: 100%; height: auto; font-family: var(--font-body); } .diagram figcaption { margin-top: 10px; color: var(--text-dim); font-size: 13.5px; line-height: 1.5; font-family: var(--font-mono); }
+    figure { margin: 0; } .callout { padding: 20px 24px; background: color-mix(in srgb, var(--surface) 78%, var(--blue) 22%); border: 1px solid color-mix(in srgb, var(--border) 65%, var(--blue) 35%); border-radius: 16px; line-height: 1.55; }
+    .footer { display: flex; justify-content: space-between; gap: 16px; color: var(--text-dim); border-top: 1px solid var(--border); padding-top: 18px; font-family: var(--font-mono); font-size: 12px; line-height: 1.5; } .footer a { color: var(--green); }
+    @media (max-width: 860px) { body { padding: 18px; } .hero { min-height: 0; } .card-row, .card-row.four { grid-template-columns: 1fr; } .section-heading { align-items: start; flex-direction: column; } .footer { flex-direction: column; } }
+  </style>
+  <link rel="stylesheet" href="./dhf-site-status.css">
+</head>
+<body>
+  <main class="wrap">
+    <aside class="dhf-status-bar" data-dhf-status="2026-08-03" aria-label="当前 DHF 状态"><strong>架构状态 · 2026-08-03</strong><span>源码、运行时、发布状态与独立核心状态彼此分开。</span><a href="./dhf-architecture-status-cn.html">查看当前状态</a></aside>
+    <section class="hero" style="--i:0"><div class="eyebrow">DHF 工程札记</div><h1>治理会话容量<br>与部署方向。</h1><p class="lead">从第一性原理说明持久状态、关闭式失败、版本方向与可执行文档如何让长周期智能体系统能够恢复。</p></section>
+    <nav class="strip" aria-label="快速链接" style="--i:1"><a class="tag" href="./index.html">中文首页</a><a class="tag" href="./dhf-for-product-and-field-cn.html">产品与现场团队</a><a class="tag" href="./dhf-architecture-status-cn.html">当前状态</a><a class="tag" href="./dhf-engineering-notes-en.html">English</a></nav>
+
+    <section class="section-block" aria-labelledby="derive-heading" style="--i:2">
+      <div class="section-heading"><div><div class="label">第一性原理</div><h2 id="derive-heading">为什么容量变化会成为控制流</h2></div><p>这套政策由四条公理推出，不假设智能体能可靠判断剩余上下文，也不假设压缩后还能自行恢复所有细节。</p></div>
+      <div class="card-row four">
+        <div class="card"><h3>1 · 上下文有限</h3><p>长周期工作最终会超过当前推理窗口，即使任务本身仍然健康。</p></div>
+        <div class="card"><h3>2 · 压缩必有损失</h3><p>摘要可以保留意图，却可能丢失精确约束、来源关系或正在进行的步骤状态。</p></div>
+        <div class="card"><h3>3 · 边界由宿主观察</h3><p>确认的容量边界由环境观察，而不是由智能体的自我判断决定。</p></div>
+        <div class="card"><h3>4 · 连续性必须持久</h3><p>锚点、证据和下一安全任务必须离开对话记忆持久保存，每个边界只产生一个后继。</p></div>
+      </div>
+      <div class="callout"><strong>推导规则：</strong>第二次确认的容量边界之后，必须进入后继流程。只有当一致性门证明五项前提——仓库与工作模式可精确解析且仍匹配、当前步骤可重建、约束已持久保存、验证证据可恢复、边界计数可信——会话才可以完成当前正在进行的步骤。任何未知都关闭式失败；第三次确认的边界立即进入后继流程。</div>
+    </section>
+
+    <section class="section-block" aria-labelledby="matrix-heading" style="--i:3">
+      <div class="section-heading"><div><div class="label">版本转移矩阵</div><h2 id="matrix-heading">六种裁定，只有一个方向</h2></div><p>每次部署都比较当前运行版本、请求版本和刚刚观察到的已发布版本。结果是有限的裁定，不靠猜测。</p></div>
+      <figure class="diagram">
+        <svg viewBox="0 0 1120 430" role="img" aria-label="六种部署转移裁定">
+          <title>部署转移矩阵</title>
+          <g font-size="14" font-weight="700">
+            <rect x="20" y="20" width="330" height="104" rx="14" fill="var(--green-dim)" stroke="var(--green)"/><text x="42" y="50" fill="var(--green)">相同 + 当前</text><text x="42" y="77" fill="var(--text)">无需动作</text><text x="42" y="101" font-size="12" font-weight="400" fill="var(--text-dim)">不重写任何内容。</text>
+            <rect x="395" y="20" width="330" height="104" rx="14" fill="var(--amber-dim)" stroke="var(--amber)"/><text x="417" y="50" fill="var(--amber)">相同 + 已发布版本已前进</text><text x="417" y="77" fill="var(--text)">按过时状态停止</text><text x="417" y="101" font-size="12" font-weight="400" fill="var(--text-dim)">落后的观察不能当作无需动作。</text>
+            <rect x="770" y="20" width="330" height="104" rx="14" fill="var(--green-dim)" stroke="var(--green)"/><text x="792" y="50" fill="var(--green)">更新 + 已发布</text><text x="792" y="77" fill="var(--text)">向前推进</text><text x="792" y="101" font-size="12" font-weight="400" fill="var(--text-dim)">部署、验证，然后记录。</text>
+            <rect x="20" y="164" width="330" height="104" rx="14" fill="var(--blue-dim)" stroke="var(--blue)"/><text x="42" y="194" fill="var(--blue)">更旧 + 明确批准</text><text x="42" y="221" fill="var(--text)">指定回退</text><text x="42" y="245" font-size="12" font-weight="400" fill="var(--text-dim)">只有在场操作员可以批准。</text>
+            <rect x="395" y="164" width="330" height="104" rx="14" fill="var(--amber-dim)" stroke="var(--amber)"/><text x="417" y="194" fill="var(--amber)">检查中已发布版本变化</text><text x="417" y="221" fill="var(--text)">停止或协调</text><text x="417" y="245" font-size="12" font-weight="400" fill="var(--text-dim)">不从不稳定的读取结果发布。</text>
+            <rect x="770" y="164" width="330" height="104" rx="14" fill="var(--rose-dim)" stroke="var(--rose)"/><text x="792" y="194" fill="var(--rose)">缺失 / 分叉 / 未知</text><text x="792" y="221" fill="var(--text)">关闭式失败</text><text x="792" y="245" font-size="12" font-weight="400" fill="var(--text-dim)">没有普通或强制后门。</text>
+          </g>
+          <path d="M185 302 H935" stroke="var(--text-dim)" stroke-width="2" stroke-dasharray="6 6"/><polygon points="945,302 931,295 931,309" fill="var(--text-dim)"/>
+          <text x="185" y="340" font-size="15" font-weight="700" fill="var(--rose)">更旧 / 不确定</text><text x="935" y="340" font-size="15" font-weight="700" text-anchor="end" fill="var(--green)">更新 / 已验证</text><text x="560" y="392" font-size="13" text-anchor="middle" fill="var(--text-dim)">默认路径只朝向刚刚观察到的已发布版本前进。</text>
+        </svg>
+        <figcaption>方向属于部署关系，而不是操作员的意图。来源关系未知或观察不稳定时，转移必须停止。</figcaption>
+      </figure>
+    </section>
+
+    <section class="section-block" aria-labelledby="incident-heading" style="--i:4">
+      <div class="section-heading"><div><div class="label">脱敏事故复盘</div><h2 id="incident-heading">一个过时的定时任务如何覆盖了更新的运行时</h2></div><p>教训不是“更加小心”，而是从系统中移除不安全的转移，并让无人值守的自动化只读。</p></div>
+      <figure class="diagram">
+        <svg viewBox="0 0 1120 250" role="img" aria-label="二十四小时内的事故与修复时间线">
+          <title>事故修复时间线</title>
+          <line x1="95" y1="118" x2="1025" y2="118" stroke="var(--text-dim)" stroke-width="3"/>
+          <g text-anchor="middle">
+            <circle cx="120" cy="118" r="15" fill="var(--rose)"/><circle cx="410" cy="118" r="15" fill="var(--amber)"/><circle cx="700" cy="118" r="15" fill="var(--blue)"/><circle cx="1000" cy="118" r="15" fill="var(--green)"/>
+            <text x="120" y="54" font-size="14" font-weight="700" fill="var(--text)">新运行时已启用</text><text x="120" y="78" font-size="12" fill="var(--text-dim)">改进尚未发布</text>
+            <text x="410" y="160" font-size="14" font-weight="700" fill="var(--text)">定时任务覆盖</text><text x="410" y="184" font-size="12" fill="var(--text-dim)">未比较版本便复制旧来源</text>
+            <text x="700" y="54" font-size="14" font-weight="700" fill="var(--text)">发现漂移</text><text x="700" y="78" font-size="12" fill="var(--text-dim)">恢复运行时并停止自动化</text>
+            <text x="1000" y="160" font-size="14" font-weight="700" fill="var(--text)">二十四小时内</text><text x="1000" y="184" font-size="12" fill="var(--text-dim)">结构性护栏就位</text>
+          </g>
+        </svg>
+        <figcaption>根因有两部分：新改动尚未到达已发布来源，无人值守同步又未检查版本方向就进行了复制。</figcaption>
+      </figure>
+      <div class="card-row">
+        <div class="card"><h3>第一层 · 版本守卫</h3><p>每次转移都比较版本，只接受当前无需动作、已验证向前推进或单独批准的回退。</p></div>
+        <div class="card"><h3>第二层 · 可恢复备份</h3><p>部署替换的文件会被保留，恢复不依赖从记忆中重新创建旧运行时。</p></div>
+        <div class="card"><h3>第三层 · 只读自动化</h3><p>定时检查可以观察并报告漂移，但不能修复、同步、发布或修改线上环境。</p></div>
+        <div class="card"><h3>操作边界</h3><p>发布、批准回退、恢复状态和接受部署后证据仍由人工负责。</p></div>
+      </div>
+    </section>
+
+    <section class="section-block" aria-labelledby="contract-heading" style="--i:5">
+      <div class="section-heading"><div><div class="label">文档即代码</div><h2 id="contract-heading">契约测试保护政策文本</h2></div><p>当文字规范约束行为时，字面、链接和双语对齐就是接口。页面看起来正常，也可能因为随意改字而产生政策回归。</p></div>
+      <div class="card-row">
+        <div class="card"><h3>锁定公开契约</h3><ul><li>状态标记与事实边界词条保持原样。</li><li>权威链接保持语言对应并可访问。</li><li>双语页面保持相同的结构覆盖。</li><li>渲染后的规范保留源文档的标题集合。</li></ul></div>
+        <div class="card"><h3>测试行为，而非装饰</h3><p>契约测试保护读者和自动化依赖的政策表面；视觉检查另行覆盖深色模式、移动布局和图表溢出。两者结合，让文档可执行但不把文字变成实现细节。</p><div class="meta">字面契约 + 视觉验证</div></div>
+      </div>
+    </section>
+    <footer class="footer"><span>工程札记：<strong>docs/dhf-engineering-notes-cn.html</strong></span><span><a href="./dhf-engineering-notes-en.html">English version</a> · 由 ShipAI.ca 发布为公开 DHF 参考</span></footer>
+  </main>
+</body>
+</html>
