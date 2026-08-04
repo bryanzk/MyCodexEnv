@@ -14,13 +14,13 @@ Stable rules belong in `AGENTS.md`, `README.md`, `docs/repo-index.md`, or
   - `codex/skills/delivery-harness-framework/SKILL.md`
 - blocked_sources: none
 - unsafe_inputs: none
-- next_safe_task: Review final W6a receipts and retain /tmp/mce-w6a-backup.j4AxHE until the operator chooses recovery or cleanup
+- next_safe_task: Observe next 09:00 report-only refresh output
 - required_commands:
   - `python3 test_runner.py`
   - `git diff --check`
   - `./scripts/verify_codex_env.sh --repo-root "$(pwd)" --codex-home "$HOME/.codex" --claude-home "$HOME/.claude"`
-- latest_checkpoint: 2026-08-02T23:45:23-04:00 W6a completed after explicit approval: 15-file targeted runtime sync is byte-identical, full suite is green, and runtime parity verification passes
-- latest_verification: 2026-08-02T23:45:23-04:00 command=PYTHONDONTWRITEBYTECODE=1 python3 test_runner.py && PYTHONDONTWRITEBYTECODE=1 ./scripts/verify_codex_env.sh --repo-root "$(pwd)" --codex-home /Users/kezheng/.codex --claude-home /Users/kezheng/.claude; exit_code=0; key_output=15/15 cmp; ran=100 passed=100 skipped=0 failed=0; Verification passed.; infra ledger valid entries=26
+- latest_checkpoint: 2026-08-03T22:23:43-04:00 Runtime parity restored under v0 transition guard: bootstrap sync from pushed main, 15/15 cmp, full suite green
+- latest_verification: 2026-08-03T22:23:43-04:00 command=sync_codex_home.sh + 15-path cmp + test_runner.py + verify_codex_env.sh; exit_code=0; key_output=15/15; suite green; manifest source_commit=63baf6d2fed35cfc13631e8f99687d518095eeff
 - compaction_ordinal: 2
 - transition_key: MCE-20260802-harness-compaction-governance:W6a
 - gate_decision: none
@@ -2445,3 +2445,22 @@ Stable rules belong in `AGENTS.md`, `README.md`, `docs/repo-index.md`, or
 - blockers:
   - none
 - next_safe_task: Review final W6a receipts and retain /tmp/mce-w6a-backup.j4AxHE until the operator chooses recovery or cleanup
+
+### 2026-08-03T22:23:43-04:00
+- phase: validation
+- event: checkpoint
+- summary: Runtime parity restored under v0 transition guard: bootstrap sync from pushed main, 15/15 cmp, full suite green
+- git:
+  - branch: main
+  - latest_commit: 63baf6d
+  - dirty_status: clean
+  - dirty_count: 0
+- changed_surfaces:
+  - none
+- verification:
+  - command: `sync_codex_home.sh + 15-path cmp + test_runner.py + verify_codex_env.sh`
+  - exit_code: 0
+  - key_output: 15/15; suite green; manifest source_commit=63baf6d2fed35cfc13631e8f99687d518095eeff
+- blockers:
+  - none
+- next_safe_task: Observe next 09:00 report-only refresh output
