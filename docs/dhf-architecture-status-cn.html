@@ -25,8 +25,8 @@
 </head>
 <body>
   <main class="wrap">
-    <aside class="dhf-status-bar" data-dhf-status="2026-08-03" aria-label="DHF 当前状态">
-      <strong>架构状态 · 2026-08-03</strong>
+    <aside class="dhf-status-bar" data-dhf-status="2026-08-04" aria-label="DHF 当前状态">
+      <strong>架构状态 · 2026-08-04</strong>
       <span>源码、运行时、公开发布与独立核心的统一事实页。</span>
       <a href="./dhf-architecture-status-cn.html" aria-current="page">当前中文状态</a>
       <a href="./dhf-architecture-status-en.html">English status</a>
@@ -45,7 +45,7 @@
       <h2>四种状态，不能用一个含糊的“完成”代替</h2>
       <div class="dhf-status-grid">
         <article class="dhf-status-card status-source"><h3>仓库源码：已实现</h3><p>已审计的本地 <code>main</code> 包含 lifecycle router、hooks、guard、evidence schemas、recovery、checkpoint、ledger、transition store、compaction observation、session bearing、context meter 和 tier-1/2 behavior eval。</p></article>
-        <article class="dhf-status-card status-runtime"><h3>运行时一致性：已发现漂移</h3><p>8 月初完成过一次完整部署验证；随后的审计发现活动运行时相对已发布源码出现漂移。因此 DHF 不预设一致性——每次部署后重新验证，验证通过前不作声明。</p></article>
+        <article class="dhf-status-card status-runtime"><h3>运行时一致性：已于 2026-08-04 恢复</h3><p>运行时一致性已于 2026-08-04 经精确源码部署验证恢复。DHF 仍不预设一致性：每次部署后持续重新验证，没有当前证据就不作运行时声明。</p></article>
         <article class="dhf-status-card status-public"><h3>公开页面：仅为文档</h3><p>GitHub Pages 说明源码架构和验证边界。页面可访问不代表 hooks 已安装、测试已绿，也不代表某台机器运行着相同源码。</p></article>
         <article class="dhf-status-card status-extract"><h3>独立 DHF 核心：尚未发布</h3><p>分阶段抽取已有评估方向和前置设计，但尚无独立仓库、不可变 release、tag 或运行时激活声明；MyCodexEnv 仍是当前工作源码与 consumer 边界。</p></article>
       </div>

@@ -58,6 +58,7 @@ SURFACES_MANIFEST = ROOT / "docs" / "surfaces.json"
 CHECK_SURFACES = ROOT / "scripts" / "check_surfaces.py"
 SKILL_GOVERNANCE_DOC = ROOT / "docs" / "skill-governance-20260608.md"
 LIFECYCLE_SKILL_ROUTING_DOC = ROOT / "docs" / "LIFECYCLE_SKILL_ROUTING.md"
+LIFECYCLE_SKILL_ROUTING_HTML = ROOT / "docs" / "lifecycle-skill-routing-en.html"
 BRANCH_CLEANUP = ROOT / "codex" / "skills" / "repo-branch-governance" / "scripts" / "cleanup_merged_branches.sh"
 CI_WORKFLOW = ROOT / ".github" / "workflows" / "ci.yml"
 PUBLIC_INDEX_HTML = ROOT / "docs" / "index.html"
@@ -2317,7 +2318,7 @@ def test_lifecycle_skill_routing_doc_is_discoverable():
                 'href="./project-lifecycle-harness-flow-en.html"',
                 'href="./project-lifecycle-harness-flow-skills-en-status-style.html"',
                 'href="./project-lifecycle-harness-flow-skills-en.html"',
-                'href="./LIFECYCLE_SKILL_ROUTING.md"',
+                'href="./lifecycle-skill-routing-en.html"',
                 "domain and ADR alignment",
                 "Open the English Flow Map",
                 "Learn the framework",
@@ -2345,7 +2346,7 @@ def test_lifecycle_skill_routing_doc_is_discoverable():
                 'href="./delivery-harness-beginner-guide-cn.html"',
                 'href="./project-lifecycle-harness-flow-cn.html"',
                 'href="./project-lifecycle-harness-flow-skills-zh-status-style.html"',
-                'href="./LIFECYCLE_SKILL_ROUTING.md"',
+                'href="./lifecycle-skill-routing-en.html"',
             ],
         ),
         PUBLIC_INDEX_EN_HTML.name: (
@@ -2359,7 +2360,7 @@ def test_lifecycle_skill_routing_doc_is_discoverable():
                 'href="./delivery-harness-beginner-guide-en.html"',
                 'href="./project-lifecycle-harness-flow-en.html"',
                 'href="./project-lifecycle-harness-flow-skills-en-status-style.html"',
-                'href="./LIFECYCLE_SKILL_ROUTING.md"',
+                'href="./lifecycle-skill-routing-en.html"',
             ],
         ),
     }
@@ -2392,7 +2393,7 @@ def test_lifecycle_skill_routing_doc_is_discoverable():
                 "timestamp",
                 'href="./project-lifecycle-harness-flow-en.html"',
                 'href="./project-lifecycle-harness-flow-skills-en-status-style.html"',
-                'href="./LIFECYCLE_SKILL_ROUTING.md"',
+                'href="./lifecycle-skill-routing-en.html"',
                 "Published by ShipAI.ca as a public DHF reference",
             ],
         ),
@@ -2410,7 +2411,7 @@ def test_lifecycle_skill_routing_doc_is_discoverable():
                 "verification evidence",
                 'href="./delivery-harness-beginner-guide-en.html"',
                 'href="./project-lifecycle-harness-flow-skills-en-status-style.html"',
-                'href="./LIFECYCLE_SKILL_ROUTING.md"',
+                'href="./lifecycle-skill-routing-en.html"',
                 "Published by ShipAI.ca as a public DHF reference",
             ],
         ),
@@ -2549,7 +2550,7 @@ def test_lifecycle_skill_routing_doc_is_discoverable():
             flow_html,
             [
                 'href="./project-lifecycle-harness-flow-skills.html"',
-                'href="./LIFECYCLE_SKILL_ROUTING.md"',
+                'href="./lifecycle-skill-routing-en.html"',
                 'href="./HARNESS_RUNTIME.md"',
                 'href="./AGENT_HARNESS_STATUS.md"',
                 'href="./CODEX_ENV_REPRODUCTION.md"',
@@ -2560,7 +2561,7 @@ def test_lifecycle_skill_routing_doc_is_discoverable():
             skills_html,
             [
                 'href="./project-lifecycle-harness-flow-cn.html"',
-                'href="./LIFECYCLE_SKILL_ROUTING.md"',
+                'href="./lifecycle-skill-routing-en.html"',
                 'href="./HARNESS_RUNTIME.md"',
                 'href="./AGENT_HARNESS_STATUS.md"',
                 'href="./CODEX_ENV_REPRODUCTION.md"',
@@ -8058,6 +8059,9 @@ def test_public_dhf_architecture_status_alignment():
     english_pages = [
         "index-en.html",
         "delivery-harness-beginner-guide-en.html",
+        "dhf-for-product-and-field-en.html",
+        "dhf-engineering-notes-en.html",
+        "lifecycle-skill-routing-en.html",
         "project-lifecycle-harness-flow-en.html",
         "project-lifecycle-harness-flow-skills-en-status-style.html",
         "dhf-workflow-skills-en.html",
@@ -8067,6 +8071,8 @@ def test_public_dhf_architecture_status_alignment():
     chinese_pages = [
         "index.html",
         "delivery-harness-beginner-guide-cn.html",
+        "dhf-for-product-and-field-cn.html",
+        "dhf-engineering-notes-cn.html",
         "project-lifecycle-harness-flow-cn.html",
         "project-lifecycle-harness-flow-skills-zh-status-style.html",
         "dhf-workflow-skills-cn.html",
@@ -8079,7 +8085,7 @@ def test_public_dhf_architecture_status_alignment():
         text = path.read_text(encoding="utf-8")
         require('href="./dhf-site-status.css"' in text,
                 f"public DHF page missing shared status styles: {filename}")
-        require('data-dhf-status="2026-08-03"' in text,
+        require('data-dhf-status="2026-08-04"' in text,
                 f"public DHF page missing current status marker: {filename}")
         expected_status = (
             "./dhf-architecture-status-en.html"
@@ -8093,7 +8099,7 @@ def test_public_dhf_architecture_status_alignment():
     chinese_status = (ROOT / "docs" / "dhf-architecture-status-cn.html").read_text(encoding="utf-8")
     for term in [
         "Source available is not runtime active",
-        "Runtime parity: drift detected",
+        "Runtime parity: restored 2026-08-04",
         "Independent DHF core: not published",
         "compaction_probe.py",
         "session_bearing.py",
@@ -8104,7 +8110,7 @@ def test_public_dhf_architecture_status_alignment():
         require(term in english_status, f"English DHF status page missing truth boundary: {term}")
     for term in [
         "源码存在不等于运行时已激活",
-        "运行时一致性：已发现漂移",
+        "运行时一致性：已于 2026-08-04 恢复",
         "独立 DHF 核心：尚未发布",
         "compaction_probe.py",
         "session_bearing.py",
@@ -8127,6 +8133,20 @@ def test_public_dhf_architecture_status_alignment():
                 f"public Markdown page missing status contract marker: {filename}")
         require("dhf-architecture-status-en.html" in text and "dhf-architecture-status-cn.html" in text,
                 f"public Markdown page missing bilingual status links: {filename}")
+
+    routing_markdown = LIFECYCLE_SKILL_ROUTING_DOC.read_text(encoding="utf-8")
+    routing_html = LIFECYCLE_SKILL_ROUTING_HTML.read_text(encoding="utf-8")
+    source_headings = [
+        line.lstrip("#").strip()
+        for line in routing_markdown.splitlines()
+        if line.startswith("#")
+    ]
+    require(source_headings, "lifecycle routing Markdown should contain headings")
+    for heading in source_headings:
+        require(
+            f">{heading}</h" in routing_html,
+            f"rendered lifecycle routing HTML missing source heading: {heading}",
+        )
 
     print("[PASS] public DHF architecture status alignment")
 

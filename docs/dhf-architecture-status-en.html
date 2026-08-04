@@ -52,8 +52,8 @@
 </head>
 <body>
   <main class="wrap">
-    <aside class="dhf-status-bar" data-dhf-status="2026-08-03" aria-label="Current DHF status">
-      <strong>Architecture status · 2026-08-03</strong>
+    <aside class="dhf-status-bar" data-dhf-status="2026-08-04" aria-label="Current DHF status">
+      <strong>Architecture status · 2026-08-04</strong>
       <span>Canonical source, runtime, publication, and independent-core status.</span>
       <a href="./dhf-architecture-status-en.html" aria-current="page">Current English status</a>
       <a href="./dhf-architecture-status-cn.html">中文状态页</a>
@@ -72,7 +72,7 @@
       <h2>Four statuses, never one vague “done”</h2>
       <div class="dhf-status-grid">
         <article class="dhf-status-card status-source"><h3>Repository source: implemented</h3><p>The audited local <code>main</code> contains the lifecycle router, hooks, guard, evidence schemas, recovery, checkpoint, ledger, transition store, compaction observation, session bearing, context meter, and tier-1/2 behavior evals.</p></article>
-        <article class="dhf-status-card status-runtime"><h3>Runtime parity: drift detected</h3><p>A full deployment was verified in early August; a follow-up audit later found the active runtime had drifted from the published source. DHF therefore does not claim active-runtime parity until it is re-verified after each deployment.</p></article>
+        <article class="dhf-status-card status-runtime"><h3>Runtime parity: restored 2026-08-04</h3><p>Runtime parity was restored on 2026-08-04 through exact-source deployment verification. DHF still does not assume parity: it is re-verified after every deployment, and no runtime claim is made without current evidence.</p></article>
         <article class="dhf-status-card status-public"><h3>Public pages: documentation only</h3><p>GitHub Pages explains source architecture and verification boundaries. A reachable page is not proof that hooks are installed, tests are green, or a particular machine is running the same source.</p></article>
         <article class="dhf-status-card status-extract"><h3>Independent DHF core: not published</h3><p>Staged extraction has a reviewed direction and prerequisite design, but no independent repository, immutable release, tag, or runtime activation is asserted. MyCodexEnv remains the working source and consumer boundary.</p></article>
       </div>
