@@ -1,0 +1,593 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Lifecycle and Skill Routing · Written Specification</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,650;9..144,760&family=IBM+Plex+Mono:wght@400;500;600&family=Atkinson+Hyperlegible:wght@400;700&display=swap" rel="stylesheet">
+  <style>
+    :root { --font-body:'Atkinson Hyperlegible',Verdana,sans-serif;--font-display:'Fraunces',Georgia,serif;--font-mono:'IBM Plex Mono',monospace;--bg:#f7f4ec;--surface:#fffdf8;--surface2:#ebe6da;--border:rgba(51,42,33,.14);--text:#231f1a;--text-dim:#665f55;--green:#147a62;--green-dim:rgba(20,122,98,.11);--amber:#a15f22;--amber-dim:rgba(161,95,34,.12);--rose:#a9475b;--rose-dim:rgba(169,71,91,.1);--blue:#2f6f92;--blue-dim:rgba(47,111,146,.1);--shadow:0 18px 44px rgba(51,42,33,.1),0 2px 10px rgba(51,42,33,.06) }
+    @media(prefers-color-scheme:dark){:root{--bg:#15120f;--surface:#211c18;--surface2:#2b251f;--border:rgba(255,239,218,.13);--text:#f6eee3;--text-dim:#b8aa9a;--green:#5cd0b2;--green-dim:rgba(92,208,178,.13);--amber:#f3b36b;--amber-dim:rgba(243,179,107,.13);--rose:#f095a5;--rose-dim:rgba(240,149,165,.12);--blue:#91c8e6;--blue-dim:rgba(145,200,230,.12)}}
+    *{box-sizing:border-box}body{margin:0;min-height:100vh;color:var(--text);font-family:var(--font-body);background-color:var(--bg);background-image:radial-gradient(circle at 12% 8%,var(--green-dim) 0 18%,transparent 38%),radial-gradient(circle at 90% 18%,var(--amber-dim) 0 18%,transparent 36%),radial-gradient(circle at 48% 100%,var(--rose-dim) 0 22%,transparent 46%),linear-gradient(135deg,transparent 0 28px,var(--border) 29px,transparent 30px);background-size:auto,auto,auto,42px 42px;padding:38px;overflow-wrap:break-word}.wrap{max-width:1180px;margin:0 auto;display:grid;gap:24px}.wrap>*{min-width:0}
+    @keyframes fadeUp{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:translateY(0)}}.hero,.strip,.article{animation:fadeUp .42s ease-out both}.hero{min-height:330px;display:grid;align-content:center;background:color-mix(in srgb,var(--surface) 88%,var(--green) 12%);border:1px solid color-mix(in srgb,var(--border) 70%,var(--green) 30%);border-radius:22px;padding:clamp(28px,5vw,58px);box-shadow:var(--shadow)}.eyebrow,.tag,.source-note{font-family:var(--font-mono);letter-spacing:.09em;text-transform:uppercase}.eyebrow{color:var(--green);font-size:13px;font-weight:600;margin-bottom:18px}.hero h1{margin:0;font-family:var(--font-display);font-size:clamp(38px,5.4vw,68px);line-height:.98}.lead{max-width:860px;margin:24px 0 0;color:var(--text-dim);font-size:clamp(18px,2.2vw,24px);line-height:1.5}.strip{display:flex;flex-wrap:wrap;gap:10px;padding:14px;background:color-mix(in srgb,var(--surface) 76%,transparent);border:1px solid var(--border);border-radius:16px}.tag{display:inline-flex;align-items:center;min-height:34px;padding:7px 12px;color:var(--green);background:var(--green-dim);border:1px solid color-mix(in srgb,var(--green) 24%,transparent);border-radius:999px;font-size:11px;text-decoration:none}
+    .article{min-width:0;background:var(--surface);border:1px solid var(--border);border-radius:20px;padding:clamp(22px,4vw,48px);box-shadow:0 8px 26px rgba(51,42,33,.07)}.source-note{margin:0 0 28px;padding:14px 16px;color:var(--blue);background:var(--blue-dim);border:1px solid color-mix(in srgb,var(--blue) 28%,transparent);border-radius:12px;font-size:11px;line-height:1.6;text-transform:none}.article h1{display:none}.article h2{margin:46px 0 14px;padding-top:24px;border-top:1px solid var(--border);font-family:var(--font-display);font-size:clamp(28px,3vw,40px);line-height:1}.article h2:first-of-type{margin-top:0}.article p,.article li{color:var(--text-dim);font-size:15.5px;line-height:1.62}.article a{color:var(--green)}.article code{font-family:var(--font-mono);font-size:.88em;color:var(--text);background:var(--surface2);border-radius:5px;padding:2px 5px}.article pre{overflow-x:auto;padding:18px;background:var(--surface2);border:1px solid var(--border);border-radius:12px}.article pre code{padding:0;background:none}.article blockquote{margin:20px 0;padding:14px 18px;background:var(--green-dim);border-left:4px solid var(--green);border-radius:0 12px 12px 0}.article blockquote p{margin:0;color:var(--text)}.table-wrap{overflow-x:auto;margin:18px 0 28px;border:1px solid var(--border);border-radius:14px}.article table{width:100%;border-collapse:collapse;min-width:760px;background:var(--surface)}.article th,.article td{padding:12px 14px;text-align:left;vertical-align:top;border-bottom:1px solid var(--border);line-height:1.45}.article th{color:var(--text);background:var(--surface2);font-family:var(--font-mono);font-size:12px}.article td{color:var(--text-dim);font-size:14px}.article tr:last-child td{border-bottom:0}.footer{display:flex;justify-content:space-between;gap:16px;color:var(--text-dim);border-top:1px solid var(--border);padding-top:18px;font-family:var(--font-mono);font-size:12px;line-height:1.5}.footer a{color:var(--green)}
+    @media(max-width:860px){body{padding:18px}.hero{min-height:0}.footer{flex-direction:column}}
+  </style>
+  <link rel="stylesheet" href="./dhf-site-status.css">
+</head>
+<body>
+  <main class="wrap">
+    <aside class="dhf-status-bar" data-dhf-status="2026-08-03" aria-label="Current DHF status"><strong>Architecture status · 2026-08-03</strong><span>Source, runtime, publication, and independent-core status are separate.</span><a href="./dhf-architecture-status-en.html">Open current status</a></aside>
+    <section class="hero"><div class="eyebrow">DHF Written Specification</div><h1>Lifecycle and skill routing.</h1><p class="lead">The complete stage map for moving from recovered facts to bounded work, fresh verification, and a recoverable handoff.</p></section>
+    <nav class="strip" aria-label="Quick links"><a class="tag" href="./index-en.html">English landing</a><a class="tag" href="./dhf-engineering-notes-en.html">Engineering notes</a><a class="tag" href="./dhf-architecture-status-en.html">Current status</a></nav>
+    <article class="article">
+      <p class="source-note">Source file: docs/LIFECYCLE_SKILL_ROUTING.md (maintainer entry). Regenerate this HTML page after changing the source file.</p>
+<h1>Lifecycle And Skill Routing</h1>
+<blockquote>
+<p><strong>DHF_PUBLIC_STATUS_V1 · 2026-08-03:</strong> This router documents the current
+stage-based source architecture. Source availability does not prove runtime
+activation or publication. See the canonical status in
+<a href="./dhf-architecture-status-en.html">English</a> or
+<a href="./dhf-architecture-status-cn.html">中文</a>. The proposed
+light/standard/governed simplification profiles are not active.</p>
+</blockquote>
+<h2>Purpose</h2>
+<p>This document explains which workflows MyCodexEnv covers, how the Harness
+Runtime maps work to lifecycle stages, and which Codex/gstack skills should be
+used at each stage.</p>
+<p>MyCodexEnv has three layers:</p>
+<ul>
+<li>Runtime layer: <code>AGENTS.md</code>, hooks, tool policy, evidence schema, verification
+scripts, and checkpoint helpers.</li>
+<li>Router layer: <code>delivery-harness-framework</code>, which reads durable state,
+classifies the lifecycle stage, and selects the next workflow.</li>
+<li>Specialist layer: repo-specific lifecycle adapters, gstack skills, local
+planning/testing/review skills, and deterministic helper scripts.</li>
+</ul>
+<p>The generic lifecycle skill should stay generic. Project-only paths, fixtures,
+checks, smoke matrices, and business safety boundaries belong in repo-specific
+adapter skills.</p>
+<h2>Visual Guides</h2>
+<ul>
+<li><code>docs/dhf-architecture-status-en.html</code>: canonical English source/runtime/publication status.</li>
+<li><code>docs/dhf-architecture-status-cn.html</code>: canonical Chinese source/runtime/publication status.</li>
+<li><code>docs/index.html</code>: Chinese Delivery Harness Framework public landing page for GitHub Pages.</li>
+<li><code>docs/index-en.html</code>: English Delivery Harness Framework public landing page for English readers.</li>
+<li><code>docs/dhf-workflow-skills-cn.html</code>: 中文 DHF workflow skills matrix，逐步列出每个阶段使用的 skill、职责说明和 GitHub 源码链接。</li>
+<li><code>docs/dhf-workflow-skills-en.html</code>: English DHF workflow skills matrix with stage-by-stage skill explanations and GitHub source links.</li>
+<li><code>docs/delivery-harness-beginner-guide-cn.html</code>: 中文 beginner guide，用一句话定义、三层架构、五步流程、例子和术语表解释 Delivery Harness Framework。</li>
+<li><code>docs/project-lifecycle-harness-flow-cn.html</code>: 中文纵向主流程图，帮助用户从入口、状态恢复、阶段分类一路看到验证、发布和交接。</li>
+<li><code>docs/project-lifecycle-harness-flow-skills.html</code>: 中文 skill/helper 路由速查页，帮助用户理解每个生命周期阶段应使用哪个 skill，以及 helper 的执行职责。</li>
+<li><code>docs/project-lifecycle-harness-flow-skills-zh-status-style.html</code>: 新版中文 Delivery Harness Framework skill/helper 路由图，使用和 LinkedIn 素材一致的状态风格。</li>
+<li><code>docs/project-lifecycle-harness-flow-skills-en-status-style.html</code>: English status-style Delivery Harness Framework flow map for public sharing.</li>
+</ul>
+<h2>Related Documentation</h2>
+<ul>
+<li><code>README.md</code>: top-level quick start and Harness Runtime overview.</li>
+<li><code>docs/repo-index.md</code>: low-token repo navigation and runtime surface index.</li>
+<li><code>docs/index.html</code>: Chinese public Delivery Harness Framework docs entry.</li>
+<li><code>docs/index-en.html</code>: English public Delivery Harness Framework docs entry.</li>
+<li><code>docs/dhf-workflow-skills-cn.html</code>: Chinese workflow skill inventory with GitHub links.</li>
+<li><code>docs/dhf-workflow-skills-en.html</code>: English workflow skill inventory with GitHub links.</li>
+<li><code>docs/delivery-harness-beginner-guide-cn.html</code>: beginner-oriented Chinese explanation.</li>
+<li><code>docs/HARNESS_RUNTIME.md</code>: lifecycle, evidence, checkpoint, permission, and subagent contracts.</li>
+<li><code>docs/AGENT_HARNESS_STATUS.md</code>: Agent Harness workflow/infra status map.</li>
+<li><code>docs/CODEX_ENV_REPRODUCTION.md</code>: Codex + Claude environment reproduction guide.</li>
+<li><code>docs/project-lifecycle-harness-flow-cn.html</code>: Chinese vertical lifecycle flow.</li>
+<li><code>docs/project-lifecycle-harness-flow-skills.html</code>: Chinese lifecycle skill/helper routing visual guide.</li>
+<li><code>docs/project-lifecycle-harness-flow-skills-zh-status-style.html</code>: current styled Chinese lifecycle skill/helper routing visual guide.</li>
+</ul>
+<h2>Covered Workflows</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Workflow</th>
+<th>What It Covers</th>
+<th>Primary Entry</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Environment reproduction</td>
+<td>Clone, bootstrap, sync Codex/Claude homes, install pinned prerequisites, verify local setup.</td>
+<td><code>README.md</code>, <code>bootstrap.sh</code>, <code>scripts/verify_codex_env.sh</code></td>
+</tr>
+<tr>
+<td>Global rules and repo routing</td>
+<td>Keep cross-repo Codex rules in one source and route repo-local constraints through <code>AGENTS.md</code>.</td>
+<td><code>codex/AGENTS.md</code>, root <code>AGENTS.md</code>, <code>scripts/manage_agents.py</code></td>
+</tr>
+<tr>
+<td>Skill synchronization</td>
+<td>Keep <code>codex/skills/*</code> as source of truth and copy managed skills into <code>~/.codex/skills/*</code>.</td>
+<td><code>scripts/sync_codex_home.sh</code></td>
+</tr>
+<tr>
+<td>Harness lifecycle routing</td>
+<td>Recover state, classify phase, choose generic/repo-specific/gstack workflow, define gates.</td>
+<td><code>delivery-harness-framework</code></td>
+</tr>
+<tr>
+<td>Requirements and planning</td>
+<td>Capture success criteria, scope, constraints, domain docs, ADR conflicts, vertical slices, risks, and validation gates before implementation.</td>
+<td><code>planner</code>, <code>req-to-dev</code>, <code>task-flow-orchestrator</code>, <code>scripts/harness_requirements.py</code></td>
+</tr>
+<tr>
+<td>Backlog-ready issue/spec authoring</td>
+<td>Turn vague implementation intent into a bounded issue or executable spec before coding starts.</td>
+<td>vendored gstack <code>spec</code>, <code>delivery-harness-framework</code></td>
+</tr>
+<tr>
+<td>Development execution</td>
+<td>Make scoped repo changes, use tests first when behavior changes, preserve unrelated user work.</td>
+<td><code>tdd-guide</code>, <code>atdd-guide</code>, repo-local workflow</td>
+</tr>
+<tr>
+<td>Validation and evidence</td>
+<td>Run fresh tests/checks and record <code>check</code>, <code>how it exited</code>, <code>what it showed</code>, <code>when it ran</code>.</td>
+<td><code>verification-loop</code>, <code>scripts/harness_evidence.py</code>, <code>scripts/harness_report.py</code></td>
+</tr>
+<tr>
+<td>Review and QA</td>
+<td>Inspect diffs, browser behavior, security/privacy boundaries, and user-visible regressions.</td>
+<td><code>gstack-review</code>, <code>code-reviewer</code>, <code>gstack-qa</code>, <code>security-reviewer</code></td>
+</tr>
+<tr>
+<td>Committee review loop</td>
+<td>Run an explicit expert-committee scoring loop with a separate revision worker until a target rating is met.</td>
+<td><code>committee-review-loop</code></td>
+</tr>
+<tr>
+<td>Ship and deployment</td>
+<td>Commit/PR/release/deploy/canary only when explicitly requested and verified.</td>
+<td><code>gstack-ship</code>, <code>gstack-land-and-deploy</code>, <code>gstack-canary</code></td>
+</tr>
+<tr>
+<td>Handoff and recovery</td>
+<td>Append state, preserve next safe task, recover without chat history, and optionally save/restore user-facing gstack context.</td>
+<td><code>scripts/harness_checkpoint.py</code>, <code>scripts/harness_recover.py</code>, vendored gstack <code>context-save</code> / <code>context-restore</code></td>
+</tr>
+<tr>
+<td>Documentation release</td>
+<td>Keep README/docs aligned with shipped behavior and skill/runtime changes; generate missing docs, polished artifacts, or source-backed diagrams when requested.</td>
+<td><code>gstack-document-release</code>, vendored gstack <code>document-generate</code>, vendored gstack <code>make-pdf</code>, vendored gstack <code>diagram</code>, <code>doc-updater</code></td>
+</tr>
+</tbody></table></div>
+<h2>Lifecycle Stage Map</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Stage</th>
+<th>Signals</th>
+<th>Default Permission</th>
+<th>Skill Or Helper</th>
+<th>Purpose</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>research</code></td>
+<td>Unknown repo, stale handoff, unclear source ownership, missing context.</td>
+<td>Read-only.</td>
+<td><code>delivery-harness-framework</code>, <code>scripts/harness_recover.py</code>, <code>scripts/harness_env_probe.py</code></td>
+<td>Read durable sources and recover the next safe task before acting.</td>
+</tr>
+<tr>
+<td><code>requirements</code></td>
+<td>Goal, audience, acceptance criteria, scope, constraints, or domain language are unclear.</td>
+<td>Read-only.</td>
+<td><code>planner</code>, <code>req-to-dev</code>, <code>scripts/harness_requirements.py</code></td>
+<td>Turn ambiguity into success criteria, read <code>CONTEXT.md</code> / <code>CONTEXT-MAP.md</code> and relevant ADRs when present, then validate requirements artifacts before treating them as source of truth.</td>
+</tr>
+<tr>
+<td><code>planning</code></td>
+<td>The user wants a backlog-ready GitHub issue, ticket, or executable spec before implementation begins.</td>
+<td>Read-only by default.</td>
+<td>vendored gstack <code>spec</code>, <code>delivery-harness-framework</code></td>
+<td>Preserve runtime state, lane boundaries, and validation gates while turning vague intent into a bounded spec or issue.</td>
+</tr>
+<tr>
+<td><code>planning</code></td>
+<td>Architecture, API shape, migration, runtime, data flow, cross-module decisions, or multi-step work breakdown.</td>
+<td>Read-only by default.</td>
+<td><code>gstack-plan-eng-review</code>, <code>planner</code>, <code>task-flow-orchestrator</code></td>
+<td>Produce an implementation plan, vertical slice breakdown, risk list, and validation gate before edits.</td>
+</tr>
+<tr>
+<td><code>development</code></td>
+<td>Acceptance criteria are clear and touched files/modules are bounded.</td>
+<td>Scoped writes.</td>
+<td><code>tdd-guide</code>, <code>atdd-guide</code>, repo workflow, scoped worker agents</td>
+<td>Implement the change with tests appropriate to the risk.</td>
+</tr>
+<tr>
+<td><code>validation</code></td>
+<td>Work is implemented or docs/config changed and needs fresh evidence.</td>
+<td>Tests/checks by default.</td>
+<td><code>verification-loop</code>, <code>scripts/harness_report.py</code>, <code>scripts/verify_codex_env.sh</code></td>
+<td>Prove the result with fresh check output and required evidence fields.</td>
+</tr>
+<tr>
+<td><code>review</code></td>
+<td>Diff exists, work is near handoff/PR/landing, or user asks for review.</td>
+<td>Read-only by default.</td>
+<td><code>gstack-review</code>, <code>code-reviewer</code>, <code>review-swarm</code>, <code>security-reviewer</code></td>
+<td>Find bugs, regressions, security risks, and missing tests before shipping.</td>
+</tr>
+<tr>
+<td><code>review</code></td>
+<td>User explicitly asks for a committee, expert panel, subagent reviewer/worker split, rating loop, or improvement until a score such as <code>9.5/10</code>.</td>
+<td>Committee read-only; revision worker scoped writes.</td>
+<td><code>committee-review-loop</code>, <code>scripts/harness_agent_team.py</code></td>
+<td>Keep ordinary review routes separate while iterating committee findings into bounded, verified revisions.</td>
+</tr>
+<tr>
+<td><code>ship</code></td>
+<td>User requests commit, push, PR, merge, release, deploy, production verification, or version-slot queue visibility.</td>
+<td>Requested release actions only.</td>
+<td><code>gstack-ship</code>, <code>gstack-land-and-deploy</code>, <code>gstack-canary</code>, vendored gstack <code>landing-report</code></td>
+<td>Complete release steps, verify deployment, and preserve rollback or version-queue context.</td>
+</tr>
+<tr>
+<td><code>handoff</code></td>
+<td>Session is ending, task crosses phases, work spans sessions, next safe task must survive, or the user asks to save/restore working context.</td>
+<td>Docs/state only unless a gstack context skill is explicitly invoked.</td>
+<td><code>scripts/harness_checkpoint.py</code>, vendored gstack <code>context-save</code> / <code>context-restore</code>, <code>gstack-retro</code>, <code>gstack-learn</code></td>
+<td>Append harness checkpoint state, capture blockers, preserve resumable user context, and leave a recoverable next step.</td>
+</tr>
+</tbody></table></div>
+<h2>Specialist Skill Map</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Skill</th>
+<th>Use For</th>
+<th>Notes</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>delivery-harness-framework</code></td>
+<td>Generic startup/resume routing, durable state reads, phase classification, helper selection, evidence expectations.</td>
+<td>Use first for complex or resumed work; delegate after phase selection.</td>
+</tr>
+<tr>
+<td>repo-specific lifecycle harnesses</td>
+<td>Project paths, local checks, business fixtures, deployment topology, smoke matrices.</td>
+<td>These adapters take over after the generic router identifies a repo-specific boundary.</td>
+</tr>
+<tr>
+<td><code>gstack-plan-ceo-review</code></td>
+<td>Product framing, user value, scope, demo boundaries, strategic tradeoffs.</td>
+<td>Use when product judgment is the work.</td>
+</tr>
+<tr>
+<td>vendored gstack <code>spec</code></td>
+<td>Backlog-ready GitHub issues, tickets, and executable specs with explicit acceptance criteria before implementation begins.</td>
+<td>Use when the work needs a durable spec artifact rather than immediate coding.</td>
+</tr>
+<tr>
+<td><code>gstack-office-hours</code></td>
+<td>Founder-style pressure testing, market/user/business clarity.</td>
+<td>Useful before committing to a product direction. In gstack <code>1.52.x</code>, it can use configured gbrain context during planning preflight.</td>
+</tr>
+<tr>
+<td><code>gstack-plan-eng-review</code></td>
+<td>Architecture, data model, API contract, migration, performance, test strategy, and distribution/publish readiness for new artifacts.</td>
+<td>Use before implementation on complex engineering plans; the current upstream workflow is explicitly search-aware, completeness-biased, and brain-aware when gbrain is configured.</td>
+</tr>
+<tr>
+<td><code>gstack-plan-design-review</code></td>
+<td>UX structure, visual direction, responsive behavior, design acceptance, and mockup-first plan refinement.</td>
+<td>Use before UI implementation or major design changes. When a design binary/mockup path exists, prefer visual review over prose-only critique; when gbrain is configured, let the planning skill consume it as specialist context.</td>
+</tr>
+<tr>
+<td><code>gstack-qa</code></td>
+<td>Browser QA, screenshots, console/network checks, responsiveness, accessibility smoke, then iterative bug fixing with regression evidence.</td>
+<td>Use for user-facing web behavior when fixes are allowed.</td>
+</tr>
+<tr>
+<td><code>gstack-qa-only</code></td>
+<td>Report-only QA when fixes should not be applied automatically.</td>
+<td>Keeps QA read-only.</td>
+</tr>
+<tr>
+<td><code>gstack-ios-qa</code></td>
+<td>Real-device iOS QA on a live app via the embedded StateServer and agent loop.</td>
+<td>Use for &quot;test my iPhone app&quot;, device-only bug hunts, or live iOS smoke runs.</td>
+</tr>
+<tr>
+<td><code>gstack-ios-design-review</code></td>
+<td>Real-device iOS visual audit against Apple HIG and app design intent.</td>
+<td>Use for shipped iOS UI review, not pre-implementation design planning.</td>
+</tr>
+<tr>
+<td><code>gstack-ios-fix</code></td>
+<td>Closed-loop iOS bug fixing after a real-device repro exists.</td>
+<td>Use when an iOS defect should be fixed, redeployed, and reverified autonomously.</td>
+</tr>
+<tr>
+<td>vendored gstack <code>ios-sync</code> / <code>ios-clean</code></td>
+<td>Maintain or remove the gstack iOS debug bridge and debug-only instrumentation.</td>
+<td>Use only for explicit iOS bridge regeneration or release-cleanup requests.</td>
+</tr>
+<tr>
+<td><code>gstack-cso</code></td>
+<td>Infrastructure-first security and privacy review.</td>
+<td>Use for auth, tokens, secrets, PII, or public/private boundaries.</td>
+</tr>
+<tr>
+<td><code>security-reviewer</code></td>
+<td>Code-level security review for validation, auth, injection, secret leakage, error disclosure.</td>
+<td>Good for narrower security audits.</td>
+</tr>
+<tr>
+<td><code>gstack-review</code></td>
+<td>Pre-landing diff review, specialist checks, and fix-first handling of mechanical findings.</td>
+<td>Use near PR, handoff, or ship; current upstream review is explicitly geared toward auto-fixing low-risk findings before asking.</td>
+</tr>
+<tr>
+<td><code>code-reviewer</code></td>
+<td>Local code review of staged or unstaged changes.</td>
+<td>Use for focused findings with file/line references.</td>
+</tr>
+<tr>
+<td><code>review-swarm</code></td>
+<td>Parallel read-only review across behavioral/security/performance/test risks.</td>
+<td>Use when the user asks for multi-agent review.</td>
+</tr>
+<tr>
+<td><code>committee-review-loop</code></td>
+<td>Explicit expert-committee/subagent loops with scoring, revision briefs, and a target rating such as <code>9.5/10</code>.</td>
+<td>Do not use for one-off design/code/QA review; preserve read-only committee roles and bounded revision-worker write sets.</td>
+</tr>
+<tr>
+<td><code>gstack-ship</code></td>
+<td>Opinionated release workflow before PR/landing, including coverage audit, plan-completion audit, pre-landing review, PR title/version hygiene, and documentation sync.</td>
+<td>Only use when user asks to ship.</td>
+</tr>
+<tr>
+<td><code>gstack-land-and-deploy</code></td>
+<td>Merge and deploy workflow with post-deploy checks.</td>
+<td>Requires explicit release/deploy intent.</td>
+</tr>
+<tr>
+<td><code>gstack-canary</code></td>
+<td>Post-deploy canary monitoring.</td>
+<td>Use after deploy when live behavior must be watched.</td>
+</tr>
+<tr>
+<td><code>gstack-document-release</code></td>
+<td>Post-ship documentation update across README/docs/CHANGELOG/TODOS/VERSION, with coverage-map and documentation-debt checks.</td>
+<td>Use when docs must reflect shipped behavior.</td>
+</tr>
+<tr>
+<td>vendored gstack <code>document-generate</code></td>
+<td>Missing tutorials, how-to docs, reference pages, or explanatory docs for a feature/module/project.</td>
+<td>Use when documentation must be created from scratch rather than just updated after release.</td>
+</tr>
+<tr>
+<td>vendored gstack <code>make-pdf</code></td>
+<td>Convert Markdown into a polished PDF artifact.</td>
+<td>Use for publication-quality exports, not routine repo docs.</td>
+</tr>
+<tr>
+<td>vendored gstack <code>diagram</code></td>
+<td>Turn an English description or mermaid source into a diagram triplet (<code>.mmd</code>, editable <code>.excalidraw</code>, rendered SVG/PNG).</td>
+<td>Use for offline source-backed diagrams that may later be embedded into docs or exported through <code>make-pdf</code>.</td>
+</tr>
+<tr>
+<td>vendored gstack <code>landing-report</code></td>
+<td>Read-only version queue and PR landing visibility before ship.</td>
+<td>Use when asking what version slot or landing order comes next.</td>
+</tr>
+<tr>
+<td>vendored gstack <code>context-save</code> / <code>context-restore</code></td>
+<td>User-facing save/resume of working context across sessions or Conductor workspaces.</td>
+<td>Use alongside, not instead of, <code>scripts/harness_checkpoint.py</code>; the harness checkpoint remains the repo-local append-only state source.</td>
+</tr>
+<tr>
+<td>vendored gstack <code>scrape</code> / <code>skillify</code></td>
+<td>Read-only browser data extraction and codifying repeated scrape flows into browser-skills.</td>
+<td>Use for extraction workflows; use <code>gstack-qa</code> for behavior testing and bug fixing.</td>
+</tr>
+<tr>
+<td>vendored gstack <code>setup-gbrain</code> / <code>sync-gbrain</code></td>
+<td>Configure or refresh optional gbrain-backed repo memory/search.</td>
+<td>Use only when the user explicitly wants gbrain setup, refresh, or repo re-indexing.</td>
+</tr>
+<tr>
+<td><code>gstack-plan-tune</code></td>
+<td>Tune repeated planning questions, developer profile preferences, and question-memory behavior.</td>
+<td>Use only when the user asks to tune how gstack asks questions or to inspect/update developer profile signals; this is operator preference state, not repo lifecycle state.</td>
+</tr>
+<tr>
+<td><code>doc-updater</code></td>
+<td>Targeted docs/codemap/README updates for feature, API, or structure changes.</td>
+<td>Use for repo-local documentation maintenance.</td>
+</tr>
+<tr>
+<td><code>verification-loop</code></td>
+<td>Build/static/test/coverage/security verification before completion.</td>
+<td>Use when a full validation loop is required.</td>
+</tr>
+<tr>
+<td><code>tdd-guide</code></td>
+<td>Test-first implementation for behavior changes and bug fixes.</td>
+<td>Use before writing production code.</td>
+</tr>
+<tr>
+<td><code>atdd-guide</code></td>
+<td>Acceptance-test-first workflow for business-facing criteria.</td>
+<td>Use when external behavior and acceptance scenarios matter.</td>
+</tr>
+<tr>
+<td><code>planner</code></td>
+<td>Requirement analysis, architecture sorting, task decomposition, risk detection.</td>
+<td>Use for complex features and refactors.</td>
+</tr>
+<tr>
+<td><code>task-flow-orchestrator</code></td>
+<td>Ordered execution across Karpathy, Planner, TDD, and verification workflows.</td>
+<td>Use when the task needs workflow sequencing.</td>
+</tr>
+<tr>
+<td><code>skill-evaluator</code></td>
+<td>Skill existence, routing, eval matrix, baseline comparison, off-target load diagnosis.</td>
+<td>Use before expanding or revising critical skills, especially when upstream workflow text changed and routing precision may drift.</td>
+</tr>
+<tr>
+<td><code>visual-explainer</code></td>
+<td>Self-contained HTML diagrams, flowcharts, architecture views, tables, and visual explanations.</td>
+<td>Use for visual documentation and system explanations.</td>
+</tr>
+</tbody></table></div>
+<h2>Skillset Gap Routes</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Pattern</th>
+<th>Lifecycle Slot</th>
+<th>Harness Rule</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Domain docs and ADRs</td>
+<td><code>requirements</code>, <code>planning</code></td>
+<td>Read <code>CONTEXT.md</code>, <code>CONTEXT-MAP.md</code>, and relevant ADR files when present; use their domain vocabulary and flag conflicts instead of inventing terms.</td>
+</tr>
+<tr>
+<td>Vertical slices</td>
+<td><code>planning</code>, <code>development</code></td>
+<td>Break multi-step work into independently verifiable vertical slice units; mark each unit <code>AFK</code> when a worker can proceed from durable context or <code>HITL</code> when human judgment is required.</td>
+</tr>
+<tr>
+<td>Feedback loop first</td>
+<td><code>debug/investigation</code></td>
+<td>Establish a runnable feedback loop before hypotheses or fixes: failing test, CLI fixture, curl script, browser check, trace replay, throwaway harness, fuzz loop, or differential run.</td>
+</tr>
+<tr>
+<td>Prototype learning</td>
+<td><code>planning</code></td>
+<td>Use a throwaway prototype only to answer one named logic, state, interface, or UI question; delete it or capture the durable decision before handoff.</td>
+</tr>
+<tr>
+<td>Durable agent brief</td>
+<td><code>planning</code>, <code>development</code>, <code>handoff</code></td>
+<td>Use <code>docs/templates/harness-agent-brief.md</code> for a durable agent brief when worker contracts need current behavior, desired behavior, key interfaces, acceptance criteria, and out of scope.</td>
+</tr>
+<tr>
+<td>Expert committee rating loop</td>
+<td><code>review</code>, <code>development</code></td>
+<td>Route only explicit committee/subagent rating loops to <code>committee-review-loop</code>; capture expert domains, target rating, revision worker scope, verification gate, and stopping condition.</td>
+</tr>
+<tr>
+<td>Deep module review</td>
+<td><code>planning</code>, <code>review</code></td>
+<td>Prefer a deep module shape with small public interfaces and meaningful behavior behind them; use the interface as the test surface and preserve locality/leverage.</td>
+</tr>
+</tbody></table></div>
+<h2>Runtime Helper Map</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Helper</th>
+<th>Lifecycle Slot</th>
+<th>Purpose</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>scripts/harness_recover.py</code></td>
+<td><code>research</code>, <code>handoff</code></td>
+<td>Read repo index, harness state, git status/log, and local evidence summary to recover current phase and next safe task.</td>
+</tr>
+<tr>
+<td><code>scripts/harness_env_probe.py</code></td>
+<td><code>research</code>, <code>validation</code></td>
+<td>Report observable Codex runtime config, hooks, tool policy, evidence schema, sandbox fields, and approval fields.</td>
+</tr>
+<tr>
+<td><code>scripts/harness_requirements.py</code></td>
+<td><code>requirements</code></td>
+<td>Validate requirements artifacts before planning or development treats them as source of truth.</td>
+</tr>
+<tr>
+<td><code>scripts/harness_agent_team.py</code></td>
+<td><code>planning</code>, <code>development</code></td>
+<td>Validate agent role, scope, write set, verification check, protected harness-state boundaries, and optional durable worker brief before parallel worker dispatch.</td>
+</tr>
+<tr>
+<td><code>scripts/harness_evidence.py</code></td>
+<td><code>validation</code></td>
+<td>Validate and append structured local evidence events.</td>
+</tr>
+<tr>
+<td><code>scripts/harness_report.py</code></td>
+<td><code>validation</code>, <code>review</code>, <code>handoff</code></td>
+<td>Summarize local JSONL evidence by phase, event type, time window, or JSON output.</td>
+</tr>
+<tr>
+<td><code>scripts/harness_checkpoint.py</code></td>
+<td><code>handoff</code>, phase transitions</td>
+<td>Append checkpoint entries to <code>docs/harness-state.md</code> with changed surfaces, verification, blockers, and next safe task.</td>
+</tr>
+<tr>
+<td><code>scripts/verify_codex_env.sh</code></td>
+<td><code>validation</code></td>
+<td>Verify Codex/Claude runtime sync, managed skills, hooks, runtime policies, and supported Codex CLI version.</td>
+</tr>
+<tr>
+<td><code>main repository regression suite</code></td>
+<td><code>validation</code></td>
+<td>Main repo regression suite for sync, hooks, runtime helpers, skill boundaries, eval fixtures, and docs/config behavior.</td>
+</tr>
+</tbody></table></div>
+<h2>Routing Rules</h2>
+<ul>
+<li>Start with <code>delivery-harness-framework</code> when work is complex, resumed,
+cross-session, security-sensitive, release-facing, or ambiguous.</li>
+<li>Prefer repo-specific lifecycle harnesses when a known project adapter owns the
+business domain.</li>
+<li>Prefer gstack skills when the task is product review, engineering review,
+backlog/spec authoring, design review, browser QA, real-device iOS QA,
+security review, ship, deploy, canary, release documentation, retro, or
+learning capture.</li>
+<li>Prefer the richer upstream gstack posture when available:
+<code>gstack-office-hours</code> for problem discovery, mockup-first <code>gstack-plan-design-review</code>
+for UI planning, fix-first <code>gstack-review</code> for near-landing diffs,
+coverage-aware <code>gstack-ship</code> for release readiness, and
+debt-aware <code>gstack-document-release</code> for post-ship docs. With gstack
+<code>1.52.x</code>, planning skills may use configured gbrain digests as specialist
+context, but DHF still owns repo state, lane, checkpoint, and validation
+boundaries; use <code>gstack-plan-tune</code> only for explicit question/developer-profile
+tuning. Also prefer <code>gstack-ios-qa</code> / <code>gstack-ios-design-review</code> /
+<code>gstack-ios-fix</code> for live-device iOS workflows, vendored <code>ios-sync</code> /
+<code>ios-clean</code> only for explicit iOS debug-bridge maintenance, vendored
+<code>context-save</code> / <code>context-restore</code> for user-facing session continuity,
+<code>landing-report</code> for version queue visibility, <code>document-generate</code> /
+<code>make-pdf</code> / <code>diagram</code> for generated docs and artifacts, and <code>setup-gbrain</code> /
+<code>sync-gbrain</code> only for explicit persistent memory setup.</li>
+<li>Prefer deterministic helper scripts when the runtime already provides one;
+do not reimplement their parsing or validation manually.</li>
+<li>Use <code>verification-loop</code> or repo-native checks before any completion claim.</li>
+<li>Keep <code>docs/harness-state.md</code> as an integrator-owned checkpoint surface for
+delegated worker plans; workers should report or write slice-local handoff
+artifacts instead. Single-line main-agent tasks may still append verified
+checkpoints directly.</li>
+<li>Use <code>harness_checkpoint.py append</code> before ending long-running work, after a
+meaningful validated slice, or before risky remote/release actions.</li>
+</ul>
+<h2>Evidence Standard</h2>
+<p>Any claim that work is complete, fixed, or passing must include fresh evidence:</p>
+<pre><code class="language-text">check
+how it exited
+what it showed
+when it ran
+</code></pre>
+<p>If a check is blocked by credentials, network, remote approval, sandbox, or an
+external dependency, report the exact blocker and the safest next check.</p>
+
+    </article>
+    <footer class="footer"><span>Rendered specification: <strong>docs/lifecycle-skill-routing-en.html</strong></span><span><a href="./LIFECYCLE_SKILL_ROUTING.md">Maintainer source</a> · Published by ShipAI.ca</span></footer>
+  </main>
+</body>
+</html>

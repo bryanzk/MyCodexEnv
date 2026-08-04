@@ -1,3 +1,4 @@
+<!-- 修改本文件后需重新生成 HTML 版 -->
 # Lifecycle And Skill Routing
 
 > **DHF_PUBLIC_STATUS_V1 · 2026-08-03:** This router documents the current

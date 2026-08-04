@@ -18,6 +18,7 @@
 - `docs/harness-state.md`: append-only harness runtime state and latest safe task.
 - `docs/HARNESS_RUNTIME.md`: design contract for workflow, infra, state, policy, evidence, hooks, checkpoints, and agent teams.
 - `docs/LIFECYCLE_SKILL_ROUTING.md`: Chinese lifecycle-to-skill routing map for current project workflows.
+- `docs/lifecycle-skill-routing-en.html`: English rendered lifecycle and skill routing specification.
 - `docs/MODEL_ROUTER_EVAL_MATRIX.md`: prompt/subtask model router eval matrix and routing assertions.
 - `docs/index.html`: Chinese public Delivery Harness Framework docs landing page for GitHub Pages.
 - `docs/index-en.html`: English public Delivery Harness Framework docs landing page for GitHub Pages.
@@ -110,6 +111,7 @@
 - `codex/skills/delivery-harness-framework/evals/evals.json`: routing and boundary evals for the generic lifecycle skill, including gstack brain-aware planning and question-tuning boundaries.
 - `scripts/verify_codex_env.sh`: runtime sync and environment verification.
 - `docs/LIFECYCLE_SKILL_ROUTING.md`: stage, workflow, skill, and helper usage guide.
+- `docs/lifecycle-skill-routing-en.html`: English browser-ready rendering of the routing specification.
 - `docs/index.html`: Chinese public docs landing page.
 - `docs/index-en.html`: English public docs landing page.
 - `docs/delivery-harness-framework-manual-cn.md`: Chinese PM-facing Delivery Harness Framework manual draft.
@@ -138,6 +140,7 @@
 - `docs/AGENT_HARNESS_STATUS.md`: Agent Harness workflow/infra status map.
 - `docs/CODEX_ENV_REPRODUCTION.md`: Codex + Claude environment reproduction guide.
 - `docs/LIFECYCLE_SKILL_ROUTING.md`: lifecycle stage, workflow, skill, and helper routing.
+- `docs/lifecycle-skill-routing-en.html`: GitHub Pages rendering of the lifecycle and skill routing specification.
 - `docs/index.html`: GitHub Pages Chinese public entry for Delivery Harness Framework guides.
 - `docs/index-en.html`: GitHub Pages English public entry for Delivery Harness Framework guides.
 - `docs/delivery-harness-framework-manual-cn.md`: Chinese PM-facing Delivery Harness Framework manual draft organized around why / what / how.

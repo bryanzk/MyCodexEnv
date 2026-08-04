@@ -325,8 +325,13 @@
     {
       "path": "docs/LIFECYCLE_SKILL_ROUTING.md",
       "role": "stage, workflow, skill, and helper usage guide",
-      "audience": ["codex", "human"],
-      "public_nav": ["docs/index.html", "docs/index-en.html"]
+      "audience": ["codex", "human"]
+    },
+    {
+      "path": "docs/lifecycle-skill-routing-en.html",
+      "role": "English rendered lifecycle and skill routing specification",
+      "audience": ["human"],
+      "public_nav": ["docs/index-en.html"]
     },
     {
       "path": "docs/index.html",
