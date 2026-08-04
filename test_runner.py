@@ -2959,6 +2959,120 @@ def test_daily_refresh_report_only_v0():
     print("[PASS] daily refresh report only v0")
 
 
+def test_runtime_rollback_prevention_v0_negative_coverage():
+    with tempfile.TemporaryDirectory() as tmp:
+        tmp_path = Path(tmp)
+        repo, first_commit = seed_runtime_sync_repo(tmp_path / "repo")
+        origin = make_bare_origin_from(repo, tmp_path / "origin.git")
+        code, out, err = run(["git", "remote", "add", "origin", str(origin)], cwd=repo)
+        require(code == 0, f"negative fixture origin should be configured: {err or out}")
+        codex_home = tmp_path / "home" / ".codex"
+        sync_cmd = [
+            str(SYNC),
+            "--repo-root",
+            str(repo),
+            "--codex-home",
+            str(codex_home),
+            "--sync-agents-only",
+        ]
+        code, out, err = run(sync_cmd)
+        require(code == 0, f"negative fixture bootstrap should work: {err or out}")
+
+        write(repo / "codex" / "AGENTS.md", "runtime contract v2\n")
+        code, out, err = run(["git", "add", "codex/AGENTS.md"], cwd=repo)
+        require(code == 0, f"negative forward fixture add should work: {err or out}")
+        code, out, err = run(["git", "commit", "-m", "fixture v2"], cwd=repo)
+        require(code == 0, f"negative forward fixture commit should work: {err or out}")
+        code, second_commit, err = run(["git", "rev-parse", "HEAD"], cwd=repo)
+        require(code == 0, f"negative forward fixture rev-parse should work: {err or second_commit}")
+        code, out, err = run(["git", "push", "origin", "main"], cwd=repo)
+        require(code == 0, f"negative forward fixture push should work: {err or out}")
+        code, out, err = run(sync_cmd)
+        require(code == 0, f"negative fixture forward sync should work: {err or out}")
+
+        manifest_path = codex_home / "harness" / "sync-manifest.json"
+        forward_manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+        code, out, err = run(["git", "checkout", "--detach", first_commit], cwd=repo)
+        require(code == 0, f"negative downgrade checkout should work: {err or out}")
+        force_missing_before = snapshot_tree(codex_home)
+        code, out, err = run([*sync_cmd, "--force-downgrade"])
+        require(code != 0, "force downgrade without an operator checkpoint should be rejected")
+        require(snapshot_tree(codex_home) == force_missing_before,
+                "force downgrade without a checkpoint must not partially write")
+
+        write(repo / "diverged.txt", "diverged\n")
+        code, out, err = run(["git", "add", "diverged.txt"], cwd=repo)
+        require(code == 0, f"diverged fixture add should work: {err or out}")
+        code, out, err = run(["git", "commit", "-m", "diverged fixture"], cwd=repo)
+        require(code == 0, f"diverged fixture commit should work: {err or out}")
+        diverged_before = snapshot_tree(codex_home)
+        code, out, err = run(sync_cmd)
+        require(code != 0 and "diverged" in f"{out}\n{err}", "diverged source should be rejected explicitly")
+        require(snapshot_tree(codex_home) == diverged_before, "diverged rejection must not partially write")
+
+        unknown_manifest = dict(forward_manifest)
+        unknown_manifest["source_commit"] = "f" * 40
+        write(manifest_path, json.dumps(unknown_manifest, sort_keys=True) + "\n")
+        unknown_before = snapshot_tree(codex_home)
+        code, out, err = run(sync_cmd)
+        require(code != 0 and "unknown" in f"{out}\n{err}", "unknown manifest commit should be rejected explicitly")
+        require(snapshot_tree(codex_home) == unknown_before, "unknown rejection must not partially write")
+
+        write(manifest_path, json.dumps(forward_manifest, sort_keys=True) + "\n")
+        code, out, err = run(["git", "checkout", "--detach", first_commit], cwd=repo)
+        require(code == 0, f"approved downgrade checkout should work: {err or out}")
+        checkpoint = tmp_path / "operator-checkpoint.json"
+        write(
+            checkpoint,
+            json.dumps(
+                {
+                    "command": f"sync_codex_home.sh --force-downgrade {first_commit}",
+                    "exit_code": 0,
+                    "key_output": "operator approved immutable downgrade",
+                    "timestamp": dt.datetime.now(dt.timezone.utc).isoformat().replace("+00:00", "Z"),
+                },
+                sort_keys=True,
+            )
+            + "\n",
+        )
+        code, out, err = run(
+            [*sync_cmd, "--force-downgrade", "--operator-checkpoint", str(checkpoint)]
+        )
+        require(code == 0, f"force downgrade with a same-operation checkpoint should pass: {err or out}")
+        approved_manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+        require(approved_manifest["source_commit"] == first_commit,
+                "approved force downgrade should update the manifest to the requested commit")
+
+        write(manifest_path, "{broken manifest\n")
+        corrupt_before = snapshot_tree(codex_home)
+        code, out, err = run(sync_cmd)
+        require(code != 0 and "manifest_corrupt" in f"{out}\n{err}", "corrupt manifest should fail closed")
+        require(snapshot_tree(codex_home) == corrupt_before, "corrupt manifest rejection must not partially write")
+
+        corrupt_controller = make_real_git_repo(tmp_path / "corrupt-controller")
+        write(corrupt_controller / "codex" / "runtime" / "daily-refresh-definition-denylist.json", "not json\n")
+        code, out, err = run(["git", "remote", "add", "origin", str(origin)], cwd=corrupt_controller)
+        require(code == 0, f"corrupt denylist controller origin should be configured: {err or out}")
+        blocked_clone = tmp_path / "corrupt-denylist-clone"
+        code, out, err = run(
+            [
+                sys.executable,
+                str(PREPARE_GSTACK_DAILY_REFRESH),
+                "--controller-repo-root",
+                str(corrupt_controller),
+                "--clone-root",
+                str(blocked_clone),
+                "--json",
+            ]
+        )
+        require(code != 0, "corrupt definition denylist should fail closed")
+        require(json.loads(out)["reason"] == "definition_denylist_invalid",
+                "corrupt denylist should identify its blocker")
+        require(not blocked_clone.exists(), "corrupt denylist rejection must occur before clone writes")
+
+    print("[PASS] runtime rollback prevention v0 negative coverage")
+
+
 def test_merge_gstack_daily_refresh_rejects_apply_when_ahead_only():
     with tempfile.TemporaryDirectory() as tmp:
         tmp_path = Path(tmp)
@@ -8008,6 +8122,7 @@ TESTS = [
     test_prepare_gstack_daily_refresh_dns_defaults_cover_slow_startup,
     test_prepare_gstack_daily_refresh_resolves_duplicate_dns_hosts_once,
     test_daily_refresh_report_only_v0,
+    test_runtime_rollback_prevention_v0_negative_coverage,
     test_merge_gstack_daily_refresh_rejects_apply_when_ahead_only,
     test_merge_gstack_daily_refresh_audits_diverged_branch,
     test_sync_local_main_fast_forwards_when_clean_and_behind_only,
