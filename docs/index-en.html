@@ -166,6 +166,27 @@
       border-radius: 16px;
     }
 
+    .audience-strip {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 12px;
+    }
+
+    .audience-path {
+      min-width: 0;
+      padding: 16px 18px;
+      color: inherit;
+      background: color-mix(in srgb, var(--surface) 82%, var(--blue) 18%);
+      border: 1px solid color-mix(in srgb, var(--border) 70%, var(--blue) 30%);
+      border-radius: 14px;
+      text-decoration: none;
+    }
+
+    .audience-path strong { display: block; margin-bottom: 6px; font-size: 17px; }
+    .audience-path span { color: var(--text-dim); font-size: 14px; line-height: 1.45; }
+    .audience-path .path-links { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 8px; }
+    .audience-path .path-links a { color: var(--green); font-family: var(--font-mono); font-size: 11px; }
+
     .tag {
       display: inline-flex;
       align-items: center;
@@ -317,7 +338,7 @@
 
     @media (max-width: 860px) {
       body { padding: 18px; }
-      .grid, .card-row, .card-row.three, .sequence { grid-template-columns: 1fr; }
+      .grid, .card-row, .card-row.three, .sequence, .audience-strip { grid-template-columns: 1fr; }
       .hero { min-height: 0; }
       .section-heading { align-items: start; flex-direction: column; }
       .footer { flex-direction: column; }
@@ -341,6 +362,12 @@
         <a class="primary-link" href="./project-lifecycle-harness-flow-en.html">Open the English Flow Map</a>
         <a class="secondary-link" href="./lifecycle-skill-routing-en.html">Read the Written Spec</a>
       </div>
+    </section>
+
+    <section class="audience-strip" aria-label="Choose a perspective" style="--i:1">
+      <a class="audience-path" href="./dhf-for-product-and-field-en.html"><strong>Product perspective</strong><span>See how delivery guarantees make scope, risk, and completion checkable.</span></a>
+      <div class="audience-path"><strong>Field engineering</strong><span>Start with deployment guarantees, then confirm the current source and runtime boundary.</span><div class="path-links"><a href="./dhf-for-product-and-field-en.html">Field guide</a><a href="./dhf-architecture-status-en.html">Current status</a></div></div>
+      <a class="audience-path" href="./dhf-engineering-notes-en.html"><strong>Engineering depth</strong><span>Study compaction governance, version transitions, and executable policy text.</span></a>
     </section>
 
     <nav class="strip" aria-label="Quick links" style="--i:1">

@@ -167,6 +167,27 @@
       border-radius: 16px;
     }
 
+    .audience-strip {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 12px;
+    }
+
+    .audience-path {
+      min-width: 0;
+      padding: 16px 18px;
+      color: inherit;
+      background: color-mix(in srgb, var(--surface) 82%, var(--blue) 18%);
+      border: 1px solid color-mix(in srgb, var(--border) 70%, var(--blue) 30%);
+      border-radius: 14px;
+      text-decoration: none;
+    }
+
+    .audience-path strong { display: block; margin-bottom: 6px; font-size: 17px; }
+    .audience-path span { color: var(--text-dim); font-size: 14px; line-height: 1.45; }
+    .audience-path .path-links { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 8px; }
+    .audience-path .path-links a { color: var(--green); font-family: var(--font-mono); font-size: 11px; }
+
     .tag {
       display: inline-flex;
       align-items: center;
@@ -317,7 +338,7 @@
 
     @media (max-width: 860px) {
       body { padding: 18px; }
-      .grid, .card-row, .card-row.three, .sequence { grid-template-columns: 1fr; }
+      .grid, .card-row, .card-row.three, .sequence, .audience-strip { grid-template-columns: 1fr; }
       .hero { min-height: 0; }
       h1 { white-space: normal; }
       .section-heading { align-items: start; flex-direction: column; }
@@ -342,6 +363,12 @@
         <a class="primary-link" href="./delivery-harness-beginner-guide-cn.html">先读新手指南</a>
         <a class="secondary-link" href="./project-lifecycle-harness-flow-skills-zh-status-style.html">打开 Skill 路由图</a>
       </div>
+    </section>
+
+    <section class="audience-strip" aria-label="选择阅读视角" style="--i:1">
+      <a class="audience-path" href="./dhf-for-product-and-field-cn.html"><strong>产品视角</strong><span>从范围、风险与完成证据看交付保证如何变得可核对。</span></a>
+      <div class="audience-path"><strong>现场交付</strong><span>先看部署保证，再确认当前源码与运行时边界。</span><div class="path-links"><a href="./dhf-for-product-and-field-cn.html">现场指南</a><a href="./dhf-architecture-status-cn.html">当前状态</a></div></div>
+      <a class="audience-path" href="./dhf-engineering-notes-cn.html"><strong>工程深度</strong><span>深入会话容量治理、版本转移与可执行政策文本。</span></a>
     </section>
 
     <nav class="strip" aria-label="快速入口" style="--i:1">
