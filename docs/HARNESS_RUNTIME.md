@@ -94,6 +94,7 @@ For the current project workflow and skill routing map, read
 - `Memory`: `docs/harness-state.md` is the repo-visible memory surface; `scripts/harness_recover.py` proves recovery from state, git, and local evidence.
 - `Memory Reflection`: `scripts/codex_subconscious.py reflect` merges duplicate routine/derived JSONL records and prunes only expired routine/derived records; decision and unknown records remain unchanged.
 - `Skills`: `codex/skills/*` is the source copied into runtime `~/.codex/skills/*`.
+- `Runtime Publication`: any commit that touches a `codex/` runtime surface is complete only after an operator-present push to `origin/main`; automation must not perform that push, and an unpushed source commit is not evidence of live runtime activation.
 - `Session State`: `docs/harness-state.md` records durable phase and handoff facts.
 - `Task Ledger`: `scripts/harness_ledger.py` creates and verifies tamper-evident acceptance ledgers from validated requirements.
 - `Transition Store`: `scripts/harness_transition.py` provides append-only first-record-wins CAS semantics for successor task ids.
