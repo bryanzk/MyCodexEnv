@@ -290,6 +290,30 @@ def make_bare_origin_from(source: Path, bare_path: Path) -> Path:
     return bare_path
 
 
+def snapshot_tree(path: Path) -> dict[str, str]:
+    if not path.exists():
+        return {}
+    snapshot = {}
+    for item in sorted(path.rglob("*")):
+        if item.is_file():
+            snapshot[item.relative_to(path).as_posix()] = hashlib.sha256(item.read_bytes()).hexdigest()
+    return snapshot
+
+
+def seed_runtime_sync_repo(path: Path) -> tuple[Path, str]:
+    repo = make_real_git_repo(path)
+    write(repo / "codex" / "AGENTS.md", "runtime contract v1\n")
+    write(repo / "codex" / "remote-access.md", "remote access v1\n")
+    write(repo / "codex" / "remote-hosts.md", "remote hosts v1\n")
+    code, out, err = run(["git", "add", "codex"], cwd=repo)
+    require(code == 0, f"runtime sync fixture add should work: {err or out}")
+    code, out, err = run(["git", "commit", "-m", "fixture v1"], cwd=repo)
+    require(code == 0, f"runtime sync fixture commit should work: {err or out}")
+    code, source_commit, err = run(["git", "rev-parse", "HEAD"], cwd=repo)
+    require(code == 0, f"runtime sync fixture rev-parse should work: {err or source_commit}")
+    return repo, source_commit
+
+
 def run_manage_agents(*args):
     return run([sys.executable, str(MANAGE_AGENTS), *args])
 
@@ -868,6 +892,73 @@ exit 2
                 "sync should install the plugin after marketplace registration")
 
     print("[PASS] sync registers and installs superpowers plugin")
+
+
+def test_sync_transition_matrix_v0():
+    with tempfile.TemporaryDirectory() as tmp:
+        tmp_path = Path(tmp)
+        repo, first_commit = seed_runtime_sync_repo(tmp_path / "repo")
+        origin = make_bare_origin_from(repo, tmp_path / "origin.git")
+        code, out, err = run(["git", "remote", "add", "origin", str(origin)], cwd=repo)
+        require(code == 0, f"runtime sync fixture origin should be configured: {err or out}")
+        codex_home = tmp_path / "home" / ".codex"
+        sync_cmd = [
+            str(SYNC),
+            "--repo-root",
+            str(repo),
+            "--codex-home",
+            str(codex_home),
+            "--sync-agents-only",
+        ]
+
+        code, out, err = run(sync_cmd)
+        require(code == 0, f"first sync without a manifest should bootstrap: {err or out}")
+        manifest_path = codex_home / "harness" / "sync-manifest.json"
+        require(manifest_path.is_file(), "bootstrap sync should write the v0 manifest")
+        manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+        require(manifest["source_commit"] == first_commit, "bootstrap manifest should record the source commit")
+        require(manifest["schema_version"] == 2, "bootstrap manifest should use schema v2")
+
+        equal_before = snapshot_tree(codex_home)
+        code, out, err = run(sync_cmd)
+        require(code == 0, f"equal source transition should be a no-op: {err or out}")
+        require("source transition: equal" in f"{out}\n{err}", "equal transition should be reported explicitly")
+        require(snapshot_tree(codex_home) == equal_before, "equal transition must not write the target tree")
+
+        write(repo / "codex" / "AGENTS.md", "runtime contract v2\n")
+        code, out, err = run(["git", "add", "codex/AGENTS.md"], cwd=repo)
+        require(code == 0, f"forward fixture add should work: {err or out}")
+        code, out, err = run(["git", "commit", "-m", "fixture v2"], cwd=repo)
+        require(code == 0, f"forward fixture commit should work: {err or out}")
+        code, second_commit, err = run(["git", "rev-parse", "HEAD"], cwd=repo)
+        require(code == 0, f"forward fixture rev-parse should work: {err or second_commit}")
+        code, out, err = run(["git", "push", "origin", "main"], cwd=repo)
+        require(code == 0, f"forward fixture push should work: {err or out}")
+
+        stale_before = snapshot_tree(codex_home)
+        code, out, err = run(["git", "checkout", "--detach", first_commit], cwd=repo)
+        require(code == 0, f"stale fixture checkout should work: {err or out}")
+        code, out, err = run(sync_cmd)
+        require(code != 0, "stale_equal source transition should be rejected")
+        require("stale_equal" in f"{out}\n{err}", "stale_equal rejection should name its verdict")
+        require(snapshot_tree(codex_home) == stale_before, "stale_equal rejection must not partially write")
+
+        code, out, err = run(["git", "checkout", "--detach", second_commit], cwd=repo)
+        require(code == 0, f"forward fixture checkout should work: {err or out}")
+        code, out, err = run(sync_cmd)
+        require(code == 0, f"forward source transition should be allowed: {err or out}")
+        manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+        require(manifest["source_commit"] == second_commit, "forward sync should advance the manifest")
+
+        downgrade_before = snapshot_tree(codex_home)
+        code, out, err = run(["git", "checkout", "--detach", first_commit], cwd=repo)
+        require(code == 0, f"downgrade fixture checkout should work: {err or out}")
+        code, out, err = run(sync_cmd)
+        require(code != 0, "ordinary downgrade should be rejected")
+        require("downgrade" in f"{out}\n{err}", "downgrade rejection should name its verdict")
+        require(snapshot_tree(codex_home) == downgrade_before, "downgrade rejection must not partially write")
+
+    print("[PASS] sync transition matrix v0")
 
 
 def test_delivery_harness_framework_stays_generic():
@@ -7724,6 +7815,7 @@ TESTS = [
     test_sync_renders_template_and_copies_skills,
     test_sync_preserves_runtime_plugin_state,
     test_sync_registers_and_installs_superpowers_plugin,
+    test_sync_transition_matrix_v0,
     test_delivery_harness_framework_stays_generic,
     test_delivery_harness_framework_routes_runtime_helpers,
     test_delivery_harness_framework_eval_matrix,

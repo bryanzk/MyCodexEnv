@@ -7,13 +7,17 @@ CODEX_HOME="${HOME}/.codex"
 EIGENPHI_BACKEND_ROOT=""
 SKIP_SUPERPOWERS_SYNC="false"
 SYNC_AGENTS_ONLY="false"
+FORCE_DOWNGRADE="false"
+OPERATOR_CHECKPOINT=""
 
 usage() {
   cat <<USAGE
-Usage: sync_codex_home.sh --repo-root <path> [--eigenphi-backend-root <path>] [--codex-home <path>] [--skip-superpowers-sync] [--sync-agents-only]
+Usage: sync_codex_home.sh --repo-root <path> [--eigenphi-backend-root <path>] [--codex-home <path>] [--skip-superpowers-sync] [--sync-agents-only] [--force-downgrade --operator-checkpoint <path>]
 
 Options:
   --eigenphi-backend-root   Optional legacy argument; EigenPhi MCP is disabled by default.
+  --force-downgrade         Allow an ancestor source only with a same-operation operator checkpoint.
+  --operator-checkpoint     JSON receipt with command, exit_code, key_output, and timestamp.
 USAGE
 }
 
@@ -39,6 +43,14 @@ while [[ $# -gt 0 ]]; do
       SYNC_AGENTS_ONLY="true"
       shift
       ;;
+    --force-downgrade)
+      FORCE_DOWNGRADE="true"
+      shift
+      ;;
+    --operator-checkpoint)
+      OPERATOR_CHECKPOINT="${2:-}"
+      shift 2
+      ;;
     -h|--help)
       usage
       exit 0
@@ -61,6 +73,221 @@ if [[ ! -d "${REPO_ROOT}" ]]; then
   echo "Repo root does not exist: ${REPO_ROOT}" >&2
   exit 1
 fi
+
+MANIFEST_PATH="${CODEX_HOME}/harness/sync-manifest.json"
+SOURCE_COMMIT=""
+REPO_IDENTITY=""
+EXPECTED_OLD=""
+TRANSITION_VERDICT="bootstrap"
+
+fail_transition() {
+  echo "source transition rejected: $1" >&2
+  exit 1
+}
+
+if ! SOURCE_COMMIT="$(git -C "${REPO_ROOT}" rev-parse --verify 'HEAD^{commit}' 2>/dev/null)"; then
+  fail_transition "unknown (source HEAD is not a commit)"
+fi
+if [[ ! "${SOURCE_COMMIT}" =~ ^[0-9a-f]{40}$ ]]; then
+  fail_transition "unknown (source commit is malformed)"
+fi
+if ! REPO_IDENTITY="$(git -C "${REPO_ROOT}" config --get remote.origin.url 2>/dev/null)" || [[ -z "${REPO_IDENTITY}" ]]; then
+  fail_transition "unknown (remote origin identity is unavailable)"
+fi
+
+if [[ -e "${MANIFEST_PATH}" && ! -f "${MANIFEST_PATH}" ]]; then
+  fail_transition "manifest_corrupt (manifest is not a regular file)"
+fi
+
+if [[ -f "${MANIFEST_PATH}" ]]; then
+  if ! EXPECTED_OLD="$(python3 - "${MANIFEST_PATH}" "${REPO_IDENTITY}" <<'PY'
+from datetime import datetime
+import json
+from pathlib import Path
+import re
+import sys
+
+path = Path(sys.argv[1])
+expected_identity = sys.argv[2]
+try:
+    payload = json.loads(path.read_text(encoding="utf-8"))
+except (OSError, UnicodeDecodeError, json.JSONDecodeError) as exc:
+    raise SystemExit(f"manifest parse failed: {exc}")
+
+required = {
+    "schema_version",
+    "repo_identity_version",
+    "repo_identity",
+    "source_commit",
+    "managed_surface_digest_version",
+    "managed_surface_digest",
+    "synced_at",
+}
+if set(payload) != required:
+    raise SystemExit("manifest keys do not match schema v2")
+if payload["schema_version"] != 2 or payload["repo_identity_version"] != 1:
+    raise SystemExit("manifest schema or repo identity version is invalid")
+if payload["repo_identity"] != expected_identity:
+    raise SystemExit("manifest repo identity does not match source")
+if not isinstance(payload["source_commit"], str) or not re.fullmatch(r"[0-9a-f]{40}", payload["source_commit"]):
+    raise SystemExit("manifest source_commit is invalid")
+if payload["managed_surface_digest_version"] != 1:
+    raise SystemExit("manifest managed surface digest version is invalid")
+if not isinstance(payload["managed_surface_digest"], str) or not re.fullmatch(
+    r"sha256:[0-9a-f]{64}", payload["managed_surface_digest"]
+):
+    raise SystemExit("manifest managed surface digest is invalid")
+if not isinstance(payload["synced_at"], str):
+    raise SystemExit("manifest synced_at is invalid")
+try:
+    datetime.fromisoformat(payload["synced_at"].replace("Z", "+00:00"))
+except ValueError as exc:
+    raise SystemExit(f"manifest synced_at is invalid: {exc}")
+print(payload["source_commit"])
+PY
+  )"; then
+    fail_transition "manifest_corrupt"
+  fi
+
+  if ! git -C "${REPO_ROOT}" cat-file -e "${EXPECTED_OLD}^{commit}" 2>/dev/null; then
+    fail_transition "unknown (manifest source commit is unavailable)"
+  fi
+  REMOTE_LINE="$(git -C "${REPO_ROOT}" ls-remote --exit-code origin refs/heads/main 2>/dev/null || true)"
+  REMOTE_TIP="${REMOTE_LINE%%[[:space:]]*}"
+  if [[ ! "${REMOTE_TIP}" =~ ^[0-9a-f]{40}$ ]]; then
+    fail_transition "unknown (fresh remote tip is unavailable)"
+  fi
+
+  if [[ "${EXPECTED_OLD}" == "${SOURCE_COMMIT}" ]]; then
+    if [[ "${SOURCE_COMMIT}" == "${REMOTE_TIP}" ]]; then
+      TRANSITION_VERDICT="equal"
+    else
+      fail_transition "stale_equal"
+    fi
+  elif git -C "${REPO_ROOT}" merge-base --is-ancestor "${EXPECTED_OLD}" "${SOURCE_COMMIT}" 2>/dev/null; then
+    if [[ "${SOURCE_COMMIT}" != "${REMOTE_TIP}" ]]; then
+      fail_transition "unknown (forward source is not the fresh remote tip)"
+    fi
+    TRANSITION_VERDICT="forward"
+  elif git -C "${REPO_ROOT}" merge-base --is-ancestor "${SOURCE_COMMIT}" "${EXPECTED_OLD}" 2>/dev/null; then
+    if ! git -C "${REPO_ROOT}" cat-file -e "${REMOTE_TIP}^{commit}" 2>/dev/null \
+      || ! git -C "${REPO_ROOT}" merge-base --is-ancestor "${EXPECTED_OLD}" "${REMOTE_TIP}" 2>/dev/null; then
+      fail_transition "unknown (downgrade commits are not reachable from the fresh remote tip)"
+    fi
+    TRANSITION_VERDICT="downgrade"
+  else
+    fail_transition "diverged"
+  fi
+fi
+
+if [[ "${TRANSITION_VERDICT}" == "equal" ]]; then
+  echo "source transition: equal"
+  exit 0
+fi
+
+if [[ "${TRANSITION_VERDICT}" == "downgrade" ]]; then
+  if [[ "${FORCE_DOWNGRADE}" != "true" || -z "${OPERATOR_CHECKPOINT}" ]]; then
+    fail_transition "downgrade (requires --force-downgrade and --operator-checkpoint)"
+  fi
+  if ! python3 - "${OPERATOR_CHECKPOINT}" "${SOURCE_COMMIT}" <<'PY'
+from datetime import datetime, timezone
+import json
+from pathlib import Path
+import sys
+
+path = Path(sys.argv[1])
+source_commit = sys.argv[2]
+try:
+    payload = json.loads(path.read_text(encoding="utf-8"))
+except (OSError, UnicodeDecodeError, json.JSONDecodeError) as exc:
+    raise SystemExit(f"operator checkpoint parse failed: {exc}")
+if set(payload) != {"command", "exit_code", "key_output", "timestamp"}:
+    raise SystemExit("operator checkpoint must contain exactly the four receipt fields")
+if not isinstance(payload["command"], str) or "--force-downgrade" not in payload["command"]:
+    raise SystemExit("operator checkpoint command must bind --force-downgrade")
+if source_commit not in payload["command"]:
+    raise SystemExit("operator checkpoint command must bind the requested source commit")
+if payload["exit_code"] != 0 or not isinstance(payload["key_output"], str) or not payload["key_output"].strip():
+    raise SystemExit("operator checkpoint result is invalid")
+try:
+    recorded = datetime.fromisoformat(payload["timestamp"].replace("Z", "+00:00"))
+except (AttributeError, ValueError) as exc:
+    raise SystemExit(f"operator checkpoint timestamp is invalid: {exc}")
+if recorded.tzinfo is None or abs((datetime.now(timezone.utc) - recorded).total_seconds()) > 300:
+    raise SystemExit("operator checkpoint is not from the same operation window")
+PY
+  then
+    fail_transition "downgrade (operator checkpoint invalid)"
+  fi
+fi
+
+write_sync_manifest() {
+  python3 - "${MANIFEST_PATH}" "${REPO_ROOT}" "${REPO_IDENTITY}" "${SOURCE_COMMIT}" "${EXPECTED_OLD}" <<'PY'
+from datetime import datetime, timezone
+import hashlib
+import json
+import os
+from pathlib import Path
+import sys
+import tempfile
+
+manifest_path = Path(sys.argv[1])
+repo_root = Path(sys.argv[2])
+repo_identity = sys.argv[3]
+source_commit = sys.argv[4]
+expected_old = sys.argv[5]
+
+if manifest_path.exists():
+    current = json.loads(manifest_path.read_text(encoding="utf-8"))
+    if not expected_old or current.get("source_commit") != expected_old:
+        raise SystemExit("manifest expected-old CAS failed")
+elif expected_old:
+    raise SystemExit("manifest expected-old CAS failed")
+
+digest = hashlib.sha256()
+source_root = repo_root / "codex"
+for path in sorted(item for item in source_root.rglob("*") if item.is_file()):
+    relative = path.relative_to(repo_root).as_posix().encode("utf-8")
+    content = path.read_bytes()
+    digest.update(relative + b"\0" + str(len(content)).encode("ascii") + b"\0" + content)
+
+payload = {
+    "schema_version": 2,
+    "repo_identity_version": 1,
+    "repo_identity": repo_identity,
+    "source_commit": source_commit,
+    "managed_surface_digest_version": 1,
+    "managed_surface_digest": f"sha256:{digest.hexdigest()}",
+    "synced_at": datetime.now(timezone.utc).isoformat().replace("+00:00", "Z"),
+}
+manifest_path.parent.mkdir(parents=True, exist_ok=True)
+fd, temp_name = tempfile.mkstemp(prefix=f".{manifest_path.name}.", dir=manifest_path.parent)
+try:
+    with os.fdopen(fd, "w", encoding="utf-8") as handle:
+        json.dump(payload, handle, ensure_ascii=False, sort_keys=True)
+        handle.write("\n")
+        handle.flush()
+        try:
+            os.fsync(handle.fileno())
+        except OSError:
+            pass
+    os.replace(temp_name, manifest_path)
+    try:
+        parent_fd = os.open(manifest_path.parent, os.O_RDONLY)
+        try:
+            os.fsync(parent_fd)
+        finally:
+            os.close(parent_fd)
+    except OSError:
+        pass
+finally:
+    try:
+        os.unlink(temp_name)
+    except FileNotFoundError:
+        pass
+PY
+  echo "source transition: ${TRANSITION_VERDICT}"
+}
 
 mkdir -p "${CODEX_HOME}"
 
@@ -142,6 +369,7 @@ PY
   else
     echo "[WARN] Missing ${CONFIG_TARGET}; hooks will activate after the next full config sync." >&2
   fi
+  write_sync_manifest
   exit 0
 fi
 
@@ -328,6 +556,7 @@ fi
 
 if [[ "${SKIP_SUPERPOWERS_SYNC}" == "true" ]]; then
   echo "Skipping superpowers sync by request."
+  write_sync_manifest
   exit 0
 fi
 
@@ -412,3 +641,4 @@ else
 fi
 
 echo "Codex home synchronized: ${CODEX_HOME}"
+write_sync_manifest
