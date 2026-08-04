@@ -56,13 +56,27 @@
 
 ## Closeout
 
-- automation_branch_push: `pending`
-- main_auto_merge: `pending`
-- local_main_safe_sync: `pending`
+- automation_branch_push: `pushed`
+  - branch: `automation/gstack-dhf-daily-refresh`
+  - note: 本轮日报首个提交已成功推送；本文件的 closeout 补记将作为后续 report finalize commit 再次推送。
+- main_auto_merge: `blocked`
+  - helper: `python3 scripts/merge_gstack_refresh_if_safe.py --repo-root "$(pwd)" --apply --verified --json`
+  - reason: `report_only_apply_forbidden`
+  - detail: helper 当前实现仍把 daily refresh 定义为 report-only，因此拒绝 `--apply`，没有推进 `main`。
+- local_main_safe_sync: `not_run`
+  - helper: `python3 scripts/sync_local_main_if_safe.py --repo-root /Users/kezheng/Codes/CursorDeveloper/MyCodexEnv --apply --json`
+  - reason: `main_not_merged`
 
 ## Closeout Evidence
 
-- pending final push / merge helper / local main helper receipts
+- command: `git -c alias.fwl='push --force-with-lease' fwl origin HEAD:refs/heads/automation/gstack-dhf-daily-refresh`
+  exit_code: `0`
+  key_output: `4def1ed..7e21b24  HEAD -> automation/gstack-dhf-daily-refresh`
+  timestamp: `not-captured-live-in-this-run`
+- command: `python3 scripts/merge_gstack_refresh_if_safe.py --repo-root "$(pwd)" --apply --verified --json`
+  exit_code: `1`
+  key_output: `{"status":"blocked","reason":"report_only_apply_forbidden","detail":"daily refresh is report-only and cannot merge or push"}`
+  timestamp: `not-captured-live-in-this-run`
 
 ## Next Auto Retry
 
