@@ -28,6 +28,7 @@
 - `docs/dhf-workflow-skills-en.html`: English DHF workflow skill inventory with GitHub source links.
 - `docs/dhf-for-product-and-field-en.html`: English diagram-first DHF overview for product managers and field engineers.
 - `docs/dhf-for-product-and-field-cn.html`: Chinese diagram-first DHF overview for product managers and field engineers.
+- `docs/dhf-engineering-notes-en.html`: English engineering notes on compaction governance and deployment safety.
 - `docs/delivery-harness-beginner-guide-cn.html`: Chinese beginner guide for agentic engineering readers.
 - `docs/delivery-harness-beginner-guide-en.html`: English beginner guide for agentic engineering readers.
 - `docs/project-lifecycle-harness-flow-cn.html`: Chinese vertical lifecycle flow visual guide.
@@ -115,6 +116,7 @@
 - `docs/dhf-workflow-skills-en.html`: English workflow skill inventory with GitHub links.
 - `docs/dhf-for-product-and-field-en.html`: English diagram-first DHF overview for PM and FDE readers.
 - `docs/dhf-for-product-and-field-cn.html`: Chinese diagram-first DHF overview for PM and FDE readers.
+- `docs/dhf-engineering-notes-en.html`: English deep-dive on governed compaction and forward-only deployment.
 - `docs/delivery-harness-beginner-guide-cn.html`: beginner-oriented Delivery Harness Framework explanation.
 - `docs/delivery-harness-beginner-guide-en.html`: English beginner-oriented Delivery Harness Framework explanation.
 - `docs/project-lifecycle-harness-flow-cn.html`: visual vertical lifecycle flow.
@@ -141,6 +143,7 @@
 - `docs/dhf-workflow-skills-en.html`: GitHub Pages English DHF workflow skill inventory.
 - `docs/dhf-for-product-and-field-en.html`: GitHub Pages English diagram-first DHF overview for product and field teams.
 - `docs/dhf-for-product-and-field-cn.html`: GitHub Pages Chinese diagram-first DHF overview for product and field teams.
+- `docs/dhf-engineering-notes-en.html`: GitHub Pages English engineering deep-dive for agentic systems readers.
 - `docs/delivery-harness-beginner-guide-cn.html`: beginner guide explaining what Delivery Harness Framework does.
 - `docs/delivery-harness-beginner-guide-en.html`: English beginner guide explaining what Delivery Harness Framework does.
 - `docs/project-lifecycle-harness-flow-cn.html`: Chinese vertical lifecycle flow.

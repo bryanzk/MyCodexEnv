@@ -382,6 +382,12 @@
       "public_nav": ["docs/index.html"]
     },
     {
+      "path": "docs/dhf-engineering-notes-en.html",
+      "role": "English engineering notes on compaction governance and deployment safety",
+      "audience": ["human"],
+      "public_nav": ["docs/index-en.html"]
+    },
+    {
       "path": "docs/delivery-harness-beginner-guide-cn.html",
       "role": "beginner-oriented Delivery Harness Framework explanation",
       "audience": ["human"],
