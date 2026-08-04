@@ -348,6 +348,7 @@
       <a class="tag" href="./project-lifecycle-harness-flow-en.html">Lifecycle Flow</a>
       <a class="tag" href="./project-lifecycle-harness-flow-skills-en-status-style.html">Skill routing map</a>
       <a class="tag" href="./dhf-workflow-skills-en.html">Workflow skills</a>
+      <a class="tag" href="./dhf-for-product-and-field-en.html">For PM &amp; FDE</a>
       <a class="tag" href="./LIFECYCLE_SKILL_ROUTING.md">Written spec</a>
     </nav>
 
@@ -387,7 +388,43 @@
       </div>
     </section>
 
-    <section class="section-block" aria-labelledby="learn-heading" style="--i:3">
+    <section class="section-block" aria-labelledby="governance-heading" style="--i:3">
+      <div class="section-heading">
+        <div>
+          <div class="label">Runtime Governance · 2026-08-04</div>
+          <h2 id="governance-heading">Compaction governance and rollback prevention</h2>
+        </div>
+        <p>The harness now treats context compaction and runtime deployment as governed control flow: host-observed signals, idempotent successor transitions, and a source transition guard that refuses to let an older source overwrite a newer runtime.</p>
+      </div>
+      <div class="card-row three">
+        <div class="card">
+          <div>
+            <div class="label">Compaction Governance</div>
+            <h2>Second compaction is control flow</h2>
+            <p>A host-observed compaction probe with incremental JSONL scanning, an append-only transition store for exactly-one successor tasks, a freshness-aware recovery boundary verdict, and a session bearing hook that injects phase and next safe task at session start.</p>
+          </div>
+          <div class="meta">probe / transition store / boundary / bearing</div>
+        </div>
+        <div class="card">
+          <div>
+            <div class="label">Rollback Prevention v0</div>
+            <h2>Old sources cannot overwrite new runtimes</h2>
+            <p>Runtime sync now checks a source transition matrix against a schema-v2 manifest: equal is a no-op, forward requires the pushed remote tip, and stale, diverged, or downgrade transitions fail closed. Deleted files are retained in backups, and the daily refresh is report-only with a quarantined-definition denylist.</p>
+          </div>
+          <div class="meta">transition matrix / manifest v2 / report-only refresh</div>
+        </div>
+        <div class="card">
+          <div>
+            <div class="label">Enforceable Guardrails</div>
+            <h2>Guards that actually block</h2>
+            <p>The live PreToolUse guard emits the enforceable block shape proven by isolated probes, guard decisions carry risk tiers, acceptance criteria live in a tamper-evident ledger, and behavior evals verify recovery, handoff completeness, and successor idempotency.</p>
+          </div>
+          <div class="meta">block shape / risk tiers / ledger / behavior evals</div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section-block" aria-labelledby="learn-heading" style="--i:4">
       <div class="section-heading">
         <div>
           <div class="label">Start Here</div>
@@ -436,6 +473,14 @@
         </a>
       </div>
       <div class="card-row">
+        <a class="card" href="./dhf-for-product-and-field-en.html">
+          <div>
+            <div class="label">Non-Builders Start Here</div>
+            <h2>For Product &amp; Field Teams</h2>
+            <p>The five guarantees of the harness explained in diagrams — delivery loop, verification receipts, lane gates, long-running work, and forward-only deployments — for readers who will never open the code.</p>
+          </div>
+          <div class="meta">diagram-first overview</div>
+        </a>
         <a class="card" href="./dhf-workflow-skills-en.html">
           <div>
             <div class="label">Skill Inventory</div>

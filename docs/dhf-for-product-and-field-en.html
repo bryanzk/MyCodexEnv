@@ -1,0 +1,371 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DHF for Product Managers &amp; Field Engineers</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,650;9..144,760&family=IBM+Plex+Mono:wght@400;500;600&family=Atkinson+Hyperlegible:wght@400;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --font-body: 'Atkinson Hyperlegible', Verdana, sans-serif;
+      --font-display: 'Fraunces', Georgia, serif;
+      --font-mono: 'IBM Plex Mono', monospace;
+      --bg: #f7f4ec;
+      --surface: #fffdf8;
+      --surface2: #ebe6da;
+      --border: rgba(51, 42, 33, 0.14);
+      --text: #231f1a;
+      --text-dim: #665f55;
+      --green: #147a62;
+      --green-dim: rgba(20, 122, 98, 0.11);
+      --amber: #a15f22;
+      --amber-dim: rgba(161, 95, 34, 0.12);
+      --rose: #a9475b;
+      --rose-dim: rgba(169, 71, 91, 0.10);
+      --blue: #2f6f92;
+      --blue-dim: rgba(47, 111, 146, 0.10);
+      --shadow: 0 18px 44px rgba(51, 42, 33, 0.10), 0 2px 10px rgba(51, 42, 33, 0.06);
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #15120f;
+        --surface: #211c18;
+        --surface2: #2b251f;
+        --border: rgba(255, 239, 218, 0.13);
+        --text: #f6eee3;
+        --text-dim: #b8aa9a;
+        --green: #5cd0b2;
+        --green-dim: rgba(92, 208, 178, 0.13);
+        --amber: #f3b36b;
+        --amber-dim: rgba(243, 179, 107, 0.13);
+        --rose: #f095a5;
+        --rose-dim: rgba(240, 149, 165, 0.12);
+        --blue: #91c8e6;
+        --blue-dim: rgba(145, 200, 230, 0.12);
+      }
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      color: var(--text);
+      font-family: var(--font-body);
+      background-color: var(--bg);
+      padding: 38px;
+      overflow-wrap: break-word;
+    }
+    .wrap { max-width: 1180px; margin: 0 auto; display: grid; gap: 24px; }
+    .hero {
+      background: color-mix(in srgb, var(--surface) 88%, var(--blue) 12%);
+      border: 1px solid color-mix(in srgb, var(--border) 70%, var(--blue) 30%);
+      border-radius: 22px;
+      padding: clamp(28px, 5vw, 52px);
+      box-shadow: var(--shadow);
+    }
+    .eyebrow, .label, .meta, .tag {
+      font-family: var(--font-mono);
+      letter-spacing: 0.11em;
+      text-transform: uppercase;
+    }
+    .eyebrow { color: var(--blue); font-size: 13px; font-weight: 600; margin-bottom: 16px; }
+    h1 {
+      margin: 0;
+      font-family: var(--font-display);
+      font-size: clamp(34px, 4.8vw, 62px);
+      line-height: 1.0;
+    }
+    .lead { max-width: 860px; margin: 20px 0 0; color: var(--text-dim); font-size: clamp(17px, 2vw, 22px); line-height: 1.5; }
+    .strip { display: flex; flex-wrap: wrap; gap: 10px; padding: 14px; background: color-mix(in srgb, var(--surface) 76%, transparent); border: 1px solid var(--border); border-radius: 16px; }
+    .tag { display: inline-flex; align-items: center; min-height: 34px; padding: 7px 12px; color: var(--green); background: var(--green-dim); border: 1px solid color-mix(in srgb, var(--green) 24%, transparent); border-radius: 999px; font-size: 11px; text-decoration: none; }
+    .section-block { display: grid; gap: 14px; padding-top: 6px; }
+    .section-heading { border-top: 1px solid var(--border); padding-top: 20px; }
+    .section-heading h2 { margin: 0 0 8px; font-family: var(--font-display); font-size: clamp(26px, 3vw, 38px); line-height: 1; }
+    .section-heading p { max-width: 760px; margin: 0; color: var(--text-dim); line-height: 1.5; }
+    .label { color: var(--amber); font-size: 11px; font-weight: 600; margin-bottom: 10px; }
+    .card-row { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+    .card {
+      min-width: 0;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      padding: 24px;
+      color: inherit;
+      text-decoration: none;
+      box-shadow: 0 8px 26px rgba(51, 42, 33, 0.07);
+    }
+    .card h3 { margin: 0 0 10px; font-family: var(--font-display); font-size: 26px; line-height: 1.05; }
+    .card p, .card li { margin: 0; color: var(--text-dim); line-height: 1.55; font-size: 15.5px; }
+    .card ul { margin: 0; padding-left: 18px; display: grid; gap: 8px; }
+    .diagram {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      padding: 18px;
+      overflow-x: auto;
+    }
+    .diagram svg { display: block; width: 100%; height: auto; font-family: var(--font-body); }
+    .diagram figcaption { margin-top: 10px; color: var(--text-dim); font-size: 13.5px; line-height: 1.5; font-family: var(--font-mono); }
+    figure { margin: 0; }
+    .footer { display: flex; justify-content: space-between; gap: 16px; color: var(--text-dim); border-top: 1px solid var(--border); padding-top: 18px; font-family: var(--font-mono); font-size: 12px; line-height: 1.5; }
+    @media (max-width: 860px) {
+      body { padding: 18px; }
+      .card-row { grid-template-columns: 1fr; }
+      .footer { flex-direction: column; }
+    }
+  </style>
+  <link rel="stylesheet" href="./dhf-site-status.css">
+</head>
+<body>
+  <main class="wrap">
+    <aside class="dhf-status-bar" data-dhf-status="2026-08-03" aria-label="Current DHF status">
+      <strong>Architecture status · 2026-08-03</strong>
+      <span>Source, runtime, publication, and independent-core status are separate.</span>
+      <a href="./dhf-architecture-status-en.html">Open current status</a>
+    </aside>
+
+    <section class="hero">
+      <div class="eyebrow">DHF for Product &amp; Field Teams</div>
+      <h1>What the harness guarantees,<br>without reading the code.</h1>
+      <p class="lead">Delivery Harness Framework (DHF) wraps AI agents in the same discipline you expect from a good engineering team: understand first, work in small verified steps, prove every claim, and hand off cleanly. This page explains the five guarantees in diagrams.</p>
+    </section>
+
+    <nav class="strip" aria-label="Quick links">
+      <a class="tag" href="./index-en.html">English landing</a>
+      <a class="tag" href="./delivery-harness-beginner-guide-en.html">Beginner guide</a>
+      <a class="tag" href="./project-lifecycle-harness-flow-en.html">Lifecycle flow</a>
+      <a class="tag" href="./dhf-architecture-status-en.html">Current status</a>
+    </nav>
+
+    <section class="section-block" aria-labelledby="loop-heading">
+      <div class="section-heading">
+        <div class="label">Guarantee 1 · Predictable process</div>
+        <h2 id="loop-heading">Every request runs the same delivery loop</h2>
+        <p>No agent jumps straight to code. Work always moves left to right, and each stage has a gate that must pass before the next one starts. A PM can ask "which stage is this in?" at any time and get a real answer.</p>
+      </div>
+      <figure class="diagram">
+        <svg viewBox="0 0 1120 190" role="img" aria-label="Seven-stage delivery loop from request to handoff">
+          <title>The DHF delivery loop</title>
+          <g font-size="15" font-weight="700" text-anchor="middle">
+            <rect x="10"  y="50" width="140" height="64" rx="12" fill="var(--blue-dim)"  stroke="var(--blue)"/>
+            <rect x="170" y="50" width="140" height="64" rx="12" fill="var(--green-dim)" stroke="var(--green)"/>
+            <rect x="330" y="50" width="140" height="64" rx="12" fill="var(--green-dim)" stroke="var(--green)"/>
+            <rect x="490" y="50" width="140" height="64" rx="12" fill="var(--green-dim)" stroke="var(--green)"/>
+            <rect x="650" y="50" width="140" height="64" rx="12" fill="var(--amber-dim)" stroke="var(--amber)"/>
+            <rect x="810" y="50" width="140" height="64" rx="12" fill="var(--amber-dim)" stroke="var(--amber)"/>
+            <rect x="970" y="50" width="140" height="64" rx="12" fill="var(--rose-dim)"  stroke="var(--rose)"/>
+            <text x="80"   y="78" fill="var(--text)">Request</text><text x="80"   y="98" font-size="12" font-weight="400" fill="var(--text-dim)">intake</text>
+            <text x="240"  y="78" fill="var(--text)">Recover</text><text x="240"  y="98" font-size="12" font-weight="400" fill="var(--text-dim)">facts &amp; state</text>
+            <text x="400"  y="78" fill="var(--text)">Require</text><text x="400"  y="98" font-size="12" font-weight="400" fill="var(--text-dim)">success criteria</text>
+            <text x="560"  y="78" fill="var(--text)">Plan</text><text x="560"  y="98" font-size="12" font-weight="400" fill="var(--text-dim)">slices &amp; gates</text>
+            <text x="720"  y="78" fill="var(--text)">Build</text><text x="720"  y="98" font-size="12" font-weight="400" fill="var(--text-dim)">one slice at a time</text>
+            <text x="880"  y="78" fill="var(--text)">Verify</text><text x="880"  y="98" font-size="12" font-weight="400" fill="var(--text-dim)">fresh evidence</text>
+            <text x="1040" y="78" fill="var(--text)">Handoff</text><text x="1040" y="98" font-size="12" font-weight="400" fill="var(--text-dim)">next safe task</text>
+          </g>
+          <g stroke="var(--text-dim)" stroke-width="2" fill="var(--text-dim)">
+            <line x1="150" y1="82" x2="166" y2="82"/><polygon points="170,82 162,78 162,86"/>
+            <line x1="310" y1="82" x2="326" y2="82"/><polygon points="330,82 322,78 322,86"/>
+            <line x1="470" y1="82" x2="486" y2="82"/><polygon points="490,82 482,78 482,86"/>
+            <line x1="630" y1="82" x2="646" y2="82"/><polygon points="650,82 642,78 642,86"/>
+            <line x1="790" y1="82" x2="806" y2="82"/><polygon points="810,82 802,78 802,86"/>
+            <line x1="950" y1="82" x2="966" y2="82"/><polygon points="970,82 962,78 962,86"/>
+          </g>
+          <path d="M 1040 120 Q 1040 165 560 165 Q 80 165 80 124" fill="none" stroke="var(--text-dim)" stroke-width="1.6" stroke-dasharray="5 5"/>
+          <text x="560" y="182" font-size="12" text-anchor="middle" fill="var(--text-dim)">the handoff seeds the next request — nothing relies on anyone's memory</text>
+        </svg>
+        <figcaption>Gates only move forward. If a stage cannot pass its gate, work stops there and says so — it does not quietly continue.</figcaption>
+      </figure>
+    </section>
+
+    <section class="section-block" aria-labelledby="receipt-heading">
+      <div class="section-heading">
+        <div class="label">Guarantee 2 · No unproven claims</div>
+        <h2 id="receipt-heading">"Done" always comes with a receipt</h2>
+        <p>Every completion claim carries a four-part verification receipt. If any part is missing, the claim is treated as unverified — by policy, not by trust. For a PM this means status reports are checkable; for an FDE this means you can re-run exactly what was run.</p>
+      </div>
+      <figure class="diagram">
+        <svg viewBox="0 0 1120 170" role="img" aria-label="Anatomy of a verification receipt with four required fields">
+          <title>The verification receipt</title>
+          <rect x="10" y="14" width="1100" height="120" rx="14" fill="var(--surface2)" stroke="var(--border)"/>
+          <text x="34" y="44" font-size="16" font-weight="700" fill="var(--text)">Verification receipt</text>
+          <text x="34" y="64" font-size="12.5" fill="var(--text-dim)">attached to every completion claim</text>
+          <g font-size="14" font-weight="700" text-anchor="middle">
+            <rect x="270"  y="34" width="190" height="66" rx="10" fill="var(--green-dim)" stroke="var(--green)"/>
+            <rect x="480"  y="34" width="190" height="66" rx="10" fill="var(--green-dim)" stroke="var(--green)"/>
+            <rect x="690"  y="34" width="190" height="66" rx="10" fill="var(--green-dim)" stroke="var(--green)"/>
+            <rect x="900"  y="34" width="190" height="66" rx="10" fill="var(--green-dim)" stroke="var(--green)"/>
+            <text x="365"  y="62" fill="var(--text)">what ran</text><text x="365"  y="84" font-size="12" font-weight="400" fill="var(--text-dim)">the exact command</text>
+            <text x="575"  y="62" fill="var(--text)">how it exited</text><text x="575"  y="84" font-size="12" font-weight="400" fill="var(--text-dim)">machine-readable result</text>
+            <text x="785"  y="62" fill="var(--text)">what it showed</text><text x="785"  y="84" font-size="12" font-weight="400" fill="var(--text-dim)">the key output line</text>
+            <text x="995"  y="62" fill="var(--text)">when it ran</text><text x="995"  y="84" font-size="12" font-weight="400" fill="var(--text-dim)">freshness timestamp</text>
+          </g>
+          <text x="560" y="158" font-size="12.5" text-anchor="middle" fill="var(--rose)">missing any field → the claim is UNVERIFIED, and a historical green result is never reused as proof of today</text>
+        </svg>
+        <figcaption>One receipt proves one claim. Yesterday's passing test does not certify today's system — verification is always re-run after change.</figcaption>
+      </figure>
+    </section>
+
+    <section class="section-block" aria-labelledby="lane-heading">
+      <div class="section-heading">
+        <div class="label">Guarantee 3 · Blast-radius control</div>
+        <h2 id="lane-heading">Work is routed by lane before it starts</h2>
+        <p>The first routing decision is not "what to build" but "where this is allowed to touch". Customer data, production systems, deploys, and secrets sit behind approval gates that agents cannot self-grant.</p>
+      </div>
+      <figure class="diagram">
+        <svg viewBox="0 0 1120 250" role="img" aria-label="Lane gate routing work into local, demo, or production lanes">
+          <title>The lane gate</title>
+          <rect x="20" y="90" width="190" height="70" rx="14" fill="var(--blue-dim)" stroke="var(--blue)"/>
+          <text x="115" y="120" font-size="15" font-weight="700" text-anchor="middle" fill="var(--text)">Incoming work</text>
+          <text x="115" y="140" font-size="12" text-anchor="middle" fill="var(--text-dim)">any request</text>
+          <polygon points="300,125 370,70 440,125 370,180" fill="var(--amber-dim)" stroke="var(--amber)"/>
+          <text x="370" y="120" font-size="14" font-weight="700" text-anchor="middle" fill="var(--text)">Lane</text>
+          <text x="370" y="138" font-size="14" font-weight="700" text-anchor="middle" fill="var(--text)">gate</text>
+          <g stroke="var(--text-dim)" stroke-width="2" fill="var(--text-dim)">
+            <line x1="210" y1="125" x2="296" y2="125"/><polygon points="300,125 292,121 292,129"/>
+            <line x1="415" y1="90"  x2="520" y2="45"/><polygon points="524,43 515,43 519,51"/>
+            <line x1="440" y1="125" x2="520" y2="125"/><polygon points="524,125 516,121 516,129"/>
+            <line x1="415" y1="160" x2="520" y2="205"/><polygon points="524,207 519,199 515,207"/>
+          </g>
+          <g font-size="14" font-weight="700">
+            <rect x="530" y="16"  width="560" height="58" rx="12" fill="var(--green-dim)" stroke="var(--green)"/>
+            <rect x="530" y="96"  width="560" height="58" rx="12" fill="var(--amber-dim)" stroke="var(--amber)"/>
+            <rect x="530" y="176" width="560" height="58" rx="12" fill="var(--rose-dim)" stroke="var(--rose)"/>
+            <text x="552" y="40" fill="var(--text)">Local development</text>
+            <text x="552" y="60" font-size="12" font-weight="400" fill="var(--text-dim)">free to iterate — no external systems, no customer data</text>
+            <text x="552" y="120" fill="var(--text)">Operator live demo</text>
+            <text x="552" y="140" font-size="12" font-weight="400" fill="var(--text-dim)">real accounts, with the operator present and approving</text>
+            <text x="552" y="200" fill="var(--text)">Customer / production</text>
+            <text x="552" y="220" font-size="12" font-weight="400" fill="var(--text-dim)">deploys, secrets, and customer data stay approval-gated</text>
+          </g>
+        </svg>
+        <figcaption>An FDE can promise a customer: nothing crosses into the production lane without an explicit, recorded human approval.</figcaption>
+      </figure>
+    </section>
+
+    <section class="section-block" aria-labelledby="longrun-heading">
+      <div class="section-heading">
+        <div class="label">Guarantee 4 · Long work survives</div>
+        <h2 id="longrun-heading">Multi-day work does not depend on anyone's memory</h2>
+        <p>AI agents have a limited working memory. DHF continuously writes decisions, progress, and the next safe task to durable files, so when a session fills up, a successor picks up exactly where the last one stopped — once, not twice, and never by guessing.</p>
+      </div>
+      <figure class="diagram">
+        <svg viewBox="0 0 1120 240" role="img" aria-label="Session memory filling up, checkpointing to durable state, and a successor session resuming">
+          <title>How long-running work survives</title>
+          <g font-size="14" font-weight="700" text-anchor="middle">
+            <rect x="20"  y="30" width="240" height="70" rx="12" fill="var(--green-dim)" stroke="var(--green)"/>
+            <rect x="320" y="30" width="240" height="70" rx="12" fill="var(--amber-dim)" stroke="var(--amber)"/>
+            <rect x="620" y="30" width="200" height="70" rx="12" fill="var(--amber-dim)" stroke="var(--amber)"/>
+            <rect x="880" y="30" width="220" height="70" rx="12" fill="var(--green-dim)" stroke="var(--green)"/>
+            <text x="140" y="60" fill="var(--text)">Session working</text>
+            <text x="140" y="80" font-size="12" font-weight="400" fill="var(--text-dim)">memory slowly fills</text>
+            <text x="440" y="60" fill="var(--text)">Memory pressure</text>
+            <text x="440" y="80" font-size="12" font-weight="400" fill="var(--text-dim)">detected by the host, not self-reported</text>
+            <text x="720" y="60" fill="var(--text)">Safe boundary</text>
+            <text x="720" y="80" font-size="12" font-weight="400" fill="var(--text-dim)">finish the step, verify</text>
+            <text x="990" y="60" fill="var(--text)">Successor session</text>
+            <text x="990" y="80" font-size="12" font-weight="400" fill="var(--text-dim)">resumes from the handoff</text>
+          </g>
+          <g stroke="var(--text-dim)" stroke-width="2" fill="var(--text-dim)">
+            <line x1="260" y1="65" x2="316" y2="65"/><polygon points="320,65 312,61 312,69"/>
+            <line x1="560" y1="65" x2="616" y2="65"/><polygon points="620,65 612,61 612,69"/>
+            <line x1="820" y1="65" x2="876" y2="65"/><polygon points="880,65 872,61 872,69"/>
+          </g>
+          <rect x="220" y="150" width="680" height="60" rx="12" fill="var(--blue-dim)" stroke="var(--blue)"/>
+          <text x="560" y="176" font-size="14" font-weight="700" text-anchor="middle" fill="var(--text)">Durable state: progress log · decisions · verification evidence · one next safe task</text>
+          <text x="560" y="196" font-size="12" text-anchor="middle" fill="var(--text-dim)">written continuously, so any session can be reconstructed from files alone</text>
+          <g stroke="var(--blue)" stroke-width="1.6" stroke-dasharray="4 4" fill="none">
+            <line x1="140" y1="100" x2="300" y2="150"/>
+            <line x1="720" y1="100" x2="700" y2="150"/>
+            <line x1="990" y1="100" x2="840" y2="150"/>
+          </g>
+          <text x="560" y="232" font-size="12" text-anchor="middle" fill="var(--text-dim)">exactly one successor per boundary — duplicates are structurally impossible, not just discouraged</text>
+        </svg>
+        <figcaption>For a PM: a two-week agent project degrades gracefully instead of restarting. For an FDE: any session can be audited after the fact from durable files.</figcaption>
+      </figure>
+    </section>
+
+    <section class="section-block" aria-labelledby="deploy-heading">
+      <div class="section-heading">
+        <div class="label">Guarantee 5 · Deployments only move forward</div>
+        <h2 id="deploy-heading">An older version can never silently replace a newer one</h2>
+        <p>Every deployed environment remembers which version it runs. Before anything overwrites it, the harness compares versions: newer wins, same is a no-op, and older is refused unless a human explicitly approves a rollback. Scheduled automation only reports — it never repairs.</p>
+      </div>
+      <figure class="diagram">
+        <svg viewBox="0 0 1120 240" role="img" aria-label="Source transition guard allowing forward deployments and blocking silent rollbacks">
+          <title>The deployment direction guard</title>
+          <rect x="20" y="80" width="230" height="80" rx="14" fill="var(--blue-dim)" stroke="var(--blue)"/>
+          <text x="135" y="112" font-size="15" font-weight="700" text-anchor="middle" fill="var(--text)">Incoming deploy</text>
+          <text x="135" y="132" font-size="12" text-anchor="middle" fill="var(--text-dim)">carries its version</text>
+          <polygon points="330,120 410,60 490,120 410,180" fill="var(--amber-dim)" stroke="var(--amber)"/>
+          <text x="410" y="112" font-size="14" font-weight="700" text-anchor="middle" fill="var(--text)">Version</text>
+          <text x="410" y="130" font-size="14" font-weight="700" text-anchor="middle" fill="var(--text)">compare</text>
+          <g stroke="var(--text-dim)" stroke-width="2" fill="var(--text-dim)">
+            <line x1="250" y1="120" x2="326" y2="120"/><polygon points="330,120 322,116 322,124"/>
+            <line x1="462" y1="82"  x2="570" y2="42"/><polygon points="574,40 565,40 569,48"/>
+            <line x1="490" y1="120" x2="570" y2="120"/><polygon points="574,120 566,116 566,124"/>
+            <line x1="462" y1="158" x2="570" y2="198"/><polygon points="574,200 569,192 565,200"/>
+          </g>
+          <g font-size="14" font-weight="700">
+            <rect x="580" y="14"  width="520" height="56" rx="12" fill="var(--green-dim)" stroke="var(--green)"/>
+            <rect x="580" y="92"  width="520" height="56" rx="12" fill="var(--surface2)" stroke="var(--border)"/>
+            <rect x="580" y="170" width="520" height="56" rx="12" fill="var(--rose-dim)" stroke="var(--rose)"/>
+            <text x="602" y="37" fill="var(--green)">NEWER → deploys</text>
+            <text x="602" y="57" font-size="12" font-weight="400" fill="var(--text-dim)">forward move, verified after landing, version recorded</text>
+            <text x="602" y="115" fill="var(--text)">SAME → no-op</text>
+            <text x="602" y="135" font-size="12" font-weight="400" fill="var(--text-dim)">nothing rewritten, nothing to verify twice</text>
+            <text x="602" y="193" fill="var(--rose)">OLDER → refused</text>
+            <text x="602" y="213" font-size="12" font-weight="400" fill="var(--text-dim)">fails closed; only an explicit human-approved rollback may pass</text>
+          </g>
+        </svg>
+        <figcaption>This guard exists because the failure it prevents is real: an out-of-date automated job once tried to overwrite a newer runtime. Now the direction check is structural.</figcaption>
+      </figure>
+    </section>
+
+    <section class="section-block" aria-labelledby="audience-heading">
+      <div class="section-heading">
+        <div class="label">What this means for you</div>
+        <h2 id="audience-heading">Two audiences, two payoffs</h2>
+        <p>The same five guarantees read differently depending on your seat.</p>
+      </div>
+      <div class="card-row">
+        <div class="card">
+          <h3>If you manage the product</h3>
+          <ul>
+            <li>Status is checkable: every "done" has a receipt you can open, not a vibe.</li>
+            <li>Scope is visible: work is sliced, and each slice lands or fails on its own.</li>
+            <li>Risk is bounded: customer-facing lanes require recorded human approval.</li>
+            <li>Long projects degrade gracefully: session limits produce handoffs, not amnesia.</li>
+          </ul>
+        </div>
+        <div class="card">
+          <h3>If you deploy in the field</h3>
+          <ul>
+            <li>Environments are self-describing: each one records the exact version it runs.</li>
+            <li>Rollbacks are explicit: nothing downgrades without you approving it by name.</li>
+            <li>Automation is read-only by default: scheduled jobs report drift, never "fix" it.</li>
+            <li>Everything is auditable after the fact from durable files and receipts.</li>
+          </ul>
+        </div>
+      </div>
+      <div class="card-row">
+        <a class="card" href="./delivery-harness-beginner-guide-en.html">
+          <div class="label">Go deeper</div>
+          <h3>Beginner guide</h3>
+          <p>The plain-English walkthrough of completion evidence and handoff basics — the natural next page after this one.</p>
+        </a>
+        <a class="card" href="./project-lifecycle-harness-flow-en.html">
+          <div class="label">Go deeper</div>
+          <h3>Lifecycle flow map</h3>
+          <p>The full end-to-end flow behind Guarantee 1, from request intake to verified handoff.</p>
+        </a>
+      </div>
+    </section>
+
+    <footer class="footer">
+      <span>Audience page: <strong>docs/dhf-for-product-and-field-en.html</strong></span>
+      <span>Published by ShipAI.ca as a public DHF reference</span>
+    </footer>
+  </main>
+</body>
+</html>

@@ -370,6 +370,12 @@
       "public_nav": ["docs/index-en.html"]
     },
     {
+      "path": "docs/dhf-for-product-and-field-en.html",
+      "role": "English diagram-first DHF overview for product managers and field engineers",
+      "audience": ["human"],
+      "public_nav": ["docs/index-en.html"]
+    },
+    {
       "path": "docs/delivery-harness-beginner-guide-cn.html",
       "role": "beginner-oriented Delivery Harness Framework explanation",
       "audience": ["human"],
