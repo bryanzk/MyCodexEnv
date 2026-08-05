@@ -4651,6 +4651,88 @@ def test_harness_observer_phase_matches_guard_resolution():
     print("[PASS] harness observer phase matches guard resolution")
 
 
+def test_harness_observer_evidence_minimization_matrix():
+    sensitive_command = "PHASE0A_SENSITIVE_FIXTURE_DO_NOT_PERSIST"
+    long_command = "printf '" + ("x" * 400) + "'"
+    long_output = "y" * 600
+    oversized_command = "x" * (1024 * 1024 + 1)
+    shared_command = "python3 test_runner.py --observer-fixture"
+    cases = [
+        {"name": "default", "payloads": [json.dumps({"tool_name": "exec_command", "tool_input": {"cmd": long_command}, "key_output": long_output})]},
+        {"name": "sensitive", "payloads": [json.dumps({"tool_name": "exec_command", "tool_input": {"cmd": sensitive_command}})]},
+        {"name": "oversized", "payloads": [json.dumps({"tool_name": "exec_command", "tool_input": {"cmd": oversized_command}})]},
+        {"name": "raw", "raw": True, "payloads": [json.dumps({"tool_name": "exec_command", "tool_input": {"cmd": long_command}})]},
+        {"name": "stable_hash", "payloads": [json.dumps({"tool_name": "exec_command", "tool_input": {"cmd": shared_command}})] * 2},
+        {"name": "permissions", "payloads": [json.dumps({"tool_name": "exec_command", "tool_input": {"cmd": "pwd"}})]},
+        {"name": "fail_safe", "payloads": ["{bad json", ""]},
+    ]
+
+    for case in cases:
+        with tempfile.TemporaryDirectory() as tmp:
+            evidence_dir = Path(tmp) / "evidence"
+            env = os.environ.copy()
+            env["CODEX_HARNESS_EVIDENCE_DIR"] = str(evidence_dir)
+            env.pop("CODEX_HARNESS_EVIDENCE_RAW", None)
+            if case.get("raw"):
+                env["CODEX_HARNESS_EVIDENCE_RAW"] = "1"
+
+            for payload in case["payloads"]:
+                code, out, err = run_with_input([sys.executable, str(HARNESS_OBSERVER)], payload, env=env)
+                require(code == 0, f"observer {case['name']} case should exit 0: {err or out}")
+                require(json.loads(out) == {}, f"observer {case['name']} case should return an empty hook response")
+                require("Traceback" not in err, f"observer {case['name']} case must not emit a traceback")
+
+            evidence_files = sorted(evidence_dir.glob("*.jsonl"))
+            require(evidence_files, f"observer {case['name']} case should write evidence")
+            evidence_text = "".join(path.read_text(encoding="utf-8") for path in evidence_files)
+            lines = [line for line in evidence_text.splitlines() if line]
+            events = [json.loads(line) for line in lines]
+
+            if case["name"] == "default":
+                require(long_command not in evidence_text, "raw command found in evidence")
+                require("command" not in events[-1], "default evidence must not retain the command field")
+                require(events[-1].get("command_present") is True, "missing command_present")
+                require(events[-1].get("command_length") == len(long_command), "missing command_length")
+                require(
+                    events[-1].get("command_sha256_prefix") == hashlib.sha256(long_command.encode()).hexdigest()[:12],
+                    "missing command_sha256_prefix",
+                )
+                require(events[-1].get("key_output") == long_output[:500], "key_output cap mismatch")
+                require(events[-1].get("output_length") == len(long_output), "missing output_length")
+                require(
+                    events[-1].get("output_sha256_prefix") == hashlib.sha256(long_output.encode()).hexdigest()[:12],
+                    "missing output_sha256_prefix",
+                )
+            elif case["name"] == "sensitive":
+                require(sensitive_command not in evidence_text, "sensitive command found in evidence")
+            elif case["name"] == "oversized":
+                require(all(len(line.encode("utf-8")) <= 8 * 1024 for line in lines), "record exceeds cap")
+                require(events[-1].get("truncated") is True, "oversized record must be marked truncated")
+            elif case["name"] == "raw":
+                require(events[-1].get("raw_capture") is True, "raw debug capture must be auditable")
+                require(events[-1].get("command_head") == long_command[:200], "raw command head mismatch")
+                require(len(events[-1]["command_head"]) <= 200, "raw command head exceeds cap")
+            elif case["name"] == "stable_hash":
+                require(len(events) == 2, "stable hash case should write two events")
+                require(
+                    events[0].get("command_sha256_prefix") == events[1].get("command_sha256_prefix"),
+                    "same command must keep a stable hash prefix",
+                )
+            elif case["name"] == "permissions":
+                require(evidence_dir.stat().st_mode & 0o777 == 0o700, "evidence directory mode must be 0700")
+                require(evidence_files[-1].stat().st_mode & 0o777 == 0o600, "evidence file mode must be 0600")
+                with evidence_files[-1].open("r+b") as handle:
+                    handle.seek(32 * 1024 * 1024 - 1)
+                    handle.write(b"\0")
+                code, out, err = run_with_input(
+                    [sys.executable, str(HARNESS_OBSERVER)], case["payloads"][0], env=env
+                )
+                require(code == 0 and json.loads(out) == {}, f"observer rotation case failed: {err or out}")
+                require(list(evidence_dir.glob("????-??-??.1.jsonl")), "full daily evidence file should rotate")
+
+    print("[PASS] harness observer evidence minimization matrix")
+
+
 def plan_governor_scope_fixture(repo_anchor: str) -> dict:
     return {
         "schema_version": 1,
@@ -9399,6 +9481,7 @@ TESTS = [
     test_harness_guard_snapshot_parser,
     test_harness_guard_phase_resolution,
     test_harness_observer_phase_matches_guard_resolution,
+    test_harness_observer_evidence_minimization_matrix,
     test_plan_governor_schema_and_surface_contracts,
     test_plan_governor_cli_state_privacy_and_atomicity,
     test_plan_governor_decision_receipt_and_shipai_replay,

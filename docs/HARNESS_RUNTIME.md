@@ -365,6 +365,20 @@ Runtime events are written to local files under `~/.codex/harness/evidence`.
 Local logs are not migrated when the schema evolves. Old events that do not
 carry `evidence_kind` are read as `unknown`.
 
+The source observer minimizes new tool-call evidence by default. It omits the
+raw command and records only `command_present`, `command_length`, and the first
+12 hexadecimal characters of its SHA-256 digest. `key_output` remains capped at
+500 characters and adds its original length and the same digest prefix. Setting
+`CODEX_HARNESS_EVIDENCE_RAW=1` is the only raw-debug opt-in; those events carry
+`raw_capture=true` and retain at most a 200-character `command_head`.
+
+Each serialized observer record is capped at 8 KiB and marks source or record
+truncation with `truncated=true`. Files keep daily names and rotate at 32 MiB to
+`<date>.<seq>.jsonl`. The evidence directory and files are enforced as
+owner-only (`0700` and `0600`). Evidence has a minimum 30-day retention window:
+rotation never deletes files, and any separately authorized cleanup must not
+remove a file still inside that window.
+
 Decision evidence may add the optional `compaction_ordinal`, `transition_key`,
 and `gate_decision` fields. They are accepted only for decision evidence;
 existing events and append calls remain valid without them.

@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 from __future__ import annotations
 
+import hashlib
 import json
 import os
 import sys
@@ -14,6 +15,15 @@ except Exception:  # Observer must keep logging best-effort if guard imports fai
     current_phase = None
     git_root = None
     load_policy = None
+
+
+COMMAND_HEAD_LIMIT = 200
+KEY_OUTPUT_LIMIT = 500
+TEXT_FIELD_LIMIT = 500
+MAX_RECORD_BYTES = 8 * 1024
+MAX_FILE_BYTES = 32 * 1024 * 1024
+DIRECTORY_MODE = 0o700
+FILE_MODE = 0o600
 
 
 def load_payload() -> dict[str, Any]:
@@ -70,31 +80,78 @@ def resolved_phase(payload: dict[str, Any], cwd: str) -> str:
         return fallback_phase(payload)
 
 
+def sha256_prefix(value: str) -> str:
+    return hashlib.sha256(value.encode("utf-8")).hexdigest()[:12]
+
+
+def serialize_event(event: dict[str, Any]) -> str:
+    serialized = json.dumps(event, ensure_ascii=False, sort_keys=True)
+    if len(serialized.encode("utf-8")) <= MAX_RECORD_BYTES:
+        return serialized
+
+    shortened = {
+        key: value[:64] if isinstance(value, str) else value
+        for key, value in event.items()
+    }
+    shortened["truncated"] = True
+    serialized = json.dumps(shortened, ensure_ascii=False, sort_keys=True)
+    if len(serialized.encode("utf-8")) > MAX_RECORD_BYTES:
+        raise ValueError("evidence record exceeds hard limit after truncation")
+    return serialized
+
+
+def writable_target(target_dir: Path, date: str, record_size: int) -> Path:
+    sequence = 0
+    while True:
+        suffix = "" if sequence == 0 else f".{sequence}"
+        target = target_dir / f"{date}{suffix}.jsonl"
+        if not target.exists() or target.stat().st_size + record_size <= MAX_FILE_BYTES:
+            return target
+        sequence += 1
+
+
 def append_event(event: dict[str, Any]) -> None:
     target_dir = Path(os.environ.get("CODEX_HARNESS_EVIDENCE_DIR", str(codex_home() / "harness" / "evidence"))).expanduser()
-    target_dir.mkdir(parents=True, exist_ok=True)
-    target = target_dir / f"{event['timestamp'][:10]}.jsonl"
-    with target.open("a", encoding="utf-8") as handle:
-        handle.write(json.dumps(event, ensure_ascii=False, sort_keys=True) + "\n")
+    target_dir.mkdir(parents=True, mode=DIRECTORY_MODE, exist_ok=True)
+    target_dir.chmod(DIRECTORY_MODE)
+    record = serialize_event(event) + "\n"
+    target = writable_target(target_dir, str(event["timestamp"])[:10], len(record.encode("utf-8")))
+    descriptor = os.open(target, os.O_WRONLY | os.O_CREAT | os.O_APPEND, FILE_MODE)
+    os.fchmod(descriptor, FILE_MODE)
+    with os.fdopen(descriptor, "a", encoding="utf-8") as handle:
+        handle.write(record)
 
 
 def build_event(payload: dict[str, Any]) -> dict[str, Any]:
     timestamp = now_iso()
     cwd = cwd_text(payload)
-    return {
+    command = command_text(payload) or ""
+    output = str(payload.get("key_output") or payload.get("result") or payload.get("output") or "")
+    raw_capture = os.environ.get("CODEX_HARNESS_EVIDENCE_RAW") == "1"
+    event = {
         "schema_version": 1,
         "timestamp": timestamp,
-        "session_id": str(payload.get("session_id") or os.environ.get("CODEX_SESSION_ID") or ""),
+        "session_id": str(payload.get("session_id") or os.environ.get("CODEX_SESSION_ID") or "")[:TEXT_FIELD_LIMIT],
         "event_type": "tool_call",
-        "cwd": cwd,
-        "phase": resolved_phase(payload, cwd),
-        "tool_name": str(payload.get("tool_name") or payload.get("tool") or payload.get("name") or "unknown"),
-        "command": command_text(payload) or "",
+        "cwd": cwd[:TEXT_FIELD_LIMIT],
+        "phase": resolved_phase(payload, cwd)[:TEXT_FIELD_LIMIT],
+        "tool_name": str(payload.get("tool_name") or payload.get("tool") or payload.get("name") or "unknown")[:TEXT_FIELD_LIMIT],
+        "command_present": bool(command),
+        "command_length": len(command),
+        "command_sha256_prefix": sha256_prefix(command),
+        "raw_capture": raw_capture,
         "exit_code": int(payload.get("exit_code")) if isinstance(payload.get("exit_code"), int) else 0,
-        "key_output": str(payload.get("key_output") or payload.get("result") or payload.get("output") or "")[:500],
+        "key_output": output[:KEY_OUTPUT_LIMIT],
+        "output_length": len(output),
+        "output_sha256_prefix": sha256_prefix(output),
         "approval_state": "unknown",
         "failure_class": "none",
     }
+    if raw_capture:
+        event["command_head"] = command[:COMMAND_HEAD_LIMIT]
+    if len(command.encode("utf-8")) > MAX_RECORD_BYTES or len(output) > KEY_OUTPUT_LIMIT:
+        event["truncated"] = True
+    return event
 
 
 def main() -> int:
