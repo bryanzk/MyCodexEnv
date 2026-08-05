@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import datetime as dt
+import fcntl
 import hashlib
 import io
 import subprocess
@@ -87,7 +88,21 @@ PLAN_GOVERNOR_SCHEMAS = [
 
 
 def run(cmd, cwd=None):
-    proc = subprocess.run(cmd, cwd=cwd, capture_output=True, text=True, check=False)
+    if cmd and str(cmd[0]) == str(SYNC) and "--repo-root" in cmd:
+        repo = Path(cmd[cmd.index("--repo-root") + 1])
+        with tempfile.TemporaryDirectory() as tmp:
+            approved_file = Path(tmp) / "approved-digests.txt"
+            write(approved_file, phase0_source_digest(repo) + "\n")
+            env = os.environ.copy()
+            env.update(
+                {
+                    "PHASE0_APPROVED_DIGESTS_FILE": str(approved_file),
+                    "PHASE0_SOURCE_ROLE": "caller_worktree",
+                }
+            )
+            proc = subprocess.run(cmd, cwd=cwd, capture_output=True, text=True, check=False, env=env)
+    else:
+        proc = subprocess.run(cmd, cwd=cwd, capture_output=True, text=True, check=False)
     return proc.returncode, proc.stdout.strip(), proc.stderr.strip()
 
 
@@ -245,9 +260,12 @@ if [[ "$1" == "-C" ]]; then
   shift
   repo="$1"
   shift
-  case "$1" in
-    status)
-      for arg in "$@"; do
+	case "$1" in
+	  status)
+	    if [[ "$*" == *"-- codex"* ]]; then
+	      exec {real_git} -C "$repo" "$@"
+	    fi
+	    for arg in "$@"; do
         if [[ "$arg" == "--untracked-files=no" ]]; then
           exit 0
         fi
@@ -309,6 +327,9 @@ def seed_runtime_sync_repo(path: Path) -> tuple[Path, str]:
     write(repo / "codex" / "AGENTS.md", "runtime contract v1\n")
     write(repo / "codex" / "remote-access.md", "remote access v1\n")
     write(repo / "codex" / "remote-hosts.md", "remote hosts v1\n")
+    write(repo / "codex" / "hooks" / "task_state.py", "# fixture task state\n")
+    write(repo / "codex" / "config.template.toml", "[features]\nhooks = true\n")
+    write(repo / "codex" / "skills" / "fixture" / "SKILL.md", "---\nname: fixture\n---\n")
     code, out, err = run(["git", "add", "codex"], cwd=repo)
     require(code == 0, f"runtime sync fixture add should work: {err or out}")
     code, out, err = run(["git", "commit", "-m", "fixture v1"], cwd=repo)
@@ -316,6 +337,319 @@ def seed_runtime_sync_repo(path: Path) -> tuple[Path, str]:
     code, source_commit, err = run(["git", "rev-parse", "HEAD"], cwd=repo)
     require(code == 0, f"runtime sync fixture rev-parse should work: {err or source_commit}")
     return repo, source_commit
+
+
+def phase0_source_digest(repo: Path) -> str:
+    digest = hashlib.sha256()
+    for path in sorted(item for item in (repo / "codex").rglob("*") if item.is_file()):
+        relative = path.relative_to(repo).as_posix().encode("utf-8")
+        content = path.read_bytes()
+        digest.update(relative + b"\0" + str(len(content)).encode("ascii") + b"\0" + content)
+    return digest.hexdigest()
+
+
+def seed_phase0_source_repo(path: Path) -> tuple[Path, str]:
+    repo, _ = seed_runtime_sync_repo(path)
+    code, source_commit, err = run(["git", "rev-parse", "HEAD"], cwd=repo)
+    require(code == 0, f"phase0 fixture rev-parse should work: {err or source_commit}")
+    return repo, source_commit
+
+
+def phase0_sync_env(repo: Path, approved_file: Path, **updates: str) -> dict[str, str]:
+    env = os.environ.copy()
+    env.update(
+        {
+            "HOME": str(approved_file.parent / "home"),
+            "PHASE0_APPROVED_DIGESTS_FILE": str(approved_file),
+            "PHASE0_SOURCE_ROLE": "caller_worktree",
+        }
+    )
+    env.update(updates)
+    return env
+
+
+def test_sync_phase0_pre_preflight_matrix():
+    fixtures = [
+        ("source-missing", "source_required_file_missing"),
+        ("controller/execution-clone swapped", "source_role_path_mismatch"),
+        ("dirty", "source_dirty"),
+        ("unapproved digest", "source_digest_unapproved"),
+        ("runtime-newer", "runtime_newer_than_source"),
+        (
+            "attestation_producer_dirty_or_unapproved",
+            "attestation_producer_dirty_or_unapproved",
+        ),
+    ]
+
+    with tempfile.TemporaryDirectory() as tmp:
+        tmp_path = Path(tmp)
+        for index, (fixture_name, expected_reason) in enumerate(fixtures):
+            case_root = tmp_path / f"case-{index}"
+            repo, source_commit = seed_phase0_source_repo(case_root / "repo")
+            origin = make_bare_origin_from(repo, case_root / "origin.git")
+            code, out, err = run(["git", "remote", "add", "origin", str(origin)], cwd=repo)
+            require(code == 0, f"{fixture_name}: origin setup should work: {err or out}")
+            codex_home = case_root / "home" / ".codex"
+            write(codex_home / "sentinel.txt", "unchanged\n")
+            approved_file = case_root / "approved-digests.txt"
+            env_updates: dict[str, str] = {}
+
+            if fixture_name == "source-missing":
+                (repo / "codex" / "hooks" / "task_state.py").unlink()
+            elif fixture_name == "controller/execution-clone swapped":
+                env_updates["PHASE0_SOURCE_ROLE"] = "automation_execution_clone"
+            elif fixture_name == "dirty":
+                write(repo / "codex" / "AGENTS.md", "dirty fixture\n")
+            elif fixture_name == "runtime-newer":
+                write(repo / "codex" / "AGENTS.md", "runtime newer fixture\n")
+                code, out, err = run(["git", "add", "codex/AGENTS.md"], cwd=repo)
+                require(code == 0, f"runtime-newer add should work: {err or out}")
+                code, out, err = run(["git", "commit", "-m", "runtime newer"], cwd=repo)
+                require(code == 0, f"runtime-newer commit should work: {err or out}")
+                code, runtime_commit, err = run(["git", "rev-parse", "HEAD"], cwd=repo)
+                require(code == 0, f"runtime-newer rev-parse should work: {err or runtime_commit}")
+                code, out, err = run(["git", "push", "origin", "main"], cwd=repo)
+                require(code == 0, f"runtime-newer push should work: {err or out}")
+                code, out, err = run(["git", "checkout", "--detach", source_commit], cwd=repo)
+                require(code == 0, f"runtime-newer checkout should work: {err or out}")
+                write(
+                    codex_home / "harness" / "sync-manifest.json",
+                    json.dumps(
+                        {
+                            "schema_version": 2,
+                            "repo_identity_version": 1,
+                            "repo_identity": str(origin),
+                            "source_commit": runtime_commit,
+                            "managed_surface_digest_version": 1,
+                            "managed_surface_digest": f"sha256:{'0' * 64}",
+                            "synced_at": dt.datetime.now(dt.timezone.utc).isoformat(),
+                        },
+                        sort_keys=True,
+                    )
+                    + "\n",
+                )
+            elif fixture_name == "attestation_producer_dirty_or_unapproved":
+                env_updates["PHASE0_PRODUCER_MANIFEST"] = str(case_root / "missing-producer.json")
+
+            approved_digest = phase0_source_digest(repo)
+            write(
+                approved_file,
+                ("f" * 64 if fixture_name == "unapproved digest" else approved_digest) + "\n",
+            )
+            before = snapshot_tree(codex_home)
+            proc = subprocess.run(
+                [
+                    str(SYNC),
+                    "--repo-root",
+                    str(repo),
+                    "--codex-home",
+                    str(codex_home),
+                    "--sync-agents-only",
+                ],
+                capture_output=True,
+                text=True,
+                check=False,
+                env=phase0_sync_env(repo, approved_file, **env_updates),
+            )
+            require(
+                proc.returncode == 78,
+                f"{fixture_name}: expected exit 78, got {proc.returncode}; {proc.stderr or proc.stdout}",
+            )
+            try:
+                payload = json.loads(proc.stderr.strip().splitlines()[-1])
+            except (IndexError, json.JSONDecodeError) as exc:
+                require(False, f"{fixture_name}: stderr must end with blocked JSON: {exc}; {proc.stderr}")
+            require(payload.get("status") == "blocked", f"{fixture_name}: status must be blocked")
+            require(
+                payload.get("reason_code") == expected_reason,
+                f"{fixture_name}: expected reason {expected_reason}, got {payload.get('reason_code')}",
+            )
+            require(
+                payload.get("authorized_clone_root") is None,
+                f"{fixture_name}: authorized_clone_root must be null",
+            )
+            require(snapshot_tree(codex_home) == before, f"{fixture_name}: temp CODEX_HOME snapshot changed")
+            require(not (codex_home / "runtime-backups").exists(), f"{fixture_name}: backup directory created")
+            require(
+                not list(codex_home.rglob("*promotion*receipt*")),
+                f"{fixture_name}: promotion receipt created",
+            )
+
+        agents_root = tmp_path / "agents-only"
+        agents_repo = seed_phase0_transaction_repo(agents_root / "repo")
+        agents_home = agents_root / "home" / ".codex"
+        write(agents_home / "AGENTS.md", "old agents\n")
+        write(agents_home / "hooks" / "sentinel.py", "old hook\n")
+        write(agents_home / "runtime" / "sentinel.json", "{}\n")
+        write(agents_home / "zsh" / "sentinel.zsh", "# old zsh\n")
+        write(agents_home / "config.toml", "model = 'unchanged'\n")
+        protected_before = {
+            name: snapshot_tree(agents_home / name)
+            for name in ["hooks", "runtime", "zsh"]
+        }
+        config_before = (agents_home / "config.toml").read_bytes()
+        approved_file = agents_root / "approved-digests.txt"
+        write(approved_file, phase0_source_digest(agents_repo) + "\n")
+        proc = subprocess.run(
+            [
+                str(SYNC),
+                "--repo-root",
+                str(agents_repo),
+                "--codex-home",
+                str(agents_home),
+                "--sync-agents-only",
+            ],
+            capture_output=True,
+            text=True,
+            check=False,
+            env=phase0_sync_env(
+                agents_repo,
+                approved_file,
+            ),
+        )
+        require(proc.returncode == 0, f"sync-agents-only fixture should pass: {proc.stderr or proc.stdout}")
+        require((agents_home / "AGENTS.md").read_bytes() == (agents_repo / "codex" / "AGENTS.md").read_bytes(),
+                "sync-agents-only should update AGENTS.md")
+        require((agents_home / "remote-access.md").is_file(), "sync-agents-only should update remote-access.md")
+        require((agents_home / "remote-hosts.md").is_file(), "sync-agents-only should update remote-hosts.md")
+        for name, before in protected_before.items():
+            require(snapshot_tree(agents_home / name) == before,
+                    f"sync-agents-only unexpectedly wrote {name}/")
+        require((agents_home / "config.toml").read_bytes() == config_before,
+                "sync-agents-only unexpectedly wrote config.toml")
+
+    print("[PASS] phase0-pre source attestation preflight matrix")
+
+
+def seed_phase0_transaction_repo(path: Path) -> Path:
+    repo, _ = seed_phase0_source_repo(path)
+    write(repo / "codex" / "config.template.toml", "[features]\nhooks = true\n")
+    write(repo / "codex" / "skills" / "fixture" / "SKILL.md", "---\nname: fixture\n---\n")
+    write(repo / "codex" / "hooks" / "a.py", "new a\n")
+    write(repo / "codex" / "hooks" / "b.py", "new b\n")
+    write(repo / "codex" / "runtime" / "policy.json", '{"version": 2}\n')
+    write(repo / "codex" / "zsh" / "helper.zsh", "# helper v2\n")
+    code, out, err = run(["git", "add", "codex"], cwd=repo)
+    require(code == 0, f"transaction fixture add should work: {err or out}")
+    code, out, err = run(["git", "commit", "-m", "transaction fixture"], cwd=repo)
+    require(code == 0, f"transaction fixture commit should work: {err or out}")
+    origin = make_bare_origin_from(repo, path.parent / f"{path.name}-origin.git")
+    code, out, err = run(["git", "remote", "add", "origin", str(origin)], cwd=repo)
+    require(code == 0, f"transaction fixture origin should work: {err or out}")
+    return repo
+
+
+def run_phase0_full_sync(repo: Path, codex_home: Path, case_root: Path, **env_updates: str):
+    approved_file = case_root / "approved-digests.txt"
+    write(approved_file, phase0_source_digest(repo) + "\n")
+    env = phase0_sync_env(
+        repo,
+        approved_file,
+        **env_updates,
+    )
+    return subprocess.run(
+        [
+            str(SYNC),
+            "--repo-root",
+            str(repo),
+            "--codex-home",
+            str(codex_home),
+            "--skip-superpowers-sync",
+        ],
+        capture_output=True,
+        text=True,
+        check=False,
+        env=env,
+    )
+
+
+def test_sync_runtime_transaction_rollback_and_locking():
+    with tempfile.TemporaryDirectory() as tmp:
+        tmp_path = Path(tmp)
+
+        success_root = tmp_path / "success"
+        success_repo = seed_phase0_transaction_repo(success_root / "repo")
+        success_home = success_root / "home" / ".codex"
+        write(success_home / "hooks" / "a.py", "old a\n")
+        write(success_home / "hooks" / "unmanaged.txt", "keep me\n")
+        (success_home / "hooks" / "a.py").chmod(0o640)
+        unmanaged_before = hashlib.sha256((success_home / "hooks" / "unmanaged.txt").read_bytes()).hexdigest()
+        proc = run_phase0_full_sync(success_repo, success_home, success_root)
+        require(proc.returncode == 0, f"transaction success fixture should pass: {proc.stderr or proc.stdout}")
+        require((success_home / "hooks" / "a.py").read_text(encoding="utf-8") == "new a\n",
+                "transaction should replace an allowlisted file")
+        require((success_home / "hooks" / "a.py").stat().st_mode & 0o777 == 0o640,
+                "transaction should preserve existing target mode")
+        require((success_home / "hooks" / "unmanaged.txt").is_file(),
+                "exact allowlist transaction must preserve non-target files")
+        require(
+            hashlib.sha256((success_home / "hooks" / "unmanaged.txt").read_bytes()).hexdigest()
+            == unmanaged_before,
+            "non-target hash must remain unchanged",
+        )
+        journals = list((success_home / "runtime-backups").rglob("transaction-journal.jsonl"))
+        manifests = list((success_home / "runtime-backups").rglob("backup-manifest.json"))
+        require(journals and journals[0].read_text(encoding="utf-8").strip(), "transaction journal missing")
+        require(manifests, "backup manifest missing")
+
+        for fault in ["partial_copy", "disk_digest_mismatch", "self_test_failure"]:
+            case_root = tmp_path / fault
+            repo = seed_phase0_transaction_repo(case_root / "repo")
+            codex_home = case_root / "home" / ".codex"
+            write(codex_home / "hooks" / "a.py", "old a\n")
+            write(codex_home / "hooks" / "b.py", "old b\n")
+            write(codex_home / "hooks" / "unmanaged.txt", "keep me\n")
+            before = snapshot_tree(codex_home / "hooks")
+            proc = run_phase0_full_sync(
+                repo,
+                codex_home,
+                case_root,
+                PHASE0_TRANSACTION_TEST_FAULT=fault,
+            )
+            require(proc.returncode != 0, f"{fault}: injected transaction failure must be nonzero")
+            require(fault in f"{proc.stdout}\n{proc.stderr}", f"{fault}: failure must name its reason")
+            require(snapshot_tree(codex_home / "hooks") == before, f"{fault}: journal rollback must restore pre-state")
+
+        lock_root = tmp_path / "lock"
+        lock_repo = seed_phase0_transaction_repo(lock_root / "repo")
+        lock_home = lock_root / "home" / ".codex"
+        write(lock_home / "hooks" / "a.py", "old a\n")
+        lock_path = lock_home / ".phase0-sync.lock"
+        lock_path.parent.mkdir(parents=True, exist_ok=True)
+        with lock_path.open("w") as lock_handle:
+            fcntl.flock(lock_handle.fileno(), fcntl.LOCK_EX | fcntl.LOCK_NB)
+            before = snapshot_tree(lock_home / "hooks")
+            proc = run_phase0_full_sync(lock_repo, lock_home, lock_root)
+        require(proc.returncode == 75, f"lock contention expected exit 75, got {proc.returncode}")
+        payload = json.loads(proc.stderr.strip().splitlines()[-1])
+        require(payload.get("reason_code") == "lock_contended", "lock contention reason code mismatch")
+        require(snapshot_tree(lock_home / "hooks") == before, "lock loser must not write managed targets")
+
+        real_target_probe = ROOT / ".phase0-loaded-readback-probe"
+        require(not real_target_probe.exists(), "loaded-readback probe target must start absent")
+        approved_file = lock_root / "loaded-approved-digests.txt"
+        write(approved_file, phase0_source_digest(lock_repo) + "\n")
+        proc = subprocess.run(
+            [
+                str(SYNC),
+                "--repo-root",
+                str(lock_repo),
+                "--codex-home",
+                str(real_target_probe),
+                "--sync-agents-only",
+            ],
+            capture_output=True,
+            text=True,
+            check=False,
+            env=phase0_sync_env(lock_repo, approved_file),
+        )
+        require(proc.returncode == 78, "non-temp target without loaded readback must exit 78")
+        payload = json.loads(proc.stderr.strip().splitlines()[-1])
+        require(payload.get("reason_code") == "loaded_readback_unavailable",
+                "non-temp target must fail with loaded_readback_unavailable")
+        require(not real_target_probe.exists(), "loaded-readback blocker must fail before target creation")
+
+    print("[PASS] phase0-pre runtime transaction rollback and locking")
 
 
 def run_manage_agents(*args):
@@ -840,6 +1174,14 @@ exit 2
 
         env = os.environ.copy()
         env["PATH"] = f"{bin_dir}:{env['PATH']}"
+        approved_file = tmp_path / "approved-digests.txt"
+        write(approved_file, phase0_source_digest(ROOT) + "\n")
+        env.update(
+            {
+                "PHASE0_APPROVED_DIGESTS_FILE": str(approved_file),
+                "PHASE0_SOURCE_ROLE": "caller_worktree",
+            }
+        )
         proc = subprocess.run(
             [
                 str(SYNC),
@@ -877,7 +1219,7 @@ def test_sync_transition_matrix_v0():
             str(repo),
             "--codex-home",
             str(codex_home),
-            "--sync-agents-only",
+            "--skip-superpowers-sync",
         ]
 
         code, out, err = run(sync_cmd)
@@ -923,8 +1265,9 @@ def test_sync_transition_matrix_v0():
         code, out, err = run(["git", "checkout", "--detach", first_commit], cwd=repo)
         require(code == 0, f"downgrade fixture checkout should work: {err or out}")
         code, out, err = run(sync_cmd)
-        require(code != 0, "ordinary downgrade should be rejected")
-        require("downgrade" in f"{out}\n{err}", "downgrade rejection should name its verdict")
+        require(code == 78, "runtime-newer source should be rejected with exit 78")
+        require("runtime_newer_than_source" in f"{out}\n{err}",
+                "runtime-newer rejection should name its stable reason")
         require(snapshot_tree(codex_home) == downgrade_before, "downgrade rejection must not partially write")
 
     print("[PASS] sync transition matrix v0")
@@ -950,6 +1293,14 @@ def test_sync_backup_dir_v0():
         write(deleted_target, "restore me\n")
         env = os.environ.copy()
         env["HOME"] = str(test_home)
+        approved_file = tmp_path / "approved-digests.txt"
+        write(approved_file, phase0_source_digest(repo) + "\n")
+        env.update(
+            {
+                "PHASE0_APPROVED_DIGESTS_FILE": str(approved_file),
+                "PHASE0_SOURCE_ROLE": "caller_worktree",
+            }
+        )
         proc = subprocess.run(
             [
                 str(SYNC),
@@ -957,7 +1308,7 @@ def test_sync_backup_dir_v0():
                 str(repo),
                 "--codex-home",
                 str(codex_home),
-                "--sync-agents-only",
+                "--skip-superpowers-sync",
             ],
             capture_output=True,
             text=True,
@@ -965,18 +1316,13 @@ def test_sync_backup_dir_v0():
             env=env,
         )
         require(proc.returncode == 0, f"backup fixture sync should work: {proc.stderr or proc.stdout}")
-        require(
-            not deleted_target.exists(),
-            f"rsync --delete fixture should remove the unmanaged target: tree={snapshot_tree(codex_home)} output={proc.stdout}",
-        )
-        backup_root = codex_home / "runtime-backups"
-        restored_candidates = list(backup_root.glob("*/deleted-by-sync.txt"))
-        require(len(restored_candidates) == 1, "deleted runtime file should be retained in one timestamped backup-dir")
-        require(restored_candidates[0].read_text(encoding="utf-8") == "restore me\n",
-                "backup-dir should retain the deleted file bytes")
-        deleted_target.write_bytes(restored_candidates[0].read_bytes())
         require(deleted_target.read_text(encoding="utf-8") == "restore me\n",
-                "deleted runtime file should be restorable from backup-dir")
+                "exact allowlist sync should preserve the unmanaged target")
+        backup_root = codex_home / "runtime-backups"
+        require(list(backup_root.rglob("backup-manifest.json")),
+                "exact allowlist transaction should write a backup manifest")
+        require(list(backup_root.rglob("transaction-journal.jsonl")),
+                "exact allowlist transaction should write a journal")
 
     print("[PASS] sync backup dir v0")
 
@@ -1270,8 +1616,19 @@ def test_sync_agents_only_copies_and_backs_up_agents():
         codex_home.mkdir(parents=True, exist_ok=True)
         original_agents = codex_home / "AGENTS.md"
         original_agents.write_text("# old agents\n", encoding="utf-8")
+        write(codex_home / "hooks" / "sentinel.py", "unchanged\n")
+        write(codex_home / "runtime" / "sentinel.json", "{}\n")
+        write(codex_home / "zsh" / "sentinel.zsh", "# unchanged\n")
+        write(codex_home / "config.toml", "model = 'unchanged'\n")
+        protected_before = {
+            name: snapshot_tree(codex_home / name)
+            for name in ["hooks", "runtime", "zsh"]
+        }
+        config_before = (codex_home / "config.toml").read_bytes()
+        approved_file = tmp_path / "approved-digests.txt"
+        write(approved_file, phase0_source_digest(ROOT) + "\n")
 
-        code, out, err = run(
+        proc = subprocess.run(
             [
                 str(SYNC),
                 "--repo-root",
@@ -1279,26 +1636,21 @@ def test_sync_agents_only_copies_and_backs_up_agents():
                 "--codex-home",
                 str(codex_home),
                 "--sync-agents-only",
-            ]
+            ],
+            capture_output=True,
+            text=True,
+            check=False,
+            env=phase0_sync_env(ROOT, approved_file),
         )
-        require(code == 0, f"sync agents only failed: {err or out}")
+        require(proc.returncode == 0, f"sync agents only failed: {proc.stderr or proc.stdout}")
         require((codex_home / "AGENTS.md").exists(), "AGENTS.md should be copied in sync-agents-only mode")
         require((codex_home / "remote-access.md").exists(), "remote-access.md should be copied in sync-agents-only mode")
         require((codex_home / "remote-hosts.md").exists(), "remote-hosts.md should be copied in sync-agents-only mode")
-        require((codex_home / "runtime" / "tool-policy.json").exists(), "tool-policy should be copied in sync-agents-only mode")
-        require((codex_home / "runtime" / "resolve_codex_cli.sh").exists(), "Codex CLI resolver should be copied")
-        require((codex_home / "runtime" / "evidence.schema.json").exists(), "evidence schema should be copied in sync-agents-only mode")
-        require(
-            (codex_home / "runtime" / "evidence" / "decision-evidence.schema.json").exists(),
-            "decision schema should be copied",
-        )
-        require(
-            (codex_home / "runtime" / "evidence" / "routine-gate-receipt.schema.json").exists(),
-            "routine schema should be copied",
-        )
-        require((codex_home / "hooks" / "harness_guard.py").exists(), "harness guard should be copied in sync-agents-only mode")
-        require((codex_home / "hooks" / "model_router.py").exists(), "model router should be copied in sync-agents-only mode")
-        require((codex_home / "hooks" / "dhf_preprompt.py").exists(), "generic DHF dispatcher should be copied in sync-agents-only mode")
+        for name, before in protected_before.items():
+            require(snapshot_tree(codex_home / name) == before,
+                    f"sync-agents-only must not write {name}/")
+        require((codex_home / "config.toml").read_bytes() == config_before,
+                "sync-agents-only must not write config.toml")
         require(
             (codex_home / "AGENTS.md").read_text(encoding="utf-8")
             == (ROOT / "codex" / "AGENTS.md").read_text(encoding="utf-8"),
@@ -2941,7 +3293,7 @@ def test_runtime_rollback_prevention_v0_negative_coverage():
             str(repo),
             "--codex-home",
             str(codex_home),
-            "--sync-agents-only",
+            "--skip-superpowers-sync",
         ]
         code, out, err = run(sync_cmd)
         require(code == 0, f"negative fixture bootstrap should work: {err or out}")
@@ -3003,13 +3355,14 @@ def test_runtime_rollback_prevention_v0_negative_coverage():
             )
             + "\n",
         )
+        approved_before = snapshot_tree(codex_home)
         code, out, err = run(
             [*sync_cmd, "--force-downgrade", "--operator-checkpoint", str(checkpoint)]
         )
-        require(code == 0, f"force downgrade with a same-operation checkpoint should pass: {err or out}")
-        approved_manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
-        require(approved_manifest["source_commit"] == first_commit,
-                "approved force downgrade should update the manifest to the requested commit")
+        require(code == 78 and "runtime_newer_than_source" in f"{out}\n{err}",
+                "operator checkpoint must not bypass runtime-newer fail-closed policy")
+        require(snapshot_tree(codex_home) == approved_before,
+                "blocked force downgrade must not update targets or manifest")
 
         write(manifest_path, "{broken manifest\n")
         corrupt_before = snapshot_tree(codex_home)
@@ -7349,9 +7702,11 @@ def test_verify_after_full_sync():
                 str(codex_home),
                 "--claude-home",
                 str(claude_home),
+                "--skip-check",
+                "chrome_devtools_mcp_bin_exists",
             ]
         )
-        require(code == 0, f"verify failed: {err or out}")
+        require(code == 0, f"verify failed:\n{out}\n{err}")
         require("Verification passed." in out, "verify success message missing")
 
     print("[PASS] full sync + verify")
@@ -7554,6 +7909,8 @@ def test_verify_detects_enforcement_script_drift():
                 "--skip-check",
                 "app_google_chrome",
                 "--skip-check",
+                "chrome_devtools_mcp_bin_exists",
+                "--skip-check",
                 "codex_superpowers_git",
                 "--skip-check",
                 "codex_superpowers_commit",
@@ -7565,7 +7922,7 @@ def test_verify_detects_enforcement_script_drift():
                 "codex_superpowers_plugin_installed",
             ]
         )
-        require(code == 0, f"freshly synced temp runtime should verify clean: {err or out}")
+        require(code == 0, f"freshly synced temp runtime should verify clean:\n{out}\n{err}")
 
         (codex_home / "hooks" / "harness_guard.py").write_text("# drifted\n", encoding="utf-8")
         code, out, err = run(
@@ -7579,6 +7936,8 @@ def test_verify_detects_enforcement_script_drift():
                 str(claude_home),
                 "--skip-check",
                 "app_google_chrome",
+                "--skip-check",
+                "chrome_devtools_mcp_bin_exists",
                 "--skip-check",
                 "codex_superpowers_git",
                 "--skip-check",
@@ -8986,6 +9345,8 @@ TESTS = [
     test_sync_registers_and_installs_superpowers_plugin,
     test_sync_transition_matrix_v0,
     test_sync_backup_dir_v0,
+    test_sync_phase0_pre_preflight_matrix,
+    test_sync_runtime_transaction_rollback_and_locking,
     test_delivery_harness_framework_stays_generic,
     test_delivery_harness_framework_routes_runtime_helpers,
     test_delivery_harness_framework_eval_matrix,

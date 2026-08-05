@@ -29,6 +29,64 @@ The lifecycle router uses these stages:
 Memory is a hint. Before acting, Codex must verify against repo files, git state,
 tests, or runtime evidence.
 
+## Phase 0-pre Source Guard
+
+`scripts/sync_codex_home.sh` performs one source-attestation preflight after
+argument validation and before any managed runtime write. It checks the required
+source file set, source role/path agreement, source cleanliness, membership in an
+independent approved-digest file, runtime-to-source direction, and producer
+attestation when automation is involved. Failures exit `78`, emit one JSON object
+with `status=blocked` and `authorized_clone_root=null`, and use one of these stable
+reason codes:
+
+- `source_required_file_missing`
+- `source_role_path_mismatch`
+- `source_dirty`
+- `source_digest_unapproved`
+- `runtime_newer_than_source`
+- `attestation_producer_dirty_or_unapproved`
+
+The source roles are `git_head` (committed source of truth), `caller_worktree`
+(manual source), `automation_controller` (producer only), and
+`automation_execution_clone` (automation sync source). `runtime_disk` is only a
+disk target observation; it is not loaded-state evidence. The automation producer
+set is exactly the launcher `run-network-enabled.sh`, `automation.toml`, and the
+controller copy of the actually executed `prepare_gstack_dhf_daily_refresh.py`.
+The prepare-to-sync edge is prompt-mediated, not a protected function call.
+
+Full-sync directory promotion uses an exact source-file allowlist and never
+deletes non-target files. Each file is copied to a same-directory temporary file,
+`fsync`ed, metadata-preserved, installed with `os.replace`, and followed by parent
+directory `fsync`. A backup manifest and append-only journal support rollback of
+partial copy, disk-digest mismatch, and self-test failure. This guarantees
+per-file atomic replacement and a crash-recoverable transaction, not atomic
+visibility of the whole file set to a host loader. A nonblocking `fcntl.flock`
+serializes writers; contention exits `75` with `reason_code=lock_contended` before
+managed targets change.
+
+`--sync-agents-only` writes only `AGENTS.md`, `remote-access.md`, and
+`remote-hosts.md` (plus backups of those files). It does not write hooks,
+runtime policy, zsh helpers, `hooks.json`, `config.toml`, or a sync manifest, and
+there is no legacy bypass flag.
+
+The receipt boundaries remain distinct:
+
+- producer manifest: `schema_version`, `verified_at`, `result`, `reason_code`,
+  and `producers[]` entries containing `role`, `path`, `sha256`, `git_clean`, and
+  `dirty_paths`;
+- promotion receipt: transaction timestamps and id, producer/source/allowlist/
+  backup digests, disk and loaded digests before/after, non-allowlist invariant,
+  policy/self-test outcomes, final outcome, and reason code;
+- controlled-unpause receipt: unpause timestamp, referenced producer/promotion
+  receipt digests, checkout/controller/execution-clone/disk/loaded digests,
+  prepare-to-sync ordering, policy/self-test outcomes, final outcome, and reason
+  code.
+
+Unknown or unavailable loaded-state readback fails closed with
+`loaded_readback_unavailable` before runtime mutation. Disk digest must never be
+reported as loaded digest. This source contract does not establish runtime sync,
+runtime load, rollout observation, automation unpause, pilot start, or owner GO.
+
 Requirements artifacts use `docs/templates/harness-requirements.md`. Validate
 them with `scripts/harness_requirements.py validate PATH` before treating them
 as source of truth.

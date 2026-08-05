@@ -68,6 +68,139 @@ if [[ ! -d "${REPO_ROOT}" ]]; then
   exit 1
 fi
 
+preflight_source_attestation() {
+  python3 - \
+    "${REPO_ROOT}" \
+    "${CODEX_HOME}" \
+    "${PHASE0_SOURCE_ROLE:-caller_worktree}" \
+    "${PHASE0_APPROVED_DIGESTS_FILE:-}" \
+    "${PHASE0_PRODUCER_MANIFEST:-}" <<'PY'
+import hashlib
+import json
+import os
+from pathlib import Path
+import re
+import subprocess
+import sys
+
+repo_root = Path(sys.argv[1]).resolve()
+codex_home = Path(sys.argv[2])
+source_role = sys.argv[3]
+approved_path = Path(sys.argv[4]) if sys.argv[4] else None
+producer_path = Path(sys.argv[5]) if sys.argv[5] else None
+
+
+def blocked(reason_code, **details):
+    payload = {
+        "status": "blocked",
+        "reason_code": reason_code,
+        "authorized_clone_root": None,
+    }
+    payload.update(details)
+    print(json.dumps(payload, sort_keys=True, separators=(",", ":")), file=sys.stderr)
+    raise SystemExit(78)
+
+
+required = [
+    repo_root / "codex" / "AGENTS.md",
+    repo_root / "codex" / "remote-access.md",
+    repo_root / "codex" / "remote-hosts.md",
+    repo_root / "codex" / "hooks" / "task_state.py",
+]
+missing = [path.relative_to(repo_root).as_posix() for path in required if not path.is_file()]
+if missing:
+    blocked("source_required_file_missing", missing_paths=missing)
+
+execution_clone = Path(
+    os.environ.get(
+        "PHASE0_AUTHORIZED_CLONE_ROOT",
+        str(Path.home() / ".codex" / "automations" / "gstack-dhf-daily-refresh" / "repo"),
+    )
+).resolve()
+if source_role not in {"git_head", "caller_worktree", "automation_execution_clone"}:
+    blocked("source_role_path_mismatch")
+if source_role == "automation_execution_clone" and repo_root != execution_clone:
+    blocked("source_role_path_mismatch")
+
+status = subprocess.run(
+    ["git", "-C", str(repo_root), "status", "--porcelain", "--untracked-files=all", "--", "codex"],
+    capture_output=True,
+    text=True,
+    check=False,
+)
+if status.returncode != 0:
+    blocked("source_role_path_mismatch")
+dirty_paths = [line[3:] for line in status.stdout.splitlines() if len(line) > 3]
+if dirty_paths:
+    blocked("source_dirty", dirty_paths=dirty_paths)
+
+digest = hashlib.sha256()
+source_root = repo_root / "codex"
+for path in sorted(item for item in source_root.rglob("*") if item.is_file()):
+    relative = path.relative_to(repo_root).as_posix().encode("utf-8")
+    content = path.read_bytes()
+    digest.update(relative + b"\0" + str(len(content)).encode("ascii") + b"\0" + content)
+source_digest = digest.hexdigest()
+try:
+    approved = {
+        line.removeprefix("sha256:").strip()
+        for line in approved_path.read_text(encoding="utf-8").splitlines()
+        if line.strip() and not line.lstrip().startswith("#")
+    } if approved_path else set()
+except (OSError, UnicodeDecodeError):
+    approved = set()
+if source_digest not in approved:
+    blocked("source_digest_unapproved", source_digest=f"sha256:{source_digest}")
+
+manifest_path = codex_home / "harness" / "sync-manifest.json"
+if manifest_path.is_file():
+    try:
+        runtime_commit = json.loads(manifest_path.read_text(encoding="utf-8"))["source_commit"]
+    except (OSError, UnicodeDecodeError, json.JSONDecodeError, KeyError, TypeError):
+        runtime_commit = None
+    if isinstance(runtime_commit, str) and re.fullmatch(r"[0-9a-f]{40}", runtime_commit):
+        source_commit = subprocess.run(
+            ["git", "-C", str(repo_root), "rev-parse", "--verify", "HEAD^{commit}"],
+            capture_output=True,
+            text=True,
+            check=False,
+        ).stdout.strip()
+        newer = subprocess.run(
+            ["git", "-C", str(repo_root), "merge-base", "--is-ancestor", source_commit, runtime_commit],
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+            check=False,
+        )
+        if runtime_commit != source_commit and newer.returncode == 0:
+            blocked("runtime_newer_than_source")
+
+if source_role == "automation_execution_clone" and producer_path is None:
+    blocked("attestation_producer_dirty_or_unapproved")
+if producer_path is not None:
+    try:
+        producer = json.loads(producer_path.read_text(encoding="utf-8"))
+        producers = producer["producers"]
+        valid_roles = {item["role"] for item in producers} == {
+            "launcher",
+            "automation_manifest",
+            "executed_prepare",
+        }
+        valid_entries = all(
+            item.get("git_clean") is True
+            and item.get("dirty_paths") == []
+            and re.fullmatch(r"[0-9a-f]{64}", item.get("sha256", ""))
+            for item in producers
+        )
+        producer_approved = producer.get("result") == "approved" and valid_roles and valid_entries
+    except (OSError, UnicodeDecodeError, json.JSONDecodeError, KeyError, TypeError):
+        producer_approved = False
+    if not producer_approved:
+        blocked("attestation_producer_dirty_or_unapproved")
+PY
+}
+
+preflight_source_attestation
+
 MANIFEST_PATH="${CODEX_HOME}/harness/sync-manifest.json"
 SOURCE_COMMIT=""
 REPO_IDENTITY=""
@@ -283,44 +416,211 @@ PY
   echo "source transition: ${TRANSITION_VERDICT}"
 }
 
+if ! python3 - "${CODEX_HOME}" <<'PY'
+from pathlib import Path
+import sys
+import tempfile
+
+target = Path(sys.argv[1]).resolve()
+temp_root = Path(tempfile.gettempdir()).resolve()
+raise SystemExit(0 if target == temp_root or temp_root in target.parents else 1)
+PY
+then
+  echo '{"authorized_clone_root":null,"reason_code":"loaded_readback_unavailable","status":"blocked"}' >&2
+  exit 78
+fi
+
 mkdir -p "${CODEX_HOME}"
+exec 9>"${CODEX_HOME}/.phase0-sync.lock"
+if ! python3 - <<'PY'
+import fcntl
+import json
+import sys
+
+try:
+    fcntl.flock(9, fcntl.LOCK_EX | fcntl.LOCK_NB)
+except BlockingIOError:
+    print(json.dumps({
+        "authorized_clone_root": None,
+        "reason_code": "lock_contended",
+        "status": "blocked",
+    }, sort_keys=True, separators=(",", ":")), file=sys.stderr)
+    raise SystemExit(75)
+PY
+then
+  exit 75
+fi
 RUNTIME_BACKUP_DIR="${CODEX_HOME}/runtime-backups/$(date -u +%Y%m%dT%H%M%SZ)/"
-mkdir -p "${RUNTIME_BACKUP_DIR}"
 
 rsync_runtime_dir() {
   local source="$1"
   local target="$2"
   shift 2
-  rsync -a --delete --backup --backup-dir="${RUNTIME_BACKUP_DIR}" "$@" "${source}/" "${target}/"
-  # openrsync 2.6.9 can leave deleted entries in place when --backup-dir is
-  # active. Move only those residual stale entries into the same backup root.
-  python3 - "${source}" "${target}" "${RUNTIME_BACKUP_DIR}" <<'PY'
+  python3 - \
+    "${source}" \
+    "${target}" \
+    "${RUNTIME_BACKUP_DIR}" \
+    "${PHASE0_TRANSACTION_TEST_FAULT:-}" \
+    "$@" <<'PY'
+import hashlib
+import json
 import os
 from pathlib import Path
+import shutil
+import stat
 import sys
+import tempfile
 
 source = Path(sys.argv[1])
 target = Path(sys.argv[2])
 backup_root = Path(sys.argv[3])
-stale = []
-for current, directories, files in os.walk(target, topdown=True, followlinks=False):
-    current_path = Path(current)
-    relative_root = current_path.relative_to(target)
-    for name in list(directories) + files:
-        relative = relative_root / name
-        if os.path.lexists(source / relative):
-            continue
-        stale.append(relative)
-        if name in directories:
-            directories.remove(name)
+fault = sys.argv[4]
+options = sys.argv[5:]
+excludes = {
+    options[index + 1].rstrip("/")
+    for index, item in enumerate(options[:-1])
+    if item == "--exclude"
+}
 
-for relative in stale:
-    old_path = target / relative
-    backup_path = backup_root / relative
-    if os.path.lexists(backup_path):
-        raise SystemExit(f"backup collision for stale runtime path: {relative}")
-    backup_path.parent.mkdir(parents=True, exist_ok=True)
-    os.replace(old_path, backup_path)
+
+def digest(path):
+    return hashlib.sha256(path.read_bytes()).hexdigest()
+
+
+def fsync_dir(path):
+    descriptor = os.open(path, os.O_RDONLY)
+    try:
+        os.fsync(descriptor)
+    finally:
+        os.close(descriptor)
+
+
+backup_root.mkdir(parents=True, exist_ok=True)
+transaction_root = Path(tempfile.mkdtemp(
+    prefix=f"{hashlib.sha256(str(target).encode('utf-8')).hexdigest()[:16]}-",
+    dir=backup_root,
+))
+journal_path = transaction_root / "transaction-journal.jsonl"
+manifest_path = transaction_root / "backup-manifest.json"
+entries = []
+for source_path in sorted(source.rglob("*")):
+    relative = source_path.relative_to(source)
+    if any(relative == Path(exclude) or Path(exclude) in relative.parents for exclude in excludes):
+        continue
+    source_stat = source_path.lstat()
+    if source_path.is_dir():
+        continue
+    if not stat.S_ISREG(source_stat.st_mode):
+        raise SystemExit(f"non-regular source rejected: {relative}")
+    target_path = target / relative
+    if os.path.lexists(target_path):
+        target_stat = target_path.lstat()
+        if not stat.S_ISREG(target_stat.st_mode):
+            raise SystemExit(f"non-regular target rejected: {relative}")
+        metadata = {
+            "uid": target_stat.st_uid,
+            "gid": target_stat.st_gid,
+            "mode": stat.S_IMODE(target_stat.st_mode),
+        }
+        backup_path = transaction_root / "files" / relative
+        backup_path.parent.mkdir(parents=True, exist_ok=True)
+        shutil.copy2(target_path, backup_path)
+        pre_digest = digest(target_path)
+    else:
+        metadata = {
+            "uid": source_stat.st_uid,
+            "gid": source_stat.st_gid,
+            "mode": stat.S_IMODE(source_stat.st_mode),
+        }
+        backup_path = None
+        pre_digest = None
+    entries.append({
+        "relative": relative.as_posix(),
+        "source": source_path,
+        "target": target_path,
+        "backup": backup_path,
+        "pre_digest": pre_digest,
+        "post_digest": digest(source_path),
+        "metadata": metadata,
+    })
+
+manifest_path.write_text(
+    json.dumps(
+        [
+            {
+                "path": item["relative"],
+                "pre_digest": item["pre_digest"],
+                **item["metadata"],
+            }
+            for item in entries
+        ],
+        sort_keys=True,
+    ) + "\n",
+    encoding="utf-8",
+)
+replaced = []
+reason = None
+try:
+    with journal_path.open("a", encoding="utf-8") as journal:
+        for item in entries:
+            target_path = item["target"]
+            target_path.parent.mkdir(parents=True, exist_ok=True)
+            descriptor, temp_name = tempfile.mkstemp(prefix=f".{target_path.name}.", dir=target_path.parent)
+            try:
+                with os.fdopen(descriptor, "wb") as handle:
+                    handle.write(item["source"].read_bytes())
+                    os.fchmod(handle.fileno(), item["metadata"]["mode"])
+                    os.fchown(handle.fileno(), item["metadata"]["uid"], item["metadata"]["gid"])
+                    handle.flush()
+                    os.fsync(handle.fileno())
+                os.replace(temp_name, target_path)
+                fsync_dir(target_path.parent)
+            finally:
+                try:
+                    os.unlink(temp_name)
+                except FileNotFoundError:
+                    pass
+            replaced.append(item)
+            journal.write(json.dumps({
+                "path": item["relative"],
+                "pre_digest": item["pre_digest"],
+                "post_digest": item["post_digest"],
+            }, sort_keys=True) + "\n")
+            journal.flush()
+            os.fsync(journal.fileno())
+            if fault == "partial_copy":
+                reason = fault
+                raise RuntimeError(reason)
+            if fault == "disk_digest_mismatch":
+                target_path.write_bytes(b"injected mismatch\n")
+            if digest(target_path) != item["post_digest"]:
+                reason = "disk_digest_mismatch"
+                raise RuntimeError(reason)
+            if fault == "self_test_failure":
+                reason = fault
+                raise RuntimeError(reason)
+except Exception as exc:
+    reason = reason or "partial_copy"
+    for item in reversed(replaced):
+        target_path = item["target"]
+        if item["backup"] is None:
+            try:
+                target_path.unlink()
+            except FileNotFoundError:
+                pass
+        else:
+            os.replace(item["backup"], target_path)
+            os.chmod(target_path, item["metadata"]["mode"])
+            os.chown(target_path, item["metadata"]["uid"], item["metadata"]["gid"])
+        fsync_dir(target_path.parent)
+        if item["pre_digest"] is not None and digest(target_path) != item["pre_digest"]:
+            raise SystemExit(f"rollback digest mismatch: {item['relative']}") from exc
+    print(json.dumps({
+        "authorized_clone_root": None,
+        "reason_code": reason,
+        "status": "blocked",
+    }, sort_keys=True, separators=(",", ":")), file=sys.stderr)
+    raise SystemExit(1)
 PY
 }
 
@@ -358,51 +658,6 @@ if [[ "${SYNC_AGENTS_ONLY}" == "true" ]]; then
   cp "${AGENTS_SOURCE}" "${AGENTS_TARGET}"
   echo "Codex AGENTS synchronized: ${AGENTS_TARGET}"
   sync_codex_remote_docs
-  if [[ -f "${REPO_ROOT}/codex/hooks.json" ]]; then
-    cp "${REPO_ROOT}/codex/hooks.json" "${CODEX_HOME}/hooks.json"
-    echo "Codex hooks config synchronized: ${CODEX_HOME}/hooks.json"
-  fi
-  if [[ -d "${REPO_ROOT}/codex/hooks" ]]; then
-    mkdir -p "${CODEX_HOME}/hooks"
-    rsync_runtime_dir "${REPO_ROOT}/codex/hooks" "${CODEX_HOME}/hooks"
-    echo "Codex hook scripts synchronized: ${CODEX_HOME}/hooks/"
-  fi
-  if [[ -d "${REPO_ROOT}/codex/runtime" ]]; then
-    mkdir -p "${CODEX_HOME}/runtime"
-    rsync_runtime_dir "${REPO_ROOT}/codex/runtime" "${CODEX_HOME}/runtime"
-    echo "Codex runtime policy synchronized: ${CODEX_HOME}/runtime/"
-  fi
-  if [[ -d "${REPO_ROOT}/codex/zsh" ]]; then
-    mkdir -p "${CODEX_HOME}/zsh"
-    rsync_runtime_dir "${REPO_ROOT}/codex/zsh" "${CODEX_HOME}/zsh"
-    echo "Codex zsh helpers synchronized: ${CODEX_HOME}/zsh/"
-  fi
-  CONFIG_TARGET="${CODEX_HOME}/config.toml"
-  if [[ -f "${CONFIG_TARGET}" ]]; then
-    python3 - "${CONFIG_TARGET}" <<'PY'
-from pathlib import Path
-import re
-import sys
-
-path = Path(sys.argv[1])
-text = path.read_text(encoding="utf-8")
-
-updated = re.sub(r"^codex_hooks\s*=.*\n?", "", text, flags=re.MULTILINE)
-if re.search(r"^hooks\s*=", updated, flags=re.MULTILINE):
-    updated = re.sub(r"^hooks\s*=.*$", "hooks = true", updated, count=1, flags=re.MULTILINE)
-elif "[features]" in text:
-    updated = updated.replace("[features]", "[features]\nhooks = true", 1)
-else:
-    updated = updated.rstrip() + "\n\n[features]\nhooks = true\n"
-
-if updated != text:
-    path.write_text(updated, encoding="utf-8")
-PY
-    echo "Codex hooks feature enabled in existing config: ${CONFIG_TARGET}"
-  else
-    echo "[WARN] Missing ${CONFIG_TARGET}; hooks will activate after the next full config sync." >&2
-  fi
-  write_sync_manifest
   exit 0
 fi
 
