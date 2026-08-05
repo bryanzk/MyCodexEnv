@@ -112,7 +112,7 @@ path = Path(sys.argv[1])
 if not path.is_file():
     raise SystemExit(1)
 payload = json.loads(path.read_text(encoding="utf-8"))
-raise SystemExit(0 if payload.get("name") == "superpowers" and payload.get("version") == "6.1.1" else 1)
+raise SystemExit(0 if payload.get("name") == "superpowers" and payload.get("version") == "6.2.0" else 1)
 PY
 }
 
@@ -123,7 +123,7 @@ superpowers_marketplace_registered_ok() {
 
 superpowers_plugin_installed_ok() {
   CODEX_HOME="${CODEX_HOME}" "${CODEX_BIN}" plugin list --json |
-    python3 -c 'import json, sys; data = json.load(sys.stdin); sys.exit(0 if any(p.get("pluginId") == "superpowers@superpowers-dev" and p.get("installed") is True and p.get("enabled") is True and p.get("version") == "6.1.1" for p in data.get("installed", [])) else 1)'
+    python3 -c 'import json, sys; data = json.load(sys.stdin); sys.exit(0 if any(p.get("pluginId") == "superpowers@superpowers-dev" and p.get("installed") is True and p.get("enabled") is True and p.get("version") == "6.2.0" for p in data.get("installed", [])) else 1)'
 }
 
 skill_compatibility_ok() {
