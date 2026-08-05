@@ -191,7 +191,7 @@
 - Session State: `docs/harness-state.md` plus local evidence JSONL.
 - Permissions: `codex/runtime/tool-policy.json` and guard hooks.
 - Hooks: `codex/hooks.json` and `codex/hooks/*`.
-- Task-scoped phase: `codex/hooks/task_state.py` is the side-effect-free, read-only transcript parser for owner declarations and bounded depth-1 same-repo inheritance; it path-fences top-level transcript identity under `CODEX_HOME/sessions`, creates no cache or state file, and returns fail-closed reason codes instead of raising.
+- Task-scoped phase: `codex/hooks/task_state.py` is the side-effect-free, read-only transcript parser for owner declarations; every descendant at any depth inherits directly from the same session root, subject to same-repo, identity, and eligible-owner restrictions. It path-fences top-level transcript identity under `CODEX_HOME/sessions`, creates no cache or state file, and returns fail-closed reason codes instead of raising.
 - DHF Prompt Dispatch: global `UserPromptSubmit` registers `dhf_preprompt.py`; `shipq_dhf_preprompt.py` remains a lazy project adapter and ordinary non-ShipQ prompts do not receive `additionalContext`.
 - Observability: `scripts/harness_evidence.py`, `scripts/harness_feedback.py`, `scripts/harness_report.py`, split evidence schemas, and local evidence files. Decision evidence is promoted into state and handoff summaries; routine gate receipts remain available for audit without burying recovery signals.
 - Tool Router: lifecycle stage policy in `tool-policy.json`.
