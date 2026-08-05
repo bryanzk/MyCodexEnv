@@ -11,6 +11,16 @@ from pathlib import Path
 from typing import Any
 
 
+HOOKS_DIR = Path(__file__).resolve().parent
+if str(HOOKS_DIR) not in sys.path:
+    sys.path.insert(0, str(HOOKS_DIR))
+
+try:
+    import task_state
+except Exception:  # A guard import failure must degrade to restrictive legacy sources.
+    task_state = None
+
+
 def load_payload() -> dict[str, Any]:
     try:
         return json.load(sys.stdin)
@@ -68,37 +78,66 @@ def candidate_paths(payload: dict[str, Any]) -> list[str]:
 def phase_from_state_snapshot(root: Path | None) -> str | None:
     if root is None:
         return None
-    state = root / "docs" / "harness-state.md"
+    candidates = [
+        root / "docs" / "harness-state.md",
+        root / "docs" / "designs" / "harness-state.md",
+    ]
+    present = [path for path in candidates if path.exists() or path.is_symlink()]
+    if len(present) != 1:
+        return None
+    state = present[0]
+    if state.is_symlink():
+        return None
     try:
         text = state.read_text(encoding="utf-8")
     except OSError:
         return None
 
     in_snapshot = False
+    snapshot_count = 0
+    phases: list[str] = []
     for line in text.splitlines():
         stripped = line.strip()
-        if stripped.lower().startswith("## current snapshot"):
+        if re.fullmatch(r"##\s+current snapshot", stripped, flags=re.IGNORECASE):
+            snapshot_count += 1
             in_snapshot = True
             continue
-        if in_snapshot:
-            if stripped.startswith("## "):
-                break
-            match = re.match(r"\s*-\s*phase:\s*([A-Za-z_]+)\s*$", line)
-            if match:
-                return match.group(1)
-    return None
+        if in_snapshot and re.match(r"##(?:\s|$)", stripped):
+            in_snapshot = False
+            continue
+        if not in_snapshot:
+            continue
+        match = re.fullmatch(r"\s*-\s*phase\s*:\s*([A-Za-z_]+)\s*", line, flags=re.IGNORECASE)
+        if match:
+            phases.append(match.group(1))
+    if snapshot_count != 1 or len(phases) != 1:
+        return None
+    return phases[0]
+
+
+def _phase_resolution(
+    payload: dict[str, Any],
+    policy: dict[str, Any],
+    root: Path | None,
+) -> tuple[str, str]:
+    value = payload.get("phase") or os.environ.get("CODEX_HARNESS_PHASE")
+    marker_reason = "NOT_EVALUATED"
+    if not value:
+        if task_state is None:
+            marker_phase, marker_reason = None, "TASK_STATE_UNAVAILABLE"
+        else:
+            try:
+                marker_phase, marker_reason = task_state.resolve_declared_phase(payload, policy)
+            except Exception:
+                marker_phase, marker_reason = None, "TRANSCRIPT_INVALID"
+        value = marker_phase or phase_from_state_snapshot(root) or "unknown"
+    phase = str(value)
+    return (phase if phase in policy.get("phases", {}) else "unknown"), marker_reason
 
 
 def current_phase(payload: dict[str, Any], policy: dict[str, Any], root: Path | None) -> str:
-    value = (
-        payload.get("phase")
-        or tool_input(payload).get("phase")
-        or os.environ.get("CODEX_HARNESS_PHASE")
-        or phase_from_state_snapshot(root)
-        or "unknown"
-    )
-    phase = str(value)
-    return phase if phase in policy.get("phases", {}) else "unknown"
+    phase, _ = _phase_resolution(payload, policy, root)
+    return phase
 
 
 def unknown_phase_policy(policy: dict[str, Any]) -> dict[str, Any]:
@@ -277,10 +316,9 @@ def block(reason: str, risk_tier: str) -> dict[str, Any]:
 def decision(payload: dict[str, Any], policy: dict[str, Any]) -> dict[str, Any]:
     if not policy:
         return {}
-    data = tool_input(payload)
-    cwd = data.get("cwd") or payload.get("cwd") or os.getcwd()
+    cwd = payload.get("cwd") or os.getcwd()
     root = git_root(str(cwd))
-    phase = current_phase(payload, policy, root)
+    phase, marker_reason = _phase_resolution(payload, policy, root)
     phase_policy = policy.get("phases", {}).get(phase)
     if phase_policy is None:
         phase_policy = unknown_phase_policy(policy)
@@ -304,7 +342,11 @@ def decision(payload: dict[str, Any], policy: dict[str, Any]) -> dict[str, Any]:
     if category == "remote" and phase_policy.get("allow_remote") is True:
         return {}
 
-    return block(f"[harness] {category} is restricted during phase '{phase}': {reason or category}.", risk_tier)
+    return block(
+        f"[harness] {category} is restricted during phase '{phase}': {reason or category}. "
+        f"[marker_reason={marker_reason}]",
+        risk_tier,
+    )
 
 
 def main() -> int:

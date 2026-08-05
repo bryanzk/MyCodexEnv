@@ -111,7 +111,7 @@ For the current project workflow and skill routing map, read
 - `Hooks`: `codex/hooks/*` implements thin objective guardrails, prompt model routing recommendations, and evidence plumbing.
 - `Observability`: local JSONL evidence records lifecycle and verification events.
 - `Surface Inventory`: `docs/surfaces.json` is the canonical runtime surface inventory; `scripts/check_surfaces.py` keeps it consistent with files on disk, the `docs/repo-index.md` `## Runtime Surfaces` mirror, and opt-in public landing nav links declared with `public_nav`.
-- `Tool Router`: lifecycle stage determines allowed read/write/network/remote behavior. The guard resolves phase in order from top-level payload, `tool_input.phase`, `CODEX_HARNESS_PHASE`, `docs/harness-state.md` `## Current Snapshot`, then `unknown`.
+- `Tool Router`: lifecycle stage determines allowed read/write/network/remote behavior. The guard resolves phase in order from the host-owned top-level payload, `CODEX_HARNESS_PHASE`, the transcript marker, one unambiguous repo snapshot, then `unknown`. The marker precedes the snapshot because a task-scoped owner declaration is narrower than repo-scoped state. `tool_input.phase`, `tool_input.cwd`, `tool_input.transcript_path`, and `tool_input.session_id` never participate in authorization. Repository lookup uses only the host-owned top-level `cwd` (or the hook process cwd when absent), while tool-input paths remain classification and logging inputs only.
 - `Model Router`: `codex/hooks/model_router.py` classifies each prompt or subtask as `simple`, `medium`, or `complex` and recommends the cheapest quality-safe model tier. It intentionally stays non-blocking; runtimes or wrapper scripts that can switch models may consume the JSON `routing` object, while plain Codex hooks inject the recommendation and response telemetry requirement as additional context.
 - `Checkpoints`: use git commits, state log entries, and handoff docs as recovery points.
 - `Guardrails`: recognized repo-write phase violations, destructive commands, secret access, remote operations, and dynamic-execution actions are blocked. The guard emits the Codex-supported legacy block shape; a 2026-07-28 isolated probe proved that the former top-level `permissionDecision` shape and every `ask` variant fail open, so former ask categories are upgraded to block until the host supports a real ask.
@@ -123,6 +123,102 @@ a classifier gap: an `exec_command` command ending in `auth.json` can miss the
 secret-path pattern after the command is concatenated with candidate-path
 text. Until that matcher is repaired and re-probed, command-form secret-path
 access must not be described as guaranteed blocked.
+
+### Task-scoped transcript marker
+
+An owner may declare the task phase by placing one independent marker line as
+the first non-empty line of the task's first real owner instruction:
+
+```text
+task-mode: development
+```
+
+`任务模式：development` is the equivalent Chinese form. Matching is
+case-insensitive and closed to this vocabulary:
+
+- `planning` or `plan`: read-only planning.
+- `development` or `implementation`: scoped repository implementation.
+- `review`: read-only review.
+- `validation`: validation without a general repository-write grant.
+- `handoff`: handoff, with category-level repository writes still blocked.
+- `report-only`: alias of `review`.
+- `ship`: explicitly not declarable; ship combines repository write and network
+  authority and therefore requires a separate owner-controlled path.
+
+Only the earliest real owner instruction is considered, so a task cannot change
+mode midway. Start a new task to change mode. A marker mentioned later in the
+message, in a later message, or inside pasted documentation does not trigger.
+For attachment-wrapped prompts beginning with `# Files mentioned by the user:`,
+the parser requires `## My request for Codex:` and evaluates its first non-empty
+request line. Injected recommended-plugin, AGENTS, environment, and skill blocks
+are skipped because they lack the host's following `user_message` event.
+`automation` and unknown thread sources are ineligible even if their preset
+prompt starts with a valid marker.
+
+`codex/hooks/task_state.py` is a read-only parser: it creates no task-state
+file, cache, or audit record. It accepts only top-level `transcript_path` and
+`session_id`, resolves the path, and requires it to remain under
+`<CODEX_HOME>/sessions/`; symlink escapes fail closed. It reads at most the first
+50 transcript lines. Missing, truncated, malformed, identity-mismatched, or
+out-of-bounds transcripts yield no marker phase and a fail-closed reason code;
+the guard then continues to the repo snapshot and `unknown` sources in the
+documented precedence chain.
+
+Session metadata has two distinct identities. `session_meta.payload.id` is the
+current thread's globally unique id and equals the UUID suffix in that thread's
+rollout filename. `session_meta.payload.session_id` is the session-root thread
+id; every descendant retains that same root id regardless of nesting depth.
+The top-level PreToolUse `session_id` has the latter session-root meaning. The
+current transcript is associated only when that top-level value equals either
+its own `meta.id` (the root-transcript case) or its `meta.session_id` (the
+descendant-transcript case).
+
+Subagents do not declare their own marker. Every thread in a session tree,
+including depth 2 and deeper descendants, resolves directly to and shares the
+owner root's declared phase without mapping, decay, or elevation. If the
+current transcript's `meta.id` is not the root `session_id`, the parser narrows
+the root candidate by the fixed rollout filename suffix
+`rollout-*-<session_id>.jsonl` under the `YYYY/MM/DD` session layout. It then
+opens the candidate and requires its internal `meta.id` to equal the requested
+root id; the filename alone is never trusted. Exactly one root must be found,
+that root must have `thread_source=user`, and its cwd Git root must equal the
+top-level current payload cwd Git root. Automation roots, missing roots,
+ambiguous roots, identity mismatches, and cross-repository reuse all fail
+closed to `unknown`/read-only.
+
+Direct-parent ids, depth fields, and agent-controlled
+`<codex_delegation><source_thread_id>` text are not read for authorization.
+Marker-like text in a subagent body is ignored; only the real owner instruction
+in the root transcript can declare the shared session-tree phase. If a restored
+long-lived session's root transcript is unavailable, its descendants remain
+read-only and the owner must start or redeclare through an eligible root task;
+the child cannot self-declare.
+
+This is a defense-in-depth task-scoping mechanism, not a hard security boundary.
+Transcript files have mode `600`, but the agent and hook execute under the same
+uid, so the agent can technically write those files. The path fence, host-shaped
+identity checks, owner-message predicate, and task-scoped declaration
+significantly raise the cost of accidental misuse and deliberate abuse compared
+with globally polluted environment state or a forgeable cwd; they do not make
+the transcript unforgeable. A true hard boundary requires either a trusted
+payload-level phase supplied by the host or a hook running under a different
+uid. Neither capability is implemented in this slice.
+
+Snapshot phase resolution checks exactly two repo-relative candidates:
+`docs/harness-state.md` and `docs/designs/harness-state.md`. Exactly one may be
+present. The candidate must be a regular non-symlink file with exactly one
+`## Current Snapshot` section and exactly one explicit `Phase` field inside
+that section; the field name is case-insensitive, while its value must directly
+match a phase key in `codex/runtime/tool-policy.json`. `Lifecycle stage`, titles,
+directory names, and fields outside the current snapshot are never inferred as
+phase. Multiple candidates, duplicate in-section fields, missing or invalid
+fields, symlinks, and read errors all resolve to `unknown`. Historical `phase`
+entries under `## State Log` do not participate in duplicate detection.
+
+The resolved phase is task-scoped through the host cwd, not target-path scoped:
+a command that names another repository in its tool input does not make that
+repository's snapshot authoritative. Cross-repository target enforcement is a
+separate design concern and is not supplied by this parser hardening.
 
 R6 adds risk tiers as evidence-only annotations. Block responses keep the exact
 legacy `decision`/`reason` key set and append `risk_tier=<tier>` inside the
@@ -486,7 +582,7 @@ Agent team validator:
 ## Failure Modes
 - missing state file: fail or warn at startup, then read repo AGENTS and README before acting.
 - unknown lifecycle stage: default to restrictive read-only behavior.
-- missing or malformed `## Current Snapshot` phase: treat the phase as unknown and require approval for repo writes.
+- missing, malformed, duplicated, unreadable, symlinked, or multiply located `## Current Snapshot` phase: treat the phase as unknown and block repo writes under the read-only fallback.
 - secret path access: deny unless the user explicitly requests and approves safe handling; the current command-form classifier gap above is fail-open, so an unclassified result must be treated as unsafe rather than as evidence of protection.
 - remote operation: require `~/.codex/remote-access.md` review and approval.
 - dynamic download execution: deny or require explicit approval.

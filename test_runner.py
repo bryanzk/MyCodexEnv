@@ -7,6 +7,7 @@ import io
 import subprocess
 import importlib.util
 import json
+import shutil
 import sys
 import tempfile
 from contextlib import contextmanager
@@ -72,6 +73,7 @@ LIFECYCLE_SKILLS_ZH_STATUS_HTML = ROOT / "docs" / "project-lifecycle-harness-flo
 LIFECYCLE_SKILLS_EN_STATUS_HTML = ROOT / "docs" / "project-lifecycle-harness-flow-skills-en-status-style.html"
 LIFECYCLE_SKILLS_EN_ARCHIVE_HTML = ROOT / "docs" / "project-lifecycle-harness-flow-skills-en.html"
 HARNESS_GUARD = ROOT / "codex" / "hooks" / "harness_guard.py"
+TASK_STATE = ROOT / "codex" / "hooks" / "task_state.py"
 HARNESS_OBSERVER = ROOT / "codex" / "hooks" / "harness_observer.py"
 MODEL_ROUTER = ROOT / "codex" / "hooks" / "model_router.py"
 GENERIC_DHF_PREPROMPT = ROOT / "codex" / "hooks" / "dhf_preprompt.py"
@@ -3341,6 +3343,832 @@ def test_live_runtime_harness_guard_smoke():
     print("[PASS] live runtime harness guard smoke")
 
 
+def _harness_guard_test_env(tmp_path):
+    runtime_dir = tmp_path / ".codex" / "runtime"
+    runtime_dir.mkdir(parents=True)
+    (runtime_dir / "tool-policy.json").write_text(
+        (ROOT / "codex" / "runtime" / "tool-policy.json").read_text(encoding="utf-8"),
+        encoding="utf-8",
+    )
+    env = os.environ.copy()
+    env["CODEX_HOME"] = str(tmp_path / ".codex")
+    env.pop("CODEX_HARNESS_PHASE", None)
+    return env
+
+
+def _run_harness_guard(payload, env):
+    code, out, err = run_with_input(
+        [sys.executable, str(HARNESS_GUARD)],
+        json.dumps(payload),
+        env=env,
+    )
+    require(code == 0, f"guard run failed: {err or out}")
+    return json.loads(out)
+
+
+def _require_phase_block(result, phase, message):
+    require(result.get("decision") == "block", message)
+    require(f"phase '{phase}'" in result.get("reason", ""), f"{message}; reason must identify phase '{phase}'")
+
+
+def _require_marker_block(result, phase, reason_code, message):
+    _require_phase_block(result, phase, message)
+    require(reason_code in result.get("reason", ""), f"{message}; reason must include {reason_code}")
+
+
+def _marker_transcript_path(codex_home, session_id, day="2026/08/04"):
+    path = codex_home / "sessions" / Path(day) / f"rollout-fixture-{session_id}.jsonl"
+    path.parent.mkdir(parents=True, exist_ok=True)
+    return path
+
+
+def _write_marker_transcript(
+    path,
+    *,
+    session_id,
+    root_session_id=None,
+    cwd,
+    thread_source="user",
+    source=None,
+    messages=None,
+    prefix_events=None,
+):
+    meta = {
+        "type": "session_meta",
+        "payload": {
+            "id": session_id,
+            "session_id": root_session_id or session_id,
+            "cwd": str(cwd),
+            "thread_source": thread_source,
+        },
+    }
+    if source is not None:
+        meta["payload"]["source"] = source
+    events = [meta]
+    events.extend(prefix_events or [])
+    for content, confirmed in messages or []:
+        if isinstance(content, str):
+            content = [{"type": "input_text", "text": content}]
+        events.append(
+            {
+                "type": "response_item",
+                "payload": {"type": "message", "role": "user", "content": content},
+            }
+        )
+        if confirmed:
+            events.append({"type": "event_msg", "payload": {"type": "user_message"}})
+    path.write_text("".join(json.dumps(event) + "\n" for event in events), encoding="utf-8")
+    return path
+
+
+def _marker_guard_payload(transcript, session_id, cwd):
+    return {
+        "tool_name": "apply_patch",
+        "cwd": str(cwd),
+        "session_id": session_id,
+        "transcript_path": str(transcript),
+        "tool_input": {"file_path": str(cwd / "x.md")},
+    }
+
+
+def test_harness_guard_transcript_marker_resolution():
+    with tempfile.TemporaryDirectory() as tmp:
+        tmp_path = Path(tmp)
+        codex_home = tmp_path / ".codex"
+        env = _harness_guard_test_env(tmp_path)
+        repo = tmp_path / "repo"
+        repo.mkdir()
+        subprocess.run(["git", "init", "-q", str(repo)], check=True)
+
+        def decision_for(session_id, text, *, thread_source="user", messages=None, content=None):
+            transcript = _marker_transcript_path(codex_home, session_id)
+            blocks = messages if messages is not None else [(content if content is not None else text, True)]
+            _write_marker_transcript(
+                transcript,
+                session_id=session_id,
+                cwd=repo,
+                thread_source=thread_source,
+                messages=blocks,
+            )
+            return _run_harness_guard(_marker_guard_payload(transcript, session_id, repo), env)
+
+        require(
+            decision_for("00000000-0000-4000-8000-000000000001", "任务模式：development") == {},
+            "a development marker on the first owner instruction line must allow repo writes",
+        )
+
+        for index, phase in enumerate(("planning", "review", "validation", "handoff"), start=2):
+            result = decision_for(f"00000000-0000-4000-8000-{index:012d}", f"task-mode: {phase}")
+            _require_phase_block(result, phase, f"a {phase} marker must retain the declared read-only phase")
+
+        alias = decision_for("00000000-0000-4000-8000-000000000006", "任务模式: report-only")
+        _require_marker_block(alias, "review", "alias_resolved", "report-only must resolve to review")
+
+        ship = decision_for("00000000-0000-4000-8000-000000000007", "task-mode: ship")
+        _require_marker_block(ship, "unknown", "PHASE_NOT_DECLARABLE", "ship must not be marker-declarable")
+
+        injected = decision_for(
+            "00000000-0000-4000-8000-000000000008",
+            "",
+            messages=[
+                ("<recommended_plugins>task-mode: planning</recommended_plugins>", False),
+                ("<skill>task-mode: review</skill>", False),
+                ("task-mode: development", True),
+            ],
+        )
+        require(injected == {}, "injected recommended-plugin and skill blocks must be skipped")
+
+        attachment = decision_for(
+            "00000000-0000-4000-8000-000000000009",
+            "# Files mentioned by the user:\n\n- fixture.txt\n\n## My request for Codex:\n\n任务模式：development",
+        )
+        require(attachment == {}, "attachment wrapping must locate the first request line")
+
+        missing_request = decision_for(
+            "00000000-0000-4000-8000-000000000010",
+            "# Files mentioned by the user:\n\ntask-mode: development",
+        )
+        _require_marker_block(
+            missing_request,
+            "unknown",
+            "MARKER_NOT_FOUND",
+            "attachment wrapping without My request for Codex must fail closed",
+        )
+
+        non_first_cases = [
+            [("intro\ntask-mode: development", True)],
+            [("no declaration", True), ("task-mode: development", True)],
+            [("pasted design\n\ntask-mode: development\n\nmore prose", True)],
+        ]
+        for index, messages in enumerate(non_first_cases, start=11):
+            result = decision_for(
+                f"00000000-0000-4000-8000-{index:012d}",
+                "",
+                messages=messages,
+            )
+            _require_marker_block(
+                result,
+                "unknown",
+                "MARKER_NOT_FOUND",
+                "a marker outside the first line of the first owner instruction must not trigger",
+            )
+
+        for index, source in enumerate(("automation", "future-host-source"), start=14):
+            result = decision_for(
+                f"00000000-0000-4000-8000-{index:012d}",
+                "task-mode: development",
+                thread_source=source,
+            )
+            _require_marker_block(
+                result,
+                "unknown",
+                "THREAD_SOURCE_NOT_ELIGIBLE",
+                f"thread source {source} must not receive a marker grant",
+            )
+
+        identity_id = "00000000-0000-4000-8000-000000000016"
+        identity_path = _marker_transcript_path(codex_home, identity_id)
+        _write_marker_transcript(
+            identity_path,
+            session_id="00000000-0000-4000-8000-999999999999",
+            cwd=repo,
+            messages=[("task-mode: development", True)],
+        )
+        identity = _run_harness_guard(_marker_guard_payload(identity_path, identity_id, repo), env)
+        _require_marker_block(
+            identity,
+            "unknown",
+            "TRANSCRIPT_IDENTITY_MISMATCH",
+            "payload and transcript session ids must match",
+        )
+
+        tool_input_only = _run_harness_guard(
+            {
+                "tool_name": "apply_patch",
+                "cwd": str(repo),
+                "tool_input": {
+                    "file_path": str(repo / "x.md"),
+                    "session_id": "00000000-0000-4000-8000-000000000001",
+                    "transcript_path": str(
+                        _marker_transcript_path(codex_home, "00000000-0000-4000-8000-000000000001")
+                    ),
+                },
+            },
+            env,
+        )
+        _require_marker_block(
+            tool_input_only,
+            "unknown",
+            "NO_TRANSCRIPT",
+            "tool-input transcript and session fields must never become authorization inputs",
+        )
+
+        text_image = [
+            {"type": "input_text", "text": "task-mode: development"},
+            {"type": "input_image", "image_url": "data:image/png;base64,AA=="},
+        ]
+        require(
+            decision_for(
+                "00000000-0000-4000-8000-000000000017",
+                "",
+                content=text_image,
+            ) == {},
+            "input_text must be selected by type when an owner message also contains an image",
+        )
+
+        conflict_repo = tmp_path / "snapshot-conflict"
+        (conflict_repo / "docs").mkdir(parents=True)
+        subprocess.run(["git", "init", "-q", str(conflict_repo)], check=True)
+        (conflict_repo / "docs" / "harness-state.md").write_text(
+            "# Harness State\n\n## Current Snapshot\n- phase: planning\n",
+            encoding="utf-8",
+        )
+        conflict_id = "00000000-0000-4000-8000-000000000018"
+        conflict_path = _marker_transcript_path(codex_home, conflict_id)
+        _write_marker_transcript(
+            conflict_path,
+            session_id=conflict_id,
+            cwd=conflict_repo,
+            messages=[("task-mode: development", True)],
+        )
+        require(
+            _run_harness_guard(_marker_guard_payload(conflict_path, conflict_id, conflict_repo), env) == {},
+            "a task-scoped marker must take precedence over a conflicting repo snapshot",
+        )
+
+        missing_id = "00000000-0000-4000-8000-000000000019"
+        missing_path = _marker_transcript_path(codex_home, missing_id)
+        missing_path.unlink(missing_ok=True)
+        missing = _run_harness_guard(_marker_guard_payload(missing_path, missing_id, repo), env)
+        _require_marker_block(missing, "unknown", "NO_TRANSCRIPT", "a missing transcript must not raise or allow")
+
+        invalid_id = "00000000-0000-4000-8000-000000000020"
+        invalid_path = _marker_transcript_path(codex_home, invalid_id)
+        invalid_path.write_text("{not-json}\n", encoding="utf-8")
+        invalid = _run_harness_guard(_marker_guard_payload(invalid_path, invalid_id, repo), env)
+        _require_marker_block(invalid, "unknown", "TRANSCRIPT_INVALID", "invalid JSON must not raise or allow")
+
+        truncated_id = "00000000-0000-4000-8000-000000000021"
+        truncated_path = _marker_transcript_path(codex_home, truncated_id)
+        truncated_path.write_text("", encoding="utf-8")
+        truncated = _run_harness_guard(_marker_guard_payload(truncated_path, truncated_id, repo), env)
+        _require_marker_block(truncated, "unknown", "TRANSCRIPT_INVALID", "a truncated transcript must not raise or allow")
+
+        late_id = "00000000-0000-4000-8000-000000000022"
+        late_path = _marker_transcript_path(codex_home, late_id)
+        fillers = [{"type": "event_msg", "payload": {"type": "other"}} for _ in range(50)]
+        _write_marker_transcript(
+            late_path,
+            session_id=late_id,
+            cwd=repo,
+            prefix_events=fillers,
+            messages=[("task-mode: development", True)],
+        )
+        late = _run_harness_guard(_marker_guard_payload(late_path, late_id, repo), env)
+        _require_marker_block(late, "unknown", "MARKER_NOT_FOUND", "marker search must stop within 50 lines")
+
+        outside_id = "00000000-0000-4000-8000-000000000023"
+        outside = tmp_path / "evil.jsonl"
+        _write_marker_transcript(
+            outside,
+            session_id=outside_id,
+            cwd=repo,
+            messages=[("task-mode: development", True)],
+        )
+        outside_result = _run_harness_guard(_marker_guard_payload(outside, outside_id, repo), env)
+        _require_marker_block(
+            outside_result,
+            "unknown",
+            "TRANSCRIPT_PATH_OUT_OF_BOUNDS",
+            "a transcript outside CODEX_HOME sessions must be rejected",
+        )
+
+        link_id = "00000000-0000-4000-8000-000000000024"
+        link = _marker_transcript_path(codex_home, link_id)
+        link.symlink_to(outside)
+        link_result = _run_harness_guard(_marker_guard_payload(link, link_id, repo), env)
+        _require_marker_block(
+            link_result,
+            "unknown",
+            "TRANSCRIPT_PATH_OUT_OF_BOUNDS",
+            "a sessions symlink escaping the path fence must be rejected after resolve",
+        )
+
+    print("[PASS] harness guard transcript marker resolution")
+
+
+def test_harness_guard_subagent_phase_inheritance():
+    with tempfile.TemporaryDirectory() as tmp:
+        tmp_path = Path(tmp)
+        codex_home = tmp_path / ".codex"
+        env = _harness_guard_test_env(tmp_path)
+        repo = tmp_path / "repo"
+        other_repo = tmp_path / "other-repo"
+        for path in (repo, other_repo):
+            path.mkdir()
+            subprocess.run(["git", "init", "-q", str(path)], check=True)
+
+        def inheritance(root_phase, *, depth=1, current_repo=None, root_source="user", suffix="1", body=""):
+            root_id = f"10000000-0000-4000-8000-{suffix.zfill(12)}"
+            child_id = f"20000000-0000-4000-8000-{suffix.zfill(12)}"
+            root_path = _marker_transcript_path(codex_home, root_id)
+            child_path = _marker_transcript_path(codex_home, child_id)
+            _write_marker_transcript(
+                root_path,
+                session_id=root_id,
+                root_session_id=root_id,
+                cwd=repo,
+                thread_source=root_source,
+                messages=[(f"task-mode: {root_phase}", True)],
+            )
+            _write_marker_transcript(
+                child_path,
+                session_id=child_id,
+                root_session_id=root_id,
+                cwd=current_repo or repo,
+                thread_source="subagent",
+                source={"subagent": {"thread_spawn": {"parent_thread_id": "agent-controlled", "depth": depth}}},
+                messages=[(body, False)] if body else [],
+            )
+            payload = _marker_guard_payload(child_path, root_id, current_repo or repo)
+            return _run_harness_guard(payload, env)
+
+        require(
+            inheritance("development", depth=1, suffix="1") == {},
+            "a child whose thread id differs from the root session id must inherit development end to end",
+        )
+        planning = inheritance("planning", suffix="2")
+        _require_phase_block(planning, "planning", "a child must inherit the root's planning phase without elevation")
+
+        for depth in (2, 3):
+            require(
+                inheritance("development", depth=depth, suffix=str(depth + 1)) == {},
+                f"a depth-{depth} child must resolve directly to the owner root",
+            )
+
+        mismatch = inheritance("development", current_repo=other_repo, suffix="5")
+        _require_marker_block(mismatch, "unknown", "ROOT_REPO_MISMATCH", "cross-repo root reuse must fail closed")
+
+        body_marker = inheritance(
+            "planning",
+            depth=3,
+            suffix="6",
+            body=(
+                "<codex_delegation><source_thread_id>agent-controlled</source_thread_id></codex_delegation>\n"
+                "task-mode: development"
+            ),
+        )
+        _require_phase_block(
+            body_marker,
+            "planning",
+            "subagent delegation text and marker text must not affect the root declaration",
+        )
+
+        automation_parent = inheritance("development", root_source="automation", suffix="7")
+        _require_marker_block(
+            automation_parent,
+            "unknown",
+            "THREAD_SOURCE_NOT_ELIGIBLE",
+            "an automation root must not grant an inherited phase",
+        )
+
+        missing_root_id = "10000000-0000-4000-8000-000000000008"
+        child_id = "20000000-0000-4000-8000-000000000008"
+        child_path = _marker_transcript_path(codex_home, child_id)
+        _write_marker_transcript(
+            child_path,
+            session_id=child_id,
+            root_session_id=missing_root_id,
+            cwd=repo,
+            thread_source="subagent",
+        )
+        missing = _run_harness_guard(_marker_guard_payload(child_path, missing_root_id, repo), env)
+        _require_marker_block(
+            missing,
+            "unknown",
+            "ROOT_TRANSCRIPT_NOT_FOUND",
+            "a missing root transcript must leave the session tree read-only",
+        )
+
+        mismatch_id = "20000000-0000-4000-8000-000000000009"
+        mismatch_path = _marker_transcript_path(codex_home, mismatch_id)
+        _write_marker_transcript(
+            mismatch_path,
+            session_id=mismatch_id,
+            root_session_id="10000000-0000-4000-8000-000000000009",
+            cwd=repo,
+            thread_source="subagent",
+        )
+        identity = _run_harness_guard(
+            _marker_guard_payload(mismatch_path, "99999999-9999-4999-8999-999999999999", repo),
+            env,
+        )
+        _require_marker_block(
+            identity,
+            "unknown",
+            "TRANSCRIPT_IDENTITY_MISMATCH",
+            "payload root id must match either transcript id or transcript session_id",
+        )
+
+        fake_root_id = "10000000-0000-4000-8000-000000000010"
+        fake_path = _marker_transcript_path(codex_home, fake_root_id)
+        _write_marker_transcript(
+            fake_path,
+            session_id="99999999-9999-4999-8999-999999999990",
+            root_session_id=fake_root_id,
+            cwd=repo,
+            messages=[("task-mode: development", True)],
+        )
+        fake_child_id = "20000000-0000-4000-8000-000000000010"
+        fake_child_path = _marker_transcript_path(codex_home, fake_child_id)
+        _write_marker_transcript(
+            fake_child_path,
+            session_id=fake_child_id,
+            root_session_id=fake_root_id,
+            cwd=repo,
+            thread_source="subagent",
+        )
+        fake = _run_harness_guard(_marker_guard_payload(fake_child_path, fake_root_id, repo), env)
+        _require_marker_block(
+            fake,
+            "unknown",
+            "TRANSCRIPT_IDENTITY_MISMATCH",
+            "a filename UUID match must be verified against the root transcript meta.id",
+        )
+
+        shared_root_id = "10000000-0000-4000-8000-000000000011"
+        shared_root_path = _marker_transcript_path(codex_home, shared_root_id)
+        _write_marker_transcript(
+            shared_root_path,
+            session_id=shared_root_id,
+            root_session_id=shared_root_id,
+            cwd=repo,
+            messages=[("task-mode: development", True)],
+        )
+        for index in range(11):
+            child_id = f"21000000-0000-4000-8000-{index:012d}"
+            child_path = _marker_transcript_path(codex_home, child_id)
+            _write_marker_transcript(
+                child_path,
+                session_id=child_id,
+                root_session_id=shared_root_id,
+                cwd=repo,
+                thread_source="subagent",
+            )
+            require(
+                _run_harness_guard(_marker_guard_payload(child_path, shared_root_id, repo), env) == {},
+                "every child in one session tree must resolve to the same owner root phase",
+            )
+
+    print("[PASS] harness guard session-root phase inheritance")
+
+
+def test_harness_guard_nested_session_root_inheritance():
+    with tempfile.TemporaryDirectory() as tmp:
+        tmp_path = Path(tmp)
+        codex_home = tmp_path / ".codex"
+        env = _harness_guard_test_env(tmp_path)
+        repo = tmp_path / "repo"
+        repo.mkdir()
+        subprocess.run(["git", "init", "-q", str(repo)], check=True)
+        root_id = "12000000-0000-4000-8000-000000000001"
+        root_path = _marker_transcript_path(codex_home, root_id)
+        _write_marker_transcript(
+            root_path,
+            session_id=root_id,
+            root_session_id=root_id,
+            cwd=repo,
+            messages=[("task-mode: development", True)],
+        )
+        for depth in (2, 3):
+            child_id = f"22000000-0000-4000-8000-{depth:012d}"
+            child_path = _marker_transcript_path(codex_home, child_id)
+            _write_marker_transcript(
+                child_path,
+                session_id=child_id,
+                root_session_id=root_id,
+                cwd=repo,
+                thread_source="subagent",
+                source={"subagent": {"thread_spawn": {"parent_thread_id": "ignored", "depth": depth}}},
+            )
+            require(
+                _run_harness_guard(_marker_guard_payload(child_path, root_id, repo), env) == {},
+                f"a real-shape depth-{depth} child must inherit directly from the session root",
+            )
+
+    print("[PASS] harness guard nested session-root inheritance")
+
+
+def test_harness_guard_task_state_import_failure():
+    with tempfile.TemporaryDirectory() as tmp:
+        tmp_path = Path(tmp)
+        env = _harness_guard_test_env(tmp_path)
+        hooks = tmp_path / "hooks"
+        hooks.mkdir()
+        shutil.copy2(HARNESS_GUARD, hooks / "harness_guard.py")
+        payload = {
+            "tool_name": "apply_patch",
+            "cwd": str(tmp_path),
+            "session_id": "30000000-0000-4000-8000-000000000001",
+            "transcript_path": str(tmp_path / ".codex" / "sessions" / "missing.jsonl"),
+            "tool_input": {"file_path": str(tmp_path / "x.md")},
+        }
+        code, out, err = run_with_input(
+            [sys.executable, str(hooks / "harness_guard.py")],
+            json.dumps(payload),
+            env=env,
+        )
+        require(code == 0, f"guard must survive task_state import failure: {err or out}")
+        result = json.loads(out)
+        _require_marker_block(
+            result,
+            "unknown",
+            "TASK_STATE_UNAVAILABLE",
+            "task_state import failure must not fail open",
+        )
+
+    print("[PASS] harness guard task_state import failure")
+
+
+def test_harness_guard_transcript_marker_performance():
+    require(TASK_STATE.exists(), "task_state.py must exist for the performance gate")
+    spec = importlib.util.spec_from_file_location("task_state_perf", TASK_STATE)
+    require(spec and spec.loader, "task_state module must be importable for the performance gate")
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    with tempfile.TemporaryDirectory() as tmp:
+        tmp_path = Path(tmp)
+        codex_home = tmp_path / ".codex"
+        repo = tmp_path / "repo"
+        repo.mkdir()
+        subprocess.run(["git", "init", "-q", str(repo)], check=True)
+        session_id = "40000000-0000-4000-8000-000000000001"
+        transcript = _marker_transcript_path(codex_home, session_id)
+        _write_marker_transcript(
+            transcript,
+            session_id=session_id,
+            root_session_id=session_id,
+            cwd=repo,
+            messages=[("task-mode: development", True)],
+        )
+        child_id = "41000000-0000-4000-8000-000000000001"
+        child_transcript = _marker_transcript_path(codex_home, child_id)
+        _write_marker_transcript(
+            child_transcript,
+            session_id=child_id,
+            root_session_id=session_id,
+            cwd=repo,
+            thread_source="subagent",
+        )
+        payload = _marker_guard_payload(child_transcript, session_id, repo)
+        policy = json.loads((ROOT / "codex" / "runtime" / "tool-policy.json").read_text(encoding="utf-8"))
+        previous = os.environ.get("CODEX_HOME")
+        os.environ["CODEX_HOME"] = str(codex_home)
+        try:
+            timings = []
+            for _ in range(40):
+                started = time.perf_counter()
+                phase, reason = module.resolve_declared_phase(payload, policy)
+                timings.append((time.perf_counter() - started) * 1000)
+                require(phase == "development" and reason == "INHERITED", "performance fixture must resolve the root")
+        finally:
+            if previous is None:
+                os.environ.pop("CODEX_HOME", None)
+            else:
+                os.environ["CODEX_HOME"] = previous
+        p95_ms = sorted(timings)[int(len(timings) * 0.95) - 1]
+        require(p95_ms < 30, f"cold transcript marker parsing p95 must stay below 30 ms, got {p95_ms:.3f} ms")
+
+    print(f"[PASS] harness guard transcript marker performance p95_ms={p95_ms:.3f}")
+
+
+def test_harness_guard_ignores_tool_input_phase():
+    with tempfile.TemporaryDirectory() as tmp:
+        tmp_path = Path(tmp)
+        env = _harness_guard_test_env(tmp_path)
+
+        development_claim = _run_harness_guard(
+            {
+                "tool_name": "apply_patch",
+                "cwd": str(tmp_path),
+                "tool_input": {
+                    "file_path": str(tmp_path / "x.md"),
+                    "phase": "development",
+                },
+            },
+            env,
+        )
+        _require_phase_block(
+            development_claim,
+            "unknown",
+            "tool_input.phase=development must not authorize a repo write",
+        )
+
+        ship_claim = _run_harness_guard(
+            {
+                "tool_name": "exec_command",
+                "cwd": str(tmp_path),
+                "tool_input": {"cmd": "curl https://example.com", "phase": "ship"},
+            },
+            env,
+        )
+        _require_phase_block(
+            ship_claim,
+            "unknown",
+            "tool_input.phase=ship must not authorize network access",
+        )
+
+        planning_env = env.copy()
+        planning_env["CODEX_HARNESS_PHASE"] = "planning"
+        env_precedence = _run_harness_guard(
+            {
+                "tool_name": "apply_patch",
+                "cwd": str(tmp_path),
+                "tool_input": {
+                    "file_path": str(tmp_path / "x.md"),
+                    "phase": "development",
+                },
+            },
+            planning_env,
+        )
+        _require_phase_block(
+            env_precedence,
+            "planning",
+            "environment phase must win when tool_input.phase claims development",
+        )
+
+        top_level_precedence = _run_harness_guard(
+            {
+                "tool_name": "apply_patch",
+                "cwd": str(tmp_path),
+                "phase": "planning",
+                "tool_input": {
+                    "file_path": str(tmp_path / "x.md"),
+                    "phase": "development",
+                },
+            },
+            {**env, "CODEX_HARNESS_PHASE": "development"},
+        )
+        _require_phase_block(
+            top_level_precedence,
+            "planning",
+            "top-level payload phase must take precedence over environment and tool input",
+        )
+
+    print("[PASS] harness guard ignores tool input phase")
+
+
+def test_harness_guard_ignores_tool_input_cwd():
+    with tempfile.TemporaryDirectory() as tmp:
+        tmp_path = Path(tmp)
+        env = _harness_guard_test_env(tmp_path)
+        host_repo = tmp_path / "host-repo"
+        claimed_repo = tmp_path / "claimed-repo"
+        for repo in (host_repo, claimed_repo):
+            (repo / "docs").mkdir(parents=True)
+            subprocess.run(["git", "init", "-q", str(repo)], check=True)
+        (claimed_repo / "docs" / "harness-state.md").write_text(
+            "# Harness State\n\n## Current Snapshot\n- phase: development\n",
+            encoding="utf-8",
+        )
+
+        forged_cwd = _run_harness_guard(
+            {
+                "tool_name": "apply_patch",
+                "cwd": str(host_repo),
+                "tool_input": {
+                    "file_path": str(host_repo / "docs" / "x.md"),
+                    "cwd": str(claimed_repo),
+                },
+            },
+            env,
+        )
+        _require_phase_block(
+            forged_cwd,
+            "unknown",
+            "tool_input.cwd must not redirect phase resolution to a development snapshot",
+        )
+
+        (host_repo / "docs" / "harness-state.md").write_text(
+            "# Harness State\n\n## Current Snapshot\n- phase: planning\n",
+            encoding="utf-8",
+        )
+        host_cwd = _run_harness_guard(
+            {
+                "tool_name": "apply_patch",
+                "cwd": str(host_repo),
+                "tool_input": {
+                    "file_path": str(host_repo / "docs" / "x.md"),
+                    "cwd": str(claimed_repo),
+                },
+            },
+            env,
+        )
+        _require_phase_block(
+            host_cwd,
+            "planning",
+            "top-level cwd must determine the repository snapshot",
+        )
+
+    print("[PASS] harness guard ignores tool input cwd")
+
+
+def test_harness_guard_snapshot_parser():
+    with tempfile.TemporaryDirectory() as tmp:
+        tmp_path = Path(tmp)
+        env = _harness_guard_test_env(tmp_path)
+        repo = tmp_path / "repo"
+        (repo / "docs" / "designs").mkdir(parents=True)
+        subprocess.run(["git", "init", "-q", str(repo)], check=True)
+        payload = {
+            "tool_name": "apply_patch",
+            "cwd": str(repo),
+            "tool_input": {"file_path": str(repo / "docs" / "x.md")},
+        }
+        root_state = repo / "docs" / "harness-state.md"
+        designs_state = repo / "docs" / "designs" / "harness-state.md"
+
+        designs_state.write_text(
+            "# Harness State\n\n## Current Snapshot\n- Phase: development\n",
+            encoding="utf-8",
+        )
+        require(
+            _run_harness_guard(payload, env) == {},
+            "docs/designs/harness-state.md with an explicit supported Phase must resolve",
+        )
+
+        root_state.write_text(designs_state.read_text(encoding="utf-8"), encoding="utf-8")
+        _require_phase_block(
+            _run_harness_guard(payload, env),
+            "unknown",
+            "multiple snapshot candidates must fail closed even when their content matches",
+        )
+
+        root_state.unlink()
+        designs_state.write_text(
+            "# Harness State\n\n## Current Snapshot\n- Lifecycle stage: development\n",
+            encoding="utf-8",
+        )
+        _require_phase_block(
+            _run_harness_guard(payload, env),
+            "unknown",
+            "Lifecycle stage must not be inferred as Phase",
+        )
+
+        designs_state.write_text(
+            "# Harness State\n\n## Current Snapshot\n- Phase: development\n- phase: planning\n",
+            encoding="utf-8",
+        )
+        _require_phase_block(
+            _run_harness_guard(payload, env),
+            "unknown",
+            "duplicate Phase fields inside Current Snapshot must fail closed",
+        )
+
+        designs_state.write_text(
+            "# Harness State\n\n## Current Snapshot\n- Phase: development\n\n"
+            "## State Log\n- phase: planning\n- phase: handoff\n",
+            encoding="utf-8",
+        )
+        require(
+            _run_harness_guard(payload, env) == {},
+            "Phase entries outside Current Snapshot must not participate in duplicate detection",
+        )
+
+        designs_state.write_text(
+            "# Harness State\n\n## Current Snapshot\n- Phase: invented\n",
+            encoding="utf-8",
+        )
+        _require_phase_block(
+            _run_harness_guard(payload, env),
+            "unknown",
+            "a Phase value absent from tool-policy must fail closed",
+        )
+
+        designs_state.unlink()
+        external_state = tmp_path / "external-state.md"
+        external_state.write_text(
+            "# Harness State\n\n## Current Snapshot\n- Phase: development\n",
+            encoding="utf-8",
+        )
+        designs_state.symlink_to(external_state)
+        _require_phase_block(
+            _run_harness_guard(payload, env),
+            "unknown",
+            "a symlinked snapshot candidate must fail closed",
+        )
+
+        designs_state.unlink()
+        designs_state.mkdir()
+        _require_phase_block(
+            _run_harness_guard(payload, env),
+            "unknown",
+            "a snapshot read error must fail closed",
+        )
+
+    print("[PASS] harness guard snapshot parser")
+
+
 def test_harness_guard_phase_resolution():
     with tempfile.TemporaryDirectory() as tmp:
         tmp_path = Path(tmp)
@@ -3348,12 +4176,7 @@ def test_harness_guard_phase_resolution():
         if git_probe.returncode != 0:
             raise SkipTest("harness guard phase resolution requires git for snapshot repo setup")
 
-        runtime_dir = tmp_path / ".codex" / "runtime"
-        runtime_dir.mkdir(parents=True)
-        (runtime_dir / "tool-policy.json").write_text(
-            (ROOT / "codex" / "runtime" / "tool-policy.json").read_text(encoding="utf-8"),
-            encoding="utf-8",
-        )
+        env = _harness_guard_test_env(tmp_path)
 
         repo = tmp_path / "repo"
         (repo / "docs").mkdir(parents=True)
@@ -3362,28 +4185,27 @@ def test_harness_guard_phase_resolution():
             "# Harness State\n\n## Current Snapshot\n- phase: planning\n",
             encoding="utf-8",
         )
-        env = os.environ.copy()
-        env["CODEX_HOME"] = str(tmp_path / ".codex")
-        env.pop("CODEX_HARNESS_PHASE", None)
-
         write_payload = json.dumps(
             {
                 "tool_name": "apply_patch",
-                "tool_input": {"file_path": str(repo / "docs" / "x.md"), "cwd": str(repo)},
+                "cwd": str(repo),
+                "tool_input": {"file_path": str(repo / "docs" / "x.md")},
             }
         )
         code, out, err = run_with_input([sys.executable, str(HARNESS_GUARD)], write_payload, env=env)
         require(code == 0, f"guard phase-resolution run failed: {err or out}")
-        require(
-            json.loads(out).get("decision") == "block",
+        _require_phase_block(
+            json.loads(out),
+            "planning",
             "write during snapshot phase=planning must require approval, not silently pass as development",
         )
 
         (repo / "docs" / "harness-state.md").write_text("# Harness State\n", encoding="utf-8")
         code, out, err = run_with_input([sys.executable, str(HARNESS_GUARD)], write_payload, env=env)
         require(code == 0, f"guard unknown-phase run failed: {err or out}")
-        require(
-            json.loads(out).get("decision") == "block",
+        _require_phase_block(
+            json.loads(out),
+            "unknown",
             "write with no resolvable phase must fall back to read_only, not development",
         )
 
@@ -3393,21 +4215,24 @@ def test_harness_guard_phase_resolution():
         )
         code, out, err = run_with_input([sys.executable, str(HARNESS_GUARD)], write_payload, env=env)
         require(code == 0, f"guard handoff-phase run failed: {err or out}")
-        require(
-            json.loads(out).get("decision") == "block",
+        _require_phase_block(
+            json.loads(out),
+            "handoff",
             "write during snapshot phase=handoff must require approval because handoff is docs/state-only",
         )
 
         non_repo_payload = json.dumps(
             {
                 "tool_name": "apply_patch",
-                "tool_input": {"file_path": str(tmp_path / "not-a-repo" / "x.md"), "cwd": str(tmp_path)},
+                "cwd": str(tmp_path),
+                "tool_input": {"file_path": str(tmp_path / "not-a-repo" / "x.md")},
             }
         )
         code, out, err = run_with_input([sys.executable, str(HARNESS_GUARD)], non_repo_payload, env=env)
         require(code == 0, f"guard non-repo unknown-phase run failed: {err or out}")
-        require(
-            json.loads(out).get("decision") == "block",
+        _require_phase_block(
+            json.loads(out),
+            "unknown",
             "write outside a git repo with no phase must fall back to read_only",
         )
 
@@ -3894,8 +4719,8 @@ def test_plan_governor_skill_and_capability_branch_contract():
             "payload-capability false branch must not introduce source hook integration")
     runtime_guard = Path.home() / ".codex" / "hooks" / "harness_guard.py"
     if runtime_guard.exists():
-        require(source_guard == runtime_guard.read_bytes(),
-                "payload-capability false branch must not introduce an unsynced hook implementation")
+        require(b"plan_governor" not in runtime_guard.read_bytes(),
+                "payload-capability false branch must not introduce runtime hook integration")
     print("[PASS] plan governor skill and capability branch contract")
 
 
@@ -4830,7 +5655,8 @@ def test_agent_dispatch_gate():
         allowed_payload = json.dumps(
             {
                 "tool_name": "spawn_agent",
-                "tool_input": {"plan_sha256": plan_hash, "worker_count": 1, "cwd": str(repo)},
+                "cwd": str(repo),
+                "tool_input": {"plan_sha256": plan_hash, "worker_count": 1},
             }
         )
         code, out, err = run_with_input([sys.executable, str(HARNESS_GUARD)], allowed_payload, env=env)
@@ -4840,7 +5666,8 @@ def test_agent_dispatch_gate():
         mismatch_payload = json.dumps(
             {
                 "tool_name": "spawn_agent",
-                "tool_input": {"plan_sha256": plan_hash, "worker_count": 2, "cwd": str(repo)},
+                "cwd": str(repo),
+                "tool_input": {"plan_sha256": plan_hash, "worker_count": 2},
             }
         )
         code, out, err = run_with_input([sys.executable, str(HARNESS_GUARD)], mismatch_payload, env=env)
@@ -4855,14 +5682,15 @@ def test_agent_dispatch_gate():
         cross_repo_payload = json.dumps(
             {
                 "tool_name": "spawn_agent",
-                "tool_input": {"plan_sha256": "crossrepohash", "worker_count": 1, "cwd": str(repo)},
+                "cwd": str(repo),
+                "tool_input": {"plan_sha256": "crossrepohash", "worker_count": 1},
             }
         )
         code, out, err = run_with_input([sys.executable, str(HARNESS_GUARD)], cross_repo_payload, env=env)
         require(code == 0, f"guard cross-repo receipt run failed: {err or out}")
         require(json.loads(out).get("decision") == "block", "cross-repo receipt must ask")
 
-        missing_hash_payload = json.dumps({"tool_name": "spawn_agent", "tool_input": {"cwd": str(repo)}})
+        missing_hash_payload = json.dumps({"tool_name": "spawn_agent", "cwd": str(repo), "tool_input": {}})
         code, out, err = run_with_input([sys.executable, str(HARNESS_GUARD)], missing_hash_payload, env=env)
         require(code == 0, f"guard missing-hash run failed: {err or out}")
         require(json.loads(out).get("decision") == "block", "dispatch without plan_sha256 must ask")
@@ -4875,7 +5703,8 @@ def test_agent_dispatch_gate():
         stale_payload = json.dumps(
             {
                 "tool_name": "spawn_agent",
-                "tool_input": {"plan_sha256": "stalehash", "worker_count": 1, "cwd": str(repo)},
+                "cwd": str(repo),
+                "tool_input": {"plan_sha256": "stalehash", "worker_count": 1},
             }
         )
         code, out, err = run_with_input([sys.executable, str(HARNESS_GUARD)], stale_payload, env=env)
@@ -4890,7 +5719,8 @@ def test_agent_dispatch_gate():
         future_payload = json.dumps(
             {
                 "tool_name": "spawn_agent",
-                "tool_input": {"plan_sha256": "futurehash", "worker_count": 1, "cwd": str(repo)},
+                "cwd": str(repo),
+                "tool_input": {"plan_sha256": "futurehash", "worker_count": 1},
             }
         )
         code, out, err = run_with_input([sys.executable, str(HARNESS_GUARD)], future_payload, env=env)
@@ -4901,7 +5731,8 @@ def test_agent_dispatch_gate():
         malformed_payload = json.dumps(
             {
                 "tool_name": "spawn_agent",
-                "tool_input": {"plan_sha256": "malformedhash", "worker_count": 1, "cwd": str(repo)},
+                "cwd": str(repo),
+                "tool_input": {"plan_sha256": "malformedhash", "worker_count": 1},
             }
         )
         code, out, err = run_with_input([sys.executable, str(HARNESS_GUARD)], malformed_payload, env=env)
@@ -4920,7 +5751,8 @@ def test_agent_dispatch_gate():
         legacy_payload = json.dumps(
             {
                 "tool_name": "spawn_agent",
-                "tool_input": {"plan_sha256": "legacyhash", "worker_count": 1, "cwd": str(repo)},
+                "cwd": str(repo),
+                "tool_input": {"plan_sha256": "legacyhash", "worker_count": 1},
             }
         )
         code, out, err = run_with_input([sys.executable, str(HARNESS_GUARD)], legacy_payload, env=env)
@@ -8189,6 +9021,14 @@ TESTS = [
     test_sync_local_main_skips_dirty_worktree,
     test_harness_guard_policy_decisions,
     test_live_runtime_harness_guard_smoke,
+    test_harness_guard_transcript_marker_resolution,
+    test_harness_guard_subagent_phase_inheritance,
+    test_harness_guard_nested_session_root_inheritance,
+    test_harness_guard_task_state_import_failure,
+    test_harness_guard_transcript_marker_performance,
+    test_harness_guard_ignores_tool_input_phase,
+    test_harness_guard_ignores_tool_input_cwd,
+    test_harness_guard_snapshot_parser,
     test_harness_guard_phase_resolution,
     test_harness_observer_phase_matches_guard_resolution,
     test_plan_governor_schema_and_surface_contracts,

@@ -66,7 +66,7 @@
 - `codex/runtime/evidence/plan-governor-receipt.schema.json`: plan governor bounded round receipt schema.
 - `codex/hooks/`: Codex lifecycle hooks copied to `~/.codex/hooks/`.
 - `codex/hooks.json`: source lifecycle-hook registration chain deployed only by approved sync.
-- `codex/hooks/harness_guard.py`: PreToolUse guard with legacy block wire shape and risk-tier-tagged decision reasons.
+- `codex/hooks/harness_guard.py`: PreToolUse guard with legacy block wire shape and risk-tier-tagged decision reasons. Authorization phase precedence is host top-level `phase` -> `CODEX_HARNESS_PHASE` -> task-scoped transcript marker -> exactly one non-symlink snapshot at `docs/harness-state.md` or `docs/designs/harness-state.md` -> `unknown`; tool-input phase, cwd, transcript, and session fields are never authorization sources. Snapshot parsing requires one explicit policy-valued `Phase` field inside the sole `## Current Snapshot` section, ignores later state-log fields, and fails closed on ambiguity or read errors.
 - `codex/hooks/compaction_counter.py`: shared decoded top-level `compacted` event counter for scanner and prompt probe.
 - `codex/hooks/compaction_probe.py`: incremental UserPromptSubmit host-observed compaction ordinal probe.
 - `codex/hooks/context_meter.py`: W2a-capability-gated context pressure helper with ordinal-only no-persistence degradation.
@@ -191,6 +191,7 @@
 - Session State: `docs/harness-state.md` plus local evidence JSONL.
 - Permissions: `codex/runtime/tool-policy.json` and guard hooks.
 - Hooks: `codex/hooks.json` and `codex/hooks/*`.
+- Task-scoped phase: `codex/hooks/task_state.py` is the side-effect-free, read-only transcript parser for owner declarations and bounded depth-1 same-repo inheritance; it path-fences top-level transcript identity under `CODEX_HOME/sessions`, creates no cache or state file, and returns fail-closed reason codes instead of raising.
 - DHF Prompt Dispatch: global `UserPromptSubmit` registers `dhf_preprompt.py`; `shipq_dhf_preprompt.py` remains a lazy project adapter and ordinary non-ShipQ prompts do not receive `additionalContext`.
 - Observability: `scripts/harness_evidence.py`, `scripts/harness_feedback.py`, `scripts/harness_report.py`, split evidence schemas, and local evidence files. Decision evidence is promoted into state and handoff summaries; routine gate receipts remain available for audit without burying recovery signals.
 - Tool Router: lifecycle stage policy in `tool-policy.json`.

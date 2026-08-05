@@ -34,6 +34,12 @@
 - `DHF_PREPROMPT_ALLOW_UNTRUSTED_TEST_PATHS=1` and the scanner's hidden `--now` argument are deterministic test seams only. Never set the former in a normal Codex hook environment because it disables the adapter trusted-root check.
 - `codex/hooks/shipq_dhf_preprompt.py` remains a synced adapter file for ShipQ cwd only; it is not registered directly in `codex/hooks.json`, and ordinary non-ShipQ prompts must not import, read, execute, or leak adapter-specific context.
 
+## Harness Guard Phase Resolution
+
+- **Source:** `codex/hooks/harness_guard.py` resolves authorization phase from host top-level `phase`, then `CODEX_HARNESS_PHASE`, then exactly one non-symlink repo snapshot at `docs/harness-state.md` or `docs/designs/harness-state.md`, and finally `unknown`. `tool_input.phase` and `tool_input.cwd` are not authorization inputs. A snapshot must contain exactly one explicit policy-valued `Phase` field inside its sole `## Current Snapshot` section; history outside that section is ignored, and ambiguity or read failure is fail-closed. Supporting the `docs/designs/` candidate does not migrate ShipQ or change MyCodexEnv's current `docs/harness-state.md` behavior.
+- **Installed runtime:** the source file and `~/.codex/hooks/harness_guard.py` are separate states. This source-stage change does not manually promote or verify the installed copy. Because the scheduled environment sync reads the repository working tree rather than Git `HEAD`, leaving an accepted change in this working tree can copy it into the runtime during the next daily sync window; an uncommitted change must not be assumed dormant.
+- **Active behavior:** source tests and even source/runtime byte parity do not prove that the host loaded or executed the hook. Active enforcement requires a fresh-session host-level probe in an owner-controlled real repository, including direct evidence that the hook ran. A disposable repository may test parser behavior only and must not be treated as proof of a durable write grant; a later P3 slice is expected to remove write-grant authority from snapshots.
+
 ## Skills Source of Truth
 - Repository source of truth is `codex/skills/*`.
 - Bootstrap/sync scripts only read `codex/skills/*` when populating `~/.codex/skills/*`.
