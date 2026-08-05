@@ -27,16 +27,23 @@
 - retained_repo_changes:
   - `tasks/gstack-dhf-daily-refresh-2026-08-04.md`
 
-## Verification Evidence
+## Historical Execution Records
+
+> 以下记录保留原始 `command`、`exit_code` 与 `key_output`，但原运行未捕获可信时间戳；因此统一标记为 `historical_unverified`，不计入 fresh verification gate，且不得回填或推断历史时间。
 
 - command: `python3 scripts/prepare_gstack_dhf_daily_refresh.py --json`
   exit_code: `0`
   key_output: `{"status":"ready","automation_branch":"automation/gstack-dhf-daily-refresh","dry_run":{"needs_update":true,"diff_files":2,"version":"1.60.1.0"}}`
-  timestamp: `not-captured-live-in-this-run`
+  timestamp: `unavailable`
+  evidence_status: `historical_unverified`
 - command: `python3 scripts/sync_gstack_vendor.py --repo-root "$(pwd)" --source https://github.com/garrytan/gstack.git --json`
   exit_code: `0`
   key_output: `{"needs_update":true,"diff_files":2,"version":"1.60.1.0"}`
-  timestamp: `not-captured-live-in-this-run`
+  timestamp: `unavailable`
+  evidence_status: `historical_unverified`
+
+## Fresh Verification Evidence
+
 - command: `python3 codex/skills/.system/skill-creator/scripts/quick_validate.py codex/skills/delivery-harness-framework`
   exit_code: `0`
   key_output: `Skill is valid!`
@@ -58,7 +65,9 @@
 
 - automation_branch_push: `pushed`
   - branch: `automation/gstack-dhf-daily-refresh`
-  - note: 本轮日报首个提交已成功推送；本文件的 closeout 补记将作为后续 report finalize commit 再次推送。
+  - rebase_post_push_sha: `3f5b0a17795ebbb4bd802168b18a66893ed6ed77`
+  - verified_at: `2026-08-05T11:36:03-04:00`
+  - note: 本轮日报及 closeout finalize commit 已 rebase 到 fresh `origin/main` 并完成精确 lease 推送；后续证据修订提交的最终远端 SHA 由提交后的 fresh readback 单独确认，避免在同一 commit 内自引用。
 - main_auto_merge: `blocked`
   - helper: `python3 scripts/merge_gstack_refresh_if_safe.py --repo-root "$(pwd)" --apply --verified --json`
   - reason: `report_only_apply_forbidden`
@@ -67,16 +76,27 @@
   - helper: `python3 scripts/sync_local_main_if_safe.py --repo-root /Users/kezheng/Codes/CursorDeveloper/MyCodexEnv --apply --json`
   - reason: `main_not_merged`
 
-## Closeout Evidence
+## Historical Closeout Records
+
+> 以下原始 closeout 记录未捕获可信时间戳，保留用于说明当时动作与结果，但统一标记为 `historical_unverified`，不计入 fresh verification gate。
 
 - command: `git -c alias.fwl='push --force-with-lease' fwl origin HEAD:refs/heads/automation/gstack-dhf-daily-refresh`
   exit_code: `0`
   key_output: `4def1ed..7e21b24  HEAD -> automation/gstack-dhf-daily-refresh`
-  timestamp: `not-captured-live-in-this-run`
+  timestamp: `unavailable`
+  evidence_status: `historical_unverified`
 - command: `python3 scripts/merge_gstack_refresh_if_safe.py --repo-root "$(pwd)" --apply --verified --json`
   exit_code: `1`
   key_output: `{"status":"blocked","reason":"report_only_apply_forbidden","detail":"daily refresh is report-only and cannot merge or push"}`
-  timestamp: `not-captured-live-in-this-run`
+  timestamp: `unavailable`
+  evidence_status: `historical_unverified`
+
+## Rebase Post-push Verification Evidence
+
+- command: `git fetch origin --prune && git rev-parse HEAD && git rev-parse origin/automation/gstack-dhf-daily-refresh && git ls-remote --heads origin refs/heads/automation/gstack-dhf-daily-refresh && git rev-list --left-right --count origin/main...HEAD`
+  exit_code: `0`
+  key_output: `local_head=3f5b0a17795ebbb4bd802168b18a66893ed6ed77 ; remote_tracking=3f5b0a17795ebbb4bd802168b18a66893ed6ed77 ; ls_remote=3f5b0a17795ebbb4bd802168b18a66893ed6ed77 ; origin/main...HEAD=0/2`
+  timestamp: `2026-08-05T11:36:03-04:00`
 
 ## Next Auto Retry
 
