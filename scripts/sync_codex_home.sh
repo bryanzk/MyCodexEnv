@@ -637,8 +637,8 @@ marketplace = json.loads(marketplace_path.read_text(encoding="utf-8"))
 plugin = json.loads(plugin_path.read_text(encoding="utf-8"))
 if marketplace.get("name") != "superpowers-dev":
     raise SystemExit("Superpowers marketplace name must be superpowers-dev")
-if plugin.get("name") != "superpowers" or plugin.get("version") != "6.1.1":
-    raise SystemExit("Superpowers plugin manifest must be superpowers version 6.1.1")
+if plugin.get("name") != "superpowers" or plugin.get("version") != "6.2.0":
+    raise SystemExit("Superpowers plugin manifest must be superpowers version 6.2.0")
 if plugin.get("skills") != "./skills/":
     raise SystemExit("Superpowers plugin manifest must expose ./skills/")
 PY
@@ -656,7 +656,7 @@ superpowers_marketplace_registered() {
 
 superpowers_plugin_installed() {
   CODEX_HOME="${CODEX_HOME}" "${CODEX_BIN}" plugin list --json |
-    python3 -c 'import json, sys; data = json.load(sys.stdin); sys.exit(0 if any(p.get("pluginId") == "superpowers@superpowers-dev" and p.get("installed") is True and p.get("enabled") is True and p.get("version") == "6.1.1" for p in data.get("installed", [])) else 1)'
+    python3 -c 'import json, sys; data = json.load(sys.stdin); sys.exit(0 if any(p.get("pluginId") == "superpowers@superpowers-dev" and p.get("installed") is True and p.get("enabled") is True and p.get("version") == "6.2.0" for p in data.get("installed", [])) else 1)'
 }
 
 if superpowers_marketplace_registered; then

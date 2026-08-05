@@ -209,7 +209,7 @@ def active_toml_lines(text: str) -> str:
     return "\n".join(line for line in text.splitlines() if not line.lstrip().startswith("#"))
 
 
-SUPERPOWERS_V6_SHA = "d884ae04edebef577e82ff7c4e143debd0bbec99"
+SUPERPOWERS_V6_SHA = "3dcbd5c4b48e02263fbf4a3c01e3fe4f81d584d9"
 
 
 def seed_superpowers_plugin_checkout(codex_home: Path) -> Path:
@@ -217,7 +217,7 @@ def seed_superpowers_plugin_checkout(codex_home: Path) -> Path:
     (superpowers_dir / ".git").mkdir(parents=True, exist_ok=True)
     write(
         superpowers_dir / ".codex-plugin" / "plugin.json",
-        json.dumps({"name": "superpowers", "version": "6.1.1", "skills": "./skills/"}),
+        json.dumps({"name": "superpowers", "version": "6.2.0", "skills": "./skills/"}),
     )
     write(
         superpowers_dir / ".agents" / "plugins" / "marketplace.json",
@@ -263,7 +263,7 @@ if [[ "$1" == "-C" ]]; then
       exit 0
       ;;
     describe)
-      echo "v6.1.1"
+      echo "v6.2.0"
       exit 0
       ;;
   esac
@@ -826,7 +826,7 @@ if [[ "$1 $2 $3" == "plugin marketplace add" ]]; then
   exit 0
 fi
 if [[ "$1 $2" == "plugin list" ]]; then
-  echo '{{"installed":[],"available":[]}}'
+  echo '{{"installed":[{{"pluginId":"superpowers@superpowers-dev","installed":true,"enabled":true,"version":"6.1.1"}}],"available":[]}}'
   exit 0
 fi
 if [[ "$1 $2 $3" == "plugin add superpowers@superpowers-dev" ]]; then
@@ -7454,9 +7454,16 @@ def test_verify_requires_superpowers_plugin_install_not_only_marketplace():
         require(code == 0, f"claude sync should succeed before plugin verify test: {err or out}")
         seed_superpowers_plugin_checkout(codex_home)
         write_git_stub(bin_dir)
-        write_executable(
-            bin_dir / "codex",
-            f"""#!/usr/bin/env bash
+        for scenario, installed_plugins in [
+            ("not installed", "[]"),
+            (
+                "installed at stale 6.1.1 version",
+                '[{"pluginId":"superpowers@superpowers-dev","installed":true,"enabled":true,"version":"6.1.1"}]',
+            ),
+        ]:
+            write_executable(
+                bin_dir / "codex",
+                f"""#!/usr/bin/env bash
 if [[ "$1" == "--version" ]]; then
   echo "codex 0.142.0"
   exit 0
@@ -7469,39 +7476,39 @@ if [[ "$1 $2 $3" == "plugin marketplace list" ]]; then
   exit 0
 fi
 if [[ "$1 $2" == "plugin list" ]]; then
-  echo '{{"installed":[],"available":[]}}'
+  echo '{{"installed":{installed_plugins},"available":[]}}'
   exit 0
 fi
 echo "unexpected codex args: $*" >&2
 exit 2
 """,
-        )
+            )
 
-        env = os.environ.copy()
-        env["PATH"] = f"{bin_dir}:{env['PATH']}"
-        proc = subprocess.run(
-            [
-                str(VERIFY),
-                "--repo-root",
-                str(ROOT),
-                "--codex-home",
-                str(codex_home),
-                "--claude-home",
-                str(claude_home),
-                "--skip-check",
-                "app_google_chrome",
-            ],
-            capture_output=True,
-            text=True,
-            check=False,
-            env=env,
-        )
-        text = f"{proc.stdout}\n{proc.stderr}"
-        require(proc.returncode != 0, "verify should fail when superpowers marketplace exists but plugin is not installed")
-        require("PASS:codex_superpowers_marketplace_registered" in text, "verify should separately report marketplace registration")
-        require("FAIL:codex_superpowers_plugin_installed" in text, "verify should require plugin installation")
+            env = os.environ.copy()
+            env["PATH"] = f"{bin_dir}:{env['PATH']}"
+            proc = subprocess.run(
+                [
+                    str(VERIFY),
+                    "--repo-root",
+                    str(ROOT),
+                    "--codex-home",
+                    str(codex_home),
+                    "--claude-home",
+                    str(claude_home),
+                    "--skip-check",
+                    "app_google_chrome",
+                ],
+                capture_output=True,
+                text=True,
+                check=False,
+                env=env,
+            )
+            text = f"{proc.stdout}\n{proc.stderr}"
+            require(proc.returncode != 0, f"verify should fail when superpowers plugin is {scenario}")
+            require("PASS:codex_superpowers_marketplace_registered" in text, "verify should separately report marketplace registration")
+            require("FAIL:codex_superpowers_plugin_installed" in text, f"verify should reject a superpowers plugin that is {scenario}")
 
-    print("[PASS] verify requires superpowers plugin install, not only marketplace")
+    print("[PASS] verify requires superpowers plugin install and target version")
 
 
 def test_verify_detects_enforcement_script_drift():
