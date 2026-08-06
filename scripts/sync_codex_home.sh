@@ -7,14 +7,17 @@ CODEX_HOME="${HOME}/.codex"
 SKIP_SUPERPOWERS_SYNC="false"
 SYNC_AGENTS_ONLY="false"
 FORCE_DOWNGRADE="false"
+BOOTSTRAP_LOADED_READBACK="false"
 OPERATOR_CHECKPOINT=""
 
 usage() {
   cat <<USAGE
-Usage: sync_codex_home.sh --repo-root <path> [--codex-home <path>] [--skip-superpowers-sync] [--sync-agents-only] [--force-downgrade --operator-checkpoint <path>]
+Usage: sync_codex_home.sh --repo-root <path> [--codex-home <path>] [--skip-superpowers-sync] [--sync-agents-only] [--force-downgrade --operator-checkpoint <path>] [--bootstrap-loaded-readback --operator-checkpoint <path>]
 
 Options:
   --force-downgrade         Allow an ancestor source only with a same-operation operator checkpoint.
+  --bootstrap-loaded-readback
+                            Allow the one-time loaded-readback bootstrap with an operator checkpoint.
   --operator-checkpoint     JSON receipt with command, exit_code, key_output, and timestamp.
 USAGE
 }
@@ -39,6 +42,10 @@ while [[ $# -gt 0 ]]; do
       ;;
     --force-downgrade)
       FORCE_DOWNGRADE="true"
+      shift
+      ;;
+    --bootstrap-loaded-readback)
+      BOOTSTRAP_LOADED_READBACK="true"
       shift
       ;;
     --operator-checkpoint)
@@ -276,7 +283,7 @@ try:
 except (OSError, UnicodeDecodeError, json.JSONDecodeError) as exc:
     raise SystemExit(f"manifest parse failed: {exc}")
 
-required = {
+base_required = {
     "schema_version",
     "repo_identity_version",
     "repo_identity",
@@ -285,9 +292,11 @@ required = {
     "managed_surface_digest",
     "synced_at",
 }
-if set(payload) != required:
-    raise SystemExit("manifest keys do not match schema v2")
-if payload["schema_version"] != 2 or payload["repo_identity_version"] != 1:
+schema_version = payload.get("schema_version")
+required = base_required if schema_version == 2 else base_required | {"loaded_readback", "loaded_receipt_digest"}
+if schema_version not in {2, 3} or set(payload) != required:
+    raise SystemExit("manifest keys do not match schema v2 or v3")
+if payload["repo_identity_version"] != 1:
     raise SystemExit("manifest schema or repo identity version is invalid")
 if payload["repo_identity"] != expected_identity:
     raise SystemExit("manifest repo identity does not match source")
@@ -305,6 +314,15 @@ try:
     datetime.fromisoformat(payload["synced_at"].replace("Z", "+00:00"))
 except ValueError as exc:
     raise SystemExit(f"manifest synced_at is invalid: {exc}")
+if schema_version == 3:
+    if payload["loaded_readback"] not in {"verified", "bootstrap_operator_attested"}:
+        raise SystemExit("manifest loaded readback status is invalid")
+    digest = payload["loaded_receipt_digest"]
+    if payload["loaded_readback"] == "verified":
+        if not isinstance(digest, str) or not re.fullmatch(r"sha256:[0-9a-f]{64}", digest):
+            raise SystemExit("manifest loaded receipt digest is invalid")
+    elif digest is not None:
+        raise SystemExit("bootstrap manifest loaded receipt digest must be null")
 print(payload["source_commit"])
 PY
   )"; then
@@ -340,11 +358,6 @@ PY
   else
     fail_transition "diverged"
   fi
-fi
-
-if [[ "${TRANSITION_VERDICT}" == "equal" ]]; then
-  echo "source transition: equal"
-  exit 0
 fi
 
 if [[ "${TRANSITION_VERDICT}" == "downgrade" ]]; then
@@ -384,7 +397,7 @@ PY
 fi
 
 write_sync_manifest() {
-  python3 - "${MANIFEST_PATH}" "${REPO_ROOT}" "${REPO_IDENTITY}" "${SOURCE_COMMIT}" "${EXPECTED_OLD}" <<'PY'
+  python3 - "${MANIFEST_PATH}" "${REPO_ROOT}" "${REPO_IDENTITY}" "${SOURCE_COMMIT}" "${EXPECTED_OLD}" "${LOADED_READBACK_STATUS}" "${LOADED_RECEIPT_DIGEST}" <<'PY'
 from datetime import datetime, timezone
 import hashlib
 import json
@@ -398,6 +411,8 @@ repo_root = Path(sys.argv[2])
 repo_identity = sys.argv[3]
 source_commit = sys.argv[4]
 expected_old = sys.argv[5]
+loaded_readback = sys.argv[6]
+loaded_receipt_digest = sys.argv[7] or None
 
 if manifest_path.exists():
     current = json.loads(manifest_path.read_text(encoding="utf-8"))
@@ -414,13 +429,15 @@ for path in sorted(item for item in source_root.rglob("*") if item.is_file()):
     digest.update(relative + b"\0" + str(len(content)).encode("ascii") + b"\0" + content)
 
 payload = {
-    "schema_version": 2,
+    "schema_version": 3,
     "repo_identity_version": 1,
     "repo_identity": repo_identity,
     "source_commit": source_commit,
     "managed_surface_digest_version": 1,
     "managed_surface_digest": f"sha256:{digest.hexdigest()}",
     "synced_at": datetime.now(timezone.utc).isoformat().replace("+00:00", "Z"),
+    "loaded_readback": loaded_readback,
+    "loaded_receipt_digest": loaded_receipt_digest,
 }
 manifest_path.parent.mkdir(parents=True, exist_ok=True)
 fd, temp_name = tempfile.mkstemp(prefix=f".{manifest_path.name}.", dir=manifest_path.parent)
@@ -451,18 +468,99 @@ PY
   echo "source transition: ${TRANSITION_VERDICT}"
 }
 
-if ! python3 - "${CODEX_HOME}" <<'PY'
+if ! LOADED_READBACK_RESULT="$(python3 - "${CODEX_HOME}" "${MANIFEST_PATH}" "${BOOTSTRAP_LOADED_READBACK}" "${OPERATOR_CHECKPOINT}" <<'PY'
+from datetime import datetime, timezone
+import hashlib
+import json
 from pathlib import Path
+import re
 import sys
-import tempfile
 
-target = Path(sys.argv[1]).resolve()
-temp_root = Path(tempfile.gettempdir()).resolve()
-raise SystemExit(0 if target == temp_root or temp_root in target.parents else 1)
+codex_home = Path(sys.argv[1])
+manifest_path = Path(sys.argv[2])
+bootstrap = sys.argv[3] == "true"
+checkpoint_path = Path(sys.argv[4]) if sys.argv[4] else None
+receipt_path = codex_home / "harness" / "loaded-receipt.json"
+
+
+def blocked(reason_code):
+    print(json.dumps({
+        "authorized_clone_root": None,
+        "reason_code": reason_code,
+        "status": "blocked",
+    }, sort_keys=True, separators=(",", ":")), file=sys.stderr)
+    raise SystemExit(78)
+
+
+manifest = None
+if manifest_path.is_file():
+    try:
+        manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+    except (OSError, UnicodeDecodeError, json.JSONDecodeError):
+        blocked("loaded_readback_unavailable")
+
+if bootstrap:
+    if receipt_path.exists() or (isinstance(manifest, dict) and "loaded_readback" in manifest):
+        blocked("bootstrap_not_applicable")
+    if checkpoint_path is None:
+        blocked("bootstrap_checkpoint_invalid")
+    try:
+        checkpoint = json.loads(checkpoint_path.read_text(encoding="utf-8"))
+        if set(checkpoint) != {"command", "exit_code", "key_output", "timestamp"}:
+            raise ValueError("checkpoint fields")
+        if not isinstance(checkpoint["command"], str) or "--bootstrap-loaded-readback" not in checkpoint["command"]:
+            raise ValueError("checkpoint command")
+        if checkpoint["exit_code"] != 0 or not isinstance(checkpoint["key_output"], str) or not checkpoint["key_output"].strip():
+            raise ValueError("checkpoint result")
+        recorded = datetime.fromisoformat(checkpoint["timestamp"].replace("Z", "+00:00"))
+        if recorded.tzinfo is None or abs((datetime.now(timezone.utc) - recorded).total_seconds()) > 300:
+            raise ValueError("checkpoint timestamp")
+    except (OSError, UnicodeDecodeError, json.JSONDecodeError, AttributeError, TypeError, ValueError):
+        blocked("bootstrap_checkpoint_invalid")
+    print("bootstrap_operator_attested\t")
+    raise SystemExit(0)
+
+if manifest is None:
+    blocked("loaded_readback_unavailable")
+try:
+    receipt_bytes = receipt_path.read_bytes()
+    receipt = json.loads(receipt_bytes)
+    required = {"schema_version", "hook_path", "self_digest", "session_id", "event_kind", "written_at"}
+    if not required.issubset(receipt) or type(receipt["schema_version"]) is not int or receipt["schema_version"] != 1:
+        raise ValueError("receipt schema")
+    if not isinstance(receipt["hook_path"], str) or not receipt["hook_path"]:
+        raise ValueError("receipt hook path")
+    if not isinstance(receipt["self_digest"], str) or not re.fullmatch(r"[0-9a-f]{64}", receipt["self_digest"]):
+        raise ValueError("receipt self digest")
+    if receipt["session_id"] is not None and not isinstance(receipt["session_id"], str):
+        raise ValueError("receipt session")
+    if not isinstance(receipt["event_kind"], str) or not receipt["event_kind"]:
+        raise ValueError("receipt event kind")
+    written_at = datetime.fromisoformat(receipt["written_at"].replace("Z", "+00:00"))
+    if written_at.tzinfo is None:
+        raise ValueError("receipt timestamp")
+    synced_at = datetime.fromisoformat(manifest["synced_at"].replace("Z", "+00:00"))
+except (OSError, UnicodeDecodeError, json.JSONDecodeError, KeyError, AttributeError, TypeError, ValueError):
+    blocked("loaded_readback_unavailable")
+
+if written_at < synced_at:
+    blocked("loaded_readback_stale")
+try:
+    runtime_digest = hashlib.sha256((codex_home / "hooks" / "harness_observer.py").read_bytes()).hexdigest()
+except OSError:
+    blocked("loaded_readback_unavailable")
+if receipt["self_digest"] != runtime_digest:
+    blocked("loaded_readback_mismatch")
+print(f"verified\tsha256:{hashlib.sha256(receipt_bytes).hexdigest()}")
 PY
-then
-  echo '{"authorized_clone_root":null,"reason_code":"loaded_readback_unavailable","status":"blocked"}' >&2
+)"; then
   exit 78
+fi
+IFS=$'\t' read -r LOADED_READBACK_STATUS LOADED_RECEIPT_DIGEST <<<"${LOADED_READBACK_RESULT}"
+
+if [[ "${TRANSITION_VERDICT}" == "equal" ]]; then
+  echo "source transition: equal"
+  exit 0
 fi
 
 mkdir -p "${CODEX_HOME}"

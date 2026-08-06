@@ -5,6 +5,7 @@ import hashlib
 import json
 import os
 import sys
+import tempfile
 from datetime import datetime
 from pathlib import Path
 from typing import Any
@@ -122,6 +123,47 @@ def append_event(event: dict[str, Any]) -> None:
         handle.write(record)
 
 
+def refresh_loaded_receipt(payload: dict[str, Any]) -> None:
+    target_dir = codex_home() / "harness"
+    target_dir.mkdir(parents=True, mode=DIRECTORY_MODE, exist_ok=True)
+    target_dir.chmod(DIRECTORY_MODE)
+    hook_path = Path(__file__).resolve()
+    session_id = payload.get("session_id") or os.environ.get("CODEX_SESSION_ID")
+    receipt = {
+        "schema_version": 1,
+        "hook_path": str(hook_path),
+        "self_digest": hashlib.sha256(hook_path.read_bytes()).hexdigest(),
+        "session_id": str(session_id)[:TEXT_FIELD_LIMIT] if session_id else None,
+        "event_kind": str(
+            payload.get("hook_event_name")
+            or payload.get("event_kind")
+            or payload.get("event_type")
+            or "unknown"
+        ),
+        "written_at": now_iso(),
+    }
+    target = target_dir / "loaded-receipt.json"
+    descriptor, temp_name = tempfile.mkstemp(prefix=f".{target.name}.", dir=target_dir)
+    try:
+        os.fchmod(descriptor, FILE_MODE)
+        with os.fdopen(descriptor, "w", encoding="utf-8") as handle:
+            json.dump(receipt, handle, ensure_ascii=False, sort_keys=True)
+            handle.write("\n")
+            handle.flush()
+            os.fsync(handle.fileno())
+        os.replace(temp_name, target)
+        parent_descriptor = os.open(target_dir, os.O_RDONLY)
+        try:
+            os.fsync(parent_descriptor)
+        finally:
+            os.close(parent_descriptor)
+    finally:
+        try:
+            os.unlink(temp_name)
+        except FileNotFoundError:
+            pass
+
+
 def build_event(payload: dict[str, Any]) -> dict[str, Any]:
     timestamp = now_iso()
     cwd = cwd_text(payload)
@@ -155,8 +197,13 @@ def build_event(payload: dict[str, Any]) -> dict[str, Any]:
 
 
 def main() -> int:
+    payload = load_payload()
     try:
-        append_event(build_event(load_payload()))
+        refresh_loaded_receipt(payload)
+    except Exception as exc:  # Loaded evidence is best-effort; sync fails closed later.
+        print(f"[harness_observer] loaded receipt warning: {exc}", file=sys.stderr)
+    try:
+        append_event(build_event(payload))
     except Exception as exc:  # Observer must not block the originating tool call.
         print(f"[harness_observer] warning: {exc}", file=sys.stderr)
     print("{}")

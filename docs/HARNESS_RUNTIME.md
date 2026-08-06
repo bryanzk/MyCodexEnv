@@ -124,10 +124,31 @@ The receipt boundaries remain distinct:
   prepare-to-sync ordering, policy/self-test outcomes, final outcome, and reason
   code.
 
-Unknown or unavailable loaded-state readback fails closed with
-`loaded_readback_unavailable` before runtime mutation. Disk digest must never be
-reported as loaded digest. This source contract does not establish runtime sync,
-runtime load, rollout observation, automation unpause, pilot start, or owner GO.
+`harness_observer.py` refreshes `${CODEX_HOME}/harness/loaded-receipt.json` on
+every invocation. The atomic, mode-`0600` receipt records the executing
+`__file__` path and its runtime-computed SHA-256 digest, session and event
+identity, and a timezone-aware timestamp. Receipt write failures do not block
+the originating tool event; the next sync fails closed instead.
+
+Before runtime mutation, sync requires a valid receipt, rejects a receipt older
+than the prior manifest with `loaded_readback_stale`, and rejects a digest that
+does not match the current runtime observer with `loaded_readback_mismatch`.
+Missing, malformed, timezone-naive, or otherwise unavailable evidence uses
+`loaded_readback_unavailable`; timestamps are parsed and compared as instants,
+not strings. Disk digest must never be reported as loaded digest.
+
+Sync manifests are written as schema 3 with `loaded_readback` (`verified` or
+`bootstrap_operator_attested`) and `loaded_receipt_digest`; schema 2 remains
+readable for transition compatibility. A target with neither manifest nor
+receipt can cross the gate once with `--bootstrap-loaded-readback` plus a valid
+four-field `--operator-checkpoint`. Bootstrap is rejected when a receipt exists
+or a schema 3 manifest already records `loaded_readback`, so it cannot be used
+again after the first crossing.
+
+This source contract does not establish runtime sync, runtime load, rollout
+observation, automation unpause, pilot start, or owner GO. Receipt evidence is
+drift and operator-error control, not isolation from an actor who can write the
+runtime directory.
 
 Requirements artifacts use `docs/templates/harness-requirements.md`. Validate
 them with `scripts/harness_requirements.py validate PATH` before treating them

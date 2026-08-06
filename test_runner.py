@@ -88,11 +88,53 @@ PLAN_GOVERNOR_SCHEMAS = [
 ]
 
 
-def run_process(cmd, cwd=None, env=None, *, approve_source=True):
+def prepare_test_loaded_readback(prepared: list[str]) -> None:
+    if not prepared or str(prepared[0]) != str(SYNC) or "--codex-home" not in prepared:
+        return
+    codex_home = Path(prepared[prepared.index("--codex-home") + 1])
+    manifest_path = codex_home / "harness" / "sync-manifest.json"
+    receipt_path = codex_home / "harness" / "loaded-receipt.json"
+    if not manifest_path.is_file():
+        checkpoint = codex_home.parent / "loaded-readback-checkpoint.json"
+        write(
+            checkpoint,
+            json.dumps(
+                {
+                    "command": "sync_codex_home.sh --bootstrap-loaded-readback",
+                    "exit_code": 0,
+                    "key_output": "test fixture owner bootstrap",
+                    "timestamp": dt.datetime.now(dt.timezone.utc).isoformat(),
+                }
+            ),
+        )
+        prepared.extend(["--bootstrap-loaded-readback", "--operator-checkpoint", str(checkpoint)])
+    elif not receipt_path.exists():
+        observer = codex_home / "hooks" / "harness_observer.py"
+        if observer.is_file():
+            write(
+                receipt_path,
+                json.dumps(
+                    {
+                        "schema_version": 1,
+                        "hook_path": str(observer.resolve()),
+                        "self_digest": hashlib.sha256(observer.read_bytes()).hexdigest(),
+                        "session_id": "test-fixture",
+                        "event_kind": "PostToolUse",
+                        "written_at": dt.datetime.now(dt.timezone.utc).isoformat(),
+                    },
+                    sort_keys=True,
+                )
+                + "\n",
+            )
+
+
+def run_process(cmd, cwd=None, env=None, *, approve_source=True, prepare_loaded_readback=True):
     prepared = list(cmd)
     if approve_source and prepared and str(prepared[0]) == str(SYNC) and "--repo-root" in prepared:
         repo_index = prepared.index("--repo-root") + 1
         prepared[repo_index] = str(phase0_approved_source(Path(prepared[repo_index])))
+    if prepare_loaded_readback:
+        prepare_test_loaded_readback(prepared)
     return subprocess.run(prepared, cwd=cwd, capture_output=True, text=True, check=False, env=env)
 
 
@@ -326,6 +368,7 @@ def seed_runtime_sync_repo(path: Path) -> tuple[Path, str]:
     write(repo / "codex" / "remote-access.md", "remote access v1\n")
     write(repo / "codex" / "remote-hosts.md", "remote hosts v1\n")
     write(repo / "codex" / "hooks" / "task_state.py", "# fixture task state\n")
+    write(repo / "codex" / "hooks" / "harness_observer.py", HARNESS_OBSERVER.read_text(encoding="utf-8"))
     write(repo / "codex" / "config.template.toml", "[features]\nhooks = true\n")
     write(repo / "codex" / "skills" / "fixture" / "SKILL.md", "---\nname: fixture\n---\n")
     code, out, err = run(["git", "add", "codex"], cwd=repo)
@@ -810,6 +853,7 @@ def test_sync_runtime_transaction_rollback_and_locking():
                 "--sync-agents-only",
             ],
             env=phase0_sync_env(lock_root),
+            prepare_loaded_readback=False,
         )
         require(proc.returncode == 78, "non-temp target without loaded readback must exit 78")
         payload = json.loads(proc.stderr.strip().splitlines()[-1])
@@ -818,6 +862,218 @@ def test_sync_runtime_transaction_rollback_and_locking():
         require(not real_target_probe.exists(), "loaded-readback blocker must fail before target creation")
 
     print("[PASS] phase0-pre runtime transaction rollback and locking")
+
+
+def test_loaded_state_readback_sync_matrix():
+    with tempfile.TemporaryDirectory() as tmp:
+        tmp_path = Path(tmp)
+        repo = seed_phase0_transaction_repo(tmp_path / "repo")
+        phase0_commit_approval(repo)
+        phase0_git(repo, "push", "origin", "main")
+        source_commit = phase0_git(repo, "rev-parse", "HEAD")
+        previous_commit = phase0_git(repo, "rev-parse", "HEAD~1")
+        repo_identity = phase0_git(repo, "config", "--get", "remote.origin.url")
+        observer_bytes = (repo / "codex" / "hooks" / "harness_observer.py").read_bytes()
+        observer_digest = hashlib.sha256(observer_bytes).hexdigest()
+        classifier_tmp = tmp_path / "classifier-tmp"
+        classifier_tmp.mkdir()
+
+        def manifest_payload(schema_version=2):
+            payload = {
+                "schema_version": schema_version,
+                "repo_identity_version": 1,
+                "repo_identity": repo_identity,
+                "source_commit": previous_commit,
+                "managed_surface_digest_version": 1,
+                "managed_surface_digest": f"sha256:{'0' * 64}",
+                "synced_at": "2026-08-06T12:00:00Z",
+            }
+            if schema_version == 3:
+                payload.update(
+                    loaded_readback="bootstrap_operator_attested",
+                    loaded_receipt_digest=None,
+                )
+            return payload
+
+        def receipt_payload(**updates):
+            payload = {
+                "schema_version": 1,
+                "hook_path": "",
+                "self_digest": observer_digest,
+                "session_id": None,
+                "event_kind": "PostToolUse",
+                "written_at": "2026-08-06T13:00:00+00:00",
+            }
+            payload.update(updates)
+            return payload
+
+        def seed_home(name, *, manifest=True, receipt=None):
+            codex_home = tmp_path / name / ".codex"
+            runtime_observer = codex_home / "hooks" / "harness_observer.py"
+            runtime_observer.parent.mkdir(parents=True, exist_ok=True)
+            runtime_observer.write_bytes(observer_bytes)
+            if manifest:
+                write(
+                    codex_home / "harness" / "sync-manifest.json",
+                    json.dumps(manifest_payload(), sort_keys=True) + "\n",
+                )
+            if receipt is not None:
+                receipt["hook_path"] = str(runtime_observer.resolve())
+                write(
+                    codex_home / "harness" / "loaded-receipt.json",
+                    json.dumps(receipt, sort_keys=True) + "\n",
+                )
+            return codex_home
+
+        def sync(codex_home, *extra):
+            env = phase0_sync_env(tmp_path, TMPDIR=str(classifier_tmp))
+            return run_process(
+                [
+                    str(SYNC),
+                    "--repo-root",
+                    str(repo),
+                    "--codex-home",
+                    str(codex_home),
+                    "--skip-superpowers-sync",
+                    *extra,
+                ],
+                env=env,
+                prepare_loaded_readback=False,
+            )
+
+        def reason(proc):
+            require(proc.returncode == 78, f"expected exit 78: {proc.stderr or proc.stdout}")
+            return json.loads(proc.stderr.strip().splitlines()[-1])["reason_code"]
+
+        invalid_cases = [
+            ("missing", None, "loaded_readback_unavailable"),
+            ("schema", receipt_payload(schema_version=0), "loaded_readback_unavailable"),
+            ("field", {"schema_version": 1}, "loaded_readback_unavailable"),
+            ("stale", receipt_payload(written_at="2026-08-06T11:59:59+00:00"), "loaded_readback_stale"),
+            ("mismatch", receipt_payload(self_digest="f" * 64), "loaded_readback_mismatch"),
+            ("naive", receipt_payload(written_at="2026-08-06T13:00:00"), "loaded_readback_unavailable"),
+        ]
+        for name, receipt, expected in invalid_cases:
+            require(reason(sync(seed_home(name, receipt=receipt))) == expected, f"{name}: reason mismatch")
+
+        require(
+            reason(sync(seed_home("orphan-receipt", manifest=False, receipt=receipt_payload())))
+            == "loaded_readback_unavailable",
+            "manifest missing with receipt must fail unavailable",
+        )
+
+        for name, written_at in [
+            ("verified", "2026-08-06T13:00:00+00:00"),
+            ("offset", "2026-08-06T21:00:00+08:00"),
+        ]:
+            codex_home = seed_home(name, receipt=receipt_payload(written_at=written_at))
+            receipt_path = codex_home / "harness" / "loaded-receipt.json"
+            receipt_digest = hashlib.sha256(receipt_path.read_bytes()).hexdigest()
+            proc = sync(codex_home)
+            require(proc.returncode == 0, f"{name}: verified readback should pass: {proc.stderr or proc.stdout}")
+            manifest = json.loads((codex_home / "harness" / "sync-manifest.json").read_text(encoding="utf-8"))
+            require(manifest["source_commit"] == source_commit, f"{name}: source commit not advanced")
+            require(manifest["schema_version"] == 3, f"{name}: manifest must be schema 3")
+            require(manifest["loaded_readback"] == "verified", f"{name}: verification status missing")
+            require(
+                manifest["loaded_receipt_digest"] == f"sha256:{receipt_digest}",
+                f"{name}: receipt digest mismatch",
+            )
+            refreshed_receipt = receipt_payload(
+                hook_path=str((codex_home / "hooks" / "harness_observer.py").resolve()),
+                written_at=dt.datetime.now(dt.timezone.utc).isoformat(),
+            )
+            write(receipt_path, json.dumps(refreshed_receipt, sort_keys=True) + "\n")
+            reread = sync(codex_home)
+            require(
+                reread.returncode == 0,
+                f"{name}: schema 3 manifest should remain readable: {reread.stderr or reread.stdout}",
+            )
+
+        checkpoint = tmp_path / "operator-checkpoint.json"
+        write(
+            checkpoint,
+            json.dumps(
+                {
+                    "command": "sync_codex_home.sh --bootstrap-loaded-readback",
+                    "exit_code": 0,
+                    "key_output": "owner attested bootstrap",
+                    "timestamp": dt.datetime.now(dt.timezone.utc).isoformat(),
+                }
+            ),
+        )
+        bootstrap_home = seed_home("bootstrap", manifest=False)
+        proc = sync(
+            bootstrap_home,
+            "--bootstrap-loaded-readback",
+            "--operator-checkpoint",
+            str(checkpoint),
+        )
+        require(proc.returncode == 0, f"valid bootstrap should pass: {proc.stderr or proc.stdout}")
+        bootstrap_manifest = json.loads(
+            (bootstrap_home / "harness" / "sync-manifest.json").read_text(encoding="utf-8")
+        )
+        require(bootstrap_manifest["schema_version"] == 3, "bootstrap manifest must be schema 3")
+        require(
+            bootstrap_manifest["loaded_readback"] == "bootstrap_operator_attested",
+            "bootstrap status missing",
+        )
+        require(bootstrap_manifest["loaded_receipt_digest"] is None, "bootstrap receipt digest must be null")
+        post_bootstrap_receipt = receipt_payload(
+            hook_path=str((bootstrap_home / "hooks" / "harness_observer.py").resolve())
+        )
+        write(
+            bootstrap_home / "harness" / "loaded-receipt.json",
+            json.dumps(post_bootstrap_receipt, sort_keys=True) + "\n",
+        )
+        (bootstrap_home / "harness" / "loaded-receipt.json").unlink()
+        require(
+            reason(
+                sync(
+                    bootstrap_home,
+                    "--bootstrap-loaded-readback",
+                    "--operator-checkpoint",
+                    str(checkpoint),
+                )
+            )
+            == "bootstrap_not_applicable",
+            "bootstrap must not be reentrant after schema 3 manifest",
+        )
+
+        receipt_home = seed_home("bootstrap-receipt", manifest=False, receipt=receipt_payload())
+        require(
+            reason(
+                sync(
+                    receipt_home,
+                    "--bootstrap-loaded-readback",
+                    "--operator-checkpoint",
+                    str(checkpoint),
+                )
+            )
+            == "bootstrap_not_applicable",
+            "bootstrap must reject an existing receipt",
+        )
+        require(
+            reason(sync(seed_home("bootstrap-no-checkpoint", manifest=False), "--bootstrap-loaded-readback"))
+            == "bootstrap_checkpoint_invalid",
+            "bootstrap without checkpoint must fail",
+        )
+        invalid_checkpoint = tmp_path / "invalid-checkpoint.json"
+        write(invalid_checkpoint, json.dumps({"command": "missing fields"}))
+        require(
+            reason(
+                sync(
+                    seed_home("bootstrap-invalid-checkpoint", manifest=False),
+                    "--bootstrap-loaded-readback",
+                    "--operator-checkpoint",
+                    str(invalid_checkpoint),
+                )
+            )
+            == "bootstrap_checkpoint_invalid",
+            "bootstrap invalid checkpoint must fail",
+        )
+
+    print("[PASS] loaded-state readback sync matrix")
 
 
 def run_manage_agents(*args):
@@ -1388,8 +1644,13 @@ def test_sync_transition_matrix_v0():
         require(manifest_path.is_file(), "bootstrap sync should write the v0 manifest")
         manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
         require(manifest["source_commit"] == first_commit, "bootstrap manifest should record the source commit")
-        require(manifest["schema_version"] == 2, "bootstrap manifest should use schema v2")
+        require(manifest["schema_version"] == 3, "bootstrap manifest should use schema v3")
+        require(
+            manifest["loaded_readback"] == "bootstrap_operator_attested",
+            "bootstrap manifest should record operator attestation",
+        )
 
+        prepare_test_loaded_readback(sync_cmd)
         equal_before = snapshot_tree(codex_home)
         code, out, err = run(sync_cmd)
         require(code == 0, f"equal source transition should be a no-op: {err or out}")
@@ -4965,6 +5226,58 @@ def test_harness_observer_phase_matches_guard_resolution():
         require(fallback_events[-1].get("phase") == "unknown", "observer must keep non-blocking unknown fallback")
 
     print("[PASS] harness observer phase matches guard resolution")
+
+
+def test_harness_observer_loaded_receipt():
+    with tempfile.TemporaryDirectory() as tmp:
+        tmp_path = Path(tmp)
+        codex_home = tmp_path / ".codex"
+        evidence_dir = tmp_path / "evidence"
+        env = os.environ.copy()
+        env.update(
+            CODEX_HOME=str(codex_home),
+            CODEX_HARNESS_EVIDENCE_DIR=str(evidence_dir),
+        )
+        payload = json.dumps(
+            {
+                "session_id": "loaded-receipt-session",
+                "hook_event_name": "PostToolUse",
+                "tool_name": "exec_command",
+                "tool_input": {"cmd": "pwd"},
+            }
+        )
+        code, out, err = run_with_input([sys.executable, str(HARNESS_OBSERVER)], payload, env=env)
+        require(code == 0 and json.loads(out) == {}, f"observer receipt run failed: {err or out}")
+        receipt_path = codex_home / "harness" / "loaded-receipt.json"
+        require(receipt_path.is_file(), "observer must write loaded receipt")
+        require(receipt_path.stat().st_mode & 0o777 == 0o600, "loaded receipt mode must be 0600")
+        receipt = json.loads(receipt_path.read_text(encoding="utf-8"))
+        require(
+            set(receipt)
+            == {"schema_version", "hook_path", "self_digest", "session_id", "event_kind", "written_at"},
+            "loaded receipt fields mismatch",
+        )
+        require(receipt["schema_version"] == 1, "loaded receipt schema mismatch")
+        require(receipt["hook_path"] == str(HARNESS_OBSERVER.resolve()), "loaded receipt hook path mismatch")
+        require(
+            receipt["self_digest"] == hashlib.sha256(HARNESS_OBSERVER.read_bytes()).hexdigest(),
+            "loaded receipt self digest mismatch",
+        )
+        require(receipt["session_id"] == "loaded-receipt-session", "loaded receipt session mismatch")
+        require(receipt["event_kind"] == "PostToolUse", "loaded receipt event kind mismatch")
+        written_at = dt.datetime.fromisoformat(receipt["written_at"].replace("Z", "+00:00"))
+        require(written_at.tzinfo is not None, "loaded receipt timestamp must be timezone-aware")
+
+        blocked_home = tmp_path / "blocked-home"
+        blocked_home.write_text("not a directory", encoding="utf-8")
+        failure_env = env.copy()
+        failure_env["CODEX_HOME"] = str(blocked_home)
+        failure_env["CODEX_HARNESS_EVIDENCE_DIR"] = str(tmp_path / "failure-evidence")
+        code, out, err = run_with_input([sys.executable, str(HARNESS_OBSERVER)], payload, env=failure_env)
+        require(code == 0 and json.loads(out) == {}, "receipt write failure must not block observer")
+        require(list((tmp_path / "failure-evidence").glob("*.jsonl")), "receipt failure must preserve evidence")
+
+    print("[PASS] harness observer loaded receipt")
 
 
 def test_harness_observer_evidence_minimization_matrix():
@@ -9678,6 +9991,7 @@ TESTS = [
     test_sync_approved_digest_authority,
     test_sync_phase0_pre_preflight_matrix,
     test_sync_runtime_transaction_rollback_and_locking,
+    test_loaded_state_readback_sync_matrix,
     test_delivery_harness_framework_stays_generic,
     test_delivery_harness_framework_routes_runtime_helpers,
     test_delivery_harness_framework_eval_matrix,
@@ -9730,6 +10044,7 @@ TESTS = [
     test_harness_guard_snapshot_parser,
     test_harness_guard_phase_resolution,
     test_harness_observer_phase_matches_guard_resolution,
+    test_harness_observer_loaded_receipt,
     test_harness_observer_evidence_minimization_matrix,
     test_plan_governor_schema_and_surface_contracts,
     test_plan_governor_cli_state_privacy_and_atomicity,
