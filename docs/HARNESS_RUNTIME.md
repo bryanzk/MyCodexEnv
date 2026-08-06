@@ -24,10 +24,34 @@ The lifecycle router uses these stages:
 | `validation` | no repo edits by default | browser/test-only if needed | optional review/qa | fresh verification evidence |
 | `review` | no by default | no by default | optional read-only reviewers | findings or no-issue statement |
 | `ship` | yes, only requested release actions | yes if release requires it | optional | ship/deploy gates |
-| `handoff` | ask-gated docs/state only | no | no | state log and next safe task |
+| `handoff` | no | no | no | state log and next safe task |
 
 Memory is a hint. Before acting, Codex must verify against repo files, git state,
 tests, or runtime evidence.
+
+### Tool policy classification boundaries
+
+The `secret` category has two independent classifiers. Anchored
+`secret_path_patterns` inspect only candidate path fields, while
+`secret_command_patterns` inspect only `tool_input.command` or `cmd` for
+credential-shaped literals. Both classifiers are case-insensitive and every
+match remains a hard block in every phase.
+
+The classifier does not inspect file contents. It reads command text and the
+path-like fields `path`, `file`, `file_path`, `filename`, `cwd`, and `workdir`;
+content carried by a tool payload never participates. Consequently, this gate
+cannot stop a credential from being written to an ordinarily named file.
+
+There is no approval or `ask` channel. The host's unsupported `ask` result is
+fail-open, so `secret`, `destructive`, and `dynamic_exec` are hard blocks in
+every phase. `minimum_gate` is a human-readable acceptance description, not an
+executable policy field. `plan_governor` is a status record whose current
+`mode: shadow` and `production_status: no_go` values are not executable policy.
+
+`allow_subagents` is executable policy. `requirements` and `handoff` set it to
+`false`, so configured agent dispatch is blocked in those phases before any
+fresh validation receipt can short-circuit the receipt gate. If the key is
+missing or is not the boolean `false`, receipt-based behavior is preserved.
 
 ## Phase 0-pre Source Guard
 
@@ -183,22 +207,21 @@ For the current project workflow and skill routing map, read
 - `Task Ledger`: `scripts/harness_ledger.py` creates and verifies tamper-evident acceptance ledgers from validated requirements.
 - `Transition Store`: `scripts/harness_transition.py` provides append-only first-record-wins CAS semantics for successor task ids.
 - `Behavior Evaluator`: `scripts/harness_eval.py tier1` executes fixture-driven recovery and handoff-lint end-state assertions from `docs/evals/`.
-- `Permissions`: `codex/runtime/tool-policy.json` declares stage-level tool permissions and low/medium/high risk annotations for every guard category; unknown phases fall back to read-only, and `handoff` repo writes require approval because the guard is category-level, not path-scoped.
+- `Permissions`: `codex/runtime/tool-policy.json` declares stage-level tool permissions and low/medium/high risk annotations for every guard category; unknown phases fall back to read-only, and blocked categories have no approval bypass.
 - `Hooks`: `codex/hooks/*` implements thin objective guardrails, prompt model routing recommendations, and evidence plumbing.
 - `Observability`: local JSONL evidence records lifecycle and verification events.
 - `Surface Inventory`: `docs/surfaces.json` is the canonical runtime surface inventory; `scripts/check_surfaces.py` keeps it consistent with files on disk, the `docs/repo-index.md` `## Runtime Surfaces` mirror, and opt-in public landing nav links declared with `public_nav`.
 - `Tool Router`: lifecycle stage determines allowed read/write/network/remote behavior. The guard resolves phase in order from the host-owned top-level payload, `CODEX_HARNESS_PHASE`, the transcript marker, one unambiguous repo snapshot, then `unknown`. The marker precedes the snapshot because a task-scoped owner declaration is narrower than repo-scoped state. `tool_input.phase`, `tool_input.cwd`, `tool_input.transcript_path`, and `tool_input.session_id` never participate in authorization. Repository lookup uses only the host-owned top-level `cwd` (or the hook process cwd when absent), while tool-input paths remain classification and logging inputs only.
 - `Model Router`: `codex/hooks/model_router.py` classifies each prompt or subtask as `simple`, `medium`, or `complex` and recommends the cheapest quality-safe model tier. It intentionally stays non-blocking; runtimes or wrapper scripts that can switch models may consume the JSON `routing` object, while plain Codex hooks inject the recommendation and response telemetry requirement as additional context.
 - `Checkpoints`: use git commits, state log entries, and handoff docs as recovery points.
-- `Guardrails`: recognized repo-write phase violations, destructive commands, secret access, remote operations, and dynamic-execution actions are blocked. The guard emits the Codex-supported legacy block shape; a 2026-07-28 isolated probe proved that the former top-level `permissionDecision` shape and every `ask` variant fail open, so former ask categories are upgraded to block until the host supports a real ask.
+- `Guardrails`: recognized repo-write phase violations, destructive commands, sensitive paths, credential-shaped command literals, remote operations, and dynamic-execution actions are blocked. The guard emits the Codex-supported legacy block shape; a 2026-07-28 isolated probe proved that the former top-level `permissionDecision` shape and every `ask` variant fail open, so there is no approval channel.
 
 The 2026-08-02 landed-guard isolation rerun confirmed that the legacy block
 shape prevents execution for repo-write, dynamic-execution, remote,
-destructive, agent-dispatch, network, and unknown-phase cases. It also exposed
-a classifier gap: an `exec_command` command ending in `auth.json` can miss the
-secret-path pattern after the command is concatenated with candidate-path
-text. Until that matcher is repaired and re-probed, command-form secret-path
-access must not be described as guaranteed blocked.
+destructive, agent-dispatch, network, and unknown-phase cases. Path and command
+classification are now intentionally separate: path patterns do not scan
+command text, and command patterns recognize credential-shaped literals rather
+than ordinary naming vocabulary.
 
 ### Task-scoped transcript marker
 
@@ -662,9 +685,10 @@ Agent team validator:
   currently `docs/harness-state.md`.
 - empty paths, `..` traversal, and absolute paths outside the repo fail.
 - configured dispatch tool names and command patterns are block-gated by
-  `codex/hooks/harness_guard.py` (legacy `{"decision":"block"}` shape) unless the
-  payload includes `plan_sha256` and a matching local receipt less than 10
-  minutes old.
+  `codex/hooks/harness_guard.py` (legacy `{"decision":"block"}` shape).
+  `requirements` and `handoff` block dispatch before receipt evaluation; other
+  phases require `plan_sha256` and a matching local receipt less than 10 minutes
+  old.
 - this is an honest configured-shape gate: runtime dispatch paths not exposed to
   `PreToolUse` or not named in `tool-policy.json` cannot be intercepted by this
   repo hook.
@@ -673,9 +697,9 @@ Agent team validator:
 - missing state file: fail or warn at startup, then read repo AGENTS and README before acting.
 - unknown lifecycle stage: default to restrictive read-only behavior.
 - missing, malformed, duplicated, unreadable, symlinked, or multiply located `## Current Snapshot` phase: treat the phase as unknown and block repo writes under the read-only fallback.
-- secret path access: deny unless the user explicitly requests and approves safe handling; the current command-form classifier gap above is fail-open, so an unclassified result must be treated as unsafe rather than as evidence of protection.
+- sensitive path access or a credential-shaped literal in command text: hard block; file content is outside this classifier's input boundary.
 - remote operation: require `~/.codex/remote-access.md` review and approval.
-- dynamic download execution: deny or require explicit approval.
+- dynamic download execution: hard block.
 - evidence write failure in observer hook: print a warning and allow the original tool result.
 - missing, stale, cross-repo, worker-count-mismatched, or malformed agent-team
   validation receipt: block configured multi-agent dispatch until a fresh

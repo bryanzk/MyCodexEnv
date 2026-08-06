@@ -150,7 +150,6 @@ def unknown_phase_policy(policy: dict[str, Any]) -> dict[str, Any]:
         "allow_repo_write": False,
         "allow_network": False,
         "allow_remote": False,
-        "require_approval": ["repo_write", "network", "remote", "secret", "destructive", "dynamic_exec"],
     }
 
 
@@ -263,8 +262,10 @@ def classify(payload: dict[str, Any], policy: dict[str, Any]) -> tuple[str, str 
     cmd = command_text(payload)
     name = tool_name(payload).lower()
     path_text = "\n".join(candidate_paths(payload))
-    if match_any(policy.get("secret_path_patterns", []), f"{cmd}\n{path_text}"):
-        return "secret", "secret path or token-like string"
+    if match_any(policy.get("secret_path_patterns", []), path_text):
+        return "secret", "secret path"
+    if match_any(policy.get("secret_command_patterns", []), cmd):
+        return "secret", "credential-shaped literal in command"
     if match_any(policy.get("destructive_command_patterns", []), cmd):
         return "destructive", "destructive command pattern"
     if match_any(policy.get("dynamic_exec_patterns", []), cmd):
@@ -326,6 +327,8 @@ def decision(payload: dict[str, Any], policy: dict[str, Any]) -> dict[str, Any]:
     category, reason = classify(payload, policy)
     risk_tier = category_risk_tier(policy, category)
     if category == "agent_dispatch":
+        if phase_policy.get("allow_subagents") is False:
+            return block(f"[harness] subagent dispatch is disabled during phase '{phase}'.", risk_tier)
         if has_fresh_validation_receipt(payload, policy, root):
             return {}
         return block(

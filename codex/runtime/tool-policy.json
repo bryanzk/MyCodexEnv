@@ -37,7 +37,6 @@
       "allow_network": false,
       "allow_remote": false,
       "allow_subagents": true,
-      "require_approval": ["network", "remote", "secret", "destructive", "dynamic_exec"],
       "minimum_gate": "source files read and cited"
     },
     "requirements": {
@@ -45,7 +44,6 @@
       "allow_network": false,
       "allow_remote": false,
       "allow_subagents": false,
-      "require_approval": ["network", "remote", "secret", "destructive", "dynamic_exec"],
       "minimum_gate": "success criteria captured"
     },
     "planning": {
@@ -53,7 +51,6 @@
       "allow_network": false,
       "allow_remote": false,
       "allow_subagents": true,
-      "require_approval": ["network", "remote", "secret", "destructive", "dynamic_exec", "repo_write"],
       "minimum_gate": "decision-complete plan and validation gate"
     },
     "development": {
@@ -61,7 +58,6 @@
       "allow_network": false,
       "allow_remote": false,
       "allow_subagents": true,
-      "require_approval": ["network", "remote", "secret", "destructive", "dynamic_exec"],
       "minimum_gate": "focused tests for touched behavior"
     },
     "validation": {
@@ -69,7 +65,6 @@
       "allow_network": false,
       "allow_remote": false,
       "allow_subagents": true,
-      "require_approval": ["network", "remote", "secret", "destructive", "dynamic_exec", "repo_write"],
       "minimum_gate": "fresh verification evidence"
     },
     "review": {
@@ -77,7 +72,6 @@
       "allow_network": false,
       "allow_remote": false,
       "allow_subagents": true,
-      "require_approval": ["network", "remote", "secret", "destructive", "dynamic_exec", "repo_write"],
       "minimum_gate": "findings or no-issue statement"
     },
     "ship": {
@@ -85,7 +79,6 @@
       "allow_network": true,
       "allow_remote": false,
       "allow_subagents": true,
-      "require_approval": ["remote", "secret", "destructive", "dynamic_exec"],
       "minimum_gate": "ship and release gates"
     },
     "handoff": {
@@ -93,16 +86,28 @@
       "allow_network": false,
       "allow_remote": false,
       "allow_subagents": false,
-      "require_approval": ["repo_write", "network", "remote", "secret", "destructive", "dynamic_exec"],
       "minimum_gate": "state log and next safe task"
     }
   },
   "secret_path_patterns": [
-    "(^|/)\\.env(\\.|$|/)?",
+    "(^|/)\\.env(\\.(?!example$|sample$|template$|dist$)[^/]*)?$",
     "(^|/)auth\\.json$",
     "(^|/)id_rsa$",
-    "\\.(pem|key|p12|pfx)$",
-    "(token|secret|credential|password)"
+    "(^|/)\\.netrc$",
+    "(^|/)\\.aws/credentials$",
+    "(^|/)\\.ssh/",
+    "\\.(pem|key|p12|pfx|jks|keystore)$"
+  ],
+  "secret_command_patterns": [
+    "-----BEGIN [A-Z ]*PRIVATE KEY-----",
+    "\\bAKIA[0-9A-Z]{16}\\b",
+    "\\bghp_[A-Za-z0-9]{36}\\b",
+    "\\bgithub_pat_[A-Za-z0-9_]{22,}\\b",
+    "\\bxox[baprs]-[A-Za-z0-9-]{10,}\\b",
+    "\\bsk-[A-Za-z0-9]{20,}\\b",
+    "\\bBearer\\s+[A-Za-z0-9._~+/-]{20,}={0,2}",
+    "\\b(export|set)\\s+[A-Za-z_]*(TOKEN|SECRET|PASSWORD|API_KEY)\\s*=\\s*[\"']?[A-Za-z0-9_\\-./+]{8,}",
+    "--password=\\S{4,}"
   ],
   "destructive_command_patterns": [
     "\\brm\\s+(-[A-Za-z]*r[A-Za-z]*|--recursive)\\b",

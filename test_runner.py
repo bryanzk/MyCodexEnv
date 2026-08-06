@@ -8,6 +8,7 @@ import io
 import subprocess
 import importlib.util
 import json
+import re
 import shutil
 import sys
 import tempfile
@@ -3804,6 +3805,174 @@ def test_harness_guard_policy_decisions():
         require("risk_tier=high" in dynamic_decision.get("reason", ""),
                 "dynamic exec decision evidence should include high tier")
 
+        def guard_result(payload):
+            code, out, err = run_with_input(
+                [sys.executable, str(HARNESS_GUARD)],
+                json.dumps(payload),
+                env=dev_env,
+            )
+            require(code == 0, f"guard classification run failed: {err or out}")
+            return json.loads(out)
+
+        path_cases = [
+            ("config/.env", True),
+            ("secrets/app.pem", True),
+            ("~/.aws/credentials", True),
+            ("codex/skills/gstack/browse/src/token-registry.ts", False),
+            ("docs/delivery/phase1-customer/13-configuration-and-secret-register.md", False),
+            ("data/AKIAIOSFODNN7EXAMPLE.txt", False),
+            ("codex/skills/gstack/.env.example", False),
+            (".env.local", True),
+        ]
+        for path, blocked in path_cases:
+            result = guard_result({"tool_name": "read_file", "tool_input": {"path": path}})
+            if blocked:
+                require(
+                    result.get("decision") == "block" and "secret" in result.get("reason", ""),
+                    f"sensitive path should be blocked: {path}",
+                )
+            else:
+                require(result == {}, f"ordinary path should remain allowed: {path}")
+
+        command_cases = [
+            ("pytest tests/test_password_reset.py", False),
+            ("rg 'secret' docs/", False),
+            ("printf AKIAIOSFODNN7EXAMPLE", True),
+            ("printf '%s' '-----BEGIN RSA PRIVATE KEY-----'", True),
+            ("export GITHUB_TOKEN=ghp_AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA", True),
+            ("curl -H 'Authorization: Bearer abcdefghijklmnopqrstuvwxyz012345'", True),
+            ('export FOO_TOKEN="$MY_VAR"', False),
+            ("export CI_SECRET=$(vault read -field=v x)", False),
+            ("psql --password mydb", False),
+            ("mysql --password=hunter2xy db", True),
+        ]
+        for command, blocked in command_cases:
+            result = guard_result({"tool_name": "exec_command", "tool_input": {"cmd": command}})
+            if blocked:
+                require(
+                    result.get("decision") == "block" and "secret" in result.get("reason", ""),
+                    f"sensitive command literal should be blocked: {command}",
+                )
+            else:
+                require(result == {}, f"ordinary command text should remain allowed: {command}")
+
+        tracked = subprocess.run(
+            ["git", "ls-files"],
+            cwd=ROOT,
+            capture_output=True,
+            text=True,
+            check=True,
+        ).stdout.splitlines()
+        path_patterns = policy.get("secret_path_patterns", [])
+        false_positives = [
+            path
+            for path in tracked
+            if any(re.search(pattern, path, flags=re.IGNORECASE) for pattern in path_patterns)
+        ]
+        require(not false_positives, f"tracked paths must have zero path-rule false positives: {false_positives}")
+
+        expected_path_patterns = [
+            r"(^|/)\.env(\.(?!example$|sample$|template$|dist$)[^/]*)?$",
+            r"(^|/)auth\.json$",
+            r"(^|/)id_rsa$",
+            r"(^|/)\.netrc$",
+            r"(^|/)\.aws/credentials$",
+            r"(^|/)\.ssh/",
+            r"\.(pem|key|p12|pfx|jks|keystore)$",
+        ]
+        expected_command_patterns = [
+            r"-----BEGIN [A-Z ]*PRIVATE KEY-----",
+            r"\bAKIA[0-9A-Z]{16}\b",
+            r"\bghp_[A-Za-z0-9]{36}\b",
+            r"\bgithub_pat_[A-Za-z0-9_]{22,}\b",
+            r"\bxox[baprs]-[A-Za-z0-9-]{10,}\b",
+            r"\bsk-[A-Za-z0-9]{20,}\b",
+            r"\bBearer\s+[A-Za-z0-9._~+/-]{20,}={0,2}",
+            r'''\b(export|set)\s+[A-Za-z_]*(TOKEN|SECRET|PASSWORD|API_KEY)\s*=\s*["']?[A-Za-z0-9_\-./+]{8,}''',
+            r"--password=\S{4,}",
+        ]
+        require(path_patterns == expected_path_patterns, "path policy must match the reviewed anchored patterns")
+        require(
+            policy.get("secret_command_patterns") == expected_command_patterns,
+            "command policy must match the reviewed literal-shape patterns",
+        )
+
+        guard_source = HARNESS_GUARD.read_text(encoding="utf-8")
+        expected_non_executable_keys = {
+            "version",
+            "minimum_gate",
+            "plan_governor",
+            "safe_read_command_patterns",
+        }
+        known_non_executable_keys = {
+            "version",  # Metadata only.
+            "minimum_gate",  # Human-readable acceptance description.
+            "plan_governor",  # Shadow/no-go status record, not executable policy.
+            "safe_read_command_patterns",  # Deferred default-read design question.
+        }
+
+        def unread_policy_keys(candidate_policy, allowlist):
+            # Approximation only: a name in guard source may still be unconsumed in behavior.
+            # It catches wholly unreferenced keys, but cannot prove every referenced key is consumed.
+            keys = set(candidate_policy)
+            for phase_config in candidate_policy.get("phases", {}).values():
+                if isinstance(phase_config, dict):
+                    keys.update(phase_config)
+            return sorted(key for key in keys if key not in guard_source and key not in allowlist)
+
+        require(
+            known_non_executable_keys == expected_non_executable_keys,
+            "known non-executable policy key allowlist must remain explicit and exact",
+        )
+        require(
+            not unread_policy_keys(policy, known_non_executable_keys),
+            f"policy contains unread keys: {unread_policy_keys(policy, known_non_executable_keys)}",
+        )
+        injected_policy = json.loads(json.dumps(policy))
+        injected_policy["unregistered_policy_key"] = True
+        require(
+            unread_policy_keys(injected_policy, known_non_executable_keys) == ["unregistered_policy_key"],
+            "an unregistered policy key must be reported as drift",
+        )
+        require(
+            "version" in unread_policy_keys(policy, known_non_executable_keys - {"version"}),
+            "a retained policy key removed from the allowlist must be reported as drift",
+        )
+        policy_text = json.dumps(policy)
+        require(policy_text.count("require_approval") == 0, "obsolete phase approval key must be absent from policy")
+        require("require_approval" not in guard_source, "obsolete phase approval key must be absent from guard defaults")
+        require(policy.get("version") == 1, "policy version metadata must remain unchanged")
+        require(
+            policy.get("safe_read_command_patterns")
+            == [r"^\s*(pwd|ls|find|rg|sed\s+-n|tail|head|wc|git\s+(status|log|show|diff)|test\s+-f|cat)\b"],
+            "safe read patterns must remain unchanged",
+        )
+        require(
+            policy.get("plan_governor")
+            == {
+                "version": 1,
+                "payload_capable": False,
+                "mode": "shadow",
+                "production_status": "no_go",
+                "reason": "dispatch command is observable but PreToolUse permissionDecision ask is unsupported and fails open",
+            },
+            "plan governor status record must remain unchanged",
+        )
+        require(
+            {phase: config.get("minimum_gate") for phase, config in policy.get("phases", {}).items()}
+            == {
+                "research": "source files read and cited",
+                "requirements": "success criteria captured",
+                "planning": "decision-complete plan and validation gate",
+                "development": "focused tests for touched behavior",
+                "validation": "fresh verification evidence",
+                "review": "findings or no-issue statement",
+                "ship": "ship and release gates",
+                "handoff": "state log and next safe task",
+            },
+            "minimum gate descriptions must remain unchanged",
+        )
+
     print("[PASS] harness guard policy decisions")
 
 
@@ -6241,9 +6410,61 @@ def test_agent_dispatch_gate():
                 "tool_input": {"plan_sha256": plan_hash, "worker_count": 1},
             }
         )
-        code, out, err = run_with_input([sys.executable, str(HARNESS_GUARD)], allowed_payload, env=env)
+        development_env = env.copy()
+        development_env["CODEX_HARNESS_PHASE"] = "development"
+        code, out, err = run_with_input(
+            [sys.executable, str(HARNESS_GUARD)], allowed_payload, env=development_env
+        )
         require(code == 0, f"guard matching receipt run failed: {err or out}")
         require(json.loads(out) == {}, "matching fresh agent_team_validated receipt should allow dispatch")
+
+        requirements_env = env.copy()
+        requirements_env["CODEX_HARNESS_PHASE"] = "requirements"
+        code, out, err = run_with_input(
+            [sys.executable, str(HARNESS_GUARD)], allowed_payload, env=requirements_env
+        )
+        require(code == 0, f"guard requirements dispatch run failed: {err or out}")
+        requirements_result = json.loads(out)
+        require(
+            requirements_result.get("decision") == "block"
+            and "disabled during phase 'requirements'" in requirements_result.get("reason", ""),
+            "requirements must block dispatch even with a fresh validation receipt",
+        )
+
+        handoff_env = env.copy()
+        handoff_env["CODEX_HARNESS_PHASE"] = "handoff"
+        code, out, err = run_with_input(
+            [sys.executable, str(HARNESS_GUARD)], dispatch_payload, env=handoff_env
+        )
+        require(code == 0, f"guard handoff dispatch run failed: {err or out}")
+        handoff_result = json.loads(out)
+        require(
+            handoff_result.get("decision") == "block"
+            and "disabled during phase 'handoff'" in handoff_result.get("reason", ""),
+            "handoff must block dispatch without a validation receipt",
+        )
+
+        code, out, err = run_with_input(
+            [sys.executable, str(HARNESS_GUARD)], dispatch_payload, env=development_env
+        )
+        require(code == 0, f"guard development dispatch without receipt failed: {err or out}")
+        require(
+            json.loads(out).get("decision") == "block",
+            "development dispatch without a validation receipt must remain blocked",
+        )
+
+        policy_path = runtime_dir / "tool-policy.json"
+        policy_without_phase_key = json.loads(policy_path.read_text(encoding="utf-8"))
+        policy_without_phase_key["phases"]["development"].pop("allow_subagents")
+        policy_path.write_text(json.dumps(policy_without_phase_key), encoding="utf-8")
+        code, out, err = run_with_input(
+            [sys.executable, str(HARNESS_GUARD)], allowed_payload, env=development_env
+        )
+        require(code == 0, f"guard missing phase key dispatch run failed: {err or out}")
+        require(
+            json.loads(out) == {},
+            "missing allow_subagents must preserve receipt-based dispatch behavior",
+        )
 
         mismatch_payload = json.dumps(
             {
