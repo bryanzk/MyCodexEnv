@@ -1,0 +1,3 @@
+# Phase 0 source digests approved for runtime synchronization.
+# Format: sha256:<64 lowercase hex characters>  <reviewed description>
+# Changes to this file require normal code review; do not add local approvals.

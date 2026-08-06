@@ -87,22 +87,16 @@ PLAN_GOVERNOR_SCHEMAS = [
 ]
 
 
-def run(cmd, cwd=None):
-    if cmd and str(cmd[0]) == str(SYNC) and "--repo-root" in cmd:
-        repo = Path(cmd[cmd.index("--repo-root") + 1])
-        with tempfile.TemporaryDirectory() as tmp:
-            approved_file = Path(tmp) / "approved-digests.txt"
-            write(approved_file, phase0_source_digest(repo) + "\n")
-            env = os.environ.copy()
-            env.update(
-                {
-                    "PHASE0_APPROVED_DIGESTS_FILE": str(approved_file),
-                    "PHASE0_SOURCE_ROLE": "caller_worktree",
-                }
-            )
-            proc = subprocess.run(cmd, cwd=cwd, capture_output=True, text=True, check=False, env=env)
-    else:
-        proc = subprocess.run(cmd, cwd=cwd, capture_output=True, text=True, check=False)
+def run_process(cmd, cwd=None, env=None, *, approve_source=True):
+    prepared = list(cmd)
+    if approve_source and prepared and str(prepared[0]) == str(SYNC) and "--repo-root" in prepared:
+        repo_index = prepared.index("--repo-root") + 1
+        prepared[repo_index] = str(phase0_approved_source(Path(prepared[repo_index])))
+    return subprocess.run(prepared, cwd=cwd, capture_output=True, text=True, check=False, env=env)
+
+
+def run(cmd, cwd=None, env=None, *, approve_source=True):
+    proc = run_process(cmd, cwd=cwd, env=env, approve_source=approve_source)
     return proc.returncode, proc.stdout.strip(), proc.stderr.strip()
 
 
@@ -262,9 +256,9 @@ if [[ "$1" == "-C" ]]; then
   shift
 	case "$1" in
 	  status)
-	    if [[ "$*" == *"-- codex"* ]]; then
-	      exec {real_git} -C "$repo" "$@"
-	    fi
+		    if [[ "$*" == *"-- codex"* || "$*" == *"runtime-approvals/approved-source-digests.txt"* ]]; then
+		      exec {real_git} -C "$repo" "$@"
+		    fi
 	    for arg in "$@"; do
         if [[ "$arg" == "--untracked-files=no" ]]; then
           exit 0
@@ -272,8 +266,11 @@ if [[ "$1" == "-C" ]]; then
       done
       echo "?? .DS_Store"
       exit 0
-      ;;
-    fetch|checkout)
+	      ;;
+	    ls-files)
+	      exec {real_git} -C "$repo" "$@"
+	      ;;
+	    fetch|checkout)
       exit 0
       ;;
     rev-parse)
@@ -348,6 +345,111 @@ def phase0_source_digest(repo: Path) -> str:
     return digest.hexdigest()
 
 
+_PHASE0_ROOT_SNAPSHOT: tempfile.TemporaryDirectory | None = None
+
+
+def phase0_git(repo: Path, *args: str) -> str:
+    proc = subprocess.run(
+        ["git", "-C", str(repo), *args],
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    if proc.returncode != 0:
+        raise RuntimeError(f"git {' '.join(args)} failed in {repo}: {proc.stderr or proc.stdout}")
+    return proc.stdout.strip()
+
+
+def phase0_commit_approval(repo: Path) -> Path:
+    manifest = repo / "runtime-approvals" / "approved-source-digests.txt"
+    relative = manifest.relative_to(repo).as_posix()
+    status = phase0_git(repo, "status", "--porcelain", "--untracked-files=all", "--", relative)
+    if status and not status.startswith("?? "):
+        raise RuntimeError(f"approval manifest must start clean: {status}")
+
+    digest = phase0_source_digest(repo)
+    approval = f"sha256:{digest}  test fixture approval"
+    lines = manifest.read_text(encoding="utf-8").splitlines() if manifest.is_file() else [
+        "# Phase 0 source digests approved for test fixtures.",
+        "# Changes are committed so production tracked-and-clean checks apply.",
+    ]
+    if approval in lines:
+        return repo
+
+    write(manifest, "\n".join([*lines, approval]) + "\n")
+    phase0_git(repo, "add", "--", relative)
+    phase0_git(
+        repo,
+        "-c",
+        "user.email=phase0-test@localhost",
+        "-c",
+        "user.name=phase0-test",
+        "commit",
+        "--only",
+        "-m",
+        "approve phase0 test fixture",
+        "--",
+        relative,
+    )
+    return repo
+
+
+def phase0_root_snapshot() -> Path:
+    global _PHASE0_ROOT_SNAPSHOT
+    if _PHASE0_ROOT_SNAPSHOT is not None:
+        return Path(_PHASE0_ROOT_SNAPSHOT.name) / "repo"
+
+    snapshot = tempfile.TemporaryDirectory(prefix="phase0-root-snapshot-")
+    repo = Path(snapshot.name) / "repo"
+    repo.mkdir()
+    try:
+        tracked = subprocess.run(
+            ["git", "-C", str(ROOT), "ls-files", "-z"],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            check=False,
+        )
+        if tracked.returncode != 0:
+            raise RuntimeError(f"git ls-files failed in {ROOT}: {tracked.stderr.decode(errors='replace')}")
+        for raw_relative in tracked.stdout.split(b"\0"):
+            if not raw_relative:
+                continue
+            relative = Path(raw_relative.decode("utf-8"))
+            source = ROOT / relative
+            if not source.exists() and not source.is_symlink():
+                continue
+            target = repo / relative
+            target.parent.mkdir(parents=True, exist_ok=True)
+            shutil.copy2(source, target, follow_symlinks=False)
+
+        phase0_git(repo, "init", "-b", "main")
+        phase0_git(repo, "add", "-A")
+        phase0_git(
+            repo,
+            "-c",
+            "user.email=phase0-test@localhost",
+            "-c",
+            "user.name=phase0-test",
+            "commit",
+            "-m",
+            "snapshot tracked worktree",
+        )
+        origin = phase0_git(ROOT, "config", "--get", "remote.origin.url")
+        phase0_git(repo, "remote", "add", "origin", origin)
+        phase0_commit_approval(repo)
+    except Exception:
+        snapshot.cleanup()
+        raise
+
+    _PHASE0_ROOT_SNAPSHOT = snapshot
+    return repo
+
+
+def phase0_approved_source(repo: Path) -> Path:
+    resolved = repo.resolve()
+    return phase0_root_snapshot() if resolved == ROOT.resolve() else phase0_commit_approval(resolved)
+
+
 def seed_phase0_source_repo(path: Path) -> tuple[Path, str]:
     repo, _ = seed_runtime_sync_repo(path)
     code, source_commit, err = run(["git", "rev-parse", "HEAD"], cwd=repo)
@@ -355,17 +457,102 @@ def seed_phase0_source_repo(path: Path) -> tuple[Path, str]:
     return repo, source_commit
 
 
-def phase0_sync_env(repo: Path, approved_file: Path, **updates: str) -> dict[str, str]:
+def phase0_sync_env(home_root: Path, **updates: str) -> dict[str, str]:
     env = os.environ.copy()
     env.update(
         {
-            "HOME": str(approved_file.parent / "home"),
-            "PHASE0_APPROVED_DIGESTS_FILE": str(approved_file),
+            "HOME": str(home_root / "home"),
             "PHASE0_SOURCE_ROLE": "caller_worktree",
         }
     )
     env.update(updates)
     return env
+
+
+def test_sync_approved_digest_authority():
+    def seed_case(path: Path) -> tuple[Path, Path, Path]:
+        repo, _ = seed_runtime_sync_repo(path / "repo")
+        origin = make_bare_origin_from(repo, path / "origin.git")
+        code, out, err = run(["git", "remote", "add", "origin", str(origin)], cwd=repo)
+        require(code == 0, f"authority fixture origin setup should work: {err or out}")
+        return repo, path / "home" / ".codex", repo / "runtime-approvals" / "approved-source-digests.txt"
+
+    def commit_manifest(repo: Path, manifest: Path, content: str, message: str) -> None:
+        write(manifest, content)
+        code, out, err = run(["git", "add", str(manifest.relative_to(repo))], cwd=repo)
+        require(code == 0, f"authority fixture manifest add should work: {err or out}")
+        code, out, err = run(["git", "commit", "-m", message], cwd=repo)
+        require(code == 0, f"authority fixture manifest commit should work: {err or out}")
+
+    def sync(repo: Path, codex_home: Path, env: dict[str, str] | None = None) -> subprocess.CompletedProcess:
+        return run_process(
+            [
+                str(SYNC),
+                "--repo-root",
+                str(repo),
+                "--codex-home",
+                str(codex_home),
+                "--sync-agents-only",
+            ],
+            env=env,
+            approve_source=False,
+        )
+
+    def blocked_payload(proc: subprocess.CompletedProcess, reason: str) -> dict:
+        require(proc.returncode == 78, f"{reason}: expected exit 78, got {proc.returncode}; {proc.stderr or proc.stdout}")
+        payload = json.loads(proc.stderr.strip().splitlines()[-1])
+        require(payload.get("reason_code") == reason, f"expected {reason}, got {payload.get('reason_code')}")
+        require(payload.get("approved_source") in {"repo_manifest", "absent"}, "invalid approved_source")
+        require("approved_manifest_path" in payload, "missing approved_manifest_path")
+        require("approved_manifest_digest" in payload, "missing approved_manifest_digest")
+        return payload
+
+    with tempfile.TemporaryDirectory() as tmp:
+        tmp_path = Path(tmp)
+
+        repo, codex_home, manifest = seed_case(tmp_path / "caller-file")
+        caller_file = tmp_path / "caller-approved.txt"
+        write(caller_file, phase0_source_digest(repo) + "\n")
+        env = os.environ.copy()
+        env.update({"HOME": str(tmp_path / "caller-home"), "PHASE0_APPROVED_DIGESTS_FILE": str(caller_file)})
+        payload = blocked_payload(sync(repo, codex_home, env), "source_digest_unapproved")
+        require(payload["approved_source"] == "absent", "caller-provided approval must be ignored")
+        require(payload["approved_manifest_path"] == str(manifest.resolve()), "fixed manifest path mismatch")
+        require(payload["approved_manifest_digest"] is None, "missing manifest digest must be null")
+
+        repo, codex_home, manifest = seed_case(tmp_path / "missing")
+        payload = blocked_payload(sync(repo, codex_home), "source_digest_unapproved")
+        require(payload["approved_source"] == "absent", "missing manifest must report absent")
+
+        repo, codex_home, manifest = seed_case(tmp_path / "empty")
+        commit_manifest(repo, manifest, "", "add empty approval manifest")
+        payload = blocked_payload(sync(repo, codex_home), "source_digest_unapproved")
+        require(payload["approved_source"] == "repo_manifest", "empty tracked manifest must report repo_manifest")
+
+        repo, codex_home, manifest = seed_case(tmp_path / "approved")
+        commit_manifest(
+            repo,
+            manifest,
+            f"sha256:{phase0_source_digest(repo)}  approved test fixture\n",
+            "approve fixture digest",
+        )
+        proc = sync(repo, codex_home)
+        require(proc.returncode == 0, f"tracked approved digest should pass preflight: {proc.stderr or proc.stdout}")
+
+        repo, codex_home, manifest = seed_case(tmp_path / "dirty-manifest")
+        commit_manifest(repo, manifest, "# approval manifest\n", "add approval manifest")
+        write(manifest, f"sha256:{phase0_source_digest(repo)}  unreviewed local approval\n")
+        payload = blocked_payload(sync(repo, codex_home), "approved_manifest_dirty")
+        require(payload["approved_source"] == "repo_manifest", "dirty manifest source mismatch")
+
+        repo, codex_home, manifest = seed_case(tmp_path / "digest-scope")
+        commit_manifest(repo, manifest, "# first comment\n", "add first manifest comment")
+        first = blocked_payload(sync(repo, codex_home), "source_digest_unapproved")["source_digest"]
+        commit_manifest(repo, manifest, "# second comment\n", "change only manifest comment")
+        second = blocked_payload(sync(repo, codex_home), "source_digest_unapproved")["source_digest"]
+        require(first == second, "approval manifest comments must not affect source_digest")
+
+    print("[PASS] approved digest authority")
 
 
 def test_sync_phase0_pre_preflight_matrix():
@@ -385,13 +572,14 @@ def test_sync_phase0_pre_preflight_matrix():
         tmp_path = Path(tmp)
         for index, (fixture_name, expected_reason) in enumerate(fixtures):
             case_root = tmp_path / f"case-{index}"
-            repo, source_commit = seed_phase0_source_repo(case_root / "repo")
+            repo, _ = seed_phase0_source_repo(case_root / "repo")
+            phase0_commit_approval(repo)
+            source_commit = phase0_git(repo, "rev-parse", "HEAD")
             origin = make_bare_origin_from(repo, case_root / "origin.git")
             code, out, err = run(["git", "remote", "add", "origin", str(origin)], cwd=repo)
             require(code == 0, f"{fixture_name}: origin setup should work: {err or out}")
             codex_home = case_root / "home" / ".codex"
             write(codex_home / "sentinel.txt", "unchanged\n")
-            approved_file = case_root / "approved-digests.txt"
             env_updates: dict[str, str] = {}
 
             if fixture_name == "source-missing":
@@ -431,13 +619,13 @@ def test_sync_phase0_pre_preflight_matrix():
             elif fixture_name == "attestation_producer_dirty_or_unapproved":
                 env_updates["PHASE0_PRODUCER_MANIFEST"] = str(case_root / "missing-producer.json")
 
-            approved_digest = phase0_source_digest(repo)
-            write(
-                approved_file,
-                ("f" * 64 if fixture_name == "unapproved digest" else approved_digest) + "\n",
-            )
+            if fixture_name == "unapproved digest":
+                approval_manifest = repo / "runtime-approvals" / "approved-source-digests.txt"
+                write(approval_manifest, f"sha256:{'f' * 64}  deliberately unapproved fixture\n")
+                phase0_git(repo, "add", "--", "runtime-approvals/approved-source-digests.txt")
+                phase0_git(repo, "commit", "-m", "set unapproved fixture digest")
             before = snapshot_tree(codex_home)
-            proc = subprocess.run(
+            proc = run_process(
                 [
                     str(SYNC),
                     "--repo-root",
@@ -446,10 +634,8 @@ def test_sync_phase0_pre_preflight_matrix():
                     str(codex_home),
                     "--sync-agents-only",
                 ],
-                capture_output=True,
-                text=True,
-                check=False,
-                env=phase0_sync_env(repo, approved_file, **env_updates),
+                env=phase0_sync_env(case_root, **env_updates),
+                approve_source=fixture_name != "unapproved digest",
             )
             require(
                 proc.returncode == 78,
@@ -488,9 +674,7 @@ def test_sync_phase0_pre_preflight_matrix():
             for name in ["hooks", "runtime", "zsh"]
         }
         config_before = (agents_home / "config.toml").read_bytes()
-        approved_file = agents_root / "approved-digests.txt"
-        write(approved_file, phase0_source_digest(agents_repo) + "\n")
-        proc = subprocess.run(
+        proc = run_process(
             [
                 str(SYNC),
                 "--repo-root",
@@ -499,13 +683,7 @@ def test_sync_phase0_pre_preflight_matrix():
                 str(agents_home),
                 "--sync-agents-only",
             ],
-            capture_output=True,
-            text=True,
-            check=False,
-            env=phase0_sync_env(
-                agents_repo,
-                approved_file,
-            ),
+            env=phase0_sync_env(agents_root),
         )
         require(proc.returncode == 0, f"sync-agents-only fixture should pass: {proc.stderr or proc.stdout}")
         require((agents_home / "AGENTS.md").read_bytes() == (agents_repo / "codex" / "AGENTS.md").read_bytes(),
@@ -540,14 +718,11 @@ def seed_phase0_transaction_repo(path: Path) -> Path:
 
 
 def run_phase0_full_sync(repo: Path, codex_home: Path, case_root: Path, **env_updates: str):
-    approved_file = case_root / "approved-digests.txt"
-    write(approved_file, phase0_source_digest(repo) + "\n")
     env = phase0_sync_env(
-        repo,
-        approved_file,
+        case_root,
         **env_updates,
     )
-    return subprocess.run(
+    return run_process(
         [
             str(SYNC),
             "--repo-root",
@@ -556,9 +731,6 @@ def run_phase0_full_sync(repo: Path, codex_home: Path, case_root: Path, **env_up
             str(codex_home),
             "--skip-superpowers-sync",
         ],
-        capture_output=True,
-        text=True,
-        check=False,
         env=env,
     )
 
@@ -627,9 +799,7 @@ def test_sync_runtime_transaction_rollback_and_locking():
 
         real_target_probe = ROOT / ".phase0-loaded-readback-probe"
         require(not real_target_probe.exists(), "loaded-readback probe target must start absent")
-        approved_file = lock_root / "loaded-approved-digests.txt"
-        write(approved_file, phase0_source_digest(lock_repo) + "\n")
-        proc = subprocess.run(
+        proc = run_process(
             [
                 str(SYNC),
                 "--repo-root",
@@ -638,10 +808,7 @@ def test_sync_runtime_transaction_rollback_and_locking():
                 str(real_target_probe),
                 "--sync-agents-only",
             ],
-            capture_output=True,
-            text=True,
-            check=False,
-            env=phase0_sync_env(lock_repo, approved_file),
+            env=phase0_sync_env(lock_root),
         )
         require(proc.returncode == 78, "non-temp target without loaded readback must exit 78")
         payload = json.loads(proc.stderr.strip().splitlines()[-1])
@@ -1174,15 +1341,8 @@ exit 2
 
         env = os.environ.copy()
         env["PATH"] = f"{bin_dir}:{env['PATH']}"
-        approved_file = tmp_path / "approved-digests.txt"
-        write(approved_file, phase0_source_digest(ROOT) + "\n")
-        env.update(
-            {
-                "PHASE0_APPROVED_DIGESTS_FILE": str(approved_file),
-                "PHASE0_SOURCE_ROLE": "caller_worktree",
-            }
-        )
-        proc = subprocess.run(
+        env["PHASE0_SOURCE_ROLE"] = "caller_worktree"
+        proc = run_process(
             [
                 str(SYNC),
                 "--repo-root",
@@ -1190,9 +1350,6 @@ exit 2
                 "--codex-home",
                 str(codex_home),
             ],
-            capture_output=True,
-            text=True,
-            check=False,
             env=env,
         )
         require(proc.returncode == 0, f"sync should install plugin after marketplace registration: {proc.stderr or proc.stdout}")
@@ -1208,7 +1365,9 @@ exit 2
 def test_sync_transition_matrix_v0():
     with tempfile.TemporaryDirectory() as tmp:
         tmp_path = Path(tmp)
-        repo, first_commit = seed_runtime_sync_repo(tmp_path / "repo")
+        repo, _ = seed_runtime_sync_repo(tmp_path / "repo")
+        phase0_commit_approval(repo)
+        first_commit = phase0_git(repo, "rev-parse", "HEAD")
         origin = make_bare_origin_from(repo, tmp_path / "origin.git")
         code, out, err = run(["git", "remote", "add", "origin", str(origin)], cwd=repo)
         require(code == 0, f"runtime sync fixture origin should be configured: {err or out}")
@@ -1241,6 +1400,7 @@ def test_sync_transition_matrix_v0():
         require(code == 0, f"forward fixture add should work: {err or out}")
         code, out, err = run(["git", "commit", "-m", "fixture v2"], cwd=repo)
         require(code == 0, f"forward fixture commit should work: {err or out}")
+        phase0_commit_approval(repo)
         code, second_commit, err = run(["git", "rev-parse", "HEAD"], cwd=repo)
         require(code == 0, f"forward fixture rev-parse should work: {err or second_commit}")
         code, out, err = run(["git", "push", "origin", "main"], cwd=repo)
@@ -1293,15 +1453,8 @@ def test_sync_backup_dir_v0():
         write(deleted_target, "restore me\n")
         env = os.environ.copy()
         env["HOME"] = str(test_home)
-        approved_file = tmp_path / "approved-digests.txt"
-        write(approved_file, phase0_source_digest(repo) + "\n")
-        env.update(
-            {
-                "PHASE0_APPROVED_DIGESTS_FILE": str(approved_file),
-                "PHASE0_SOURCE_ROLE": "caller_worktree",
-            }
-        )
-        proc = subprocess.run(
+        env["PHASE0_SOURCE_ROLE"] = "caller_worktree"
+        proc = run_process(
             [
                 str(SYNC),
                 "--repo-root",
@@ -1310,9 +1463,6 @@ def test_sync_backup_dir_v0():
                 str(codex_home),
                 "--skip-superpowers-sync",
             ],
-            capture_output=True,
-            text=True,
-            check=False,
             env=env,
         )
         require(proc.returncode == 0, f"backup fixture sync should work: {proc.stderr or proc.stdout}")
@@ -1625,10 +1775,7 @@ def test_sync_agents_only_copies_and_backs_up_agents():
             for name in ["hooks", "runtime", "zsh"]
         }
         config_before = (codex_home / "config.toml").read_bytes()
-        approved_file = tmp_path / "approved-digests.txt"
-        write(approved_file, phase0_source_digest(ROOT) + "\n")
-
-        proc = subprocess.run(
+        proc = run_process(
             [
                 str(SYNC),
                 "--repo-root",
@@ -1637,10 +1784,7 @@ def test_sync_agents_only_copies_and_backs_up_agents():
                 str(codex_home),
                 "--sync-agents-only",
             ],
-            capture_output=True,
-            text=True,
-            check=False,
-            env=phase0_sync_env(ROOT, approved_file),
+            env=phase0_sync_env(tmp_path),
         )
         require(proc.returncode == 0, f"sync agents only failed: {proc.stderr or proc.stdout}")
         require((codex_home / "AGENTS.md").exists(), "AGENTS.md should be copied in sync-agents-only mode")
@@ -3282,7 +3426,9 @@ def test_daily_refresh_report_only_v0():
 def test_runtime_rollback_prevention_v0_negative_coverage():
     with tempfile.TemporaryDirectory() as tmp:
         tmp_path = Path(tmp)
-        repo, first_commit = seed_runtime_sync_repo(tmp_path / "repo")
+        repo, _ = seed_runtime_sync_repo(tmp_path / "repo")
+        phase0_commit_approval(repo)
+        first_commit = phase0_git(repo, "rev-parse", "HEAD")
         origin = make_bare_origin_from(repo, tmp_path / "origin.git")
         code, out, err = run(["git", "remote", "add", "origin", str(origin)], cwd=repo)
         require(code == 0, f"negative fixture origin should be configured: {err or out}")
@@ -3303,6 +3449,7 @@ def test_runtime_rollback_prevention_v0_negative_coverage():
         require(code == 0, f"negative forward fixture add should work: {err or out}")
         code, out, err = run(["git", "commit", "-m", "fixture v2"], cwd=repo)
         require(code == 0, f"negative forward fixture commit should work: {err or out}")
+        phase0_commit_approval(repo)
         code, second_commit, err = run(["git", "rev-parse", "HEAD"], cwd=repo)
         require(code == 0, f"negative forward fixture rev-parse should work: {err or second_commit}")
         code, out, err = run(["git", "push", "origin", "main"], cwd=repo)
@@ -9427,6 +9574,7 @@ TESTS = [
     test_sync_registers_and_installs_superpowers_plugin,
     test_sync_transition_matrix_v0,
     test_sync_backup_dir_v0,
+    test_sync_approved_digest_authority,
     test_sync_phase0_pre_preflight_matrix,
     test_sync_runtime_transaction_rollback_and_locking,
     test_delivery_harness_framework_stays_generic,

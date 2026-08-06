@@ -34,7 +34,7 @@ tests, or runtime evidence.
 `scripts/sync_codex_home.sh` performs one source-attestation preflight after
 argument validation and before any managed runtime write. It checks the required
 source file set, source role/path agreement, source cleanliness, membership in an
-independent approved-digest file, runtime-to-source direction, and producer
+approved-digest manifest, runtime-to-source direction, and producer
 attestation when automation is involved. Failures exit `78`, emit one JSON object
 with `status=blocked` and `authorized_clone_root=null`, and use one of these stable
 reason codes:
@@ -42,6 +42,7 @@ reason codes:
 - `source_required_file_missing`
 - `source_role_path_mismatch`
 - `source_dirty`
+- `approved_manifest_dirty`
 - `source_digest_unapproved`
 - `runtime_newer_than_source`
 - `attestation_producer_dirty_or_unapproved`
@@ -53,6 +54,23 @@ disk target observation; it is not loaded-state evidence. The automation produce
 set is exactly the launcher `run-network-enabled.sh`, `automation.toml`, and the
 controller copy of the actually executed `prepare_gstack_dhf_daily_refresh.py`.
 The prepare-to-sync edge is prompt-mediated, not a protected function call.
+
+Approved source digests are read only from the tracked, clean repository file
+`runtime-approvals/approved-source-digests.txt`; the caller cannot select a
+different authority with `PHASE0_APPROVED_DIGESTS_FILE`. Valid entries use
+`sha256:<64 lowercase hex characters>  <reviewed description>`, while blank and
+comment lines are ignored. A missing or empty manifest approves nothing. Every
+blocked preflight receipt includes `approved_source` (`repo_manifest` or
+`absent`), the absolute `approved_manifest_path`, and the manifest's own
+`approved_manifest_digest` (or `null` when absent).
+
+The manifest lives outside `codex/`, so changing an approval or its comments
+does not change the source digest and the file is not copied into the runtime.
+This prevents accidental or unreviewed synchronization of an unexpected source
+version; it does not stop a repository writer from changing source and approval
+together. The manifest is an auditable code-review control, not mechanical
+authorization isolation. Defending against an intentional repository writer
+would require a separately designed signed commit or tag scheme.
 
 Full-sync directory promotion uses an exact source-file allowlist and never
 deletes non-target files. Each file is copied to a same-directory temporary file,

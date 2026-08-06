@@ -73,7 +73,6 @@ preflight_source_attestation() {
     "${REPO_ROOT}" \
     "${CODEX_HOME}" \
     "${PHASE0_SOURCE_ROLE:-caller_worktree}" \
-    "${PHASE0_APPROVED_DIGESTS_FILE:-}" \
     "${PHASE0_PRODUCER_MANIFEST:-}" <<'PY'
 import hashlib
 import json
@@ -86,8 +85,17 @@ import sys
 repo_root = Path(sys.argv[1]).resolve()
 codex_home = Path(sys.argv[2])
 source_role = sys.argv[3]
-approved_path = Path(sys.argv[4]) if sys.argv[4] else None
-producer_path = Path(sys.argv[5]) if sys.argv[5] else None
+producer_path = Path(sys.argv[4]) if sys.argv[4] else None
+approved_path = (repo_root / "runtime-approvals" / "approved-source-digests.txt").resolve()
+approved_present = approved_path.exists() or approved_path.is_symlink()
+approved_source = "repo_manifest" if approved_present else "absent"
+try:
+    approved_bytes = approved_path.read_bytes() if approved_present else None
+except OSError:
+    approved_bytes = None
+approved_manifest_digest = (
+    f"sha256:{hashlib.sha256(approved_bytes).hexdigest()}" if approved_bytes is not None else None
+)
 
 
 def blocked(reason_code, **details):
@@ -95,6 +103,9 @@ def blocked(reason_code, **details):
         "status": "blocked",
         "reason_code": reason_code,
         "authorized_clone_root": None,
+        "approved_source": approved_source,
+        "approved_manifest_path": str(approved_path),
+        "approved_manifest_digest": approved_manifest_digest,
     }
     payload.update(details)
     print(json.dumps(payload, sort_keys=True, separators=(",", ":")), file=sys.stderr)
@@ -122,6 +133,29 @@ if source_role not in {"git_head", "caller_worktree", "automation_execution_clon
 if source_role == "automation_execution_clone" and repo_root != execution_clone:
     blocked("source_role_path_mismatch")
 
+if approved_present:
+    approved_relative = approved_path.relative_to(repo_root).as_posix()
+    tracked = subprocess.run(
+        ["git", "-C", str(repo_root), "ls-files", "--error-unmatch", "--", approved_relative],
+        stdout=subprocess.DEVNULL,
+        stderr=subprocess.DEVNULL,
+        check=False,
+    )
+    manifest_status = subprocess.run(
+        ["git", "-C", str(repo_root), "status", "--porcelain", "--untracked-files=all", "--", approved_relative],
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    if (
+        tracked.returncode != 0
+        or manifest_status.returncode != 0
+        or manifest_status.stdout.strip()
+        or approved_path.is_symlink()
+        or not approved_path.is_file()
+    ):
+        blocked("approved_manifest_dirty")
+
 status = subprocess.run(
     ["git", "-C", str(repo_root), "status", "--porcelain", "--untracked-files=all", "--", "codex"],
     capture_output=True,
@@ -143,11 +177,12 @@ for path in sorted(item for item in source_root.rglob("*") if item.is_file()):
 source_digest = digest.hexdigest()
 try:
     approved = {
-        line.removeprefix("sha256:").strip()
-        for line in approved_path.read_text(encoding="utf-8").splitlines()
+        match.group(1)
+        for line in approved_bytes.decode("utf-8").splitlines()
         if line.strip() and not line.lstrip().startswith("#")
-    } if approved_path else set()
-except (OSError, UnicodeDecodeError):
+        if (match := re.fullmatch(r"sha256:([0-9a-f]{64})  .+", line.strip()))
+    } if approved_bytes is not None else set()
+except UnicodeDecodeError:
     approved = set()
 if source_digest not in approved:
     blocked("source_digest_unapproved", source_digest=f"sha256:{source_digest}")
