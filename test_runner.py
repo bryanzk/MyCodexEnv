@@ -9495,177 +9495,57 @@ def test_codex_fluent_report_only_contract():
     print("[PASS] codex-fluent report-only contract")
 
 
-def test_global_agents_thread_discipline_contract():
+def test_global_agents_authorization_and_mode_contract():
     text = (ROOT / "codex" / "AGENTS.md").read_text(encoding="utf-8")
     normalized = " ".join(text.split())
     required = [
-        "## Thread Discipline",
-        "THREAD_DISCIPLINE_V1",
-        "THREAD_DISCIPLINE_SUMMARY_V1",
-        "repo_anchor",
-        "repo_anchor_provenance",
-        "mode_anchor",
-        "compaction_ordinal",
-        "automatic_transition_count",
-        "checkpoint",
-        "terminal chat handoff",
-        "unknown",
-        "Codex Desktop lifecycle API",
-        "ANCHOR_MISMATCH_SEQUENCE_V1",
-        "resolve request_repo and request_mode from direct request and already-available workspace evidence",
-        "unknown mismatch",
-        "next_action=terminal_chat_handoff",
-        "next_action=created_task",
-        "forbid new-direction tool calls and edits",
-        "must not probe or partially start the new direction",
-        "create exactly one new task",
-        "automatic_transition_count is less than 3",
-        "automatic_transition_count is already 3",
-        "<project>-<YYYYMMDD>-<summary>",
+        "只有 change、build、fix 或 implementation 请求授权修改",
+        "plan、review、diagnose 与 report-only 只允许检查和报告，不得实施修复",
+        "同时出现 mutation 与 no-write 约束时，停止修改并向用户确认",
+        "只有用户在当前回合直接明确要求新建 task、thread 或 chat 时",
+        "compaction 或 anchor mismatch 只生成 fail-closed 的 chat handoff",
+        "不得自动创建 successor、archive 或 delete 任务",
+        "Repo-native handoff 只有在用户明确授权准确文档路径时才可以写入",
     ]
     for term in required:
-        require(term in text, f"global AGENTS missing thread discipline term: {term}")
-    require(
-        "Research and verification do not change mode_anchor" in text,
-        "supporting work must remain inside the anchored mode",
-    )
-    for term in [
-        "explicitly authorized the exact documentation path",
-        "Archive authorization does not imply file-write authorization",
-        "Apply authorization does not imply file-write authorization",
-        "keep the task active",
-    ]:
-        require(term in normalized, f"global AGENTS missing handoff authorization term: {term}")
-    require("Never automatically archive or delete a task" in text,
-            "global AGENTS must preserve the archive/delete boundary")
-    require("up to three automatic task creations" in normalized,
-            "confirmed mismatch chains must allow at most three automatic transitions")
-    require("no more than one new task per confirmed anchor mismatch" in normalized,
-            "each confirmed mismatch must create at most one task")
-    require("Project listing, task creation, and task renaming are the only permitted tool calls" in normalized,
-            "mismatch handling must retain its narrow lifecycle-tool allowlist")
-    require("never create a replacement task for the same mismatch" in normalized,
-            "rename failure must not create a duplicate replacement task")
-    sequence_start = text.index("ANCHOR_MISMATCH_SEQUENCE_V1")
-    sequence = text[sequence_start:]
-    ordered_terms = [
-        "1. resolve request_repo and request_mode from direct request and already-available workspace evidence",
-        "2. compare both values with the frozen anchors",
-        "3. on mismatch or unknown mismatch, forbid new-direction tool calls and edits",
-        "4. create a bounded terminal chat handoff containing the resolved anchors",
-        "5. on a confirmed mismatch, continue automatically only when",
-        "6. use task-lifecycle tools only to resolve the exact registered project",
-        "7. run the new task in the registered project's local environment by default",
-        "8. rename the new task to <project>-<YYYYMMDD>-<summary>",
-        "9. return the created-task directive in the original task",
-        "10. if automatic_transition_count is already 3, the mismatch is unknown",
-        "11. if creation succeeds but renaming fails, return the created-task directive",
-    ]
-    positions = [sequence.index(term) for term in ordered_terms]
-    require(positions == sorted(positions), "anchor mismatch handling must preserve its fail-closed order")
-    print("[PASS] global AGENTS thread discipline contract")
-
-
-def test_global_agents_second_compaction_successor_contract():
-    text = (ROOT / "codex" / "AGENTS.md").read_text(encoding="utf-8")
-    reproduction = (
-        ROOT / "docs" / "CODEX_ENV_REPRODUCTION.md"
-    ).read_text(encoding="utf-8")
-    normalized = " ".join(text.split())
-    reproduction_normalized = " ".join(reproduction.split())
-    required = [
+        require(term in normalized, f"global AGENTS missing authorization term: {term}")
+    forbidden = [
         "COMPACTION_SUCCESSOR_SEQUENCE_V1",
-        "confirmed second compaction",
-        "complete, independently executable bounded handoff",
-        "exact parent task ID and trusted compaction event identity",
-        "same parent task and same compaction event",
-        "cannot create more than one successor task",
-        "return its existing created-task directive and do not create another task",
-        "repo_anchor resolves exactly to a registered project",
-        "mode_anchor is known",
-        "task-lifecycle creation tools are available",
-        "automatic_transition_count is less than 3",
-        "compaction_ordinal: 0",
-        "parent_compaction_ordinal: 2",
-        "automatic_transition_count + 1",
-        "next_action=created_task",
-        "registered project's local environment",
-        "creation and dispatch count as startup",
-        "do not wait for successor execution",
-        "return the created-task directive",
-        "next_action=terminal_chat_handoff",
-        "cannot determine whether a successor was already created",
-        "never create a replacement task for the same compaction event",
-        "ordinary non-compaction paths must not create a task",
+        "ANCHOR_MISMATCH_SEQUENCE_V1",
+        "automatic_transition_count",
+        "standing, explicit authorization",
+    ]
+    for term in forbidden:
+        require(term not in text, f"global AGENTS still contains automatic-create policy: {term}")
+    print("[PASS] global AGENTS authorization and mode contract")
+
+
+def test_global_agents_layering_workflow_and_size_contract():
+    path = ROOT / "codex" / "AGENTS.md"
+    text = path.read_text(encoding="utf-8")
+    normalized = " ".join(text.split())
+    required = [
+        "更靠近目标目录的 AGENTS.md 可以覆盖其作用域内冲突的上层指导",
+        "不可覆盖的安全要求必须由 developer 或 managed policy、sandbox、rules 或 hooks 强制执行",
+        "Skill 只在用户明确点名或任务与其描述匹配时使用",
+        "并行 agent 只用于可独立执行、边界清晰且确实可以并行推进的子任务",
+        "<项目缩写>-<YYYYMMDD>-<概要>",
+        "交付前必须重新运行相关验证，不使用旧结果替代 fresh evidence",
+        "## Remote Operations",
+        "## Repo AGENTS Expectations",
     ]
     for term in required:
-        require(term in normalized,
-                f"global AGENTS missing second-compaction successor term: {term}")
-    require(
-        "After a confirmed first compaction, refresh a concise checkpoint and do not create a task"
-        in normalized,
-        "first compaction must remain checkpoint-only",
-    )
-    require(
-        "automatic_transition_count is already 3 or greater" in normalized,
-        "second-compaction successor creation must retain the shared transition cap",
-    )
-    require(
-        "the project cannot be resolved exactly" in normalized,
-        "unknown projects must fall back to terminal handoff",
-    )
-    require(
-        "task-lifecycle creation tools are unavailable" in normalized,
-        "unavailable lifecycle tools must fall back to terminal handoff",
-    )
-    require(
-        "task creation fails" in normalized,
-        "creation failure must fall back to terminal handoff",
-    )
-    require(
-        "if creation succeeds but renaming fails" in normalized,
-        "rename failure must preserve the created successor",
-    )
-    sequence_start = text.index("COMPACTION_SUCCESSOR_SEQUENCE_V1")
-    sequence_end = text.index("ANCHOR_MISMATCH_SEQUENCE_V1")
-    sequence = text[sequence_start:sequence_end]
-    ordered_terms = [
-        "1. on a confirmed second compaction",
-        "2. create a complete, independently executable bounded handoff",
-        "3. establish the exact parent task ID and trusted compaction event identity",
-        "4. continue automatically only when repo_anchor resolves exactly",
-        "5. use task-lifecycle tools only to resolve the exact registered project",
-        "6. create exactly one successor task",
-        "7. record compaction_ordinal: 0",
-        "8. rename the successor to <project>-<YYYYMMDD>-<summary>",
-        "9. return the created-task directive",
-        "10. if automatic_transition_count is already 3 or greater",
-        "11. if creation succeeds but renaming fails",
+        require(term in normalized, f"global AGENTS missing stable workflow term: {term}")
+    forbidden = [
+        "Karpathy -> Planner -> TDD -> Verification",
+        "UserPromptSubmit",
+        "复杂且可并行的任务应以 orchestrator 方式拆给 parallel agents",
     ]
-    positions = [sequence.index(term) for term in ordered_terms]
-    require(
-        positions == sorted(positions),
-        "second-compaction successor handling must preserve its fail-closed order",
-    )
-    require(
-        "ANCHOR_MISMATCH_SEQUENCE_V1" in text,
-        "second-compaction policy must preserve anchor-mismatch routing",
-    )
-    for term in [
-        "`codex/AGENTS.md` is the unique policy source of truth",
-        "does not contain an executable compaction detector",
-        "source tests prove the policy contract, not automatic runtime activation",
-        "`compaction_ordinal` to `0`",
-        "`parent_compaction_ordinal: 2`",
-        "`automatic_transition_count`",
-        "`scripts/sync_codex_home.sh`",
-        "`~/.codex/AGENTS.md`",
-        "`test_runner.py`",
-        "`scripts/verify_codex_env.sh`",
-    ]:
-        require(term in reproduction_normalized,
-                f"Thread Discipline reproduction docs missing boundary term: {term}")
-    print("[PASS] global AGENTS second-compaction successor contract")
+    for term in forbidden:
+        require(term not in text, f"global AGENTS still contains fixed workflow detail: {term}")
+    require(len(text.splitlines()) <= 90, "global AGENTS should not exceed 90 lines")
+    require(len(text.encode("utf-8")) <= 8192, "global AGENTS should not exceed 8192 bytes")
+    print("[PASS] global AGENTS layering, workflow, and size contract")
 
 
 def test_public_dhf_architecture_status_alignment():
@@ -9883,8 +9763,8 @@ TESTS = [
     test_capture_text_auto_classifies_input_types,
     test_headroom_filter_detects_modes_and_reports_stats,
     test_manage_agents_scan_backup_generate_restore,
-    test_global_agents_thread_discipline_contract,
-    test_global_agents_second_compaction_successor_contract,
+    test_global_agents_authorization_and_mode_contract,
+    test_global_agents_layering_workflow_and_size_contract,
     test_codex_fluent_active_session_report,
     test_codex_fluent_active_session_boundaries,
     test_codex_fluent_selection_contract,

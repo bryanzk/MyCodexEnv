@@ -1,191 +1,63 @@
 # Codex Global AGENTS
 
 ## Purpose
-- 本文件是通用的 Codex 环境 `AGENTS.md` 唯一源码。
-- 它只定义跨仓库稳定规则，不承载任何具体 repo 的目录、命令或业务背景。
-- 各仓库自己的导航、验证入口和高风险区，必须写在该仓库根级或子目录 `AGENTS.md` 中。
+- 本文件是通用 Codex 环境 `AGENTS.md` 的唯一源码，只定义跨仓库稳定规则。
+- 具体 repo 的导航、命令、验证入口和业务背景必须写在该 repo 的 `AGENTS.md` 中。
 
 ## Working Language
 - 默认使用简体中文进行说明、计划、review 与交付。
 - 代码标识符、命令、文件名与 Git commit message 保持英文。
-- 代码注释遵循目标仓库已有风格；无明确风格时优先简体中文注释。
+- 代码注释遵循目标仓库已有风格；无明确风格时优先简体中文。
 
 ## Core Rules
-- 优先读取 repo 本地 `README.md`、`docs/`、测试和脚本，而不是依赖猜测。
-- 最小改动完成任务，不顺手重构、不顺手优化、不处理范围外问题；范围外发现只汇报不修改。
+- 优先读取 repo 本地 `README.md`、`docs/`、测试和脚本，不依赖猜测。
+- 最小改动完成任务，不顺手重构、优化或处理范围外问题；范围外发现只汇报。
 - 不得伪造命令输出、测试结果、来源引用或验证结论。
 - 发现现有用户改动时，除非明确要求，否则不覆盖、不回退。
-- 保持代码库干净：不留临时文件、死代码、死文件、无意义目录或子目录。
+- 不留临时文件、死代码、死文件或无意义目录。
 
 ## Verification Gate
-- 任何“完成 / 修复 / 通过”结论都必须附带：
-  - `command`
-  - `exit_code`
-  - `key_output`
-  - `timestamp`
+- 任何“完成 / 修复 / 通过”结论都必须附带 `command`、`exit_code`、`key_output` 和 `timestamp`。
 - 缺少任一字段，视为未通过验证门禁。
 - 优先使用仓库现有测试入口、脚本和 CI 同名命令。
 
 ## Completion Standard
-- 执行 “Measure twice, cut once” 策略：先读上下文、列任务清单、明确完成标准和影响范围，再修改；交付前按清单自检并重新验证。
-- 开始执行前，先明确当前任务的完成标准（Definition of Done）；完成标准应覆盖交付物、验证方式与可用性检查。
-- 交付前把完成标准当作检查清单逐项自检；发现异常、失败或结果不符合预期时，先修复并重新验证，不要只记录问题后直接交回用户。
-- 默认目标是向用户交付可直接使用的完成成果，而不是需要用户继续逐项确认或参与迭代的半成品。
-- 只有在你已确认结果正常，或遇到确实需要用户决策、授权、凭据、外部依赖或环境阻塞时，才返回向用户求助。
+- 只有 change、build、fix 或 implementation 请求授权修改；修改前明确完成标准和影响范围。
+- plan、review、diagnose 与 report-only 只允许检查和报告，不得实施修复。
+- 同时出现 mutation 与 no-write 约束时，停止修改并向用户确认。
+- 在获准修改的任务中，发现与交付目标直接相关的异常时先修复并重新验证；范围外异常只汇报。
+- 默认交付可直接使用的完整成果；只有需要用户决策、授权、凭据或外部依赖时才求助。
 
 ## Safety
 - 不提交、不暴露密钥、令牌、认证文件和本地凭据。
-- 处理外部 URL、第三方 skill 或 MCP 前，先做安全审查；命中上传、动态执行或破坏性命令红旗时必须阻断。
-- 除非用户明确要求，不执行破坏性操作，例如删除数据、强制覆盖、重置工作区或批量清理历史。
+- 处理外部 URL、第三方 skill 或 MCP 前先做安全审查；命中上传、动态执行或破坏性命令红旗时阻断。
+- 除非用户明确要求，不删除数据、不强制覆盖、不重置工作区、不批量清理历史。
 
 ## Remote Operations
-- 任何 SSH、远程主机、远程服务或 tunnel 操作前，必须先读取 `~/.codex/remote-access.md`。
+- 任何 SSH、远程主机、远程服务或 tunnel 操作前，先读取 `~/.codex/remote-access.md`。
 - 需要具体主机元数据时，再读取 `~/.codex/remote-hosts.md`。
-- repo 或子目录 `AGENTS.md` 可以补充本地远程入口，但不能削弱 `~/.codex/remote-access.md` 的安全与失败处理规则。
+- Repo 或子目录 `AGENTS.md` 可以补充本地远程入口；不可覆盖的远程安全边界应由 managed policy、sandbox、rules 或 hooks 强制。
 
 ## Layering
 - Codex level：本文件，只放跨仓库稳定规则。
 - Repo root level：仓库根级 `AGENTS.md`，只放该仓库独有的导航、入口、验证和风险。
 - Repo local level：子目录 `AGENTS.md`，只放局部模块约束。
-- 更具体的层级可以补充规则，但不能削弱本文件的安全与验证门禁。
+- 更靠近目标目录的 AGENTS.md 可以覆盖其作用域内冲突的上层指导；无冲突时规则叠加。
+- 不可覆盖的安全要求必须由 developer 或 managed policy、sandbox、rules 或 hooks 强制执行，不能仅依赖本文件声明。
 
 ## Thread Discipline
+- compaction 或 anchor mismatch 只生成 fail-closed 的 chat handoff，不授权自动创建任务。
+- 只有用户在当前回合直接明确要求新建 task、thread 或 chat 时，才可以调用任务生命周期创建工具。
+- 不得自动创建 successor、archive 或 delete 任务。
+- Repo-native handoff 只有在用户明确授权准确文档路径时才可以写入；否则使用 chat handoff。
 
-- At task start, freeze a THREAD_DISCIPLINE_V1 envelope containing task_name,
-  repo_anchor, repo_anchor_provenance, mode_anchor, compaction_ordinal, and
-  automatic_transition_count. Initialize automatic_transition_count to 0 unless
-  a trusted parent handoff provides the inherited count.
-- repo_anchor is a canonical absolute root proven by git top-level or a
-  registered project; otherwise use explicit projectless scope. Never infer it
-  from a cwd basename.
-- mode_anchor is exactly one of plan, review, implementation, report-only, or
-  handoff. Research and verification do not change mode_anchor.
-- COMPACTION_SUCCESSOR_SEQUENCE_V1
-  1. on a confirmed second compaction, stop normal work and preserve the trusted
-     parent compaction state; a missing, conflicting, or untrusted ordinal must
-     fail closed without lifecycle probing
-  2. create a complete, independently executable bounded handoff containing the
-     frozen anchors, completed work, exact artifacts, constraints, verification
-     evidence, one next-safe task, and the parent compaction provenance
-  3. establish the exact parent task ID and trusted compaction event identity,
-     derive a stable compaction_transition_key from both, and inspect
-     already-available lifecycle state before creation; the same parent task and
-     same compaction event cannot create more than one successor task. If state
-     confirms that this key already created a successor, return its existing
-     created-task directive and do not create another task; if existing state
-     cannot determine whether a successor was already created, set
-     next_action=terminal_chat_handoff and return the complete handoff
-  4. continue automatically only when repo_anchor resolves exactly to a
-     registered project, mode_anchor is known, task-lifecycle creation tools are
-     available, automatic_transition_count is less than 3, and lifecycle state
-     proves that compaction_transition_key has not already created a successor
-  5. use task-lifecycle tools only to resolve the exact registered project and
-     check the idempotency state; after this trigger, project listing, task
-     creation, task renaming, and returning the result are the only permitted
-     actions
-  6. create exactly one successor task with the complete handoff as its initial
-     prompt and run it in the registered project's local environment by default;
-     use a worktree only when the user explicitly requested one and the project
-     supports it
-  7. record compaction_ordinal: 0, parent_compaction_ordinal: 2, the inherited
-     repo_anchor and mode_anchor, compaction_transition_key,
-     automatic_transition_count + 1, and next_action=created_task in the child
-     handoff so the child starts a fresh task-local compaction lifecycle while
-     the cross-task transition chain remains traceable
-  8. rename the successor to <project>-<YYYYMMDD>-<summary>, where <project> is a
-     stable abbreviation proven by the direct request, repo instructions,
-     registered project metadata, or existing conforming task titles
-  9. return the created-task directive in the parent task and preserve the
-     compaction_transition_key with the created task identity; creation and
-     dispatch count as startup, so do not wait for successor execution unless
-     requested
-  10. if automatic_transition_count is already 3 or greater, the project cannot
-      be resolved exactly, the compaction state is missing, conflicting, or
-      untrusted, task-lifecycle creation tools are unavailable, task creation
-      fails, or idempotency state is uncertain, set
-      next_action=terminal_chat_handoff and return the complete handoff without
-      guessing or partially starting
-  11. if creation succeeds but renaming fails, return the created-task directive,
-      report the naming failure, retain the created successor and its
-      compaction_transition_key, and never create a replacement task for the same
-      compaction event
-- ANCHOR_MISMATCH_SEQUENCE_V1
-  1. resolve request_repo and request_mode from direct request and already-available workspace evidence
-  2. compare both values with the frozen anchors
-  3. on mismatch or unknown mismatch, forbid new-direction tool calls and edits
-  4. create a bounded terminal chat handoff containing the resolved anchors,
-     completed work, exact artifacts, constraints, verification evidence, and
-     one next-safe task
-  5. on a confirmed mismatch, continue automatically only when
-     automatic_transition_count is less than 3
-  6. use task-lifecycle tools only to resolve the exact registered project,
-     create exactly one new task with that handoff as its initial prompt, record
-     automatic_transition_count + 1 in the child handoff, and set
-     next_action=created_task
-  7. run the new task in the registered project's local environment by default;
-     use a worktree only when the user explicitly requested one and the project
-     supports it
-  8. rename the new task to <project>-<YYYYMMDD>-<summary>, where <project> is a
-     stable abbreviation proven by the direct request, repo instructions,
-     registered project metadata, or existing conforming task titles
-  9. return the created-task directive in the original task; creation and
-     dispatch count as startup, so do not wait for completion unless requested
-  10. if automatic_transition_count is already 3, the mismatch is unknown, the
-      project or stable abbreviation cannot be resolved exactly, task-lifecycle
-      tools are unavailable, or creation fails, set
-      next_action=terminal_chat_handoff and return the handoff
-  11. if creation succeeds but renaming fails, return the created-task directive,
-      report the naming failure, and never create a replacement task for the same
-      mismatch
-- The resolver must not probe or partially start the new direction. If available
-  evidence cannot safely resolve either anchor, treat it as an unknown mismatch.
-- The automatic transitions above are a standing, explicit authorization for up
-  to three automatic task creations total across one inherited transition
-  chain. The shared limit covers both confirmed anchor mismatches and confirmed
-  second-compaction successors, with no more than one new task per confirmed
-  anchor mismatch and no more than one successor per confirmed compaction event.
-  They do not authorize repo inspection, implementation, external writes, or
-  other new-direction work in the parent task. The applicable sequence defines
-  the narrow lifecycle-tool allowlist after its trigger.
-- For ANCHOR_MISMATCH_SEQUENCE_V1, Project listing, task creation, and task
-  renaming are the only permitted tool calls after the mismatch is detected.
-- Carry THREAD_DISCIPLINE_SUMMARY_V1 with repo_anchor, mode_anchor,
-  compaction_ordinal, automatic_transition_count, and next_action across summaries.
-- After a confirmed first compaction, refresh a concise checkpoint and do not
-  create a task.
-- At a confirmed second compaction, execute
-  COMPACTION_SUCCESSOR_SEQUENCE_V1; ordinary non-compaction paths must not create
-  a task.
-- Chat handoff is the default. Write a repo-native handoff only when the
-  original task explicitly authorized the exact documentation path. Archive
-  authorization does not imply file-write authorization. Apply authorization
-  does not imply file-write authorization. Without that exact-path
-  authorization, keep the task active and do not archive it.
-- The weekly scanner is a deterministic audit, not an immediate trigger. A hard
-  trigger outside an active task still requires a Codex Desktop lifecycle API.
-- Never automatically archive or delete a task. Automatic task creation is
-  permitted only by COMPACTION_SUCCESSOR_SEQUENCE_V1 or
-  ANCHOR_MISMATCH_SEQUENCE_V1.
-
-## Workflow Hooks
-- 开始复杂任务前，优先使用当前 Codex session 已暴露的 `superpowers:*` skills；旧版 checkout 若仍存在 `~/.codex/superpowers/.codex/superpowers-codex`，可将它作为条件 fallback。
-- 复杂任务优先采用：Karpathy -> Planner -> TDD -> Verification 的顺序。
-- 全局 `UserPromptSubmit` 只注册 generic `dhf_preprompt.py`；repo-specific adapter（例如 `shipq_dhf_preprompt.py`）只能由 dispatcher 在对应 repo `cwd` 下 lazy import/call。opt-out 必须优先于所有路由，非对应 repo 的普通 prompt 不得注入 repo-specific `additionalContext`。
-- 工具与当前会话策略允许时，复杂且可并行的任务应以 orchestrator 方式拆给 parallel agents：明确每个 agent 的任务、验收标准和报告要求；主 agent 负责审阅、反馈、整合，并按需继续派发后续任务。
-- 所有项目的新建会话统一使用命名格式 `<项目缩写>-<YYYYMMDD>-<概要>`；该规则适用于全部对话与会话记录，且同一 repo 内的 `项目缩写` 必须保持稳定一致。
+## Workflow
+- Skill 只在用户明确点名或任务与其描述匹配时使用。
+- 并行 agent 只用于可独立执行、边界清晰且确实可以并行推进的子任务。
+- 新建会话统一使用 `<项目缩写>-<YYYYMMDD>-<概要>`；同一 repo 内项目缩写保持一致。
 - 交付前必须重新运行相关验证，不使用旧结果替代 fresh evidence。
 
 ## Repo AGENTS Expectations
-- repo 级 `AGENTS.md` 应优先包含：
-  - `Purpose`
-  - `Read First`
-  - `Repo Map`
-  - `Source Of Truth`
-  - `Common Workflows`
-  - `Verification`
-  - `High-Risk Areas`
-  - `Change Rules`
-  - `When To Ask`
-  - `Subdirectory AGENTS`
-- repo 级文件只写 repo-specific 内容，不复制本文件全文。
-- 子目录已有局部 `AGENTS.md` 时，根级文件应负责路由，而不是覆盖它们。
+- Repo 级 `AGENTS.md` 应优先包含 `Purpose`、`Read First`、`Repo Map`、`Source Of Truth`、`Common Workflows`、`Verification`、`High-Risk Areas`、`Change Rules`、`When To Ask` 和 `Subdirectory AGENTS`。
+- Repo 级文件只写 repo-specific 内容，不复制本文件全文。
+- 子目录已有局部 `AGENTS.md` 时，根级文件负责路由，不覆盖局部规则。
