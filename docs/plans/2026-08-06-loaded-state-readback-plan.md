@@ -2,7 +2,7 @@
 
 - 状态：`plan_only` — 无代码变更；本文与配套合同是唯一产出
 - 日期：2026-08-06
-- 基线：`HEAD=bb641d0`（工作树 clean，与 origin/main 同步）
+- 基线：行号核实于 `HEAD=bb641d0`；实施基线为起工时的 main HEAD（AGENTS 修复分支合入后）
 - 阻塞对象：`scripts/sync_codex_home.sh` 的 `loaded_readback_unavailable` 门（`:454-466`，对非临时 `CODEX_HOME` 无条件拒绝）
 - 证据等级：行号断言均已读源码核实；标 `[判断]` 为设计取舍
 

@@ -2,7 +2,8 @@
 
 - 配套计划：`docs/plans/2026-08-06-loaded-state-readback-plan.md`
 - 工作目录：`/Users/kezheng/Codes/CursorDeveloper/MyCodexEnv`
-- 基线：`HEAD=bb641d0`
+- 基线：**起工时的 main HEAD**（动代码前记录于报告）。文中行号核实于 `bb641d0`；若因 `codex/global-agents-minimal-fix` 分支合入而漂移，按 §6 处置（行号漂移属可自行确认的小幅漂移，语义冲突才停）
+- **前置**：`codex/global-agents-minimal-fix` 分支（AGENTS 修复，改了 `test_runner.py`）**必须先合入 main**再开工——本任务同样写 `test_runner.py`，并行必冲突
 - 任务模式：`development`
 
 ## 0. 写集（仅限以下）
