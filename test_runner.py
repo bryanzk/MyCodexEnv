@@ -1198,6 +1198,7 @@ def test_codex_version_policy_accepts_current_cli():
             f"{script_name} should accept current codex-cli 0.137.0",
         )
         require('"0.144."' in script_text, f"{script_name} should accept Codex 0.144.x")
+        require('"0.147.0"' in script_text, f"{script_name} should accept the probe-verified Codex 0.147.0")
         require("codex_version_ok" in script_text, f"{script_name} should evaluate version prefixes explicitly")
 
     require("skills_managed_present" in verify_text, "verify should require managed repo skills to exist")
@@ -9990,7 +9991,7 @@ def test_public_dhf_architecture_status_alignment():
     chinese_status = (ROOT / "docs" / "dhf-architecture-status-cn.html").read_text(encoding="utf-8")
     for term in [
         "Source available is not runtime active",
-        "Runtime parity: restored 2026-08-04",
+        "Local runtime parity: verified 2026-08-10",
         "Independent DHF core: not published",
         "compaction_probe.py",
         "session_bearing.py",
@@ -10001,7 +10002,7 @@ def test_public_dhf_architecture_status_alignment():
         require(term in english_status, f"English DHF status page missing truth boundary: {term}")
     for term in [
         "源码存在不等于运行时已激活",
-        "运行时一致性：已于 2026-08-04 恢复",
+        "本机运行时一致性：已于 2026-08-10 验证",
         "独立 DHF 核心：尚未发布",
         "compaction_probe.py",
         "session_bearing.py",

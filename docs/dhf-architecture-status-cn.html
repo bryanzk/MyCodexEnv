@@ -16,7 +16,7 @@
     h1,h2,h3 { line-height:1.2; } h1 { margin:.5rem 0 .8rem; font-size:clamp(2rem,5vw,4rem); } h2 { margin-top:0; font-size:clamp(1.35rem,3vw,2rem); } h3 { margin:0 0 .35rem; }
     p { color:var(--muted); } code { padding:.12rem .3rem; border-radius:5px; background:rgba(47,111,146,.09); color:var(--ink); } a { color:var(--blue); }
     .pill { display:inline-flex; margin:.3rem .35rem .3rem 0; padding:.3rem .65rem; border-radius:999px; background:rgba(20,122,98,.11); color:var(--green); font-weight:750; }
-    .status-source { border-top:4px solid var(--green); } .status-runtime { border-top:4px solid var(--red); } .status-public { border-top:4px solid var(--blue); } .status-extract { border-top:4px solid var(--amber); }
+    .status-source,.status-runtime { border-top:4px solid var(--green); } .status-public { border-top:4px solid var(--blue); } .status-extract { border-top:4px solid var(--amber); }
     .stack { display:grid; gap:.7rem; } .layer { padding:1rem; border:1px solid var(--line); border-left:6px solid var(--blue); border-radius:12px; background:rgba(47,111,146,.045); } .layer strong { display:block; margin-bottom:.25rem; }
     table { width:100%; border-collapse:collapse; } th,td { padding:.75rem; border-bottom:1px solid var(--line); text-align:left; vertical-align:top; } th { color:var(--green); }
     .warning { padding:1rem; border-radius:12px; background:rgba(169,71,91,.09); border:1px solid rgba(169,71,91,.24); }
@@ -45,10 +45,26 @@
       <h2>四种状态，不能用一个含糊的“完成”代替</h2>
       <div class="dhf-status-grid">
         <article class="dhf-status-card status-source"><h3>仓库源码：已实现</h3><p>已审计的本地 <code>main</code> 包含 lifecycle router、hooks、guard、evidence schemas、recovery、checkpoint、ledger、transition store、compaction observation、session bearing、context meter 和 tier-1/2 behavior eval。</p></article>
-        <article class="dhf-status-card status-runtime"><h3>运行时一致性：已于 2026-08-04 恢复</h3><p>运行时一致性已于 2026-08-04 经精确源码部署验证恢复。DHF 仍不预设一致性：每次部署后持续重新验证，没有当前证据就不作运行时声明。</p></article>
+        <article class="dhf-status-card status-runtime"><h3>本机运行时一致性：已于 2026-08-10 验证</h3><p>可回滚的七 target promotion 产出 <code>runtime_promoted</code>；更广的 tracked 对比为 24/24 managed 文件匹配源码。Codex CLI 0.147.0 在 18/18 隔离 host 轮次中触发了已 promotion 的 guard。这些是本机 parity 与 activity 收据，不是生产 rollout。</p></article>
         <article class="dhf-status-card status-public"><h3>公开页面：仅为文档</h3><p>GitHub Pages 说明源码架构和验证边界。页面可访问不代表 hooks 已安装、测试已绿，也不代表某台机器运行着相同源码。</p></article>
         <article class="dhf-status-card status-extract"><h3>独立 DHF 核心：尚未发布</h3><p>分阶段抽取已有评估方向和前置设计，但尚无独立仓库、不可变 release、tag 或运行时激活声明；MyCodexEnv 仍是当前工作源码与 consumer 边界。</p></article>
       </div>
+    </section>
+
+    <section class="section">
+      <h2>相互独立的交付状态</h2>
+      <table>
+        <thead><tr><th>状态</th><th>当前证据边界</th></tr></thead>
+        <tbody>
+          <tr><td>仓库源码</td><td>managed source 已锚定本地 <code>main</code>；本次状态页更新在另行提交前仍是 working-tree 变更。</td></tr>
+          <tr><td>新鲜验证</td><td>只接受本任务的新鲜 command receipt；历史绿灯不计当前证据。</td></tr>
+          <tr><td>已安装运行时</td><td><code>runtime_promoted</code>，七个批准 target byte-match，tracked managed 对比为 24/24。</td></tr>
+          <tr><td>公开发布</td><td>本任务未执行。更新页面源码不等于部署或公开 readback。</td></tr>
+          <tr><td>生产 enforcement</td><td>尚未证明；18/18 host probe 是隔离的本机证据。</td></tr>
+          <tr><td>客户采用</td><td>不声明任何已验证客户使用证据。</td></tr>
+          <tr><td>商业验证</td><td>不声明收入、价格、转化或效果。</td></tr>
+        </tbody>
+      </table>
     </section>
 
     <section class="section">
@@ -70,7 +86,7 @@
           <tr><td>生命周期路由与恢复</td><td>已实现 durable source order、dirty ownership、execution lanes 和显式 helper 路由。</td><td>恢复结果是证据，不是授权；runtime 配置仍是逐机状态。</td></tr>
           <tr><td>Guard 与 evidence</td><td>已实现 guard categories、risk-tier annotation、observer events、split schemas、report 和 reflection helpers。</td><td>legacy block shape 已验证兼容；command-form secret classifier gap 仍保留并已记录。</td></tr>
           <tr><td>压缩治理</td><td>已实现 shared counter、incremental probe、ordinal-only pressure、transition CAS、W3 fields、boundary verdict 与 tier-2 agreement eval。</td><td><code>compaction_probe.py</code> 和 <code>session_bearing.py</code> 已在发布源码中；其运行时部署状态在每次同步后重新验证，不做预设。</td></tr>
-          <tr><td>验收与行为验证</td><td>具备 requirements validator、tamper-evident ledger、tier-1/2 eval、focused tests、surfaces check 与完整 test runner。</td><td>每次改动对完整测试套件保持零新增失败；已知失败项只跟踪运行时一致性，在运行时重新同步并验证后即清除。</td></tr>
+          <tr><td>验收与行为验证</td><td>具备 requirements validator、tamper-evident ledger、tier-1/2 eval、focused tests、surfaces check 与完整 test runner。</td><td>完成声明必须同时具备本次变更的新鲜完整套件和环境 verifier 收据；只有源码或 parity 不足以验收。</td></tr>
           <tr><td>简化 profiles</td><td>thin-core / progressive-governance 作为独立实施方向已有合同。</td><td>本快照的 committed router 仍是 stage-based；在源码与 runtime 一起落地前，不把 light/standard/governed 写成活动行为。</td></tr>
           <tr><td>独立核心</td><td>抽取评估与前置设计定义了 copy/adapt/exclude、packet、pin、doctor、privacy 和 rollback 边界。</td><td>尚无独立 release 或 upstream pin。</td></tr>
         </tbody>

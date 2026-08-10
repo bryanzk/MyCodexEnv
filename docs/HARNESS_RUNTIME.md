@@ -1,10 +1,12 @@
 # Harness Runtime
 
-> **DHF_PUBLIC_STATUS_V1 · 2026-08-03:** This file is the source contract, not
-> proof of the currently installed runtime. Current source/runtime/publication
+> **DHF_PUBLIC_STATUS_V1 · local evidence refreshed 2026-08-10:** This file is
+> the source contract. Current source/runtime/publication
 > status: [English](./dhf-architecture-status-en.html) ·
-> [中文](./dhf-architecture-status-cn.html). The approved W6a sync passed
-> historically, but a fresh comparison now detects runtime drift.
+> [中文](./dhf-architecture-status-cn.html). A targeted promotion now reports
+> `runtime_promoted`; 24/24 tracked managed runtime files match source, and the
+> Codex CLI 0.147.0 guard probe passed 18/18. These local receipts do not prove
+> publication, production enforcement, customer adoption, or commercial value.
 
 ## Purpose
 MyCodexEnv treats the model as only one part of the agent system. The harness
@@ -375,22 +377,25 @@ reason. A first 2026-08-02 pre-commit probe proved that adding a top-level
 that shape was rejected. The corrected reason-only shape then matched all 18
 W6b reference rounds: every hook ran once, G0/G4 retained their known allowed
 outcomes, and G1/G2/G3/G5/G6/G7/G8 remained blocked. Risk tiers do not change
-block/allow behavior.
+block/allow behavior. A fresh 2026-08-10 isolated host probe on Codex CLI
+0.147.0 repeated the same 18/18 matrix against the promoted runtime guard; every
+round had `hook_delta=1`. This proves current host parsing for the probed shape,
+not production rollout.
 
 ## Session Bearing
 
 `codex/hooks/session_bearing.py` is registered in the source `SessionStart`
-chain. W6a deployed the approved snapshot on 2026-08-02, but a fresh
-2026-08-03 comparison finds the current runtime copy missing; therefore this
-section describes source behavior, not current activation. For a cwd inside
-this repo the source hook runs
+chain. The 2026-08-10 targeted promotion restored source/runtime byte parity for
+this file. That proves the installed copy, not a fresh `SessionStart` execution
+in this task. For a cwd inside this repo the hook runs
 `scripts/harness_recover.py --boundary --json` and injects `phase`,
 `next_safe_task`, `boundary_verdict`, and `dirty_status`. The hook shares one
 180ms deadline across the boundary call and its compatibility fallback; only an
 explicitly unsupported `--boundary` argument triggers plain recovery, which
 reports `boundary_verdict=unknown`. Missing repo helpers, malformed results,
 timeouts, and other failures exit zero without output so session start remains
-unaffected. Restore of runtime parity requires a new, explicit sync action.
+unaffected. Every later promotion still requires explicit authorization and
+fresh parity evidence.
 
 ## Compaction Observation
 
@@ -422,9 +427,10 @@ R4 records that degradation as decision evidence before meter code exists:
 - isolated evidence file: `/tmp/mce-r4-evidence.aUpBFW/harness/evidence/2026-08-02.jsonl`
 
 W2b implements that source-stage probe in `codex/hooks/compaction_probe.py` and
-registers it in the source `UserPromptSubmit` chain. W6a deployed the approved
-snapshot on 2026-08-02; the current 2026-08-03 runtime comparison finds this
-hook missing, so it must not be described as runtime-active. Resolution
+registers it in the source `UserPromptSubmit` chain. The 2026-08-10 tracked
+runtime comparison matches source, but this task did not produce a fresh,
+attributable `UserPromptSubmit` compaction receipt, so execution remains
+unverified. Resolution
 prefers an exact session id. Without an id it injects only when the payload cwd
 matches session metadata, the file mtime is inside the configured window, and
 exactly one candidate remains; otherwise it returns continue-only and records

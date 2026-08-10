@@ -37,7 +37,7 @@
     a { color: var(--blue); }
     .pill { display: inline-flex; margin: .3rem .35rem .3rem 0; padding: .3rem .65rem; border-radius: 999px; background: rgba(20,122,98,.11); color: var(--green); font-weight: 750; }
     .status-source { border-top: 4px solid var(--green); }
-    .status-runtime { border-top: 4px solid var(--red); }
+    .status-runtime { border-top: 4px solid var(--green); }
     .status-public { border-top: 4px solid var(--blue); }
     .status-extract { border-top: 4px solid var(--amber); }
     .stack { display: grid; gap: .7rem; }
@@ -72,10 +72,26 @@
       <h2>Four statuses, never one vague “done”</h2>
       <div class="dhf-status-grid">
         <article class="dhf-status-card status-source"><h3>Repository source: implemented</h3><p>The audited local <code>main</code> contains the lifecycle router, hooks, guard, evidence schemas, recovery, checkpoint, ledger, transition store, compaction observation, session bearing, context meter, and tier-1/2 behavior evals.</p></article>
-        <article class="dhf-status-card status-runtime"><h3>Runtime parity: restored 2026-08-04</h3><p>Runtime parity was restored on 2026-08-04 through exact-source deployment verification. DHF still does not assume parity: it is re-verified after every deployment, and no runtime claim is made without current evidence.</p></article>
+        <article class="dhf-status-card status-runtime"><h3>Local runtime parity: verified 2026-08-10</h3><p>A reversible seven-target promotion produced <code>runtime_promoted</code>; a broader tracked comparison found 24/24 managed files matching source. Codex CLI 0.147.0 triggered the promoted guard in 18/18 isolated host rounds. These are local parity and activity receipts, not production rollout.</p></article>
         <article class="dhf-status-card status-public"><h3>Public pages: documentation only</h3><p>GitHub Pages explains source architecture and verification boundaries. A reachable page is not proof that hooks are installed, tests are green, or a particular machine is running the same source.</p></article>
         <article class="dhf-status-card status-extract"><h3>Independent DHF core: not published</h3><p>Staged extraction has a reviewed direction and prerequisite design, but no independent repository, immutable release, tag, or runtime activation is asserted. MyCodexEnv remains the working source and consumer boundary.</p></article>
       </div>
+    </section>
+
+    <section class="section">
+      <h2>Independent lifecycle states</h2>
+      <table>
+        <thead><tr><th>State</th><th>Current evidence boundary</th></tr></thead>
+        <tbody>
+          <tr><td>Repository source</td><td>Implemented managed source is anchored to local <code>main</code>; this status refresh remains a working-tree change until separately committed.</td></tr>
+          <tr><td>Fresh verification</td><td>Only fresh command receipts in this task count; historical green results do not.</td></tr>
+          <tr><td>Installed runtime</td><td><code>runtime_promoted</code>, seven approved targets byte-match, and the tracked managed comparison is 24/24.</td></tr>
+          <tr><td>Public publication</td><td>Not performed in this task. Updating page source is not deployment or public readback.</td></tr>
+          <tr><td>Production enforcement</td><td>Not proven. The 18/18 host probe is isolated local evidence.</td></tr>
+          <tr><td>Customer adoption</td><td>No verified customer-use evidence is asserted.</td></tr>
+          <tr><td>Commercial validation</td><td>No revenue, pricing, conversion, or outcome claim is asserted.</td></tr>
+        </tbody>
+      </table>
     </section>
 
     <section class="section">
@@ -97,7 +113,7 @@
           <tr><td>Lifecycle routing and recovery</td><td>Implemented with durable source order, dirty ownership, execution lanes, and explicit helper routing.</td><td>Recovery is evidence, not permission; runtime config remains machine-specific.</td></tr>
           <tr><td>Guard and evidence</td><td>Guard categories, risk-tier annotations, observer events, split schemas, report and reflection helpers are implemented.</td><td>The legacy block shape is host-compatible; a documented command-form secret classifier gap remains.</td></tr>
           <tr><td>Compaction governance</td><td>Shared counter, incremental probe, ordinal-only pressure, transition CAS, W3 checkpoint fields, boundary verdict, and tier-2 agreement eval are implemented.</td><td><code>compaction_probe.py</code> and <code>session_bearing.py</code> exist in the published source; their live deployment is re-verified after every sync rather than assumed.</td></tr>
-          <tr><td>Acceptance and behavior</td><td>Requirements validation, tamper-evident ledger, tier-1/2 evals, focused tests, surfaces checks, and a full test runner exist.</td><td>The full suite runs with zero new failures on every change; the only known failing checks track runtime parity and clear once the runtime is re-synced and re-verified.</td></tr>
+          <tr><td>Acceptance and behavior</td><td>Requirements validation, tamper-evident ledger, tier-1/2 evals, focused tests, surfaces checks, and a full test runner exist.</td><td>A completion claim requires fresh final-suite and environment-verifier receipts from the same change; source or parity alone is insufficient.</td></tr>
           <tr><td>Simplification profiles</td><td>A thin-core / progressive-governance contract exists as a separate implementation direction.</td><td>The committed router on this snapshot remains stage-based; do not describe light/standard/governed profiles as active runtime behavior until their source and runtime land together.</td></tr>
           <tr><td>Independent core</td><td>Extraction evaluation and prerequisite design define copy/adapt/exclude, packet, pin, doctor, privacy, and rollback boundaries.</td><td>No independent release or upstream pin exists yet.</td></tr>
         </tbody>

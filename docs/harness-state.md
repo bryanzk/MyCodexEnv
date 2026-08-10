@@ -5,7 +5,7 @@ Stable rules belong in `AGENTS.md`, `README.md`, `docs/repo-index.md`, or
 `docs/HARNESS_RUNTIME.md`; session facts and phase transitions are appended here.
 
 ## Current Snapshot
-- phase: development
+- phase: validation
 - source_of_truth:
   - `AGENTS.md`
   - `docs/repo-index.md`
@@ -14,13 +14,13 @@ Stable rules belong in `AGENTS.md`, `README.md`, `docs/repo-index.md`, or
   - `codex/skills/delivery-harness-framework/SKILL.md`
 - blocked_sources: none
 - unsafe_inputs: none
-- next_safe_task: Operator may review and push the completed public-site audience upgrade, then verify the listed GitHub Pages URLs after deployment.
+- next_safe_task: Review the bounded dirty diff and request commit/push/publication separately if desired; retain the runtime backup until that decision.
 - required_commands:
   - `python3 test_runner.py`
   - `git diff --check`
   - `./scripts/verify_codex_env.sh --repo-root "$(pwd)" --codex-home "$HOME/.codex" --claude-home "$HOME/.claude"`
-- latest_checkpoint: 2026-08-04T11:35:59-04:00 B7 complete: updated the bilingual runtime parity status to the verified 2026-08-04 recovery, advanced all 19 public status banners, added five new audience pages to alignment coverage, replaced legacy Markdown-link expectations, and asserted source-heading parity for the rendered lifecycle routing specification.
-- latest_verification: 2026-08-04T11:35:59-04:00 command=python3 scripts/check_surfaces.py --check-public-nav && PYTHONDONTWRITEBYTECODE=1 python3 test_runner.py && git diff --check; exit_code=0; key_output=surfaces manifest consistent; ran=105 passed=105 skipped=0 failed=0; 19 status banners use 2026-08-04; five new pages are alignment-tested; all source headings appear in rendered HTML
+- latest_checkpoint: 2026-08-10T11:17:51-04:00 MCE-20260810-dhf-runtime-promotion-v1 targeted seven runtime files from source, verified runtime_promoted and 24/24 tracked parity, refreshed DHF status docs, and admitted probe-verified Codex CLI 0.147.0.
+- latest_verification: 2026-08-10T11:17:51-04:00 command=PYTHONDONTWRITEBYTECODE=1 python3 test_runner.py; exit_code=0; key_output=ran=120 passed=120 skipped=0 failed=0; runtime_state=runtime_promoted; promotion_difference_paths=[]; tracked runtime 24/24; host guard probe 18/18; environment Verification passed; non-target invariant PASS
 - compaction_ordinal: 1
 - transition_key: MCE-20260802-harness-compaction-governance:W6a
 - gate_decision: none
@@ -2835,3 +2835,42 @@ Stable rules belong in `AGENTS.md`, `README.md`, `docs/repo-index.md`, or
   - none
 - next_safe_task: Review the reconciled eight-path dirty diff and request commit/push only if desired; keep all recovery stashes and runtime backup until that decision
 - checkpoint_data: {"constraints":["Do not commit, push, pop/delete stashes, remove worktrees, or delete the runtime backup without explicit authorization"],"next_action":{"args":[],"command":"git diff --stat","requires_user_direction_for_commit":true},"ownership":{"boundary":"The five documentation/product-guide paths are restored user-owned changes, the validator is the validated repair, the test file is a verified minimal merge of both, and harness-state is the append-only integrator checkpoint","files":{"README.md":"user_owned_restored","docs/DHF_SIMPLIFICATION_PRODUCT_GUIDE.md":"user_owned_restored","docs/HARNESS_RUNTIME.md":"user_owned_restored","docs/LIFECYCLE_SKILL_ROUTING.md":"user_owned_restored","docs/harness-state.md":"agent_owned_checkpoint","docs/repo-index.md":"user_owned_restored","scripts/validate_dhf_simplification_corpus.py":"agent_owned_repair","tests/test_dhf_simplification.py":"verified_mixed_merge"}},"phase":"handoff","schema":"dhf_checkpoint_v1","verification_evidence":{"command":"python3 tests/test_dhf_simplification.py && python3 scripts/validate_dhf_simplification_corpus.py validate tests/fixtures/dhf_simplification_scenarios.json --contract docs/plans/2026-07-12-dhf-simplification-implementation-contract.md --check-baseline --json && python3 scripts/dhf_simplification_evidence.py --repo-root \"$(pwd)\" && python3 scripts/check_skill_compatibility.py --repo-root \"$(pwd)\" --codex-home \"$HOME/.codex\" --claude-home \"$HOME/.claude\" --strict-runtime-parity --json && python3 scripts/check_codex_skill_loader.py --repo-root \"$(pwd)\" --codex-home \"$HOME/.codex\" --json && python3 test_runner.py && ./scripts/verify_codex_env.sh --repo-root \"$(pwd)\" --codex-home \"$HOME/.codex\" --claude-home \"$HOME/.claude\" && git diff --check","exit_code":0,"freshness":"fresh","key_output":"DHF=49/49; acceptance=18/18; test_runner=93/93; Verification passed; compatibility errors=0; loader errors=0; runtime_state=runtime_promoted; promotion_difference_paths=[]; diff check clean","timestamp":"2026-08-02T22:02:46Z"}}
+- constraints: ["No commit, push, deploy, publication, restart, customer-adoption, production-enforcement, or commercial-validation claim."]
+- ownership: {}
+- next_action: {"command":"Review the bounded dirty diff and request commit/push/publication separately if desired; retain the runtime backup until that decision."}
+
+### 2026-08-10T11:17:51-04:00
+- phase: validation
+- event: checkpoint
+- summary: MCE-20260810-dhf-runtime-promotion-v1 targeted seven runtime files from source, verified runtime_promoted and 24/24 tracked parity, refreshed DHF status docs, and admitted probe-verified Codex CLI 0.147.0.
+- git:
+  - branch: main
+  - latest_commit: 860133c
+  - dirty_status: dirty
+  - dirty_count: 8
+- gate_decision: none
+- changed_surfaces:
+  - `docs/dhf-architecture-status-en.html`
+  - `docs/dhf-architecture-status-cn.html`
+  - `docs/AGENT_HARNESS_STATUS.md`
+  - `docs/HARNESS_RUNTIME.md`
+  - `docs/CODEX_ENV_REPRODUCTION.md`
+  - `scripts/install_prereqs.sh`
+  - `scripts/verify_codex_env.sh`
+  - `test_runner.py`
+  - `TEST_VERIFICATION.md`
+  - `/Users/kezheng/.codex/hooks/dhf_preprompt.py`
+  - `/Users/kezheng/.codex/hooks/harness_guard.py`
+  - `/Users/kezheng/.codex/hooks/harness_observer.py`
+  - `/Users/kezheng/.codex/hooks/session_bearing.py`
+  - `/Users/kezheng/.codex/hooks/task_state.py`
+  - `/Users/kezheng/.codex/skills/delivery-harness-framework/SKILL.md`
+  - `/Users/kezheng/.codex/skills/delivery-harness-framework/evals/evals.json`
+- verification:
+  - command: `PYTHONDONTWRITEBYTECODE=1 python3 test_runner.py`
+  - exit_code: 0
+  - key_output: ran=120 passed=120 skipped=0 failed=0; runtime_state=runtime_promoted; promotion_difference_paths=[]; tracked runtime 24/24; host guard probe 18/18; environment Verification passed; non-target invariant PASS
+- blockers:
+  - none
+- next_safe_task: Review the bounded dirty diff and request commit/push/publication separately if desired; retain the runtime backup until that decision.
+- checkpoint_data: {"constraints":["No commit, push, deploy, publication, restart, customer-adoption, production-enforcement, or commercial-validation claim."],"next_action":{"command":"Review the bounded dirty diff and request commit/push/publication separately if desired; retain the runtime backup until that decision."},"ownership":{},"phase":"validation","schema":"dhf_checkpoint_v1","verification_evidence":{"command":"PYTHONDONTWRITEBYTECODE=1 python3 test_runner.py","exit_code":0,"freshness":"fresh","key_output":"ran=120 passed=120 skipped=0 failed=0; runtime_state=runtime_promoted; promotion_difference_paths=[]; tracked runtime 24/24; host guard probe 18/18; environment Verification passed; non-target invariant PASS","timestamp":"2026-08-10T15:16:39Z"}}

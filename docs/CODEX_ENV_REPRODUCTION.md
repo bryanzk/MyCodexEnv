@@ -1,9 +1,11 @@
 # Codex + Claude Environment Reproduction (Git Clone + One Command)
 
-> **DHF_PUBLIC_STATUS_V1 · 2026-08-03:** The paths below describe repository
-> source and intended sync behavior; they do not prove that a particular
-> `~/.codex` currently matches. The approved W6a snapshot passed historically,
-> while a fresh comparison now detects runtime drift. Current status:
+> **DHF_PUBLIC_STATUS_V1 · local evidence refreshed 2026-08-10:** The paths
+> below describe repository source and intended sync behavior. For this machine,
+> a targeted promotion now reports `runtime_promoted` and 24/24 tracked managed
+> runtime files match source. This local receipt does not prove another machine,
+> public deployment, production enforcement, customer adoption, or commercial
+> validation. Current status:
 > [English](./dhf-architecture-status-en.html) ·
 > [中文](./dhf-architecture-status-cn.html).
 
@@ -43,7 +45,7 @@
 ## Harness Guard Phase Resolution
 
 - **Source:** `codex/hooks/harness_guard.py` resolves authorization phase from host top-level `phase`, then `CODEX_HARNESS_PHASE`, then the task-scoped transcript marker, then exactly one non-symlink repo snapshot at `docs/harness-state.md` or `docs/designs/harness-state.md`, and finally `unknown`. `tool_input.phase` and `tool_input.cwd` are not authorization inputs. A snapshot must contain exactly one explicit policy-valued `Phase` field inside its sole `## Current Snapshot` section; history outside that section is ignored, and ambiguity or read failure is fail-closed. Supporting the `docs/designs/` candidate does not migrate ShipQ or change MyCodexEnv's current `docs/harness-state.md` behavior.
-- **Installed runtime:** the source file and `~/.codex/hooks/harness_guard.py` are separate states. This source-stage change does not manually promote or verify the installed copy. Because the scheduled environment sync reads the repository working tree rather than Git `HEAD`, leaving an accepted change in this working tree can copy it into the runtime during the next daily sync window; an uncommitted change must not be assumed dormant.
+- **Installed runtime:** the source file and `~/.codex/hooks/harness_guard.py` are separate states. The 2026-08-10 targeted promotion verified byte parity for the approved target and the broader tracked managed comparison was 24/24; this does not authorize a future sync. Because the scheduled environment sync reads the repository working tree rather than Git `HEAD`, leaving an accepted change in this working tree can copy it into the runtime during the next daily sync window; an uncommitted change must not be assumed dormant.
 - **Active behavior:** source tests and even source/runtime byte parity do not prove that the host loaded or executed the hook. Active enforcement requires a fresh-session host-level probe in an owner-controlled real repository, including direct evidence that the hook ran. A disposable repository may test parser behavior only and must not be treated as proof of a durable write grant; a later P3 slice is expected to remove write-grant authority from snapshots.
 
 ## Skills Source of Truth
