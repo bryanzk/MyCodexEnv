@@ -3,3 +3,4 @@
 # Changes to this file require normal code review; do not add local approvals.
 sha256:1f7cf3d006ac7a81f01967c4ece96176d5e92ee0c9ccd914ff7ab5615c79ff9d  Approve 6e9d662: observer minimization + digest authority + policy alignment
 sha256:f6ced0a17b2f30cdfc784bf2dca7c9b57184f018493dbdcdde03915b3a44176d  Approve loaded-state readback: observer receipt + three-stage sync gate
+sha256:a635daae2dd644ed2e25e20b23e6f20fc1b9529d3cb42d386ff99c504b8efcd8  Approve 26cabff: canonicalize scoped harness governance (independently blind-reviewed)
