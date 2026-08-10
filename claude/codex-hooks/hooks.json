@@ -1,0 +1,67 @@
+{
+  "hooks": {
+    "SessionStart": [
+      {
+        "matcher": "startup",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "/usr/bin/python3 ~/.codex/hooks/session_start_require_naming.py",
+            "statusMessage": "Loading session naming rule"
+          },
+          {
+            "type": "command",
+            "command": "/usr/bin/python3 ~/.codex/hooks/session_bearing.py",
+            "statusMessage": "Recovering session bearing"
+          }
+        ]
+      }
+    ],
+    "UserPromptSubmit": [
+      {
+        "matcher": "*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "/usr/bin/python3 ~/.codex/hooks/compaction_probe.py",
+            "statusMessage": "Reading host-observed compaction ordinal"
+          },
+          {
+            "type": "command",
+            "command": "/usr/bin/python3 ~/.codex/hooks/model_router.py",
+            "statusMessage": "Routing prompt to a cost-aware model tier"
+          },
+          {
+            "type": "command",
+            "command": "/usr/bin/python3 ~/.codex/hooks/dhf_preprompt.py",
+            "statusMessage": "Applying DHF prompt policy"
+          }
+        ]
+      }
+    ],
+    "PreToolUse": [
+      {
+        "matcher": "*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "/usr/bin/python3 ~/.codex/hooks/harness_guard.py",
+            "statusMessage": "Checking harness tool policy"
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "/usr/bin/python3 ~/.codex/hooks/harness_observer.py",
+            "statusMessage": "Recording harness evidence"
+          }
+        ]
+      }
+    ]
+  }
+}

@@ -1,0 +1,5 @@
+repo=https://github.com/mattpocock/skills.git
+commit=84fdeffd12f2ee307994d1eb6feb48173b6e0502
+installed_from=skills
+preserved_existing=grill-me,grilling
+local_patch=setup-ts-deep-modules-relative-example

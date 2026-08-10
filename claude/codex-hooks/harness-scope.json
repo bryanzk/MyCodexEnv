@@ -1,0 +1,5 @@
+{
+  "governed_roots": ["~/Codes"],
+  "protected_roots": ["~/.codex"],
+  "out_of_scope_mode": "allow"
+}

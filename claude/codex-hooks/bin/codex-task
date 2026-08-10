@@ -1,0 +1,144 @@
+#!/usr/bin/env python3
+"""Self-service task declaration for the harness guard (improvement plan S3).
+
+Usage:
+    codex-task declare <phase> --reason "one line" [--ttl 8h] [--session-id UUID]
+
+Writes a TTL-bound declaration keyed by workspace (git root inside a repo,
+canonical cwd otherwise) to $CODEX_HOME/task-state/, plus an audit record.
+This script only writes under $CODEX_HOME/task-state/ and never touches the
+workspace itself.
+"""
+from __future__ import annotations
+
+import argparse
+import hashlib
+import json
+import os
+import re
+import sys
+from datetime import datetime, timedelta, timezone
+from pathlib import Path
+
+HOOKS_DIR = Path(__file__).resolve().parent.parent / "hooks"
+if str(HOOKS_DIR) not in sys.path:
+    sys.path.insert(0, str(HOOKS_DIR))
+
+try:
+    import task_state
+except Exception as exc:  # pragma: no cover - deployment error, not logic
+    print(f"codex-task: cannot import task_state from {HOOKS_DIR}: {exc}", file=sys.stderr)
+    raise SystemExit(2)
+
+DEFAULT_TTL = timedelta(hours=8)
+MAX_TTL = timedelta(hours=24)
+MAX_AUDIT_BYTES = 32 * 1024 * 1024
+TTL_PATTERN = re.compile(r"^(\d+)([hm])$")
+DIRECTORY_MODE = 0o700
+FILE_MODE = 0o600
+
+
+def parse_ttl(raw: str) -> timedelta | None:
+    match = TTL_PATTERN.fullmatch(raw.strip())
+    if match is None:
+        return None
+    amount = int(match.group(1))
+    if amount <= 0:
+        return None
+    ttl = timedelta(hours=amount) if match.group(2) == "h" else timedelta(minutes=amount)
+    if ttl > MAX_TTL:
+        return None
+    return ttl
+
+
+def task_state_dir() -> Path:
+    return task_state._codex_home() / "task-state"
+
+
+def append_audit(record: dict) -> None:
+    directory = task_state_dir()
+    directory.mkdir(parents=True, exist_ok=True)
+    os.chmod(directory, DIRECTORY_MODE)
+    audit = directory / "audit.jsonl"
+    try:
+        if audit.exists() and audit.stat().st_size > MAX_AUDIT_BYTES:
+            stamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
+            audit.rename(directory / f"audit.{stamp}.jsonl")
+    except OSError:
+        pass
+    with audit.open("a", encoding="utf-8") as handle:
+        handle.write(json.dumps(record, ensure_ascii=False) + "\n")
+    os.chmod(audit, FILE_MODE)
+
+
+def declare(args: argparse.Namespace) -> int:
+    alias = args.phase.lower()
+    phase = task_state.DECLARABLE_PHASES.get(alias)
+    if phase is None:
+        detail = "'ship' is not self-declarable" if alias == "ship" else f"unknown phase '{args.phase}'"
+        print(f"codex-task: {detail}. Declarable: {sorted(set(task_state.DECLARABLE_PHASES))}", file=sys.stderr)
+        return 2
+    reason = (args.reason or "").strip()
+    if not reason:
+        print("codex-task: --reason is required and must be non-empty.", file=sys.stderr)
+        return 2
+    ttl = parse_ttl(args.ttl)
+    if ttl is None:
+        print("codex-task: --ttl must be like 30m/8h and at most 24h.", file=sys.stderr)
+        return 2
+    session_id = args.session_id
+    if session_id is not None and not task_state.UUID_PATTERN.fullmatch(session_id):
+        print("codex-task: --session-id must be a UUID.", file=sys.stderr)
+        return 2
+
+    cwd = os.getcwd()
+    key = task_state.workspace_key(cwd)
+    if key is None:
+        print("codex-task: cannot resolve current workspace.", file=sys.stderr)
+        return 2
+    now = datetime.now(timezone.utc)
+    record = {
+        "schema_version": 1,
+        "phase": phase,
+        "declared_alias": alias,
+        "reason": reason,
+        "workspace": str(key),
+        "created_at": now.isoformat(),
+        "expires_at": (now + ttl).isoformat(),
+        "ttl_seconds": int(ttl.total_seconds()),
+        "session_id": session_id,
+        "declared_from_cwd": cwd,
+    }
+
+    directory = task_state_dir()
+    directory.mkdir(parents=True, exist_ok=True)
+    os.chmod(directory, DIRECTORY_MODE)
+    digest = hashlib.sha256(str(key).encode("utf-8")).hexdigest()
+    path = directory / f"{digest}.json"
+    path.write_text(json.dumps(record, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+    os.chmod(path, FILE_MODE)
+    append_audit({"event": "declare", **record})
+
+    print(
+        f"declared phase={phase} (alias={alias}) for workspace={key} "
+        f"until {record['expires_at']} — retry the blocked action now."
+    )
+    return 0
+
+
+def main(argv: list[str]) -> int:
+    parser = argparse.ArgumentParser(prog="codex-task")
+    sub = parser.add_subparsers(dest="command", required=True)
+    p_declare = sub.add_parser("declare", help="declare the working phase for this workspace")
+    p_declare.add_argument("phase")
+    p_declare.add_argument("--reason", required=True)
+    p_declare.add_argument("--ttl", default="8h")
+    p_declare.add_argument("--session-id", default=None)
+    args = parser.parse_args(argv)
+    if args.command == "declare":
+        return declare(args)
+    return 2
+
+
+if __name__ == "__main__":
+    raise SystemExit(main(sys.argv[1:]))

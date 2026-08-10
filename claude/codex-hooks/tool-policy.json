@@ -1,0 +1,156 @@
+{
+  "version": 1,
+  "default_phase": "development",
+  "unknown_phase_behavior": "read_only",
+  "evidence_dir": "~/.codex/harness/evidence",
+  "plan_governor": {
+    "version": 1,
+    "payload_capable": false,
+    "mode": "shadow",
+    "production_status": "no_go",
+    "reason": "dispatch command is observable but PreToolUse permissionDecision ask is unsupported and fails open"
+  },
+  "agent_dispatch_tool_names": [
+    "spawn_agent",
+    "multi_agent_v1.spawn_agent",
+    "dispatch_agents",
+    "dispatch_agent",
+    "spawn_agents",
+    "task_team"
+  ],
+  "agent_dispatch_command_patterns": [
+    "\\bharness_agent_team\\.py\\b.*\\bdispatch\\b"
+  ],
+  "categories": {
+    "read": {"risk_tier": "low"},
+    "repo_write": {"risk_tier": "medium"},
+    "network": {"risk_tier": "medium"},
+    "remote": {"risk_tier": "high"},
+    "secret": {"risk_tier": "high"},
+    "destructive": {"risk_tier": "high"},
+    "dynamic_exec": {"risk_tier": "high"},
+    "agent_dispatch": {"risk_tier": "medium"}
+  },
+  "phases": {
+    "research": {
+      "allow_repo_write": false,
+      "allow_network": false,
+      "allow_remote": false,
+      "allow_subagents": true,
+      "minimum_gate": "source files read and cited"
+    },
+    "requirements": {
+      "allow_repo_write": false,
+      "allow_network": false,
+      "allow_remote": false,
+      "allow_subagents": false,
+      "minimum_gate": "success criteria captured"
+    },
+    "planning": {
+      "allow_repo_write": false,
+      "allow_network": false,
+      "allow_remote": false,
+      "allow_subagents": true,
+      "minimum_gate": "decision-complete plan and validation gate"
+    },
+    "development": {
+      "allow_repo_write": true,
+      "allow_network": false,
+      "allow_remote": false,
+      "allow_subagents": true,
+      "minimum_gate": "focused tests for touched behavior"
+    },
+    "validation": {
+      "allow_repo_write": false,
+      "allow_network": false,
+      "allow_remote": false,
+      "allow_subagents": true,
+      "minimum_gate": "fresh verification evidence"
+    },
+    "review": {
+      "allow_repo_write": false,
+      "allow_network": false,
+      "allow_remote": false,
+      "allow_subagents": true,
+      "minimum_gate": "findings or no-issue statement"
+    },
+    "ship": {
+      "allow_repo_write": true,
+      "allow_network": true,
+      "allow_remote": false,
+      "allow_subagents": true,
+      "minimum_gate": "ship and release gates"
+    },
+    "handoff": {
+      "allow_repo_write": false,
+      "allow_network": false,
+      "allow_remote": false,
+      "allow_subagents": false,
+      "minimum_gate": "state log and next safe task"
+    }
+  },
+  "secret_path_patterns": [
+    "(^|/)\\.env(\\.(?!example$|sample$|template$|dist$)[^/]*)?$",
+    "(^|/)auth\\.json$",
+    "(^|/)id_rsa$",
+    "(^|/)\\.netrc$",
+    "(^|/)\\.aws/credentials$",
+    "(^|/)\\.ssh/",
+    "\\.(pem|key|p12|pfx|jks|keystore)$"
+  ],
+  "secret_command_patterns": [
+    "-----BEGIN [A-Z ]*PRIVATE KEY-----",
+    "\\bAKIA[0-9A-Z]{16}\\b",
+    "\\bghp_[A-Za-z0-9]{36}\\b",
+    "\\bgithub_pat_[A-Za-z0-9_]{22,}\\b",
+    "\\bxox[baprs]-[A-Za-z0-9-]{10,}\\b",
+    "\\bsk-[A-Za-z0-9]{20,}\\b",
+    "\\bBearer\\s+[A-Za-z0-9._~+/-]{20,}={0,2}",
+    "\\b(export|set)\\s+[A-Za-z_]*(TOKEN|SECRET|PASSWORD|API_KEY)\\s*=\\s*[\"']?[A-Za-z0-9_\\-./+]{8,}",
+    "--password=\\S{4,}"
+  ],
+  "destructive_command_patterns": [
+    "\\brm\\s+(-[A-Za-z]*r[A-Za-z]*|--recursive)\\b",
+    "\\bgit\\s+reset\\s+--hard\\b",
+    "\\bgit\\s+(checkout|restore)\\s+\\.\\b",
+    "\\bgit\\s+push\\b.*\\s(-f|--force)\\b",
+    "\\bdrop\\s+(table|database)\\b",
+    "\\btruncate\\b",
+    "\\bkubectl\\s+delete\\b",
+    "\\bdocker\\s+(rm\\s+-f|system\\s+prune)\\b"
+  ],
+  "dynamic_exec_patterns": [
+    "\\b(curl|wget)\\b.*\\|\\s*(sh|bash|zsh|python|python3)\\b",
+    "\\b(sh|bash|zsh)\\s+<\\s*\\(\\s*(curl|wget)\\b",
+    "\\bnpx\\s+.*(@latest|--yes|-y)\\b"
+  ],
+  "remote_command_patterns": [
+    "^\\s*ssh\\b",
+    "^\\s*scp\\b",
+    "^\\s*rsync\\b.*:",
+    "\\bkubectl\\b",
+    "\\bterraform\\s+apply\\b",
+    "\\bgh\\s+workflow\\s+run\\b"
+  ],
+  "network_command_patterns": [
+    "^\\s*(curl|wget)\\b",
+    "\\bnpm\\s+(install|add|update|exec)\\b",
+    "\\bnpx\\b",
+    "\\bpip\\s+install\\b",
+    "\\buv\\s+add\\b",
+    "\\bgo\\s+(get|install)\\b"
+  ],
+  "repo_write_command_patterns": [
+    "\\bapply_patch\\b",
+    "\\b(sed|perl)\\s+.*-i\\b",
+    "\\btee\\s+",
+    "\\bcp\\s+",
+    "\\bmv\\s+",
+    "\\bmkdir\\s+",
+    "\\btouch\\s+",
+    "\\bpython3?\\b.*\\b(write_text|open\\(.+,[^)]*[wa])"
+  ],
+  "safe_read_command_patterns": [
+    "^\\s*(pwd|ls|find|rg|sed\\s+-n|tail|head|wc|git\\s+(status|log|show|diff)|test\\s+-f|cat)\\b"
+  ]
+}
