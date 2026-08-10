@@ -2,8 +2,11 @@
 from __future__ import annotations
 
 import json
+import hashlib
 import os
 import re
+import shlex
+import stat
 import subprocess
 import sys
 from datetime import datetime, timedelta, timezone
@@ -42,6 +45,234 @@ def load_policy() -> dict[str, Any]:
         return {}
 
 
+OUT_OF_SCOPE_PHASE_POLICY: dict[str, Any] = {
+    "allow_repo_write": True,
+    "allow_network": True,
+    "allow_remote": False,
+}
+DEFAULT_PROTECTED_COMMAND_PATTERNS = [
+    r"(~|\$HOME|/Users/[^/\s\"']+|/home/[^/\s\"']+)/\.codex(/|\b)",
+]
+DEFAULT_PERSISTENCE_PATH_PATTERNS = [
+    r"/Library/LaunchAgents(?:/|$)",
+    r"/(?:\.zshrc|\.zshenv|\.zprofile|\.bashrc|\.profile)$",
+    r"\bcrontab\b.*(?:-|<|\bwrite\b)",
+]
+PATCH_TARGET = re.compile(r"^\*\*\* (?:Add|Update|Delete) File:\s*(.+?)\s*$")
+_DIGEST_CACHE: dict[tuple[str, int, int, int], str] = {}
+RECOVERY_COMMANDS = (
+    './scripts/verify_codex_env.sh --repo-root "$(pwd)" --codex-home "$HOME/.codex" '
+    '--claude-home "$HOME/.claude"; ./scripts/sync_codex_home.sh'
+)
+
+
+def load_scope() -> dict[str, Any]:
+    path = codex_home() / "runtime" / "harness-scope.json"
+    if not path.exists():
+        return {}
+    try:
+        data = json.loads(path.read_text(encoding="utf-8"))
+    except (json.JSONDecodeError, OSError):
+        return {}
+    return data if isinstance(data, dict) else {}
+
+
+def _canonical_path(raw: Any, base: Path | None = None) -> Path | None:
+    if not isinstance(raw, str) or not raw.strip():
+        return None
+    try:
+        path = Path(raw).expanduser()
+        if not path.is_absolute() and base is not None:
+            path = base / path
+        return path.resolve(strict=False)
+    except (OSError, RuntimeError, ValueError):
+        return None
+
+
+def _scope_roots(scope: dict[str, Any], key: str) -> list[Path]:
+    value = scope.get(key)
+    if not isinstance(value, list):
+        return []
+    return [path for item in value if (path := _canonical_path(item)) is not None]
+
+
+def _within_any(path: Path, roots: list[Path]) -> bool:
+    for root in roots:
+        try:
+            path.relative_to(root)
+            return True
+        except ValueError:
+            pass
+    return False
+
+
+def structured_targets(payload: dict[str, Any]) -> list[str]:
+    name = tool_name(payload).lower()
+    data = tool_input(payload)
+    if name == "apply_patch":
+        patch = data.get("patch")
+        if not isinstance(patch, str):
+            return []
+        return [match.group(1) for line in patch.splitlines() if (match := PATCH_TARGET.fullmatch(line))]
+    if name not in {"write", "edit", "multi_edit"}:
+        return []
+    targets: list[str] = []
+    for key in ("file_path", "path", "file", "filename"):
+        value = data.get(key)
+        if isinstance(value, str):
+            targets.append(value)
+    if name == "multi_edit" and isinstance(data.get("edits"), list):
+        for edit in data["edits"]:
+            if not isinstance(edit, dict):
+                continue
+            for key in ("file_path", "path", "file", "filename"):
+                value = edit.get(key)
+                if isinstance(value, str):
+                    targets.append(value)
+    return targets
+
+
+def _pattern_list(scope: dict[str, Any], key: str, defaults: list[str]) -> list[str]:
+    configured = scope.get(key)
+    return [item for item in configured if isinstance(item, str)] if isinstance(configured, list) else list(defaults)
+
+
+def _screening_hit(
+    payload: dict[str, Any], scope: dict[str, Any], cwd: Path | None, *, roots_key: str | None, patterns_key: str,
+    defaults: list[str],
+) -> bool:
+    targets = [_canonical_path(raw, cwd) for raw in structured_targets(payload)]
+    if roots_key and any(
+        target is not None and _within_any(target, _scope_roots(scope, roots_key)) for target in targets
+    ):
+        return True
+    patterns = _pattern_list(scope, patterns_key, defaults)
+    if roots_key:
+        patterns.extend(re.escape(str(root)) for root in _scope_roots(scope, roots_key))
+        raw_roots = scope.get(roots_key)
+        if isinstance(raw_roots, list):
+            patterns.extend(re.escape(item.strip()) for item in raw_roots if isinstance(item, str) and item.strip())
+    text = "\n".join([command_text(payload), *structured_targets(payload)])
+    return match_any(patterns, text) is not None
+
+
+def _protected_hit(payload: dict[str, Any], scope: dict[str, Any], cwd: Path | None) -> bool:
+    return _screening_hit(
+        payload, scope, cwd, roots_key="protected_roots", patterns_key="protected_command_patterns",
+        defaults=DEFAULT_PROTECTED_COMMAND_PATTERNS,
+    )
+
+
+def _persistence_hit(payload: dict[str, Any], scope: dict[str, Any], cwd: Path | None) -> bool:
+    return _screening_hit(
+        payload, scope, cwd, roots_key=None, patterns_key="persistence_path_patterns",
+        defaults=DEFAULT_PERSISTENCE_PATH_PATTERNS,
+    )
+
+
+def out_of_scope(payload: dict[str, Any], scope: dict[str, Any]) -> bool:
+    governed = _scope_roots(scope, "governed_roots")
+    if not governed or scope.get("out_of_scope_mode") not in {"allow", "report"}:
+        return False
+    cwd = _canonical_path(str(payload.get("cwd") or os.getcwd()))
+    return cwd is not None and not _within_any(cwd, governed)
+
+
+TASK_ADMIN_METACHARS = re.compile(r"[;&|<>`$\r\n]")
+TASK_ADMIN_PHASE = re.compile(r"^[A-Za-z-]+$")
+TASK_ADMIN_REASON = re.compile(r"^[A-Za-z0-9._:-]{1,64}$")
+TASK_ADMIN_TTL = re.compile(r"^\d+[hm]$")
+TASK_ADMIN_SESSION = re.compile(
+    r"^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$", re.IGNORECASE
+)
+
+
+def is_task_admin_command(cmd: str) -> bool:
+    if not cmd or TASK_ADMIN_METACHARS.search(cmd):
+        return False
+    try:
+        tokens = shlex.split(cmd)
+    except ValueError:
+        return False
+    if len(tokens) < 4:
+        return False
+    head = tokens[0]
+    if head != "codex-task" and _canonical_path(head) != (codex_home() / "bin" / "codex-task").resolve(strict=False):
+        return False
+    command = tokens[1]
+    if command == "revoke":
+        return len(tokens) == 4 and tokens[2] == "--reason" and TASK_ADMIN_REASON.fullmatch(tokens[3]) is not None
+    if command != "declare" or len(tokens) < 5 or TASK_ADMIN_PHASE.fullmatch(tokens[2]) is None:
+        return False
+    seen: set[str] = set()
+    validators = {"--reason": TASK_ADMIN_REASON, "--ttl": TASK_ADMIN_TTL, "--session-id": TASK_ADMIN_SESSION}
+    index = 3
+    while index < len(tokens):
+        flag = tokens[index]
+        if flag in seen or flag not in validators or index + 1 >= len(tokens):
+            return False
+        if validators[flag].fullmatch(tokens[index + 1]) is None:
+            return False
+        seen.add(flag)
+        index += 2
+    return "--reason" in seen
+
+
+def _cached_sha256(path: Path, info: os.stat_result) -> str:
+    key = (str(path), info.st_size, info.st_mtime_ns, info.st_ino)
+    digest = _DIGEST_CACHE.get(key)
+    if digest is None:
+        digest = hashlib.sha256(path.read_bytes()).hexdigest()
+        for stale in [cached for cached in _DIGEST_CACHE if cached[0] == str(path)]:
+            _DIGEST_CACHE.pop(stale, None)
+        _DIGEST_CACHE[key] = digest
+    return digest
+
+
+def integrity_watch_status(scope: dict[str, Any]) -> tuple[str, str]:
+    manifest_path = codex_home() / "harness" / "deployed-manifest.json"
+    if not manifest_path.exists():
+        return "inactive", "deployed manifest missing"
+    limits = scope.get("integrity_watch")
+    limits = limits if isinstance(limits, dict) else {}
+    max_files = int(limits.get("max_files", 32))
+    max_file_bytes = int(limits.get("max_file_bytes", 1024 * 1024))
+    max_total_bytes = int(limits.get("max_total_bytes", 4 * 1024 * 1024))
+    try:
+        manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+        files = manifest.get("files") if isinstance(manifest, dict) else None
+        if not isinstance(files, list):
+            return "frozen", "manifest files are invalid"
+        if len(files) > max_files:
+            return "frozen", f"manifest file count exceeds {max_files}"
+        total = 0
+        home = codex_home().resolve(strict=False)
+        for entry in files:
+            if not isinstance(entry, dict) or not isinstance(entry.get("path"), str):
+                return "frozen", "manifest entry is invalid"
+            raw_path = Path(entry["path"])
+            if raw_path.is_absolute():
+                return "frozen", "manifest path must be relative"
+            path = (home / raw_path).resolve(strict=False)
+            if not _within_any(path, [home]):
+                return "frozen", "manifest path escapes CODEX_HOME"
+            info = path.stat()
+            if not stat.S_ISREG(info.st_mode) or entry.get("type") != "file":
+                return "frozen", f"deployed type mismatch: {entry['path']}"
+            if stat.S_IMODE(info.st_mode) != entry.get("mode"):
+                return "frozen", f"deployed mode mismatch: {entry['path']}"
+            if info.st_size > max_file_bytes:
+                return "frozen", f"deployed file exceeds {max_file_bytes} bytes: {entry['path']}"
+            total += info.st_size
+            if total > max_total_bytes:
+                return "frozen", f"deployed total exceeds {max_total_bytes} bytes"
+            if _cached_sha256(path, info) != entry.get("sha256"):
+                return "frozen", f"deployed digest mismatch: {entry['path']}"
+    except (OSError, ValueError, TypeError, json.JSONDecodeError) as exc:
+        return "frozen", f"integrity watch error: {exc}"
+    return "ok", "manifest matches"
+
+
 def tool_input(payload: dict[str, Any]) -> dict[str, Any]:
     for key in ("tool_input", "input", "arguments", "params"):
         value = payload.get(key)
@@ -72,6 +303,7 @@ def candidate_paths(payload: dict[str, Any]) -> list[str]:
         value = data.get(key) or payload.get(key)
         if isinstance(value, str):
             paths.append(value)
+    paths.extend(structured_targets(payload))
     return paths
 
 
@@ -120,9 +352,25 @@ def _phase_resolution(
     policy: dict[str, Any],
     root: Path | None,
 ) -> tuple[str, str]:
-    value = payload.get("phase") or os.environ.get("CODEX_HARNESS_PHASE")
+    phase, marker_reason, _ = phase_with_trace(payload, policy, root)
+    return phase, marker_reason
+
+
+def phase_with_trace(
+    payload: dict[str, Any],
+    policy: dict[str, Any],
+    root: Path | None,
+) -> tuple[str, str, dict[str, Any]]:
+    env_value = payload.get("phase") or os.environ.get("CODEX_HARNESS_PHASE")
+    scope = load_scope()
+    cwd = _canonical_path(str(payload.get("cwd") or os.getcwd()))
+    adopted = bool(env_value and root is not None and cwd is not None and _within_any(cwd, _scope_roots(scope, "governed_roots")))
+    trace: dict[str, Any] = {"env": {"present": bool(env_value), "adopted": adopted}}
     marker_reason = "NOT_EVALUATED"
-    if not value:
+    if adopted:
+        value = env_value
+        trace.update({"transcript": "NOT_EVALUATED", "self_declared": "NOT_EVALUATED", "snapshot": None, "source": "env"})
+    else:
         if task_state is None:
             marker_phase, marker_reason = None, "TASK_STATE_UNAVAILABLE"
         else:
@@ -130,9 +378,30 @@ def _phase_resolution(
                 marker_phase, marker_reason = task_state.resolve_declared_phase(payload, policy)
             except Exception:
                 marker_phase, marker_reason = None, "TRANSCRIPT_INVALID"
-        value = marker_phase or phase_from_state_snapshot(root) or "unknown"
+        trace["transcript"] = marker_reason
+        self_phase, self_reason = None, "NOT_EVALUATED"
+        if not marker_phase and task_state is not None:
+            try:
+                self_phase, self_reason = task_state.resolve_self_declared(payload.get("cwd") or os.getcwd(), policy)
+            except Exception:
+                self_phase, self_reason = None, "DECLARATION_INVALID"
+        trace["self_declared"] = "SELF_DECLARED" if self_phase else self_reason
+        snapshot_phase = phase_from_state_snapshot(root) if not marker_phase and not self_phase else None
+        trace["snapshot"] = snapshot_phase
+        value = marker_phase or self_phase or snapshot_phase or "unknown"
+        if marker_phase:
+            trace["source"] = "transcript"
+        elif self_phase:
+            marker_reason = "SELF_DECLARED"
+            trace["source"] = "self_declared"
+        elif snapshot_phase:
+            trace["source"] = "snapshot"
+        else:
+            trace["source"] = "none"
     phase = str(value)
-    return (phase if phase in policy.get("phases", {}) else "unknown"), marker_reason
+    resolved = phase if phase in policy.get("phases", {}) else "unknown"
+    trace["resolved"] = resolved
+    return resolved, marker_reason, trace
 
 
 def current_phase(payload: dict[str, Any], policy: dict[str, Any], root: Path | None) -> str:
@@ -317,15 +586,38 @@ def block(reason: str, risk_tier: str) -> dict[str, Any]:
 def decision(payload: dict[str, Any], policy: dict[str, Any]) -> dict[str, Any]:
     if not policy:
         return {}
+    if is_task_admin_command(command_text(payload)):
+        return {}
     cwd = payload.get("cwd") or os.getcwd()
     root = git_root(str(cwd))
-    phase, marker_reason = _phase_resolution(payload, policy, root)
-    phase_policy = policy.get("phases", {}).get(phase)
+    scope = load_scope()
+    watch_status, watch_reason = integrity_watch_status(scope)
+    if watch_status == "frozen":
+        category, _ = classify(payload, policy)
+        if category != "read":
+            return block(
+                f"[harness] integrity watch frozen: {watch_reason}. Recover in a terminal: {RECOVERY_COMMANDS}",
+                "high",
+            )
+    scoped_out = out_of_scope(payload, scope)
+    if scoped_out:
+        phase, marker_reason = "out_of_scope", "OUT_OF_SCOPE"
+        phase_policy = dict(OUT_OF_SCOPE_PHASE_POLICY)
+    else:
+        phase, marker_reason = _phase_resolution(payload, policy, root)
+        phase_policy = policy.get("phases", {}).get(phase)
     if phase_policy is None:
         phase_policy = unknown_phase_policy(policy)
 
     category, reason = classify(payload, policy)
     risk_tier = category_risk_tier(policy, category)
+    canonical_cwd = _canonical_path(str(cwd))
+    if scoped_out and _protected_hit(payload, scope, canonical_cwd):
+        return block("[harness] protected-root screening blocked this call.", "high")
+    if scoped_out and _persistence_hit(payload, scope, canonical_cwd):
+        return block("[harness] persistence screening blocked this call.", "high")
+    if marker_reason == "SELF_DECLARED" and category != "read" and _protected_hit(payload, scope, canonical_cwd):
+        return block("[harness] protected roots stay locked under a self-declared phase.", "high")
     if category == "agent_dispatch":
         if phase_policy.get("allow_subagents") is False:
             return block(f"[harness] subagent dispatch is disabled during phase '{phase}'.", risk_tier)

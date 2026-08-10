@@ -17,6 +17,11 @@ except Exception:  # Observer must keep logging best-effort if guard imports fai
     git_root = None
     load_policy = None
 
+try:
+    from harness_guard import phase_with_trace
+except Exception:
+    phase_with_trace = None
+
 
 COMMAND_HEAD_LIMIT = 200
 KEY_OUTPUT_LIMIT = 500
@@ -79,6 +84,19 @@ def resolved_phase(payload: dict[str, Any], cwd: str) -> str:
         return current_phase(payload, policy, git_root(cwd))
     except Exception:
         return fallback_phase(payload)
+
+
+def resolved_phase_and_trace(payload: dict[str, Any], cwd: str) -> tuple[str, dict[str, Any] | None]:
+    if phase_with_trace is None or git_root is None or load_policy is None:
+        return resolved_phase(payload, cwd), None
+    try:
+        policy = load_policy()
+        if not policy:
+            return fallback_phase(payload), None
+        phase, _, trace = phase_with_trace(payload, policy, git_root(cwd))
+        return phase, trace
+    except Exception:
+        return resolved_phase(payload, cwd), None
 
 
 def sha256_prefix(value: str) -> str:
@@ -170,13 +188,14 @@ def build_event(payload: dict[str, Any]) -> dict[str, Any]:
     command = command_text(payload) or ""
     output = str(payload.get("key_output") or payload.get("result") or payload.get("output") or "")
     raw_capture = os.environ.get("CODEX_HARNESS_EVIDENCE_RAW") == "1"
+    phase, phase_trace = resolved_phase_and_trace(payload, cwd)
     event = {
         "schema_version": 1,
         "timestamp": timestamp,
         "session_id": str(payload.get("session_id") or os.environ.get("CODEX_SESSION_ID") or "")[:TEXT_FIELD_LIMIT],
         "event_type": "tool_call",
         "cwd": cwd[:TEXT_FIELD_LIMIT],
-        "phase": resolved_phase(payload, cwd)[:TEXT_FIELD_LIMIT],
+        "phase": phase[:TEXT_FIELD_LIMIT],
         "tool_name": str(payload.get("tool_name") or payload.get("tool") or payload.get("name") or "unknown")[:TEXT_FIELD_LIMIT],
         "command_present": bool(command),
         "command_length": len(command),
@@ -189,6 +208,8 @@ def build_event(payload: dict[str, Any]) -> dict[str, Any]:
         "approval_state": "unknown",
         "failure_class": "none",
     }
+    if phase_trace is not None:
+        event["phase_trace"] = phase_trace
     if raw_capture:
         event["command_head"] = command[:COMMAND_HEAD_LIMIT]
     if len(command.encode("utf-8")) > MAX_RECORD_BYTES or len(output) > KEY_OUTPUT_LIMIT:

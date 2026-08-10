@@ -258,11 +258,11 @@ For the current project workflow and skill routing map, read
 - `Task Ledger`: `scripts/harness_ledger.py` creates and verifies tamper-evident acceptance ledgers from validated requirements.
 - `Transition Store`: `scripts/harness_transition.py` provides append-only first-record-wins CAS semantics for successor task ids.
 - `Behavior Evaluator`: `scripts/harness_eval.py tier1` executes fixture-driven recovery and handoff-lint end-state assertions from `docs/evals/`.
-- `Permissions`: `codex/runtime/tool-policy.json` declares stage-level tool permissions and low/medium/high risk annotations for every guard category; unknown phases fall back to read-only, and blocked categories have no approval bypass.
+- `Permissions`: `codex/runtime/tool-policy.json` remains unchanged and declares category risk tiers. `codex/runtime/harness-scope.json` separately owns governed roots, screening, env-gate scope, and integrity-watch limits; unknown phases remain read-only.
 - `Hooks`: `codex/hooks/*` implements thin objective guardrails, prompt model routing recommendations, and evidence plumbing.
 - `Observability`: local JSONL evidence records lifecycle and verification events.
 - `Surface Inventory`: `docs/surfaces.json` is the canonical runtime surface inventory; `scripts/check_surfaces.py` keeps it consistent with files on disk, the `docs/repo-index.md` `## Runtime Surfaces` mirror, and opt-in public landing nav links declared with `public_nav`.
-- `Tool Router`: lifecycle stage determines allowed read/write/network/remote behavior. The guard resolves phase in order from the host-owned top-level payload, `CODEX_HARNESS_PHASE`, the transcript marker, one unambiguous repo snapshot, then `unknown`. The marker precedes the snapshot because a task-scoped owner declaration is narrower than repo-scoped state. `tool_input.phase`, `tool_input.cwd`, `tool_input.transcript_path`, and `tool_input.session_id` never participate in authorization. Repository lookup uses only the host-owned top-level `cwd` (or the hook process cwd when absent), while tool-input paths remain classification and logging inputs only.
+- `Tool Router`: lifecycle stage determines allowed read/write/network/remote behavior. Top-level payload/env phase is adopted only for a cwd inside a governed Git repository; trace records whether it was present and adopted. Resolution then uses transcript marker, TTL self-declaration, one unambiguous repo snapshot, and `unknown`. `tool_input.phase`, cwd, transcript, and session fields never authorize.
 - `Model Router`: `codex/hooks/model_router.py` classifies each prompt or subtask as `simple`, `medium`, or `complex` and recommends the cheapest quality-safe model tier. It intentionally stays non-blocking; runtimes or wrapper scripts that can switch models may consume the JSON `routing` object, while plain Codex hooks inject the recommendation and response telemetry requirement as additional context.
 - `Checkpoints`: use git commits, state log entries, and handoff docs as recovery points.
 - `Guardrails`: recognized repo-write phase violations, destructive commands, sensitive paths, credential-shaped command literals, remote operations, and dynamic-execution actions are blocked. The guard emits the Codex-supported legacy block shape; a 2026-07-28 isolated probe proved that the former top-level `permissionDecision` shape and every `ask` variant fail open, so there is no approval channel.
@@ -305,14 +305,42 @@ are skipped because they lack the host's following `user_message` event.
 `automation` and unknown thread sources are ineligible even if their preset
 prompt starts with a valid marker.
 
-`codex/hooks/task_state.py` is a read-only parser: it creates no task-state
-file, cache, or audit record. It accepts only top-level `transcript_path` and
+`codex/hooks/task_state.py` is a side-effect-free resolver: it creates no task-state
+file, cache, or audit record itself. It accepts only top-level `transcript_path` and
 `session_id`, resolves the path, and requires it to remain under
 `<CODEX_HOME>/sessions/`; symlink escapes fail closed. It reads at most the first
 50 transcript lines. Missing, truncated, malformed, identity-mismatched, or
 out-of-bounds transcripts yield no marker phase and a fail-closed reason code;
 the guard then continues to the repo snapshot and `unknown` sources in the
 documented precedence chain.
+
+For plain non-Git workspaces, the root and current cwd must resolve to the same
+canonical directory; Git/non-Git splits and different Git roots remain
+`ROOT_REPO_MISMATCH`, while different plain directories are
+`ROOT_WORKSPACE_MISMATCH`. Well-formed leading host wrapper blocks are skipped
+before the first owner marker; unclosed wrappers fail closed.
+
+`codex/bin/codex-task declare` writes an audited, workspace-bound declaration
+with an 8-hour default and 24-hour maximum TTL; `revoke` removes it and appends
+an audit event. Both commands require a bounded reason code and a strict full
+argv shape. A declaration can remediate only low/medium unknown-phase blocks;
+protected roots and high-risk categories stay blocked.
+
+Out-of-scope workspaces waive phase for low/medium repo-write and network calls,
+including shell commands without structured targets. Secret, destructive,
+dynamic-exec, remote, agent-dispatch, protected-root, and persistence hits stay
+blocked. Shell path checks are screening, not a proof: a constructed
+`$CODEX_HOME` form can pass the current call. The integrity watch detects a
+resulting deployed-file digest/type/mode change on the next non-read call. A
+missing deployed manifest disables the watch and is disclosed by SessionStart.
+
+`codex/runtime/harness-guard-targets.json` fixes the seven promotion targets.
+`scripts/sync_codex_home.sh --promote-harness-guard` applies them under a
+fsync-backed WAL and preserves `tool-policy.json` byte-for-byte; ordinary sync
+also atomically refreshes `harness/deployed-manifest.json` for all canonical
+hooks and target files. `scripts/verify_codex_env.sh --harness-only` consumes the
+same target manifest. These are source capabilities only in this commit; no
+real `~/.codex` promotion is authorized or claimed.
 
 Session metadata has two distinct identities. `session_meta.payload.id` is the
 current thread's globally unique id and equals the UUID suffix in that thread's

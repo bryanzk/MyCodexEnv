@@ -85,6 +85,8 @@ behavior live in `codex/hooks/dhf_preprompt.py`.
 - `codex/skills/committee-review-loop/`: explicit expert-committee review and revision loop skill.
 - `codex/skills/codex-fluent/scripts/report_active_sessions.py`: read-only active Codex session ranking and handoff audit.
 - `codex/runtime/tool-policy.json`: stage-aware tool and permission policy with low/medium/high annotations for every guard category, unknown-phase read-only fallback, configured agent-dispatch patterns, and Plan Governor Shadow status.
+- `codex/runtime/harness-scope.json`: canonical governed roots, protected/persistence screening patterns, and the 32-file/1-MiB/4-MiB integrity-watch limits; these new controls do not modify `tool-policy.json`.
+- `codex/runtime/harness-guard-targets.json`: exact seven-target source/runtime mapping consumed by harness promotion and verification.
 - `codex/runtime/resolve_codex_cli.sh`: resolve a Codex CLI only after its `--version` smoke passes, preferring the npm global CLI before ChatGPT/Codex app bundle fallbacks for launchd and stale-shim recovery.
 - `codex/runtime/dhf-packet.schema.json`: portable DHF packet schema for incubation, consumer handoff, and future extraction boundaries.
 - `codex/runtime/evidence.schema.json`: compatibility local evidence JSONL event contract, including `agent_team_validated` receipts and optional compaction transition decision fields.
@@ -95,7 +97,9 @@ behavior live in `codex/hooks/dhf_preprompt.py`.
 - `codex/runtime/evidence/plan-governor-receipt.schema.json`: plan governor bounded round receipt schema.
 - `codex/hooks/`: Codex lifecycle hooks copied to `~/.codex/hooks/`.
 - `codex/hooks.json`: source lifecycle-hook registration chain deployed only by approved sync.
-- `codex/hooks/harness_guard.py`: PreToolUse guard with legacy block wire shape and risk-tier-tagged decision reasons. Authorization phase precedence is host top-level `phase` -> `CODEX_HARNESS_PHASE` -> task-scoped transcript marker -> exactly one non-symlink snapshot at `docs/harness-state.md` or `docs/designs/harness-state.md` -> `unknown`; tool-input phase, cwd, transcript, and session fields are never authorization sources. Snapshot parsing requires one explicit policy-valued `Phase` field inside the sole `## Current Snapshot` section, ignores later state-log fields, and fails closed on ambiguity or read errors.
+- `codex/hooks/harness_guard.py`: PreToolUse guard with legacy block wire shape, governed/out-of-scope decisions, per-tool structured targets, protected/persistence screening, and integrity-watch freeze. Env/payload phase is accepted only in governed Git workspaces; precedence then continues through transcript, TTL self-declaration, snapshot, and `unknown`.
+- `codex/hooks/task_state.py`: same-Git-root or same canonical non-Git workspace phase resolution, including transcript and TTL state reads.
+- `codex/bin/codex-task`: audited TTL-bound `declare`/`revoke`; declarations do not downgrade high-risk categories or unlock protected roots.
 - `codex/hooks/compaction_counter.py`: shared decoded top-level `compacted` event counter for scanner and prompt probe.
 - `codex/hooks/compaction_probe.py`: incremental UserPromptSubmit host-observed compaction ordinal probe.
 - `codex/hooks/context_meter.py`: W2a-capability-gated context pressure helper with ordinal-only no-persistence degradation.
@@ -225,7 +229,7 @@ behavior live in `codex/hooks/dhf_preprompt.py`.
 - Session State: `docs/harness-state.md` plus local evidence JSONL.
 - Permissions: `codex/runtime/tool-policy.json` and guard hooks.
 - Hooks: `codex/hooks.json` and `codex/hooks/*`.
-- Task-scoped phase: `codex/hooks/task_state.py` is the side-effect-free, read-only transcript parser for owner declarations; every descendant at any depth inherits directly from the same session root, subject to same-repo, identity, and eligible-owner restrictions. It path-fences top-level transcript identity under `CODEX_HOME/sessions`, creates no cache or state file, and returns fail-closed reason codes instead of raising.
+- Task-scoped phase: `codex/hooks/task_state.py` reads owner transcript markers and workspace-keyed TTL state without writing; `codex/bin/codex-task` is the only declare/revoke writer. Git workspaces require the same repo root; non-Git workspaces require the same canonical cwd. Host wrapper blocks are skipped only when well formed.
 - DHF Prompt Dispatch: global `UserPromptSubmit` registers `dhf_preprompt.py`; `shipq_dhf_preprompt.py` remains a lazy project adapter and ordinary non-ShipQ prompts do not receive `additionalContext`.
 - Observability: `scripts/harness_evidence.py`, `scripts/harness_feedback.py`, `scripts/harness_report.py`, split evidence schemas, and local evidence files. Decision evidence is promoted into state and handoff summaries; routine gate receipts remain available for audit without burying recovery signals.
 - Tool Router: lifecycle stage policy in `tool-policy.json`.

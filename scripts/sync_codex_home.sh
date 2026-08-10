@@ -9,16 +9,18 @@ SYNC_AGENTS_ONLY="false"
 FORCE_DOWNGRADE="false"
 BOOTSTRAP_LOADED_READBACK="false"
 OPERATOR_CHECKPOINT=""
+PROMOTE_HARNESS_GUARD="false"
 
 usage() {
   cat <<USAGE
-Usage: sync_codex_home.sh --repo-root <path> [--codex-home <path>] [--skip-superpowers-sync] [--sync-agents-only] [--force-downgrade --operator-checkpoint <path>] [--bootstrap-loaded-readback --operator-checkpoint <path>]
+Usage: sync_codex_home.sh --repo-root <path> [--codex-home <path>] [--skip-superpowers-sync] [--sync-agents-only] [--promote-harness-guard] [--force-downgrade --operator-checkpoint <path>] [--bootstrap-loaded-readback --operator-checkpoint <path>]
 
 Options:
   --force-downgrade         Allow an ancestor source only with a same-operation operator checkpoint.
   --bootstrap-loaded-readback
                             Allow the one-time loaded-readback bootstrap with an operator checkpoint.
   --operator-checkpoint     JSON receipt with command, exit_code, key_output, and timestamp.
+  --promote-harness-guard   Promote only the committed seven-target harness manifest.
 USAGE
 }
 
@@ -51,6 +53,10 @@ while [[ $# -gt 0 ]]; do
     --operator-checkpoint)
       OPERATOR_CHECKPOINT="${2:-}"
       shift 2
+      ;;
+    --promote-harness-guard)
+      PROMOTE_HARNESS_GUARD="true"
+      shift
       ;;
     -h|--help)
       usage
@@ -242,6 +248,292 @@ PY
 }
 
 preflight_source_attestation
+
+sync_harness_targets() {
+  mkdir -p "${CODEX_HOME}/harness"
+  exec 8>"${CODEX_HOME}/harness/.harness-guard-sync.lock"
+  if ! python3 - <<'PY'
+import fcntl
+try:
+    fcntl.flock(8, fcntl.LOCK_EX | fcntl.LOCK_NB)
+except BlockingIOError:
+    raise SystemExit(75)
+PY
+  then
+    echo '{"status":"blocked","reason_code":"harness_guard_lock_contended"}' >&2
+    return 75
+  fi
+  python3 - \
+    "${REPO_ROOT}" \
+    "${CODEX_HOME}" \
+    "${HARNESS_TARGET_FAIL_AFTER:-}" \
+    "${HARNESS_TARGET_CRASH_AT:-}" <<'PY'
+import hashlib
+import json
+import os
+from pathlib import Path
+import shutil
+import stat
+import subprocess
+import sys
+import tempfile
+import uuid
+
+repo_root = Path(sys.argv[1]).resolve()
+codex_home = Path(sys.argv[2]).resolve()
+fail_after = int(sys.argv[3]) if sys.argv[3] else None
+crash_at = sys.argv[4]
+targets_path = repo_root / "codex" / "runtime" / "harness-guard-targets.json"
+transactions = codex_home / "harness" / "harness-guard-transactions"
+transactions.mkdir(parents=True, exist_ok=True)
+
+
+def digest_bytes(data):
+    return hashlib.sha256(data).hexdigest()
+
+
+def digest(path):
+    return digest_bytes(path.read_bytes())
+
+
+def fsync_dir(path):
+    descriptor = os.open(path, os.O_RDONLY)
+    try:
+        os.fsync(descriptor)
+    finally:
+        os.close(descriptor)
+
+
+def atomic_write(path, data, mode):
+    path.parent.mkdir(parents=True, exist_ok=True)
+    descriptor, temporary = tempfile.mkstemp(prefix=f".{path.name}.", dir=path.parent)
+    try:
+        with os.fdopen(descriptor, "wb") as handle:
+            handle.write(data)
+            os.fchmod(handle.fileno(), mode)
+            handle.flush()
+            os.fsync(handle.fileno())
+        os.replace(temporary, path)
+        fsync_dir(path.parent)
+    finally:
+        try:
+            os.unlink(temporary)
+        except FileNotFoundError:
+            pass
+
+
+def record(directory, sequence, state, payload=None):
+    path = directory / f"{sequence:03d}-{state}.json"
+    data = {"state": state, **(payload or {})}
+    descriptor = os.open(path, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600)
+    with os.fdopen(descriptor, "w", encoding="utf-8") as handle:
+        json.dump(data, handle, sort_keys=True)
+        handle.write("\n")
+        handle.flush()
+        os.fsync(handle.fileno())
+    fsync_dir(directory)
+
+
+def crash(boundary):
+    if crash_at == boundary:
+        os._exit(91)
+
+
+def restore(entry):
+    target = codex_home / entry["target"]
+    current = digest(target) if target.is_file() else None
+    if current == entry["pre_digest"]:
+        return
+    if current != entry["post_digest"]:
+        raise RuntimeError(f"recovery_digest_unknown:{entry['target']}")
+    backup = entry.get("backup")
+    if backup is None:
+        target.unlink(missing_ok=True)
+        fsync_dir(target.parent)
+        return
+    atomic_write(target, (Path(entry["transaction_root"]) / backup).read_bytes(), entry["pre_mode"])
+
+
+def recover_incomplete():
+    for directory in sorted(path for path in transactions.iterdir() if path.is_dir()):
+        prepared = list(directory.glob("*-PREPARED.json"))
+        committed = list(directory.glob("*-COMMITTED.json"))
+        if committed:
+            continue
+        if not prepared:
+            shutil.rmtree(directory)
+            fsync_dir(transactions)
+            continue
+        manifest_path = directory / "backup-manifest.json"
+        try:
+            payload = json.loads(manifest_path.read_text(encoding="utf-8"))
+            entries = payload["entries"]
+        except (OSError, KeyError, TypeError, json.JSONDecodeError) as exc:
+            raise RuntimeError(f"recovery_manifest_invalid:{directory.name}") from exc
+        for entry in reversed(entries):
+            entry["transaction_root"] = str(directory)
+            restore(entry)
+        sequence = len(list(directory.glob("*.json"))) + 1
+        record(directory, sequence, "ABORTED", {"reason": "startup_recovery"})
+
+
+recover_incomplete()
+
+try:
+    target_manifest_bytes = targets_path.read_bytes()
+    target_manifest = json.loads(target_manifest_bytes)
+    targets = target_manifest["targets"]
+except (OSError, KeyError, TypeError, json.JSONDecodeError) as exc:
+    raise SystemExit(f"harness target manifest invalid: {exc}")
+if target_manifest.get("schema_version") != 1 or not isinstance(targets, list) or len(targets) != 7:
+    raise SystemExit("harness target manifest must contain exactly seven targets")
+if len({item.get("target") for item in targets if isinstance(item, dict)}) != 7:
+    raise SystemExit("harness target manifest targets must be unique")
+if any(item.get("source") == "codex/runtime/tool-policy.json" for item in targets):
+    raise SystemExit("tool-policy.json must not be a harness target")
+
+target_by_runtime = {item["target"]: item for item in targets}
+deployed_entries = []
+for source in sorted((repo_root / "codex" / "hooks").glob("*.py")):
+    runtime_relative = f"hooks/{source.name}"
+    runtime = codex_home / runtime_relative
+    target_item = target_by_runtime.get(runtime_relative)
+    if target_item is None:
+        if not runtime.is_file() or digest(runtime) != digest(source):
+            raise SystemExit(f"non-target canonical hook drift: {runtime_relative}")
+        mode = stat.S_IMODE(runtime.stat().st_mode)
+    else:
+        mode = int(target_item["mode"])
+    deployed_entries.append({
+        "path": runtime_relative,
+        "sha256": digest(source),
+        "type": "file",
+        "mode": mode,
+    })
+for item in targets:
+    if item["target"].startswith("hooks/"):
+        continue
+    source = repo_root / item["source"]
+    deployed_entries.append({
+        "path": item["target"],
+        "sha256": digest(source),
+        "type": "file",
+        "mode": int(item["mode"]),
+    })
+if len(deployed_entries) > 32:
+    raise SystemExit("deployed manifest exceeds 32 files")
+deployed_payload = {"schema_version": 1, "files": sorted(deployed_entries, key=lambda item: item["path"])}
+deployed_bytes = (json.dumps(deployed_payload, ensure_ascii=False, sort_keys=True) + "\n").encode("utf-8")
+deployed_path = codex_home / "harness" / "deployed-manifest.json"
+
+transaction_id = uuid.uuid4().hex
+transaction = transactions / transaction_id
+transaction.mkdir()
+fsync_dir(transactions)
+entries = []
+for item in targets:
+    source = repo_root / item["source"]
+    target = codex_home / item["target"]
+    if not source.is_file() or source.is_symlink():
+        raise SystemExit(f"invalid harness target source: {item['source']}")
+    pre_digest = digest(target) if target.is_file() else None
+    pre_mode = stat.S_IMODE(target.stat().st_mode) if target.is_file() else None
+    backup = None
+    if target.is_file():
+        backup_path = transaction / "backups" / item["target"]
+        atomic_write(backup_path, target.read_bytes(), pre_mode)
+        backup = str(backup_path.relative_to(transaction))
+    entries.append({
+        "source": item["source"],
+        "target": item["target"],
+        "mode": int(item["mode"]),
+        "pre_digest": pre_digest,
+        "pre_mode": pre_mode,
+        "post_digest": digest(source),
+        "backup": backup,
+    })
+deployed_pre_digest = digest(deployed_path) if deployed_path.is_file() else None
+deployed_pre_mode = stat.S_IMODE(deployed_path.stat().st_mode) if deployed_path.is_file() else None
+deployed_backup = None
+if deployed_path.is_file():
+    backup_path = transaction / "backups" / "harness" / "deployed-manifest.json"
+    atomic_write(backup_path, deployed_path.read_bytes(), deployed_pre_mode)
+    deployed_backup = str(backup_path.relative_to(transaction))
+entries.append({
+    "source": None,
+    "target": "harness/deployed-manifest.json",
+    "mode": 0o600,
+    "pre_digest": deployed_pre_digest,
+    "pre_mode": deployed_pre_mode,
+    "post_digest": digest_bytes(deployed_bytes),
+    "backup": deployed_backup,
+})
+
+source_commit = subprocess.run(
+    ["git", "-C", str(repo_root), "rev-parse", "HEAD"],
+    check=True,
+    capture_output=True,
+    text=True,
+).stdout.strip()
+backup_manifest = {
+    "schema_version": 1,
+    "transaction_id": transaction_id,
+    "repo_root": str(repo_root),
+    "source_commit": source_commit,
+    "target_manifest_sha256": digest_bytes(target_manifest_bytes),
+    "target_set": [item["target"] for item in targets],
+    "entries": entries,
+}
+atomic_write(
+    transaction / "backup-manifest.json",
+    (json.dumps(backup_manifest, sort_keys=True) + "\n").encode("utf-8"),
+    0o600,
+)
+crash("after_backup_manifest")
+sequence = 1
+record(transaction, sequence, "PREPARED", {key: backup_manifest[key] for key in (
+    "schema_version", "transaction_id", "repo_root", "source_commit", "target_manifest_sha256", "target_set"
+)})
+crash("after_prepared")
+tool_policy = codex_home / "runtime" / "tool-policy.json"
+tool_policy_before = digest(tool_policy) if tool_policy.is_file() else None
+
+try:
+    for index, item in enumerate(targets, 1):
+        sequence += 1
+        record(transaction, sequence, "TARGET_INTENT", {"index": index, "target": item["target"]})
+        crash(f"after_intent_{index}")
+        atomic_write(codex_home / item["target"], (repo_root / item["source"]).read_bytes(), int(item["mode"]))
+        crash(f"after_replace_{index}")
+        sequence += 1
+        record(transaction, sequence, "TARGET_APPLIED", {"index": index, "target": item["target"]})
+        crash(f"after_applied_{index}")
+        if fail_after == index:
+            raise RuntimeError(f"failure_injection_after_{index}")
+    atomic_write(deployed_path, deployed_bytes, 0o600)
+    crash("after_manifest")
+    tool_policy_after = digest(tool_policy) if tool_policy.is_file() else None
+    if tool_policy_after != tool_policy_before:
+        raise RuntimeError("tool_policy_changed")
+    sequence += 1
+    record(transaction, sequence, "COMMITTED", {"target_count": 7})
+    crash("after_committed")
+except Exception as exc:
+    for entry in reversed(entries):
+        entry["transaction_root"] = str(transaction)
+        restore(entry)
+    sequence += 1
+    record(transaction, sequence, "ABORTED", {"reason": str(exc)})
+    raise SystemExit(str(exc))
+
+print(f"harness guard promotion committed: targets=7 transaction={transaction_id}")
+PY
+}
+
+if [[ "${PROMOTE_HARNESS_GUARD}" == "true" ]]; then
+  sync_harness_targets
+  exit $?
+fi
 
 MANIFEST_PATH="${CODEX_HOME}/harness/sync-manifest.json"
 SOURCE_COMMIT=""
@@ -968,6 +1260,10 @@ fi
 if [[ -d "${REPO_ROOT}/codex/runtime" ]]; then
   mkdir -p "${CODEX_HOME}/runtime"
   rsync_runtime_dir "${REPO_ROOT}/codex/runtime" "${CODEX_HOME}/runtime"
+fi
+
+if [[ -f "${REPO_ROOT}/codex/runtime/harness-guard-targets.json" ]]; then
+  sync_harness_targets
 fi
 
 if [[ -d "${REPO_ROOT}/codex/zsh" ]]; then

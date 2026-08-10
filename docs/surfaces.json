@@ -73,6 +73,16 @@
       "audience": ["runtime", "codex"]
     },
     {
+      "path": "codex/runtime/harness-scope.json",
+      "role": "canonical governed roots, screening patterns, and integrity-watch limits",
+      "audience": ["runtime", "codex", "human"]
+    },
+    {
+      "path": "codex/runtime/harness-guard-targets.json",
+      "role": "canonical seven-target harness promotion manifest",
+      "audience": ["runtime", "codex", "human"]
+    },
+    {
       "path": "codex/runtime/resolve_codex_cli.sh",
       "role": "functional Codex CLI resolver for interactive and scheduled automation",
       "audience": ["runtime", "codex", "human"]
@@ -126,6 +136,16 @@
       "path": "codex/hooks/harness_guard.py",
       "role": "PreToolUse guard with legacy block shape and tier-tagged decision reasons",
       "audience": ["runtime", "codex"]
+    },
+    {
+      "path": "codex/hooks/task_state.py",
+      "role": "workspace-bound transcript and TTL declaration phase resolver",
+      "audience": ["runtime", "codex"]
+    },
+    {
+      "path": "codex/bin/codex-task",
+      "role": "workspace-bound declare and revoke CLI for low and medium phase remediation",
+      "audience": ["runtime", "codex", "human"]
     },
     {
       "path": "codex/hooks/compaction_counter.py",

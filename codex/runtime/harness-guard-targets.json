@@ -1,0 +1,12 @@
+{
+  "schema_version": 1,
+  "targets": [
+    {"source": "codex/hooks/task_state.py", "target": "hooks/task_state.py", "mode": 493},
+    {"source": "codex/hooks/harness_guard.py", "target": "hooks/harness_guard.py", "mode": 493},
+    {"source": "codex/hooks/harness_observer.py", "target": "hooks/harness_observer.py", "mode": 493},
+    {"source": "codex/hooks/session_bearing.py", "target": "hooks/session_bearing.py", "mode": 493},
+    {"source": "codex/bin/codex-task", "target": "bin/codex-task", "mode": 493},
+    {"source": "codex/runtime/harness-scope.json", "target": "runtime/harness-scope.json", "mode": 420},
+    {"source": "codex/runtime/harness-guard-targets.json", "target": "runtime/harness-guard-targets.json", "mode": 420}
+  ]
+}

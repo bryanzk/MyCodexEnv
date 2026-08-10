@@ -7,9 +7,10 @@ CODEX_HOME="${HOME}/.codex"
 CLAUDE_HOME="${HOME}/.claude"
 ACCEPTED_CODEX_VERSION_PREFIXES=("0.104.0" "0.130.0" "0.131.0" "0.133.0" "0.135.0" "0.136.0" "0.137.0" "0.138.0" "0.140.0" "0.142." "0.144." "0.147.0")
 SKIP_CHECKS=()
+HARNESS_ONLY="false"
 
 usage() {
-  echo "Usage: verify_codex_env.sh --repo-root <path> [--codex-home <path>] [--claude-home <path>] [--skip-check <name>]"
+  echo "Usage: verify_codex_env.sh --repo-root <path> [--codex-home <path>] [--claude-home <path>] [--skip-check <name>] [--harness-only]"
 }
 
 while [[ $# -gt 0 ]]; do
@@ -29,6 +30,10 @@ while [[ $# -gt 0 ]]; do
     --skip-check)
       SKIP_CHECKS+=("${2:-}")
       shift 2
+      ;;
+    --harness-only)
+      HARNESS_ONLY="true"
+      shift
       ;;
     -h|--help)
       usage
@@ -133,6 +138,68 @@ skill_compatibility_ok() {
     --json
 }
 
+harness_guard_targets_ok() {
+  python3 - "${REPO_ROOT}" "${CODEX_HOME}" <<'PY'
+import hashlib
+import json
+import os
+from pathlib import Path
+import stat
+import sys
+
+repo = Path(sys.argv[1]).resolve()
+home = Path(sys.argv[2]).resolve()
+manifest_path = repo / "codex" / "runtime" / "harness-guard-targets.json"
+deployed_path = home / "harness" / "deployed-manifest.json"
+try:
+    manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+    targets = manifest["targets"]
+    deployed = json.loads(deployed_path.read_text(encoding="utf-8"))
+    deployed_entries = deployed["files"]
+except (OSError, KeyError, TypeError, json.JSONDecodeError):
+    raise SystemExit(1)
+if manifest.get("schema_version") != 1 or len(targets) != 7:
+    raise SystemExit(1)
+if any(item.get("source") == "codex/runtime/tool-policy.json" for item in targets):
+    raise SystemExit(1)
+for item in targets:
+    source = (repo / item["source"]).resolve()
+    target = (home / item["target"]).resolve()
+    if repo not in source.parents or home not in target.parents:
+        raise SystemExit(1)
+    if not source.is_file() or not target.is_file() or source.read_bytes() != target.read_bytes():
+        raise SystemExit(1)
+    if stat.S_IMODE(target.stat().st_mode) != item["mode"]:
+        raise SystemExit(1)
+expected_paths = {item["target"] for item in targets}
+expected_paths.update(f"hooks/{path.name}" for path in (repo / "codex" / "hooks").glob("*.py"))
+seen = set()
+for entry in deployed_entries:
+    relative = entry.get("path")
+    if not isinstance(relative, str) or relative in seen:
+        raise SystemExit(1)
+    seen.add(relative)
+    path = (home / relative).resolve()
+    if home not in path.parents or not path.is_file() or entry.get("type") != "file":
+        raise SystemExit(1)
+    if hashlib.sha256(path.read_bytes()).hexdigest() != entry.get("sha256"):
+        raise SystemExit(1)
+    if stat.S_IMODE(path.stat().st_mode) != entry.get("mode"):
+        raise SystemExit(1)
+if seen != expected_paths:
+    raise SystemExit(1)
+PY
+}
+
+if [[ "${HARNESS_ONLY}" == "true" ]]; then
+  if harness_guard_targets_ok; then
+    echo "PASS:harness_guard_targets"
+    exit 0
+  fi
+  echo "FAIL:harness_guard_targets"
+  exit 1
+fi
+
 results=()
 results+=("$(check os_darwin '[[ "$(uname -s)" == "Darwin" ]]')")
 results+=("$(check arch_arm64 '[[ "$(uname -m)" == "arm64" ]]')")
@@ -172,6 +239,7 @@ results+=("$(check codex_runtime_evidence_schema_exists '[[ -f "'"${CODEX_HOME}"
 results+=("$(check codex_runtime_decision_evidence_schema_exists '[[ -f "'"${CODEX_HOME}"'"/runtime/evidence/decision-evidence.schema.json ]]')")
 results+=("$(check codex_runtime_routine_gate_receipt_schema_exists '[[ -f "'"${CODEX_HOME}"'"/runtime/evidence/routine-gate-receipt.schema.json ]]')")
 results+=("$(check codex_zsh_title_hook_exists '[[ -f "'"${CODEX_HOME}"'"/zsh/codex-session-title.zsh ]]')")
+results+=("$(run_check harness_guard_targets harness_guard_targets_ok)")
 results+=("$(check codex_config_has_chrome_devtools_mcp 'rg -n "\[mcp_servers\.\"chrome-devtools\"\]" "'"${CODEX_HOME}"'"/config.toml')")
 results+=("$(check codex_config_chrome_devtools_no_usage_statistics 'rg -n -- "--no-usage-statistics" "'"${CODEX_HOME}"'"/config.toml')")
 results+=("$(check codex_config_chrome_devtools_no_performance_crux 'rg -n -- "--no-performance-crux" "'"${CODEX_HOME}"'"/config.toml')")

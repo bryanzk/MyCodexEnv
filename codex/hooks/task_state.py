@@ -1,9 +1,11 @@
 #!/usr/bin/env python3
 from __future__ import annotations
 
+import hashlib
 import json
 import os
 import re
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
@@ -127,9 +129,31 @@ def _first_owner_text(events: list[dict[str, Any]]) -> str | None:
     return None
 
 
+_HOST_WRAPPER_OPEN = re.compile(r"^<([A-Za-z_][A-Za-z0-9_-]*)>$")
+
+
+def _skip_host_wrappers(lines: list[str], start: int) -> int | None:
+    index = start
+    while True:
+        while index < len(lines) and not lines[index].strip():
+            index += 1
+        if index >= len(lines):
+            return None
+        match = _HOST_WRAPPER_OPEN.fullmatch(lines[index].strip())
+        if match is None:
+            return index
+        closing = f"</{match.group(1)}>"
+        index += 1
+        while index < len(lines) and lines[index].strip() != closing:
+            index += 1
+        if index >= len(lines):
+            return None
+        index += 1
+
+
 def _first_instruction_line(text: str) -> str | None:
     lines = text.splitlines()
-    first_index = next((index for index, line in enumerate(lines) if line.strip()), None)
+    first_index = _skip_host_wrappers(lines, 0)
     if first_index is None:
         return None
     first = lines[first_index].strip()
@@ -211,6 +235,15 @@ def _git_root_from_cwd(raw_cwd: Any) -> Path | None:
     return None
 
 
+def _canonical_cwd(raw_cwd: Any) -> Path | None:
+    if not isinstance(raw_cwd, str) or not raw_cwd.strip():
+        return None
+    try:
+        return Path(raw_cwd).expanduser().resolve(strict=False)
+    except (OSError, RuntimeError, ValueError):
+        return None
+
+
 def _resolve_transcript(
     transcript: Path,
     session_id: str,
@@ -244,12 +277,53 @@ def _resolve_transcript(
         return None, "THREAD_SOURCE_NOT_ELIGIBLE"
     root_repo = _git_root_from_cwd(root_meta.get("cwd"))
     current_repo = _git_root_from_cwd(current_cwd)
-    if root_repo is None or current_repo is None or root_repo != current_repo:
-        return None, "ROOT_REPO_MISMATCH"
+    if root_repo is not None or current_repo is not None:
+        if root_repo is None or current_repo is None or root_repo != current_repo:
+            return None, "ROOT_REPO_MISMATCH"
+    else:
+        root_cwd = _canonical_cwd(root_meta.get("cwd"))
+        active_cwd = _canonical_cwd(current_cwd)
+        if root_cwd is None or active_cwd is None or root_cwd != active_cwd:
+            return None, "ROOT_WORKSPACE_MISMATCH"
     phase, reason = _declared_phase(root_events, policy)
     if phase is None:
         return None, reason
     return phase, "INHERITED" if inherited else reason
+
+
+def workspace_key(raw_cwd: Any) -> Path | None:
+    return _git_root_from_cwd(raw_cwd) or _canonical_cwd(raw_cwd)
+
+
+def declaration_path(raw_cwd: Any) -> Path | None:
+    key = workspace_key(raw_cwd)
+    if key is None:
+        return None
+    digest = hashlib.sha256(str(key).encode("utf-8")).hexdigest()
+    return _codex_home() / "task-state" / f"{digest}.json"
+
+
+def resolve_self_declared(raw_cwd: Any, policy: dict[str, Any]) -> tuple[str | None, str]:
+    try:
+        path = declaration_path(raw_cwd)
+        if path is None:
+            return None, "NO_WORKSPACE"
+        if not path.is_file():
+            return None, "NO_DECLARATION"
+        record = json.loads(path.read_text(encoding="utf-8"))
+        expires_raw = record.get("expires_at") if isinstance(record, dict) else None
+        if not isinstance(expires_raw, str):
+            return None, "DECLARATION_INVALID"
+        expires = datetime.fromisoformat(expires_raw.replace("Z", "+00:00"))
+        if expires.tzinfo is None or datetime.now(timezone.utc) >= expires:
+            return None, "DECLARATION_EXPIRED" if expires.tzinfo is not None else "DECLARATION_INVALID"
+        phase = record.get("phase")
+        phases = policy.get("phases")
+        if not isinstance(phase, str) or not isinstance(phases, dict) or phase not in phases:
+            return None, "DECLARATION_INVALID"
+        return phase, "SELF_DECLARED"
+    except (OSError, ValueError, TypeError, json.JSONDecodeError):
+        return None, "DECLARATION_INVALID"
 
 
 def resolve_declared_phase(payload: dict[str, Any], policy: dict[str, Any]) -> tuple[str | None, str]:

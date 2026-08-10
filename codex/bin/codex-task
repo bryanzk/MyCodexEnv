@@ -1,0 +1,142 @@
+#!/usr/bin/env python3
+from __future__ import annotations
+
+import argparse
+import json
+import os
+import re
+import sys
+import tempfile
+from datetime import datetime, timedelta, timezone
+from pathlib import Path
+
+HOOKS_DIR = Path(__file__).resolve().parent.parent / "hooks"
+sys.path.insert(0, str(HOOKS_DIR))
+import task_state
+
+DEFAULT_TTL = timedelta(hours=8)
+MAX_TTL = timedelta(hours=24)
+TTL_PATTERN = re.compile(r"^(\d+)([hm])$")
+REASON_PATTERN = re.compile(r"^[A-Za-z0-9._:-]{1,64}$")
+
+
+def parse_ttl(raw: str) -> timedelta | None:
+    match = TTL_PATTERN.fullmatch(raw)
+    if match is None:
+        return None
+    amount = int(match.group(1))
+    ttl = timedelta(hours=amount) if match.group(2) == "h" else timedelta(minutes=amount)
+    return ttl if amount > 0 and ttl <= MAX_TTL else None
+
+
+def state_dir() -> Path:
+    return task_state._codex_home() / "task-state"
+
+
+def atomic_json(path: Path, record: dict) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True, mode=0o700)
+    fd, temporary = tempfile.mkstemp(prefix=f".{path.name}.", dir=path.parent)
+    try:
+        with os.fdopen(fd, "w", encoding="utf-8") as handle:
+            json.dump(record, handle, ensure_ascii=False, indent=2)
+            handle.write("\n")
+            handle.flush()
+            os.fsync(handle.fileno())
+        os.chmod(temporary, 0o600)
+        os.replace(temporary, path)
+    finally:
+        try:
+            os.unlink(temporary)
+        except FileNotFoundError:
+            pass
+
+
+def append_audit(record: dict) -> None:
+    directory = state_dir()
+    directory.mkdir(parents=True, exist_ok=True, mode=0o700)
+    audit = directory / "audit.jsonl"
+    with audit.open("a", encoding="utf-8") as handle:
+        handle.write(json.dumps(record, ensure_ascii=False) + "\n")
+        handle.flush()
+        os.fsync(handle.fileno())
+    os.chmod(audit, 0o600)
+
+
+def valid_reason(raw: str) -> bool:
+    return REASON_PATTERN.fullmatch(raw) is not None
+
+
+def declare(args: argparse.Namespace) -> int:
+    phase = task_state.DECLARABLE_PHASES.get(args.phase.lower())
+    ttl = parse_ttl(args.ttl)
+    if phase is None or args.phase.lower() == "ship" or ttl is None or not valid_reason(args.reason):
+        print("codex-task: invalid phase, reason code, or ttl", file=sys.stderr)
+        return 2
+    if args.session_id is not None and task_state.UUID_PATTERN.fullmatch(args.session_id) is None:
+        print("codex-task: invalid session id", file=sys.stderr)
+        return 2
+    workspace = task_state.workspace_key(os.getcwd())
+    path = task_state.declaration_path(os.getcwd())
+    if workspace is None or path is None:
+        print("codex-task: cannot resolve workspace", file=sys.stderr)
+        return 2
+    now = datetime.now(timezone.utc)
+    record = {
+        "schema_version": 1,
+        "phase": phase,
+        "declared_alias": args.phase.lower(),
+        "reason": args.reason,
+        "workspace": str(workspace),
+        "created_at": now.isoformat(),
+        "expires_at": (now + ttl).isoformat(),
+        "ttl_seconds": int(ttl.total_seconds()),
+        "session_id": args.session_id,
+        "declared_from_cwd": os.getcwd(),
+    }
+    atomic_json(path, record)
+    append_audit({"event": "declare", **record})
+    print(f"declared phase={phase} workspace={workspace} until={record['expires_at']}")
+    return 0
+
+
+def revoke(args: argparse.Namespace) -> int:
+    if not valid_reason(args.reason):
+        print("codex-task: invalid reason code", file=sys.stderr)
+        return 2
+    workspace = task_state.workspace_key(os.getcwd())
+    path = task_state.declaration_path(os.getcwd())
+    if workspace is None or path is None:
+        print("codex-task: cannot resolve workspace", file=sys.stderr)
+        return 2
+    existed = path.exists()
+    path.unlink(missing_ok=True)
+    append_audit(
+        {
+            "event": "revoke",
+            "schema_version": 1,
+            "reason": args.reason,
+            "workspace": str(workspace),
+            "revoked_at": datetime.now(timezone.utc).isoformat(),
+            "declaration_existed": existed,
+        }
+    )
+    print(f"revoked workspace={workspace} existed={str(existed).lower()}")
+    return 0
+
+
+def main(argv: list[str]) -> int:
+    parser = argparse.ArgumentParser(prog="codex-task")
+    commands = parser.add_subparsers(dest="command", required=True)
+    declare_parser = commands.add_parser("declare")
+    declare_parser.add_argument("phase")
+    declare_parser.add_argument("--reason", required=True)
+    declare_parser.add_argument("--ttl", default="8h")
+    declare_parser.add_argument("--session-id")
+    revoke_parser = commands.add_parser("revoke")
+    revoke_parser.add_argument("--reason", required=True)
+    args = parser.parse_args(argv)
+    return declare(args) if args.command == "declare" else revoke(args)
+
+
+if __name__ == "__main__":
+    raise SystemExit(main(sys.argv[1:]))

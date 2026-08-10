@@ -1,0 +1,19 @@
+{
+  "schema_version": 1,
+  "governed_roots": ["~/Codes"],
+  "protected_roots": ["~/.codex"],
+  "out_of_scope_mode": "allow",
+  "protected_command_patterns": [
+    "(~|\\$HOME|/Users/[^/\\s\\\"']+|/home/[^/\\s\\\"']+)/\\.codex(/|\\b)"
+  ],
+  "persistence_path_patterns": [
+    "/Library/LaunchAgents(?:/|$)",
+    "/(?:\\.zshrc|\\.zshenv|\\.zprofile|\\.bashrc|\\.profile)$",
+    "\\bcrontab\\b.*(?:-|<|\\bwrite\\b)"
+  ],
+  "integrity_watch": {
+    "max_files": 32,
+    "max_file_bytes": 1048576,
+    "max_total_bytes": 4194304
+  }
+}
