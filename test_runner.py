@@ -9,6 +9,7 @@ import subprocess
 import importlib.util
 import json
 import re
+import shlex
 import shutil
 import sys
 import tempfile
@@ -388,9 +389,17 @@ def seed_runtime_sync_repo(path: Path) -> tuple[Path, str]:
 
 def phase0_source_digest(repo: Path) -> str:
     digest = hashlib.sha256()
-    for path in sorted(item for item in (repo / "codex").rglob("*") if item.is_file()):
-        relative = path.relative_to(repo).as_posix().encode("utf-8")
-        content = path.read_bytes()
+    proc = subprocess.run(
+        ["git", "-C", str(repo), "ls-files", "-z", "--", "codex/"],
+        capture_output=True,
+        check=False,
+    )
+    require(proc.returncode == 0, f"tracked source enumeration should work: {proc.stderr!r}")
+    for relative in sorted(part for part in proc.stdout.split(b"\0") if part):
+        path = repo / os.fsdecode(relative)
+        if not path.exists() and not path.is_symlink():
+            continue
+        content = os.fsencode(os.readlink(path)) if path.is_symlink() else path.read_bytes()
         digest.update(relative + b"\0" + str(len(content)).encode("ascii") + b"\0" + content)
     return digest.hexdigest()
 
@@ -606,6 +615,45 @@ def test_sync_approved_digest_authority():
         commit_manifest(repo, manifest, "# second comment\n", "change only manifest comment")
         second = blocked_payload(sync(repo, codex_home), "source_digest_unapproved")["source_digest"]
         require(first == second, "approval manifest comments must not affect source_digest")
+
+        repo, codex_home, manifest = seed_case(tmp_path / "tracked-digest")
+        exclude = repo / ".git" / "info" / "exclude"
+        write(exclude, exclude.read_text(encoding="utf-8") + "\ncodex/hooks/__pycache__/\n")
+        first = blocked_payload(sync(repo, codex_home), "source_digest_unapproved")["source_digest"]
+        write(repo / "codex" / "hooks" / "__pycache__" / "task_state.cpython-314.pyc", "ignored bytecode\n")
+        second = blocked_payload(sync(repo, codex_home), "source_digest_unapproved")["source_digest"]
+        require(first == second, "ignored __pycache__ files must not affect source_digest")
+        write(repo / "codex" / "hooks" / "tracked_digest_fixture.py", "# tracked fixture\n")
+        code, out, err = run(["git", "add", "codex/hooks/tracked_digest_fixture.py"], cwd=repo)
+        require(code == 0, f"tracked digest fixture add should work: {err or out}")
+        code, out, err = run(["git", "commit", "-m", "add tracked digest fixture"], cwd=repo)
+        require(code == 0, f"tracked digest fixture commit should work: {err or out}")
+        third = blocked_payload(sync(repo, codex_home), "source_digest_unapproved")["source_digest"]
+        require(third != second, "new tracked codex file must change source_digest")
+
+        repo, codex_home, manifest = seed_case(tmp_path / "enumeration-failure")
+        commit_manifest(
+            repo,
+            manifest,
+            f"sha256:{phase0_source_digest(repo)}  approved test fixture\n",
+            "approve fixture digest",
+        )
+        git_path = shutil.which("git")
+        require(git_path is not None, "git is required")
+        stub_dir = tmp_path / "git-stub"
+        stub = stub_dir / "git"
+        write(
+            stub,
+            "#!/bin/sh\n"
+            "case \" $* \" in\n"
+            "  *\" ls-files -z -- codex/ \"*) exit 1 ;;\n"
+            "esac\n"
+            f"exec {shlex.quote(git_path)} \"$@\"\n",
+        )
+        stub.chmod(0o755)
+        env = os.environ.copy()
+        env["PATH"] = f"{stub_dir}{os.pathsep}{env['PATH']}"
+        blocked_payload(sync(repo, codex_home, env), "source_enumeration_failed")
 
     print("[PASS] approved digest authority")
 

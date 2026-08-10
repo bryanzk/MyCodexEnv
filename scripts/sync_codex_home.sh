@@ -182,11 +182,20 @@ if dirty_paths:
     blocked("source_dirty", dirty_paths=dirty_paths)
 
 digest = hashlib.sha256()
-source_root = repo_root / "codex"
-for path in sorted(item for item in source_root.rglob("*") if item.is_file()):
-    relative = path.relative_to(repo_root).as_posix().encode("utf-8")
-    content = path.read_bytes()
-    digest.update(relative + b"\0" + str(len(content)).encode("ascii") + b"\0" + content)
+try:
+    tracked = subprocess.run(
+        ["git", "-C", str(repo_root), "ls-files", "-z", "--", "codex/"],
+        capture_output=True,
+        check=False,
+    )
+    if tracked.returncode != 0:
+        blocked("source_enumeration_failed")
+    for relative in sorted(part for part in tracked.stdout.split(b"\0") if part):
+        path = repo_root / os.fsdecode(relative)
+        content = os.fsencode(os.readlink(path)) if path.is_symlink() else path.read_bytes()
+        digest.update(relative + b"\0" + str(len(content)).encode("ascii") + b"\0" + content)
+except OSError:
+    blocked("source_enumeration_failed")
 source_digest = digest.hexdigest()
 try:
     approved = {
@@ -695,6 +704,7 @@ import hashlib
 import json
 import os
 from pathlib import Path
+import subprocess
 import sys
 import tempfile
 
@@ -714,11 +724,20 @@ elif expected_old:
     raise SystemExit("manifest expected-old CAS failed")
 
 digest = hashlib.sha256()
-source_root = repo_root / "codex"
-for path in sorted(item for item in source_root.rglob("*") if item.is_file()):
-    relative = path.relative_to(repo_root).as_posix().encode("utf-8")
-    content = path.read_bytes()
-    digest.update(relative + b"\0" + str(len(content)).encode("ascii") + b"\0" + content)
+try:
+    tracked = subprocess.run(
+        ["git", "-C", str(repo_root), "ls-files", "-z", "--", "codex/"],
+        capture_output=True,
+        check=False,
+    )
+    if tracked.returncode != 0:
+        raise OSError("git ls-files failed")
+    for relative in sorted(part for part in tracked.stdout.split(b"\0") if part):
+        path = repo_root / os.fsdecode(relative)
+        content = os.fsencode(os.readlink(path)) if path.is_symlink() else path.read_bytes()
+        digest.update(relative + b"\0" + str(len(content)).encode("ascii") + b"\0" + content)
+except OSError:
+    raise SystemExit("source_enumeration_failed")
 
 payload = {
     "schema_version": 3,
