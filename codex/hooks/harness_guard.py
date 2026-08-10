@@ -637,11 +637,16 @@ def decision(payload: dict[str, Any], policy: dict[str, Any]) -> dict[str, Any]:
     if category == "remote" and phase_policy.get("allow_remote") is True:
         return {}
 
-    return block(
+    denial_reason = (
         f"[harness] {category} is restricted during phase '{phase}': {reason or category}. "
-        f"[marker_reason={marker_reason}]",
-        risk_tier,
+        f"[marker_reason={marker_reason}]"
     )
+    if not scoped_out and risk_tier in {"low", "medium"}:
+        denial_reason += (
+            " To proceed: run ~/.codex/bin/codex-task declare implementation "
+            "--reason task-unblock and retry."
+        )
+    return block(denial_reason, risk_tier)
 
 
 def main() -> int:
