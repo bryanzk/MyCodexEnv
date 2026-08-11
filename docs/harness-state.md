@@ -5,7 +5,7 @@ Stable rules belong in `AGENTS.md`, `README.md`, `docs/repo-index.md`, or
 `docs/HARNESS_RUNTIME.md`; session facts and phase transitions are appended here.
 
 ## Current Snapshot
-- phase: validation
+- phase: handoff
 - source_of_truth:
   - `AGENTS.md`
   - `docs/repo-index.md`
@@ -14,13 +14,13 @@ Stable rules belong in `AGENTS.md`, `README.md`, `docs/repo-index.md`, or
   - `codex/skills/delivery-harness-framework/SKILL.md`
 - blocked_sources: none
 - unsafe_inputs: none
-- next_safe_task: Review the bounded dirty diff and request commit/push/publication separately if desired; retain the runtime backup until that decision.
+- next_safe_task: Review the bounded docs/harness-state.md diff and user-owned plan separately; request commit and push explicitly if desired
 - required_commands:
   - `python3 test_runner.py`
   - `git diff --check`
   - `./scripts/verify_codex_env.sh --repo-root "$(pwd)" --codex-home "$HOME/.codex" --claude-home "$HOME/.claude"`
-- latest_checkpoint: 2026-08-10T11:17:51-04:00 MCE-20260810-dhf-runtime-promotion-v1 targeted seven runtime files from source, verified runtime_promoted and 24/24 tracked parity, refreshed DHF status docs, and admitted probe-verified Codex CLI 0.147.0.
-- latest_verification: 2026-08-10T11:17:51-04:00 command=PYTHONDONTWRITEBYTECODE=1 python3 test_runner.py; exit_code=0; key_output=ran=120 passed=120 skipped=0 failed=0; runtime_state=runtime_promoted; promotion_difference_paths=[]; tracked runtime 24/24; host guard probe 18/18; environment Verification passed; non-target invariant PASS
+- latest_checkpoint: 2026-08-10T23:32:36-04:00 Completed final branch-governance audit after converging both DHF backup branches; only synchronized main remains locally and remotely
+- latest_verification: 2026-08-10T23:32:36-04:00 command=git fetch --all --prune; branch_snapshot.sh; git status --short --branch; git branch -a -vv --no-abbrev; git worktree list --porcelain; git stash list; git rev-list --left-right --count main...origin/main; git diff --check; exit_code=0; key_output=only main remains; main and origin/main both d34200f at 0/0; one main worktree; stash_count=11; expected dirty files unchanged; git diff --check clean
 - compaction_ordinal: 1
 - transition_key: MCE-20260802-harness-compaction-governance:W6a
 - gate_decision: none
@@ -2835,9 +2835,9 @@ Stable rules belong in `AGENTS.md`, `README.md`, `docs/repo-index.md`, or
   - none
 - next_safe_task: Review the reconciled eight-path dirty diff and request commit/push only if desired; keep all recovery stashes and runtime backup until that decision
 - checkpoint_data: {"constraints":["Do not commit, push, pop/delete stashes, remove worktrees, or delete the runtime backup without explicit authorization"],"next_action":{"args":[],"command":"git diff --stat","requires_user_direction_for_commit":true},"ownership":{"boundary":"The five documentation/product-guide paths are restored user-owned changes, the validator is the validated repair, the test file is a verified minimal merge of both, and harness-state is the append-only integrator checkpoint","files":{"README.md":"user_owned_restored","docs/DHF_SIMPLIFICATION_PRODUCT_GUIDE.md":"user_owned_restored","docs/HARNESS_RUNTIME.md":"user_owned_restored","docs/LIFECYCLE_SKILL_ROUTING.md":"user_owned_restored","docs/harness-state.md":"agent_owned_checkpoint","docs/repo-index.md":"user_owned_restored","scripts/validate_dhf_simplification_corpus.py":"agent_owned_repair","tests/test_dhf_simplification.py":"verified_mixed_merge"}},"phase":"handoff","schema":"dhf_checkpoint_v1","verification_evidence":{"command":"python3 tests/test_dhf_simplification.py && python3 scripts/validate_dhf_simplification_corpus.py validate tests/fixtures/dhf_simplification_scenarios.json --contract docs/plans/2026-07-12-dhf-simplification-implementation-contract.md --check-baseline --json && python3 scripts/dhf_simplification_evidence.py --repo-root \"$(pwd)\" && python3 scripts/check_skill_compatibility.py --repo-root \"$(pwd)\" --codex-home \"$HOME/.codex\" --claude-home \"$HOME/.claude\" --strict-runtime-parity --json && python3 scripts/check_codex_skill_loader.py --repo-root \"$(pwd)\" --codex-home \"$HOME/.codex\" --json && python3 test_runner.py && ./scripts/verify_codex_env.sh --repo-root \"$(pwd)\" --codex-home \"$HOME/.codex\" --claude-home \"$HOME/.claude\" && git diff --check","exit_code":0,"freshness":"fresh","key_output":"DHF=49/49; acceptance=18/18; test_runner=93/93; Verification passed; compatibility errors=0; loader errors=0; runtime_state=runtime_promoted; promotion_difference_paths=[]; diff check clean","timestamp":"2026-08-02T22:02:46Z"}}
-- constraints: ["No commit, push, deploy, publication, restart, customer-adoption, production-enforcement, or commercial-validation claim."]
-- ownership: {}
-- next_action: {"command":"Review the bounded dirty diff and request commit/push/publication separately if desired; retain the runtime backup until that decision."}
+- constraints: ["authorization_state=read-only remote fetch only; commit and push are not authorized","rollback=not required because no remote or source ref was mutated during final audit","Preserve the user-owned plan and all 11 stashes"]
+- ownership: {"boundary":"Final audit changed only the agent-owned append-only checkpoint; the user-owned plan and all stashes remain untouched","files":{"docs/harness-state.md":"agent_owned_checkpoint","docs/plans/2026-08-10-canonical-harness-forward-fix-plan.md":"user_owned"}}
+- next_action: {"command":"Review the bounded docs/harness-state.md diff and user-owned plan separately; request commit and push explicitly if desired"}
 
 ### 2026-08-10T11:17:51-04:00
 - phase: validation
@@ -2874,3 +2874,143 @@ Stable rules belong in `AGENTS.md`, `README.md`, `docs/repo-index.md`, or
   - none
 - next_safe_task: Review the bounded dirty diff and request commit/push/publication separately if desired; retain the runtime backup until that decision.
 - checkpoint_data: {"constraints":["No commit, push, deploy, publication, restart, customer-adoption, production-enforcement, or commercial-validation claim."],"next_action":{"command":"Review the bounded dirty diff and request commit/push/publication separately if desired; retain the runtime backup until that decision."},"ownership":{},"phase":"validation","schema":"dhf_checkpoint_v1","verification_evidence":{"command":"PYTHONDONTWRITEBYTECODE=1 python3 test_runner.py","exit_code":0,"freshness":"fresh","key_output":"ran=120 passed=120 skipped=0 failed=0; runtime_state=runtime_promoted; promotion_difference_paths=[]; tracked runtime 24/24; host guard probe 18/18; environment Verification passed; non-target invariant PASS","timestamp":"2026-08-10T15:16:39Z"}}
+
+### 2026-08-10T18:42:48-04:00
+- phase: handoff
+- event: checkpoint
+- summary: Branch-governance cleanup classified and ancestry-proven; runtime guard blocked destructive execution before any ref changed
+- git:
+  - branch: main
+  - latest_commit: d34200f
+  - dirty_status: dirty
+  - dirty_count: 1
+- changed_surfaces:
+  - `docs/harness-state.md`
+- verification:
+  - command: `git status --short --branch; git branch --merged main; git branch --no-merged main; git remote show origin`
+  - exit_code: 0
+  - key_output: main equals origin/main; two merged stale branches remain; three diverged branches remain; no ref changed
+- blockers:
+  - Runtime PreToolUse guard blocks destructive branch operations during validation and ship cannot be self-declared mid-task
+- next_safe_task: Use the owner-controlled ship path to delete only the two ancestry-proven stale branches, then verify refs and preserve the three diverged branches
+- checkpoint_data: {"constraints":["Do not bypass the runtime guard or delete any branch listed as unmerged"],"next_action":{"command":"Start an owner-controlled ship task for the exact stale-branch cleanup","requires_owner_controlled_ship_path":true},"ownership":{"boundary":"Existing untracked plan remains user-owned; this task only appends the integrator checkpoint","files":{"docs/harness-state.md":"agent_owned_checkpoint","docs/plans/2026-08-10-canonical-harness-forward-fix-plan.md":"user_owned"}},"phase":"handoff","schema":"dhf_checkpoint_v1","verification_evidence":{"command":"git status --short --branch; git branch --merged main; git branch --no-merged main; git remote show origin","exit_code":0,"freshness":"fresh","key_output":"main equals origin/main; two merged stale branches remain; three diverged branches remain; no ref changed","timestamp":"2026-08-10T22:42:31Z"}}
+
+### 2026-08-10T18:47:51-04:00
+- phase: handoff
+- event: checkpoint
+- summary: Verified owner-controlled stale-branch cleanup: both local stale refs and the remote guidance ref are absent; three diverged branches remain preserved
+- git:
+  - branch: main
+  - latest_commit: d34200f
+  - dirty_status: dirty
+  - dirty_count: 2
+- changed_surfaces:
+  - `docs/harness-state.md`
+- verification:
+  - command: `git fetch --all --prune; git status -sb; git branch -vv --no-abbrev; git branch --merged main; git branch --no-merged main; git worktree list; git remote show origin; git rev-list --left-right --count main...origin/main`
+  - exit_code: 0
+  - key_output: main equals origin/main at d34200f; only main remains merged; three diverged branches remain; deleted local and remote stale refs are absent; one main worktree; stash count 11
+- blockers:
+  - none
+- next_safe_task: Review the three preserved diverged branches, starting with patch-equivalent a649-recovery, and do not delete either pre-rebase branch until its 9 or 10 patch-unique commits are dispositioned
+- checkpoint_data: {"constraints":["Preserve the user-owned untracked plan and all 11 stashes; do not delete branches listed as unmerged"],"next_action":{"command":"Audit patch-equivalence and retained value for the three diverged branches","requires_destructive_authorization":false},"ownership":{"boundary":"User-owned untracked plan and stashes remain untouched; this task updates only the integrator checkpoint","files":{"docs/harness-state.md":"agent_owned_checkpoint","docs/plans/2026-08-10-canonical-harness-forward-fix-plan.md":"user_owned"}},"phase":"handoff","schema":"dhf_checkpoint_v1","verification_evidence":{"command":"git fetch --all --prune; git status -sb; git branch -vv --no-abbrev; git branch --merged main; git branch --no-merged main; git worktree list; git remote show origin; git rev-list --left-right --count main...origin/main","exit_code":0,"freshness":"fresh","key_output":"main equals origin/main at d34200f; only main remains merged; three diverged branches remain; deleted local and remote stale refs are absent; one main worktree; stash count 11","timestamp":"2026-08-10T22:47:24Z"}}
+
+### 2026-08-10T18:55:47-04:00
+- phase: handoff
+- event: checkpoint
+- summary: Completed read-only retained-value audit for all three diverged branches: a649 is patch-equivalent to main; both DHF pre-rebase series map one-to-one onto main with no unmapped commits; focused DHF gates pass
+- git:
+  - branch: main
+  - latest_commit: d34200f
+  - dirty_status: dirty
+  - dirty_count: 2
+- changed_surfaces:
+  - `docs/harness-state.md`
+- verification:
+  - command: `git cherry -v main BRANCH; git range-diff SOURCE_RANGE MAIN_RANGE; PYTHONDONTWRITEBYTECODE=1 python3 tests/test_dhf_simplification.py; PYTHONDONTWRITEBYTECODE=1 python3 tests/test_dhf_simplification_pair.py`
+  - exit_code: 0
+  - key_output: a649 commit maps to main 53d2fd7; Aug2 series 26/26 with 17 exact and 9 modified mappings; Aug9 series 27/27 with 17 exact and 10 modified mappings ending at main 1431d7d; no unmapped commits; tests 52/52 and 32/32 passed
+- blockers:
+  - none
+- next_safe_task: Use an isolated worktree to rebase only a649-recovery onto main; proceed to normal branch deletion only if the duplicate commit is dropped, the branch becomes 0/0, and focused router verification passes; keep both DHF pre-rebase branches unchanged
+- checkpoint_data: {"constraints":["Preserve the user-owned plan and all 11 stashes; do not force-delete any unmerged branch; do not mutate either DHF pre-rebase backup"],"next_action":{"command":"Rebase a649-recovery in an isolated worktree and require 0/0 before normal deletion","requires_destructive_authorization":true},"ownership":{"boundary":"Audit was read-only for branch refs; user-owned plan and stashes remain untouched; only the integrator checkpoint is updated","files":{"docs/harness-state.md":"agent_owned_checkpoint","docs/plans/2026-08-10-canonical-harness-forward-fix-plan.md":"user_owned"}},"phase":"handoff","schema":"dhf_checkpoint_v1","verification_evidence":{"command":"git cherry -v main BRANCH; git range-diff SOURCE_RANGE MAIN_RANGE; PYTHONDONTWRITEBYTECODE=1 python3 tests/test_dhf_simplification.py; PYTHONDONTWRITEBYTECODE=1 python3 tests/test_dhf_simplification_pair.py","exit_code":0,"freshness":"fresh","key_output":"a649 commit maps to main 53d2fd7; Aug2 series 26/26 with 17 exact and 9 modified mappings; Aug9 series 27/27 with 17 exact and 10 modified mappings ending at main 1431d7d; no unmapped commits; tests 52/52 and 32/32 passed","timestamp":"2026-08-10T22:55:33Z"}}
+
+### 2026-08-10T21:08:53-04:00
+- phase: handoff
+- event: checkpoint
+- summary: Verified a649 recovery convergence and normal deletion; corrected worktree test invocation and passed the full repository gate
+- git:
+  - branch: main
+  - latest_commit: d34200f
+  - dirty_status: dirty
+  - dirty_count: 2
+- changed_surfaces:
+  - `docs/harness-state.md`
+- verification:
+  - command: `PYTHONDONTWRITEBYTECODE=1 python3 test_runner.py`
+  - exit_code: 0
+  - key_output: ran=129 passed=129 skipped=0 failed=0; a649 branch absent; main equals origin/main at d34200f
+- blockers:
+  - none
+- next_safe_task: Process codex/mce-20260802-dhf-simplification-pre-rebase alone in an isolated worktree; require successful rebase, full gate, and main...branch 0/0 before normal deletion
+- checkpoint_data: {"constraints":["Preserve the user-owned plan and all stashes; never force-delete an unmerged branch"],"next_action":{"command":"Process codex/mce-20260802-dhf-simplification-pre-rebase alone in an isolated worktree; require successful rebase, full gate, and main...branch 0/0 before normal deletion"},"ownership":{},"phase":"handoff","schema":"dhf_checkpoint_v1","verification_evidence":{"command":"PYTHONDONTWRITEBYTECODE=1 python3 test_runner.py","exit_code":0,"freshness":"fresh","key_output":"ran=129 passed=129 skipped=0 failed=0; a649 branch absent; main equals origin/main at d34200f","timestamp":"2026-08-11T01:03:46Z"}}
+
+### 2026-08-10T23:22:25-04:00
+- phase: handoff
+- event: checkpoint
+- summary: Converged and normally deleted the Aug2 DHF pre-rebase branch after proving all commits mapped to main and the rebased branch reached 0/0
+- git:
+  - branch: main
+  - latest_commit: d34200f
+  - dirty_status: dirty
+  - dirty_count: 2
+- changed_surfaces:
+  - `docs/harness-state.md`
+- verification:
+  - command: `PYTHONDONTWRITEBYTECODE=1 python3 test_runner.py`
+  - exit_code: 0
+  - key_output: main-path gate ran=129 passed=129 skipped=0 failed=0; Aug2 branch rebased to d34200f at 0/0; temporary-path live guard failure classified as governed-root scope behavior
+- blockers:
+  - none
+- next_safe_task: Process codex/mce-20260809-dhf-simplification-pre-rebase alone in an isolated worktree located under ~/Codes so live runtime scope tests remain valid
+- checkpoint_data: {"constraints":["Preserve the user-owned plan and all 11 stashes; never force-delete an unmerged branch"],"next_action":{"command":"Process codex/mce-20260809-dhf-simplification-pre-rebase alone in an isolated worktree located under ~/Codes so live runtime scope tests remain valid"},"ownership":{},"phase":"handoff","schema":"dhf_checkpoint_v1","verification_evidence":{"command":"PYTHONDONTWRITEBYTECODE=1 python3 test_runner.py","exit_code":0,"freshness":"fresh","key_output":"main-path gate ran=129 passed=129 skipped=0 failed=0; Aug2 branch rebased to d34200f at 0/0; temporary-path live guard failure classified as governed-root scope behavior","timestamp":"2026-08-11T02:40:51Z"}}
+
+### 2026-08-10T23:31:17-04:00
+- phase: handoff
+- event: checkpoint
+- summary: Converged and normally deleted the Aug9 DHF pre-rebase branch after all 27 commits mapped to main, the branch reached 0/0, and the full gate passed
+- git:
+  - branch: main
+  - latest_commit: d34200f
+  - dirty_status: dirty
+  - dirty_count: 2
+- changed_surfaces:
+  - `docs/harness-state.md`
+- verification:
+  - command: `PYTHONDONTWRITEBYTECODE=1 python3 test_runner.py`
+  - exit_code: 0
+  - key_output: ran=129 passed=129 skipped=0 failed=0; Aug9 branch reached d34200f at 0/0 and was normally deleted; only main remains
+- blockers:
+  - none
+- next_safe_task: Verify branch, remote, worktree, stash, and checkpoint state; then request commit/push separately if desired
+- checkpoint_data: {"constraints":["Preserve the user-owned plan and all 11 stashes; no commit or push without separate authorization"],"next_action":{"command":"Verify branch, remote, worktree, stash, and checkpoint state; then request commit/push separately if desired"},"ownership":{"boundary":"Only the agent-owned checkpoint changed; the user-owned plan and all stashes remain untouched","files":{"docs/harness-state.md":"agent_owned_checkpoint","docs/plans/2026-08-10-canonical-harness-forward-fix-plan.md":"user_owned"}},"phase":"handoff","schema":"dhf_checkpoint_v1","verification_evidence":{"command":"PYTHONDONTWRITEBYTECODE=1 python3 test_runner.py","exit_code":0,"freshness":"fresh","key_output":"ran=129 passed=129 skipped=0 failed=0; Aug9 branch reached d34200f at 0/0 and was normally deleted; only main remains","timestamp":"2026-08-11T03:31:17Z"}}
+
+### 2026-08-10T23:32:36-04:00
+- phase: handoff
+- event: checkpoint
+- summary: Completed final branch-governance audit after converging both DHF backup branches; only synchronized main remains locally and remotely
+- git:
+  - branch: main
+  - latest_commit: d34200f
+  - dirty_status: dirty
+  - dirty_count: 2
+- changed_surfaces:
+  - `docs/harness-state.md`
+- verification:
+  - command: `git fetch --all --prune; branch_snapshot.sh; git status --short --branch; git branch -a -vv --no-abbrev; git worktree list --porcelain; git stash list; git rev-list --left-right --count main...origin/main; git diff --check`
+  - exit_code: 0
+  - key_output: only main remains; main and origin/main both d34200f at 0/0; one main worktree; stash_count=11; expected dirty files unchanged; git diff --check clean
+- blockers:
+  - none
+- next_safe_task: Review the bounded docs/harness-state.md diff and user-owned plan separately; request commit and push explicitly if desired
+- checkpoint_data: {"constraints":["authorization_state=read-only remote fetch only; commit and push are not authorized","rollback=not required because no remote or source ref was mutated during final audit","Preserve the user-owned plan and all 11 stashes"],"next_action":{"command":"Review the bounded docs/harness-state.md diff and user-owned plan separately; request commit and push explicitly if desired"},"ownership":{"boundary":"Final audit changed only the agent-owned append-only checkpoint; the user-owned plan and all stashes remain untouched","files":{"docs/harness-state.md":"agent_owned_checkpoint","docs/plans/2026-08-10-canonical-harness-forward-fix-plan.md":"user_owned"}},"phase":"handoff","schema":"dhf_checkpoint_v1","verification_evidence":{"command":"git fetch --all --prune; branch_snapshot.sh; git status --short --branch; git branch -a -vv --no-abbrev; git worktree list --porcelain; git stash list; git rev-list --left-right --count main...origin/main; git diff --check","exit_code":0,"freshness":"fresh","key_output":"only main remains; main and origin/main both d34200f at 0/0; one main worktree; stash_count=11; expected dirty files unchanged; git diff --check clean","timestamp":"2026-08-11T03:32:00Z"}}
