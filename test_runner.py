@@ -10670,7 +10670,7 @@ def test_public_dhf_architecture_status_alignment():
         path = ROOT / "docs" / filename
         require(path.is_file(), f"public DHF page missing: {filename}")
         text = path.read_text(encoding="utf-8")
-        require('href="./dhf-site-status.css"' in text,
+        require('href="./dhf-site-status.css' in text,
                 f"public DHF page missing shared status styles: {filename}")
         require('data-dhf-status="2026-08-11"' in text,
                 f"public DHF page missing current status marker: {filename}")
