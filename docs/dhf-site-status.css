@@ -81,11 +81,18 @@
   /* Inherit each page's own palette; fall back to system colours where a page
      does not define the token. Token names are not uniform across the 21
      pages, so every custom property here is written with a fallback. */
-  background: color-mix(in srgb, var(--surface, Canvas) 86%, transparent);
-  border: 1px solid var(--border, color-mix(in srgb, CanvasText 16%, transparent));
+  /* Translucent glass, plus elevation. The shadow is what separates this from
+     the site's content vocabulary (surface + full border + radius, used by the
+     hero and every card): chrome floats, content sits. 75% is the floor — the
+     dark status bar scrolls underneath this bar, and the scrim alone carries
+     the text contrast because backdrop blur smears pixels without lightening
+     them. Below 75% the link text drops under 4.5:1 against that worst case. */
+  background: color-mix(in srgb, var(--surface, Canvas) 75%, transparent);
+  border: 1px solid color-mix(in srgb, var(--border, CanvasText) 55%, transparent);
+  box-shadow: var(--shadow, 0 6px 22px rgba(0, 0, 0, 0.10));
   color: var(--text, CanvasText);
-  backdrop-filter: saturate(1.6) blur(12px);
-  -webkit-backdrop-filter: saturate(1.6) blur(12px);
+  backdrop-filter: saturate(1.7) blur(16px);
+  -webkit-backdrop-filter: saturate(1.7) blur(16px);
   font: 400 0.875rem/1.2 var(--font-body, system-ui), system-ui, sans-serif;
 }
 
@@ -127,18 +134,20 @@
      be invented, and it stays legible on every page theme. */
   border-bottom: 2px solid transparent;
   background: none;
-  color: var(--text-dim, var(--muted, GrayText));
+  /* Full-contrast, not muted. Muted nav text measures 3.4:1 against the dark
+     status bar passing under a 75% scrim; the page's own --text measures 9.7:1.
+     Hierarchy therefore comes from weight and the underline, not from colour. */
+  color: var(--text, CanvasText);
+  font-weight: 400;
   text-decoration: none;
   white-space: nowrap;
 }
 
 .dhf-nav a:hover {
-  color: var(--text, CanvasText);
-  border-bottom-color: var(--border, color-mix(in srgb, CanvasText 26%, transparent));
+  border-bottom-color: color-mix(in srgb, currentColor 35%, transparent);
 }
 
 .dhf-nav a[aria-current="page"] {
-  color: var(--green, var(--blue, LinkText));
   border-bottom-color: currentColor;
   font-weight: 500;
 }
@@ -149,15 +158,13 @@
   padding: 0 0.6rem !important;
   min-height: 30px !important;
   align-self: center;
-  border: 1px solid var(--border, color-mix(in srgb, CanvasText 20%, transparent));
+  border: 1px solid color-mix(in srgb, currentColor 30%, transparent);
   border-radius: 999px;
-  color: var(--text-dim, var(--muted, GrayText)) !important;
   font-size: 0.8125rem;
 }
 
 .dhf-nav-lang:hover {
-  color: var(--text, CanvasText) !important;
-  border-color: var(--text-dim, GrayText);
+  border-color: color-mix(in srgb, currentColor 60%, transparent);
 }
 
 /* Cross-language link badge: never change a reader's language without warning. */
