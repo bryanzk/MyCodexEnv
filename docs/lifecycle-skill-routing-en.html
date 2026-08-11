@@ -15,7 +15,7 @@
     .article{min-width:0;background:var(--surface);border:1px solid var(--border);border-radius:20px;padding:clamp(22px,4vw,48px);box-shadow:0 8px 26px rgba(51,42,33,.07)}.source-note{margin:0 0 28px;padding:14px 16px;color:var(--blue);background:var(--blue-dim);border:1px solid color-mix(in srgb,var(--blue) 28%,transparent);border-radius:12px;font-size:11px;line-height:1.6;text-transform:none}.article h1{display:none}.article h2{margin:46px 0 14px;padding-top:24px;border-top:1px solid var(--border);font-family:var(--font-display);font-size:clamp(28px,3vw,40px);line-height:1}.article h2:first-of-type{margin-top:0}.article p,.article li{color:var(--text-dim);font-size:15.5px;line-height:1.62}.article a{color:var(--green)}.article code{font-family:var(--font-mono);font-size:.88em;color:var(--text);background:var(--surface2);border-radius:5px;padding:2px 5px}.article pre{overflow-x:auto;padding:18px;background:var(--surface2);border:1px solid var(--border);border-radius:12px}.article pre code{padding:0;background:none}.article blockquote{margin:20px 0;padding:14px 18px;background:var(--green-dim);border-left:4px solid var(--green);border-radius:0 12px 12px 0}.article blockquote p{margin:0;color:var(--text)}.table-wrap{overflow-x:auto;margin:18px 0 28px;border:1px solid var(--border);border-radius:14px}.article table{width:100%;border-collapse:collapse;min-width:760px;background:var(--surface)}.article th,.article td{padding:12px 14px;text-align:left;vertical-align:top;border-bottom:1px solid var(--border);line-height:1.45}.article th{color:var(--text);background:var(--surface2);font-family:var(--font-mono);font-size:12px}.article td{color:var(--text-dim);font-size:14px}.article tr:last-child td{border-bottom:0}.footer{display:flex;justify-content:space-between;gap:16px;color:var(--text-dim);border-top:1px solid var(--border);padding-top:18px;font-family:var(--font-mono);font-size:12px;line-height:1.5}.footer a{color:var(--green)}
     @media(max-width:860px){body{padding:18px}.hero{min-height:0}.footer{flex-direction:column}}
   </style>
-  <link rel="stylesheet" href="./dhf-site-status.css?v=20260811c">
+  <link rel="stylesheet" href="./dhf-site-status.css?v=20260811e">
 </head>
 <body>
   <a class="dhf-skip" href="#dhf-main">Skip to content</a>
@@ -34,7 +34,21 @@
     </div>
     <a class="dhf-nav-lang" href="./index.html" lang="zh-CN" hreflang="zh-CN">中文首页</a>
   </nav>
-  <main id="dhf-main" class="wrap">
+  <main id="dhf-main" class="wrap dhf-has-toc">
+  <nav class="dhf-toc" aria-label="On this page">
+    <div class="dhf-toc-title">On this page</div>
+    <a href="#purpose">Purpose</a>
+    <a href="#contract-mirror">Contract mirror</a>
+    <a href="#visual-guides">Visual guides</a>
+    <a href="#related-docs">Related docs</a>
+    <a href="#covered-workflows">Covered workflows</a>
+    <a href="#stage-map">Stage map</a>
+    <a href="#skill-map">Skill map</a>
+    <a href="#gap-routes">Gap routes</a>
+    <a href="#helper-map">Helper map</a>
+    <a href="#routing-rules">Routing rules</a>
+    <a href="#evidence-standard">Evidence standard</a>
+  </nav>
     <aside class="dhf-status-bar" data-dhf-status="2026-08-11" aria-label="Current DHF status"><strong>Architecture status · 2026-08-11</strong><span>Source, runtime, publication, and independent-core status are separate.</span><a href="./dhf-architecture-status-en.html">Open current status</a></aside>
     <section class="hero"><div class="eyebrow">DHF Written Specification</div><h1>Lifecycle and skill routing.</h1><p class="lead">The complete stage map for moving from recovered facts to bounded work, fresh verification, and a recoverable handoff.</p></section>
     <nav class="strip" aria-label="Quick links"><a class="tag" href="./index-en.html">English landing</a><a class="tag" href="./dhf-engineering-notes-en.html">Engineering notes</a><a class="tag" href="./dhf-architecture-status-en.html">Current status</a></nav>
@@ -49,7 +63,7 @@ activation or publication. See the canonical status in
 <a href="./dhf-architecture-status-cn.html" hreflang="zh-CN">中文</a>. The proposed
 light/standard/governed simplification profiles are not active.</p>
 </blockquote>
-<h2>Purpose</h2>
+<h2 id="purpose">Purpose</h2>
 <p>This document explains which workflows MyCodexEnv covers, how the Harness
 Runtime maps work to lifecycle stages, and which Codex/gstack skills should be
 used at each stage.</p>
@@ -65,7 +79,7 @@ planning/testing/review skills, and deterministic helper scripts.</li>
 <p>The generic lifecycle skill should stay generic. Project-only paths, fixtures,
 checks, smoke matrices, and business safety boundaries belong in repo-specific
 adapter skills.</p>
-<h2>DHF Source-Stage Contract Mirror</h2>
+<h2 id="contract-mirror">DHF Source-Stage Contract Mirror</h2>
 <p>Canonical profile and Result Invariant semantics live in
 <code>codex/skills/delivery-harness-framework/SKILL.md</code>; routing and rollout-switch
 behavior live in <code>codex/hooks/dhf_preprompt.py</code>.</p>
@@ -75,7 +89,7 @@ behavior live in <code>codex/hooks/dhf_preprompt.py</code>.</p>
 <li>Every completion preserves exactly <code>result</code>, <code>scope_and_constraints</code>, <code>verification_receipt</code>, and <code>remaining_risk_or_next_action</code>; profile-specific ceremony is conditional rather than repeated by default.</li>
 <li>The source simplified route uses <code>DHF_PREPROMPT_SIMPLIFIED_PROFILES=1</code>; values <code>0</code>, <code>false</code>, <code>off</code>, and <code>legacy</code> roll back. Runtime evidence must report either <code>source_stage_unsynced</code> or <code>runtime_promoted</code> and reject drift.</li>
 </ul>
-<h2>Visual Guides</h2>
+<h2 id="visual-guides">Visual Guides</h2>
 <ul>
 <li><code>docs/dhf-architecture-status-en.html</code>: canonical English source/runtime/publication status.</li>
 <li><code>docs/dhf-architecture-status-cn.html</code>: canonical Chinese source/runtime/publication status.</li>
@@ -89,7 +103,7 @@ behavior live in <code>codex/hooks/dhf_preprompt.py</code>.</p>
 <li><code>docs/project-lifecycle-harness-flow-skills-zh-status-style.html</code>: 新版中文 Delivery Harness Framework skill/helper 路由图，使用和 LinkedIn 素材一致的状态风格。</li>
 <li><code>docs/project-lifecycle-harness-flow-skills-en-status-style.html</code>: English status-style Delivery Harness Framework flow map for public sharing.</li>
 </ul>
-<h2>Related Documentation</h2>
+<h2 id="related-docs">Related Documentation</h2>
 <ul>
 <li><code>README.md</code>: top-level quick start and Harness Runtime overview.</li>
 <li><code>docs/repo-index.md</code>: low-token repo navigation and runtime surface index.</li>
@@ -105,7 +119,7 @@ behavior live in <code>codex/hooks/dhf_preprompt.py</code>.</p>
 <li><code>docs/project-lifecycle-harness-flow-skills.html</code>: Chinese lifecycle skill/helper routing visual guide.</li>
 <li><code>docs/project-lifecycle-harness-flow-skills-zh-status-style.html</code>: current styled Chinese lifecycle skill/helper routing visual guide.</li>
 </ul>
-<h2>Covered Workflows</h2>
+<h2 id="covered-workflows">Covered Workflows</h2>
 <div class="table-wrap"><table>
 <thead>
 <tr>
@@ -180,7 +194,7 @@ behavior live in <code>codex/hooks/dhf_preprompt.py</code>.</p>
 <td><code>gstack-document-release</code>, vendored gstack <code>document-generate</code>, vendored gstack <code>make-pdf</code>, vendored gstack <code>diagram</code>, <code>doc-updater</code></td>
 </tr>
 </tbody></table></div>
-<h2>Lifecycle Stage Map</h2>
+<h2 id="stage-map">Lifecycle Stage Map</h2>
 <div class="table-wrap"><table>
 <thead>
 <tr>
@@ -262,7 +276,7 @@ behavior live in <code>codex/hooks/dhf_preprompt.py</code>.</p>
 <td>Append harness checkpoint state, capture blockers, preserve resumable user context, and leave a recoverable next step.</td>
 </tr>
 </tbody></table></div>
-<h2>Specialist Skill Map</h2>
+<h2 id="skill-map">Specialist Skill Map</h2>
 <div class="table-wrap"><table>
 <thead>
 <tr>
@@ -467,7 +481,7 @@ behavior live in <code>codex/hooks/dhf_preprompt.py</code>.</p>
 <td>Use for visual documentation and system explanations.</td>
 </tr>
 </tbody></table></div>
-<h2>Skillset Gap Routes</h2>
+<h2 id="gap-routes">Skillset Gap Routes</h2>
 <div class="table-wrap"><table>
 <thead>
 <tr>
@@ -512,7 +526,7 @@ behavior live in <code>codex/hooks/dhf_preprompt.py</code>.</p>
 <td>Prefer a deep module shape with small public interfaces and meaningful behavior behind them; use the interface as the test surface and preserve locality/leverage.</td>
 </tr>
 </tbody></table></div>
-<h2>Runtime Helper Map</h2>
+<h2 id="helper-map">Runtime Helper Map</h2>
 <div class="table-wrap"><table>
 <thead>
 <tr>
@@ -567,7 +581,7 @@ behavior live in <code>codex/hooks/dhf_preprompt.py</code>.</p>
 <td>Main repo regression suite for sync, hooks, runtime helpers, skill boundaries, eval fixtures, and docs/config behavior.</td>
 </tr>
 </tbody></table></div>
-<h2>Routing Rules</h2>
+<h2 id="routing-rules">Routing Rules</h2>
 <ul>
 <li>Start with <code>delivery-harness-framework</code> when work is complex, resumed,
 cross-session, security-sensitive, release-facing, or ambiguous.</li>
@@ -602,7 +616,7 @@ checkpoints directly.</li>
 <li>Use <code>harness_checkpoint.py append</code> before ending long-running work, after a
 meaningful validated slice, or before risky remote/release actions.</li>
 </ul>
-<h2>Evidence Standard</h2>
+<h2 id="evidence-standard">Evidence Standard</h2>
 <p>Any claim that work is complete, fixed, or passing must include fresh evidence:</p>
 <pre><code class="language-text">check
 how it exited
@@ -615,5 +629,26 @@ external dependency, report the exact blocker and the safest next check.</p>
     </article>
     <footer class="footer"><span>Rendered specification: <strong>docs/lifecycle-skill-routing-en.html</strong></span><span><a href="./LIFECYCLE_SKILL_ROUTING.md">Maintainer source</a> · Published by ShipAI.ca</span></footer>
   </main>
+
+  <script>
+    (function () {
+      var links = Array.prototype.slice.call(document.querySelectorAll('.dhf-toc a'));
+      if (!links.length || !('IntersectionObserver' in window)) return;
+      var pairs = [];
+      links.forEach(function (link) {
+        var el = document.getElementById(link.getAttribute('href').slice(1));
+        if (el) pairs.push({ el: el, link: link });
+      });
+      var observer = new IntersectionObserver(function (entries) {
+        entries.forEach(function (entry) {
+          if (!entry.isIntersecting) return;
+          links.forEach(function (l) { l.classList.remove('is-active'); });
+          var match = pairs.filter(function (p) { return p.el === entry.target; })[0];
+          if (match) match.link.classList.add('is-active');
+        });
+      }, { rootMargin: '-14% 0px -74% 0px' });
+      pairs.forEach(function (p) { observer.observe(p.el); });
+    })();
+  </script>
 </body>
 </html>

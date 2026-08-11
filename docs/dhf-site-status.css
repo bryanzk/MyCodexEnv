@@ -59,13 +59,15 @@
   .dhf-status-bar a { white-space: normal; }
 }
 
-/* ---------------------------------------------------------------------------
-   Site navigation. Every public page carries this identical bar as the first
-   element in <body>, so the primary path is reachable from anywhere without
-   scrolling. It reuses the status-bar palette on purpose: that treatment is the
-   one element already present on all 21 pages and it reads correctly against
-   both the light landing theme and the dark flow-map theme.
-   --------------------------------------------------------------------------- */
+/* The bar is a true page header: flush to the top edge and full-bleed on every
+   page, matching the status-style skill map. Two page shapes exist — six pages
+   put their padding on an inner .wrap and leave <body> at zero, the other
+   fifteen pad <body> itself — so the bleed cannot assume a single value.
+   overflow-x: clip (not hidden) contains the bleed without creating a scroll
+   container, which would break position: sticky on descendants. */
+html { overflow-x: clip; }
+body { padding-top: 0 !important; }
+
 .dhf-nav {
   position: sticky;
   top: 0;
@@ -73,27 +75,28 @@
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  /* Sits inside each page's own body padding, like the status bar below it,
-     rather than bleeding to the viewport edge — page paddings differ. */
-  margin: 0 0 1rem;
-  padding: 0 clamp(0.6rem, 2vw, 1rem);
-  border-radius: 14px;
-  /* Inherit each page's own palette; fall back to system colours where a page
-     does not define the token. Token names are not uniform across the 21
-     pages, so every custom property here is written with a fallback. */
-  /* Translucent glass, plus elevation. The shadow is what separates this from
-     the site's content vocabulary (surface + full border + radius, used by the
-     hero and every card): chrome floats, content sits. 75% is the floor — the
-     dark status bar scrolls underneath this bar, and the scrim alone carries
-     the text contrast because backdrop blur smears pixels without lightening
-     them. Below 75% the link text drops under 4.5:1 against that worst case. */
-  background: color-mix(in srgb, var(--surface, Canvas) 75%, transparent);
-  border: 1px solid color-mix(in srgb, var(--border, CanvasText) 55%, transparent);
-  box-shadow: var(--shadow, 0 6px 22px rgba(0, 0, 0, 0.10));
+  margin: 0 0 clamp(1.25rem, 3vw, 2.25rem);
+  padding: 0 clamp(0.75rem, 2.5vw, 1.5rem);
   color: var(--text, CanvasText);
+  font: 400 0.875rem/1.2 var(--font-body, system-ui), system-ui, sans-serif;
+}
+
+/* The glass is painted by a bleeding pseudo-element so the bar reaches the
+   viewport edges while its links stay aligned with the page content.
+   Inherit each page's own palette; token names are not uniform across the 21
+   pages, so every custom property here is written with a fallback.
+   75% opacity is the floor: the dark status bar scrolls under this bar and the
+   scrim alone carries the text contrast, because backdrop blur smears pixels
+   without lightening them. Below 75% link text drops under 4.5:1. */
+.dhf-nav::before {
+  content: "";
+  position: absolute;
+  inset: 0 -100vmax;
+  z-index: -1;
+  background: color-mix(in srgb, var(--surface, Canvas) 75%, transparent);
+  border-bottom: 1px solid color-mix(in srgb, var(--border, CanvasText) 55%, transparent);
   backdrop-filter: saturate(1.7) blur(16px);
   -webkit-backdrop-filter: saturate(1.7) blur(16px);
-  font: 400 0.875rem/1.2 var(--font-body, system-ui), system-ui, sans-serif;
 }
 
 .dhf-nav-home {
@@ -191,6 +194,77 @@
 
 /* 1.4.4 — sidebar heading labels were 10px on six pages. */
 .toc-title { font-size: 12px !important; }
+
+/* The global nav is sticky, so the six pages with a sidebar TOC must park it
+   below the bar rather than letting it slide underneath. */
+.toc {
+  top: 3.9rem;
+  max-height: calc(100dvh - 5.5rem);
+}
+
+/* ---------------------------------------------------------------------------
+   Sidebar contents, for long pages only. Applied where the page has enough
+   sections to be worth indexing: the written spec (12 sections), the English
+   beginner guide (7, matching its Chinese twin), and the PM/FDE guide (6).
+   Short pages and the two landing directories deliberately do not get one --
+   a permanent sidebar taller than the content it indexes is noise.
+   --------------------------------------------------------------------------- */
+.dhf-toc-title {
+  margin-bottom: 0.6rem;
+  padding-bottom: 0.6rem;
+  border-bottom: 1px solid var(--border, color-mix(in srgb, CanvasText 16%, transparent));
+  color: var(--text-dim, GrayText);
+  font-family: var(--font-mono, ui-monospace, monospace);
+  font-size: 12px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.dhf-toc a {
+  display: block;
+  margin-bottom: 2px;
+  padding: 0.45rem 0.6rem;
+  border-left: 2px solid transparent;
+  border-radius: 0 6px 6px 0;
+  color: var(--text-dim, GrayText);
+  font-size: 13px;
+  line-height: 1.35;
+  text-decoration: none;
+}
+
+.dhf-toc a:hover,
+.dhf-toc a.is-active {
+  background: var(--surface2, color-mix(in srgb, CanvasText 6%, transparent));
+  border-left-color: var(--green, var(--blue, LinkText));
+  color: var(--text, CanvasText);
+}
+
+.dhf-toc a.is-active { font-weight: 500; }
+
+@media (min-width: 1100px) {
+  .dhf-has-toc {
+    grid-template-columns: 190px minmax(0, 1fr);
+    column-gap: 2rem;
+    align-items: start;
+  }
+  /* Everything that is not the sidebar stays in the content column. */
+  .dhf-has-toc > :not(.dhf-toc) { grid-column: 2; }
+  .dhf-toc {
+    grid-column: 1;
+    grid-row: 1 / -1;
+    position: sticky;
+    top: 3.9rem;
+    align-self: start;
+    max-height: calc(100dvh - 5.5rem);
+    overflow-y: auto;
+    padding: 0.25rem 0;
+  }
+}
+
+/* Below the two-column breakpoint the top nav already covers wayfinding. */
+@media (max-width: 1099px) {
+  .dhf-toc { display: none; }
+}
 
 /* 2.5.5 — landing-page quick-link chips were 34px tall. */
 .tag { min-height: 44px !important; }

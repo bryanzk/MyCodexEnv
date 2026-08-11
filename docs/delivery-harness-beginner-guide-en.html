@@ -238,7 +238,7 @@
       .grid, .example, .links { grid-template-columns: 1fr; }
     }
   </style>
-  <link rel="stylesheet" href="./dhf-site-status.css?v=20260811c">
+  <link rel="stylesheet" href="./dhf-site-status.css?v=20260811e">
 </head>
 <body>
   <a class="dhf-skip" href="#dhf-main">Skip to content</a>
@@ -257,7 +257,17 @@
     </div>
     <a class="dhf-nav-lang" href="./delivery-harness-beginner-guide-cn.html" lang="zh-CN" hreflang="zh-CN">中文</a>
   </nav>
-  <main id="dhf-main" class="wrap">
+  <main id="dhf-main" class="wrap dhf-has-toc">
+  <nav class="dhf-toc" aria-label="On this page">
+    <div class="dhf-toc-title">On this page</div>
+    <a href="#why">Why a harness</a>
+    <a href="#what">What DHF does</a>
+    <a href="#layers">Three layers</a>
+    <a href="#flow">Five-step flow</a>
+    <a href="#example">Worked example</a>
+    <a href="#terms">Terms</a>
+    <a href="#next">Continue</a>
+  </nav>
     <aside class="dhf-status-bar" data-dhf-status="2026-08-11" aria-label="Current DHF status">
       <strong>Architecture status · 2026-08-11</strong>
       <span>Source, runtime, publication, and independent-core status are separate.</span>
@@ -271,7 +281,7 @@
 
     <section class="section">
       <div class="label">Why it exists</div>
-      <h2>Why beginners need a harness</h2>
+      <h2 id="why">Why beginners need a harness</h2>
       <div class="grid">
         <article class="card"><div class="label">Memory</div><h3>Conversation is not durable state</h3><p>Long tasks outlive a single working window. Decisions and the next safe step must survive outside chat memory.</p></article>
         <article class="card"><div class="label">Ambiguity</div><h3>Broad requests hide decisions</h3><p>Audience, scope, acceptance criteria, and domain language need to be explicit before implementation begins.</p></article>
@@ -284,7 +294,7 @@
 
     <section class="section">
       <div class="label">Plain Definition</div>
-      <h2>What DHF Does</h2>
+      <h2 id="what">What DHF Does</h2>
       <p>DHF answers five questions before it claims progress: what facts were read, which lifecycle stage the work is in, which skill or helper owns the next step, how the result will be verified, and what the next safe task is.</p>
       <div class="grid">
         <article class="card"><div class="label">Recover</div><h3>Facts first</h3><p>Read repo instructions, durable state, git status, and recent evidence before trusting chat memory.</p></article>
@@ -295,7 +305,7 @@
 
     <section class="section">
       <div class="label">Three-layer model</div>
-      <h2>Three layers keep responsibilities clear</h2>
+      <h2 id="layers">Three layers keep responsibilities clear</h2>
       <div class="grid">
         <article class="card"><div class="label">Runtime layer</div><h3>Rules and observable state</h3><p>Global and repository instructions, permissions, durable evidence, and environment checks define what work is allowed and what is currently true.</p></article>
         <article class="card"><div class="label">Router layer</div><h3>Lifecycle ownership</h3><p>The router recovers state, identifies the current stage, and chooses the workflow that owns the next bounded step.</p></article>
@@ -305,7 +315,7 @@
 
     <section class="section">
       <div class="label">Five-step flow</div>
-      <h2>Five-step flow</h2>
+      <h2 id="flow">Five-step flow</h2>
       <p>This is a checklist, not mandatory ceremony. Only <code>governed</code> work with a matching escalation signal runs <code>harness_recover.py</code>, <code>harness_env_probe.py</code>, or <code>harness_checkpoint.py</code>; <code>light</code> does not require those lifecycle helpers.</p>
       <div class="steps">
         <div class="step"><div class="step-num">1</div><div><strong>Recover when escalated</strong><p>Restore phase, dirty state, latest verification, and next safe task only when the governed signal requires it.</p></div></div>
@@ -318,7 +328,7 @@
 
     <section class="section">
       <div class="label">Concrete IO</div>
-      <h2>Input request -> DHF output</h2>
+      <h2 id="example">Input request -> DHF output</h2>
       <div class="example">
         <div class="example-box">
           <h3>input request</h3>
@@ -339,7 +349,7 @@
 
     <section class="section">
       <div class="label">Glossary</div>
-      <h2>Terms you will see on the next pages</h2>
+      <h2 id="terms">Terms you will see on the next pages</h2>
       <div class="grid">
         <article class="card"><h3>Lifecycle stage</h3><p>The current kind of work—such as requirements, planning, development, validation, review, ship, or handoff.</p></article>
         <article class="card"><h3>Gate</h3><p>An observable condition that must pass before work is allowed to move to the next stage.</p></article>
@@ -352,7 +362,7 @@
 
     <section class="section">
       <div class="label">Next</div>
-      <h2>Continue the English path</h2>
+      <h2 id="next">Continue the English path</h2>
       <div class="links">
         <a class="link-card" href="./project-lifecycle-harness-flow-en.html"><b>Lifecycle Flow</b><span>See how a request moves from intake to handoff.</span></a>
         <a class="link-card" href="./project-lifecycle-harness-flow-skills-en-status-style.html"><b>Skill Routing Map</b><span>See which skill or helper owns each stage.</span></a>
@@ -363,5 +373,26 @@
 
     <footer class="footer">Published by ShipAI.ca as a public DHF reference. File: <code>docs/delivery-harness-beginner-guide-en.html</code>.</footer>
   </main>
+
+  <script>
+    (function () {
+      var links = Array.prototype.slice.call(document.querySelectorAll('.dhf-toc a'));
+      if (!links.length || !('IntersectionObserver' in window)) return;
+      var pairs = [];
+      links.forEach(function (link) {
+        var el = document.getElementById(link.getAttribute('href').slice(1));
+        if (el) pairs.push({ el: el, link: link });
+      });
+      var observer = new IntersectionObserver(function (entries) {
+        entries.forEach(function (entry) {
+          if (!entry.isIntersecting) return;
+          links.forEach(function (l) { l.classList.remove('is-active'); });
+          var match = pairs.filter(function (p) { return p.el === entry.target; })[0];
+          if (match) match.link.classList.add('is-active');
+        });
+      }, { rootMargin: '-14% 0px -74% 0px' });
+      pairs.forEach(function (p) { observer.observe(p.el); });
+    })();
+  </script>
 </body>
 </html>
