@@ -257,7 +257,24 @@ body { padding: 0 0 clamp(1.5rem, 4vw, 2.4rem) !important; }
 
 .dhf-toc a.is-active { font-weight: 500; }
 
+/* The page content is wrapped in one column element so the rail and the content
+   are the grid's only two children, in a single row. Two earlier attempts to
+   let the rail span the rows instead both failed: grid-row: 1 / -1 collapses to
+   one row because these wrappers declare no explicit rows, and grid-row:
+   1 / span 9999 created 9994 empty implicit tracks whose 24px row gaps added
+   239,856px of blank page below the content. With one row there is nothing to
+   span and nothing to leave empty. */
+.dhf-col {
+  display: grid;
+  gap: inherit;
+  min-width: 0;
+  align-content: start;
+}
+
+.dhf-col > * { min-width: 0; }
+
 @media (min-width: 1100px) {
+  .dhf-col { grid-column: 2; }
   .dhf-has-toc {
     display: grid;
     grid-template-columns: 190px minmax(0, 1fr);
@@ -271,16 +288,8 @@ body { padding: 0 0 clamp(1.5rem, 4vw, 2.4rem) !important; }
        for it (1480px) and are deliberately not touched. */
     max-width: 1479px;
   }
-  /* Everything that is not the sidebar stays in the content column. */
-  .dhf-has-toc > :not(.dhf-toc) { grid-column: 2; }
   .dhf-toc {
     grid-column: 1;
-    /* NOT 1 / -1. These wrappers declare no explicit rows, and -1 counts back
-       from the end of the EXPLICIT grid, so 1 / -1 collapses to a single row.
-       The rail then forced row 1 to its own height and left a 404px hole
-       between the status bar and the hero. A large explicit span reaches
-       every implicit row. */
-    grid-row: 1 / span 9999;
     position: sticky;
     top: 3.9rem;
     align-self: start;

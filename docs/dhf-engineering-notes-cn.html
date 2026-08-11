@@ -42,7 +42,7 @@
     .footer { display: flex; justify-content: space-between; gap: 16px; color: var(--text-dim); border-top: 1px solid var(--border); padding-top: 18px; font-family: var(--font-mono); font-size: 12px; line-height: 1.5; } .footer a { color: var(--green); }
     @media (max-width: 860px) { body { padding: 18px; } .hero { min-height: 0; } .card-row, .card-row.four { grid-template-columns: 1fr; } .section-heading { align-items: start; flex-direction: column; } .footer { flex-direction: column; } }
   </style>
-  <link rel="stylesheet" href="./dhf-site-status.css?v=20260811i">
+  <link rel="stylesheet" href="./dhf-site-status.css?v=20260811j">
 </head>
 <body>
   <a class="dhf-skip" href="#dhf-main">跳到正文</a>
@@ -69,6 +69,7 @@
     <a href="#incident-heading">回退事故</a>
     <a href="#contract-heading">契约测试</a>
   </nav>
+  <div class="dhf-col">
     <aside class="dhf-status-bar" data-dhf-status="2026-08-11" aria-label="当前 DHF 状态"><strong>架构状态 · 2026-08-11</strong><span>源码、运行时、发布状态与独立核心状态彼此分开。</span><a href="./dhf-architecture-status-cn.html">查看当前状态</a></aside>
     <section class="hero" style="--i:0"><div class="eyebrow">DHF 工程札记</div><h1>治理会话容量<br>与部署方向。</h1><p class="lead">从第一性原理说明持久状态、关闭式失败、版本方向与可执行文档如何让长周期智能体系统能够恢复。</p></section>
     <nav class="strip" aria-label="快速链接" style="--i:1"><a class="tag" href="./index.html">中文首页</a><a class="tag" href="./dhf-for-product-and-field-cn.html">产品与现场团队</a><a class="tag" href="./dhf-architecture-status-cn.html">当前状态</a><a class="tag" href="./dhf-engineering-notes-en.html" hreflang="en">English</a></nav>
@@ -136,7 +137,8 @@
       </div>
     </section>
     <footer class="footer"><span>工程札记：<strong>docs/dhf-engineering-notes-cn.html</strong></span><span><a href="./dhf-engineering-notes-en.html" hreflang="en">English version</a> · 由 ShipAI.ca 发布为公开 DHF 参考</span></footer>
-  </main>
+    </div>
+</main>
 
   <script>
     (function () {

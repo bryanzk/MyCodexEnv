@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="description" content="MyCodexEnv 与 Delivery Harness Framework 当前架构、源码、运行时、发布和独立核心状态。">
   <title>DHF 架构与当前状态</title>
-  <link rel="stylesheet" href="./dhf-site-status.css?v=20260811i">
+  <link rel="stylesheet" href="./dhf-site-status.css?v=20260811j">
   <style>
     :root { --bg:#f4f1e8; --surface:#fffdf8; --ink:#1e2924; --muted:#637068; --line:rgba(30,41,36,.14); --green:#147a62; --amber:#a15f22; --red:#a9475b; --blue:#2f6f92; }
     * { box-sizing: border-box; }
@@ -49,6 +49,7 @@
     <a href="#implemented">已实现</a>
     <a href="#boundary">验证边界</a>
   </nav>
+  <div class="dhf-col">
     <aside class="dhf-status-bar" data-dhf-status="2026-08-11" aria-label="DHF 当前状态">
       <strong>架构状态 · 2026-08-11</strong>
       <span>源码、运行时、公开发布与独立核心的统一事实页。</span>
@@ -122,7 +123,8 @@
       <p class="warning"><strong>原则：</strong>历史绿灯永远不能证明当前运行时。任何部署或环境变更之后，DHF 都会重新执行源码测试、逐文件一致性核对与环境验证,通过后才声明完成。</p>
       <p>每个完成声明都以新鲜、可机器核验的验证凭据为支撑,而不是依赖记忆或过去的状态。</p>
     </section>
-  </main>
+    </div>
+</main>
 
   <script>
     (function () {
