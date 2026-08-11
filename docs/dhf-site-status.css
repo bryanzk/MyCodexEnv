@@ -251,6 +251,13 @@ body { padding-top: 0 !important; }
     grid-template-columns: 190px minmax(0, 1fr);
     column-gap: 2rem;
     align-items: start;
+    /* Each page's own max-width was sized for a single column. Left alone, the
+       rail eats 190px + 32px out of it and the reading column gets NARROWER
+       than before the sidebar existed (1180 -> 958 on the written spec). Widen
+       the container by exactly the rail cost so the content column keeps the
+       measure it had. The six pages that shipped their own .toc already sized
+       for it (1480px) and are deliberately not touched. */
+    max-width: 1402px;
   }
   /* Everything that is not the sidebar stays in the content column. */
   .dhf-has-toc > :not(.dhf-toc) { grid-column: 2; }
