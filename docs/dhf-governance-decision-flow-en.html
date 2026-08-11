@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Delivery Harness Framework (DHF) Lifecycle Flow</title>
+  <title>Delivery Harness Framework (DHF) Governance Decision Flow</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,650;9..144,760&family=IBM+Plex+Mono:wght@400;500;600&family=Atkinson+Hyperlegible:wght@400;700&display=swap" rel="stylesheet">
@@ -232,15 +232,15 @@
     <div class="dhf-nav-links">
         <a href="./index-en.html">Home</a>
         <a href="./delivery-harness-beginner-guide-en.html">Beginner</a>
-        <a href="./project-lifecycle-harness-flow-en.html" aria-current="page">Lifecycle Flow</a>
+        <a href="./project-lifecycle-harness-flow-en.html">Lifecycle Flow</a>
         <a href="./project-lifecycle-harness-flow-skills-en-status-style.html">Skill Routing</a>
-        <a href="./dhf-governance-decision-flow-en.html">Governance</a>
+        <a href="./dhf-governance-decision-flow-en.html" aria-current="page">Governance</a>
         <a href="./dhf-workflow-skills-en.html">Workflow Skills</a>
         <a href="./dhf-for-product-and-field-en.html">PM &amp; FDE</a>
         <a href="./dhf-engineering-notes-en.html">Engineering Notes</a>
         <a href="./lifecycle-skill-routing-en.html">Written Spec</a>
     </div>
-    <a class="dhf-nav-lang" href="./project-lifecycle-harness-flow-cn.html" lang="zh-CN" hreflang="zh-CN">中文</a>
+    <a class="dhf-nav-lang" href="./dhf-governance-decision-flow-cn.html" lang="zh-CN" hreflang="zh-CN">中文</a>
   </nav>
   <main id="dhf-main" class="wrap">
     <aside class="dhf-status-bar" data-dhf-status="2026-08-11" aria-label="Current DHF status">
@@ -249,80 +249,104 @@
       <a href="./dhf-architecture-status-en.html">Open current status</a>
     </aside>
     <section class="hero">
-      <div class="eyebrow">Delivery Harness Framework / DHF Lifecycle Flow</div>
-      <h1>DHF Lifecycle Flow from intake to handoff.</h1>
-      <p class="lead">Use this Flow Map after the beginner guide. It shows how <code>delivery-harness-framework</code> selects a governance profile and routes requirements, implementation, verification evidence, review, release, and conditional recovery or handoff.</p>
+      <div class="eyebrow">Delivery Harness Framework / DHF Governance Decision Flow</div>
+      <h1>What happens before the tool runs.</h1>
+      <p class="lead">The Lifecycle Flow and the Skill Routing Map answer <em>which route a task takes</em>. This map answers a different question: for any single tool call, what has to be true before it is allowed to execute, and what happens when it is not. Refusal edges and the verification back-edge are drawn, because an agent that only has success paths is a demo.</p>
     </section>
 
     <section class="section">
-      <div class="label">Lifecycle Flow</div>
-      <h2>Flow Map</h2>
-      <p>Recover / Env / Checkpoint are conditional nodes. Only <code>governed</code> work with a matching escalation signal runs <code>harness_recover.py</code>, <code>harness_env_probe.py</code>, or <code>harness_checkpoint.py</code>; <code>light</code> does not require those helpers.</p>
+      <div class="label">Governance Decision Flow</div>
+      <h2>Every tool call passes this gate.</h2>
+      <p>Read it as an enforcement path, not a workflow. The guard runs at <code>PreToolUse</code>, so a refusal happens before the side effect, not after it. Note the two properties the topology encodes: an unresolved phase falls back to <strong>read-only</strong> rather than to trust, and a <strong>self-declared</strong> phase still cannot reach a protected root.</p>
       <div class="mermaid-wrap">
         <pre class="mermaid">
 flowchart TD
-  Start(["User request enters DHF"])
-  ProfileDecision{"Does the selected profile require governed recovery?"}
-  Recover["Governed matching signal only<br/>harness_recover.py"]
-  Env["Governed matching signal only<br/>harness_env_probe.py"]
-  Clear{"Are goal, scope,<br/>and acceptance clear?"}
-  Req["Requirements<br/>planner / req-to-dev<br/>CONTEXT / ADR"]
-  Plan["Planning<br/>vertical slice / AFK / HITL"]
-  Dev["Implementation<br/>TDD / ATDD / scoped workers"]
-  Verify["Verification evidence<br/>command, exit_code,<br/>key_output, timestamp"]
-  Review["QA / security / review<br/>gstack-qa / gstack-cso / gstack-review"]
-  Ship["Ship / deploy / canary<br/>gstack-ship / land-and-deploy"]
-  Docs["Docs release<br/>document-release / doc-updater"]
-  Handoff["Governed matching signal only<br/>harness_checkpoint.py append"]
-  Done(["DHF output<br/>route, evidence, next safe task"])
+  Req(["Agent proposes a tool call"])
+  Lane{"Execution lane?"}
+  HITL["High impact<br/>separate human authorization<br/>promotion / push / deploy"]
+  Phase{"Work phase resolved?"}
+  ReadOnly["Fail closed<br/>read-only fallback"]
+  Declare["Agent self-declares a phase<br/>codex-task declare"]
+  Cap{"Does the phase allow this capability?<br/>repo_write / network / remote / subagent"}
+  Scope{"Where does the call reach?"}
+  Protected["Protected root or persistence write<br/>shell profile / LaunchAgent / crontab"]
+  Tier{"Category risk tier"}
+  Block["PreToolUse returns a real block<br/>reason + risk_tier"]
+  Run["Tool executes"]
+  Evidence["guardrail_decision appended<br/>schema-validated JSONL"]
+  Verify{"Fresh verification passes?"}
+  Compact{"Context compaction happened?"}
+  Successor["Transition store CAS<br/>exactly one successor"]
+  Handoff(["Checkpoint + next safe task"])
 
-  Start --> ProfileDecision
-  ProfileDecision -- "governed matching signal" --> Recover --> Env --> Clear
-  ProfileDecision -- "light/standard skip Recover / Env" --> Clear
-  Clear -- "No" --> Req --> Plan
-  Clear -- "Yes" --> Plan
-  Plan --> Dev --> Verify
-  Verify --> Review --> Ship --> Docs --> Handoff --> Done
-  Verify --> Handoff
+  Req --> Lane
+  Lane -- "local development" --> Phase
+  Lane -- "operator live demo" --> Phase
+  Lane -- "customer / production" --> HITL
+  HITL -- "approved" --> Phase
+  HITL -- "not approved" --> Block
+  Phase -- "no" --> ReadOnly --> Declare
+  Declare -- "unblocks low / medium only" --> Cap
+  Phase -- "yes" --> Cap
+  Cap -- "no" --> Block
+  Cap -- "yes" --> Scope
+  Scope -- "protected root or persistence" --> Protected --> Block
+  Scope -- "inside governed root" --> Tier
+  Tier -- "high: remote / secret / destructive / dynamic_exec" --> Block
+  Tier -- "low / medium" --> Run
+  Block --> Evidence
+  Run --> Evidence
+  Evidence --> Verify
+  Verify -- "fail: back to the agent" --> Req
+  Verify -- "pass" --> Compact
+  Compact -- "yes" --> Successor --> Handoff
+  Compact -- "no" --> Handoff
 
-  classDef runtime fill:#e9f7f5,stroke:#0f9b8e,color:#17241f;
   classDef decision fill:#f0eaff,stroke:#8a4fff,color:#17241f;
+  classDef deny fill:#faeaf1,stroke:#d13574,color:#17241f;
+  classDef runtime fill:#e9f7f5,stroke:#0f9b8e,color:#17241f;
   classDef build fill:#fbf0dc,stroke:#b26a00,color:#17241f;
   classDef verify fill:#eaf6f0,stroke:#12805c,color:#17241f;
-  classDef ship fill:#faeaf1,stroke:#d13574,color:#17241f;
 
-  class Recover,Env,Handoff runtime;
-  class Clear decision;
-  class Req,Plan,Dev build;
-  class Verify,Review,Docs verify;
-  class Ship ship;
+  class Lane,Phase,Cap,Scope,Tier,Verify,Compact decision;
+  class Block,Protected,ReadOnly deny;
+  class HITL,Declare build;
+  class Evidence,Successor runtime;
+  class Run verify;
         </pre>
       </div>
     </section>
 
     <section class="section">
       <div class="label">How to read it</div>
-      <h2>Use the map as a gate, not a poster.</h2>
+      <h2>Four properties this diagram is claiming.</h2>
       <div class="grid">
-        <div class="card"><b>1. Recover when escalated</b><span>Run full recovery only for a matching governed signal; otherwise read the narrowest task sources.</span></div>
-        <div class="card"><b>2. Lock scope</b><span>If acceptance is unclear, route to requirements before planning.</span></div>
-        <div class="card"><b>3. Build in slices</b><span>Development starts only after the lifecycle stage and owner are clear.</span></div>
-        <div class="card"><b>4. Prove; hand off when escalated</b><span>Verification is required for artifact claims; checkpoint handoff remains signal-conditional.</span></div>
+        <div class="card"><b>1. Permissions are phase-scoped</b><span>Eight lifecycle phases each declare whether repository writes, network, remote access, and subagent dispatch are allowed. The capability check is a gate, not advice in a prompt.</span></div>
+        <div class="card"><b>2. The agent cannot widen its own reach</b><span>Self-declaring a phase unblocks ordinary low and medium actions. It never unlocks protected roots, and persistence writes stay refused in every phase.</span></div>
+        <div class="card"><b>3. Refusals are recorded, not just successes</b><span>Both the block edge and the execute edge converge on the same evidence append, so the audit trail shows what was stopped as well as what ran.</span></div>
+        <div class="card"><b>4. Failure has somewhere to go</b><span>Verification failure returns to the agent instead of falling through to handoff, and a compaction routes through a first-record-wins transition so a retry cannot fan out into two successors.</span></div>
       </div>
+    </section>
+
+    <section class="section">
+      <div class="label">Scope</div>
+      <h2>What this map does not claim.</h2>
+      <p>This is the enforcement path as implemented in source, with the guard promoted to one machine's runtime. Production enforcement, customer adoption, and commercial validation are separate and still unverified — the <a href="./dhf-architecture-status-en.html">architecture status page</a> is canonical. There is also a known limitation the diagram deliberately does not hide: the host's <code>ask</code> response fails open, so high-risk categories are hard blocks rather than approval prompts, and the Plan Governor stays in shadow with <code>production_status = no_go</code>.</p>
     </section>
 
     <section class="section">
       <div class="label">Next</div>
       <h2>Continue the English path</h2>
       <div class="links">
-        <a class="link-card" href="./delivery-harness-beginner-guide-en.html"><b>Beginner</b><span>Review the plain-English DHF model.</span></a>
+        <a class="link-card" href="./project-lifecycle-harness-flow-en.html"><b>Lifecycle Flow</b><span>See how a request routes from intake to handoff.</span></a>
         <a class="link-card" href="./project-lifecycle-harness-flow-skills-en-status-style.html"><b>Skill Routing Map</b><span>See which skill or helper owns each stage.</span></a>
-        <a class="link-card" href="./lifecycle-skill-routing-en.html"><b>Written Spec</b><span>Read the routing contract and evidence rules.</span></a>
+        <a class="link-card" href="./dhf-engineering-notes-en.html"><b>Engineering Notes</b><span>Read the compaction and rollback-prevention detail.</span></a>
         <a class="link-card" href="./index-en.html"><b>English Index</b><span>Return to the public guide entry.</span></a>
+        <a class="link-card" href="./dhf-governance-decision-flow-cn.html" lang="zh-CN" hreflang="zh-CN"><b>中文版</b><span>Read this same governance decision flow in Chinese.</span></a>
       </div>
     </section>
 
-    <footer class="footer">Published by ShipAI.ca as a public DHF reference. File: <code>docs/project-lifecycle-harness-flow-en.html</code>.</footer>
+    <footer class="footer">Published by ShipAI.ca as a public DHF reference. File: <code>docs/dhf-governance-decision-flow-en.html</code>.</footer>
   </main>
 
   <script type="module">

@@ -59,6 +59,161 @@
   .dhf-status-bar a { white-space: normal; }
 }
 
+/* ---------------------------------------------------------------------------
+   Site navigation. Every public page carries this identical bar as the first
+   element in <body>, so the primary path is reachable from anywhere without
+   scrolling. It reuses the status-bar palette on purpose: that treatment is the
+   one element already present on all 21 pages and it reads correctly against
+   both the light landing theme and the dark flow-map theme.
+   --------------------------------------------------------------------------- */
+.dhf-nav {
+  position: sticky;
+  top: 0;
+  z-index: 40;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.5rem clamp(0.75rem, 3vw, 1.5rem);
+  background: color-mix(in srgb, var(--dhf-status-bg) 94%, transparent);
+  border-bottom: 1px solid var(--dhf-status-border);
+  backdrop-filter: saturate(1.4) blur(10px);
+  font: 500 0.85rem/1.2 system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+
+.dhf-nav-home {
+  flex: none;
+  padding: 0.4rem 0.6rem;
+  border-radius: 8px;
+  color: var(--dhf-status-text);
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-decoration: none;
+}
+
+.dhf-nav-links {
+  display: flex;
+  flex: 1 1 auto;
+  gap: 0.25rem;
+  min-width: 0;
+  overflow-x: auto;
+  scrollbar-width: thin;
+  -webkit-overflow-scrolling: touch;
+}
+
+.dhf-nav-links::-webkit-scrollbar { height: 4px; }
+.dhf-nav-links::-webkit-scrollbar-thumb { background: var(--dhf-status-border); border-radius: 4px; }
+
+.dhf-nav a {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  /* 2.5.5 — 44px min target on the primary bar. */
+  min-height: 44px;
+  padding: 0 0.65rem;
+  border-radius: 8px;
+  color: var(--dhf-status-muted);
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.dhf-nav a:hover { color: var(--dhf-status-text); background: rgba(255, 255, 255, 0.07); }
+
+.dhf-nav a[aria-current="page"] {
+  color: var(--dhf-status-bg);
+  background: var(--dhf-status-link);
+  font-weight: 700;
+}
+
+.dhf-nav-lang {
+  flex: none;
+  border: 1px solid var(--dhf-status-border);
+  color: var(--dhf-status-link) !important;
+}
+
+/* Cross-language link badge: never change a reader's language without warning. */
+.dhf-xlang::after {
+  content: attr(data-lang);
+  margin-left: 0.35rem;
+  padding: 0.08em 0.32em;
+  border: 1px solid currentColor;
+  border-radius: 4px;
+  opacity: 0.75;
+  font-size: 0.72em;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+}
+
+@media (max-width: 760px) {
+  .dhf-nav { gap: 0.4rem; padding: 0.4rem 0.6rem; }
+  .dhf-nav-home { padding: 0.4rem; }
+}
+
+@media print {
+  .dhf-nav, .dhf-skip { display: none; }
+}
+
+/* 1.4.4 — sidebar heading labels were 10px on six pages. */
+.toc-title { font-size: 12px !important; }
+
+/* 2.5.5 — landing-page quick-link chips were 34px tall. */
+.tag { min-height: 44px !important; }
+
+/* CJK label typography. The landing pages style .eyebrow/.label/.meta/.tag with
+   a mono face, uppercase, and 0.11em tracking. On Chinese labels uppercase is a
+   no-op, the mono fallback is inconsistent, and the tracking visibly loosens the
+   characters. Scope those three properties back for Chinese text only. */
+:lang(zh) :is(.eyebrow, .label, .meta, .tag),
+:lang(zh-CN) :is(.eyebrow, .label, .meta, .tag) {
+  font-family: inherit;
+  letter-spacing: 0.02em;
+  text-transform: none;
+}
+
+/* WCAG 2.4.7 — visible focus indicator.
+   Every public page links this stylesheet last, and no page defines its own
+   focus style, so this is the single site-wide keyboard-visibility rule.
+   currentColor is used deliberately: it inherits each link's own colour, which
+   already clears 4.5:1 against its background on both the light landing theme
+   and the dark flow-map theme, so one rule stays compliant on both. */
+:where(a, button, summary, [tabindex]:not([tabindex="-1"]), input, select, textarea):focus-visible {
+  outline: 3px solid currentColor;
+  outline-offset: 2px;
+  border-radius: 6px;
+  box-shadow: 0 0 0 6px rgba(128, 128, 128, 0.32);
+}
+
+/* Skip link. Add `<a class="dhf-skip" href="#dhf-main">…</a>` as the first
+   child of <body>, and `id="dhf-main"` on <main>. */
+.dhf-skip {
+  position: absolute;
+  left: -9999px;
+  z-index: 999;
+  padding: 0.7rem 1.1rem;
+  border-radius: 10px;
+  background: var(--dhf-status-bg);
+  color: var(--dhf-status-link);
+  font: 700 0.95rem/1.2 system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  text-decoration: none;
+}
+
+.dhf-skip:focus {
+  left: 1rem;
+  top: 1rem;
+}
+
+/* WCAG 2.3.3 — several pages stagger section entry with a --i delay and the
+   flow maps animate on load. Honour a reduced-motion preference. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
 @media print {
   .dhf-status-bar {
     background: #fff;

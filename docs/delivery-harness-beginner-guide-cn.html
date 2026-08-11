@@ -535,6 +535,22 @@
   <link rel="stylesheet" href="./dhf-site-status.css">
 </head>
 <body>
+  <a class="dhf-skip" href="#dhf-main">跳到正文</a>
+  <nav class="dhf-nav" aria-label="站点导航">
+    <a class="dhf-nav-home" href="./index.html">DHF</a>
+    <div class="dhf-nav-links">
+        <a href="./index.html">首页</a>
+        <a href="./delivery-harness-beginner-guide-cn.html" aria-current="page">新手指南</a>
+        <a href="./project-lifecycle-harness-flow-cn.html">生命周期流程</a>
+        <a href="./project-lifecycle-harness-flow-skills-zh-status-style.html">Skill 路由图</a>
+        <a href="./dhf-governance-decision-flow-cn.html">治理判定</a>
+        <a href="./dhf-workflow-skills-cn.html">工作流 Skills</a>
+        <a href="./dhf-for-product-and-field-cn.html">产品与交付</a>
+        <a href="./dhf-engineering-notes-cn.html">工程笔记</a>
+        <a href="./lifecycle-skill-routing-en.html" class="dhf-xlang" data-lang="EN" lang="en" hreflang="en">文字规范</a>
+    </div>
+    <a class="dhf-nav-lang" href="./delivery-harness-beginner-guide-en.html" lang="en" hreflang="en">English</a>
+  </nav>
   <div class="wrap">
     <nav class="toc" id="toc" aria-label="页面目录">
       <div class="toc-title">目录</div>
@@ -547,9 +563,9 @@
       <a href="#next">下一步</a>
     </nav>
 
-    <main class="main">
-      <aside class="dhf-status-bar" data-dhf-status="2026-08-04" aria-label="DHF 当前状态">
-        <strong>架构状态 · 2026-08-04</strong>
+    <main id="dhf-main" class="main">
+      <aside class="dhf-status-bar" data-dhf-status="2026-08-11" aria-label="DHF 当前状态">
+        <strong>架构状态 · 2026-08-11</strong>
         <span>仓库源码、当前运行态、公开站点与独立核心分别判定。</span>
         <a href="./dhf-architecture-status-cn.html">查看当前状态</a>
       </aside>
@@ -717,8 +733,8 @@
           <a class="link-card" href="./index.html"><b>中文公开入口</b><span>从这里进入中文 DHF 公开页面。</span></a>
           <a class="link-card" href="./project-lifecycle-harness-flow-cn.html"><b>Lifecycle Flow</b><span>看任务从进入到交接的完整路径。</span></a>
           <a class="link-card" href="./project-lifecycle-harness-flow-skills-zh-status-style.html"><b>Skill Routing Map</b><span>看每个阶段由哪个 skill 或 helper 接管。</span></a>
-          <a class="link-card" href="./index-en.html"><b>English Guide</b><span>给英文读者的独立入口。</span></a>
-          <a class="link-card" href="./lifecycle-skill-routing-en.html"><b>Written Spec</b><span>查 workflow、stage map、helper 和 evidence standard。</span></a>
+          <a class="link-card" href="./index-en.html" hreflang="en"><b>English Guide</b><span>给英文读者的独立入口。</span></a>
+          <a class="dhf-xlang link-card" href="./lifecycle-skill-routing-en.html" hreflang="en" data-lang="EN"><b>Written Spec</b><span>查 workflow、stage map、helper 和 evidence standard。</span></a>
         </div>
         <div class="footer">
           Published by ShipAI.ca as a public DHF reference. 生成来源：<code>docs/LIFECYCLE_SKILL_ROUTING.md</code>、<code>docs/HARNESS_RUNTIME.md</code>、<code>docs/AGENT_HARNESS_STATUS.md</code>。页面目标：让 agentic engineering beginner 先理解 DHF 在做什么，再进入详细流程图。

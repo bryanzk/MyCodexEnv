@@ -32,3 +32,6 @@ TEST_VERIFICATION.md
 
 # Local runtime backup and verification evidence
 .runtime-backups/
+
+# Personal job-application drafts, not part of the public DHF reference.
+application-*.md

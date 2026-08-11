@@ -80,9 +80,25 @@
   <link rel="stylesheet" href="./dhf-site-status.css">
 </head>
 <body>
-  <main class="wrap">
-    <aside class="dhf-status-bar" data-dhf-status="2026-08-04" aria-label="当前 DHF 状态">
-      <strong>架构状态 · 2026-08-04</strong>
+  <a class="dhf-skip" href="#dhf-main">跳到正文</a>
+  <nav class="dhf-nav" aria-label="站点导航">
+    <a class="dhf-nav-home" href="./index.html">DHF</a>
+    <div class="dhf-nav-links">
+        <a href="./index.html">首页</a>
+        <a href="./delivery-harness-beginner-guide-cn.html">新手指南</a>
+        <a href="./project-lifecycle-harness-flow-cn.html">生命周期流程</a>
+        <a href="./project-lifecycle-harness-flow-skills-zh-status-style.html">Skill 路由图</a>
+        <a href="./dhf-governance-decision-flow-cn.html">治理判定</a>
+        <a href="./dhf-workflow-skills-cn.html">工作流 Skills</a>
+        <a href="./dhf-for-product-and-field-cn.html" aria-current="page">产品与交付</a>
+        <a href="./dhf-engineering-notes-cn.html">工程笔记</a>
+        <a href="./lifecycle-skill-routing-en.html" class="dhf-xlang" data-lang="EN" lang="en" hreflang="en">文字规范</a>
+    </div>
+    <a class="dhf-nav-lang" href="./dhf-for-product-and-field-en.html" lang="en" hreflang="en">English</a>
+  </nav>
+  <main id="dhf-main" class="wrap">
+    <aside class="dhf-status-bar" data-dhf-status="2026-08-11" aria-label="当前 DHF 状态">
+      <strong>架构状态 · 2026-08-11</strong>
       <span>源码、运行时、发布状态与独立核心状态彼此分开。</span>
       <a href="./dhf-architecture-status-cn.html">查看当前状态</a>
     </aside>
@@ -96,7 +112,7 @@
       <a class="tag" href="./delivery-harness-beginner-guide-cn.html">入门指南</a>
       <a class="tag" href="./project-lifecycle-harness-flow-cn.html">生命周期流程</a>
       <a class="tag" href="./dhf-architecture-status-cn.html">当前状态</a>
-      <a class="tag" href="./dhf-for-product-and-field-en.html">English</a>
+      <a class="tag" href="./dhf-for-product-and-field-en.html" hreflang="en">English</a>
     </nav>
 
     <section class="section-block" aria-labelledby="loop-heading">
@@ -187,7 +203,7 @@
       <div class="card-row"><div class="card"><h3>如果你负责产品</h3><ul><li>状态可核对：每个“完成”都有可打开的凭据，而不是模糊感受。</li><li>范围可见：工作被分批，每一批独立落地或失败。</li><li>风险有界：面向客户的环境需要人工批准。</li><li>长项目平稳延续：会话限制带来交接，而不是失忆。</li></ul></div><div class="card"><h3>如果你负责现场部署</h3><ul><li>环境可自描述：每个环境都记录自己运行的准确版本。</li><li>回退必须明确：未经你指名批准，不会发生降级。</li><li>自动化默认只读：定时任务报告差异，不自行“修复”。</li><li>事后可从持久记录和凭据审计全过程。</li></ul></div></div>
       <div class="card-row"><a class="card" href="./delivery-harness-beginner-guide-cn.html"><div class="label">继续了解</div><h3>入门指南</h3><p>用易懂语言说明完成证据与交接基础，是本页之后最自然的阅读入口。</p></a><a class="card" href="./project-lifecycle-harness-flow-cn.html"><div class="label">继续了解</div><h3>生命周期流程图</h3><p>展开保证 1 背后的端到端流程，从接收请求直到验证并交接。</p></a></div>
     </section>
-    <footer class="footer"><span>受众页面：<strong>docs/dhf-for-product-and-field-cn.html</strong></span><span><a href="./dhf-for-product-and-field-en.html">English version</a> · 由 ShipAI.ca 发布为公开 DHF 参考</span></footer>
+    <footer class="footer"><span>受众页面：<strong>docs/dhf-for-product-and-field-cn.html</strong></span><span><a href="./dhf-for-product-and-field-en.html" hreflang="en">English version</a> · 由 ShipAI.ca 发布为公开 DHF 参考</span></footer>
   </main>
 </body>
 </html>

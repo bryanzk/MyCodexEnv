@@ -468,6 +468,18 @@
       "public_nav": ["docs/index-en.html"]
     },
     {
+      "path": "docs/dhf-governance-decision-flow-cn.html",
+      "role": "governance decision flow for a single tool call: lane gate, capability check, refusal edges, verification back-edge",
+      "audience": ["human"],
+      "public_nav": ["docs/index.html"]
+    },
+    {
+      "path": "docs/dhf-governance-decision-flow-en.html",
+      "role": "English governance decision flow for a single tool call: lane gate, capability check, refusal edges, verification back-edge",
+      "audience": ["human"],
+      "public_nav": ["docs/index-en.html"]
+    },
+    {
       "path": "docs/project-lifecycle-harness-flow-skills.html",
       "role": "visual skill and helper routing map",
       "audience": ["human"]

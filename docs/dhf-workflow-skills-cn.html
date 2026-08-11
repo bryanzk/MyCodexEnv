@@ -172,9 +172,25 @@
   <link rel="stylesheet" href="./dhf-site-status.css">
 </head>
 <body>
-  <main class="wrap">
-    <aside class="dhf-status-bar" data-dhf-status="2026-08-04" aria-label="DHF 当前状态">
-      <strong>架构状态 · 2026-08-04</strong>
+  <a class="dhf-skip" href="#dhf-main">跳到正文</a>
+  <nav class="dhf-nav" aria-label="站点导航">
+    <a class="dhf-nav-home" href="./index.html">DHF</a>
+    <div class="dhf-nav-links">
+        <a href="./index.html">首页</a>
+        <a href="./delivery-harness-beginner-guide-cn.html">新手指南</a>
+        <a href="./project-lifecycle-harness-flow-cn.html">生命周期流程</a>
+        <a href="./project-lifecycle-harness-flow-skills-zh-status-style.html">Skill 路由图</a>
+        <a href="./dhf-governance-decision-flow-cn.html">治理判定</a>
+        <a href="./dhf-workflow-skills-cn.html" aria-current="page">工作流 Skills</a>
+        <a href="./dhf-for-product-and-field-cn.html">产品与交付</a>
+        <a href="./dhf-engineering-notes-cn.html">工程笔记</a>
+        <a href="./lifecycle-skill-routing-en.html" class="dhf-xlang" data-lang="EN" lang="en" hreflang="en">文字规范</a>
+    </div>
+    <a class="dhf-nav-lang" href="./dhf-workflow-skills-en.html" lang="en" hreflang="en">English</a>
+  </nav>
+  <main id="dhf-main" class="wrap">
+    <aside class="dhf-status-bar" data-dhf-status="2026-08-11" aria-label="DHF 当前状态">
+      <strong>架构状态 · 2026-08-11</strong>
       <span>仓库源码、当前运行态、公开站点与独立核心分别判定。</span>
       <a href="./dhf-architecture-status-cn.html">查看当前状态</a>
     </aside>
@@ -183,9 +199,9 @@
       <h1>DHF 每一步由哪些 Skill 接管。</h1>
       <p class="lead">本页把当前 DHF 工作流程拆成逐步矩阵：每一步使用哪些 Skill、这些 Skill 具体做什么，并附上对应的 GitHub 源码链接。</p>
       <nav class="links" aria-label="相关页面">
-        <a class="tag" href="./dhf-workflow-skills-en.html">English version</a>
+        <a class="tag" href="./dhf-workflow-skills-en.html" hreflang="en">English version</a>
         <a class="tag" href="./index.html">中文入口</a>
-        <a class="tag" href="./lifecycle-skill-routing-en.html">文字路由规范</a>
+        <a class="dhf-xlang tag" href="./lifecycle-skill-routing-en.html" hreflang="en" data-lang="EN">文字路由规范</a>
         <a class="tag" href="https://github.com/bryanzk/MyCodexEnv/tree/main/codex/skills">GitHub 全部 Skills</a>
       </nav>
     </section>

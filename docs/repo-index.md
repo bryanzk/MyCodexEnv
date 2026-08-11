@@ -62,6 +62,8 @@ behavior live in `codex/hooks/dhf_preprompt.py`.
 - `docs/dhf-engineering-notes-cn.html`: Chinese engineering notes on compaction governance and deployment safety.
 - `docs/delivery-harness-beginner-guide-cn.html`: Chinese beginner guide for agentic engineering readers.
 - `docs/delivery-harness-beginner-guide-en.html`: English beginner guide for agentic engineering readers.
+- `docs/dhf-governance-decision-flow-cn.html`: Chinese governance decision flow for a single tool call.
+- `docs/dhf-governance-decision-flow-en.html`: English governance decision flow for a single tool call.
 - `docs/project-lifecycle-harness-flow-cn.html`: Chinese vertical lifecycle flow visual guide.
 - `docs/project-lifecycle-harness-flow-en.html`: English vertical lifecycle flow visual guide.
 - `docs/project-lifecycle-harness-flow-skills.html`: Chinese skill/helper routing visual guide.
@@ -160,6 +162,8 @@ behavior live in `codex/hooks/dhf_preprompt.py`.
 - `docs/dhf-engineering-notes-cn.html`: Chinese deep-dive on governed compaction and forward-only deployment.
 - `docs/delivery-harness-beginner-guide-cn.html`: beginner-oriented Delivery Harness Framework explanation.
 - `docs/delivery-harness-beginner-guide-en.html`: English beginner-oriented Delivery Harness Framework explanation.
+- `docs/dhf-governance-decision-flow-cn.html`: governance decision flow for a single tool call.
+- `docs/dhf-governance-decision-flow-en.html`: English governance decision flow for a single tool call.
 - `docs/project-lifecycle-harness-flow-cn.html`: visual vertical lifecycle flow.
 - `docs/project-lifecycle-harness-flow-en.html`: English visual vertical lifecycle flow.
 - `docs/project-lifecycle-harness-flow-skills.html`: visual skill/helper routing map.
@@ -190,6 +194,8 @@ behavior live in `codex/hooks/dhf_preprompt.py`.
 - `docs/dhf-engineering-notes-cn.html`: GitHub Pages Chinese engineering deep-dive for agentic systems readers.
 - `docs/delivery-harness-beginner-guide-cn.html`: beginner guide explaining what Delivery Harness Framework does.
 - `docs/delivery-harness-beginner-guide-en.html`: English beginner guide explaining what Delivery Harness Framework does.
+- `docs/dhf-governance-decision-flow-cn.html`: Chinese governance decision flow, lane gate through refusal and verification back-edge.
+- `docs/dhf-governance-decision-flow-en.html`: English governance decision flow, lane gate through refusal and verification back-edge.
 - `docs/project-lifecycle-harness-flow-cn.html`: Chinese vertical lifecycle flow.
 - `docs/project-lifecycle-harness-flow-en.html`: English vertical lifecycle flow.
 - `docs/project-lifecycle-harness-flow-skills.html`: Chinese lifecycle skill/helper routing visual guide.

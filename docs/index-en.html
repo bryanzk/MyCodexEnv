@@ -347,16 +347,32 @@
   <link rel="stylesheet" href="./dhf-site-status.css">
 </head>
 <body>
-  <main class="wrap">
-    <aside class="dhf-status-bar" data-dhf-status="2026-08-04" aria-label="Current DHF status">
-      <strong>Architecture status · 2026-08-04</strong>
+  <a class="dhf-skip" href="#dhf-main">Skip to content</a>
+  <nav class="dhf-nav" aria-label="Site">
+    <a class="dhf-nav-home" href="./index-en.html" aria-current="page">DHF</a>
+    <div class="dhf-nav-links">
+        <a href="./index-en.html" aria-current="page">Home</a>
+        <a href="./delivery-harness-beginner-guide-en.html">Beginner</a>
+        <a href="./project-lifecycle-harness-flow-en.html">Lifecycle Flow</a>
+        <a href="./project-lifecycle-harness-flow-skills-en-status-style.html">Skill Routing</a>
+        <a href="./dhf-governance-decision-flow-en.html">Governance</a>
+        <a href="./dhf-workflow-skills-en.html">Workflow Skills</a>
+        <a href="./dhf-for-product-and-field-en.html">PM &amp; FDE</a>
+        <a href="./dhf-engineering-notes-en.html">Engineering Notes</a>
+        <a href="./lifecycle-skill-routing-en.html">Written Spec</a>
+    </div>
+    <a class="dhf-nav-lang" href="./index.html" lang="zh-CN" hreflang="zh-CN">中文</a>
+  </nav>
+  <main id="dhf-main" class="wrap">
+    <aside class="dhf-status-bar" data-dhf-status="2026-08-11" aria-label="Current DHF status">
+      <strong>Architecture status · 2026-08-11</strong>
       <span>Source, runtime, publication, and independent-core status are separate.</span>
       <a href="./dhf-architecture-status-en.html">Open current status</a>
     </aside>
     <section class="hero" style="--i:0">
       <div class="eyebrow">Delivery Harness Framework / DHF Public Guide</div>
       <h1>From ambiguous requests<br>to verifiable delivery.</h1>
-      <p class="lead">These pages explain how Delivery Harness Framework (DHF) turns agentic engineering work into fact recovery, domain and ADR alignment, lifecycle routing, verification evidence, and recoverable handoff.</p>
+      <p class="lead">These pages explain how Delivery Harness Framework (DHF) turns agentic engineering work into fact recovery, domain and ADR alignment, lifecycle routing, verification evidence, and recoverable handoff. Prompt instructions do not make an agent reliable. DHF is the enforcement layer underneath them: a phase-scoped capability model, hooks that return a real block, and an evidence trail for every guarded decision.</p>
       <div class="hero-actions" aria-label="Primary actions">
         <a class="primary-link" href="./project-lifecycle-harness-flow-en.html">Open the English Flow Map</a>
         <a class="secondary-link" href="./lifecycle-skill-routing-en.html">Read the Written Spec</a>
@@ -370,12 +386,14 @@
     </section>
 
     <nav class="strip" aria-label="Quick links" style="--i:1">
-      <a class="tag" href="./index.html">Chinese landing</a>
+      <a class="tag" href="./index.html" hreflang="zh-CN">Chinese landing</a>
       <a class="tag" href="./delivery-harness-beginner-guide-en.html">Beginner</a>
       <a class="tag" href="./project-lifecycle-harness-flow-en.html">Lifecycle Flow</a>
       <a class="tag" href="./project-lifecycle-harness-flow-skills-en-status-style.html">Skill routing map</a>
       <a class="tag" href="./dhf-workflow-skills-en.html">Workflow skills</a>
       <a class="tag" href="./dhf-for-product-and-field-en.html">For PM &amp; FDE</a>
+      <a class="tag" href="./dhf-governance-decision-flow-en.html">Governance decision flow</a>
+      <a class="tag" href="#reliability-heading">Agent reliability</a>
       <a class="tag" href="./lifecycle-skill-routing-en.html">Written spec</a>
     </nav>
 
@@ -418,7 +436,7 @@
     <section class="section-block" aria-labelledby="governance-heading" style="--i:3">
       <div class="section-heading">
         <div>
-          <div class="label">Runtime Governance · 2026-08-04</div>
+          <div class="label">Runtime Governance · 2026-08-11</div>
           <h2 id="governance-heading">Compaction governance and rollback prevention</h2>
         </div>
         <p>The harness now treats context compaction and runtime deployment as governed control flow: host-observed signals, idempotent successor transitions, and a source transition guard that refuses to let an older source overwrite a newer runtime.</p>
@@ -447,6 +465,86 @@
             <p>The live PreToolUse guard emits the enforceable block shape proven by isolated probes, guard decisions carry risk tiers, acceptance criteria live in a tamper-evident ledger, and behavior evals verify recovery, handoff completeness, and successor idempotency.</p>
           </div>
           <div class="meta">block shape / risk tiers / ledger / behavior evals</div>
+        </a>
+      </div>
+      <div class="card-row">
+        <a class="card" href="./dhf-architecture-status-en.html">
+          <div>
+            <div class="label">Scoped Governance</div>
+            <h2>An agent cannot widen its own blast radius</h2>
+            <p>The guard governs a declared root and keeps the harness install directory protected. An agent may self-declare a work phase to unblock ordinary low and medium actions, but a self-declared phase never unlocks protected roots, and shell-profile, LaunchAgent, and crontab persistence writes stay blocked in every phase.</p>
+          </div>
+          <div class="meta">governed roots / protected roots / self-declare cannot escalate</div>
+        </a>
+        <a class="card" href="./dhf-architecture-status-en.html">
+          <div>
+            <div class="label">Promotion Evidence</div>
+            <h2>Source available is not runtime active</h2>
+            <p>Runtime promotion moves a seven-target manifest and is authorized separately from writing the code. The 2026-08-10 comparison found 24/24 tracked managed runtime files byte-identical to repository source, and an isolated Codex CLI 0.147.0 host probe matched the expected guard matrix in 18/18 rounds. Production enforcement is still called unverified, because it is.</p>
+          </div>
+          <div class="meta">seven-target manifest / 24-24 parity / 18-18 host probe</div>
+        </a>
+      </div>
+    </section>
+
+    <section class="section-block" aria-labelledby="reliability-heading" style="--i:3">
+      <div class="section-heading">
+        <div>
+          <div class="label">Agent Reliability Engineering</div>
+          <h2 id="reliability-heading">What actually makes a multi-step agent dependable</h2>
+        </div>
+        <p>Every mechanism below exists because a demo-grade agent failed without it. This is the map for readers evaluating DHF as an enforcement, permission, and audit layer rather than as a writing style.</p>
+      </div>
+      <div class="card-row three">
+        <a class="card" href="./dhf-governance-decision-flow-en.html">
+          <div>
+            <div class="label">Capability Model</div>
+            <h2>Permissions are phase-scoped, not prompt-scoped</h2>
+            <p>Eight lifecycle phases each declare whether repository writes, network, remote access, and subagent dispatch are permitted, plus the minimum gate that phase must clear. Tool categories carry risk tiers, and an unresolved phase falls back to read-only rather than to trust.</p>
+          </div>
+          <div class="meta">8 phases / 4 capability flags / unknown phase fails closed</div>
+        </a>
+        <a class="card" href="./dhf-for-product-and-field-en.html">
+          <div>
+            <div class="label">Human In The Loop</div>
+            <h2>High-impact actions wait for a person</h2>
+            <p>Execution lanes separate local work from operator demos and customer or production paths. Runtime promotion, remote pushes, and commits are authorized as their own step, and multi-worker dispatch is intercepted until a write-set decision receipt exists.</p>
+          </div>
+          <div class="meta">lane gate / separate promotion authorization / dispatch ask-gate</div>
+        </a>
+        <a class="card" href="./dhf-engineering-notes-en.html">
+          <div>
+            <div class="label">Determinism</div>
+            <h2>Retries must not fan out</h2>
+            <p>An append-only transition store with first-record-wins resolution guarantees exactly one successor task across compaction and restart. Acceptance criteria are content-hashed in a ledger, and a source transition matrix fails closed on stale, diverged, or downgrade syncs.</p>
+          </div>
+          <div class="meta">exactly-one successor / content-hashed ledger / fail-closed sync</div>
+        </a>
+      </div>
+      <div class="card-row three">
+        <a class="card" href="./dhf-engineering-notes-en.html">
+          <div>
+            <div class="label">Memory Lifecycle</div>
+            <h2>Recovered state carries a freshness verdict</h2>
+            <p>Session state is an append-only checkpoint log, not a growing prompt. Recovery returns a boundary verdict that is fail-closed when freshness is unknown, and a session bearing hook injects the current phase and the next safe task at session start instead of asking the model to remember.</p>
+          </div>
+          <div class="meta">append-only state / fail-closed recovery / session bearing</div>
+        </a>
+        <a class="card" href="./dhf-engineering-notes-en.html">
+          <div>
+            <div class="label">Observability</div>
+            <h2>Every guarded decision leaves a record</h2>
+            <p>Guard decisions, verification runs, and checkpoints are written as schema-validated JSONL evidence with pass, fail, and skip states preserved. Reports are generated from that evidence, so a completion claim can be checked against what the agent actually did.</p>
+          </div>
+          <div class="meta">evidence schema / guardrail decisions / generated reports</div>
+        </a>
+        <a class="card" href="./dhf-architecture-status-en.html">
+          <div>
+            <div class="label">Excessive Agency</div>
+            <h2>Designed against the known agentic failure modes</h2>
+            <p>The controls here line up with the OWASP agentic-AI concerns of excessive agency, excessive permission, and unbounded consumption: capability flags bound what a phase may do, protected roots and persistence patterns bound where it may reach, and integrity watch limits bound how much it may read at once.</p>
+          </div>
+          <div class="meta">excessive agency / excessive permission / bounded consumption</div>
         </a>
       </div>
     </section>
@@ -544,7 +642,7 @@
           </div>
           <div class="meta">image asset</div>
         </a>
-        <a class="card" href="./index.html">
+        <a class="card" href="./index.html" hreflang="zh-CN">
           <div>
             <div class="label">Chinese Docs</div>
             <h2>Chinese Landing</h2>
