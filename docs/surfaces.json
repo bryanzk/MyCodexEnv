@@ -12,6 +12,16 @@
       "audience": ["codex", "human"]
     },
     {
+      "path": "docs/dhf-content-drift-accept.json",
+      "role": "recorded deliberate differences that the public-documentation drift check should not re-report",
+      "audience": ["codex", "human"]
+    },
+    {
+      "path": "scripts/dhf_content_drift.py",
+      "role": "read-only reporter for drift between repository state and the public DHF pages: status marker, registration, bilingual shape, diagram coverage, and unreflected capabilities",
+      "audience": ["codex", "human"]
+    },
+    {
       "path": "scripts/validate_dhf_simplification_corpus.py",
       "role": "bounded DHF corpus, independent producer catalog, and derived acceptance-gate validator",
       "audience": ["codex", "human"]

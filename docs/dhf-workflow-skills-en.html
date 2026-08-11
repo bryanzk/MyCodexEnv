@@ -169,7 +169,7 @@
       .footer { flex-direction: column; }
     }
   </style>
-  <link rel="stylesheet" href="./dhf-site-status.css?v=20260811e">
+  <link rel="stylesheet" href="./dhf-site-status.css?v=20260811f">
 </head>
 <body>
   <a class="dhf-skip" href="#dhf-main">Skip to content</a>
@@ -188,7 +188,20 @@
     </div>
     <a class="dhf-nav-lang" href="./dhf-workflow-skills-cn.html" lang="zh-CN" hreflang="zh-CN">中文</a>
   </nav>
-  <main id="dhf-main" class="wrap">
+  <main id="dhf-main" class="wrap dhf-has-toc">
+  <nav class="dhf-toc" aria-label="On this page">
+    <div class="dhf-toc-title">On this page</div>
+    <a href="#recover">Recover and route</a>
+    <a href="#requirements">Requirements</a>
+    <a href="#planning">Planning</a>
+    <a href="#development">Development</a>
+    <a href="#validation">Validation</a>
+    <a href="#review">Review and QA</a>
+    <a href="#committee">Committee loop</a>
+    <a href="#ship">Ship and deploy</a>
+    <a href="#handoff">Handoff</a>
+    <a href="#docs">Documentation</a>
+  </nav>
     <aside class="dhf-status-bar" data-dhf-status="2026-08-11" aria-label="Current DHF status">
       <strong>Architecture status · 2026-08-11</strong>
       <span>Source, runtime, publication, and independent-core status are separate.</span>
@@ -216,7 +229,7 @@
       <article class="stage">
         <div class="stage-head">
           <div class="step-number">Step 01</div>
-          <h3>Recover and route</h3>
+          <h3 id="recover">Recover and route</h3>
           <p>Start or resume complex work from durable repo state before choosing the next workflow.</p>
         </div>
         <div class="skills">
@@ -228,7 +241,7 @@
       <article class="stage">
         <div class="stage-head">
           <div class="step-number">Step 02</div>
-          <h3>Requirements</h3>
+          <h3 id="requirements">Requirements</h3>
           <p>Turn ambiguity into success criteria, scope, constraints, and source-of-truth artifacts.</p>
         </div>
         <div class="skills">
@@ -241,7 +254,7 @@
       <article class="stage">
         <div class="stage-head">
           <div class="step-number">Step 03</div>
-          <h3>Planning</h3>
+          <h3 id="planning">Planning</h3>
           <p>Lock product, engineering, design, and execution decisions before scoped implementation.</p>
         </div>
         <div class="skills">
@@ -258,7 +271,7 @@
       <article class="stage">
         <div class="stage-head">
           <div class="step-number">Step 04</div>
-          <h3>Development</h3>
+          <h3 id="development">Development</h3>
           <p>Implement scoped changes with tests appropriate to behavioral and user-facing risk.</p>
         </div>
         <div class="skills">
@@ -271,7 +284,7 @@
       <article class="stage">
         <div class="stage-head">
           <div class="step-number">Step 05</div>
-          <h3>Validation</h3>
+          <h3 id="validation">Validation</h3>
           <p>Prove the implemented or documented change with fresh command evidence.</p>
         </div>
         <div class="skills">
@@ -283,7 +296,7 @@
       <article class="stage">
         <div class="stage-head">
           <div class="step-number">Step 06</div>
-          <h3>Review and QA</h3>
+          <h3 id="review">Review and QA</h3>
           <p>Find regressions, user-visible failures, security risks, and missing tests before release.</p>
         </div>
         <div class="skills">
@@ -301,7 +314,7 @@
       <article class="stage">
         <div class="stage-head">
           <div class="step-number">Step 07</div>
-          <h3>Committee rating loop</h3>
+          <h3 id="committee">Committee rating loop</h3>
           <p>Use only when the user explicitly asks for committee/subagent review and a target score.</p>
         </div>
         <div class="skills">
@@ -312,7 +325,7 @@
       <article class="stage">
         <div class="stage-head">
           <div class="step-number">Step 08</div>
-          <h3>Ship and deploy</h3>
+          <h3 id="ship">Ship and deploy</h3>
           <p>Move verified work through commit, PR, merge, deployment, and production monitoring when explicitly requested.</p>
         </div>
         <div class="skills">
@@ -325,7 +338,7 @@
       <article class="stage">
         <div class="stage-head">
           <div class="step-number">Step 09</div>
-          <h3>Handoff and learning</h3>
+          <h3 id="handoff">Handoff and learning</h3>
           <p>Preserve recoverable state and capture durable learning when work spans sessions.</p>
         </div>
         <div class="skills">
@@ -338,7 +351,7 @@
       <article class="stage">
         <div class="stage-head">
           <div class="step-number">Step 10</div>
-          <h3>Documentation release</h3>
+          <h3 id="docs">Documentation release</h3>
           <p>Keep public docs, README, routing specs, and release notes aligned with shipped behavior.</p>
         </div>
         <div class="skills">
@@ -355,5 +368,26 @@
       <span>Public docs entry: <strong>docs/dhf-workflow-skills-en.html</strong></span>
     </footer>
   </main>
+
+  <script>
+    (function () {
+      var links = Array.prototype.slice.call(document.querySelectorAll('.dhf-toc a'));
+      if (!links.length || !('IntersectionObserver' in window)) return;
+      var pairs = [];
+      links.forEach(function (link) {
+        var el = document.getElementById(link.getAttribute('href').slice(1));
+        if (el) pairs.push({ el: el, link: link });
+      });
+      var observer = new IntersectionObserver(function (entries) {
+        entries.forEach(function (entry) {
+          if (!entry.isIntersecting) return;
+          links.forEach(function (l) { l.classList.remove('is-active'); });
+          var match = pairs.filter(function (p) { return p.el === entry.target; })[0];
+          if (match) match.link.classList.add('is-active');
+        });
+      }, { rootMargin: '-14% 0px -74% 0px' });
+      pairs.forEach(function (p) { observer.observe(p.el); });
+    })();
+  </script>
 </body>
 </html>

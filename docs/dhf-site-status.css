@@ -192,9 +192,6 @@ body { padding-top: 0 !important; }
   .dhf-nav, .dhf-skip { display: none; }
 }
 
-/* 1.4.4 — sidebar heading labels were 10px on six pages. */
-.toc-title { font-size: 12px !important; }
-
 /* The global nav is sticky, so the six pages with a sidebar TOC must park it
    below the bar rather than letting it slide underneath. */
 .toc {
@@ -209,6 +206,10 @@ body { padding-top: 0 !important; }
    Short pages and the two landing directories deliberately do not get one --
    a permanent sidebar taller than the content it indexes is noise.
    --------------------------------------------------------------------------- */
+/* Six pages shipped their own sidebar before this component existed. Rather
+   than rewrite their markup, give both implementations the same measurements
+   so the rail reads identically across all 19 non-landing pages. */
+.toc-title,
 .dhf-toc-title {
   margin-bottom: 0.6rem;
   padding-bottom: 0.6rem;
@@ -220,6 +221,7 @@ body { padding-top: 0 !important; }
   text-transform: uppercase;
 }
 
+.toc a,
 .dhf-toc a {
   display: block;
   margin-bottom: 2px;
@@ -232,6 +234,8 @@ body { padding-top: 0 !important; }
   text-decoration: none;
 }
 
+.toc a:hover,
+.toc a.active,
 .dhf-toc a:hover,
 .dhf-toc a.is-active {
   background: var(--surface2, color-mix(in srgb, CanvasText 6%, transparent));
@@ -243,6 +247,7 @@ body { padding-top: 0 !important; }
 
 @media (min-width: 1100px) {
   .dhf-has-toc {
+    display: grid;
     grid-template-columns: 190px minmax(0, 1fr);
     column-gap: 2rem;
     align-items: start;

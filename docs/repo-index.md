@@ -75,6 +75,8 @@ behavior live in `codex/hooks/dhf_preprompt.py`.
 ## Runtime Surfaces
 - `docs/surfaces.json`: canonical machine-readable runtime surface inventory; edit this first when adding, renaming, or retiring runtime surfaces.
 - `scripts/check_surfaces.py`: validates `docs/surfaces.json` against files on disk, this Runtime Surfaces mirror, and opt-in public landing nav links.
+- `scripts/dhf_content_drift.py`: read-only public-documentation drift reporter; every finding carries a stable `key` so it can be fixed or recorded as accepted.
+- `docs/dhf-content-drift-accept.json`: deliberate differences the drift check should not re-report, each with a reason; stale entries are surfaced so exemptions cannot outlive the difference.
 - `docs/repo-index.md`: low-token repo navigation and checked runtime surface mirror.
 - `CONTEXT.md`: repo terminology contract for DHF language and forbidden aliases.
 - `docs/harness-state.md`: append-only harness state, checkpoint, and next-safe-task log.

@@ -223,7 +223,7 @@
       .grid, .links { grid-template-columns: 1fr; }
     }
   </style>
-  <link rel="stylesheet" href="./dhf-site-status.css?v=20260811e">
+  <link rel="stylesheet" href="./dhf-site-status.css?v=20260811f">
 </head>
 <body>
   <a class="dhf-skip" href="#dhf-main">Skip to content</a>
@@ -242,7 +242,14 @@
     </div>
     <a class="dhf-nav-lang" href="./dhf-governance-decision-flow-cn.html" lang="zh-CN" hreflang="zh-CN">中文</a>
   </nav>
-  <main id="dhf-main" class="wrap">
+  <main id="dhf-main" class="wrap dhf-has-toc">
+  <nav class="dhf-toc" aria-label="On this page">
+    <div class="dhf-toc-title">On this page</div>
+    <a href="#flow">Decision flow</a>
+    <a href="#claims">Four claims</a>
+    <a href="#scope">Scope</a>
+    <a href="#next">Continue</a>
+  </nav>
     <aside class="dhf-status-bar" data-dhf-status="2026-08-11" aria-label="Current DHF status">
       <strong>Architecture status · 2026-08-11</strong>
       <span>Source, runtime, publication, and independent-core status are separate.</span>
@@ -256,7 +263,7 @@
 
     <section class="section">
       <div class="label">Governance Decision Flow</div>
-      <h2>Every tool call passes this gate.</h2>
+      <h2 id="flow">Every tool call passes this gate.</h2>
       <p>Read it as an enforcement path, not a workflow. The guard runs at <code>PreToolUse</code>, so a refusal happens before the side effect, not after it. Note the two properties the topology encodes: an unresolved phase falls back to <strong>read-only</strong> rather than to trust, and a <strong>self-declared</strong> phase still cannot reach a protected root.</p>
       <div class="mermaid-wrap">
         <pre class="mermaid">
@@ -319,7 +326,7 @@ flowchart TD
 
     <section class="section">
       <div class="label">How to read it</div>
-      <h2>Four properties this diagram is claiming.</h2>
+      <h2 id="claims">Four properties this diagram is claiming.</h2>
       <div class="grid">
         <div class="card"><b>1. Permissions are phase-scoped</b><span>Eight lifecycle phases each declare whether repository writes, network, remote access, and subagent dispatch are allowed. The capability check is a gate, not advice in a prompt.</span></div>
         <div class="card"><b>2. The agent cannot widen its own reach</b><span>Self-declaring a phase unblocks ordinary low and medium actions. It never unlocks protected roots, and persistence writes stay refused in every phase.</span></div>
@@ -330,13 +337,13 @@ flowchart TD
 
     <section class="section">
       <div class="label">Scope</div>
-      <h2>What this map does not claim.</h2>
+      <h2 id="scope">What this map does not claim.</h2>
       <p>This is the enforcement path as implemented in source, with the guard promoted to one machine's runtime. Production enforcement, customer adoption, and commercial validation are separate and still unverified — the <a href="./dhf-architecture-status-en.html">architecture status page</a> is canonical. There is also a known limitation the diagram deliberately does not hide: the host's <code>ask</code> response fails open, so high-risk categories are hard blocks rather than approval prompts, and the Plan Governor stays in shadow with <code>production_status = no_go</code>.</p>
     </section>
 
     <section class="section">
       <div class="label">Next</div>
-      <h2>Continue the English path</h2>
+      <h2 id="next">Continue the English path</h2>
       <div class="links">
         <a class="link-card" href="./project-lifecycle-harness-flow-en.html"><b>Lifecycle Flow</b><span>See how a request routes from intake to handoff.</span></a>
         <a class="link-card" href="./project-lifecycle-harness-flow-skills-en-status-style.html"><b>Skill Routing Map</b><span>See which skill or helper owns each stage.</span></a>
@@ -369,6 +376,27 @@ flowchart TD
         fontSize: '18px'
       }
     });
+  </script>
+
+  <script>
+    (function () {
+      var links = Array.prototype.slice.call(document.querySelectorAll('.dhf-toc a'));
+      if (!links.length || !('IntersectionObserver' in window)) return;
+      var pairs = [];
+      links.forEach(function (link) {
+        var el = document.getElementById(link.getAttribute('href').slice(1));
+        if (el) pairs.push({ el: el, link: link });
+      });
+      var observer = new IntersectionObserver(function (entries) {
+        entries.forEach(function (entry) {
+          if (!entry.isIntersecting) return;
+          links.forEach(function (l) { l.classList.remove('is-active'); });
+          var match = pairs.filter(function (p) { return p.el === entry.target; })[0];
+          if (match) match.link.classList.add('is-active');
+        });
+      }, { rootMargin: '-14% 0px -74% 0px' });
+      pairs.forEach(function (p) { observer.observe(p.el); });
+    })();
   </script>
 </body>
 </html>

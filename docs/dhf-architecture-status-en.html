@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="description" content="Current MyCodexEnv and Delivery Harness Framework architecture, source, runtime, publication, and extraction status.">
   <title>DHF Architecture and Current Status</title>
-  <link rel="stylesheet" href="./dhf-site-status.css?v=20260811e">
+  <link rel="stylesheet" href="./dhf-site-status.css?v=20260811f">
   <style>
     :root {
       --bg: #f4f1e8;
@@ -67,7 +67,15 @@
     </div>
     <a class="dhf-nav-lang" href="./dhf-architecture-status-cn.html" lang="zh-CN" hreflang="zh-CN">中文</a>
   </nav>
-  <main id="dhf-main" class="wrap">
+  <main id="dhf-main" class="wrap dhf-has-toc">
+  <nav class="dhf-toc" aria-label="On this page">
+    <div class="dhf-toc-title">On this page</div>
+    <a href="#statuses">Four statuses</a>
+    <a href="#independent">Independent states</a>
+    <a href="#architecture">Architecture</a>
+    <a href="#implemented">Implemented now</a>
+    <a href="#boundary">Verification boundary</a>
+  </nav>
     <aside class="dhf-status-bar" data-dhf-status="2026-08-11" aria-label="Current DHF status">
       <strong>Architecture status · 2026-08-11</strong>
       <span>Canonical source, runtime, publication, and independent-core status.</span>
@@ -85,7 +93,7 @@
     </section>
 
     <section class="section">
-      <h2>Four statuses, never one vague “done”</h2>
+      <h2 id="statuses">Four statuses, never one vague “done”</h2>
       <div class="dhf-status-grid">
         <article class="dhf-status-card status-source"><h3>Repository source: implemented</h3><p>The audited local <code>main</code> contains the lifecycle router, hooks, guard, evidence schemas, recovery, checkpoint, ledger, transition store, compaction observation, session bearing, context meter, and tier-1/2 behavior evals.</p></article>
         <article class="dhf-status-card status-runtime"><h3>Local runtime parity: verified 2026-08-10</h3><p>A reversible seven-target promotion produced <code>runtime_promoted</code>; a broader tracked comparison found 24/24 managed files matching source. Codex CLI 0.147.0 triggered the promoted guard in 18/18 isolated host rounds. These are local parity and activity receipts, not production rollout.</p></article>
@@ -95,7 +103,7 @@
     </section>
 
     <section class="section">
-      <h2>Independent lifecycle states</h2>
+      <h2 id="independent">Independent lifecycle states</h2>
       <table>
         <thead><tr><th>State</th><th>Current evidence boundary</th></tr></thead>
         <tbody>
@@ -111,7 +119,7 @@
     </section>
 
     <section class="section">
-      <h2>Current architecture</h2>
+      <h2 id="architecture">Current architecture</h2>
       <div class="stack" role="list" aria-label="DHF architecture layers">
         <div class="layer" role="listitem"><strong>1 · Host and runtime hooks</strong><span><code>SessionStart</code>: naming → <code>session_bearing.py</code>. <code>UserPromptSubmit</code>: <code>compaction_probe.py</code> → <code>model_router.py</code> → <code>dhf_preprompt.py</code>. <code>PreToolUse</code>: <code>harness_guard.py</code>. <code>PostToolUse</code>: <code>harness_observer.py</code>.</span></div>
         <div class="layer" role="listitem"><strong>2 · Generic router and repo adapters</strong><span>The generic dispatcher honors opt-out first, lazily delegates known repositories, and otherwise routes explicit DHF work by lifecycle stage. Project paths, fixtures, commands, and business boundaries stay in repo-specific adapters.</span></div>
@@ -122,7 +130,7 @@
     </section>
 
     <section class="section">
-      <h2>What is implemented now</h2>
+      <h2 id="implemented">What is implemented now</h2>
       <table>
         <thead><tr><th>Capability</th><th>Source state</th><th>Runtime / remaining boundary</th></tr></thead>
         <tbody>
@@ -137,10 +145,31 @@
     </section>
 
     <section class="section">
-      <h2>Verification boundary</h2>
+      <h2 id="boundary">Verification boundary</h2>
       <p class="warning"><strong>Principle:</strong> a historical green result is never reused as proof of the current runtime. After any deployment or environment change, DHF re-runs its source tests, file-by-file parity checks, and environment verification before claiming completion.</p>
       <p>Every completion claim is backed by a fresh, machine-checkable verification receipt rather than by memory or past status.</p>
     </section>
   </main>
+
+  <script>
+    (function () {
+      var links = Array.prototype.slice.call(document.querySelectorAll('.dhf-toc a'));
+      if (!links.length || !('IntersectionObserver' in window)) return;
+      var pairs = [];
+      links.forEach(function (link) {
+        var el = document.getElementById(link.getAttribute('href').slice(1));
+        if (el) pairs.push({ el: el, link: link });
+      });
+      var observer = new IntersectionObserver(function (entries) {
+        entries.forEach(function (entry) {
+          if (!entry.isIntersecting) return;
+          links.forEach(function (l) { l.classList.remove('is-active'); });
+          var match = pairs.filter(function (p) { return p.el === entry.target; })[0];
+          if (match) match.link.classList.add('is-active');
+        });
+      }, { rootMargin: '-14% 0px -74% 0px' });
+      pairs.forEach(function (p) { observer.observe(p.el); });
+    })();
+  </script>
 </body>
 </html>

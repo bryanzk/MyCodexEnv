@@ -169,7 +169,7 @@
       .footer { flex-direction: column; }
     }
   </style>
-  <link rel="stylesheet" href="./dhf-site-status.css?v=20260811e">
+  <link rel="stylesheet" href="./dhf-site-status.css?v=20260811f">
 </head>
 <body>
   <a class="dhf-skip" href="#dhf-main">跳到正文</a>
@@ -188,7 +188,20 @@
     </div>
     <a class="dhf-nav-lang" href="./dhf-workflow-skills-en.html" lang="en" hreflang="en">English</a>
   </nav>
-  <main id="dhf-main" class="wrap">
+  <main id="dhf-main" class="wrap dhf-has-toc">
+  <nav class="dhf-toc" aria-label="本页目录">
+    <div class="dhf-toc-title">本页目录</div>
+    <a href="#recover">恢复与路由</a>
+    <a href="#requirements">需求澄清</a>
+    <a href="#planning">计划锁定</a>
+    <a href="#development">开发实现</a>
+    <a href="#validation">验证证据</a>
+    <a href="#review">Review 与 QA</a>
+    <a href="#committee">委员会循环</a>
+    <a href="#ship">发布与部署</a>
+    <a href="#handoff">交接与学习</a>
+    <a href="#docs">文档发布</a>
+  </nav>
     <aside class="dhf-status-bar" data-dhf-status="2026-08-11" aria-label="DHF 当前状态">
       <strong>架构状态 · 2026-08-11</strong>
       <span>仓库源码、当前运行态、公开站点与独立核心分别判定。</span>
@@ -216,7 +229,7 @@
       <article class="stage">
         <div class="stage-head">
           <div class="step-number">Step 01</div>
-          <h3>恢复与路由</h3>
+          <h3 id="recover">恢复与路由</h3>
           <p>从 repo 持久状态启动或恢复复杂任务，然后选择下一步工作流。</p>
         </div>
         <div class="skills">
@@ -228,7 +241,7 @@
       <article class="stage">
         <div class="stage-head">
           <div class="step-number">Step 02</div>
-          <h3>需求澄清</h3>
+          <h3 id="requirements">需求澄清</h3>
           <p>把模糊目标变成成功标准、范围、约束和可作为 source of truth 的材料。</p>
         </div>
         <div class="skills">
@@ -241,7 +254,7 @@
       <article class="stage">
         <div class="stage-head">
           <div class="step-number">Step 03</div>
-          <h3>计划锁定</h3>
+          <h3 id="planning">计划锁定</h3>
           <p>在进入实现前锁定产品、工程、设计和执行顺序。</p>
         </div>
         <div class="skills">
@@ -258,7 +271,7 @@
       <article class="stage">
         <div class="stage-head">
           <div class="step-number">Step 04</div>
-          <h3>开发实现</h3>
+          <h3 id="development">开发实现</h3>
           <p>在文件/模块范围明确后，按风险选择测试优先或验收优先的实现路径。</p>
         </div>
         <div class="skills">
@@ -271,7 +284,7 @@
       <article class="stage">
         <div class="stage-head">
           <div class="step-number">Step 05</div>
-          <h3>验证证据</h3>
+          <h3 id="validation">验证证据</h3>
           <p>用 fresh command evidence 证明代码、文档或配置修改真的可用。</p>
         </div>
         <div class="skills">
@@ -283,7 +296,7 @@
       <article class="stage">
         <div class="stage-head">
           <div class="step-number">Step 06</div>
-          <h3>Review 与 QA</h3>
+          <h3 id="review">Review 与 QA</h3>
           <p>在发布前发现回归、可见故障、安全风险和缺失测试。</p>
         </div>
         <div class="skills">
@@ -301,7 +314,7 @@
       <article class="stage">
         <div class="stage-head">
           <div class="step-number">Step 07</div>
-          <h3>委员会评分循环</h3>
+          <h3 id="committee">委员会评分循环</h3>
           <p>仅在用户明确要求 committee/subagent review 和目标评分时使用。</p>
         </div>
         <div class="skills">
@@ -312,7 +325,7 @@
       <article class="stage">
         <div class="stage-head">
           <div class="step-number">Step 08</div>
-          <h3>发布与部署</h3>
+          <h3 id="ship">发布与部署</h3>
           <p>用户明确要求发布时，才进入 commit、PR、merge、deploy 和生产监控。</p>
         </div>
         <div class="skills">
@@ -325,7 +338,7 @@
       <article class="stage">
         <div class="stage-head">
           <div class="step-number">Step 09</div>
-          <h3>交接与学习</h3>
+          <h3 id="handoff">交接与学习</h3>
           <p>跨 session 工作需要留下可恢复状态，并沉淀可复用经验。</p>
         </div>
         <div class="skills">
@@ -338,7 +351,7 @@
       <article class="stage">
         <div class="stage-head">
           <div class="step-number">Step 10</div>
-          <h3>文档发布</h3>
+          <h3 id="docs">文档发布</h3>
           <p>让 public docs、README、路由规范和 release notes 与已交付行为一致。</p>
         </div>
         <div class="skills">
@@ -355,5 +368,26 @@
       <span>Public docs entry: <strong>docs/dhf-workflow-skills-cn.html</strong></span>
     </footer>
   </main>
+
+  <script>
+    (function () {
+      var links = Array.prototype.slice.call(document.querySelectorAll('.dhf-toc a'));
+      if (!links.length || !('IntersectionObserver' in window)) return;
+      var pairs = [];
+      links.forEach(function (link) {
+        var el = document.getElementById(link.getAttribute('href').slice(1));
+        if (el) pairs.push({ el: el, link: link });
+      });
+      var observer = new IntersectionObserver(function (entries) {
+        entries.forEach(function (entry) {
+          if (!entry.isIntersecting) return;
+          links.forEach(function (l) { l.classList.remove('is-active'); });
+          var match = pairs.filter(function (p) { return p.el === entry.target; })[0];
+          if (match) match.link.classList.add('is-active');
+        });
+      }, { rootMargin: '-14% 0px -74% 0px' });
+      pairs.forEach(function (p) { observer.observe(p.el); });
+    })();
+  </script>
 </body>
 </html>

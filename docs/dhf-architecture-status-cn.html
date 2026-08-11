@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="description" content="MyCodexEnv 与 Delivery Harness Framework 当前架构、源码、运行时、发布和独立核心状态。">
   <title>DHF 架构与当前状态</title>
-  <link rel="stylesheet" href="./dhf-site-status.css?v=20260811e">
+  <link rel="stylesheet" href="./dhf-site-status.css?v=20260811f">
   <style>
     :root { --bg:#f4f1e8; --surface:#fffdf8; --ink:#1e2924; --muted:#637068; --line:rgba(30,41,36,.14); --green:#147a62; --amber:#a15f22; --red:#a9475b; --blue:#2f6f92; }
     * { box-sizing: border-box; }
@@ -40,7 +40,15 @@
     </div>
     <a class="dhf-nav-lang" href="./dhf-architecture-status-en.html" lang="en" hreflang="en">English</a>
   </nav>
-  <main id="dhf-main" class="wrap">
+  <main id="dhf-main" class="wrap dhf-has-toc">
+  <nav class="dhf-toc" aria-label="本页目录">
+    <div class="dhf-toc-title">本页目录</div>
+    <a href="#statuses">四种状态</a>
+    <a href="#independent">独立状态</a>
+    <a href="#architecture">当前架构</a>
+    <a href="#implemented">已实现</a>
+    <a href="#boundary">验证边界</a>
+  </nav>
     <aside class="dhf-status-bar" data-dhf-status="2026-08-11" aria-label="DHF 当前状态">
       <strong>架构状态 · 2026-08-11</strong>
       <span>源码、运行时、公开发布与独立核心的统一事实页。</span>
@@ -58,7 +66,7 @@
     </section>
 
     <section class="section">
-      <h2>四种状态，不能用一个含糊的“完成”代替</h2>
+      <h2 id="statuses">四种状态，不能用一个含糊的“完成”代替</h2>
       <div class="dhf-status-grid">
         <article class="dhf-status-card status-source"><h3>仓库源码：已实现</h3><p>已审计的本地 <code>main</code> 包含 lifecycle router、hooks、guard、evidence schemas、recovery、checkpoint、ledger、transition store、compaction observation、session bearing、context meter 和 tier-1/2 behavior eval。</p></article>
         <article class="dhf-status-card status-runtime"><h3>本机运行时一致性：已于 2026-08-10 验证</h3><p>可回滚的七 target promotion 产出 <code>runtime_promoted</code>；更广的 tracked 对比为 24/24 managed 文件匹配源码。Codex CLI 0.147.0 在 18/18 隔离 host 轮次中触发了已 promotion 的 guard。这些是本机 parity 与 activity 收据，不是生产 rollout。</p></article>
@@ -68,7 +76,7 @@
     </section>
 
     <section class="section">
-      <h2>相互独立的交付状态</h2>
+      <h2 id="independent">相互独立的交付状态</h2>
       <table>
         <thead><tr><th>状态</th><th>当前证据边界</th></tr></thead>
         <tbody>
@@ -84,7 +92,7 @@
     </section>
 
     <section class="section">
-      <h2>当前架构</h2>
+      <h2 id="architecture">当前架构</h2>
       <div class="stack" role="list" aria-label="DHF 架构分层">
         <div class="layer" role="listitem"><strong>1 · Host 与 runtime hooks</strong><span><code>SessionStart</code>：命名 → <code>session_bearing.py</code>；<code>UserPromptSubmit</code>：<code>compaction_probe.py</code> → <code>model_router.py</code> → <code>dhf_preprompt.py</code>；<code>PreToolUse</code>：<code>harness_guard.py</code>；<code>PostToolUse</code>：<code>harness_observer.py</code>。</span></div>
         <div class="layer" role="listitem"><strong>2 · 通用 router 与 repo adapter</strong><span>通用 dispatcher 先处理 opt-out，再 lazy delegate 已知仓库，最后按生命周期阶段路由显式 DHF 工作。项目路径、fixture、命令与业务边界留在 repo-specific adapter。</span></div>
@@ -95,7 +103,7 @@
     </section>
 
     <section class="section">
-      <h2>现在已经实现什么</h2>
+      <h2 id="implemented">现在已经实现什么</h2>
       <table>
         <thead><tr><th>能力</th><th>源码状态</th><th>运行时 / 剩余边界</th></tr></thead>
         <tbody>
@@ -110,10 +118,31 @@
     </section>
 
     <section class="section">
-      <h2>验证边界</h2>
+      <h2 id="boundary">验证边界</h2>
       <p class="warning"><strong>原则：</strong>历史绿灯永远不能证明当前运行时。任何部署或环境变更之后，DHF 都会重新执行源码测试、逐文件一致性核对与环境验证,通过后才声明完成。</p>
       <p>每个完成声明都以新鲜、可机器核验的验证凭据为支撑,而不是依赖记忆或过去的状态。</p>
     </section>
   </main>
+
+  <script>
+    (function () {
+      var links = Array.prototype.slice.call(document.querySelectorAll('.dhf-toc a'));
+      if (!links.length || !('IntersectionObserver' in window)) return;
+      var pairs = [];
+      links.forEach(function (link) {
+        var el = document.getElementById(link.getAttribute('href').slice(1));
+        if (el) pairs.push({ el: el, link: link });
+      });
+      var observer = new IntersectionObserver(function (entries) {
+        entries.forEach(function (entry) {
+          if (!entry.isIntersecting) return;
+          links.forEach(function (l) { l.classList.remove('is-active'); });
+          var match = pairs.filter(function (p) { return p.el === entry.target; })[0];
+          if (match) match.link.classList.add('is-active');
+        });
+      }, { rootMargin: '-14% 0px -74% 0px' });
+      pairs.forEach(function (p) { observer.observe(p.el); });
+    })();
+  </script>
 </body>
 </html>
