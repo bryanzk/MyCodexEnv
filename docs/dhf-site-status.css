@@ -1,3 +1,93 @@
+/* ---------------------------------------------------------------------------
+   Canonical palettes. Every page declares its family on <html> with
+   data-dhf-palette, and these blocks are the single source of truth for the
+   values. The attribute selector outscores each page's own :root, so the
+   inline values in the 21 pages are now inert defaults kept only as a
+   no-JavaScript fallback.
+
+   Why this exists: a site-wide audit found seven near-identical background
+   values, four greens (including #137960, one hex digit from #147a62 and
+   present on exactly one page while its Chinese twin used the standard), and
+   three almost-blacks. None of those were decisions; they were what happens
+   when each page is hand-authored from a copy of the last one. Five of ten
+   bilingual twin pairs had diverged, two of them across colour families.
+
+   The two families are deliberate and stay: warm for documents, cool for
+   diagram pages. Twins always share a family.
+   --------------------------------------------------------------------------- */
+html[data-dhf-palette="warm"] {
+  --bg: #f7f4ec;
+  --surface: #fffdf8;
+  --surface2: #ebe6da;
+  --border: rgba(51, 42, 33, 0.14);
+  --text: #231f1a;
+  --text-dim: #665f55;
+  --green: #147a62;
+  --green-dim: rgba(20, 122, 98, 0.11);
+  --amber: #a15f22;
+  --amber-dim: rgba(161, 95, 34, 0.12);
+  --rose: #a9475b;
+  --rose-dim: rgba(169, 71, 91, 0.10);
+  --blue: #2f6f92;
+  --blue-dim: rgba(47, 111, 146, 0.10);
+}
+
+html[data-dhf-palette="cool"] {
+  --bg: #f7faf7;
+  --surface: #ffffff;
+  --surface2: #eef7f1;
+  --border: rgba(22, 45, 37, 0.12);
+  --text: #17241f;
+  --text-dim: #62736b;
+  --green: #0f9b8e;
+  --green-dim: rgba(15, 155, 142, 0.10);
+  --purple: #8a4fff;
+  --purple-dim: rgba(138, 79, 255, 0.10);
+  --amber: #b26a00;
+  --amber-dim: rgba(178, 106, 0, 0.12);
+}
+
+@media (prefers-color-scheme: dark) {
+  html[data-dhf-palette="warm"] {
+    --bg: #15120f;
+    --surface: #211c18;
+    --surface2: #2b251f;
+    --border: rgba(255, 239, 218, 0.13);
+    --text: #f6eee3;
+    --text-dim: #b8aa9a;
+    --green: #5cd0b2;
+    --green-dim: rgba(92, 208, 178, 0.13);
+    --amber: #f3b36b;
+    --amber-dim: rgba(243, 179, 107, 0.13);
+    --rose: #f095a5;
+    --rose-dim: rgba(240, 149, 165, 0.12);
+    --blue: #91c8e6;
+    --blue-dim: rgba(145, 200, 230, 0.12);
+  }
+
+  html[data-dhf-palette="cool"] {
+    --bg: #101613;
+    --surface: #171f1b;
+    --surface2: #1e2924;
+    --border: rgba(222, 245, 235, 0.12);
+    --text: #e7f4ee;
+    --text-dim: #9db2a8;
+    --green: #35d5c6;
+    --green-dim: rgba(53, 213, 198, 0.12);
+    --purple: #b99cff;
+    --purple-dim: rgba(185, 156, 255, 0.13);
+    --amber: #ffc15a;
+    --amber-dim: rgba(255, 193, 90, 0.12);
+  }
+}
+
+/* The two status pages alias the same colours under older local names. */
+html[data-dhf-palette] {
+  --ink: var(--text);
+  --muted: var(--text-dim);
+  --line: var(--border);
+}
+
 :root {
   --dhf-status-bg: #17241f;
   --dhf-status-text: #f4fbf7;
