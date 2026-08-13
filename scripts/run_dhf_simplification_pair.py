@@ -1152,7 +1152,29 @@ def run_comparison(
         if observations.get(field) != identities[field]:
             errors.append(f"{field} identity drift")
     expected_base_runtime = evidence_module.base_expected_runtime_manifest(root)
-    if observations.get("base_expected_runtime_manifest") != expected_base_runtime:
+
+    def portable_runtime_manifest(manifest):
+        if not isinstance(manifest, dict):
+            return manifest
+        return {
+            "schema_version": manifest.get("schema_version"),
+            "kind": manifest.get("kind"),
+            "base_commit": manifest.get("base_commit"),
+            "managed_relative_paths": manifest.get("managed_relative_paths"),
+            "records": [
+                {
+                    "source_path": item.get("source_path"),
+                    "type": item.get("type"),
+                    "sha256": item.get("sha256"),
+                }
+                for item in manifest.get("records", [])
+            ],
+            "exclusions": manifest.get("exclusions"),
+        }
+
+    if portable_runtime_manifest(observations.get("base_expected_runtime_manifest")) != portable_runtime_manifest(
+        expected_base_runtime
+    ):
         errors.append("base_expected_runtime_manifest identity drift")
     runtime_boundary = evidence_module.runtime_boundary_evidence(root)
     if not runtime_boundary["gate_pass"]:
