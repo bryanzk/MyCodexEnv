@@ -1,10 +1,13 @@
 {
   "schema_version": 1,
   "kind": "dhf_simplification_transition_identity",
-  "authorized_slices": [5, 6],
+  "authorized_slices": [
+    5,
+    6
+  ],
   "runner_name": "run_dhf_simplification_pair.py",
   "runner_version": "dhf-bounded-v1",
-  "runner_sha256": "9cf2a2bde215840ffd9db7a7b9eab354a0fc73a890c834510842607a557e98ce",
+  "runner_sha256": "d930128121381ce78d26aaec36ca56087e8577cd817763ca4bf28ee02f5d18a2",
   "managed_source_hashes_sha256": "62716957bc2acd81c648a7ec1f83a22246062111b6007aaf41e352b5867610c4",
-  "identity_sha256": "37eb834194d86f2973ef67005f5d9d574b3f37f86df861b72fe06b9df04dd339"
+  "identity_sha256": "52df22167e695efd51b24c4fbefd9af32ea1bf2a91529d9f3a44dd9593e71cbf"
 }
