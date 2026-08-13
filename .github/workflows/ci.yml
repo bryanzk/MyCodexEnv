@@ -26,6 +26,10 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          # DHF simplification tests compare against an immutable historical
+          # baseline commit via git show, so the baseline must be available.
+          fetch-depth: 0
 
       - name: Set up Python
         uses: actions/setup-python@v5
