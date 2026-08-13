@@ -27,8 +27,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
         with:
-          # DHF simplification tests compare against an immutable historical
-          # baseline commit via git show, so the baseline must be available.
+          # DHF simplification tests read an immutable historical baseline.
           fetch-depth: 0
 
       - name: Set up Python
@@ -38,23 +37,19 @@ jobs:
 
       - name: Seed exact DHF runtime promotion
         env:
-          DHF_BASE_SHA: 00818ae174f039899a2757ee4c67fcf9db1effa0
+          CI_DHF_HOME: /tmp/ci-dhf-home
         run: |
-          baseline_dir="$RUNNER_TEMP/dhf-baseline"
-          mkdir -p "$baseline_dir"
-          git archive "$DHF_BASE_SHA" \
-            codex/hooks/dhf_preprompt.py \
-            codex/skills/delivery-harness-framework \
-            | tar -x -C "$baseline_dir"
-          mkdir -p "$HOME/.codex/hooks" "$HOME/.codex/skills/delivery-harness-framework"
-          cp "$baseline_dir/codex/hooks/dhf_preprompt.py" "$HOME/.codex/hooks/dhf_preprompt.py"
-          cp -R "$baseline_dir/codex/skills/delivery-harness-framework/." \
-            "$HOME/.codex/skills/delivery-harness-framework/"
+          mkdir -p \
+            "$CI_DHF_HOME/.codex/hooks" \
+            "$CI_DHF_HOME/.codex/skills/delivery-harness-framework"
+          cp "codex/hooks/dhf_preprompt.py" \
+            "$CI_DHF_HOME/.codex/hooks/dhf_preprompt.py"
+          cp -R "codex/skills/delivery-harness-framework/." \
+            "$CI_DHF_HOME/.codex/skills/delivery-harness-framework/"
 
       - name: Run test suite (per-test isolation; codex/git-dependent checks SKIP)
         env:
-          # Frozen DHF evidence signs the original runtime paths.
-          HOME: /Users/kezheng
+          HOME: /tmp/ci-dhf-home
           CI_DHF_RUNTIME_RESET: "1"
         run: python3 test_runner.py
 
