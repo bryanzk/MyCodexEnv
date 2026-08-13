@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="zh-CN" data-dhf-palette="warm">
+<html lang="en" data-dhf-palette="warm">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Delivery Harness Framework (DHF) 公共说明入口</title>
+  <title>Delivery Harness Framework (DHF) Public Guide</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,650;9..144,760&family=IBM+Plex+Mono:wght@400;500;600&family=Atkinson+Hyperlegible:wght@400;700&display=swap" rel="stylesheet">
@@ -12,21 +12,21 @@
       --font-body: 'Atkinson Hyperlegible', Verdana, sans-serif;
       --font-display: 'Fraunces', Georgia, serif;
       --font-mono: 'IBM Plex Mono', monospace;
-      --bg: #fbf7ef;
+      --bg: #f7f4ec;
       --surface: #fffdf8;
-      --surface2: #f2eadf;
-      --border: rgba(67, 46, 31, 0.13);
-      --text: #251d18;
-      --text-dim: #6d5f55;
+      --surface2: #ebe6da;
+      --border: rgba(51, 42, 33, 0.14);
+      --text: #231f1a;
+      --text-dim: #665f55;
       --green: #147a62;
       --green-dim: rgba(20, 122, 98, 0.11);
-      --amber: #a35d22;
-      --amber-dim: rgba(163, 93, 34, 0.12);
-      --rose: #b9475b;
-      --rose-dim: rgba(185, 71, 91, 0.10);
+      --amber: #a15f22;
+      --amber-dim: rgba(161, 95, 34, 0.12);
+      --rose: #a9475b;
+      --rose-dim: rgba(169, 71, 91, 0.10);
       --blue: #2f6f92;
       --blue-dim: rgba(47, 111, 146, 0.10);
-      --shadow: 0 18px 44px rgba(67, 46, 31, 0.10), 0 2px 10px rgba(67, 46, 31, 0.06);
+      --shadow: 0 18px 44px rgba(51, 42, 33, 0.10), 0 2px 10px rgba(51, 42, 33, 0.06);
     }
 
     @media (prefers-color-scheme: dark) {
@@ -111,9 +111,8 @@
       max-width: 100%;
       font-family: var(--font-display);
       font-size: clamp(38px, 5.9vw, 76px);
-      line-height: 0.94;
+      line-height: 0.96;
       letter-spacing: 0;
-      white-space: nowrap;
     }
 
     .lead {
@@ -287,7 +286,7 @@
       padding: 24px;
       color: inherit;
       text-decoration: none;
-      box-shadow: 0 8px 26px rgba(67, 46, 31, 0.07);
+      box-shadow: 0 8px 26px rgba(51, 42, 33, 0.07);
       transition: transform 0.16s ease, border-color 0.16s ease, box-shadow 0.16s ease;
     }
 
@@ -309,6 +308,7 @@
       font-family: var(--font-display);
       font-size: 34px;
       line-height: 1.02;
+      letter-spacing: 0;
     }
 
     .card p {
@@ -340,7 +340,6 @@
       body { padding: 18px; }
       .grid, .card-row, .card-row.three, .sequence, .audience-strip { grid-template-columns: 1fr; }
       .hero { min-height: 0; }
-      h1 { white-space: normal; }
       .section-heading { align-items: start; flex-direction: column; }
       .footer { flex-direction: column; }
     }
@@ -348,86 +347,86 @@
   <link rel="stylesheet" href="./dhf-site-status.css?v=20260812a">
 </head>
 <body>
-  <a class="dhf-skip" href="#dhf-main">跳到正文</a>
-  <nav class="dhf-nav" aria-label="站点导航">
-    <a class="dhf-nav-home" href="./index.html" aria-current="page">DHF</a>
+  <a class="dhf-skip" href="#dhf-main">Skip to content</a>
+  <nav class="dhf-nav" aria-label="Site">
+    <a class="dhf-nav-home" href="./" aria-current="page">DHF</a>
     <div class="dhf-nav-links">
-        <a href="./index.html" aria-current="page">首页</a>
-        <a href="./delivery-harness-beginner-guide-cn.html">新手指南</a>
-        <a href="./project-lifecycle-harness-flow-cn.html">生命周期流程</a>
-        <a href="./project-lifecycle-harness-flow-skills-zh-status-style.html">Skill 路由图</a>
-        <a href="./dhf-governance-decision-flow-cn.html">治理判定</a>
-        <a href="./dhf-workflow-skills-cn.html">工作流 Skills</a>
-        <a href="./dhf-for-product-and-field-cn.html">产品与交付</a>
-        <a href="./dhf-engineering-notes-cn.html">工程笔记</a>
-        <a href="./lifecycle-skill-routing-en.html" class="dhf-xlang" data-lang="EN" lang="en" hreflang="en">文字规范</a>
+        <a href="./" aria-current="page">Home</a>
+        <a href="./delivery-harness-beginner-guide-en.html">Beginner</a>
+        <a href="./project-lifecycle-harness-flow-en.html">Lifecycle Flow</a>
+        <a href="./project-lifecycle-harness-flow-skills-en-status-style.html">Skill Routing</a>
+        <a href="./dhf-governance-decision-flow-en.html">Governance</a>
+        <a href="./dhf-workflow-skills-en.html">Workflow Skills</a>
+        <a href="./dhf-for-product-and-field-en.html">PM &amp; FDE</a>
+        <a href="./dhf-engineering-notes-en.html">Engineering Notes</a>
+        <a href="./lifecycle-skill-routing-en.html">Written Spec</a>
     </div>
-    <a class="dhf-nav-lang" href="./index-en.html" lang="en" hreflang="en">English</a>
+    <a class="dhf-nav-lang" href="./index-zh.html" lang="zh-CN" hreflang="zh-CN">中文</a>
   </nav>
   <main id="dhf-main" class="wrap">
-    <aside class="dhf-status-bar" data-dhf-status="2026-08-11" aria-label="DHF 当前状态">
-      <strong>架构状态 · 2026-08-11</strong>
-      <span>仓库源码、当前运行态、公开站点与独立核心分别判定。</span>
-      <a href="./dhf-architecture-status-cn.html">查看当前状态</a>
+    <aside class="dhf-status-bar" data-dhf-status="2026-08-11" aria-label="Current DHF status">
+      <strong>Architecture status · 2026-08-11</strong>
+      <span>Source, runtime, publication, and independent-core status are separate.</span>
+      <a href="./dhf-architecture-status-en.html">Open current status</a>
     </aside>
     <section class="hero" style="--i:0">
       <div class="eyebrow">Delivery Harness Framework / DHF Public Guide</div>
-      <h1>从模糊请求到可验证交付。</h1>
-      <p class="lead">这组页面解释 Delivery Harness Framework (DHF) 如何把 agentic engineering 的工作组织成事实恢复、领域语义与 ADR 对齐、阶段路由、验证证据和可恢复交接。提示词写得再细也不会让 agent 变可靠。DHF 是提示词底下那一层强制机制：按阶段收紧的能力模型、真的能返回阻断的 hook，以及每一次受控裁定都留下的证据。</p>
-      <div class="hero-actions" aria-label="主要入口">
-        <a class="primary-link" href="./delivery-harness-beginner-guide-cn.html">先读新手指南</a>
-        <a class="secondary-link" href="./project-lifecycle-harness-flow-skills-zh-status-style.html">打开 Skill 路由图</a>
+      <h1>From ambiguous requests<br>to verifiable delivery.</h1>
+      <p class="lead">These pages explain how Delivery Harness Framework (DHF) turns agentic engineering work into fact recovery, domain and ADR alignment, lifecycle routing, verification evidence, and recoverable handoff. Prompt instructions do not make an agent reliable. DHF is the enforcement layer underneath them: a phase-scoped capability model, hooks that return a real block, and an evidence trail for every guarded decision.</p>
+      <div class="hero-actions" aria-label="Primary actions">
+        <a class="primary-link" href="./project-lifecycle-harness-flow-en.html">Open the English Flow Map</a>
+        <a class="secondary-link" href="./lifecycle-skill-routing-en.html">Read the Written Spec</a>
       </div>
     </section>
 
-    <section class="audience-strip" aria-label="选择阅读视角" style="--i:1">
-      <a class="audience-path" href="./dhf-for-product-and-field-cn.html"><strong>产品视角</strong><span>从范围、风险与完成证据看交付保证如何变得可核对。</span></a>
-      <div class="audience-path"><strong>现场交付</strong><span>先看部署保证，再确认当前源码与运行时边界。</span><div class="path-links"><a href="./dhf-for-product-and-field-cn.html">现场指南</a><a href="./dhf-architecture-status-cn.html">当前状态</a></div></div>
-      <a class="audience-path" href="./dhf-engineering-notes-cn.html"><strong>工程深度</strong><span>深入会话容量治理、版本转移与可执行政策文本。</span></a>
+    <section class="audience-strip" aria-label="Choose a perspective" style="--i:1">
+      <a class="audience-path" href="./dhf-for-product-and-field-en.html"><strong>Product perspective</strong><span>See how delivery guarantees make scope, risk, and completion checkable.</span></a>
+      <div class="audience-path"><strong>Field engineering</strong><span>Start with deployment guarantees, then confirm the current source and runtime boundary.</span><div class="path-links"><a href="./dhf-for-product-and-field-en.html">Field guide</a><a href="./dhf-architecture-status-en.html">Current status</a></div></div>
+      <a class="audience-path" href="./dhf-engineering-notes-en.html"><strong>Engineering depth</strong><span>Study compaction governance, version transitions, and executable policy text.</span></a>
     </section>
 
-    <nav class="strip" aria-label="快速入口" style="--i:1">
-      <a class="tag" href="./delivery-harness-beginner-guide-cn.html">Beginner 中文指南</a>
-      <a class="tag" href="./project-lifecycle-harness-flow-cn.html">生命周期流程</a>
-      <a class="tag" href="./project-lifecycle-harness-flow-skills-zh-status-style.html">Skill 路由图</a>
-      <a class="tag" href="./dhf-workflow-skills-cn.html">Workflow Skills</a>
-      <a class="tag" href="./dhf-for-product-and-field-cn.html">产品与交付团队</a>
-      <a class="tag" href="./dhf-governance-decision-flow-cn.html">治理判定流程</a>
-      <a class="tag" href="#reliability-heading">Agent 可靠性</a>
-      <a class="tag" href="./index-en.html" hreflang="en">English guide</a>
-      <a class="dhf-xlang tag" href="./lifecycle-skill-routing-en.html" hreflang="en" data-lang="EN">文字规范</a>
+    <nav class="strip" aria-label="Quick links" style="--i:1">
+      <a class="tag" href="./index-zh.html" hreflang="zh-CN">Chinese landing</a>
+      <a class="tag" href="./delivery-harness-beginner-guide-en.html">Beginner</a>
+      <a class="tag" href="./project-lifecycle-harness-flow-en.html">Lifecycle Flow</a>
+      <a class="tag" href="./project-lifecycle-harness-flow-skills-en-status-style.html">Skill routing map</a>
+      <a class="tag" href="./dhf-workflow-skills-en.html">Workflow skills</a>
+      <a class="tag" href="./dhf-for-product-and-field-en.html">For PM &amp; FDE</a>
+      <a class="tag" href="./dhf-governance-decision-flow-en.html">Governance decision flow</a>
+      <a class="tag" href="#reliability-heading">Agent reliability</a>
+      <a class="tag" href="./lifecycle-skill-routing-en.html">Written spec</a>
     </nav>
 
     <section class="section-block" aria-labelledby="latest-heading" style="--i:2">
       <div class="section-heading">
         <div>
           <div class="label">Current Routing Contract</div>
-          <h2 id="latest-heading">DHF 先路由决策，再开始工作</h2>
+          <h2 id="latest-heading">DHF routes decisions before work starts</h2>
         </div>
-        <p>公开说明现在覆盖当前 skill 合同：恢复状态、分类执行 lane、处理架构冲突、选择专用 route，并以 fresh evidence 收尾。</p>
+        <p>The public guide now reflects the current skill contract: recover state, classify execution lane, resolve architecture conflicts, choose the specialist route, and finish with fresh evidence.</p>
       </div>
       <div class="card-row three">
         <div class="card">
           <div>
             <div class="label">Lane Gate</div>
-            <h2>本地、演示或生产</h2>
-            <p>DHF 区分 local development、operator live demo、customer/production 三类路径，外部系统、密钥、部署和客户数据默认需要显式门禁。</p>
+            <h2>Local, demo, or production</h2>
+            <p>DHF separates local development, operator live demo work, and customer or production paths so external systems, secrets, deploys, and customer data stay approval-gated.</p>
           </div>
           <div class="meta">execution lane first</div>
         </div>
         <div class="card">
           <div>
             <div class="label">Alignment Gate</div>
-            <h2>架构对齐 checkpoint</h2>
-            <p>当 durable sources 不一致时，DHF 先记录 decision checkpoint，按业务结果重切 vertical slices，再验证 agent-team write set。</p>
+            <h2>Architecture checkpoint</h2>
+            <p>When durable sources disagree, DHF captures a decision-focused checkpoint, recuts vertical slices around outcomes, and validates agent-team write sets before dispatch.</p>
           </div>
           <div class="meta">decision surface before edits</div>
         </div>
         <div class="card">
           <div>
             <div class="label">Review Boundary</div>
-            <h2>委员会循环必须显式触发</h2>
-            <p>普通 review、QA、安全和设计检查继续走专用 route；只有用户要求 committee、revision worker 和目标评分时，才进入 committee-review-loop。</p>
+            <h2>Committee loops are explicit</h2>
+            <p>Ordinary review, QA, security, and design routes stay specialized. Committee loops run only when the user asks for reviewers, a revision worker, and a target score.</p>
           </div>
           <div class="meta">committee-review-loop</div>
         </div>
@@ -437,53 +436,53 @@
     <section class="section-block" aria-labelledby="governance-heading" style="--i:3">
       <div class="section-heading">
         <div>
-          <div class="label">运行治理 · 2026-08-11</div>
-          <h2 id="governance-heading">会话容量治理与回退预防</h2>
+          <div class="label">Runtime Governance · 2026-08-11</div>
+          <h2 id="governance-heading">Compaction governance and rollback prevention</h2>
         </div>
-        <p>DHF 把会话容量变化和运行时部署当作受治理的控制流：由宿主观察信号、确保后继只创建一次，并用版本守卫阻止旧来源覆盖更新的运行时。</p>
+        <p>The harness now treats context compaction and runtime deployment as governed control flow: host-observed signals, idempotent successor transitions, and a source transition guard that refuses to let an older source overwrite a newer runtime.</p>
       </div>
       <div class="card-row three">
-        <a class="card" href="./dhf-engineering-notes-cn.html">
+        <a class="card" href="./dhf-engineering-notes-en.html">
           <div>
-            <div class="label">会话容量治理</div>
-            <h2>容量边界属于控制流</h2>
-            <p>宿主增量观察会话变化，持久记录每次边界裁定；恢复时先核对新鲜度，再由会话开场提示明确当前阶段和下一项安全任务。</p>
+            <div class="label">Compaction Governance</div>
+            <h2>Second compaction is control flow</h2>
+            <p>A host-observed compaction probe with incremental JSONL scanning, an append-only transition store for exactly-one successor tasks, a freshness-aware recovery boundary verdict, and a session bearing hook that injects phase and next safe task at session start.</p>
           </div>
-          <div class="meta">观察 / 唯一后继 / 恢复 / 定位</div>
+          <div class="meta">probe / transition store / boundary / bearing</div>
         </a>
-        <a class="card" href="./dhf-engineering-notes-cn.html">
+        <a class="card" href="./dhf-engineering-notes-en.html">
           <div>
-            <div class="label">回退预防</div>
-            <h2>旧来源不能覆盖新运行时</h2>
-            <p>部署前比较来源版本：相同版本无需动作，向前部署要求已经发布的最新来源；过时、分叉或降级请求均关闭式失败。删除项保留备份，定时刷新只报告。</p>
+            <div class="label">Rollback Prevention v0</div>
+            <h2>Old sources cannot overwrite new runtimes</h2>
+            <p>Runtime sync now checks a source transition matrix against a schema-v2 manifest: equal is a no-op, forward requires the pushed remote tip, and stale, diverged, or downgrade transitions fail closed. Deleted files are retained in backups, and the daily refresh is report-only with a quarantined-definition denylist.</p>
           </div>
-          <div class="meta">版本比较 / 备份 / 只读报告</div>
+          <div class="meta">transition matrix / manifest v2 / report-only refresh</div>
         </a>
-        <a class="card" href="./dhf-engineering-notes-cn.html">
+        <a class="card" href="./dhf-engineering-notes-en.html">
           <div>
-            <div class="label">可执行护栏</div>
-            <h2>守卫会真正阻止越界</h2>
-            <p>工具调用前的守卫能返回明确阻断，裁定按风险分层，验收标准写入防篡改记录，行为评估覆盖恢复、交接完整性与后继唯一性。</p>
+            <div class="label">Enforceable Guardrails</div>
+            <h2>Guards that actually block</h2>
+            <p>The live PreToolUse guard emits the enforceable block shape proven by isolated probes, guard decisions carry risk tiers, acceptance criteria live in a tamper-evident ledger, and behavior evals verify recovery, handoff completeness, and successor idempotency.</p>
           </div>
-          <div class="meta">阻断 / 风险分层 / 记录 / 行为评估</div>
+          <div class="meta">block shape / risk tiers / ledger / behavior evals</div>
         </a>
       </div>
       <div class="card-row">
-        <a class="card" href="./dhf-architecture-status-cn.html">
+        <a class="card" href="./dhf-architecture-status-en.html">
           <div>
-            <div class="label">受限治理域</div>
-            <h2>agent 不能自己扩大影响范围</h2>
-            <p>守卫只治理声明过的工作根目录，harness 自身的安装目录始终受保护。agent 可以自行声明当前工作阶段，把普通的低风险和中风险动作放行；但自行声明的阶段永远打不开受保护目录，写 shell 配置、开机启动项和定时任务这类持久化动作在任何阶段都被拦。</p>
+            <div class="label">Scoped Governance</div>
+            <h2>An agent cannot widen its own blast radius</h2>
+            <p>The guard governs a declared root and keeps the harness install directory protected. An agent may self-declare a work phase to unblock ordinary low and medium actions, but a self-declared phase never unlocks protected roots, and shell-profile, LaunchAgent, and crontab persistence writes stay blocked in every phase.</p>
           </div>
-          <div class="meta">治理根目录 / 受保护目录 / 自声明不等于提权</div>
+          <div class="meta">governed roots / protected roots / self-declare cannot escalate</div>
         </a>
-        <a class="card" href="./dhf-architecture-status-cn.html">
+        <a class="card" href="./dhf-architecture-status-en.html">
           <div>
-            <div class="label">上线证据</div>
-            <h2>源码存在不等于运行时已激活</h2>
-            <p>运行时上线搬运的是一份七目标清单，授权动作和写代码分开进行。2026-08-10 的比对结果是 24/24 个受管运行时文件与仓库源码逐字节一致，隔离环境下的 Codex CLI 0.147.0 宿主探测 18/18 轮命中预期守卫矩阵。生产强制仍然写作「未验证」，因为它确实还没验证。</p>
+            <div class="label">Promotion Evidence</div>
+            <h2>Source available is not runtime active</h2>
+            <p>Runtime promotion moves a seven-target manifest and is authorized separately from writing the code. The 2026-08-10 comparison found 24/24 tracked managed runtime files byte-identical to repository source, and an isolated Codex CLI 0.147.0 host probe matched the expected guard matrix in 18/18 rounds. Production enforcement is still called unverified, because it is.</p>
           </div>
-          <div class="meta">七目标清单 / 24-24 一致 / 18-18 宿主探测</div>
+          <div class="meta">seven-target manifest / 24-24 parity / 18-18 host probe</div>
         </a>
       </div>
     </section>
@@ -492,60 +491,60 @@
       <div class="section-heading">
         <div>
           <div class="label">Agent Reliability Engineering</div>
-          <h2 id="reliability-heading">让多步 agent 真正可靠的那几件事</h2>
+          <h2 id="reliability-heading">What actually makes a multi-step agent dependable</h2>
         </div>
-        <p>下面每一项机制，都是因为某个只能在 demo 里跑通的 agent 出过事才加进来的。这一节写给把 DHF 当成强制层、权限层和审计层来评估的读者，而不是把它当成一种写作风格。</p>
+        <p>Every mechanism below exists because a demo-grade agent failed without it. This is the map for readers evaluating DHF as an enforcement, permission, and audit layer rather than as a writing style.</p>
       </div>
       <div class="card-row three">
-        <a class="card" href="./dhf-governance-decision-flow-cn.html">
+        <a class="card" href="./dhf-governance-decision-flow-en.html">
           <div>
-            <div class="label">能力模型</div>
-            <h2>权限按阶段收紧，不靠提示词</h2>
-            <p>八个生命周期阶段各自声明是否允许写仓库、联网、访问远端、派发子 agent，以及这个阶段必须过的最低门槛。工具类别带风险分层；阶段解析不出来时退回只读，而不是退回信任。</p>
+            <div class="label">Capability Model</div>
+            <h2>Permissions are phase-scoped, not prompt-scoped</h2>
+            <p>Eight lifecycle phases each declare whether repository writes, network, remote access, and subagent dispatch are permitted, plus the minimum gate that phase must clear. Tool categories carry risk tiers, and an unresolved phase falls back to read-only rather than to trust.</p>
           </div>
-          <div class="meta">8 个阶段 / 4 类能力开关 / 阶段未知即只读</div>
+          <div class="meta">8 phases / 4 capability flags / unknown phase fails closed</div>
         </a>
-        <a class="card" href="./dhf-for-product-and-field-cn.html">
+        <a class="card" href="./dhf-for-product-and-field-en.html">
           <div>
-            <div class="label">人工介入</div>
-            <h2>高影响动作必须等人点头</h2>
-            <p>执行 lane 把本地开发、操作员演示、客户与生产路径分开。运行时上线、远端推送和提交都是单独授权的一步；多 worker 派发在拿到写集裁定回执之前会被拦下。</p>
+            <div class="label">Human In The Loop</div>
+            <h2>High-impact actions wait for a person</h2>
+            <p>Execution lanes separate local work from operator demos and customer or production paths. Runtime promotion, remote pushes, and commits are authorized as their own step, and multi-worker dispatch is intercepted until a write-set decision receipt exists.</p>
           </div>
-          <div class="meta">lane 门禁 / 上线单独授权 / 派发前置门</div>
+          <div class="meta">lane gate / separate promotion authorization / dispatch ask-gate</div>
         </a>
-        <a class="card" href="./dhf-engineering-notes-cn.html">
+        <a class="card" href="./dhf-engineering-notes-en.html">
           <div>
-            <div class="label">确定性</div>
-            <h2>重试不能变成扩散</h2>
-            <p>只追加的转移记录加上「先到者胜」判定，保证跨会话压缩和重启之后后继任务只会有一个。验收标准以内容哈希写入台账；来源版本比较在过时、分叉和降级三种情况下一律关闭式失败。</p>
+            <div class="label">Determinism</div>
+            <h2>Retries must not fan out</h2>
+            <p>An append-only transition store with first-record-wins resolution guarantees exactly one successor task across compaction and restart. Acceptance criteria are content-hashed in a ledger, and a source transition matrix fails closed on stale, diverged, or downgrade syncs.</p>
           </div>
-          <div class="meta">唯一后继 / 内容哈希台账 / 关闭式失败</div>
+          <div class="meta">exactly-one successor / content-hashed ledger / fail-closed sync</div>
         </a>
       </div>
       <div class="card-row three">
-        <a class="card" href="./dhf-engineering-notes-cn.html">
+        <a class="card" href="./dhf-engineering-notes-en.html">
           <div>
-            <div class="label">记忆生命周期</div>
-            <h2>恢复出来的状态自带新鲜度判定</h2>
-            <p>会话状态是只追加的 checkpoint 日志，不是越滚越长的提示词。恢复时返回边界裁定，新鲜度未知时关闭式失败；会话开场直接注入当前阶段和下一项安全任务，而不是指望模型自己记得。</p>
+            <div class="label">Memory Lifecycle</div>
+            <h2>Recovered state carries a freshness verdict</h2>
+            <p>Session state is an append-only checkpoint log, not a growing prompt. Recovery returns a boundary verdict that is fail-closed when freshness is unknown, and a session bearing hook injects the current phase and the next safe task at session start instead of asking the model to remember.</p>
           </div>
-          <div class="meta">只追加状态 / 关闭式恢复 / 开场定位</div>
+          <div class="meta">append-only state / fail-closed recovery / session bearing</div>
         </a>
-        <a class="card" href="./dhf-engineering-notes-cn.html">
+        <a class="card" href="./dhf-engineering-notes-en.html">
           <div>
-            <div class="label">可观测性</div>
-            <h2>每一次受控裁定都留痕</h2>
-            <p>守卫裁定、验证运行和 checkpoint 都写成经 schema 校验的 JSONL 证据，通过、失败和跳过三种状态都保留。报告由这些证据生成，所以「做完了」这句话可以拿去对账。</p>
+            <div class="label">Observability</div>
+            <h2>Every guarded decision leaves a record</h2>
+            <p>Guard decisions, verification runs, and checkpoints are written as schema-validated JSONL evidence with pass, fail, and skip states preserved. Reports are generated from that evidence, so a completion claim can be checked against what the agent actually did.</p>
           </div>
-          <div class="meta">证据 schema / 守卫裁定 / 报告可回溯</div>
+          <div class="meta">evidence schema / guardrail decisions / generated reports</div>
         </a>
-        <a class="card" href="./dhf-architecture-status-cn.html">
+        <a class="card" href="./dhf-architecture-status-en.html">
           <div>
-            <div class="label">过度自主</div>
-            <h2>对着已知的 agent 失败模式设计</h2>
-            <p>这些控制对应 OWASP 在 agentic AI 上关注的过度自主、过度权限和无边界消耗：能力开关限定一个阶段能做什么，受保护目录和持久化模式限定它能碰到哪里，完整性巡检的上限限定它一次能读多少。</p>
+            <div class="label">Excessive Agency</div>
+            <h2>Designed against the known agentic failure modes</h2>
+            <p>The controls here line up with the OWASP agentic-AI concerns of excessive agency, excessive permission, and unbounded consumption: capability flags bound what a phase may do, protected roots and persistence patterns bound where it may reach, and integrity watch limits bound how much it may read at once.</p>
           </div>
-          <div class="meta">过度自主 / 过度权限 / 消耗有上限</div>
+          <div class="meta">excessive agency / excessive permission / bounded consumption</div>
         </a>
       </div>
     </section>
@@ -554,115 +553,137 @@
       <div class="section-heading">
         <div>
           <div class="label">Start Here</div>
-          <h2 id="learn-heading">先理解 DHF</h2>
+          <h2 id="learn-heading">Learn the framework</h2>
         </div>
-        <p>推荐学习顺序：Beginner -> Lifecycle Flow -> Skill Routing Map -> Written Spec。先读入门解释，再看任务如何流动、每个阶段由哪个 skill 或 helper 接管。</p>
+        <p>Recommended learning sequence: Beginner -> Lifecycle Flow -> Skill Routing Map -> Written Spec. The English path is now self-contained, with the written spec as the exact routing contract.</p>
       </div>
-      <div class="sequence" aria-label="推荐学习顺序">
-        <a class="sequence-step" href="./delivery-harness-beginner-guide-cn.html">
+      <div class="sequence" aria-label="Recommended learning sequence">
+        <a class="sequence-step" href="./delivery-harness-beginner-guide-en.html">
           <div class="label">01</div>
           <strong>Beginner</strong>
-          <span>先理解 DHF 为什么存在、怎样定义完成。</span>
+          <span>Plain-English DHF guide for completion evidence and handoff basics.</span>
         </a>
-        <a class="sequence-step" href="./project-lifecycle-harness-flow-cn.html">
+        <a class="sequence-step" href="./project-lifecycle-harness-flow-en.html">
           <div class="label">02</div>
           <strong>Lifecycle Flow</strong>
-          <span>再看任务从进入到交接的完整生命周期。</span>
+          <span>English Flow Map for the end-to-end lifecycle from request intake to handoff.</span>
         </a>
-        <a class="sequence-step" href="./project-lifecycle-harness-flow-skills-zh-status-style.html">
-          <div class="label">03</div>
+        <a class="sequence-step" href="./project-lifecycle-harness-flow-skills-en-status-style.html">
+          <div class="label">03 / Current</div>
           <strong>Skill Routing Map</strong>
-          <span>然后看当前阶段由哪个 skill 或 helper 负责。</span>
+          <span>Primary English map for which skill or helper owns each DHF stage.</span>
         </a>
-        <a class="dhf-xlang sequence-step" href="./lifecycle-skill-routing-en.html" hreflang="en" data-lang="EN">
-          <div class="label">04</div>
+        <a class="sequence-step" href="./lifecycle-skill-routing-en.html">
+          <div class="label">04 / Reference</div>
           <strong>Written Spec</strong>
-          <span>最后查文字规范、路由规则和证据标准。</span>
+          <span>Source-of-truth routing rules, helper commands, and evidence standards.</span>
         </a>
       </div>
-      <div class="card-row three">
-        <a class="card" href="./delivery-harness-beginner-guide-cn.html">
+      <div class="card-row">
+        <a class="card" href="./project-lifecycle-harness-flow-en.html">
           <div>
-            <div class="label">新手入口</div>
-            <h2>新手先读</h2>
-            <p>用一句话定义、三层架构、五步流程、术语表和一个具体例子解释 DHF 如何避免跳过需求、测试和交接。</p>
+            <div class="label">Flow Map</div>
+            <h2>English Flow Map</h2>
+            <p>A lightweight English lifecycle map showing how DHF moves from fact recovery and requirements through verification evidence and handoff.</p>
           </div>
-          <div class="meta">适合 agentic engineering beginner</div>
+          <div class="meta">self-contained English path</div>
         </a>
-        <a class="card" href="./dhf-for-product-and-field-cn.html">
+        <a class="card" href="./project-lifecycle-harness-flow-skills-en-status-style.html">
           <div>
-            <div class="label">非开发者从这里开始</div>
-            <h2>面向产品与交付团队</h2>
-            <p>用五张图解释 DHF 的交付闭环、验证凭据、环境门禁、长周期工作与只向前的部署，适合无需阅读代码的读者。</p>
-          </div>
-          <div class="meta">图解优先的受众概览</div>
-        </a>
-        <a class="card" href="./project-lifecycle-harness-flow-cn.html">
-          <div>
-            <div class="label">生命周期流程</div>
-            <h2>任务如何流动</h2>
-            <p>从任务进入、读取事实、恢复状态、分类阶段，到垂直切片、验证、发布和交接的纵向流程。</p>
-          </div>
-          <div class="meta">看懂工作如何流动</div>
-        </a>
-        <a class="card" href="./project-lifecycle-harness-flow-skills-zh-status-style.html">
-          <div>
-            <div class="label">Skill 路由图</div>
+            <div class="label">Primary Path</div>
             <h2>Skill Routing Map</h2>
-            <p>解释每个 DHF 阶段应由哪个 skill 或 helper 接管，包括 domain docs、ADR、feedback loop 和 durable brief 触发点。</p>
+            <p>The public DHF skill and helper routing map, including domain docs, ADR checks, vertical slices, feedback loops, prototypes, durable briefs, and handoff gates.</p>
           </div>
-          <div class="meta">看懂 agent 如何选工具</div>
+          <div class="meta">primary visual guide</div>
+        </a>
+      </div>
+      <div class="card-row">
+        <a class="card" href="./dhf-for-product-and-field-en.html">
+          <div>
+            <div class="label">Non-Builders Start Here</div>
+            <h2>For Product &amp; Field Teams</h2>
+            <p>The five guarantees of the harness explained in diagrams — delivery loop, verification receipts, lane gates, long-running work, and forward-only deployments — for readers who will never open the code.</p>
+          </div>
+          <div class="meta">diagram-first overview</div>
+        </a>
+        <a class="card" href="./dhf-workflow-skills-en.html">
+          <div>
+            <div class="label">Skill Inventory</div>
+            <h2>Workflow Skills Matrix</h2>
+            <p>A step-by-step inventory of every current DHF workflow step, the skills it uses, what each skill does, and the GitHub source link for each skill.</p>
+          </div>
+          <div class="meta">English skill matrix</div>
+        </a>
+        <a class="card" href="./lifecycle-skill-routing-en.html">
+          <div>
+            <div class="label">Reference</div>
+            <h2>Written Routing Spec</h2>
+            <p>The source-of-truth lifecycle guide for stage ownership, specialist skills, runtime helpers, agent briefs, evidence standards, and completion gates.</p>
+          </div>
+          <div class="meta">docs/LIFECYCLE_SKILL_ROUTING.md</div>
         </a>
       </div>
     </section>
 
-    <section class="section-block" aria-labelledby="reference-heading" style="--i:5">
+    <section class="section-block" aria-labelledby="resources-heading" style="--i:4">
       <div class="section-heading">
         <div>
-          <div class="label">Reference</div>
-          <h2 id="reference-heading">查规范与素材</h2>
+          <div class="label">Resources</div>
+          <h2 id="resources-heading">Share or switch language</h2>
         </div>
-        <p>读者已经知道 DHF 是什么之后，再进入文字规范、分享图片或英文版本。</p>
+        <p>Use these when the reader needs a presentation asset or the Chinese version of the same guide.</p>
       </div>
-      <div class="card-row three">
-        <a class="card" href="./dhf-workflow-skills-cn.html">
-          <div>
-            <div class="label">Skill Inventory</div>
-            <h2>工作流 Skill 矩阵</h2>
-            <p>逐步列出当前 DHF 工作流程每个阶段用到的 Skill、职责说明，以及对应 GitHub 源码链接。</p>
-          </div>
-          <div class="meta">中英文 skill inventory</div>
-        </a>
-        <a class="dhf-xlang card" href="./lifecycle-skill-routing-en.html" hreflang="en" data-lang="EN">
-          <div>
-            <div class="label">文字规范</div>
-            <h2>路由细则</h2>
-            <p>覆盖 workflow、stage map、specialist skills、runtime helpers、routing rules、agent brief 和 evidence standard。</p>
-          </div>
-          <div class="meta">source-of-truth document</div>
-        </a>
+      <div class="card-row">
         <a class="card" href="./project-lifecycle-harness-flow-skills-en-status-style-flowchart@2x.png">
           <div>
-            <div class="label">分享素材</div>
-            <h2>流程图图片</h2>
-            <p>高分辨率流程图 PNG，可用于文章、演示或社交媒体。</p>
+            <div class="label">Assets</div>
+            <h2>Shareable PNG</h2>
+            <p>A high-resolution flowchart image for articles, social posts, talks, and handoff decks.</p>
           </div>
           <div class="meta">image asset</div>
         </a>
-        <a class="card" href="./index-en.html" hreflang="en">
+        <a class="card" href="./index-zh.html" hreflang="zh-CN">
           <div>
-            <div class="label">English</div>
-            <h2>英文入口</h2>
-            <p>为 English audience 独立整理的 DHF public guide，连接英文 flow map、文字 spec 和可分享图片素材。</p>
+            <div class="label">Chinese Docs</div>
+            <h2>Chinese Landing</h2>
+            <p>The Chinese entry point groups the beginner guide, lifecycle flow, skill routing map, written spec, and shareable image.</p>
           </div>
-          <div class="meta">docs/index-en.html</div>
+          <div class="meta">localized guide</div>
+        </a>
+      </div>
+    </section>
+
+    <section class="section-block" aria-labelledby="implementation-heading" style="--i:5">
+      <div class="section-heading">
+        <div>
+          <div class="label">Implementation Notes</div>
+          <h2 id="implementation-heading">For maintainers</h2>
+        </div>
+        <p>These are useful after the public concept is clear. They should not compete with the learning path.</p>
+      </div>
+      <div class="card-row">
+        <a class="card" href="./HARNESS_RUNTIME.md">
+          <div>
+            <div class="label">Runtime Reference</div>
+            <h2>Harness Runtime</h2>
+            <p>The implementation contract for workflow state, helper scripts, evidence, checkpoints, permissions, hooks, and agent teams.</p>
+          </div>
+          <div class="meta">reference docs</div>
+        </a>
+        <a class="card" href="./project-lifecycle-harness-flow-skills-en.html">
+          <div>
+            <div class="label">Archive</div>
+            <h2>Classic Skill Map</h2>
+            <p>Archive only. The older English visual remains available for comparison, but the status-style Skill Routing Map is the primary public path.</p>
+          </div>
+          <div class="meta">legacy visual page</div>
         </a>
       </div>
     </section>
 
     <footer class="footer">
-      <span>Public docs entries: <strong>docs/index.html</strong> / <strong>docs/index-en.html</strong></span>
-      <span><a href="./dhf-for-product-and-field-cn.html">产品与现场团队</a> · <a href="./dhf-engineering-notes-cn.html">工程札记</a> · Published by ShipAI.ca as a public DHF reference</span>
+      <span>English docs entry: <strong>docs/index-en.html</strong></span>
+      <span><a href="./dhf-engineering-notes-en.html">Engineering Notes</a> · Published by ShipAI.ca as a public DHF reference</span>
     </footer>
   </main>
 </body>

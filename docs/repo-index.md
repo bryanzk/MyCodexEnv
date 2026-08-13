@@ -48,8 +48,9 @@ behavior live in `codex/hooks/dhf_preprompt.py`.
 - `docs/LIFECYCLE_SKILL_ROUTING.md`: Chinese lifecycle-to-skill routing map for current project workflows.
 - `docs/lifecycle-skill-routing-en.html`: English rendered lifecycle and skill routing specification.
 - `docs/MODEL_ROUTER_EVAL_MATRIX.md`: prompt/subtask model router eval matrix and routing assertions.
-- `docs/index.html`: Chinese public Delivery Harness Framework docs landing page for GitHub Pages.
-- `docs/index-en.html`: English public Delivery Harness Framework docs landing page for GitHub Pages.
+- `docs/index.html`: English canonical Delivery Harness Framework docs landing page for GitHub Pages.
+- `docs/index-en.html`: English compatibility copy kept for existing bookmarks and links.
+- `docs/index-zh.html`: Chinese Delivery Harness Framework docs landing page for GitHub Pages.
 - `docs/dhf-architecture-status-cn.html`: canonical Chinese DHF architecture and source/runtime/publication status.
 - `docs/dhf-architecture-status-en.html`: canonical English DHF architecture and source/runtime/publication status.
 - `docs/delivery-harness-framework-manual-cn.md`: Chinese PM-facing Delivery Harness Framework manual draft.
@@ -153,8 +154,10 @@ behavior live in `codex/hooks/dhf_preprompt.py`.
 - `scripts/verify_codex_env.sh`: runtime sync and environment verification.
 - `docs/LIFECYCLE_SKILL_ROUTING.md`: stage, workflow, skill, and helper usage guide.
 - `docs/lifecycle-skill-routing-en.html`: English browser-ready rendering of the routing specification.
-- `docs/index.html`: Chinese public docs landing page.
-- `docs/index-en.html`: English public docs landing page.
+- `docs/index.html`: English canonical public docs landing page.
+- `docs/index-en.html`: English compatibility public docs landing page.
+- `docs/index-zh.html`: Chinese public docs landing page.
+- `docs/CNAME`: GitHub Pages custom-domain marker for `deliveryharness.com`.
 - `docs/delivery-harness-framework-manual-cn.md`: Chinese PM-facing Delivery Harness Framework manual draft.
 - `docs/dhf-workflow-skills-cn.html`: Chinese workflow skill inventory with GitHub links.
 - `docs/dhf-workflow-skills-en.html`: English workflow skill inventory with GitHub links.
@@ -185,8 +188,9 @@ behavior live in `codex/hooks/dhf_preprompt.py`.
 - `docs/CODEX_ENV_REPRODUCTION.md`: Codex + Claude environment reproduction guide.
 - `docs/LIFECYCLE_SKILL_ROUTING.md`: lifecycle stage, workflow, skill, and helper routing.
 - `docs/lifecycle-skill-routing-en.html`: GitHub Pages rendering of the lifecycle and skill routing specification.
-- `docs/index.html`: GitHub Pages Chinese public entry for Delivery Harness Framework guides.
-- `docs/index-en.html`: GitHub Pages English public entry for Delivery Harness Framework guides.
+- `docs/index.html`: GitHub Pages English canonical public entry for Delivery Harness Framework guides.
+- `docs/index-en.html`: GitHub Pages English compatibility entry.
+- `docs/index-zh.html`: GitHub Pages Chinese public entry for Delivery Harness Framework guides.
 - `docs/delivery-harness-framework-manual-cn.md`: Chinese PM-facing Delivery Harness Framework manual draft organized around why / what / how.
 - `docs/dhf-workflow-skills-cn.html`: GitHub Pages Chinese DHF workflow skill inventory.
 - `docs/dhf-workflow-skills-en.html`: GitHub Pages English DHF workflow skill inventory.

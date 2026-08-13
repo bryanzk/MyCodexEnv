@@ -54,6 +54,8 @@ def load_manifest(repo_root: Path) -> list[dict[str, Any]]:
 def href_for_docs_surface(path: str) -> str | None:
     if not path.startswith("docs/"):
         return None
+    if path == "docs/index.html":
+        return "./"
     return "./" + path.removeprefix("docs/")
 
 

@@ -1,0 +1,669 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-dhf-palette="warm">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Delivery Harness Framework (DHF) 公共说明入口</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,650;9..144,760&family=IBM+Plex+Mono:wght@400;500;600&family=Atkinson+Hyperlegible:wght@400;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --font-body: 'Atkinson Hyperlegible', Verdana, sans-serif;
+      --font-display: 'Fraunces', Georgia, serif;
+      --font-mono: 'IBM Plex Mono', monospace;
+      --bg: #fbf7ef;
+      --surface: #fffdf8;
+      --surface2: #f2eadf;
+      --border: rgba(67, 46, 31, 0.13);
+      --text: #251d18;
+      --text-dim: #6d5f55;
+      --green: #147a62;
+      --green-dim: rgba(20, 122, 98, 0.11);
+      --amber: #a35d22;
+      --amber-dim: rgba(163, 93, 34, 0.12);
+      --rose: #b9475b;
+      --rose-dim: rgba(185, 71, 91, 0.10);
+      --blue: #2f6f92;
+      --blue-dim: rgba(47, 111, 146, 0.10);
+      --shadow: 0 18px 44px rgba(67, 46, 31, 0.10), 0 2px 10px rgba(67, 46, 31, 0.06);
+    }
+
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #15120f;
+        --surface: #211c18;
+        --surface2: #2b251f;
+        --border: rgba(255, 239, 218, 0.13);
+        --text: #f6eee3;
+        --text-dim: #b8aa9a;
+        --green: #5cd0b2;
+        --green-dim: rgba(92, 208, 178, 0.13);
+        --amber: #f3b36b;
+        --amber-dim: rgba(243, 179, 107, 0.13);
+        --rose: #f095a5;
+        --rose-dim: rgba(240, 149, 165, 0.12);
+        --blue: #91c8e6;
+        --blue-dim: rgba(145, 200, 230, 0.12);
+      }
+    }
+
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      color: var(--text);
+      font-family: var(--font-body);
+      background-color: var(--bg);
+      background-image:
+        radial-gradient(circle at 12% 8%, var(--green-dim) 0 18%, transparent 38%),
+        radial-gradient(circle at 90% 18%, var(--amber-dim) 0 18%, transparent 36%),
+        radial-gradient(circle at 48% 100%, var(--rose-dim) 0 22%, transparent 46%),
+        linear-gradient(135deg, transparent 0 28px, var(--border) 29px, transparent 30px);
+      background-size: auto, auto, auto, 42px 42px;
+      padding: 38px;
+      overflow-wrap: break-word;
+    }
+
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(14px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .wrap {
+      max-width: 1180px;
+      margin: 0 auto;
+      display: grid;
+      gap: 24px;
+    }
+
+    .hero, .card, .strip, .section-block {
+      animation: fadeUp 0.42s ease-out both;
+      animation-delay: calc(var(--i, 0) * 0.05s);
+    }
+
+    .hero {
+      min-height: 430px;
+      display: grid;
+      align-content: center;
+      background: color-mix(in srgb, var(--surface) 88%, var(--green) 12%);
+      border: 1px solid color-mix(in srgb, var(--border) 70%, var(--green) 30%);
+      border-radius: 22px;
+      padding: clamp(28px, 5vw, 58px);
+      box-shadow: var(--shadow);
+    }
+
+    .eyebrow, .label, .meta, .tag {
+      font-family: var(--font-mono);
+      letter-spacing: 0.11em;
+      text-transform: uppercase;
+    }
+
+    .eyebrow {
+      color: var(--green);
+      font-size: 13px;
+      font-weight: 600;
+      margin-bottom: 18px;
+    }
+
+    h1 {
+      margin: 0;
+      max-width: 100%;
+      font-family: var(--font-display);
+      font-size: clamp(38px, 5.9vw, 76px);
+      line-height: 0.94;
+      letter-spacing: 0;
+      white-space: nowrap;
+    }
+
+    .lead {
+      max-width: 820px;
+      margin: 24px 0 0;
+      color: var(--text-dim);
+      font-size: clamp(18px, 2.2vw, 25px);
+      line-height: 1.5;
+    }
+
+    .hero-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      margin-top: 28px;
+    }
+
+    .primary-link, .secondary-link {
+      display: inline-flex;
+      align-items: center;
+      min-height: 44px;
+      padding: 11px 16px;
+      border-radius: 999px;
+      font-family: var(--font-mono);
+      font-size: 12px;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      text-decoration: none;
+    }
+
+    .primary-link {
+      color: var(--surface);
+      background: var(--green);
+      border: 1px solid var(--green);
+    }
+
+    .secondary-link {
+      color: var(--green);
+      background: color-mix(in srgb, var(--surface) 82%, var(--green) 18%);
+      border: 1px solid color-mix(in srgb, var(--green) 34%, transparent);
+    }
+
+    .strip {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      padding: 14px;
+      background: color-mix(in srgb, var(--surface) 76%, transparent);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+    }
+
+    .audience-strip {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 12px;
+    }
+
+    .audience-path {
+      min-width: 0;
+      padding: 16px 18px;
+      color: inherit;
+      background: color-mix(in srgb, var(--surface) 82%, var(--blue) 18%);
+      border: 1px solid color-mix(in srgb, var(--border) 70%, var(--blue) 30%);
+      border-radius: 14px;
+      text-decoration: none;
+    }
+
+    .audience-path strong { display: block; margin-bottom: 6px; font-size: 17px; }
+    .audience-path span { color: var(--text-dim); font-size: 14px; line-height: 1.45; }
+    .audience-path .path-links { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 8px; }
+    .audience-path .path-links a { color: var(--green); font-family: var(--font-mono); font-size: 11px; }
+
+    .tag {
+      display: inline-flex;
+      align-items: center;
+      min-height: 34px;
+      padding: 7px 12px;
+      color: var(--green);
+      background: var(--green-dim);
+      border: 1px solid color-mix(in srgb, var(--green) 24%, transparent);
+      border-radius: 999px;
+      font-size: 11px;
+      text-decoration: none;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 16px;
+    }
+
+    .section-block {
+      display: grid;
+      gap: 14px;
+      padding-top: 6px;
+    }
+
+    .section-heading {
+      display: flex;
+      justify-content: space-between;
+      gap: 20px;
+      align-items: end;
+      border-top: 1px solid var(--border);
+      padding-top: 20px;
+    }
+
+    .section-heading h2 {
+      margin: 0;
+      font-family: var(--font-display);
+      font-size: clamp(28px, 3vw, 42px);
+      line-height: 1;
+      letter-spacing: 0;
+    }
+
+    .section-heading p {
+      max-width: 520px;
+      margin: 0;
+      color: var(--text-dim);
+      line-height: 1.5;
+    }
+
+    .card-row {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 16px;
+    }
+
+    .card-row.three {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+
+    .sequence {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 12px;
+    }
+
+    .sequence-step {
+      min-width: 0;
+      padding: 16px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      text-decoration: none;
+      color: inherit;
+    }
+
+    .sequence-step strong {
+      display: block;
+      margin: 8px 0 6px;
+      font-size: 18px;
+    }
+
+    .sequence-step span {
+      color: var(--text-dim);
+      line-height: 1.45;
+      font-size: 14px;
+    }
+
+    .card {
+      min-width: 0;
+      min-height: 220px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      padding: 24px;
+      color: inherit;
+      text-decoration: none;
+      box-shadow: 0 8px 26px rgba(67, 46, 31, 0.07);
+      transition: transform 0.16s ease, border-color 0.16s ease, box-shadow 0.16s ease;
+    }
+
+    .card:hover {
+      transform: translateY(-3px);
+      border-color: color-mix(in srgb, var(--green) 42%, var(--border));
+      box-shadow: var(--shadow);
+    }
+
+    .label {
+      color: var(--amber);
+      font-size: 11px;
+      font-weight: 600;
+      margin-bottom: 12px;
+    }
+
+    h2 {
+      margin: 0 0 10px;
+      font-family: var(--font-display);
+      font-size: 34px;
+      line-height: 1.02;
+    }
+
+    .card p {
+      margin: 0;
+      color: var(--text-dim);
+      line-height: 1.55;
+      font-size: 16px;
+    }
+
+    .meta {
+      margin-top: 22px;
+      color: var(--text-dim);
+      font-size: 11px;
+    }
+
+    .footer {
+      display: flex;
+      justify-content: space-between;
+      gap: 16px;
+      color: var(--text-dim);
+      border-top: 1px solid var(--border);
+      padding-top: 18px;
+      font-family: var(--font-mono);
+      font-size: 12px;
+      line-height: 1.5;
+    }
+
+    @media (max-width: 860px) {
+      body { padding: 18px; }
+      .grid, .card-row, .card-row.three, .sequence, .audience-strip { grid-template-columns: 1fr; }
+      .hero { min-height: 0; }
+      h1 { white-space: normal; }
+      .section-heading { align-items: start; flex-direction: column; }
+      .footer { flex-direction: column; }
+    }
+  </style>
+  <link rel="stylesheet" href="./dhf-site-status.css?v=20260812a">
+</head>
+<body>
+  <a class="dhf-skip" href="#dhf-main">跳到正文</a>
+  <nav class="dhf-nav" aria-label="站点导航">
+    <a class="dhf-nav-home" href="./index-zh.html" aria-current="page">DHF</a>
+    <div class="dhf-nav-links">
+        <a href="./index-zh.html" aria-current="page">首页</a>
+        <a href="./delivery-harness-beginner-guide-cn.html">新手指南</a>
+        <a href="./project-lifecycle-harness-flow-cn.html">生命周期流程</a>
+        <a href="./project-lifecycle-harness-flow-skills-zh-status-style.html">Skill 路由图</a>
+        <a href="./dhf-governance-decision-flow-cn.html">治理判定</a>
+        <a href="./dhf-workflow-skills-cn.html">工作流 Skills</a>
+        <a href="./dhf-for-product-and-field-cn.html">产品与交付</a>
+        <a href="./dhf-engineering-notes-cn.html">工程笔记</a>
+        <a href="./lifecycle-skill-routing-en.html" class="dhf-xlang" data-lang="EN" lang="en" hreflang="en">文字规范</a>
+    </div>
+    <a class="dhf-nav-lang" href="./" lang="en" hreflang="en">English</a>
+  </nav>
+  <main id="dhf-main" class="wrap">
+    <aside class="dhf-status-bar" data-dhf-status="2026-08-11" aria-label="DHF 当前状态">
+      <strong>架构状态 · 2026-08-11</strong>
+      <span>仓库源码、当前运行态、公开站点与独立核心分别判定。</span>
+      <a href="./dhf-architecture-status-cn.html">查看当前状态</a>
+    </aside>
+    <section class="hero" style="--i:0">
+      <div class="eyebrow">Delivery Harness Framework / DHF Public Guide</div>
+      <h1>从模糊请求到可验证交付。</h1>
+      <p class="lead">这组页面解释 Delivery Harness Framework (DHF) 如何把 agentic engineering 的工作组织成事实恢复、领域语义与 ADR 对齐、阶段路由、验证证据和可恢复交接。提示词写得再细也不会让 agent 变可靠。DHF 是提示词底下那一层强制机制：按阶段收紧的能力模型、真的能返回阻断的 hook，以及每一次受控裁定都留下的证据。</p>
+      <div class="hero-actions" aria-label="主要入口">
+        <a class="primary-link" href="./delivery-harness-beginner-guide-cn.html">先读新手指南</a>
+        <a class="secondary-link" href="./project-lifecycle-harness-flow-skills-zh-status-style.html">打开 Skill 路由图</a>
+      </div>
+    </section>
+
+    <section class="audience-strip" aria-label="选择阅读视角" style="--i:1">
+      <a class="audience-path" href="./dhf-for-product-and-field-cn.html"><strong>产品视角</strong><span>从范围、风险与完成证据看交付保证如何变得可核对。</span></a>
+      <div class="audience-path"><strong>现场交付</strong><span>先看部署保证，再确认当前源码与运行时边界。</span><div class="path-links"><a href="./dhf-for-product-and-field-cn.html">现场指南</a><a href="./dhf-architecture-status-cn.html">当前状态</a></div></div>
+      <a class="audience-path" href="./dhf-engineering-notes-cn.html"><strong>工程深度</strong><span>深入会话容量治理、版本转移与可执行政策文本。</span></a>
+    </section>
+
+    <nav class="strip" aria-label="快速入口" style="--i:1">
+      <a class="tag" href="./delivery-harness-beginner-guide-cn.html">Beginner 中文指南</a>
+      <a class="tag" href="./project-lifecycle-harness-flow-cn.html">生命周期流程</a>
+      <a class="tag" href="./project-lifecycle-harness-flow-skills-zh-status-style.html">Skill 路由图</a>
+      <a class="tag" href="./dhf-workflow-skills-cn.html">Workflow Skills</a>
+      <a class="tag" href="./dhf-for-product-and-field-cn.html">产品与交付团队</a>
+      <a class="tag" href="./dhf-governance-decision-flow-cn.html">治理判定流程</a>
+      <a class="tag" href="#reliability-heading">Agent 可靠性</a>
+      <a class="tag" href="./" hreflang="en">English guide</a>
+      <a class="dhf-xlang tag" href="./lifecycle-skill-routing-en.html" hreflang="en" data-lang="EN">文字规范</a>
+    </nav>
+
+    <section class="section-block" aria-labelledby="latest-heading" style="--i:2">
+      <div class="section-heading">
+        <div>
+          <div class="label">Current Routing Contract</div>
+          <h2 id="latest-heading">DHF 先路由决策，再开始工作</h2>
+        </div>
+        <p>公开说明现在覆盖当前 skill 合同：恢复状态、分类执行 lane、处理架构冲突、选择专用 route，并以 fresh evidence 收尾。</p>
+      </div>
+      <div class="card-row three">
+        <div class="card">
+          <div>
+            <div class="label">Lane Gate</div>
+            <h2>本地、演示或生产</h2>
+            <p>DHF 区分 local development、operator live demo、customer/production 三类路径，外部系统、密钥、部署和客户数据默认需要显式门禁。</p>
+          </div>
+          <div class="meta">execution lane first</div>
+        </div>
+        <div class="card">
+          <div>
+            <div class="label">Alignment Gate</div>
+            <h2>架构对齐 checkpoint</h2>
+            <p>当 durable sources 不一致时，DHF 先记录 decision checkpoint，按业务结果重切 vertical slices，再验证 agent-team write set。</p>
+          </div>
+          <div class="meta">decision surface before edits</div>
+        </div>
+        <div class="card">
+          <div>
+            <div class="label">Review Boundary</div>
+            <h2>委员会循环必须显式触发</h2>
+            <p>普通 review、QA、安全和设计检查继续走专用 route；只有用户要求 committee、revision worker 和目标评分时，才进入 committee-review-loop。</p>
+          </div>
+          <div class="meta">committee-review-loop</div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section-block" aria-labelledby="governance-heading" style="--i:3">
+      <div class="section-heading">
+        <div>
+          <div class="label">运行治理 · 2026-08-11</div>
+          <h2 id="governance-heading">会话容量治理与回退预防</h2>
+        </div>
+        <p>DHF 把会话容量变化和运行时部署当作受治理的控制流：由宿主观察信号、确保后继只创建一次，并用版本守卫阻止旧来源覆盖更新的运行时。</p>
+      </div>
+      <div class="card-row three">
+        <a class="card" href="./dhf-engineering-notes-cn.html">
+          <div>
+            <div class="label">会话容量治理</div>
+            <h2>容量边界属于控制流</h2>
+            <p>宿主增量观察会话变化，持久记录每次边界裁定；恢复时先核对新鲜度，再由会话开场提示明确当前阶段和下一项安全任务。</p>
+          </div>
+          <div class="meta">观察 / 唯一后继 / 恢复 / 定位</div>
+        </a>
+        <a class="card" href="./dhf-engineering-notes-cn.html">
+          <div>
+            <div class="label">回退预防</div>
+            <h2>旧来源不能覆盖新运行时</h2>
+            <p>部署前比较来源版本：相同版本无需动作，向前部署要求已经发布的最新来源；过时、分叉或降级请求均关闭式失败。删除项保留备份，定时刷新只报告。</p>
+          </div>
+          <div class="meta">版本比较 / 备份 / 只读报告</div>
+        </a>
+        <a class="card" href="./dhf-engineering-notes-cn.html">
+          <div>
+            <div class="label">可执行护栏</div>
+            <h2>守卫会真正阻止越界</h2>
+            <p>工具调用前的守卫能返回明确阻断，裁定按风险分层，验收标准写入防篡改记录，行为评估覆盖恢复、交接完整性与后继唯一性。</p>
+          </div>
+          <div class="meta">阻断 / 风险分层 / 记录 / 行为评估</div>
+        </a>
+      </div>
+      <div class="card-row">
+        <a class="card" href="./dhf-architecture-status-cn.html">
+          <div>
+            <div class="label">受限治理域</div>
+            <h2>agent 不能自己扩大影响范围</h2>
+            <p>守卫只治理声明过的工作根目录，harness 自身的安装目录始终受保护。agent 可以自行声明当前工作阶段，把普通的低风险和中风险动作放行；但自行声明的阶段永远打不开受保护目录，写 shell 配置、开机启动项和定时任务这类持久化动作在任何阶段都被拦。</p>
+          </div>
+          <div class="meta">治理根目录 / 受保护目录 / 自声明不等于提权</div>
+        </a>
+        <a class="card" href="./dhf-architecture-status-cn.html">
+          <div>
+            <div class="label">上线证据</div>
+            <h2>源码存在不等于运行时已激活</h2>
+            <p>运行时上线搬运的是一份七目标清单，授权动作和写代码分开进行。2026-08-10 的比对结果是 24/24 个受管运行时文件与仓库源码逐字节一致，隔离环境下的 Codex CLI 0.147.0 宿主探测 18/18 轮命中预期守卫矩阵。生产强制仍然写作「未验证」，因为它确实还没验证。</p>
+          </div>
+          <div class="meta">七目标清单 / 24-24 一致 / 18-18 宿主探测</div>
+        </a>
+      </div>
+    </section>
+
+    <section class="section-block" aria-labelledby="reliability-heading" style="--i:3">
+      <div class="section-heading">
+        <div>
+          <div class="label">Agent Reliability Engineering</div>
+          <h2 id="reliability-heading">让多步 agent 真正可靠的那几件事</h2>
+        </div>
+        <p>下面每一项机制，都是因为某个只能在 demo 里跑通的 agent 出过事才加进来的。这一节写给把 DHF 当成强制层、权限层和审计层来评估的读者，而不是把它当成一种写作风格。</p>
+      </div>
+      <div class="card-row three">
+        <a class="card" href="./dhf-governance-decision-flow-cn.html">
+          <div>
+            <div class="label">能力模型</div>
+            <h2>权限按阶段收紧，不靠提示词</h2>
+            <p>八个生命周期阶段各自声明是否允许写仓库、联网、访问远端、派发子 agent，以及这个阶段必须过的最低门槛。工具类别带风险分层；阶段解析不出来时退回只读，而不是退回信任。</p>
+          </div>
+          <div class="meta">8 个阶段 / 4 类能力开关 / 阶段未知即只读</div>
+        </a>
+        <a class="card" href="./dhf-for-product-and-field-cn.html">
+          <div>
+            <div class="label">人工介入</div>
+            <h2>高影响动作必须等人点头</h2>
+            <p>执行 lane 把本地开发、操作员演示、客户与生产路径分开。运行时上线、远端推送和提交都是单独授权的一步；多 worker 派发在拿到写集裁定回执之前会被拦下。</p>
+          </div>
+          <div class="meta">lane 门禁 / 上线单独授权 / 派发前置门</div>
+        </a>
+        <a class="card" href="./dhf-engineering-notes-cn.html">
+          <div>
+            <div class="label">确定性</div>
+            <h2>重试不能变成扩散</h2>
+            <p>只追加的转移记录加上「先到者胜」判定，保证跨会话压缩和重启之后后继任务只会有一个。验收标准以内容哈希写入台账；来源版本比较在过时、分叉和降级三种情况下一律关闭式失败。</p>
+          </div>
+          <div class="meta">唯一后继 / 内容哈希台账 / 关闭式失败</div>
+        </a>
+      </div>
+      <div class="card-row three">
+        <a class="card" href="./dhf-engineering-notes-cn.html">
+          <div>
+            <div class="label">记忆生命周期</div>
+            <h2>恢复出来的状态自带新鲜度判定</h2>
+            <p>会话状态是只追加的 checkpoint 日志，不是越滚越长的提示词。恢复时返回边界裁定，新鲜度未知时关闭式失败；会话开场直接注入当前阶段和下一项安全任务，而不是指望模型自己记得。</p>
+          </div>
+          <div class="meta">只追加状态 / 关闭式恢复 / 开场定位</div>
+        </a>
+        <a class="card" href="./dhf-engineering-notes-cn.html">
+          <div>
+            <div class="label">可观测性</div>
+            <h2>每一次受控裁定都留痕</h2>
+            <p>守卫裁定、验证运行和 checkpoint 都写成经 schema 校验的 JSONL 证据，通过、失败和跳过三种状态都保留。报告由这些证据生成，所以「做完了」这句话可以拿去对账。</p>
+          </div>
+          <div class="meta">证据 schema / 守卫裁定 / 报告可回溯</div>
+        </a>
+        <a class="card" href="./dhf-architecture-status-cn.html">
+          <div>
+            <div class="label">过度自主</div>
+            <h2>对着已知的 agent 失败模式设计</h2>
+            <p>这些控制对应 OWASP 在 agentic AI 上关注的过度自主、过度权限和无边界消耗：能力开关限定一个阶段能做什么，受保护目录和持久化模式限定它能碰到哪里，完整性巡检的上限限定它一次能读多少。</p>
+          </div>
+          <div class="meta">过度自主 / 过度权限 / 消耗有上限</div>
+        </a>
+      </div>
+    </section>
+
+    <section class="section-block" aria-labelledby="learn-heading" style="--i:4">
+      <div class="section-heading">
+        <div>
+          <div class="label">Start Here</div>
+          <h2 id="learn-heading">先理解 DHF</h2>
+        </div>
+        <p>推荐学习顺序：Beginner -> Lifecycle Flow -> Skill Routing Map -> Written Spec。先读入门解释，再看任务如何流动、每个阶段由哪个 skill 或 helper 接管。</p>
+      </div>
+      <div class="sequence" aria-label="推荐学习顺序">
+        <a class="sequence-step" href="./delivery-harness-beginner-guide-cn.html">
+          <div class="label">01</div>
+          <strong>Beginner</strong>
+          <span>先理解 DHF 为什么存在、怎样定义完成。</span>
+        </a>
+        <a class="sequence-step" href="./project-lifecycle-harness-flow-cn.html">
+          <div class="label">02</div>
+          <strong>Lifecycle Flow</strong>
+          <span>再看任务从进入到交接的完整生命周期。</span>
+        </a>
+        <a class="sequence-step" href="./project-lifecycle-harness-flow-skills-zh-status-style.html">
+          <div class="label">03</div>
+          <strong>Skill Routing Map</strong>
+          <span>然后看当前阶段由哪个 skill 或 helper 负责。</span>
+        </a>
+        <a class="dhf-xlang sequence-step" href="./lifecycle-skill-routing-en.html" hreflang="en" data-lang="EN">
+          <div class="label">04</div>
+          <strong>Written Spec</strong>
+          <span>最后查文字规范、路由规则和证据标准。</span>
+        </a>
+      </div>
+      <div class="card-row three">
+        <a class="card" href="./delivery-harness-beginner-guide-cn.html">
+          <div>
+            <div class="label">新手入口</div>
+            <h2>新手先读</h2>
+            <p>用一句话定义、三层架构、五步流程、术语表和一个具体例子解释 DHF 如何避免跳过需求、测试和交接。</p>
+          </div>
+          <div class="meta">适合 agentic engineering beginner</div>
+        </a>
+        <a class="card" href="./dhf-for-product-and-field-cn.html">
+          <div>
+            <div class="label">非开发者从这里开始</div>
+            <h2>面向产品与交付团队</h2>
+            <p>用五张图解释 DHF 的交付闭环、验证凭据、环境门禁、长周期工作与只向前的部署，适合无需阅读代码的读者。</p>
+          </div>
+          <div class="meta">图解优先的受众概览</div>
+        </a>
+        <a class="card" href="./project-lifecycle-harness-flow-cn.html">
+          <div>
+            <div class="label">生命周期流程</div>
+            <h2>任务如何流动</h2>
+            <p>从任务进入、读取事实、恢复状态、分类阶段，到垂直切片、验证、发布和交接的纵向流程。</p>
+          </div>
+          <div class="meta">看懂工作如何流动</div>
+        </a>
+        <a class="card" href="./project-lifecycle-harness-flow-skills-zh-status-style.html">
+          <div>
+            <div class="label">Skill 路由图</div>
+            <h2>Skill Routing Map</h2>
+            <p>解释每个 DHF 阶段应由哪个 skill 或 helper 接管，包括 domain docs、ADR、feedback loop 和 durable brief 触发点。</p>
+          </div>
+          <div class="meta">看懂 agent 如何选工具</div>
+        </a>
+      </div>
+    </section>
+
+    <section class="section-block" aria-labelledby="reference-heading" style="--i:5">
+      <div class="section-heading">
+        <div>
+          <div class="label">Reference</div>
+          <h2 id="reference-heading">查规范与素材</h2>
+        </div>
+        <p>读者已经知道 DHF 是什么之后，再进入文字规范、分享图片或英文版本。</p>
+      </div>
+      <div class="card-row three">
+        <a class="card" href="./dhf-workflow-skills-cn.html">
+          <div>
+            <div class="label">Skill Inventory</div>
+            <h2>工作流 Skill 矩阵</h2>
+            <p>逐步列出当前 DHF 工作流程每个阶段用到的 Skill、职责说明，以及对应 GitHub 源码链接。</p>
+          </div>
+          <div class="meta">中英文 skill inventory</div>
+        </a>
+        <a class="dhf-xlang card" href="./lifecycle-skill-routing-en.html" hreflang="en" data-lang="EN">
+          <div>
+            <div class="label">文字规范</div>
+            <h2>路由细则</h2>
+            <p>覆盖 workflow、stage map、specialist skills、runtime helpers、routing rules、agent brief 和 evidence standard。</p>
+          </div>
+          <div class="meta">source-of-truth document</div>
+        </a>
+        <a class="card" href="./project-lifecycle-harness-flow-skills-en-status-style-flowchart@2x.png">
+          <div>
+            <div class="label">分享素材</div>
+            <h2>流程图图片</h2>
+            <p>高分辨率流程图 PNG，可用于文章、演示或社交媒体。</p>
+          </div>
+          <div class="meta">image asset</div>
+        </a>
+        <a class="card" href="./" hreflang="en">
+          <div>
+            <div class="label">English</div>
+            <h2>英文入口</h2>
+            <p>为 English audience 独立整理的 DHF public guide，连接英文 flow map、文字 spec 和可分享图片素材。</p>
+          </div>
+          <div class="meta">docs/index.html</div>
+        </a>
+      </div>
+    </section>
+
+    <footer class="footer">
+      <span>Public docs entries: <strong>docs/index-zh.html</strong> / <strong>docs/index.html</strong></span>
+      <span><a href="./dhf-for-product-and-field-cn.html">产品与现场团队</a> · <a href="./dhf-engineering-notes-cn.html">工程札记</a> · Published by ShipAI.ca as a public DHF reference</span>
+    </footer>
+  </main>
+</body>
+</html>

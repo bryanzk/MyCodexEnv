@@ -68,6 +68,8 @@ BRANCH_CLEANUP = ROOT / "codex" / "skills" / "repo-branch-governance" / "scripts
 CI_WORKFLOW = ROOT / ".github" / "workflows" / "ci.yml"
 PUBLIC_INDEX_HTML = ROOT / "docs" / "index.html"
 PUBLIC_INDEX_EN_HTML = ROOT / "docs" / "index-en.html"
+PUBLIC_INDEX_ZH_HTML = ROOT / "docs" / "index-zh.html"
+PAGES_CNAME = ROOT / "docs" / "CNAME"
 LIFECYCLE_FLOW_HTML = ROOT / "docs" / "project-lifecycle-harness-flow-cn.html"
 BEGINNER_GUIDE_CN_HTML = ROOT / "docs" / "delivery-harness-beginner-guide-cn.html"
 BEGINNER_GUIDE_EN_HTML = ROOT / "docs" / "delivery-harness-beginner-guide-en.html"
@@ -3015,6 +3017,8 @@ def test_lifecycle_skill_routing_doc_is_discoverable():
     require(LIFECYCLE_SKILL_ROUTING_DOC.exists(), "missing lifecycle skill routing doc")
     require(PUBLIC_INDEX_HTML.exists(), "missing public index HTML guide")
     require(PUBLIC_INDEX_EN_HTML.exists(), "missing English public index HTML guide")
+    require(PUBLIC_INDEX_ZH_HTML.exists(), "missing Chinese public index HTML guide")
+    require(PAGES_CNAME.read_text(encoding="utf-8").strip() == "deliveryharness.com", "docs/CNAME must contain the canonical domain")
     require(BEGINNER_GUIDE_CN_HTML.exists(), "missing beginner guide HTML")
     require(BEGINNER_GUIDE_EN_HTML.exists(), "missing English beginner guide HTML")
     require(LIFECYCLE_FLOW_HTML.exists(), "missing lifecycle flow HTML guide")
@@ -3026,6 +3030,8 @@ def test_lifecycle_skill_routing_doc_is_discoverable():
     doc_text = LIFECYCLE_SKILL_ROUTING_DOC.read_text(encoding="utf-8")
     public_index_html = PUBLIC_INDEX_HTML.read_text(encoding="utf-8")
     public_index_en_html = PUBLIC_INDEX_EN_HTML.read_text(encoding="utf-8")
+    public_index_zh_html = PUBLIC_INDEX_ZH_HTML.read_text(encoding="utf-8")
+    require(public_index_html == public_index_en_html, "English root and compatibility landing pages must match")
     beginner_cn_html = BEGINNER_GUIDE_CN_HTML.read_text(encoding="utf-8")
     beginner_en_html = BEGINNER_GUIDE_EN_HTML.read_text(encoding="utf-8")
     flow_html = LIFECYCLE_FLOW_HTML.read_text(encoding="utf-8")
@@ -3107,14 +3113,17 @@ def test_lifecycle_skill_routing_doc_is_discoverable():
         PUBLIC_INDEX_HTML.name: (
             public_index_html,
             [
-                'lang="zh-CN"',
-                'href="./index-en.html"',
-                "先读新手指南",
-                "先理解 DHF",
-                "生命周期流程",
-                "Skill 路由图",
-                "查规范与素材",
-                "英文入口",
+                'lang="en"',
+                'href="./index-zh.html"',
+                'href="./"',
+                "From ambiguous requests",
+                "domain and ADR alignment",
+                "Open the English Flow Map",
+                "Learn the framework",
+                "Share or switch language",
+                "For maintainers",
+                "English Flow Map",
+                "Archive",
                 "docs/index-en.html",
             ],
         ),
@@ -3123,7 +3132,8 @@ def test_lifecycle_skill_routing_doc_is_discoverable():
             [
                 'lang="en"',
                 "From ambiguous requests",
-                'href="./index.html"',
+                'href="./index-zh.html"',
+                'href="./"',
                 'href="./delivery-harness-beginner-guide-en.html"',
                 'href="./project-lifecycle-harness-flow-en.html"',
                 'href="./project-lifecycle-harness-flow-skills-en-status-style.html"',
@@ -3139,6 +3149,22 @@ def test_lifecycle_skill_routing_doc_is_discoverable():
                 "docs/index-en.html",
             ],
         ),
+        PUBLIC_INDEX_ZH_HTML.name: (
+            public_index_zh_html,
+            [
+                'lang="zh-CN"',
+                'href="./index-zh.html"',
+                'href="./"',
+                "先读新手指南",
+                "先理解 DHF",
+                "生命周期流程",
+                "Skill 路由图",
+                "查规范与素材",
+                "英文入口",
+                "docs/index-zh.html",
+                "docs/index.html",
+            ],
+        ),
     }
     for filename, (text, terms) in public_index_expectations.items():
         for term in terms:
@@ -3148,14 +3174,14 @@ def test_lifecycle_skill_routing_doc_is_discoverable():
         PUBLIC_INDEX_HTML.name: (
             public_index_html,
             [
-                "推荐学习顺序",
+                "Recommended learning sequence",
                 "Beginner",
                 "Lifecycle Flow",
                 "Skill Routing Map",
                 "Written Spec",
-                'href="./delivery-harness-beginner-guide-cn.html"',
-                'href="./project-lifecycle-harness-flow-cn.html"',
-                'href="./project-lifecycle-harness-flow-skills-zh-status-style.html"',
+                'href="./delivery-harness-beginner-guide-en.html"',
+                'href="./project-lifecycle-harness-flow-en.html"',
+                'href="./project-lifecycle-harness-flow-skills-en-status-style.html"',
                 'href="./lifecycle-skill-routing-en.html"',
             ],
         ),
@@ -3170,6 +3196,20 @@ def test_lifecycle_skill_routing_doc_is_discoverable():
                 'href="./delivery-harness-beginner-guide-en.html"',
                 'href="./project-lifecycle-harness-flow-en.html"',
                 'href="./project-lifecycle-harness-flow-skills-en-status-style.html"',
+                'href="./lifecycle-skill-routing-en.html"',
+            ],
+        ),
+        PUBLIC_INDEX_ZH_HTML.name: (
+            public_index_zh_html,
+            [
+                "推荐学习顺序",
+                "Beginner",
+                "Lifecycle Flow",
+                "Skill Routing Map",
+                "Written Spec",
+                'href="./delivery-harness-beginner-guide-cn.html"',
+                'href="./project-lifecycle-harness-flow-cn.html"',
+                'href="./project-lifecycle-harness-flow-skills-zh-status-style.html"',
                 'href="./lifecycle-skill-routing-en.html"',
             ],
         ),
@@ -3234,6 +3274,7 @@ def test_lifecycle_skill_routing_doc_is_discoverable():
     brand_pages = {
         PUBLIC_INDEX_HTML.name: public_index_html,
         PUBLIC_INDEX_EN_HTML.name: public_index_en_html,
+        PUBLIC_INDEX_ZH_HTML.name: public_index_zh_html,
         BEGINNER_GUIDE_CN_HTML.name: beginner_cn_html,
         BEGINNER_GUIDE_EN_HTML.name: beginner_en_html,
         LIFECYCLE_FLOW_HTML.name: flow_html,
@@ -10644,6 +10685,7 @@ def test_global_agents_layering_workflow_and_size_contract():
 
 def test_public_dhf_architecture_status_alignment():
     english_pages = [
+        "index.html",
         "index-en.html",
         "delivery-harness-beginner-guide-en.html",
         "dhf-for-product-and-field-en.html",
@@ -10656,7 +10698,7 @@ def test_public_dhf_architecture_status_alignment():
         "dhf-architecture-status-en.html",
     ]
     chinese_pages = [
-        "index.html",
+        "index-zh.html",
         "delivery-harness-beginner-guide-cn.html",
         "dhf-for-product-and-field-cn.html",
         "dhf-engineering-notes-cn.html",

@@ -55,7 +55,7 @@
       "path": "docs/HARNESS_RUNTIME.md",
       "role": "runtime workflow, evidence, permission, checkpoint, and agent-team contract",
       "audience": ["codex", "human"],
-      "public_nav": ["docs/index-en.html"]
+      "public_nav": ["docs/index.html"]
     },
     {
       "path": "docs/AGENT_HARNESS_STATUS.md",
@@ -381,19 +381,29 @@
       "path": "docs/lifecycle-skill-routing-en.html",
       "role": "English rendered lifecycle and skill routing specification",
       "audience": ["human"],
-      "public_nav": ["docs/index-en.html"]
+      "public_nav": ["docs/index.html"]
     },
     {
       "path": "docs/index.html",
-      "role": "Chinese public docs landing page",
+      "role": "English canonical public docs landing page",
       "audience": ["human"],
-      "public_nav": ["docs/index-en.html"]
+      "public_nav": ["docs/index-zh.html"]
     },
     {
       "path": "docs/index-en.html",
-      "role": "English public docs landing page",
+      "role": "English compatibility public docs landing page",
+      "audience": ["human"]
+    },
+    {
+      "path": "docs/index-zh.html",
+      "role": "Chinese public docs landing page",
       "audience": ["human"],
       "public_nav": ["docs/index.html"]
+    },
+    {
+      "path": "docs/CNAME",
+      "role": "GitHub Pages custom-domain marker",
+      "audience": ["human"]
     },
     {
       "path": "docs/dhf-site-status.css",
@@ -404,61 +414,61 @@
       "path": "docs/dhf-architecture-status-cn.html",
       "role": "canonical Chinese DHF architecture and source runtime publication status",
       "audience": ["human"],
-      "public_nav": ["docs/index.html"]
+      "public_nav": ["docs/index-zh.html"]
     },
     {
       "path": "docs/dhf-architecture-status-en.html",
       "role": "canonical English DHF architecture and source runtime publication status",
       "audience": ["human"],
-      "public_nav": ["docs/index-en.html"]
+      "public_nav": ["docs/index.html"]
     },
     {
       "path": "docs/dhf-workflow-skills-cn.html",
       "role": "Chinese workflow skill inventory page",
       "audience": ["human"],
-      "public_nav": ["docs/index.html"]
+      "public_nav": ["docs/index-zh.html"]
     },
     {
       "path": "docs/dhf-workflow-skills-en.html",
       "role": "English workflow skill inventory page",
       "audience": ["human"],
-      "public_nav": ["docs/index-en.html"]
+      "public_nav": ["docs/index.html"]
     },
     {
       "path": "docs/dhf-for-product-and-field-en.html",
       "role": "English diagram-first DHF overview for product managers and field engineers",
       "audience": ["human"],
-      "public_nav": ["docs/index-en.html"]
+      "public_nav": ["docs/index.html"]
     },
     {
       "path": "docs/dhf-for-product-and-field-cn.html",
       "role": "Chinese diagram-first DHF overview for product managers and field engineers",
       "audience": ["human"],
-      "public_nav": ["docs/index.html"]
+      "public_nav": ["docs/index-zh.html"]
     },
     {
       "path": "docs/dhf-engineering-notes-en.html",
       "role": "English engineering notes on compaction governance and deployment safety",
       "audience": ["human"],
-      "public_nav": ["docs/index-en.html"]
+      "public_nav": ["docs/index.html"]
     },
     {
       "path": "docs/dhf-engineering-notes-cn.html",
       "role": "Chinese engineering notes on compaction governance and deployment safety",
       "audience": ["human"],
-      "public_nav": ["docs/index.html"]
+      "public_nav": ["docs/index-zh.html"]
     },
     {
       "path": "docs/delivery-harness-beginner-guide-cn.html",
       "role": "beginner-oriented Delivery Harness Framework explanation",
       "audience": ["human"],
-      "public_nav": ["docs/index.html"]
+      "public_nav": ["docs/index-zh.html"]
     },
     {
       "path": "docs/delivery-harness-beginner-guide-en.html",
       "role": "English beginner-oriented Delivery Harness Framework explanation",
       "audience": ["human"],
-      "public_nav": ["docs/index-en.html"]
+      "public_nav": ["docs/index.html"]
     },
     {
       "path": "docs/delivery-harness-framework-manual-cn.md",
@@ -469,25 +479,25 @@
       "path": "docs/project-lifecycle-harness-flow-cn.html",
       "role": "visual vertical lifecycle flow",
       "audience": ["human"],
-      "public_nav": ["docs/index.html"]
+      "public_nav": ["docs/index-zh.html"]
     },
     {
       "path": "docs/project-lifecycle-harness-flow-en.html",
       "role": "English visual vertical lifecycle flow",
       "audience": ["human"],
-      "public_nav": ["docs/index-en.html"]
+      "public_nav": ["docs/index.html"]
     },
     {
       "path": "docs/dhf-governance-decision-flow-cn.html",
       "role": "governance decision flow for a single tool call: lane gate, capability check, refusal edges, verification back-edge",
       "audience": ["human"],
-      "public_nav": ["docs/index.html"]
+      "public_nav": ["docs/index-zh.html"]
     },
     {
       "path": "docs/dhf-governance-decision-flow-en.html",
       "role": "English governance decision flow for a single tool call: lane gate, capability check, refusal edges, verification back-edge",
       "audience": ["human"],
-      "public_nav": ["docs/index-en.html"]
+      "public_nav": ["docs/index.html"]
     },
     {
       "path": "docs/project-lifecycle-harness-flow-skills.html",
@@ -498,19 +508,19 @@
       "path": "docs/project-lifecycle-harness-flow-skills-zh-status-style.html",
       "role": "current status-style skill and helper routing map",
       "audience": ["human"],
-      "public_nav": ["docs/index.html"]
+      "public_nav": ["docs/index-zh.html"]
     },
     {
       "path": "docs/project-lifecycle-harness-flow-skills-en-status-style.html",
       "role": "current English status-style skill and helper routing map",
       "audience": ["human"],
-      "public_nav": ["docs/index-en.html"]
+      "public_nav": ["docs/index.html"]
     },
     {
       "path": "docs/project-lifecycle-harness-flow-skills-en.html",
       "role": "archived English skill and helper routing map",
       "audience": ["human"],
-      "public_nav": ["docs/index-en.html"]
+      "public_nav": ["docs/index.html"]
     },
     {
       "path": "codex/skills/codex-fluent/scripts/report_active_sessions.py",
