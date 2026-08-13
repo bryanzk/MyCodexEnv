@@ -55,6 +55,7 @@ jobs:
         env:
           # Frozen DHF evidence signs the original runtime paths.
           HOME: /Users/kezheng
+          CI_DHF_RUNTIME_RESET: "1"
         run: python3 test_runner.py
 
       - name: Check formatting (whitespace/conflict markers)
