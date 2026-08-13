@@ -36,7 +36,7 @@ jobs:
         with:
           python-version: "3.x"
 
-      - name: Seed immutable DHF baseline runtime
+      - name: Seed exact DHF runtime promotion
         env:
           DHF_BASE_SHA: 00818ae174f039899a2757ee4c67fcf9db1effa0
         run: |
