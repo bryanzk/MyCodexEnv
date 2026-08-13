@@ -2984,7 +2984,7 @@ def test_dhf_dispatcher_stdout_stderr_and_no_leak_output():
 def _reset_ci_dhf_runtime_promotion():
     if os.environ.get("CI_DHF_RUNTIME_RESET") != "1":
         return
-    if os.environ.get("CI") != "true" or Path.home() != Path("/Users/kezheng"):
+    if os.environ.get("CI") != "true" or Path.home() != Path("/tmp/ci-dhf-home"):
         raise RuntimeError("refusing CI DHF runtime reset outside the isolated CI home")
     runtime = Path.home() / ".codex"
     hook_target = runtime / "hooks" / "dhf_preprompt.py"
