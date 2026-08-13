@@ -52,6 +52,9 @@ jobs:
             "$HOME/.codex/skills/delivery-harness-framework/"
 
       - name: Run test suite (per-test isolation; codex/git-dependent checks SKIP)
+        env:
+          # Frozen DHF evidence signs the original runtime paths.
+          HOME: /Users/kezheng
         run: python3 test_runner.py
 
       - name: Check formatting (whitespace/conflict markers)
