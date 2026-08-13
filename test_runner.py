@@ -2981,13 +2981,30 @@ def test_dhf_dispatcher_stdout_stderr_and_no_leak_output():
     print("[PASS] DHF dispatcher stdout/stderr and no-leak output")
 
 
+def _reset_ci_dhf_runtime_promotion():
+    if os.environ.get("CI_DHF_RUNTIME_RESET") != "1":
+        return
+    if os.environ.get("CI") != "true" or Path.home() != Path("/Users/kezheng"):
+        raise RuntimeError("refusing CI DHF runtime reset outside the isolated CI home")
+    runtime = Path.home() / ".codex"
+    hook_target = runtime / "hooks" / "dhf_preprompt.py"
+    skill_target = runtime / "skills" / "delivery-harness-framework"
+    hook_target.parent.mkdir(parents=True, exist_ok=True)
+    if skill_target.exists():
+        shutil.rmtree(skill_target)
+    shutil.copy2(ROOT / "codex" / "hooks" / "dhf_preprompt.py", hook_target)
+    shutil.copytree(ROOT / "codex" / "skills" / "delivery-harness-framework", skill_target)
+
+
 def test_dhf_simplification_golden_corpus():
+    _reset_ci_dhf_runtime_promotion()
     code, out, err = run([sys.executable, str(DHF_SIMPLIFICATION_TEST)], cwd=ROOT)
     require(code == 0, f"DHF simplification golden corpus failed:\n{out}\n{err}")
     print("[PASS] DHF simplification golden corpus")
 
 
 def test_dhf_simplification_paired_gate():
+    _reset_ci_dhf_runtime_promotion()
     code, out, err = run([sys.executable, str(DHF_SIMPLIFICATION_PAIR_TEST)], cwd=ROOT)
     require(code == 0, f"DHF simplification paired gate failed: {err or out}")
     print("[PASS] DHF simplification paired gate")
