@@ -36,6 +36,21 @@ jobs:
         with:
           python-version: "3.x"
 
+      - name: Seed immutable DHF baseline runtime
+        env:
+          DHF_BASE_SHA: 00818ae174f039899a2757ee4c67fcf9db1effa0
+        run: |
+          baseline_dir="$RUNNER_TEMP/dhf-baseline"
+          mkdir -p "$baseline_dir"
+          git archive "$DHF_BASE_SHA" \
+            codex/hooks/dhf_preprompt.py \
+            codex/skills/delivery-harness-framework \
+            | tar -x -C "$baseline_dir"
+          mkdir -p "$HOME/.codex/hooks" "$HOME/.codex/skills/delivery-harness-framework"
+          cp "$baseline_dir/codex/hooks/dhf_preprompt.py" "$HOME/.codex/hooks/dhf_preprompt.py"
+          cp -R "$baseline_dir/codex/skills/delivery-harness-framework/." \
+            "$HOME/.codex/skills/delivery-harness-framework/"
+
       - name: Run test suite (per-test isolation; codex/git-dependent checks SKIP)
         run: python3 test_runner.py
 
