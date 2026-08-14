@@ -17,6 +17,7 @@ SKIP_DIR_NAMES = {
     ".git",
     ".worktrees",
     ".agents-backups",
+    ".runtime-backups",
     "node_modules",
     ".venv",
     "venv",
@@ -31,6 +32,7 @@ SKIP_DIR_NAMES = {
     "build",
     "coverage",
 }
+SKIP_DIR_PREFIXES = ("symphony-worktree-session-",)
 
 PRIMARY_DOC_FILES = ("README.md", "readme.md", "README.zh-CN.md", "README.en.md")
 ROOT_AGENT_FILENAMES = ("AGENTS.md", "agents.md")
@@ -135,7 +137,7 @@ def is_git_repo(path: Path) -> bool:
 
 
 def is_skipped_dir(name: str) -> bool:
-    return name in SKIP_DIR_NAMES
+    return name in SKIP_DIR_NAMES or name.startswith(SKIP_DIR_PREFIXES)
 
 
 def actual_root_agents(path: Path) -> Path | None:

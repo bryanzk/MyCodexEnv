@@ -4798,6 +4798,12 @@ def test_harness_guard_scope_verdict_and_target_matrix():
             "persistence_path_patterns": [r"/Library/LaunchAgents(?:/|$)"],
         }
         (codex_home / "runtime" / "harness-scope.json").write_text(json.dumps(scope), encoding="utf-8")
+        skill_doc = codex_home / "skills" / "fixture" / "nested" / "SKILL.md"
+        skill_doc.parent.mkdir(parents=True)
+        skill_doc.write_text("---\nname: fixture\n---\n", encoding="utf-8")
+        escaped_skill = codex_home / "skills" / "escaped" / "SKILL.md"
+        escaped_skill.parent.mkdir(parents=True)
+        escaped_skill.symlink_to(outside / "SKILL.md")
 
         def shell(command):
             return _run_harness_guard(
@@ -4854,10 +4860,45 @@ def test_harness_guard_scope_verdict_and_target_matrix():
         require(governed_high.get("decision") == "block", "governed high-risk calls must block")
         require("codex-task" not in governed_high.get("reason", ""), "high-risk denials must not suggest declaration")
 
+        require(shell(f"cat {skill_doc}") == {}, "an absolute runtime skill document read must be allowed")
         require(
-            shell('tee "$CODEX_HOME/hooks.json"') == {},
-            "$CODEX_HOME screening bypass must be honestly allowed on this call",
+            shell('cat "$CODEX_HOME/skills/fixture/nested/SKILL.md"') == {},
+            "$CODEX_HOME runtime skill document reads must be allowed",
         )
+        require(
+            _run_harness_guard(
+                {"tool_name": "read_file", "cwd": str(outside), "tool_input": {"path": str(skill_doc)}}, env
+            )
+            == {},
+            "structured runtime skill document reads must be allowed",
+        )
+        protected_skill_commands = [
+            'cat "$CODEX_HOME/config.toml"',
+            f"cat {skill_doc} {codex_home / 'config.toml'}",
+            f"cat {skill_doc} | tee {outside / 'copy'}",
+            'tee "$CODEX_HOME/skills/fixture/nested/SKILL.md"',
+            'rm "$CODEX_HOME/skills/fixture/nested/SKILL.md"',
+            'chmod 644 "$CODEX_HOME/skills/fixture/nested/SKILL.md"',
+        ]
+        for command in protected_skill_commands:
+            require(
+                shell(command).get("decision") == "block",
+                f"runtime skill exception must remain read-only and exact: {command}",
+            )
+        protected_read_paths = [
+            codex_home / "config.toml",
+            codex_home / "auth.json",
+            codex_home / "skills" / "fixture" / "README.md",
+            escaped_skill,
+        ]
+        for path in protected_read_paths:
+            require(
+                _run_harness_guard(
+                    {"tool_name": "read_file", "cwd": str(outside), "tool_input": {"path": str(path)}}, env
+                ).get("decision")
+                == "block",
+                f"config, credentials, non-skill files, and path escapes must remain protected: {path}",
+            )
 
         mixed_patch = dict(patch_payload)
         mixed_patch["tool_input"] = {
@@ -9766,6 +9807,15 @@ def test_manage_agents_scan_backup_generate_restore():
         )
         local_agents = repo_node / "services" / "api" / "AGENTS.md"
         write(local_agents, "# Local API Rules\n")
+        write(
+            repo_node / ".runtime-backups" / "snapshot" / "AGENTS.md",
+            "# Backup Only\n",
+        )
+
+        session_worktree = make_git_repo(
+            workspace_root / "symphony-worktree-session-test"
+        )
+        write(session_worktree / "elixir" / "AGENTS.md", "# Session Rules\n")
 
         os.symlink(repo_node, workspace_root / "repo-node-alias")
 
@@ -9786,6 +9836,17 @@ def test_manage_agents_scan_backup_generate_restore():
         require(
             any(repo["path"].endswith("repo-node") and repo["local_agents"] for repo in scan_payload["repos"]),
             "repo-node local AGENTS should be discovered",
+        )
+        node_payload = next(
+            repo for repo in scan_payload["repos"] if repo["path"].endswith("repo-node")
+        )
+        require(
+            node_payload["local_agents"] == [str(local_agents)],
+            "runtime backups should not be treated as local AGENTS",
+        )
+        require(
+            not any("symphony-worktree-session-" in repo["path"] for repo in scan_payload["repos"]),
+            "temporary Symphony session worktrees should be skipped",
         )
 
         backup_id = "test-backup"
