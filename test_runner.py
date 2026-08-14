@@ -4872,6 +4872,18 @@ def test_harness_guard_scope_verdict_and_target_matrix():
             == {},
             "structured runtime skill document reads must be allowed",
         )
+        require(
+            _run_harness_guard(
+                {
+                    "tool_name": "read_file",
+                    "cwd": str(outside),
+                    "tool_input": {"path": "$CODEX_HOME/skills/fixture/nested/SKILL.md"},
+                },
+                env,
+            )
+            == {},
+            "structured $CODEX_HOME runtime skill document reads must be allowed",
+        )
         protected_skill_commands = [
             'cat "$CODEX_HOME/config.toml"',
             f"cat {skill_doc} {codex_home / 'config.toml'}",
@@ -4887,6 +4899,7 @@ def test_harness_guard_scope_verdict_and_target_matrix():
             )
         protected_read_paths = [
             codex_home / "config.toml",
+            "$CODEX_HOME/config.toml",
             codex_home / "auth.json",
             codex_home / "skills" / "fixture" / "README.md",
             escaped_skill,

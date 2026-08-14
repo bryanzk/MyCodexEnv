@@ -152,15 +152,57 @@ def _screening_hit(
         raw_roots = scope.get(roots_key)
         if isinstance(raw_roots, list):
             patterns.extend(re.escape(item.strip()) for item in raw_roots if isinstance(item, str) and item.strip())
-    text = "\n".join([command_text(payload), *structured_targets(payload)])
+    text = "\n".join([command_text(payload), *candidate_paths(payload)])
     return match_any(patterns, text) is not None
 
 
 def _protected_hit(payload: dict[str, Any], scope: dict[str, Any], cwd: Path | None) -> bool:
+    targets = [_canonical_path(raw, cwd) for raw in candidate_paths(payload)]
+    if any(target is not None and _within_any(target, _scope_roots(scope, "protected_roots")) for target in targets):
+        return True
+    text = "\n".join([command_text(payload), *candidate_paths(payload)])
+    if re.search(r"\$(?:CODEX_HOME|\{CODEX_HOME\})(?:/|\b)", text, flags=re.IGNORECASE):
+        return True
     return _screening_hit(
         payload, scope, cwd, roots_key="protected_roots", patterns_key="protected_command_patterns",
         defaults=DEFAULT_PROTECTED_COMMAND_PATTERNS,
     )
+
+
+def _protected_skill_read_allowed(payload: dict[str, Any], cwd: Path | None) -> bool:
+    home = codex_home().resolve(strict=False)
+    skills = (home / "skills").resolve(strict=False)
+
+    def is_skill_doc(raw: Any) -> bool:
+        if not isinstance(raw, str):
+            return False
+        for prefix in ("$CODEX_HOME/", "${CODEX_HOME}/"):
+            if raw.startswith(prefix):
+                raw = str(home / raw.removeprefix(prefix))
+                break
+        path = _canonical_path(raw, cwd)
+        if path is None or path.name != "SKILL.md":
+            return False
+        try:
+            return len(path.relative_to(skills).parts) >= 2
+        except ValueError:
+            return False
+
+    cmd = command_text(payload)
+    if cmd:
+        if re.search(r"[;&|<>`\r\n]", cmd):
+            return False
+        try:
+            tokens = shlex.split(cmd)
+        except ValueError:
+            return False
+        return len(tokens) >= 2 and tokens[0] in {"cat", "/bin/cat"} and all(is_skill_doc(token) for token in tokens[1:])
+
+    if tool_name(payload).lower() not in {"read", "read_file"}:
+        return False
+    data = tool_input(payload)
+    paths = [data[key] for key in ("path", "file", "file_path", "filename") if key in data]
+    return bool(paths) and all(is_skill_doc(path) for path in paths)
 
 
 def _persistence_hit(payload: dict[str, Any], scope: dict[str, Any], cwd: Path | None) -> bool:
@@ -612,7 +654,7 @@ def decision(payload: dict[str, Any], policy: dict[str, Any]) -> dict[str, Any]:
     category, reason = classify(payload, policy)
     risk_tier = category_risk_tier(policy, category)
     canonical_cwd = _canonical_path(str(cwd))
-    if scoped_out and _protected_hit(payload, scope, canonical_cwd):
+    if scoped_out and _protected_hit(payload, scope, canonical_cwd) and not _protected_skill_read_allowed(payload, canonical_cwd):
         return block("[harness] protected-root screening blocked this call.", "high")
     if scoped_out and _persistence_hit(payload, scope, canonical_cwd):
         return block("[harness] persistence screening blocked this call.", "high")
