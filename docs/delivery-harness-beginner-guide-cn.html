@@ -644,7 +644,7 @@
         <h2>五步流程</h2>
         <div class="section-note">这是检查清单，不是每个任务的固定仪式：只有 <code>governed</code> 且命中 matching escalation signal 时才运行 <code>harness_recover.py</code>、<code>harness_env_probe.py</code> 或 <code>harness_checkpoint.py</code>；<code>light</code> 不要求这些 lifecycle helpers。</div>
         <div class="pipeline">
-          <div class="pipe"><b>1. Recover（条件化）</b><span>仅在 governed 的 matching escalation signal 要求时读取 harness state、git 状态和本地 evidence；light 直接读取任务所需的最窄来源。</span></div>
+          <div class="pipe"><b>1. Recover（条件化）</b><span>只有当任务风险较高、系统明确要求加强检查时，才核对当前运行状态、代码改动和本地记录；普通任务只查看完成工作所必需的信息。</span></div>
           <div class="pipe"><b>2. Clarify</b><span>确认目标、范围、受众、约束、领域词汇和验收标准；不清楚就进入 requirements。</span></div>
           <div class="pipe"><b>3. Route</b><span>按生命周期阶段选择 planner、TDD、QA、安全、发布、文档或 runtime helper；多步工作拆成垂直切片。</span></div>
           <div class="pipe"><b>4. Verify</b><span>运行测试、静态检查、浏览器 smoke 或脚本验证，记录四个证据字段。</span></div>
@@ -653,11 +653,11 @@
         <div class="steps" style="margin-top:18px">
           <div class="step">
             <div class="step-num">01</div>
-            <div><h3>如果任务不明确，不要开始实现</h3><p>先把模糊请求转成可验证目标。DHF 会读取 <code>CONTEXT.md</code>、<code>CONTEXT-MAP.md</code> 和相关 ADR，避免用错领域词。</p></div>
+            <div><h3>如果任务不明确，不要开始实现</h3><p>先把模糊请求转成可验证目标。当前仓库的 <code>CONTEXT.md</code> 是统一术语表，定义 DHF、任务阶段、风险路径、验证记录、交接点、修改范围和协作角色等词，并列出应避免的近义词。当前没有 <code>CONTEXT-MAP.md</code>：只有项目以后拆成多个业务领域时，才需要用它指向各领域自己的术语表。相关 ADR 则记录已经确定的架构取舍，避免重复争论。</p></div>
           </div>
           <div class="step">
             <div class="step-num">02</div>
-            <div><h3>如果要并行 agent，先验证写入边界</h3><p>多 agent 不是越多越好。只有当 write set 不重叠、验证命令明确，必要时还有 durable agent brief，才允许 scoped workers。</p></div>
+            <div><h3>如果要并行 agent，先验证写入边界</h3><p>多人协作只有在分工清楚、不会互相覆盖时才启动。每个 agent 负责哪些文件、如何证明完成、哪些内容不能改，都要事先写清楚；否则由一个 agent 完成，通常更快也更安全。复杂或跨会话任务还会使用 durable brief 保存这份任务说明。</p></div>
           </div>
           <div class="step">
             <div class="step-num">03</div>
@@ -665,7 +665,7 @@
           </div>
           <div class="step">
             <div class="step-num">04</div>
-            <div><h3>如果在 debug，先建立反馈回路</h3><p>不要先猜修复。先拿到 failing test、CLI fixture、browser check、trace replay 或 throwaway harness，再进入假设和修复。</p></div>
+            <div><h3>如果在 debug，先建立反馈回路</h3><p>不要先猜修复。先用失败测试、命令行样例、浏览器检查或运行轨迹稳定复现问题。若现有系统不便重复验证，就搭一个 throwaway harness：在隔离环境中用假数据反复执行最小故障场景，修复后立即用同一路径确认结果。它不接触客户或生产数据；问题解决后删除，或把关键场景转成长期自动化测试。</p></div>
           </div>
         </div>
       </section>
@@ -718,7 +718,7 @@
               <tr><td>Skill</td><td>认知工作流：规划、TDD、QA、安全、发布、文档等。</td><td><code>codex/skills/*</code>、<code>gstack-*</code></td></tr>
               <tr><td>Helper</td><td>确定性脚本：恢复、探测、验证、报告、checkpoint。</td><td><code>scripts/harness_*.py</code></td></tr>
               <tr><td>Vertical slice</td><td>一个能单独验证的端到端小切片，而不是只改某一层。</td><td><code>AFK</code> / <code>HITL</code> planning</td></tr>
-              <tr><td>Durable brief</td><td>给 worker agent 的耐久任务合同，记录 current/desired behavior、key interfaces、acceptance criteria 和 out of scope。</td><td><code>docs/templates/harness-agent-brief.md</code></td></tr>
+              <tr><td>Durable brief</td><td>给 worker agent 的任务说明书，包含任务类型、现状与目标、必须保持或改变的接口、可验证的验收标准、验证命令、任务强度和明确不做的事项。这些内容刚好回答“要改什么、不能影响什么、怎样证明完成”；文件位置只用于导航，具体实现方法由 worker 决定，避免任务说明过长或过早锁死方案。</td><td><code>docs/templates/harness-agent-brief.md</code></td></tr>
               <tr><td>Evidence</td><td>证明任务完成的新鲜命令结果。</td><td><code>command</code>、<code>exit_code</code>、<code>key_output</code>、<code>timestamp</code></td></tr>
               <tr><td>Checkpoint</td><td>给下一次会话恢复用的状态记录。</td><td><code>docs/harness-state.md</code></td></tr>
               <tr><td>Next safe task</td><td>下一位 agent 不需要猜就能继续做的安全动作。</td><td><code>scripts/harness_recover.py</code> 输出</td></tr>

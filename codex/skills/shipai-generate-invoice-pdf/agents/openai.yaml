@@ -1,0 +1,4 @@
+interface:
+  display_name: "ShipAI Invoice PDF"
+  short_description: "Generate verified ShipAI invoice PDFs"
+  default_prompt: "Use $shipai-generate-invoice-pdf to create and verify a ShipAI invoice PDF from the approved template."

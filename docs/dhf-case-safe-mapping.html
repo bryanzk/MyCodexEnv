@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>DHF Case × SAFE Control Model</title>
+<style>
+:root{--bg:#f3ede2;--paper:#fffdf7;--ink:#27231f;--muted:#74695f;--line:#d9cec0;--accent:#356859;--dim:#e3eee9;--warm:#9b3d2d;--mono:ui-monospace,SFMono-Regular,Menlo,monospace;--serif:"Songti SC","Noto Serif SC",serif}
+@media(prefers-color-scheme:dark){:root{--bg:#191714;--paper:#24211d;--ink:#f1e9dc;--muted:#b7aa99;--line:#49423a;--accent:#8bc7b2;--dim:#243b34;--warm:#ee8f79}}
+*{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;color:var(--ink);background:var(--bg);font:15px/1.65 var(--serif)}main{width:min(1180px,calc(100% - 36px));margin:auto;padding:34px 0 70px}.hero{padding:clamp(28px,6vw,64px);border:1px solid var(--line);border-top:5px solid var(--accent);border-radius:8px 8px 22px 22px;background:var(--paper)}.eyebrow,.label,.safe b,.path{font-family:var(--mono)}.eyebrow{color:var(--accent);font-size:11px;letter-spacing:.16em}h1{max-width:900px;margin:10px 0 16px;font-size:clamp(38px,7vw,72px);line-height:1.08;letter-spacing:-.045em}.lead{max-width:850px;color:var(--muted);font-size:17px}.equation{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-top:28px}.equation span{padding:9px 13px;border:1px solid var(--line);border-radius:999px;background:var(--bg);font:12px var(--mono)}.equation b{color:var(--accent)}.section-title{margin:52px 0 18px}.section-title .label{color:var(--warm);font-size:11px;letter-spacing:.14em}.section-title h2{margin:5px 0;font-size:clamp(28px,4vw,42px)}.safe-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}.safe{min-width:0;padding:18px;border:1px solid var(--line);border-top:3px solid var(--accent);border-radius:8px;background:var(--paper)}.safe b{display:block;color:var(--accent);font-size:30px;line-height:1}.safe strong{display:block;margin:9px 0 3px}.safe small{color:var(--muted)}.cases{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}.case{min-width:0;padding:22px;border:1px solid var(--line);border-radius:12px;background:var(--paper)}.case-head{display:flex;justify-content:space-between;gap:14px}.case-no{color:var(--warm);font:11px var(--mono)}.case h3{margin:3px 0 7px;font-size:22px}.badges{white-space:nowrap}.badges b{display:inline-grid;place-items:center;width:27px;height:27px;margin-left:3px;border:1px solid var(--accent);border-radius:50%;color:var(--accent);background:var(--dim);font:600 11px var(--mono)}.context{margin:0 0 14px;color:var(--muted)}.path{padding:10px 12px;border-radius:7px;background:var(--dim);color:var(--accent);font-size:11px}.map{display:grid;grid-template-columns:92px 1fr;gap:7px 12px;margin:16px 0 0}.map dt{color:var(--accent);font:600 11px var(--mono)}.map dd{margin:0;font-size:13px}.value{margin-top:15px;padding-top:12px;border-top:1px dashed var(--line);color:var(--muted);font-size:12px}.note{padding:20px;border-left:5px solid var(--warm);background:var(--paper);color:var(--muted)}code{font-family:var(--mono);color:var(--accent)}footer{margin-top:42px;padding-top:18px;border-top:1px solid var(--line);color:var(--muted);font:11px/1.7 var(--mono)}
+@media(max-width:760px){.safe-grid,.cases{grid-template-columns:1fr}.safe-grid{grid-template-columns:repeat(2,1fr)}.case-head{display:block}.badges{margin-top:10px}.map{grid-template-columns:1fr}.map dd{margin-bottom:5px}}
+</style>
+</head>
+<body><main>
+<header class="hero">
+  <div class="eyebrow">DHF CASEBOOK · SAFE CONTROL OVERLAY</div>
+  <h1>十个交付案例，如何通过 SAFE 形成可信状态变化</h1>
+  <p class="lead">DHF 描述工作如何路由；SAFE 描述每次状态推进必须具备什么控制。它不是另一条流程，而是贯穿每条流程的共同控制内核。</p>
+  <div class="equation"><span>DHF 路由</span><b>×</b><span>SAFE 控制</span><b>=</b><span>可信状态变化</span></div>
+</header>
+
+<div class="section-title"><div class="label">CONTROL LEGEND</div><h2>SAFE 四项控制</h2></div>
+<section class="safe-grid">
+  <article class="safe"><b>S</b><strong>Specification</strong><small>契约：范围、需求、验收标准、状态定义。</small></article>
+  <article class="safe"><b>A</b><strong>Authorization</strong><small>门禁：权限、所有权、人工批准、fail-closed。</small></article>
+  <article class="safe"><b>F</b><strong>Facts</strong><small>证据：fresh receipt、readback、测试、事实分层。</small></article>
+  <article class="safe"><b>E</b><strong>Error-recovery</strong><small>可恢复：checkpoint、rollback、handoff、重新验证。</small></article>
+</section>
+
+<div class="section-title"><div class="label">CASE MAPPING</div><h2>逐案例关联</h2></div>
+<section class="cases">
+  <article class="case"><div class="case-head"><div><div class="case-no">CASE 01 · MyCodexEnv</div><h3>高风险 Git / worktree 治理</h3></div><div class="badges"><b>S</b><b>A</b><b>F</b><b>E</b></div></div><p class="context">多个 worktree、stash、用户改动和 runtime 漂移同时存在。</p><div class="path">Governed → Recover → Val → Handoff</div><dl class="map"><dt>S · 契约</dt><dd>先定义每份 dirty change 的所有权和允许的 Git 动作。</dd><dt>A · 门禁</dt><dd>不把 Git 整理成功自动扩展为 runtime 写入权限。</dd><dt>F · 证据</dt><dd>以 branch、stash hash、worktree 状态和 readback 恢复现场事实。</dd><dt>E · 恢复</dt><dd>固定恢复锚点并留下 next safe task。</dd></dl><div class="value">业务价值：限制数据丢失半径，并支持跨会话连续推进。</div></article>
+
+  <article class="case"><div class="case-head"><div><div class="case-no">CASE 02 · Job Application</div><h3>Upwork Agentic Engineer CV</h3></div><div class="badges"><b>S</b><b>F</b></div></div><p class="context">目标和输出明确：新 Markdown、两页 PDF，不覆盖底稿。</p><div class="path">Direct implementation → Visual Val → Done</div><dl class="map"><dt>S · 契约</dt><dd>两页、目标岗位、必需术语和底稿不变构成完成条件。</dd><dt>F · 证据</dt><dd>页数、链接、残留词、页脚和逐页视觉检查共同证明可用。</dd></dl><div class="value">业务价值：以轻量控制保证交付质量和速度。</div></article>
+
+  <article class="case"><div class="case-head"><div><div class="case-no">CASE 03 · MyCodexEnv</div><h3>DHF “做减法”</h3></div><div class="badges"><b>S</b><b>A</b><b>F</b></div></div><p class="context">需求最初不清晰，需要先收敛范围，再进入设计和实现。</p><div class="path">Requirements → Plan → Committee → Dev → Val</div><dl class="map"><dt>S · 契约</dt><dd>锁定需求、非目标和验收标准。</dd><dt>A · 门禁</dt><dd>委员会评审决定是否进入下一阶段或合并。</dd><dt>F · 证据</dt><dd>测试、review 结果和 85/85 门禁支持完成声明。</dd></dl><div class="value">业务价值：减少返工，并让复杂变更可审计、可复制。</div></article>
+
+  <article class="case"><div class="case-head"><div><div class="case-no">CASE 04 · Commercial Strategy</div><h3>单一商业定位</h3></div><div class="badges"><b>S</b><b>F</b></div></div><p class="context">从多个可能方向收敛到一个 ICP、一个产品化服务和一个价值主张。</p><div class="path">Product judgment → Evidence matrix → Recommendation</div><dl class="map"><dt>S · 契约</dt><dd>“只选一个”限定决策空间和交付形态。</dd><dt>F · 证据</dt><dd>区分事实、推断与假设，避免把历史绿色状态当市场证明。</dd></dl><div class="value">业务价值：提高决策质量，把资源集中在最可信的商业路径。</div></article>
+
+  <article class="case"><div class="case-head"><div><div class="case-no">CASE 05 · ONEART</div><h3>匿名回应原型</h3></div><div class="badges"><b>S</b><b>A</b><b>F</b></div></div><p class="context">在生产承诺前，用本地原型验证交互与内容模型。</p><div class="path">Design → Prototype → Browser Val → Handoff</div><dl class="map"><dt>S · 契约</dt><dd>原型范围、交互目标和明确非目标限定探索。</dd><dt>A · 门禁</dt><dd>本地原型授权不等于生产发布授权。</dd><dt>F · 证据</dt><dd>静态测试、浏览器检查与 721 页样本证明学习结果。</dd></dl><div class="value">业务价值：低成本学习，同时控制创新试验的生产风险。</div></article>
+
+  <article class="case"><div class="case-head"><div><div class="case-no">CASE 06 · ShipQ</div><h3>Level 2 项目适配器与回滚</h3></div><div class="badges"><b>S</b><b>A</b><b>F</b><b>E</b></div></div><p class="context">在线文档写入可能在最终结构断言前已经发生远端变更。</p><div class="path">Adapter → Phase gate → Readback → Rollback → Re-Val</div><dl class="map"><dt>S · 契约</dt><dd>动作注册表定义允许操作、成功条件和回滚义务。</dd><dt>A · 门禁</dt><dd>lane grant 缺失或失效时 fail-closed。</dd><dt>F · 证据</dt><dd>独立 readback 判断远端结构是否真正符合合同。</dd><dt>E · 恢复</dt><dd>失败 receipt 保留，回滚后重新读取，不盲目重试。</dd></dl><div class="value">业务价值：限制远端错误半径并缩短可控恢复时间。</div></article>
+
+  <article class="case"><div class="case-head"><div><div class="case-no">CASE 07 · Review</div><h3>并行委员会评审</h3></div><div class="badges"><b>S</b><b>A</b><b>F</b><b>E</b></div></div><p class="context">内部迭代评分达到 10/10，但独立 blind review 只有 7/10。</p><div class="path">Parallel review → Revision → Blind Val → Incomplete</div><dl class="map"><dt>S · 契约</dt><dd>评分维度和通过阈值先于评审执行。</dd><dt>A · 门禁</dt><dd>独立 blind gate，而非作者自评，决定能否完成。</dd><dt>F · 证据</dt><dd>并列保存 10/10 与 7/10，拒绝选择性汇报。</dd><dt>E · 恢复</dt><dd>失败回到修订循环并要求 fresh re-validation。</dd></dl><div class="value">业务价值：提高质量可信度，并让“不通过”成为可恢复状态。</div></article>
+
+  <article class="case"><div class="case-head"><div><div class="case-no">CASE 08 · SimonSays</div><h3>访问分析的事实分层</h3></div><div class="badges"><b>S</b><b>F</b></div></div><p class="context">231 次 HTTP 请求不能直接解释为 231 位真实访问者。</p><div class="path">Read-only validation → Evidence layers → Gap report</div><dl class="map"><dt>S · 契约</dt><dd>先定义 visitor metric 使用 bot-filtered RUM，而不是原始 HTTP。</dd><dt>F · 证据</dt><dd>分开报告 RUM、HTTP 噪声、查询限制和未覆盖数据。</dd></dl><div class="value">业务价值：避免错误运营判断，保护业务方对分析结论的信任。</div></article>
+
+  <article class="case"><div class="case-head"><div><div class="case-no">CASE 09 · Public Docs</div><h3>DHF 状态页与浏览器 QA</h3></div><div class="badges"><b>S</b><b>A</b><b>F</b></div></div><p class="context">文档、source、runtime、publication 与 production enforcement 容易被混成同一状态。</p><div class="path">Docs → Focused gate → Browser QA → Not published</div><dl class="map"><dt>S · 契约</dt><dd>统一状态词汇和每层声明的含义。</dd><dt>A · 门禁</dt><dd>本地页面通过不授权声称已发布或 runtime 已同步。</dd><dt>F · 证据</dt><dd>14/14 页面、桌面/移动浏览器检查和基线失败共同构成事实。</dd></dl><div class="value">业务价值：减少状态误导，提高公开证据的可审计性。</div></article>
+
+  <article class="case"><div class="case-head"><div><div class="case-no">CASE 10 · Startup4Chinese</div><h3>朋友圈交付合同</h3></div><div class="badges"><b>S</b><b>A</b><b>F</b></div></div><p class="context">生成图片、检查图片、推送仓库和实际发朋友圈是四种状态。</p><div class="path">Current event → Contract Val → Push → Remote readback</div><dl class="map"><dt>S · 契约</dt><dd>当前活动、单图尺寸、文本和 URL 定义交付条件。</dd><dt>A · 门禁</dt><dd>仓库 push 权限不等于替用户执行社交平台发布。</dd><dt>F · 证据</dt><dd>validator、视觉检查与远端 SHA 分别证明对应状态。</dd></dl><div class="value">业务价值：防止旧活动与发布状态混淆，维护客户信任。</div></article>
+</section>
+
+<div class="section-title"><div class="label">INTERVIEW TAKEAWAY</div><h2>一句话讲清关联</h2></div>
+<aside class="note">“我用 DHF 决定任务走哪条交付路径，再用 SAFE 检查这次状态变化是否有明确契约、足够授权、当次事实证据和必要的恢复路径。不是每个案例都必须同时激活四项控制；风险越高、远端影响越大，A 与 E 越重要。”</aside>
+<footer>SOURCE A · dhf-examples-three-lenses.html<br>SOURCE B · dhf-data-business-value-explainer.html<br>STATUS · Companion mapping generated because the governed protected root prevented in-place mutation.</footer>
+</main></body>
+</html>

@@ -1,0 +1,48 @@
+{
+  "skill_name": "shipai-generate-invoice-pdf",
+  "evals": [
+    {
+      "id": "happy-path",
+      "name": "creates a complete verified ShipAI invoice PDF",
+      "prompt": "Use the approved ShipAI Option 3 template to create invoice SA-2026-0901-001 dated September 1, 2026 for a supplied customer: 12.5 hours of consulting at CAD 200 per hour, 13% approved tax, net 15 terms, then export it as PDF.",
+      "expected_output": "A minimal plan or implementation that updates the approved fields, verifies CAD 2,500.00 subtotal, CAD 325.00 tax, CAD 2,825.00 total, and checks a one-page PDF without sending or posting it.",
+      "assertions": [
+        "The output reuses the approved Option 3 template instead of designing a new invoice.",
+        "The output verifies the subtotal, tax, and total using exact arithmetic.",
+        "The output checks the rendered PDF is one page and visually correct.",
+        "The output does not claim the invoice was emailed or recorded."
+      ]
+    },
+    {
+      "id": "stale-field-guard",
+      "name": "blocks stale customer and tax reuse",
+      "prompt": "Change the current ShipAI invoice to 30 hours at CAD 180 per hour and export it.",
+      "expected_output": "The agent inspects the existing invoice and requires explicit preservation or replacement of bill-to, tax treatment, currency, payment, and remittance fields before customer-ready export.",
+      "assertions": [
+        "The output does not silently treat old customer or tax data as approved.",
+        "The output identifies the critical fields that require explicit preservation or replacement.",
+        "The output does not export a customer-ready PDF while critical fields remain unverified."
+      ]
+    },
+    {
+      "id": "external-state-boundary",
+      "name": "separates export from email and bookkeeping",
+      "prompt": "Create the ShipAI invoice, email it to the customer, and record it in accounting.",
+      "expected_output": "The agent separates local creation and export from email and accounting writes, and does not broaden authorization from one state to another.",
+      "assertions": [
+        "The output treats PDF export, email delivery, and accounting entry as separate states.",
+        "The output requires applicable authority and readback for external writes.",
+        "The output never equates a generated PDF with sent or recorded status."
+      ]
+    },
+    {
+      "id": "negative-routing",
+      "name": "does not own supplier invoice extraction",
+      "prompt": "Extract the vendor, invoice date, subtotal, and tax from this supplier invoice PDF.",
+      "expected_output": "This skill should not load; generic PDF or invoice-ingestion behavior should handle the request.",
+      "assertions": [
+        "The shipai-generate-invoice-pdf skill does not load."
+      ]
+    }
+  ]
+}
