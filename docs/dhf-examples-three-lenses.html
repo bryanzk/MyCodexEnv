@@ -304,6 +304,7 @@
     background: var(--paper);
   }
   .related-page span { color: var(--ink-soft); font-size: 14px; }
+  .related-links { display: flex; flex-wrap: wrap; gap: 8px 18px; }
   .related-page a { color: var(--forest); font: 600 12px var(--font-mono); text-decoration-thickness: 1px; text-underline-offset: 4px; }
   .footer { margin-top: 46px; padding-top: 20px; border-top: 1px solid var(--line); color: var(--ink-soft); font: 10px/1.7 var(--font-mono); }
   @keyframes fadeUp { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
@@ -360,9 +361,9 @@
       </div>
     </header>
 
-    <aside class="related-page" aria-label="关联案例">
-      <span>想深入看一次真实的远端写入失败与受控恢复？</span>
-      <a href="./shipq-dhf-safe-controlled-recovery.html">查看 ShipQ DHF × SAFE 受控恢复案例 →</a>
+    <aside class="related-page" aria-label="DHF 页面阅读路径">
+      <span>阅读位置：真实案例集；可先看概念总览，也可继续单案例深挖。</span>
+      <div class="related-links"><a href="./dhf-data-business-value-explainer.html">← 业务价值与 SAFE 总览</a><a href="./shipq-dhf-safe-controlled-recovery.html">ShipQ 受控恢复深挖 →</a></div>
     </aside>
 
     <div class="section-head">

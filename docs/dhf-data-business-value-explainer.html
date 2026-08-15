@@ -1,0 +1,763 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>同一业务价值，两套执行系统</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Noto+Serif+SC:wght@400;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #f3efe7;
+      --surface: #fbf8f1;
+      --surface-deep: #e9e3d7;
+      --border: rgba(34, 42, 53, .13);
+      --text: #202936;
+      --text-dim: #68717c;
+      --data: #1c6d76;
+      --data-dim: rgba(28, 109, 118, .10);
+      --shared: #bf563f;
+      --shared-dim: rgba(191, 86, 63, .11);
+      --dhf: #6355a5;
+      --dhf-dim: rgba(99, 85, 165, .10);
+      --success: #43745b;
+      --success-dim: rgba(67, 116, 91, .10);
+      --warning: #9a6a24;
+      --warning-dim: rgba(154, 106, 36, .11);
+      --shadow: 0 24px 60px rgba(64, 50, 35, .11);
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #151718;
+        --surface: #1d2021;
+        --surface-deep: #272a2b;
+        --border: rgba(255, 255, 255, .10);
+        --text: #eee8dc;
+        --text-dim: #aaa59c;
+        --data: #72c0c7;
+        --data-dim: rgba(114, 192, 199, .12);
+        --shared: #ef8f72;
+        --shared-dim: rgba(239, 143, 114, .13);
+        --dhf: #b5a8f2;
+        --dhf-dim: rgba(181, 168, 242, .13);
+        --success: #8dc7a3;
+        --success-dim: rgba(141, 199, 163, .12);
+        --warning: #dfb66f;
+        --warning-dim: rgba(223, 182, 111, .13);
+        --shadow: 0 24px 60px rgba(0, 0, 0, .28);
+      }
+    }
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      color: var(--text);
+      background:
+        radial-gradient(circle at 82% 2%, var(--dhf-dim), transparent 28rem),
+        radial-gradient(circle at 8% 34%, var(--data-dim), transparent 30rem),
+        linear-gradient(rgba(90, 82, 67, .035) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(90, 82, 67, .035) 1px, transparent 1px),
+        var(--bg);
+      background-size: auto, auto, 28px 28px, 28px 28px, auto;
+      font-family: "Noto Serif SC", Georgia, serif;
+      line-height: 1.65;
+    }
+    a { color: inherit; }
+    code, .mono, .eyebrow, .section-index, .legend, .nav-link, .micro-label {
+      font-family: "IBM Plex Mono", Menlo, monospace;
+    }
+    .shell {
+      width: min(1460px, 100%);
+      margin: 0 auto;
+      display: grid;
+      grid-template-columns: 220px minmax(0, 1fr);
+      gap: 34px;
+      padding: 26px 34px 72px;
+    }
+    .side-nav {
+      position: sticky;
+      top: 24px;
+      align-self: start;
+      min-width: 0;
+      padding-top: 18px;
+    }
+    .nav-title {
+      margin-bottom: 18px;
+      color: var(--text-dim);
+      font-size: 12px;
+      letter-spacing: .12em;
+      text-transform: uppercase;
+    }
+    .nav-link {
+      display: block;
+      padding: 9px 0 9px 15px;
+      border-left: 2px solid var(--border);
+      color: var(--text-dim);
+      font-size: 12px;
+      text-decoration: none;
+      transition: color .2s ease, border-color .2s ease, transform .2s ease;
+    }
+    .nav-link:hover, .nav-link.active {
+      color: var(--text);
+      border-color: var(--shared);
+      transform: translateX(3px);
+    }
+    .related-pages {
+      display: flex;
+      justify-content: space-between;
+      gap: 18px;
+      align-items: center;
+      margin: 0 0 28px;
+      padding: 16px 18px;
+      border: 1px solid var(--border);
+      background: var(--surface);
+    }
+    .related-pages span { color: var(--text-dim); }
+    .related-links { display: flex; flex-wrap: wrap; gap: 8px 18px; }
+    .related-pages a { color: var(--shared); font: 500 12px/1.5 "IBM Plex Mono", monospace; text-underline-offset: 4px; }
+    main { min-width: 0; }
+    .hero {
+      position: relative;
+      overflow: hidden;
+      margin-bottom: 28px;
+      padding: clamp(30px, 6vw, 72px);
+      border: 1px solid var(--border);
+      background: linear-gradient(135deg, var(--surface), color-mix(in srgb, var(--surface) 80%, var(--shared-dim)));
+      box-shadow: var(--shadow);
+    }
+    .hero::after {
+      content: "";
+      position: absolute;
+      width: 260px;
+      height: 260px;
+      right: -90px;
+      top: -90px;
+      border: 40px solid var(--shared-dim);
+      border-radius: 50%;
+    }
+    .eyebrow {
+      margin-bottom: 16px;
+      color: var(--shared);
+      font-size: 12px;
+      letter-spacing: .16em;
+      text-transform: uppercase;
+    }
+    h1, h2, h3, p { margin-top: 0; }
+    h1 {
+      max-width: 900px;
+      margin-bottom: 18px;
+      font-size: clamp(38px, 6vw, 76px);
+      line-height: 1.12;
+      letter-spacing: -.04em;
+    }
+    .hero-lead {
+      max-width: 820px;
+      margin-bottom: 32px;
+      color: var(--text-dim);
+      font-size: clamp(17px, 2.2vw, 23px);
+    }
+    .hero-equation {
+      position: relative;
+      z-index: 1;
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+      gap: 18px;
+      align-items: center;
+    }
+    .hero-system {
+      min-width: 0;
+      padding: 20px;
+      border-top: 4px solid;
+      background: var(--surface-deep);
+    }
+    .hero-system.data { border-color: var(--data); }
+    .hero-system.dhf { border-color: var(--dhf); }
+    .hero-system strong { display: block; font-size: 19px; }
+    .hero-system span { display: block; margin-top: 5px; color: var(--text-dim); }
+    .equals {
+      display: grid;
+      place-items: center;
+      width: 78px;
+      height: 78px;
+      color: var(--shared);
+      border: 1px solid var(--shared);
+      border-radius: 50%;
+      font: 500 13px/1 "IBM Plex Mono", monospace;
+      letter-spacing: .08em;
+    }
+    .safe-memory {
+      margin: 0 0 34px;
+      padding: 26px 28px;
+      border-left: 6px solid var(--shared);
+      background: var(--shared-dim);
+    }
+    .safe-word {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 1px;
+      margin-bottom: 16px;
+      background: var(--border);
+    }
+    .safe-letter {
+      min-width: 0;
+      display: grid;
+      grid-template-columns: auto minmax(0, 1fr);
+      gap: 11px;
+      align-items: center;
+      padding: 15px 16px;
+      background: var(--surface);
+    }
+    .safe-letter > b {
+      color: var(--shared);
+      font: 500 clamp(28px, 4vw, 44px)/1 "IBM Plex Mono", monospace;
+    }
+    .safe-letter strong { display: block; overflow-wrap: anywhere; }
+    .safe-letter small { display: block; color: var(--text-dim); }
+    .safe-statement { margin: 0; font-size: clamp(17px, 2.2vw, 23px); }
+    .safe-statement code { color: var(--shared); font-size: .82em; }
+    .overview, .value-section, .audit-section, .closing { scroll-margin-top: 24px; }
+    .overview {
+      margin-bottom: 34px;
+      padding: 28px;
+      border: 1px solid var(--border);
+      background: var(--surface);
+    }
+    .section-head {
+      display: grid;
+      grid-template-columns: auto minmax(0, 1fr);
+      gap: 14px;
+      align-items: start;
+      margin-bottom: 22px;
+    }
+    .section-index { color: var(--shared); font-size: 12px; letter-spacing: .12em; }
+    h2 { margin-bottom: 7px; font-size: clamp(26px, 3.5vw, 40px); line-height: 1.2; }
+    .section-head p { margin: 0; color: var(--text-dim); }
+    .control-spine {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 2px;
+      background: var(--border);
+    }
+    .spine-step {
+      min-width: 0;
+      padding: 18px 12px;
+      background: var(--surface-deep);
+      text-align: center;
+    }
+    .spine-step b { display: block; color: var(--shared); font-family: "IBM Plex Mono", monospace; font-size: 12px; }
+    .spine-step span { display: block; margin-top: 5px; }
+    .legend {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 16px;
+      margin-top: 18px;
+      color: var(--text-dim);
+      font-size: 12px;
+    }
+    .legend-item { display: inline-flex; align-items: center; gap: 7px; }
+    .dot { width: 9px; height: 9px; display: inline-block; border-radius: 50%; }
+    .dot.data { background: var(--data); }
+    .dot.shared { background: var(--shared); }
+    .dot.dhf { background: var(--dhf); }
+    .value-section {
+      margin-bottom: 24px;
+      padding: clamp(24px, 4vw, 42px);
+      border: 1px solid var(--border);
+      background: color-mix(in srgb, var(--surface) 96%, var(--shared-dim));
+      animation: fadeUp .55s ease both;
+    }
+    .value-section:nth-of-type(2) { animation-delay: .05s; }
+    .value-section:nth-of-type(3) { animation-delay: .10s; }
+    .value-section:nth-of-type(4) { animation-delay: .15s; }
+    .value-section:nth-of-type(5) { animation-delay: .20s; }
+    .value-section:nth-of-type(6) { animation-delay: .25s; }
+    .value-kicker {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 10px;
+    }
+    .value-kicker .micro-label { color: var(--shared); font-size: 11px; letter-spacing: .12em; }
+    .value-kicker .outcome-short { color: var(--success); font-weight: 600; }
+    .safe-driver {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      color: var(--text-dim);
+      font: 400 11px/1.3 "IBM Plex Mono", monospace;
+    }
+    .safe-codes { display: inline-flex; gap: 3px; }
+    .safe-codes b {
+      display: grid;
+      place-items: center;
+      width: 22px;
+      height: 22px;
+      color: var(--surface);
+      background: var(--shared);
+      font-weight: 500;
+    }
+    .value-title { margin-bottom: 22px; font-size: clamp(25px, 3.2vw, 38px); }
+    .pattern-band {
+      display: grid;
+      grid-template-columns: minmax(0, .72fr) minmax(0, 1.45fr) minmax(0, .72fr);
+      gap: 0;
+      align-items: stretch;
+      margin-bottom: 22px;
+    }
+    .pattern-edge, .pattern-core {
+      min-width: 0;
+      padding: 19px 20px;
+      overflow-wrap: anywhere;
+    }
+    .pattern-edge { display: flex; align-items: center; color: var(--text-dim); background: var(--surface-deep); }
+    .pattern-edge.left { border-left: 4px solid var(--data); }
+    .pattern-edge.right { justify-content: flex-end; border-right: 4px solid var(--dhf); text-align: right; }
+    .pattern-core {
+      position: relative;
+      z-index: 1;
+      display: grid;
+      place-items: center;
+      color: var(--text);
+      background: var(--shared-dim);
+      border-top: 1px solid var(--shared);
+      border-bottom: 1px solid var(--shared);
+      text-align: center;
+      font-size: 19px;
+      font-weight: 600;
+    }
+    .comparison {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 18px;
+      margin-bottom: 20px;
+    }
+    .lane {
+      min-width: 0;
+      padding: 22px;
+      border: 1px solid var(--border);
+      background: var(--surface);
+      overflow-wrap: anywhere;
+    }
+    .lane.data { box-shadow: inset 4px 0 0 var(--data); }
+    .lane.dhf { box-shadow: inset 4px 0 0 var(--dhf); }
+    .lane-label { margin-bottom: 10px; font-family: "IBM Plex Mono", monospace; font-size: 12px; letter-spacing: .08em; }
+    .lane.data .lane-label { color: var(--data); }
+    .lane.dhf .lane-label { color: var(--dhf); }
+    .lane ul { margin: 0; padding-left: 20px; color: var(--text-dim); }
+    .lane li + li { margin-top: 7px; }
+    .value-box {
+      display: grid;
+      grid-template-columns: auto minmax(0, 1fr);
+      gap: 15px;
+      align-items: start;
+      padding: 18px 20px;
+      background: var(--success-dim);
+      border-left: 4px solid var(--success);
+    }
+    .value-box strong { color: var(--success); }
+    .value-box p { margin: 0; }
+    .audit-section {
+      margin: 34px 0 24px;
+      padding: clamp(24px, 4vw, 42px);
+      border: 1px solid var(--border);
+      background: var(--surface);
+    }
+    .audit-summary {
+      max-width: 980px;
+      margin: -4px 0 22px;
+      color: var(--text-dim);
+    }
+    .audit-summary strong { color: var(--text); }
+    .table-wrap {
+      width: 100%;
+      overflow-x: auto;
+      border: 1px solid var(--border);
+      background: var(--surface);
+    }
+    .audit-table {
+      width: 100%;
+      min-width: 1120px;
+      border-collapse: collapse;
+      font-size: 14px;
+    }
+    .audit-table th,
+    .audit-table td {
+      padding: 14px 15px;
+      border-bottom: 1px solid var(--border);
+      text-align: left;
+      vertical-align: top;
+      overflow-wrap: anywhere;
+    }
+    .audit-table th {
+      color: var(--text-dim);
+      background: var(--surface-deep);
+      font-family: "IBM Plex Mono", monospace;
+      font-size: 11px;
+      font-weight: 500;
+      letter-spacing: .06em;
+      text-transform: uppercase;
+    }
+    .audit-table tbody tr:nth-child(even) { background: color-mix(in srgb, var(--surface-deep) 38%, transparent); }
+    .audit-table tbody tr:hover { background: var(--shared-dim); }
+    .audit-table tr:last-child td { border-bottom: 0; }
+    .audit-table code { color: var(--text); }
+    .capability-name { display: block; margin-bottom: 4px; font-weight: 600; }
+    .capability-note { color: var(--text-dim); font-size: 12px; }
+    .status {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      white-space: nowrap;
+      font-family: "IBM Plex Mono", monospace;
+      font-size: 11px;
+      font-weight: 500;
+    }
+    .status::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: currentColor; }
+    .status.implemented { color: var(--success); }
+    .status.partial { color: var(--warning); }
+    .status.missing { color: var(--shared); }
+    .audit-legend {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 16px;
+      margin: 14px 0 26px;
+      color: var(--text-dim);
+      font-size: 12px;
+    }
+    .recommendation-title { margin: 34px 0 16px; font-size: clamp(23px, 3vw, 32px); }
+    .recommendation-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 14px;
+    }
+    .recommendation-item {
+      min-width: 0;
+      padding: 20px;
+      border: 1px solid var(--border);
+      border-top: 4px solid var(--shared);
+      background: color-mix(in srgb, var(--surface) 92%, var(--shared-dim));
+      overflow-wrap: anywhere;
+    }
+    .recommendation-item:nth-child(2) { border-top-color: var(--data); }
+    .recommendation-item:nth-child(3) { border-top-color: var(--dhf); }
+    .recommendation-item:nth-child(4) { border-top-color: var(--success); }
+    .recommendation-item h3 { margin-bottom: 8px; font-size: 19px; }
+    .recommendation-item p { margin: 0; color: var(--text-dim); }
+    .boundary-note {
+      margin: 18px 0 0;
+      padding: 17px 19px;
+      border-left: 4px solid var(--warning);
+      background: var(--warning-dim);
+    }
+    .closing {
+      margin-top: 34px;
+      padding: clamp(30px, 5vw, 58px);
+      color: var(--surface);
+      background: var(--text);
+    }
+    @media (prefers-color-scheme: dark) { .closing { color: var(--text); background: #0d0f10; } }
+    .closing .eyebrow { color: var(--shared); }
+    .closing blockquote {
+      max-width: 980px;
+      margin: 0;
+      font-size: clamp(22px, 3.4vw, 38px);
+      line-height: 1.45;
+    }
+    .evidence-note { margin-top: 26px; color: var(--text-dim); font-size: 13px; }
+    @keyframes fadeUp { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
+    @media (prefers-reduced-motion: reduce) { * { scroll-behavior: auto !important; animation: none !important; transition: none !important; } }
+    @media (max-width: 900px) {
+      .shell { grid-template-columns: 1fr; padding: 0 18px 54px; }
+      .side-nav {
+        z-index: 10;
+        top: 0;
+        margin: 0 -18px;
+        padding: 0 18px;
+        overflow-x: auto;
+        white-space: nowrap;
+        background: color-mix(in srgb, var(--bg) 93%, transparent);
+        backdrop-filter: blur(14px);
+        border-bottom: 1px solid var(--border);
+      }
+      .nav-title { display: none; }
+      .nav-link { display: inline-block; padding: 13px 10px; border-left: 0; border-bottom: 2px solid transparent; }
+      .nav-link:hover, .nav-link.active { border-color: var(--shared); transform: none; }
+      .hero { margin-top: 18px; }
+      .control-spine { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    }
+    @media (max-width: 660px) {
+      .shell { padding-inline: 12px; }
+      .side-nav { margin-inline: -12px; padding-inline: 12px; }
+      .hero { padding: 26px 20px; }
+      .hero-equation, .comparison, .pattern-band, .value-box { grid-template-columns: 1fr; }
+      .recommendation-grid { grid-template-columns: 1fr; }
+      .equals { width: 62px; height: 62px; margin: 0 auto; }
+      .pattern-edge.right { justify-content: flex-start; border-right: 0; border-left: 4px solid var(--dhf); text-align: left; }
+      .pattern-core { border: 0; border-left: 4px solid var(--shared); text-align: left; place-items: start; }
+      .safe-word { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .business-value { grid-template-columns: 1fr; }
+      .related-pages { align-items: flex-start; flex-direction: column; }
+    }
+  </style>
+</head>
+<body>
+  <div class="shell">
+    <nav class="side-nav" aria-label="页面章节">
+      <div class="nav-title">Business value map</div>
+      <a class="nav-link active" href="#overview">总览</a>
+      <a class="nav-link" href="#quality">质量与信任</a>
+      <a class="nav-link" href="#risk">风险与授权</a>
+      <a class="nav-link" href="#speed">效率与速度</a>
+      <a class="nav-link" href="#continuity">韧性与连续性</a>
+      <a class="nav-link" href="#scale">治理与规模化</a>
+      <a class="nav-link" href="#gap-audit">DHF 缺口审查</a>
+      <a class="nav-link" href="#conclusion">结论</a>
+    </nav>
+
+    <main>
+      <header class="hero">
+        <div class="eyebrow">Business control architecture</div>
+        <h1>同一业务价值，<br>两套执行系统</h1>
+        <p class="hero-lead">数据与 AI 架构和 DHF 是两套实施框架；SAFE 是它们共享的控制内核；质量、信任、效率、韧性与规模化则是这个内核服务的业务目标。</p>
+        <div class="hero-equation" aria-label="数据架构和 DHF 共享 SAFE 控制内核">
+          <div class="hero-system data"><strong>数据与 AI 架构</strong><span>业务对象：事件 · 数据 · 模型判断</span></div>
+          <div class="equals">SAFE</div>
+          <div class="hero-system dhf"><strong>Delivery Harness Framework</strong><span>业务对象：需求 · 变更 · 发布结果</span></div>
+        </div>
+      </header>
+
+      <aside class="related-pages" aria-label="DHF 页面阅读路径">
+        <span>阅读路径：业务价值总览 → 真实案例集 → 单案例深挖</span>
+        <div class="related-links"><a href="./dhf-examples-three-lenses.html">下一步：十案例三种讲法 →</a><a href="./shipq-dhf-safe-controlled-recovery.html">直接查看 ShipQ 受控恢复 →</a></div>
+      </aside>
+
+      <section class="safe-memory" aria-label="SAFE 共同控制内核">
+        <div class="safe-word">
+          <div class="safe-letter"><b>S</b><span><strong>Specification</strong><small>契约</small></span></div>
+          <div class="safe-letter"><b>A</b><span><strong>Authorization</strong><small>门禁</small></span></div>
+          <div class="safe-letter"><b>F</b><span><strong>Facts</strong><small>证据</small></span></div>
+          <div class="safe-letter"><b>E</b><span><strong>Error-recovery</strong><small>可恢复</small></span></div>
+        </div>
+        <p class="safe-statement"><strong>SAFE 是两套框架的共同控制内核：</strong>把不确定输入转换为有契约、有授权、有事实证据、可从错误中恢复的可信状态变化。<br><code>SAFE — The Shared Control Model for Trusted State Transitions.</code></p>
+      </section>
+
+      <section class="overview" id="overview">
+        <div class="section-head">
+          <span class="section-index">00</span>
+          <div><h2>SAFE：共同控制内核</h2><p>SAFE 不是第三套实施框架，也不是最终业务目标；它定义两套框架推进可信状态变化时必须具备的四类控制能力。</p></div>
+        </div>
+        <div class="control-spine" aria-label="共同业务控制主干">
+          <div class="spine-step"><b>S · SPECIFICATION</b><span>入口分类 · 契约规范 · 分阶段处理</span></div>
+          <div class="spine-step"><b>A · AUTHORIZATION</b><span>质量门禁 · 执行权限 · 人工批准</span></div>
+          <div class="spine-step"><b>F · FACTS</b><span>来源证据 · 验证凭证 · 可解释责任</span></div>
+          <div class="spine-step"><b>E · ERROR-RECOVERY</b><span>幂等重试 · 回放回滚 · 交接恢复</span></div>
+        </div>
+        <div class="legend">
+          <span class="legend-item"><i class="dot data"></i>数据架构特有机制</span>
+          <span class="legend-item"><i class="dot shared"></i>共同业务控制模式</span>
+          <span class="legend-item"><i class="dot dhf"></i>DHF 特有机制</span>
+        </div>
+      </section>
+
+      <section class="value-section" id="quality">
+        <div class="value-kicker"><span class="micro-label">VALUE DOMAIN 01</span><span class="safe-driver" aria-label="SAFE 驱动能力：Specification 和 Facts"><span class="safe-codes"><b>S</b><b>F</b></span>Specification + Facts</span><span class="outcome-short">减少错误与返工</span></div>
+        <h2 class="value-title">质量与客户信任</h2>
+        <div class="pattern-band">
+          <div class="pattern-edge left">坏数据不能冒充有效结果</div>
+          <div class="pattern-core">契约先行 · 分阶段验收 · 门禁推进</div>
+          <div class="pattern-edge right">未验证交付不能冒充完成</div>
+        </div>
+        <div class="comparison">
+          <article class="lane data"><div class="lane-label">DATA / AI SPECIFIC</div><ul><li>Canonical Schema 统一下游数据语言</li><li>truth/challenge set 验证完整性、顺序与 exactly-once</li><li>幂等写入和 baseline guard 防止坏状态覆盖可信结果</li></ul></article>
+          <article class="lane dhf"><div class="lane-label">DHF SPECIFIC</div><ul><li>Requirements 和 acceptance criteria 定义完成条件</li><li>Validation / review gate 阻止未经验证的推进</li><li>Fresh verification receipt 绑定本次命令、结果与时间</li></ul></article>
+        </div>
+        <div class="value-box"><strong>业务价值</strong><p>阻止坏数据和未验证交付进入客户或生产，减少错误决策、重复调查、客户投诉和修复成本。</p></div>
+      </section>
+
+      <section class="value-section" id="risk">
+        <div class="value-kicker"><span class="micro-label">VALUE DOMAIN 02</span><span class="safe-driver" aria-label="SAFE 驱动能力：Authorization 和 Facts"><span class="safe-codes"><b>A</b><b>F</b></span>Authorization + Facts</span><span class="outcome-short">限制错误半径</span></div>
+        <h2 class="value-title">风险与授权控制</h2>
+        <div class="pattern-band">
+          <div class="pattern-edge left">证据不足时降低模型能力</div>
+          <div class="pattern-core">证据决定权限 · Fail-closed · 人工批准</div>
+          <div class="pattern-edge right">授权不足时限制执行范围</div>
+        </div>
+        <div class="comparison">
+          <article class="lane data"><div class="lane-label">DATA / AI SPECIFIC</div><ul><li>FULL / REDUCED / MINIMAL 表达数据充分性</li><li>证据不足时阻断 LLM 或返回 <code>unknown</code></li><li>模型冲突和高风险建议进入人工复核</li></ul></article>
+          <article class="lane dhf"><div class="lane-label">DHF SPECIFIC</div><ul><li>local_dev / demo / production 分离执行权限</li><li>客户数据、远程系统和破坏性动作需要明确授权</li><li>恢复信息是证据，不自动扩大操作权限</li></ul></article>
+        </div>
+        <div class="value-box"><strong>业务价值</strong><p>让自动化覆盖更多正常路径，同时防止 AI、代理或自动任务越权，把单点错误限制在可承受范围内。</p></div>
+      </section>
+
+      <section class="value-section" id="speed">
+        <div class="value-kicker"><span class="micro-label">VALUE DOMAIN 03</span><span class="safe-driver" aria-label="SAFE 驱动能力：Specification 和 Authorization"><span class="safe-codes"><b>S</b><b>A</b></span>Specification + Authorization</span><span class="outcome-short">提高单位人力产出</span></div>
+        <h2 class="value-title">运营效率与交付速度</h2>
+        <div class="pattern-band">
+          <div class="pattern-edge left">按来源与数据状态路由</div>
+          <div class="pattern-core">先路由再处理 · 正常路径自动化</div>
+          <div class="pattern-edge right">按任务风险与阶段路由</div>
+        </div>
+        <div class="comparison">
+          <article class="lane data"><div class="lane-label">DATA / AI SPECIFIC</div><ul><li>流式和 backfill 共用判断与写入语义</li><li>多源 adapter 隔离外部差异，并发富化缩短延迟</li><li>规则处理确定场景，LLM 只补充剩余歧义</li></ul></article>
+          <article class="lane dhf"><div class="lane-label">DHF SPECIFIC</div><ul><li>Lifecycle router 选择当前阶段和专业 workflow</li><li>Repo adapter 延迟加载项目规则与验证入口</li><li>Light / standard / governed 使流程成本匹配任务风险</li></ul></article>
+        </div>
+        <div class="value-box"><strong>业务价值</strong><p>低风险业务快速通过，高风险业务获得必要治理；工程师和运营人员把时间集中到异常、歧义和关键决策。</p></div>
+      </section>
+
+      <section class="value-section" id="continuity">
+        <div class="value-kicker"><span class="micro-label">VALUE DOMAIN 04</span><span class="safe-driver" aria-label="SAFE 驱动能力：Error-recovery 和 Facts"><span class="safe-codes"><b>E</b><b>F</b></span>Error-recovery + Facts</span><span class="outcome-short">缩短恢复时间</span></div>
+        <h2 class="value-title">韧性与业务连续性</h2>
+        <div class="pattern-band">
+          <div class="pattern-edge left">从可重放数据恢复</div>
+          <div class="pattern-core">幂等 · 持久中间态 · 可恢复推进</div>
+          <div class="pattern-edge right">从可信 checkpoint 恢复</div>
+        </div>
+        <div class="comparison">
+          <article class="lane data"><div class="lane-label">DATA / AI SPECIFIC</div><ul><li>Raw archive 保存可重算的最后防线</li><li>Retry / DLQ / replay / backfill 处理暂时性失败和遗漏</li><li>Current 与 history 分层，重放通过幂等键吸收重复</li></ul></article>
+          <article class="lane dhf"><div class="lane-label">DHF SPECIFIC</div><ul><li>Append-only checkpoint 保存决策和最新可信状态</li><li>Handoff 与 next safe task 支持跨会话、跨人员继续</li><li>Rollback 后重新验证，不复用历史绿色结果</li></ul></article>
+        </div>
+        <div class="value-box"><strong>业务价值</strong><p>故障后从最近可信状态继续，减少从头重做和重复操作，并降低业务对单个人员、单进程或单次会话的依赖。</p></div>
+      </section>
+
+      <section class="value-section" id="scale">
+        <div class="value-kicker"><span class="micro-label">VALUE DOMAIN 05</span><span class="safe-driver" aria-label="SAFE 四项能力共同驱动"><span class="safe-codes"><b>S</b><b>A</b><b>F</b><b>E</b></span>Full SAFE core</span><span class="outcome-short">降低审计与扩张成本</span></div>
+        <h2 class="value-title">审计、治理与规模化</h2>
+        <div class="pattern-band">
+          <div class="pattern-edge left">追踪数据与模型结论来源</div>
+          <div class="pattern-core">状态分离 · 全链路证据 · 可解释责任</div>
+          <div class="pattern-edge right">追踪交付与运行状态来源</div>
+        </div>
+        <div class="comparison">
+          <article class="lane data"><div class="lane-label">DATA / AI SPECIFIC</div><ul><li>Evidence ID、source path、provenance 和 trace 绑定结论</li><li>Raw / current / history / materialized 分离查询与保留责任</li><li>降级原因和人工批准保留当时决策条件</li></ul></article>
+          <article class="lane dhf"><div class="lane-label">DHF SPECIFIC</div><ul><li>Repository source、runtime、publication、production 分开声明</li><li>四字段验证凭证记录 command、exit code、关键输出与时间</li><li>Ownership 和 source-of-truth 顺序明确变更责任</li></ul></article>
+        </div>
+        <div class="value-box"><strong>业务价值</strong><p>更快回答“发生了什么、依据什么、谁批准、当前在哪一层”，并把可信流程复制到更多项目、数据源、团队和客户环境。</p></div>
+      </section>
+
+      <section class="audit-section" id="gap-audit">
+        <div class="section-head">
+          <span class="section-index">06</span>
+          <div><h2>DHF × SAFE 2.0 缺口审查</h2><p>区分已经强制执行的内核能力、只覆盖部分场景的能力，以及仍由外部 workflow 或运行平台承担的能力。</p></div>
+        </div>
+        <p class="audit-summary"><strong>判断：</strong>当前 DHF 已较完整实现原始 SAFE；SAFE 2.0 新增的目标、持续反馈、统一责任和事故学习尚未形成完整闭环。这里的“未实现”不等于全部都应进入 generic DHF。</p>
+
+        <div class="table-wrap" role="region" aria-label="DHF 与 SAFE 2.0 能力缺口表" tabindex="0">
+          <table class="audit-table">
+            <colgroup>
+              <col style="width:16%"><col style="width:11%"><col style="width:22%"><col style="width:29%"><col style="width:22%">
+            </colgroup>
+            <thead>
+              <tr><th>SAFE 2.0 能力</th><th>当前状态</th><th>当前 DHF 证据</th><th>主要缺失</th><th>建议实施层</th></tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><span class="capability-name">S · Specification</span><span class="capability-note">契约与期望状态</span></td>
+                <td><span class="status implemented">已实现</span></td>
+                <td>Requirements、Acceptance Criteria、Scope、Source of Truth、验证命令。</td>
+                <td>核心能力已成立；继续保持契约验证和 source-of-truth 顺序。</td>
+                <td>Generic DHF</td>
+              </tr>
+              <tr>
+                <td><span class="capability-name">S · SLOs</span><span class="capability-note">量化业务目标</span></td>
+                <td><span class="status missing">未实现</span></td>
+                <td>Requirements 只有成功标准和测试门禁，没有统一 SLO 字段。</td>
+                <td>缺少 SLI、SLO、Error Budget、业务 KPI、测量窗口和阈值违反动作。</td>
+                <td>Generic schema + Repo Adapter</td>
+              </tr>
+              <tr>
+                <td><span class="capability-name">S · Safety Context</span><span class="capability-note">风险与影响边界</span></td>
+                <td><span class="status partial">部分实现</span></td>
+                <td>Secret、PII、IAM、远程操作、客户数据和 external-capture gate。</td>
+                <td>缺少 AI risk map、data classification、privacy impact、bias/fairness 和 drift threshold。</td>
+                <td>Generic contract + Repo Adapter</td>
+              </tr>
+              <tr>
+                <td><span class="capability-name">A · Authorization</span><span class="capability-note">有边界的执行权限</span></td>
+                <td><span class="status implemented">已实现</span></td>
+                <td>Execution Lane、Tool Policy、Guard、受保护路径、远程和破坏性动作门禁。</td>
+                <td>核心能力已成立；平台不支持可靠 ask 时继续保持 fail-closed。</td>
+                <td>Generic DHF + Host Policy</td>
+              </tr>
+              <tr>
+                <td><span class="capability-name">A · Accountability</span><span class="capability-note">责任归属与升级</span></td>
+                <td><span class="status partial">部分实现</span></td>
+                <td>Production lane 要求 owner/project；部分 plan-finding schema 有 owner。</td>
+                <td>Named owner 未贯穿 requirements、checkpoint、SLO、incident 和 corrective action。</td>
+                <td>Generic DHF</td>
+              </tr>
+              <tr>
+                <td><span class="capability-name">F · Facts</span><span class="capability-note">证据与可追溯性</span></td>
+                <td><span class="status implemented">已实现</span></td>
+                <td>四字段 verification receipt、Evidence Schema、Observer、Checkpoint、Ledger。</td>
+                <td>交付证据能力已成立；仍需与业务运行指标明确分层。</td>
+                <td>Generic DHF</td>
+              </tr>
+              <tr>
+                <td><span class="capability-name">F · Feedback</span><span class="capability-note">持续运行反馈</span></td>
+                <td><span class="status partial">部分实现</span></td>
+                <td>本地 JSONL tool evidence 和 advisory conversion health。</td>
+                <td>缺少服务 telemetry、主动告警、用户反馈、业务 KPI、模型和数据漂移信号。</td>
+                <td>Runtime Platform + Repo Adapter</td>
+              </tr>
+              <tr>
+                <td><span class="capability-name">E · Error-recovery</span><span class="capability-note">恢复可信状态</span></td>
+                <td><span class="status implemented">已实现</span></td>
+                <td>Recover、append-only checkpoint、幂等 transition、handoff、rollback 和 next safe task。</td>
+                <td>Generic 交付恢复已成立；业务服务自动恢复仍应由运行平台负责。</td>
+                <td>Generic DHF + Runtime Platform</td>
+              </tr>
+              <tr>
+                <td><span class="capability-name">E · Evolution</span><span class="capability-note">从失败中演进</span></td>
+                <td><span class="status missing">未实现</span></td>
+                <td>仅按需路由到 <code>gstack-retro</code> 或 <code>gstack-learn</code>。</td>
+                <td>缺少强制 postmortem、root cause、行动项 owner/期限、关闭证据和回写 Specification。</td>
+                <td>Learning Workflow + Generic contract</td>
+              </tr>
+              <tr>
+                <td><span class="capability-name">A + F + E</span><span class="capability-note">渐进式暴露控制</span></td>
+                <td><span class="status missing">核心未实现</span></td>
+                <td>Deployment Readiness 要求 smoke/canary，并可路由到 <code>gstack-canary</code>。</td>
+                <td>没有指标驱动的流量分阶段、pause、promotion、automatic rollback 和 blast-radius budget。</td>
+                <td>Runtime Platform</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="audit-legend" aria-label="状态说明">
+          <span class="status implemented">已实现并有强制边界</span>
+          <span class="status partial">有局部能力但未形成端到端闭环</span>
+          <span class="status missing">尚无核心实现或只负责路由</span>
+        </div>
+
+        <h3 class="recommendation-title">建议的实施边界</h3>
+        <div class="recommendation-grid">
+          <article class="recommendation-item"><h3>01 · Generic DHF</h3><p>增加 <code>service_objectives</code>、<code>accountable_owner</code>、<code>feedback_contract</code> 和 <code>corrective_actions</code> 契约；验证字段完整性、freshness 与行动项关闭状态。</p></article>
+          <article class="recommendation-item"><h3>02 · Repo Adapter</h3><p>定义领域 KPI、数据质量阈值、AI risk map、隐私分类、模型/数据漂移阈值，以及这些信号如何映射到 SAFE 门禁。</p></article>
+          <article class="recommendation-item"><h3>03 · Runtime Platform</h3><p>实现 OpenTelemetry、告警、SLO 计算、canary 流量控制、自动 pause/rollback；把运行结果作为结构化 Facts 回传 DHF。</p></article>
+          <article class="recommendation-item"><h3>04 · Learning Workflow</h3><p>定义 postmortem 触发条件、root cause、owner、优先级、截止时间、防复发测试和关闭证据，并把有效学习回写 Specification。</p></article>
+        </div>
+        <p class="boundary-note"><strong>边界原则：</strong>Generic DHF 应定义控制契约并验证证据，不应自行膨胀成监控系统、模型治理平台或部署控制器。</p>
+      </section>
+
+      <section class="closing" id="conclusion">
+        <div class="eyebrow">Executive takeaway</div>
+        <blockquote>业务目标定义价值，SAFE 定义可信推进的控制条件；当前 DHF 已实现核心门禁与恢复，但还需要目标、持续反馈、责任和学习才能形成 SAFE 2.0 闭环。</blockquote>
+        <p class="evidence-note">定位：Value Domains 是目标；SAFE 是共同控制内核；数据与 AI 架构和 DHF 是实施框架；Schema、quality gate、execution lane、receipt、replay 和 handoff 是具体机制。缺失能力应按 Generic DHF、Repo Adapter、Runtime Platform 与 Learning Workflow 分层实现。</p>
+      </section>
+    </main>
+  </div>
+
+  <script>
+    const links = [...document.querySelectorAll('.nav-link')];
+    const sections = links.map(link => document.querySelector(link.getAttribute('href'))).filter(Boolean);
+    const observer = new IntersectionObserver(entries => {
+      const visible = entries.filter(entry => entry.isIntersecting).sort((a, b) => b.intersectionRatio - a.intersectionRatio)[0];
+      if (!visible) return;
+      links.forEach(link => link.classList.toggle('active', link.getAttribute('href') === `#${visible.target.id}`));
+    }, { rootMargin: '-18% 0px -64% 0px', threshold: [0, .25, .5] });
+    sections.forEach(section => observer.observe(section));
+  </script>
+</body>
+</html>
