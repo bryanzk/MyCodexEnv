@@ -260,6 +260,16 @@
     .dot.data { background: var(--data); }
     .dot.shared { background: var(--shared); }
     .dot.dhf { background: var(--dhf); }
+    .trust-memory {
+      margin-top: 24px;
+      padding-top: 22px;
+      border-top: 1px solid var(--border);
+    }
+    .trust-memory h3 { margin: 6px 0 12px; font-size: clamp(20px, 2.5vw, 28px); }
+    .trust-word { grid-template-columns: repeat(5, minmax(0, 1fr)); margin-bottom: 12px; }
+    .trust-letter > b { color: var(--dhf); }
+    .trust-statement { margin: 0; color: var(--text-dim); }
+    .trust-statement code { color: var(--dhf); font-weight: 500; }
     .value-section {
       margin-bottom: 24px;
       padding: clamp(24px, 4vw, 42px);
@@ -497,6 +507,7 @@
       .pattern-edge.right { justify-content: flex-start; border-right: 0; border-left: 4px solid var(--dhf); text-align: left; }
       .pattern-core { border: 0; border-left: 4px solid var(--shared); text-align: left; place-items: start; }
       .safe-word { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .trust-word { grid-template-columns: 1fr; }
       .business-value { grid-template-columns: 1fr; }
       .related-pages { align-items: flex-start; flex-direction: column; }
     }
@@ -558,6 +569,18 @@
           <span class="legend-item"><i class="dot data"></i>数据架构特有机制</span>
           <span class="legend-item"><i class="dot shared"></i>共同业务控制模式</span>
           <span class="legend-item"><i class="dot dhf"></i>DHF 特有机制</span>
+        </div>
+        <div class="trust-memory" aria-label="TRUST 五个业务价值域记忆法">
+          <div class="micro-label">VALUE DOMAIN MEMORY</div>
+          <h3>TRUST：五个业务价值域</h3>
+          <div class="safe-word trust-word">
+            <div class="safe-letter trust-letter"><b>T</b><span><strong>Trust &amp; quality</strong><small>质量与客户信任</small></span></div>
+            <div class="safe-letter trust-letter"><b>R</b><span><strong>Risk control</strong><small>风险与授权控制</small></span></div>
+            <div class="safe-letter trust-letter"><b>U</b><span><strong>Unit productivity</strong><small>运营效率与交付速度</small></span></div>
+            <div class="safe-letter trust-letter"><b>S</b><span><strong>Service continuity</strong><small>韧性与业务连续性</small></span></div>
+            <div class="safe-letter trust-letter"><b>T</b><span><strong>Traceability at scale</strong><small>审计、治理与规模化</small></span></div>
+          </div>
+          <p class="trust-statement"><code>SAFE controls create TRUST.</code> SAFE 定义可信推进的控制条件，TRUST 记住这些控制最终服务的五类业务价值。</p>
         </div>
       </section>
 
