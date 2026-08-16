@@ -4,7 +4,7 @@
 
 ## Command
 
-- Repository gate: `python3 test_runner.py`
+- Final repository gate: `python3 test_runner.py`; it is not an iteration gate. Select scoped gates and receipt validity through [Verification and change safety](docs/agents/verification-and-change-safety.md).
 
 ## Task-specific guidance
 
