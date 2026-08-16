@@ -276,6 +276,11 @@
     .phase-body > div { padding-left: 12px; border-left: 2px solid color-mix(in srgb, var(--phase-color) 48%, transparent 52%); }
     .phase-body b { display: block; margin-bottom: 5px; color: var(--phase-color); font: 600 10px var(--font-mono); text-transform: uppercase; letter-spacing: .08em; }
     .phase-body p { margin: 0; color: var(--muted); font-size: 12px; line-height: 1.6; }
+    .safe-focus { grid-column: 3; min-width: 0; display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; margin-top: 12px; padding: 10px 12px; border-left: 3px solid var(--phase-color); background: color-mix(in srgb, var(--paper-deep) 78%, var(--phase-color) 22%); font-size: 11px; }
+    .safe-focus b { color: var(--phase-color); font: 600 9px var(--font-mono); letter-spacing: .09em; }
+    .safe-focus strong { color: var(--ink); font-family: var(--font-mono); }
+    .safe-focus span, .safe-focus em { color: var(--muted); }
+    .safe-focus em { flex-basis: 100%; font-style: normal; line-height: 1.55; }
     .receipts { grid-column: 3; display: flex; flex-wrap: wrap; gap: 5px; margin-top: 12px; }
     .receipts code { padding: 4px 6px; border: 1px solid var(--line); border-radius: 4px; background: var(--paper-deep); color: var(--muted); font-size: 9px; }
     .split { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
@@ -357,7 +362,7 @@
       .hero { min-height: auto; }
       .thesis, .grid-3, .grid-4, .frontier { grid-template-columns: 1fr; }
       .phase { grid-template-columns: 54px 1fr; }
-      .phase-body, .receipts { grid-column: 2; }
+      .phase-body, .safe-focus, .receipts { grid-column: 2; }
       .phase-body { grid-template-columns: 1fr; }
       .split { grid-template-columns: 1fr; }
       .control-stack { grid-template-columns: 1fr; }
@@ -433,6 +438,7 @@
           <div class="marker">B</div>
           <div><div class="date">PHASE 0 · 2026-05-20 — 05-31</div><h3 class="phase-title">Baseline · 种子期</h3><div class="phase-sub">先让复杂任务不断线：Lifecycle harness 恢复；ShipQ Gmail 本地后端、工作簿报价与 Phase 1 handoff 同时成形。</div></div>
           <div class="phase-body"><div><b>业务痛点</b><p>报价引擎、Gmail UI、Gemini、SQLite 与工作簿并行变化；会话一断就要重新考古。</p></div><div><b>关键机制</b><p>harness state、阶段交接、受限本地 lane、初始 skill 路由。</p></div><div><b>业务价值</b><p>把“聊天记忆”变成“项目记忆”，降低重复定位与误接手。</p></div></div>
+          <div class="safe-focus"><b>SAFE 重点</b><strong>E · Error-recovery</strong><span>支撑：S · Specification</span><em>先恢复现场，再明确可续接状态。</em></div>
           <div class="receipts"><code>9d163ce</code><code>25315b3</code><code>2235622</code><code>c3ec270</code></div>
         </article>
 
@@ -440,6 +446,7 @@
           <div class="marker">R</div>
           <div><div class="date">PHASE 1 · 2026-06-01 — 06-14</div><h3 class="phase-title">Receipts · 骨架期</h3><div class="phase-sub">把“完成”改写成可验证切片：Recovery、env probe、checkpoint、report、requirements 与 agent-team validators 成为工具链。</div></div>
           <div class="phase-body"><div><b>业务痛点</b><p>测试、分支清理、fixture 与文档各自“看似完成”，但没有统一证据和下一步。</p></div><div><b>关键机制</b><p>Definition of Done；<code>command / exit_code / key_output / timestamp</code>；append-only checkpoint。</p></div><div><b>业务价值</b><p>负责人无需信任语气，只需核对可复现回执；绿色切片可独立交接。</p></div></div>
+          <div class="safe-focus"><b>SAFE 重点</b><strong>F · Facts</strong><span>支撑：S · Specification</span><em>把完成声明变成可复核事实。</em></div>
           <div class="receipts"><code>d9c506c</code><code>40cb715</code><code>f8e180f</code><code>e2be7a0</code><code>019ea7c9…</code></div>
         </article>
 
@@ -447,6 +454,7 @@
           <div class="marker">I</div>
           <div><div class="date">PHASE 2 · 2026-06-03 — 07-11</div><h3 class="phase-title">Inspection · 领域可信期</h3><div class="phase-sub">把 AI 输出降级为可审核草稿：ShipQ 用 spec-safe source rules、11-case fixture、manual review 与 operator UI 验证真实询价链路。</div></div>
           <div class="phase-body"><div><b>业务痛点</b><p>邮件转发头、路线、客户身份、总量与明细、FCL/LCL、Door Delivery 容易被模型猜错。</p></div><div><b>关键机制</b><p>canonical payload、确定性 resolver、来源证据、draft-first、人工修订审计、禁止自动晋升。</p></div><div><b>业务价值</b><p>减少错价与返工；让 operator 看见“为什么需要审核”，而非得到一个不可解释的答案。</p></div></div>
+          <div class="safe-focus"><b>SAFE 重点</b><strong>S · Specification</strong><span>支撑：F · Facts</span><em>先定义 ShipQ 的业务正确性，再用来源证据验证。</em></div>
           <div class="receipts"><code>ff7368f</code><code>debfca7</code><code>019eb6a6…</code><code>081456a</code><code>277a2fb</code></div>
         </article>
 
@@ -454,6 +462,7 @@
           <div class="marker">D</div>
           <div><div class="date">PHASE 3 · 2026-06-15 — 07-11</div><h3 class="phase-title">Decoupling · 产品化期</h3><div class="phase-sub">从 ShipQ 做法提炼可移植核心：DHF 留在 MyCodexEnv 孵化；ShipQ 成为明确的 consumer adapter。</div></div>
           <div class="phase-body"><div><b>业务痛点</b><p>通用治理与 ShipQ 专属 fixture、quote/workbook/demo gate 混在一起，难复用也容易泄漏上下文。</p></div><div><b>关键机制</b><p>DHF core / local runtime / ShipQ adapter 三分；consumer matrix；portable <code>DHF_PACKET</code>。</p></div><div><b>业务价值</b><p>其他项目可复用生命周期与证据合同，同时保留 ShipQ 的领域自治和最小 token 成本。</p></div></div>
+          <div class="safe-focus"><b>SAFE 重点</b><strong>S · Specification</strong><span>支撑：E · Error-recovery</span><em>明确 core、runtime 与 ShipQ adapter 的责任及交接合同。</em></div>
           <div class="receipts"><code>4cf3a39</code><code>019ecd3f…</code><code>dhf-packet.schema.json</code></div>
         </article>
 
@@ -461,6 +470,7 @@
           <div class="marker">G</div>
           <div><div class="date">PHASE 4 · 2026-07-12 — 07-27</div><h3 class="phase-title">Grading · 减负期</h3><div class="phase-sub">让治理强度与风险匹配：DHF 从统一重流程收敛为 <code>light / standard / governed</code>，并加入通用 prompt dispatcher。</div></div>
           <div class="phase-body"><div><b>业务痛点</b><p>如果普通解释、小修复和高风险发布都走同一流程，业务等待与 token 成本过高。</p></div><div><b>关键机制</b><p>风险分层、渐进式加载、opt-out、薄核心、source/runtime promotion 分离。</p></div><div><b>业务价值</b><p>简单工作更快，常规开发保留验证，高风险工作才承担完整治理成本。</p></div></div>
+          <div class="safe-focus"><b>SAFE 重点</b><strong>A · Authorization</strong><span>支撑：S · Specification</span><em>按风险决定需要多强的门禁、评审与授权。</em></div>
           <div class="receipts"><code>b11db05</code><code>327c9fe</code><code>44cf6ba</code><code>019f5789…</code></div>
         </article>
 
@@ -468,6 +478,7 @@
           <div class="marker">E</div>
           <div><div class="date">PHASE 5 · 2026-07-28 — 至今</div><h3 class="phase-title">Enforcement · 执行控制期</h3><div class="phase-sub">从流程建议进入动作授权：ShipQ DHF Sol audit 暴露旧 grant 不可信；Level 0/1/2、中央 consumer、journal、readback 与 runtime guard 逐步落地。</div></div>
           <div class="phase-body"><div><b>业务痛点</b><p>“用户说过可以”无法证明这一次、这个目标、这个动作仍被授权；失败重试还可能重复产生副作用。</p></div><div><b>关键机制</b><p>closed action registry、action binding、single-use、TTL、fail-closed、reconciliation、三层验证。</p></div><div><b>业务价值</b><p>本地绿灯不再被误当生产权限；可以受控推进 Drive/Docs/Gmail 草稿等精确动作，同时阻断未知副作用。</p></div></div>
+          <div class="safe-focus"><b>SAFE 重点</b><strong>A · Authorization</strong><span>支撑：F · Facts / E · Error-recovery</span><em>把授权变成不可绕过、可回读、可恢复的执行控制。</em></div>
           <div class="receipts"><code>2d0aaf8</code><code>172da84</code><code>ac4b31b</code><code>00f8f80</code><code>019fbae3…</code></div>
         </article>
 
