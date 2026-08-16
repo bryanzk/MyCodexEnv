@@ -14,13 +14,13 @@ Stable rules belong in `AGENTS.md`, `README.md`, `docs/repo-index.md`, or
   - `codex/skills/delivery-harness-framework/SKILL.md`
 - blocked_sources: none
 - unsafe_inputs: none
-- next_safe_task: Review the bounded docs/harness-state.md diff and user-owned plan separately; request commit and push explicitly if desired
+- next_safe_task: Owner reviews the standalone local page; publish or link it only after explicit authorization.
 - required_commands:
   - `python3 test_runner.py`
   - `git diff --check`
   - `./scripts/verify_codex_env.sh --repo-root "$(pwd)" --codex-home "$HOME/.codex" --claude-home "$HOME/.claude"`
-- latest_checkpoint: 2026-08-10T23:32:36-04:00 Completed final branch-governance audit after converging both DHF backup branches; only synchronized main remains locally and remotely
-- latest_verification: 2026-08-10T23:32:36-04:00 command=git fetch --all --prune; branch_snapshot.sh; git status --short --branch; git branch -a -vv --no-abbrev; git worktree list --porcelain; git stash list; git rev-list --left-right --count main...origin/main; git diff --check; exit_code=0; key_output=only main remains; main and origin/main both d34200f at 0/0; one main worktree; stash_count=11; expected dirty files unchanged; git diff --check clean
+- latest_checkpoint: 2026-08-16T10:58:56-04:00 Created standalone ShipQ DHF incident and controlled-recovery memory page with timeline, swimlane, state-machine, SAFE matrix, path comparison, and recall quiz; no publication performed.
+- latest_verification: 2026-08-16T10:58:56-04:00 command=python3 HTMLParser content assertions; git diff --check -- docs/shipq-dhf-incident-recovery-memory-map.html; exit_code=0; key_output=HTML_PARSE_OK bytes=19952 sections=7; diff check clean
 - compaction_ordinal: 1
 - transition_key: MCE-20260802-harness-compaction-governance:W6a
 - gate_decision: none
@@ -2835,9 +2835,9 @@ Stable rules belong in `AGENTS.md`, `README.md`, `docs/repo-index.md`, or
   - none
 - next_safe_task: Review the reconciled eight-path dirty diff and request commit/push only if desired; keep all recovery stashes and runtime backup until that decision
 - checkpoint_data: {"constraints":["Do not commit, push, pop/delete stashes, remove worktrees, or delete the runtime backup without explicit authorization"],"next_action":{"args":[],"command":"git diff --stat","requires_user_direction_for_commit":true},"ownership":{"boundary":"The five documentation/product-guide paths are restored user-owned changes, the validator is the validated repair, the test file is a verified minimal merge of both, and harness-state is the append-only integrator checkpoint","files":{"README.md":"user_owned_restored","docs/DHF_SIMPLIFICATION_PRODUCT_GUIDE.md":"user_owned_restored","docs/HARNESS_RUNTIME.md":"user_owned_restored","docs/LIFECYCLE_SKILL_ROUTING.md":"user_owned_restored","docs/harness-state.md":"agent_owned_checkpoint","docs/repo-index.md":"user_owned_restored","scripts/validate_dhf_simplification_corpus.py":"agent_owned_repair","tests/test_dhf_simplification.py":"verified_mixed_merge"}},"phase":"handoff","schema":"dhf_checkpoint_v1","verification_evidence":{"command":"python3 tests/test_dhf_simplification.py && python3 scripts/validate_dhf_simplification_corpus.py validate tests/fixtures/dhf_simplification_scenarios.json --contract docs/plans/2026-07-12-dhf-simplification-implementation-contract.md --check-baseline --json && python3 scripts/dhf_simplification_evidence.py --repo-root \"$(pwd)\" && python3 scripts/check_skill_compatibility.py --repo-root \"$(pwd)\" --codex-home \"$HOME/.codex\" --claude-home \"$HOME/.claude\" --strict-runtime-parity --json && python3 scripts/check_codex_skill_loader.py --repo-root \"$(pwd)\" --codex-home \"$HOME/.codex\" --json && python3 test_runner.py && ./scripts/verify_codex_env.sh --repo-root \"$(pwd)\" --codex-home \"$HOME/.codex\" --claude-home \"$HOME/.claude\" && git diff --check","exit_code":0,"freshness":"fresh","key_output":"DHF=49/49; acceptance=18/18; test_runner=93/93; Verification passed; compatibility errors=0; loader errors=0; runtime_state=runtime_promoted; promotion_difference_paths=[]; diff check clean","timestamp":"2026-08-02T22:02:46Z"}}
-- constraints: ["authorization_state=read-only remote fetch only; commit and push are not authorized","rollback=not required because no remote or source ref was mutated during final audit","Preserve the user-owned plan and all 11 stashes"]
-- ownership: {"boundary":"Final audit changed only the agent-owned append-only checkpoint; the user-owned plan and all stashes remain untouched","files":{"docs/harness-state.md":"agent_owned_checkpoint","docs/plans/2026-08-10-canonical-harness-forward-fix-plan.md":"user_owned"}}
-- next_action: {"command":"Review the bounded docs/harness-state.md diff and user-owned plan separately; request commit and push explicitly if desired"}
+- constraints: ["Do not publish, deploy, or modify the existing public case page without explicit owner authorization."]
+- ownership: {"boundary":"Agent created only the requested standalone page and append-only checkpoint; existing public case page remains untouched.","files":{"docs/harness-state.md":"agent_owned_checkpoint","docs/shipq-dhf-incident-recovery-memory-map.html":"agent_created"}}
+- next_action: {"command":"Owner reviews the standalone local page; publish or link it only after explicit authorization."}
 
 ### 2026-08-10T11:17:51-04:00
 - phase: validation
@@ -3014,3 +3014,24 @@ Stable rules belong in `AGENTS.md`, `README.md`, `docs/repo-index.md`, or
   - none
 - next_safe_task: Review the bounded docs/harness-state.md diff and user-owned plan separately; request commit and push explicitly if desired
 - checkpoint_data: {"constraints":["authorization_state=read-only remote fetch only; commit and push are not authorized","rollback=not required because no remote or source ref was mutated during final audit","Preserve the user-owned plan and all 11 stashes"],"next_action":{"command":"Review the bounded docs/harness-state.md diff and user-owned plan separately; request commit and push explicitly if desired"},"ownership":{"boundary":"Final audit changed only the agent-owned append-only checkpoint; the user-owned plan and all stashes remain untouched","files":{"docs/harness-state.md":"agent_owned_checkpoint","docs/plans/2026-08-10-canonical-harness-forward-fix-plan.md":"user_owned"}},"phase":"handoff","schema":"dhf_checkpoint_v1","verification_evidence":{"command":"git fetch --all --prune; branch_snapshot.sh; git status --short --branch; git branch -a -vv --no-abbrev; git worktree list --porcelain; git stash list; git rev-list --left-right --count main...origin/main; git diff --check","exit_code":0,"freshness":"fresh","key_output":"only main remains; main and origin/main both d34200f at 0/0; one main worktree; stash_count=11; expected dirty files unchanged; git diff --check clean","timestamp":"2026-08-11T03:32:00Z"}}
+
+### 2026-08-16T10:58:56-04:00
+- phase: handoff
+- event: checkpoint
+- summary: Created standalone ShipQ DHF incident and controlled-recovery memory page with timeline, swimlane, state-machine, SAFE matrix, path comparison, and recall quiz; no publication performed.
+- git:
+  - branch: main
+  - latest_commit: 29df749
+  - dirty_status: dirty
+  - dirty_count: 2
+- gate_decision: none
+- changed_surfaces:
+  - `docs/shipq-dhf-incident-recovery-memory-map.html`
+- verification:
+  - command: `python3 HTMLParser content assertions; git diff --check -- docs/shipq-dhf-incident-recovery-memory-map.html`
+  - exit_code: 0
+  - key_output: HTML_PARSE_OK bytes=19952 sections=7; diff check clean
+- blockers:
+  - none
+- next_safe_task: Owner reviews the standalone local page; publish or link it only after explicit authorization.
+- checkpoint_data: {"constraints":["Do not publish, deploy, or modify the existing public case page without explicit owner authorization."],"next_action":{"command":"Owner reviews the standalone local page; publish or link it only after explicit authorization."},"ownership":{"boundary":"Agent created only the requested standalone page and append-only checkpoint; existing public case page remains untouched.","files":{"docs/harness-state.md":"agent_owned_checkpoint","docs/shipq-dhf-incident-recovery-memory-map.html":"agent_created"}},"phase":"handoff","schema":"dhf_checkpoint_v1","verification_evidence":{"command":"python3 HTMLParser content assertions; git diff --check -- docs/shipq-dhf-incident-recovery-memory-map.html","exit_code":0,"freshness":"fresh","key_output":"HTML_PARSE_OK bytes=19952 sections=7; diff check clean","timestamp":"2026-08-16T14:58:30Z"}}
