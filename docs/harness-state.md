@@ -14,13 +14,13 @@ Stable rules belong in `AGENTS.md`, `README.md`, `docs/repo-index.md`, or
   - `codex/skills/delivery-harness-framework/SKILL.md`
 - blocked_sources: none
 - unsafe_inputs: none
-- next_safe_task: Owner reviews the standalone local page; publish or link it only after explicit authorization.
+- next_safe_task: Review and commit the DHF checkpoint append, then remove the merged feature worktree and local branch if desired
 - required_commands:
   - `python3 test_runner.py`
   - `git diff --check`
   - `./scripts/verify_codex_env.sh --repo-root "$(pwd)" --codex-home "$HOME/.codex" --claude-home "$HOME/.claude"`
-- latest_checkpoint: 2026-08-16T10:58:56-04:00 Created standalone ShipQ DHF incident and controlled-recovery memory page with timeline, swimlane, state-machine, SAFE matrix, path comparison, and recall quiz; no publication performed.
-- latest_verification: 2026-08-16T10:58:56-04:00 command=python3 HTMLParser content assertions; git diff --check -- docs/shipq-dhf-incident-recovery-memory-map.html; exit_code=0; key_output=HTML_PARSE_OK bytes=19952 sections=7; diff check clean
+- latest_checkpoint: 2026-08-16T16:57:46-04:00 Harness Skill read commit pushed to origin/main
+- latest_verification: 2026-08-16T16:57:46-04:00 command=git status -sb; git rev-parse HEAD; git rev-parse refs/remotes/origin/main; git rev-list --left-right --count main...origin/main; exit_code=0; key_output=HEAD=origin/main=1fe3d28; main...origin/main=0/0
 - compaction_ordinal: 1
 - transition_key: MCE-20260802-harness-compaction-governance:W6a
 - gate_decision: none
@@ -2835,9 +2835,9 @@ Stable rules belong in `AGENTS.md`, `README.md`, `docs/repo-index.md`, or
   - none
 - next_safe_task: Review the reconciled eight-path dirty diff and request commit/push only if desired; keep all recovery stashes and runtime backup until that decision
 - checkpoint_data: {"constraints":["Do not commit, push, pop/delete stashes, remove worktrees, or delete the runtime backup without explicit authorization"],"next_action":{"args":[],"command":"git diff --stat","requires_user_direction_for_commit":true},"ownership":{"boundary":"The five documentation/product-guide paths are restored user-owned changes, the validator is the validated repair, the test file is a verified minimal merge of both, and harness-state is the append-only integrator checkpoint","files":{"README.md":"user_owned_restored","docs/DHF_SIMPLIFICATION_PRODUCT_GUIDE.md":"user_owned_restored","docs/HARNESS_RUNTIME.md":"user_owned_restored","docs/LIFECYCLE_SKILL_ROUTING.md":"user_owned_restored","docs/harness-state.md":"agent_owned_checkpoint","docs/repo-index.md":"user_owned_restored","scripts/validate_dhf_simplification_corpus.py":"agent_owned_repair","tests/test_dhf_simplification.py":"verified_mixed_merge"}},"phase":"handoff","schema":"dhf_checkpoint_v1","verification_evidence":{"command":"python3 tests/test_dhf_simplification.py && python3 scripts/validate_dhf_simplification_corpus.py validate tests/fixtures/dhf_simplification_scenarios.json --contract docs/plans/2026-07-12-dhf-simplification-implementation-contract.md --check-baseline --json && python3 scripts/dhf_simplification_evidence.py --repo-root \"$(pwd)\" && python3 scripts/check_skill_compatibility.py --repo-root \"$(pwd)\" --codex-home \"$HOME/.codex\" --claude-home \"$HOME/.claude\" --strict-runtime-parity --json && python3 scripts/check_codex_skill_loader.py --repo-root \"$(pwd)\" --codex-home \"$HOME/.codex\" --json && python3 test_runner.py && ./scripts/verify_codex_env.sh --repo-root \"$(pwd)\" --codex-home \"$HOME/.codex\" --claude-home \"$HOME/.claude\" && git diff --check","exit_code":0,"freshness":"fresh","key_output":"DHF=49/49; acceptance=18/18; test_runner=93/93; Verification passed; compatibility errors=0; loader errors=0; runtime_state=runtime_promoted; promotion_difference_paths=[]; diff check clean","timestamp":"2026-08-02T22:02:46Z"}}
-- constraints: ["Do not publish, deploy, or modify the existing public case page without explicit owner authorization."]
-- ownership: {"boundary":"Agent created only the requested standalone page and append-only checkpoint; existing public case page remains untouched.","files":{"docs/harness-state.md":"agent_owned_checkpoint","docs/shipq-dhf-incident-recovery-memory-map.html":"agent_created"}}
-- next_action: {"command":"Owner reviews the standalone local page; publish or link it only after explicit authorization."}
+- constraints: ["Runtime remains unsynchronized; checkpoint is not included in pushed commit"]
+- ownership: {}
+- next_action: {"command":"Review and commit the DHF checkpoint append, then remove the merged feature worktree and local branch if desired"}
 
 ### 2026-08-10T11:17:51-04:00
 - phase: validation
@@ -3035,3 +3035,45 @@ Stable rules belong in `AGENTS.md`, `README.md`, `docs/repo-index.md`, or
   - none
 - next_safe_task: Owner reviews the standalone local page; publish or link it only after explicit authorization.
 - checkpoint_data: {"constraints":["Do not publish, deploy, or modify the existing public case page without explicit owner authorization."],"next_action":{"command":"Owner reviews the standalone local page; publish or link it only after explicit authorization."},"ownership":{"boundary":"Agent created only the requested standalone page and append-only checkpoint; existing public case page remains untouched.","files":{"docs/harness-state.md":"agent_owned_checkpoint","docs/shipq-dhf-incident-recovery-memory-map.html":"agent_created"}},"phase":"handoff","schema":"dhf_checkpoint_v1","verification_evidence":{"command":"python3 HTMLParser content assertions; git diff --check -- docs/shipq-dhf-incident-recovery-memory-map.html","exit_code":0,"freshness":"fresh","key_output":"HTML_PARSE_OK bytes=19952 sections=7; diff check clean","timestamp":"2026-08-16T14:58:30Z"}}
+
+### 2026-08-16T16:57:23-04:00
+- phase: ship
+- event: checkpoint
+- summary: Harness Skill read commit merged locally; authorized origin/main push pending
+- git:
+  - branch: main
+  - latest_commit: 1fe3d28
+  - dirty_status: clean
+  - dirty_count: 0
+- changed_surfaces:
+  - `codex/hooks/harness_guard.py`
+  - `test_runner.py`
+- verification:
+  - command: `git status -sb; git rev-list --left-right --count main...origin/main; git log -1 --format='%H %s'`
+  - exit_code: 0
+  - key_output: main clean; main...origin/main=1/0; HEAD=1fe3d28
+- blockers:
+  - none
+- next_safe_task: Push main to origin/main, verify exact SHA, then decide feature worktree cleanup
+- checkpoint_data: {"constraints":["No runtime sync; no branch or worktree deletion in this step"],"next_action":{"command":"Push main to origin/main, verify exact SHA, then decide feature worktree cleanup"},"ownership":{},"phase":"ship","schema":"dhf_checkpoint_v1","verification_evidence":{"command":"git status -sb; git rev-list --left-right --count main...origin/main; git log -1 --format='%H %s'","exit_code":0,"freshness":"fresh","key_output":"main clean; main...origin/main=1/0; HEAD=1fe3d28","timestamp":"2026-08-16T20:57:16Z"}}
+
+### 2026-08-16T16:57:46-04:00
+- phase: handoff
+- event: checkpoint
+- summary: Harness Skill read commit pushed to origin/main
+- git:
+  - branch: main
+  - latest_commit: 1fe3d28
+  - dirty_status: dirty
+  - dirty_count: 1
+- changed_surfaces:
+  - `codex/hooks/harness_guard.py`
+  - `test_runner.py`
+- verification:
+  - command: `git status -sb; git rev-parse HEAD; git rev-parse refs/remotes/origin/main; git rev-list --left-right --count main...origin/main`
+  - exit_code: 0
+  - key_output: HEAD=origin/main=1fe3d28; main...origin/main=0/0
+- blockers:
+  - none
+- next_safe_task: Review and commit the DHF checkpoint append, then remove the merged feature worktree and local branch if desired
+- checkpoint_data: {"constraints":["Runtime remains unsynchronized; checkpoint is not included in pushed commit"],"next_action":{"command":"Review and commit the DHF checkpoint append, then remove the merged feature worktree and local branch if desired"},"ownership":{},"phase":"handoff","schema":"dhf_checkpoint_v1","verification_evidence":{"command":"git status -sb; git rev-parse HEAD; git rev-parse refs/remotes/origin/main; git rev-list --left-right --count main...origin/main","exit_code":0,"freshness":"fresh","key_output":"HEAD=origin/main=1fe3d28; main...origin/main=0/0","timestamp":"2026-08-16T20:57:39Z"}}
