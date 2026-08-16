@@ -4801,6 +4801,35 @@ def test_harness_guard_scope_verdict_and_target_matrix():
         skill_doc = codex_home / "skills" / "fixture" / "nested" / "SKILL.md"
         skill_doc.parent.mkdir(parents=True)
         skill_doc.write_text("---\nname: fixture\n---\n", encoding="utf-8")
+        skill_root = codex_home / "skills" / "fixture"
+        skill_readme = skill_root / "README.md"
+        skill_reference = skill_root / "references" / "read me.md"
+        skill_script = skill_root / "scripts" / "check.py"
+        skill_arbitrary = skill_root / "cache.data"
+        for path, content in (
+            (skill_readme, "fixture readme\n"),
+            (skill_reference, "hello skill\n"),
+            (skill_script, "print('fixture')\n"),
+            (skill_arbitrary, "fixture cache\n"),
+        ):
+            path.parent.mkdir(parents=True, exist_ok=True)
+            path.write_text(content, encoding="utf-8")
+        other_skill = codex_home / "skills" / "other" / "README.md"
+        other_skill.parent.mkdir(parents=True)
+        other_skill.write_text("other\n", encoding="utf-8")
+        config = codex_home / "config.toml"
+        auth = codex_home / "auth.json"
+        runtime_file = codex_home / "runtime" / "tool-policy.json"
+        config.write_text("config\n", encoding="utf-8")
+        auth.write_text("auth\n", encoding="utf-8")
+        outside_file = outside / "ordinary.txt"
+        outside_file.write_text("ordinary\n", encoding="utf-8")
+        skill_file_alias = outside / "skill-readme"
+        skill_file_alias.symlink_to(skill_readme)
+        skill_dir_alias = outside / "skill-dir"
+        skill_dir_alias.symlink_to(skill_root, target_is_directory=True)
+        config_alias = outside / "config-alias"
+        config_alias.symlink_to(config)
         escaped_skill = codex_home / "skills" / "escaped" / "SKILL.md"
         escaped_skill.parent.mkdir(parents=True)
         escaped_skill.symlink_to(outside / "SKILL.md")
@@ -4812,7 +4841,6 @@ def test_harness_guard_scope_verdict_and_target_matrix():
 
         allowed = [
             "mkdir -p project",
-            "cat <<'EOF' > notes.md\nhello\nEOF",
             "pandoc notes.md -o notes.pdf",
             "python3 -c \"open('notes.pdf','wb').write(b'x')\"",
         ]
@@ -4860,8 +4888,24 @@ def test_harness_guard_scope_verdict_and_target_matrix():
         require(governed_high.get("decision") == "block", "governed high-risk calls must block")
         require("codex-task" not in governed_high.get("reason", ""), "high-risk denials must not suggest declaration")
 
-        require(shell(f"cat {skill_doc}") == {}, "an absolute runtime skill document read must be allowed")
-        require(
+        allowed_skill_commands = [
+            f"/bin/cat {skill_doc} {skill_readme}",
+            f"/bin/cat '{skill_reference}'",
+            f"/usr/bin/sed -n 1p {skill_readme}",
+            f"/opt/homebrew/bin/rg --no-config --fixed-strings -- fixture {skill_root}",
+            f"/opt/homebrew/bin/rg --no-config --fixed-strings -- 'hello skill' '{skill_reference}'",
+            f"/bin/ls {skill_root}",
+            f"/bin/cat {skill_file_alias}",
+            f"/bin/ls {skill_dir_alias}",
+        ]
+        for command in allowed_skill_commands:
+            require(shell(command) == {}, f"canonical single-skill reads must be allowed: {command}")
+        require(shell(f"/bin/cat {outside_file}") == {}, "exact reads of ordinary outside files must remain allowed")
+
+        def require_false(condition, _legacy_message):
+            require(not condition, "shell variable runtime skill reads must block")
+
+        require_false(
             shell('cat "$CODEX_HOME/skills/fixture/nested/SKILL.md"') == {},
             "$CODEX_HOME runtime skill document reads must be allowed",
         )
@@ -4884,6 +4928,28 @@ def test_harness_guard_scope_verdict_and_target_matrix():
             == {},
             "structured $CODEX_HOME runtime skill document reads must be allowed",
         )
+        for name, path in (
+            ("read", skill_readme),
+            ("read_file", skill_arbitrary),
+            ("list_dir", skill_root),
+            ("list_directory", skill_root / "references"),
+        ):
+            require(
+                _run_harness_guard(
+                    {"tool_name": name, "cwd": str(outside), "tool_input": {"path": str(path)}}, env
+                )
+                == {},
+                f"structured whole-skill reads must be allowed: {name} {path}",
+            )
+        braced_skill_path = "${" + "CODEX_HOME}/skills/fixture/README.md"
+        require(
+            _run_harness_guard(
+                {"tool_name": "read_file", "cwd": str(outside), "tool_input": {"path": braced_skill_path}}, env
+            )
+            == {},
+            "structured braced runtime skill paths must be allowed",
+        )
+
         protected_skill_commands = [
             'cat "$CODEX_HOME/config.toml"',
             f"cat {skill_doc} {codex_home / 'config.toml'}",
@@ -4897,11 +4963,37 @@ def test_harness_guard_scope_verdict_and_target_matrix():
                 shell(command).get("decision") == "block",
                 f"runtime skill exception must remain read-only and exact: {command}",
             )
+        shell_codex_path = "$" + "CODEX_HOME/skills/fixture/README.md"
+        restricted_read_commands = [
+            "cat <<'EOF' > notes.md\nhello\nEOF",
+            f"cat {skill_doc}",
+            f"/tmp/cat {skill_doc}",
+            f"/opt/homebrew/Cellar/ripgrep/15.1.0/bin/rg --no-config --fixed-strings -- fixture {skill_root}",
+            f"/bin/cat {skill_doc} {other_skill}",
+            f"/bin/cat {skill_doc} {outside_file}",
+            f"/bin/cat {codex_home / 'skills'}",
+            f"/bin/cat {config_alias}",
+            f"/bin/cat {runtime_file}",
+            f"/bin/cat -n {skill_doc}",
+            f"/usr/bin/sed -i 1p {skill_doc}",
+            f"/usr/bin/sed -n w/tmp/copy {skill_doc}",
+            f"/opt/homebrew/bin/rg --no-config -- fixture {skill_root}",
+            f"/opt/homebrew/bin/rg --pre /bin/cat fixture {skill_root}",
+            f"/bin/ls -L {skill_root}",
+            f"/bin/cat {shell_codex_path}",
+            f"/bin/cat {outside}/*",
+            f"/bin/cat $(readlink {config_alias})",
+            f"/bin/cat {outside_file} | /bin/cat",
+        ]
+        for command in restricted_read_commands:
+            require(
+                shell(command).get("decision") == "block",
+                f"uncertain, mixed, or escaped protected reads must block: {command}",
+            )
         protected_read_paths = [
             codex_home / "config.toml",
             "$CODEX_HOME/config.toml",
             codex_home / "auth.json",
-            codex_home / "skills" / "fixture" / "README.md",
             escaped_skill,
         ]
         for path in protected_read_paths:
@@ -4912,6 +5004,42 @@ def test_harness_guard_scope_verdict_and_target_matrix():
                 == "block",
                 f"config, credentials, non-skill files, and path escapes must remain protected: {path}",
             )
+        structured_blocks = [
+            {"tool_name": "read_file", "tool": "write", "tool_input": {"path": str(outside_file)}},
+            {"tool_name": "read_file", "name": "read_file", "tool_input": {"path": str(outside_file)}},
+            {"tool": "read_file", "tool_input": {"path": str(outside_file)}},
+            {
+                "tool_name": "read_file",
+                "tool_input": {"path": str(outside_file)},
+                "input": "shadow",
+            },
+            {"tool_name": "read_file", "tool_input": "not-a-dict"},
+            {"tool_name": "read_file", "path": str(outside_file), "tool_input": {"path": str(outside_file)}},
+            {"tool_name": "read_file", "tool_input": {"path": str(outside_file), "offset": 1}},
+            {"tool_name": "read_file", "cmd": f"/bin/cat {skill_doc}", "tool_input": {"path": str(outside_file)}},
+            {"tool_name": "read_file", "tool_input": {"path": str(outside_file), "cmd": f"/bin/cat {skill_doc}"}},
+            {"tool_name": "read_file", "tool_input": {"path": str(skill_readme), "file": str(skill_readme)}},
+            {"tool_name": "read_file", "tool_input": {"path": str(skill_readme), "file": str(skill_doc)}},
+            {"tool_name": "read_file", "tool_input": {"path": str(skill_readme), "file": str(other_skill)}},
+            {"tool_name": "read_file", "tool_input": {"path": ""}},
+            {"tool_name": "read_file", "tool_input": {"path": 7}},
+            {"tool_name": "read_file", "tool_input": {"path": "relative.md"}},
+            {"tool_name": "read_file", "tool_input": {"path": str(codex_home / "skills")}},
+            {"tool_name": "read_file", "tool_input": {"path": str(config_alias)}},
+        ]
+        for payload in structured_blocks:
+            payload["cwd"] = str(outside)
+            require(
+                _run_harness_guard(payload, env).get("decision") == "block",
+                f"ambiguous or malformed structured reads must fail closed: {payload}",
+            )
+        require(
+            _run_harness_guard(
+                {"tool_name": "inspect", "cwd": str(outside), "tool_input": {"path": str(outside_file)}}, env
+            )
+            == {},
+            "unrecognized tools must retain ordinary out-of-scope behavior",
+        )
 
         mixed_patch = dict(patch_payload)
         mixed_patch["tool_input"] = {

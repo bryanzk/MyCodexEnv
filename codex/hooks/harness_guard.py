@@ -156,8 +156,87 @@ def _screening_hit(
     return match_any(patterns, text) is not None
 
 
+def _protected_read_request(payload: dict[str, Any], cwd: Path | None) -> tuple[str, list[Path]]:
+    structured_names = {"read", "read_file", "list_dir", "list_directory"}
+    identities = [payload[key] for key in ("tool_name", "tool", "name") if key in payload]
+    if any(isinstance(value, str) and value.lower() in structured_names for value in identities):
+        if (
+            not isinstance(payload.get("tool_name"), str)
+            or payload["tool_name"].lower() not in structured_names
+            or "tool" in payload
+            or "name" in payload
+            or any(key in payload for key in ("command", "cmd", "path", "file", "file_path", "filename"))
+        ):
+            return "recognized_uncertain", []
+        containers = [key for key in ("tool_input", "input", "arguments", "params") if key in payload]
+        if len(containers) != 1 or not isinstance(payload[containers[0]], dict):
+            return "recognized_uncertain", []
+        data = payload[containers[0]]
+        path_keys = [key for key in ("path", "file", "file_path", "filename") if key in data]
+        if len(data) != 1 or len(path_keys) != 1 or not isinstance(data[path_keys[0]], str) or not data[path_keys[0]].strip():
+            return "recognized_uncertain", []
+        raw = data[path_keys[0]]
+        home = codex_home().resolve(strict=False)
+        prefixes = ("$" + "CODEX_HOME/", "${" + "CODEX_HOME}/")
+        for prefix in prefixes:
+            if raw.startswith(prefix):
+                raw = str(home / raw.removeprefix(prefix))
+                break
+        if not Path(raw).is_absolute():
+            return "recognized_uncertain", []
+        target = _canonical_path(raw, cwd)
+        return ("recognized_valid", [target]) if target is not None else ("recognized_uncertain", [])
+
+    shell_commands = {
+        "cat": "/bin/cat",
+        "sed": "/usr/bin/sed",
+        "rg": "/opt/homebrew/bin/rg",
+        "ls": "/bin/ls",
+    }
+    cmd = command_text(payload)
+    if cmd:
+        leading = re.match(r"\s*['\"]?([^'\"\s;&|<>]+)", cmd)
+        leading_name = Path(leading.group(1)).name if leading else ""
+        try:
+            tokens = shlex.split(cmd)
+        except ValueError:
+            return ("recognized_uncertain", []) if leading_name in shell_commands else ("unrecognized", [])
+        name = Path(tokens[0]).name if tokens else leading_name
+        if name not in shell_commands:
+            return "unrecognized", []
+        if any(char in cmd for char in "$`\\;&|<>\r\n*?[]{}()#~") or tokens[0] != shell_commands[name]:
+            return "recognized_uncertain", []
+
+        paths: list[str]
+        if name in {"cat", "ls"}:
+            paths = tokens[1:]
+        elif name == "sed":
+            if len(tokens) < 4 or tokens[1] != "-n" or re.fullmatch(r"[1-9]\d*(?:,[1-9]\d*)?p", tokens[2]) is None:
+                return "recognized_uncertain", []
+            paths = tokens[3:]
+        else:
+            if (
+                len(tokens) < 6
+                or tokens[1:4] != ["--no-config", "--fixed-strings", "--"]
+                or re.fullmatch(r"[A-Za-z0-9 _./:-]+", tokens[4]) is None
+            ):
+                return "recognized_uncertain", []
+            paths = tokens[5:]
+        if not paths or any(not Path(path).is_absolute() for path in paths):
+            return "recognized_uncertain", []
+        targets = [_canonical_path(path) for path in paths]
+        if any(path is None for path in targets):
+            return "recognized_uncertain", []
+        return "recognized_valid", [path for path in targets if path is not None]
+
+    return "unrecognized", []
+
+
 def _protected_hit(payload: dict[str, Any], scope: dict[str, Any], cwd: Path | None) -> bool:
-    targets = [_canonical_path(raw, cwd) for raw in candidate_paths(payload)]
+    read_state, read_targets = _protected_read_request(payload, cwd)
+    if read_state == "recognized_uncertain":
+        return True
+    targets = [_canonical_path(raw, cwd) for raw in candidate_paths(payload)] + read_targets
     if any(target is not None and _within_any(target, _scope_roots(scope, "protected_roots")) for target in targets):
         return True
     text = "\n".join([command_text(payload), *candidate_paths(payload)])
@@ -170,6 +249,22 @@ def _protected_hit(payload: dict[str, Any], scope: dict[str, Any], cwd: Path | N
 
 
 def _protected_skill_read_allowed(payload: dict[str, Any], cwd: Path | None) -> bool:
+    state, targets = _protected_read_request(payload, cwd)
+    if state != "unrecognized":
+        if state != "recognized_valid" or not targets:
+            return False
+        skills = (codex_home().resolve(strict=False) / "skills").resolve(strict=False)
+        roots: set[str] = set()
+        for target in targets:
+            try:
+                relative = target.relative_to(skills)
+            except ValueError:
+                return False
+            if not relative.parts:
+                return False
+            roots.add(relative.parts[0])
+        return len(roots) == 1
+
     home = codex_home().resolve(strict=False)
     skills = (home / "skills").resolve(strict=False)
 
