@@ -10900,6 +10900,10 @@ def test_shipq_dhf_visual_pages_are_mutually_linked():
     ]:
         require(statement in history, f"BRIDGE SAFE focus missing: {statement}")
 
+    value_page = (ROOT / "docs" / "dhf-data-business-value-explainer.html").read_text(encoding="utf-8")
+    require('aria-label="DHF 页面底部阅读路径"' in value_page,
+            "business value page must keep its bottom related-page navigation")
+
     print("[PASS] ShipQ DHF visual pages mutually linked")
 
 
