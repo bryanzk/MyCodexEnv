@@ -14,13 +14,13 @@ Stable rules belong in `AGENTS.md`, `README.md`, `docs/repo-index.md`, or
   - `codex/skills/delivery-harness-framework/SKILL.md`
 - blocked_sources: none
 - unsafe_inputs: none
-- next_safe_task: Review and commit the DHF checkpoint append, then remove the merged feature worktree and local branch if desired
+- next_safe_task: Decide whether to delete the two merged local branches and four merged remote branches; no code convergence is required
 - required_commands:
   - `python3 test_runner.py`
   - `git diff --check`
   - `./scripts/verify_codex_env.sh --repo-root "$(pwd)" --codex-home "$HOME/.codex" --claude-home "$HOME/.claude"`
-- latest_checkpoint: 2026-08-16T16:57:46-04:00 Harness Skill read commit pushed to origin/main
-- latest_verification: 2026-08-16T16:57:46-04:00 command=git status -sb; git rev-parse HEAD; git rev-parse refs/remotes/origin/main; git rev-list --left-right --count main...origin/main; exit_code=0; key_output=HEAD=origin/main=1fe3d28; main...origin/main=0/0
+- latest_checkpoint: 2026-08-16T17:01:50-04:00 Completed Harness Skill branch cleanup and reviewed every remaining local and origin branch
+- latest_verification: 2026-08-16T17:01:50-04:00 command=branch_snapshot.sh; git branch --merged main; git branch --no-merged main; git branch -r --merged main; git branch -r --no-merged main; git worktree list; git stash list; exit_code=0; key_output=one main worktree; Harness feature removed; all 2 non-main local and 4 non-main origin branches fully merged and behind-only; no ahead/diverged branches; stash_count=0
 - compaction_ordinal: 1
 - transition_key: MCE-20260802-harness-compaction-governance:W6a
 - gate_decision: none
@@ -2835,9 +2835,9 @@ Stable rules belong in `AGENTS.md`, `README.md`, `docs/repo-index.md`, or
   - none
 - next_safe_task: Review the reconciled eight-path dirty diff and request commit/push only if desired; keep all recovery stashes and runtime backup until that decision
 - checkpoint_data: {"constraints":["Do not commit, push, pop/delete stashes, remove worktrees, or delete the runtime backup without explicit authorization"],"next_action":{"args":[],"command":"git diff --stat","requires_user_direction_for_commit":true},"ownership":{"boundary":"The five documentation/product-guide paths are restored user-owned changes, the validator is the validated repair, the test file is a verified minimal merge of both, and harness-state is the append-only integrator checkpoint","files":{"README.md":"user_owned_restored","docs/DHF_SIMPLIFICATION_PRODUCT_GUIDE.md":"user_owned_restored","docs/HARNESS_RUNTIME.md":"user_owned_restored","docs/LIFECYCLE_SKILL_ROUTING.md":"user_owned_restored","docs/harness-state.md":"agent_owned_checkpoint","docs/repo-index.md":"user_owned_restored","scripts/validate_dhf_simplification_corpus.py":"agent_owned_repair","tests/test_dhf_simplification.py":"verified_mixed_merge"}},"phase":"handoff","schema":"dhf_checkpoint_v1","verification_evidence":{"command":"python3 tests/test_dhf_simplification.py && python3 scripts/validate_dhf_simplification_corpus.py validate tests/fixtures/dhf_simplification_scenarios.json --contract docs/plans/2026-07-12-dhf-simplification-implementation-contract.md --check-baseline --json && python3 scripts/dhf_simplification_evidence.py --repo-root \"$(pwd)\" && python3 scripts/check_skill_compatibility.py --repo-root \"$(pwd)\" --codex-home \"$HOME/.codex\" --claude-home \"$HOME/.claude\" --strict-runtime-parity --json && python3 scripts/check_codex_skill_loader.py --repo-root \"$(pwd)\" --codex-home \"$HOME/.codex\" --json && python3 test_runner.py && ./scripts/verify_codex_env.sh --repo-root \"$(pwd)\" --codex-home \"$HOME/.codex\" --claude-home \"$HOME/.claude\" && git diff --check","exit_code":0,"freshness":"fresh","key_output":"DHF=49/49; acceptance=18/18; test_runner=93/93; Verification passed; compatibility errors=0; loader errors=0; runtime_state=runtime_promoted; promotion_difference_paths=[]; diff check clean","timestamp":"2026-08-02T22:02:46Z"}}
-- constraints: ["Runtime remains unsynchronized; checkpoint is not included in pushed commit"]
+- constraints: ["No runtime sync; no deletion of branches outside the explicitly completed Harness feature cleanup","Rollback for removed Harness branch: recreate codex/mce-20260816-harness-skill-read at 1fe3d28 and add a worktree if needed"]
 - ownership: {}
-- next_action: {"command":"Review and commit the DHF checkpoint append, then remove the merged feature worktree and local branch if desired"}
+- next_action: {"command":"Decide whether to delete the two merged local branches and four merged remote branches; no code convergence is required"}
 
 ### 2026-08-10T11:17:51-04:00
 - phase: validation
@@ -3077,3 +3077,23 @@ Stable rules belong in `AGENTS.md`, `README.md`, `docs/repo-index.md`, or
   - none
 - next_safe_task: Review and commit the DHF checkpoint append, then remove the merged feature worktree and local branch if desired
 - checkpoint_data: {"constraints":["Runtime remains unsynchronized; checkpoint is not included in pushed commit"],"next_action":{"command":"Review and commit the DHF checkpoint append, then remove the merged feature worktree and local branch if desired"},"ownership":{},"phase":"handoff","schema":"dhf_checkpoint_v1","verification_evidence":{"command":"git status -sb; git rev-parse HEAD; git rev-parse refs/remotes/origin/main; git rev-list --left-right --count main...origin/main","exit_code":0,"freshness":"fresh","key_output":"HEAD=origin/main=1fe3d28; main...origin/main=0/0","timestamp":"2026-08-16T20:57:39Z"}}
+
+### 2026-08-16T17:01:50-04:00
+- phase: handoff
+- event: checkpoint
+- summary: Completed Harness Skill branch cleanup and reviewed every remaining local and origin branch
+- git:
+  - branch: main
+  - latest_commit: f70edbe
+  - dirty_status: clean
+  - dirty_count: 0
+- changed_surfaces:
+  - `docs/harness-state.md`
+- verification:
+  - command: `branch_snapshot.sh; git branch --merged main; git branch --no-merged main; git branch -r --merged main; git branch -r --no-merged main; git worktree list; git stash list`
+  - exit_code: 0
+  - key_output: one main worktree; Harness feature removed; all 2 non-main local and 4 non-main origin branches fully merged and behind-only; no ahead/diverged branches; stash_count=0
+- blockers:
+  - none
+- next_safe_task: Decide whether to delete the two merged local branches and four merged remote branches; no code convergence is required
+- checkpoint_data: {"constraints":["No runtime sync; no deletion of branches outside the explicitly completed Harness feature cleanup","Rollback for removed Harness branch: recreate codex/mce-20260816-harness-skill-read at 1fe3d28 and add a worktree if needed"],"next_action":{"command":"Decide whether to delete the two merged local branches and four merged remote branches; no code convergence is required"},"ownership":{},"phase":"handoff","schema":"dhf_checkpoint_v1","verification_evidence":{"command":"branch_snapshot.sh; git branch --merged main; git branch --no-merged main; git branch -r --merged main; git branch -r --no-merged main; git worktree list; git stash list","exit_code":0,"freshness":"fresh","key_output":"one main worktree; Harness feature removed; all 2 non-main local and 4 non-main origin branches fully merged and behind-only; no ahead/diverged branches; stash_count=0","timestamp":"2026-08-16T21:01:25Z"}}
