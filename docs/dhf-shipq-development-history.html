@@ -1,0 +1,637 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DHF 演进史：从 ShipQ 业务阻塞到 SAFE 控制与 TRUST 价值</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Noto+Serif+SC:wght@400;600;700;900&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --font-body: "Noto Serif SC", "Songti SC", serif;
+      --font-mono: "IBM Plex Mono", "SFMono-Regular", monospace;
+      --bg: #f3efe5;
+      --paper: #fffdf7;
+      --paper-deep: #ebe4d4;
+      --ink: #17283c;
+      --muted: #6f746f;
+      --line: rgba(23,40,60,.14);
+      --navy: #173b5e;
+      --navy-dim: rgba(23,59,94,.09);
+      --orange: #c85724;
+      --orange-dim: rgba(200,87,36,.10);
+      --sage: #5f7454;
+      --sage-dim: rgba(95,116,84,.11);
+      --gold: #a8781f;
+      --gold-dim: rgba(168,120,31,.10);
+      --red: #a13d39;
+      --red-dim: rgba(161,61,57,.09);
+      --shadow: 0 18px 50px rgba(39,33,24,.08);
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #151a1d;
+        --paper: #1e2528;
+        --paper-deep: #171d20;
+        --ink: #eef0e8;
+        --muted: #a9aea9;
+        --line: rgba(255,255,255,.11);
+        --navy: #8fc5e8;
+        --navy-dim: rgba(143,197,232,.12);
+        --orange: #f18b58;
+        --orange-dim: rgba(241,139,88,.12);
+        --sage: #acc99d;
+        --sage-dim: rgba(172,201,157,.12);
+        --gold: #e8be67;
+        --gold-dim: rgba(232,190,103,.12);
+        --red: #ed8b83;
+        --red-dim: rgba(237,139,131,.12);
+        --shadow: 0 18px 50px rgba(0,0,0,.25);
+      }
+    }
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      color: var(--ink);
+      background-color: var(--bg);
+      background-image:
+        linear-gradient(var(--line) 1px, transparent 1px),
+        linear-gradient(90deg, var(--line) 1px, transparent 1px),
+        radial-gradient(circle at 15% 8%, var(--orange-dim), transparent 32%),
+        radial-gradient(circle at 88% 64%, var(--sage-dim), transparent 30%);
+      background-size: 38px 38px, 38px 38px, auto, auto;
+      font-family: var(--font-body);
+      overflow-wrap: break-word;
+    }
+    a { color: inherit; }
+    code, .mono { font-family: var(--font-mono); }
+    .wrap {
+      max-width: 1480px;
+      margin: 0 auto;
+      padding: 28px 30px 72px;
+      display: grid;
+      grid-template-columns: 190px minmax(0, 1fr);
+      gap: 0 42px;
+    }
+    .wrap > *, .grid > *, .phase > *, .value-grid > *, .split > * { min-width: 0; }
+    .toc {
+      position: sticky;
+      top: 24px;
+      align-self: start;
+      grid-row: 1 / -1;
+      max-height: calc(100dvh - 48px);
+      overflow-y: auto;
+      padding: 16px 0;
+      font-family: var(--font-mono);
+    }
+    .toc-title {
+      padding-bottom: 11px;
+      border-bottom: 1px solid var(--line);
+      color: var(--muted);
+      font-size: 9px;
+      font-weight: 600;
+      letter-spacing: .18em;
+      text-transform: uppercase;
+    }
+    .toc a {
+      display: block;
+      padding: 7px 9px;
+      margin-top: 4px;
+      border-left: 2px solid transparent;
+      border-radius: 0 6px 6px 0;
+      color: var(--muted);
+      font-size: 11px;
+      line-height: 1.45;
+      text-decoration: none;
+      transition: .16s ease;
+    }
+    .toc a:hover, .toc a.active {
+      color: var(--orange);
+      border-left-color: var(--orange);
+      background: var(--orange-dim);
+    }
+    .main { min-width: 0; }
+    .hero {
+      position: relative;
+      overflow: hidden;
+      min-height: 560px;
+      padding: clamp(34px, 7vw, 82px);
+      border: 1px solid var(--line);
+      border-top: 7px solid var(--orange);
+      border-radius: 8px 8px 32px 32px;
+      background: color-mix(in srgb, var(--paper) 94%, var(--orange) 6%);
+      box-shadow: var(--shadow);
+    }
+    .hero::after {
+      content: "DHF";
+      position: absolute;
+      right: -22px;
+      bottom: -82px;
+      color: var(--orange-dim);
+      font: 900 clamp(150px, 22vw, 330px)/1 var(--font-mono);
+      letter-spacing: -.10em;
+      pointer-events: none;
+    }
+    .kicker, .section-kicker, .tag, .date, .fact-label {
+      font-family: var(--font-mono);
+      text-transform: uppercase;
+      letter-spacing: .13em;
+    }
+    .kicker { color: var(--orange); font-size: 11px; font-weight: 600; }
+    h1 {
+      position: relative;
+      z-index: 1;
+      max-width: 980px;
+      margin: 16px 0 22px;
+      font-size: clamp(42px, 7vw, 88px);
+      line-height: 1.08;
+      letter-spacing: -.055em;
+      text-wrap: balance;
+    }
+    .lead {
+      position: relative;
+      z-index: 1;
+      max-width: 860px;
+      margin: 0;
+      color: var(--muted);
+      font-size: clamp(17px, 2vw, 23px);
+      line-height: 1.75;
+    }
+    .thesis {
+      position: relative;
+      z-index: 1;
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0,1fr));
+      gap: 10px;
+      max-width: 900px;
+      margin-top: 42px;
+    }
+    .thesis div {
+      padding: 16px;
+      border: 1px solid var(--line);
+      background: color-mix(in srgb, var(--paper) 82%, transparent 18%);
+    }
+    .thesis b { display: block; margin-bottom: 5px; color: var(--orange); font: 600 12px var(--font-mono); }
+    .thesis span { font-size: 13px; line-height: 1.6; }
+    .snapshot {
+      position: relative;
+      z-index: 1;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 7px;
+      margin-top: 24px;
+    }
+    .snapshot span, .tag {
+      padding: 6px 9px;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      background: var(--paper-deep);
+      font: 500 10px var(--font-mono);
+      letter-spacing: .02em;
+    }
+    .sec-head {
+      scroll-margin-top: 24px;
+      margin: 66px 0 22px;
+      padding-bottom: 14px;
+      border-bottom: 1px solid var(--line);
+    }
+    .section-kicker { color: var(--orange); font-size: 10px; }
+    .sec-head h2 { margin: 7px 0 5px; font-size: clamp(30px, 4vw, 50px); line-height: 1.18; letter-spacing: -.035em; }
+    .sec-head p { max-width: 850px; margin: 0; color: var(--muted); line-height: 1.7; }
+    .panel {
+      padding: 26px;
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      background: var(--paper);
+    }
+    .panel--recessed { background: var(--paper-deep); box-shadow: inset 0 1px 4px rgba(0,0,0,.05); }
+    .grid { display: grid; gap: 14px; }
+    .grid-3 { grid-template-columns: repeat(3, minmax(0,1fr)); }
+    .grid-4 { grid-template-columns: repeat(4, minmax(0,1fr)); }
+    .fact-label {
+      display: inline-block;
+      margin-bottom: 9px;
+      color: var(--sage);
+      font-size: 9px;
+      font-weight: 600;
+    }
+    .panel h3 { margin: 0 0 8px; font-size: 21px; }
+    .panel p { margin: 0; color: var(--muted); line-height: 1.65; }
+    .panel ul { margin: 12px 0 0; padding: 0; list-style: none; }
+    .panel li { position: relative; padding: 5px 0 5px 15px; line-height: 1.55; }
+    .panel li::before { content: ""; position: absolute; left: 0; top: 15px; width: 6px; border-top: 2px solid var(--orange); }
+    .evolution {
+      position: relative;
+      display: grid;
+      gap: 17px;
+    }
+    .evolution::before {
+      content: "";
+      position: absolute;
+      left: 26px;
+      top: 14px;
+      bottom: 14px;
+      width: 2px;
+      background: linear-gradient(var(--orange), var(--navy), var(--sage));
+    }
+    .phase {
+      --phase-color: var(--orange);
+      position: relative;
+      display: grid;
+      grid-template-columns: 54px 150px minmax(0,1fr);
+      gap: 16px;
+      padding: 23px 24px 23px 0;
+      border: 1px solid var(--line);
+      border-left: 0;
+      border-radius: 0 14px 14px 0;
+      background: var(--paper);
+      transition: transform .18s ease, box-shadow .18s ease;
+    }
+    .phase:hover { transform: translateX(4px); box-shadow: 0 8px 28px rgba(0,0,0,.07); }
+    .phase:nth-child(2), .phase:nth-child(5) { --phase-color: var(--navy); }
+    .phase:nth-child(3), .phase:nth-child(6) { --phase-color: var(--gold); }
+    .phase:nth-child(4) { --phase-color: var(--sage); }
+    .marker {
+      position: relative;
+      z-index: 1;
+      display: grid;
+      place-items: center;
+      align-self: start;
+      width: 28px;
+      height: 28px;
+      margin-left: 13px;
+      border: 3px solid var(--paper);
+      border-radius: 50%;
+      background: var(--phase-color);
+      color: white;
+      font: 600 10px var(--font-mono);
+      box-shadow: 0 0 0 1px var(--phase-color);
+    }
+    .date { color: var(--phase-color); font-size: 10px; font-weight: 600; }
+    .phase-title { margin: 7px 0 6px; font-size: 19px; line-height: 1.35; }
+    .phase-sub { color: var(--muted); font-size: 12px; line-height: 1.55; }
+    .phase-body { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; }
+    .phase-body > div { padding-left: 12px; border-left: 2px solid color-mix(in srgb, var(--phase-color) 48%, transparent 52%); }
+    .phase-body b { display: block; margin-bottom: 5px; color: var(--phase-color); font: 600 10px var(--font-mono); text-transform: uppercase; letter-spacing: .08em; }
+    .phase-body p { margin: 0; color: var(--muted); font-size: 12px; line-height: 1.6; }
+    .receipts { grid-column: 3; display: flex; flex-wrap: wrap; gap: 5px; margin-top: 12px; }
+    .receipts code { padding: 4px 6px; border: 1px solid var(--line); border-radius: 4px; background: var(--paper-deep); color: var(--muted); font-size: 9px; }
+    .split { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+    .loop {
+      position: relative;
+      overflow: hidden;
+      padding: 28px;
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      background: var(--paper);
+    }
+    .loop::before { content: attr(data-no); position: absolute; right: 14px; top: -20px; color: var(--navy-dim); font: 900 100px var(--font-mono); }
+    .loop h3 { position: relative; margin: 0 0 7px; font-size: 26px; }
+    .loop .flow { margin: 18px 0; padding: 12px; border: 1px dashed var(--line); background: var(--navy-dim); color: var(--navy); font: 500 11px/1.7 var(--font-mono); }
+    .pain, .value { display: grid; grid-template-columns: 74px 1fr; gap: 9px; margin-top: 11px; font-size: 13px; line-height: 1.6; }
+    .pain b { color: var(--red); font: 600 10px var(--font-mono); }
+    .value b { color: var(--sage); font: 600 10px var(--font-mono); }
+    .control-stack {
+      display: grid;
+      grid-template-columns: 1fr 70px 1fr;
+      align-items: stretch;
+      gap: 12px;
+    }
+    .control-word { display: grid; gap: 8px; }
+    .letter {
+      display: grid;
+      grid-template-columns: 46px 1fr;
+      gap: 12px;
+      align-items: center;
+      padding: 13px;
+      border: 1px solid var(--line);
+      background: var(--paper);
+    }
+    .letter > b { color: var(--orange); font: 700 30px var(--font-mono); text-align: center; }
+    .letter strong { display: block; font-size: 14px; }
+    .letter small { color: var(--muted); }
+    .creates { display: grid; place-items: center; color: var(--muted); font: 600 10px/1.8 var(--font-mono); text-align: center; text-transform: uppercase; }
+    .trust .letter > b { color: var(--sage); }
+    .value-grid { display: grid; grid-template-columns: repeat(5, minmax(0,1fr)); gap: 8px; margin-top: 16px; }
+    .value-card { padding: 16px 13px; border-top: 3px solid var(--sage); background: var(--sage-dim); }
+    .value-card b { display: block; color: var(--sage); font: 600 11px var(--font-mono); }
+    .value-card span { display: block; margin-top: 6px; font-size: 12px; line-height: 1.55; }
+    .matrix-wrap { overflow-x: auto; border: 1px solid var(--line); border-radius: 12px; background: var(--paper); }
+    table { width: 100%; min-width: 930px; border-collapse: collapse; font-size: 12px; line-height: 1.55; }
+    thead { position: sticky; top: 0; z-index: 2; }
+    th { padding: 12px; background: var(--navy); color: white; font: 600 10px var(--font-mono); text-align: left; letter-spacing: .06em; }
+    td { padding: 12px; border-top: 1px solid var(--line); vertical-align: top; }
+    tbody tr:nth-child(even) { background: var(--navy-dim); }
+    tbody tr:hover { background: var(--orange-dim); }
+    td:first-child { font-family: var(--font-mono); font-weight: 600; color: var(--orange); }
+    .status { display: inline-block; padding: 3px 7px; border-radius: 999px; font: 600 9px var(--font-mono); }
+    .status-now { color: var(--sage); background: var(--sage-dim); }
+    .status-gap { color: var(--red); background: var(--red-dim); }
+    .status-next { color: var(--gold); background: var(--gold-dim); }
+    .frontier {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0,1fr));
+      gap: 12px;
+    }
+    .frontier .panel { border-top: 4px solid var(--orange); }
+    .frontier .panel:nth-child(2) { border-top-color: var(--navy); }
+    .frontier .panel:nth-child(3) { border-top-color: var(--sage); }
+    details { margin-top: 12px; border: 1px solid var(--line); border-radius: 10px; background: var(--paper); }
+    summary { padding: 15px 18px; cursor: pointer; color: var(--navy); font-weight: 700; }
+    .details-body { padding: 0 18px 18px; color: var(--muted); }
+    .details-body li { margin: 7px 0; }
+    .evidence-note { padding: 16px 19px; border-left: 5px solid var(--gold); background: var(--gold-dim); color: var(--muted); line-height: 1.7; }
+    footer { margin-top: 54px; padding-top: 18px; border-top: 1px solid var(--line); color: var(--muted); font: 10px/1.8 var(--font-mono); }
+    footer a { display: inline-block; margin-bottom: 8px; color: var(--orange); font-weight: 700; text-underline-offset: 4px; }
+    .reveal { animation: rise .48s ease-out both; animation-delay: calc(var(--i, 0) * .05s); }
+    @keyframes rise { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: translateY(0); } }
+    @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; } }
+    @media (max-width: 980px) {
+      .wrap { grid-template-columns: 1fr; padding: 0 18px 55px; }
+      .toc { position: sticky; top: 0; z-index: 50; display: flex; gap: 4px; margin: 0 -18px 18px; padding: 9px 18px; max-height: none; overflow-x: auto; background: color-mix(in srgb, var(--bg) 90%, transparent 10%); backdrop-filter: blur(14px); border-bottom: 1px solid var(--line); }
+      .toc-title { display: none; }
+      .toc a { flex: 0 0 auto; border-left: 0; border-bottom: 2px solid transparent; border-radius: 5px; white-space: nowrap; }
+      .toc a.active { border-bottom-color: var(--orange); }
+      .hero { min-height: auto; }
+      .thesis, .grid-3, .grid-4, .frontier { grid-template-columns: 1fr; }
+      .phase { grid-template-columns: 54px 1fr; }
+      .phase-body, .receipts { grid-column: 2; }
+      .phase-body { grid-template-columns: 1fr; }
+      .split { grid-template-columns: 1fr; }
+      .control-stack { grid-template-columns: 1fr; }
+      .creates { min-height: 55px; }
+      .value-grid { grid-template-columns: 1fr 1fr; }
+    }
+    @media (max-width: 560px) {
+      .wrap { padding-left: 12px; padding-right: 12px; }
+      .toc { margin-left: -12px; margin-right: -12px; padding-left: 12px; padding-right: 12px; }
+      .hero { padding: 28px 22px; border-radius: 6px 6px 22px 22px; }
+      h1 { font-size: 39px; }
+      .thesis { grid-template-columns: 1fr; }
+      .phase { grid-template-columns: 43px 1fr; gap: 10px; padding-right: 14px; }
+      .marker { margin-left: 7px; }
+      .evolution::before { left: 20px; }
+      .value-grid { grid-template-columns: 1fr; }
+      .panel, .loop { padding: 20px; }
+    }
+  </style>
+</head>
+<body>
+<div class="wrap">
+  <nav class="toc" id="toc" aria-label="章节导航">
+    <div class="toc-title">Manifest / Contents</div>
+    <a href="#thesis">结论</a>
+    <a href="#timeline">六阶段演进</a>
+    <a href="#business">ShipQ 业务痛点</a>
+    <a href="#safe-trust">SAFE × TRUST</a>
+    <a href="#matrix">价值矩阵</a>
+    <a href="#current">当前成熟度</a>
+    <a href="#evidence">证据边界</a>
+  </nav>
+
+  <main class="main">
+    <header class="hero reveal" id="thesis">
+      <div class="kicker">MYCODEXENV × SHIPQ · DEVELOPMENT HISTORY · 2026-08-16</div>
+      <h1>DHF 不是流程模板，<br>而是被业务风险逼出来的交付控制系统。</h1>
+      <p class="lead">它从 ShipQ 的跨会话交付、Gmail 询价抽取、工作簿报价、人工审核与受保护运行时中生长出来：先解决“下次从哪里继续”，再解决“凭什么说完成”，最后解决“谁有权让真实世界发生变化”。</p>
+      <div class="thesis">
+        <div><b>方法层 · DHF</b><span>决定任务走哪条路径：恢复、规格、实现、验证、评审、发布或交接。</span></div>
+        <div><b>控制层 · SAFE</b><span>检查一次状态变化是否有契约、授权、事实证据与错误恢复。</span></div>
+        <div><b>价值层 · TRUST</b><span>把工程控制翻译成质量、风险、效率、连续性与规模化价值。</span></div>
+      </div>
+      <div class="snapshot" aria-label="当前证据快照">
+        <span>ShipQ lane = local_dev</span>
+        <span>active_lane_grant = null</span>
+        <span>worktree = clean</span>
+        <span>snapshot = 2026-08-16T12:13Z</span>
+      </div>
+    </header>
+
+    <section>
+      <div class="sec-head reveal" style="--i:1">
+        <div class="section-kicker">01 · EXECUTIVE READING</div>
+        <h2>三条演进主线：CAP</h2>
+        <p><code>Continuity · Accuracy · Permission</code>：从“Agent 能做”到“业务敢让它做”。每一阶段都来自 ShipQ 的实际阻塞，并保留了上一阶段的能力。</p>
+      </div>
+      <div class="grid grid-3">
+        <article class="panel reveal" style="--i:2"><span class="fact-label">CAP · C</span><h3>Continuity · 连续性</h3><p>跨分支、worktree、会话和多日任务时，事实不能只留在聊天里。于是产生 durable state、recovery、checkpoint 和 <code>next_safe_task</code>。</p></article>
+        <article class="panel reveal" style="--i:3"><span class="fact-label">CAP · A</span><h3>Accuracy · 正确性</h3><p>货运邮件中的路线、箱型、客户身份、CBM/重量和门到门地址都可能歧义。于是产生规格契约、fixtures、人工审核、确定性规则与 fresh evidence。</p></article>
+        <article class="panel reveal" style="--i:4"><span class="fact-label">CAP · P</span><h3>Permission · 授权</h3><p>本地测试通过不等于可以调用 Gemini、替换报价 SQLite、发布 Pages、创建 Drive/Docs 或发送 Gmail。于是产生 lane、Level 0/1/2、action binding、readback 与 fail-closed。</p></article>
+      </div>
+    </section>
+
+    <section>
+      <div class="sec-head reveal" id="timeline" style="--i:1">
+        <div class="section-kicker">02 · SIX-STAGE EVOLUTION</div>
+        <h2>六个演进阶段：BRIDGE</h2>
+        <p><code>Baseline · Receipts · Inspection · Decoupling · Grading · Enforcement</code>。SAFE/TRUST 不属于历史阶段，而是对全部阶段持续适用的指导原则。</p>
+      </div>
+      <div class="evolution">
+        <article class="phase reveal" style="--i:1">
+          <div class="marker">B</div>
+          <div><div class="date">PHASE 0 · 2026-05-20 — 05-31</div><h3 class="phase-title">Baseline · 种子期</h3><div class="phase-sub">先让复杂任务不断线：Lifecycle harness 恢复；ShipQ Gmail 本地后端、工作簿报价与 Phase 1 handoff 同时成形。</div></div>
+          <div class="phase-body"><div><b>业务痛点</b><p>报价引擎、Gmail UI、Gemini、SQLite 与工作簿并行变化；会话一断就要重新考古。</p></div><div><b>关键机制</b><p>harness state、阶段交接、受限本地 lane、初始 skill 路由。</p></div><div><b>业务价值</b><p>把“聊天记忆”变成“项目记忆”，降低重复定位与误接手。</p></div></div>
+          <div class="receipts"><code>9d163ce</code><code>25315b3</code><code>2235622</code><code>c3ec270</code></div>
+        </article>
+
+        <article class="phase reveal" style="--i:2">
+          <div class="marker">R</div>
+          <div><div class="date">PHASE 1 · 2026-06-01 — 06-14</div><h3 class="phase-title">Receipts · 骨架期</h3><div class="phase-sub">把“完成”改写成可验证切片：Recovery、env probe、checkpoint、report、requirements 与 agent-team validators 成为工具链。</div></div>
+          <div class="phase-body"><div><b>业务痛点</b><p>测试、分支清理、fixture 与文档各自“看似完成”，但没有统一证据和下一步。</p></div><div><b>关键机制</b><p>Definition of Done；<code>command / exit_code / key_output / timestamp</code>；append-only checkpoint。</p></div><div><b>业务价值</b><p>负责人无需信任语气，只需核对可复现回执；绿色切片可独立交接。</p></div></div>
+          <div class="receipts"><code>d9c506c</code><code>40cb715</code><code>f8e180f</code><code>e2be7a0</code><code>019ea7c9…</code></div>
+        </article>
+
+        <article class="phase reveal" style="--i:3">
+          <div class="marker">I</div>
+          <div><div class="date">PHASE 2 · 2026-06-03 — 07-11</div><h3 class="phase-title">Inspection · 领域可信期</h3><div class="phase-sub">把 AI 输出降级为可审核草稿：ShipQ 用 spec-safe source rules、11-case fixture、manual review 与 operator UI 验证真实询价链路。</div></div>
+          <div class="phase-body"><div><b>业务痛点</b><p>邮件转发头、路线、客户身份、总量与明细、FCL/LCL、Door Delivery 容易被模型猜错。</p></div><div><b>关键机制</b><p>canonical payload、确定性 resolver、来源证据、draft-first、人工修订审计、禁止自动晋升。</p></div><div><b>业务价值</b><p>减少错价与返工；让 operator 看见“为什么需要审核”，而非得到一个不可解释的答案。</p></div></div>
+          <div class="receipts"><code>ff7368f</code><code>debfca7</code><code>019eb6a6…</code><code>081456a</code><code>277a2fb</code></div>
+        </article>
+
+        <article class="phase reveal" style="--i:4">
+          <div class="marker">D</div>
+          <div><div class="date">PHASE 3 · 2026-06-15 — 07-11</div><h3 class="phase-title">Decoupling · 产品化期</h3><div class="phase-sub">从 ShipQ 做法提炼可移植核心：DHF 留在 MyCodexEnv 孵化；ShipQ 成为明确的 consumer adapter。</div></div>
+          <div class="phase-body"><div><b>业务痛点</b><p>通用治理与 ShipQ 专属 fixture、quote/workbook/demo gate 混在一起，难复用也容易泄漏上下文。</p></div><div><b>关键机制</b><p>DHF core / local runtime / ShipQ adapter 三分；consumer matrix；portable <code>DHF_PACKET</code>。</p></div><div><b>业务价值</b><p>其他项目可复用生命周期与证据合同，同时保留 ShipQ 的领域自治和最小 token 成本。</p></div></div>
+          <div class="receipts"><code>4cf3a39</code><code>019ecd3f…</code><code>dhf-packet.schema.json</code></div>
+        </article>
+
+        <article class="phase reveal" style="--i:5">
+          <div class="marker">G</div>
+          <div><div class="date">PHASE 4 · 2026-07-12 — 07-27</div><h3 class="phase-title">Grading · 减负期</h3><div class="phase-sub">让治理强度与风险匹配：DHF 从统一重流程收敛为 <code>light / standard / governed</code>，并加入通用 prompt dispatcher。</div></div>
+          <div class="phase-body"><div><b>业务痛点</b><p>如果普通解释、小修复和高风险发布都走同一流程，业务等待与 token 成本过高。</p></div><div><b>关键机制</b><p>风险分层、渐进式加载、opt-out、薄核心、source/runtime promotion 分离。</p></div><div><b>业务价值</b><p>简单工作更快，常规开发保留验证，高风险工作才承担完整治理成本。</p></div></div>
+          <div class="receipts"><code>b11db05</code><code>327c9fe</code><code>44cf6ba</code><code>019f5789…</code></div>
+        </article>
+
+        <article class="phase reveal" style="--i:6">
+          <div class="marker">E</div>
+          <div><div class="date">PHASE 5 · 2026-07-28 — 至今</div><h3 class="phase-title">Enforcement · 执行控制期</h3><div class="phase-sub">从流程建议进入动作授权：ShipQ DHF Sol audit 暴露旧 grant 不可信；Level 0/1/2、中央 consumer、journal、readback 与 runtime guard 逐步落地。</div></div>
+          <div class="phase-body"><div><b>业务痛点</b><p>“用户说过可以”无法证明这一次、这个目标、这个动作仍被授权；失败重试还可能重复产生副作用。</p></div><div><b>关键机制</b><p>closed action registry、action binding、single-use、TTL、fail-closed、reconciliation、三层验证。</p></div><div><b>业务价值</b><p>本地绿灯不再被误当生产权限；可以受控推进 Drive/Docs/Gmail 草稿等精确动作，同时阻断未知副作用。</p></div></div>
+          <div class="receipts"><code>2d0aaf8</code><code>172da84</code><code>ac4b31b</code><code>00f8f80</code><code>019fbae3…</code></div>
+        </article>
+
+      </div>
+      <div class="panel panel--recessed reveal" style="margin-top:17px;--i:7">
+        <span class="fact-label">CROSS-STAGE GUIDING PRINCIPLE</span>
+        <h3>CAP 是主线，BRIDGE 是路径，SAFE 控制过程，TRUST 检验价值</h3>
+        <p>四组助记词分别回答不同问题：<code>CAP</code> 关注什么，<code>BRIDGE</code> 如何演进，<code>SAFE</code> 如何可信推进，<code>TRUST</code> 最终创造什么价值。</p>
+        <div class="receipts"><code>038f30a</code><code>80a4ee0</code><code>2bc459c</code><code>01a005d7…</code></div>
+      </div>
+    </section>
+
+    <section>
+      <div class="sec-head reveal" id="business">
+        <div class="section-kicker">03 · SHIPQ BUSINESS LOOPS</div>
+        <h2>DHF 为什么必须围绕 ShipQ 业务边界，而不是围绕代码目录设计</h2>
+        <p>ShipQ 有两个相连但风险不同的闭环：询价录入负责把不确定邮件变成可审核事实；报价计算负责把受控数据变成确定性价格。</p>
+      </div>
+      <div class="split">
+        <article class="loop reveal" data-no="1">
+          <h3>Gmail 询价录入闭环</h3>
+          <div class="flow">客户邮件 → sanitized message → AI/规则抽取 → side panel 人工审核 → canonical payload → Get Rate handoff</div>
+          <div class="pain"><b>原始痛点</b><span>模型可能把转发人当客户、把正文噪声当路线、把总量拆成虚假明细，或在歧义时自信输出。</span></div>
+          <div class="value"><b>DHF 价值</b><span>把 AI 定位为候选生成器；用 fixture、来源证据、manual review、状态机与审计事件，把错误阻断在报价之前。</span></div>
+        </article>
+        <article class="loop reveal" data-no="2" style="--i:1">
+          <h3>工作簿到报价闭环</h3>
+          <div class="flow">MGF workbook → policy scan → canonical artifacts → approval → guarded SQLite → deterministic quote</div>
+          <div class="pain"><b>原始痛点</b><span>工作簿含敏感、破损公式与多种业务表；本地 smoke 成功不代表可以替换真实报价运行时。</span></div>
+          <div class="value"><b>DHF 价值</b><span>把 source、canonical、staging、runtime promotion 与 quote result 分层；变更需审批、回滚和独立 readback。</span></div>
+        </article>
+      </div>
+      <div class="panel panel--recessed reveal" style="margin-top:15px;--i:2">
+        <span class="fact-label">CURRENT BUSINESS PROOF</span>
+        <h3>2026-08-16 的一个小切片，浓缩了完整演进</h3>
+        <p>当前 durable state 表示 Phase 2 数据请求草稿已创建，下一步是 owner 在 Gmail Drafts 审核；没有单独、精确的发送指令就不得发送。早期 DHF 只会记住“下一步”；当前 DHF 还定义“下一步是谁的权力”。</p>
+      </div>
+    </section>
+
+    <section>
+      <div class="sec-head reveal" id="safe-trust">
+        <div class="section-kicker">04 · CONTROL KERNEL → BUSINESS VALUE</div>
+        <h2>SAFE 是状态变化的控制内核，TRUST 是业务结果记忆法</h2>
+        <p>三者不是同一层：DHF 路由工作；SAFE 判断这次推进是否可信；TRUST 说明为什么值得为这些控制付出成本。</p>
+      </div>
+      <div class="control-stack">
+        <div class="control-word">
+          <div class="letter"><b>S</b><div><strong>Specification</strong><small>范围、需求、验收、状态定义</small></div></div>
+          <div class="letter"><b>A</b><div><strong>Authorization</strong><small>所有权、权限、人工批准、fail-closed</small></div></div>
+          <div class="letter"><b>F</b><div><strong>Facts</strong><small>fresh tests、receipt、readback、事实分层</small></div></div>
+          <div class="letter"><b>E</b><div><strong>Error-recovery</strong><small>checkpoint、rollback、handoff、reconcile</small></div></div>
+        </div>
+        <div class="creates">controls<br>create<br>→</div>
+        <div class="control-word trust">
+          <div class="letter"><b>T</b><div><strong>Trust &amp; quality</strong><small>客户相信字段与价格可核对</small></div></div>
+          <div class="letter"><b>R</b><div><strong>Risk control</strong><small>副作用与授权边界清晰</small></div></div>
+          <div class="letter"><b>U</b><div><strong>Unit productivity</strong><small>减少返工、等待与重复考古</small></div></div>
+          <div class="letter"><b>S</b><div><strong>Service continuity</strong><small>跨会话、失败与人员切换可恢复</small></div></div>
+          <div class="letter"><b>T</b><div><strong>Traceability at scale</strong><small>证据可审计、机制可复制</small></div></div>
+        </div>
+      </div>
+      <div class="value-grid">
+        <div class="value-card"><b>S + F → T</b><span>规格加事实，减少抽取歧义与错价。</span></div>
+        <div class="value-card"><b>A + F → R</b><span>授权加回执，阻止“本地绿灯即生产权限”。</span></div>
+        <div class="value-card"><b>S + F → U</b><span>清晰验收和最小反馈回路减少返工。</span></div>
+        <div class="value-card"><b>E + F → S</b><span>恢复锚点与 fresh readback 保持连续性。</span></div>
+        <div class="value-card"><b>SAFE → T</b><span>统一合同、证据和 adapter 支持规模化治理。</span></div>
+      </div>
+    </section>
+
+    <section>
+      <div class="sec-head reveal" id="matrix">
+        <div class="section-kicker">05 · STAGE VALUE MATRIX</div>
+        <h2>每个阶段解决的痛点与可观察业务价值</h2>
+        <p>“价值”只写可由机制合理支持的结果；未出现客户采用、生产收益或商业验证证据时，不把它们写成已实现。</p>
+      </div>
+      <div class="matrix-wrap">
+        <table>
+          <thead><tr><th>阶段</th><th>ShipQ 具体痛点</th><th>引入能力</th><th>业务价值</th><th>当前证据性质</th></tr></thead>
+          <tbody>
+            <tr><td>B · Baseline</td><td>多模块、多会话后无法恢复真实现场</td><td>state / handoff / phase</td><td>减少重复考古与错误接手</td><td><span class="status status-now">repo + history</span></td></tr>
+            <tr><td>R · Receipts</td><td>“测试过”无法复核；绿色切片没有下一步</td><td>fresh evidence / checkpoint / CI gate</td><td>完成声明可审计，切片可交接</td><td><span class="status status-now">repo + session</span></td></tr>
+            <tr><td>I · Inspection</td><td>货运邮件字段歧义会直接放大为错价</td><td>canonical schema / fixtures / manual review</td><td>降低错误进入报价链路的概率</td><td><span class="status status-now">local validation</span></td></tr>
+            <tr><td>D · Decoupling</td><td>通用治理与 ShipQ 领域规则耦合</td><td>core / runtime / adapter / packet</td><td>复用而不牺牲项目自治</td><td><span class="status status-now">compatibility proof</span></td></tr>
+            <tr><td>G · Grading</td><td>简单任务承担完整高风险流程成本</td><td>light / standard / governed</td><td>更短响应与更低治理成本</td><td><span class="status status-now">source + runtime proof</span></td></tr>
+            <tr><td>E · Enforcement</td><td>历史批准、自然语言 token 与重试不足以保护外部动作</td><td>Level 0/1/2 / central consumer / readback</td><td>控制副作用，保留精确低风险自动化</td><td><span class="status status-gap">Level 2 remains gated</span></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section>
+      <div class="sec-head reveal" id="current">
+        <div class="section-kicker">06 · CURRENT MATURITY & FRONTIER</div>
+        <h2>当前不是“全自动”，而是“知道哪里必须停下”</h2>
+        <p>这是成熟度而不是缺陷：DHF 已能区分本地工作、受约束外部动作与默认拒绝动作；尚未有证据的生产强制、客户采用和商业结果仍保持未声明。</p>
+      </div>
+      <div class="frontier">
+        <article class="panel"><span class="status status-now">已具备</span><h3 style="margin-top:12px">可恢复、可验证、可审计</h3><ul><li>phase / lane / dirty ownership 恢复</li><li>fresh evidence 四元组</li><li>checkpoint 与 next safe task</li><li>ShipQ adapter 与项目级门禁</li></ul></article>
+        <article class="panel"><span class="status status-gap">仍受限</span><h3 style="margin-top:12px">真实 Level 2 自动执行</h3><ul><li><code>active_lane_grant=null</code></li><li>unknown action 默认拒绝</li><li>source/test 不等于 runtime rollout</li><li>没有 owner go/no-go 就不扩大授权</li></ul></article>
+        <article class="panel"><span class="status status-next">下一价值证明</span><h3 style="margin-top:12px">从工程证据到业务证据</h3><ul><li>三案例轻量 pilot</li><li>time-to-recover 与返工率</li><li>manual-review 命中与错价逃逸</li><li>授权阻断与 readback 完整率</li></ul></article>
+      </div>
+      <div class="evidence-note" style="margin-top:16px"><strong>推荐的单一北极星：</strong>把 DHF 定义为“让 Agent 驱动的业务流程在每次状态变化时都可恢复、可授权、可验证”的交付控制系统。SAFE 是其可复用控制合同，TRUST 是对业务负责人的价值汇报结构。</div>
+    </section>
+
+    <section>
+      <div class="sec-head reveal" id="evidence">
+        <div class="section-kicker">07 · EVIDENCE & CLAIM BOUNDARY</div>
+        <h2>分析依据与结论边界</h2>
+        <p>页面使用当前 checkout、Git 历史、DHF/ShipQ 文档、当前只读 recovery 输出与本机会话索引。历史成功不自动升级为当前生产状态。</p>
+      </div>
+      <details open>
+        <summary>主要 repo 证据</summary>
+        <div class="details-body"><ul>
+          <li>MyCodexEnv：<code>docs/delivery-harness-framework-manual-cn.md</code>、<code>docs/DHF_SIMPLIFICATION_PRODUCT_GUIDE.md</code>、<code>docs/HARNESS_RUNTIME.md</code>、<code>docs/dhf-consumer-compatibility.json</code>、SAFE/TRUST 三个公开页面。</li>
+          <li>ShipQ：<code>docs/project-handbook.md</code>、<code>docs/HARNESS_RUNTIME.md</code>、Gmail source-rule / fixture / workbook / lane-grant plans 与 contracts。</li>
+          <li>当前只读状态：MyCodexEnv HEAD <code>e11919f</code>；ShipQ HEAD <code>162b7af</code>，<code>local_dev</code>，<code>active_lane_grant=null</code>。</li>
+        </ul></div>
+      </details>
+      <details>
+        <summary>代表性会话证据</summary>
+        <div class="details-body"><ul>
+          <li><code>019ea7c9-d4be-78f0-aed4-d4cf8440a847</code>：CI green gate、checkpoint 与 next-safe-task。</li>
+          <li><code>019eb6a6-82e8-7602-83fe-6a217fcbd5ae</code>：ShipQ 11-case Gmail fixture validation。</li>
+          <li><code>019ecd3f-041d-7d61-a58f-b2eb1040436f</code>：DHF 孵化边界与 ShipQ consumer compatibility。</li>
+          <li><code>019f5789-9d07-7cf1-bd25-c47e67c2f4b0</code>：DHF simplification 与 runtime activation 边界。</li>
+          <li><code>019fbae3-46e4-7972-aa43-0159319ca6fa</code>：lane-grant redesign 起点。</li>
+          <li><code>019ff1a9-bfd0-7a31-a5d9-af34269f6025</code> / <code>019ff1eb-49e2-72c2-91f7-6ca2209eee46</code>：Phase 2 discovery workspace 与 data-request draft。</li>
+          <li><code>01a005d7-106d-7833-bdaf-2a8a561898ad</code>：SAFE/TRUST 跨阶段指导原则的业务表达与发布。</li>
+        </ul></div>
+      </details>
+      <details>
+        <summary>事实、推断与尚未证明</summary>
+        <div class="details-body"><ul>
+          <li><strong>事实：</strong>阶段工件、提交、helper、fixtures、授权分类和当前 recovery 状态在 repo/会话中存在。</li>
+          <li><strong>分析性推断：</strong>六阶段划分和“业务风险逼出控制能力”的主线，是对证据的归纳，不是 repo 内既有官方版本号；SAFE/TRUST 是贯穿阶段的指导原则。</li>
+          <li><strong>尚未证明：</strong>生产级完整执行覆盖、客户采用、节省金额、错价下降百分比、商业验证。需要后续 pilot 数据。</li>
+        </ul></div>
+      </details>
+    </section>
+
+    <footer>
+      <strong>继续阅读：</strong><br>
+      <a href="./dhf-best-care-recover.html">BEST / CARE / RECOVER 助记总览</a> ·
+      <a href="./dhf-data-business-value-explainer.html#overview">SAFE → TRUST 业务价值</a> ·
+      <a href="./dhf-examples-three-lenses.html">十案例三种讲法</a> ·
+      <a href="./shipq-dhf-safe-controlled-recovery.html">ShipQ 受控恢复深挖</a> ·
+      <a href="./shipq-dhf-incident-recovery-memory-map.html">RECOVER 事故记忆图</a> ·
+      <a href="./dhf-case-safe-mapping.html">DHF Case × SAFE</a><br>
+      Generated for MCE-20260816-dhf-history · Analysis snapshot 2026-08-16 · No repository or runtime mutation used as evidence.<br>
+      Reading key: FACT = repo/session confirmed · INFERENCE = stage synthesis · UNPROVEN = production/adoption/commercial outcome.
+    </footer>
+  </main>
+</div>
+<script>
+  const links = [...document.querySelectorAll('.toc a')];
+  const targets = links.map(a => document.querySelector(a.getAttribute('href'))).filter(Boolean);
+  const observer = new IntersectionObserver(entries => {
+    entries.forEach(entry => {
+      if (!entry.isIntersecting) return;
+      links.forEach(a => a.classList.toggle('active', a.getAttribute('href') === '#' + entry.target.id));
+    });
+  }, { rootMargin: '-18% 0px -70% 0px' });
+  targets.forEach(target => observer.observe(target));
+</script>
+</body>
+</html>

@@ -10871,6 +10871,26 @@ def test_public_dhf_architecture_status_alignment():
     print("[PASS] public DHF architecture status alignment")
 
 
+def test_shipq_dhf_visual_pages_are_mutually_linked():
+    pages = [
+        "dhf-best-care-recover.html",
+        "dhf-shipq-development-history.html",
+        "dhf-data-business-value-explainer.html",
+        "dhf-examples-three-lenses.html",
+        "shipq-dhf-safe-controlled-recovery.html",
+        "shipq-dhf-incident-recovery-memory-map.html",
+        "dhf-case-safe-mapping.html",
+    ]
+    for page in pages:
+        text = (ROOT / "docs" / page).read_text(encoding="utf-8")
+        require("file://" not in text, f"DHF visual page contains a machine-local link: {page}")
+        for target in pages:
+            if target != page:
+                require(f'href="./{target}' in text, f"DHF visual page missing link: {page} -> {target}")
+
+    print("[PASS] ShipQ DHF visual pages mutually linked")
+
+
 def test_runner_registry_complete():
     registered = [fn.__name__ for fn in TESTS]
     defined = defined_test_names()
@@ -11014,6 +11034,7 @@ TESTS = [
     test_codex_fluent_markdown_metadata_is_inert,
     test_codex_fluent_report_only_contract,
     test_public_dhf_architecture_status_alignment,
+    test_shipq_dhf_visual_pages_are_mutually_linked,
     test_runner_registry_complete,
 ]
 
