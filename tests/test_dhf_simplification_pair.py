@@ -29,18 +29,30 @@ def load_runner():
 
 
 class DhfSimplificationPairTests(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls):
+        runner = load_runner()
+        corpus = json.loads(CORPUS.read_text(encoding="utf-8"))
+        observations = json.loads(OBSERVATIONS.read_text(encoding="utf-8"))
+        cls._candidate_measurements = runner.measure_candidate(corpus, ROOT)
+        cls._recovery_results = runner.run_recoverability_cases(observations, ROOT)
+
     def setUp(self):
         self.runner = load_runner()
         self.corpus = json.loads(CORPUS.read_text(encoding="utf-8"))
         self.observations = json.loads(OBSERVATIONS.read_text(encoding="utf-8"))
 
     def measurements(self):
-        return self.runner.measure_candidate(self.corpus, ROOT)
+        return copy.deepcopy(type(self)._candidate_measurements)
 
     def recovery_results(self):
-        return self.runner.run_recoverability_cases(self.observations, ROOT)
+        return copy.deepcopy(type(self)._recovery_results)
 
-    def compare(self, *, corpus=None, observations=None, measurements=None, recovery_results=None):
+    def compare(self, *, corpus=None, observations=None, measurements=None, recovery_results=None, fresh=False):
+        if not fresh and corpus is None and measurements is None:
+            measurements = self.measurements()
+        if not fresh and observations is None and recovery_results is None:
+            recovery_results = self.recovery_results()
         return self.runner.run_comparison(
             corpus if corpus is not None else self.corpus,
             observations if observations is not None else self.observations,
@@ -636,8 +648,8 @@ class DhfSimplificationPairTests(unittest.TestCase):
         self.assertTrue(any("zero-baseline helpers regression" in error for error in report["errors"]), report)
 
     def test_sanitized_results_are_reproducible(self):
-        first = self.compare()
-        second = self.compare()
+        first = self.compare(fresh=True)
+        second = self.compare(fresh=True)
         first_timestamp = first["runtime_boundary"]["current_runtime_snapshot"].pop("captured_at")
         second_timestamp = second["runtime_boundary"]["current_runtime_snapshot"].pop("captured_at")
         self.assertRegex(first_timestamp, r"Z$")
@@ -665,7 +677,7 @@ class DhfSimplificationPairTests(unittest.TestCase):
             with mock.patch.object(self.runner, "_evidence_module", return_value=evidence), mock.patch.object(
                 evidence, "runtime_boundary_evidence", return_value=promoted
             ):
-                report = self.compare()
+                report = self.compare(fresh=True)
         self.assertTrue(report["pass"], report["errors"])
         self.assertEqual(report["runtime_boundary"]["runtime_state"], "runtime_promoted")
         stored = self.observations["producer_evidence"]["PRODUCER-AC-16-S4-1"]["evidence"]
