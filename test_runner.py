@@ -10888,6 +10888,18 @@ def test_shipq_dhf_visual_pages_are_mutually_linked():
             if target != page:
                 require(f'href="./{target}' in text, f"DHF visual page missing link: {page} -> {target}")
 
+    history = (ROOT / "docs" / "dhf-shipq-development-history.html").read_text(encoding="utf-8")
+    require(history.count('class="safe-focus"') == 6, "each BRIDGE stage must name its SAFE focus")
+    for statement in [
+        "先恢复现场，再明确可续接状态。",
+        "把完成声明变成可复核事实。",
+        "先定义 ShipQ 的业务正确性，再用来源证据验证。",
+        "明确 core、runtime 与 ShipQ adapter 的责任及交接合同。",
+        "按风险决定需要多强的门禁、评审与授权。",
+        "把授权变成不可绕过、可回读、可恢复的执行控制。",
+    ]:
+        require(statement in history, f"BRIDGE SAFE focus missing: {statement}")
+
     print("[PASS] ShipQ DHF visual pages mutually linked")
 
 
