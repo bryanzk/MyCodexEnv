@@ -1,0 +1,4 @@
+interface:
+  display_name: "Podcast Episode Prep"
+  short_description: "Prepare audio, copy, cover art, and a safe episode draft"
+  default_prompt: "Use $podcast-episode-prep to prepare this episode from source media through an unpublished Spotify draft."
