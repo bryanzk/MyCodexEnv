@@ -54,8 +54,7 @@
     {
       "path": "docs/HARNESS_RUNTIME.md",
       "role": "runtime workflow, evidence, permission, checkpoint, and agent-team contract",
-      "audience": ["codex", "human"],
-      "public_nav": ["docs/index.html"]
+      "audience": ["codex", "human"]
     },
     {
       "path": "docs/AGENT_HARNESS_STATUS.md",
@@ -423,6 +422,18 @@
       "public_nav": ["docs/index.html"]
     },
     {
+      "path": "docs/dhf-context-engineering-cn.html",
+      "role": "Chinese guide to the governed DHF context supply chain",
+      "audience": ["human"],
+      "public_nav": ["docs/index-zh.html"]
+    },
+    {
+      "path": "docs/dhf-context-engineering-en.html",
+      "role": "English guide to the governed DHF context supply chain",
+      "audience": ["human"],
+      "public_nav": ["docs/index.html"]
+    },
+    {
       "path": "docs/dhf-protect-seven-components-cn.html",
       "role": "Chinese PROTECT map for the seven WAL-protected DHF runtime promotion targets",
       "audience": ["human"],
@@ -519,20 +530,17 @@
     {
       "path": "docs/project-lifecycle-harness-flow-skills-zh-status-style.html",
       "role": "current status-style skill and helper routing map",
-      "audience": ["human"],
-      "public_nav": ["docs/index-zh.html"]
+      "audience": ["human"]
     },
     {
       "path": "docs/project-lifecycle-harness-flow-skills-en-status-style.html",
       "role": "current English status-style skill and helper routing map",
-      "audience": ["human"],
-      "public_nav": ["docs/index.html"]
+      "audience": ["human"]
     },
     {
       "path": "docs/project-lifecycle-harness-flow-skills-en.html",
       "role": "archived English skill and helper routing map",
-      "audience": ["human"],
-      "public_nav": ["docs/index.html"]
+      "audience": ["human"]
     },
     {
       "path": "codex/skills/codex-fluent/scripts/report_active_sessions.py",

@@ -3134,14 +3134,14 @@ def test_lifecycle_skill_routing_doc_is_discoverable():
                 'href="./index-zh.html"',
                 'href="./"',
                 "From ambiguous requests",
-                "domain and ADR alignment",
-                "Open the English Flow Map",
-                "Learn the framework",
-                "Share or switch language",
-                "For maintainers",
-                "English Flow Map",
-                "Archive",
-                "docs/index-en.html",
+                "right, fresh, authorized context",
+                'data-dhf-chain="simplified"',
+                "Core Context Supply Chain",
+                "Learn the Framework",
+                "Choose by Goal",
+                "Status Boundary",
+                'aria-label="Engineering Resources"',
+                "docs/index.html",
             ],
         ),
         PUBLIC_INDEX_EN_HTML.name: (
@@ -3152,18 +3152,19 @@ def test_lifecycle_skill_routing_doc_is_discoverable():
                 'href="./index-zh.html"',
                 'href="./"',
                 'href="./delivery-harness-beginner-guide-en.html"',
+                'href="./dhf-context-engineering-en.html"',
                 'href="./project-lifecycle-harness-flow-en.html"',
-                'href="./project-lifecycle-harness-flow-skills-en-status-style.html"',
-                'href="./project-lifecycle-harness-flow-skills-en.html"',
+                'href="./dhf-governance-decision-flow-en.html"',
+                'href="./dhf-architecture-status-en.html"',
                 'href="./lifecycle-skill-routing-en.html"',
-                "domain and ADR alignment",
-                "Open the English Flow Map",
-                "Learn the framework",
-                "Share or switch language",
-                "For maintainers",
-                "English Flow Map",
-                "Archive",
-                "docs/index-en.html",
+                "right, fresh, authorized context",
+                'data-dhf-chain="simplified"',
+                "Core Context Supply Chain",
+                "Learn the Framework",
+                "Choose by Goal",
+                "Status Boundary",
+                'aria-label="Engineering Resources"',
+                "docs/index.html",
             ],
         ),
         PUBLIC_INDEX_ZH_HTML.name: (
@@ -3172,14 +3173,14 @@ def test_lifecycle_skill_routing_doc_is_discoverable():
                 'lang="zh-CN"',
                 'href="./index-zh.html"',
                 'href="./"',
-                "先读新手指南",
-                "先理解 DHF",
-                "生命周期流程",
-                "Skill 路由图",
-                "查规范与素材",
-                "英文入口",
+                "正确、最新且获准使用的上下文",
+                'data-dhf-chain="simplified"',
+                "Core Context Supply Chain",
+                "Learn the Framework",
+                "Choose by Goal",
+                "Status Boundary",
+                'aria-label="工程资源"',
                 "docs/index-zh.html",
-                "docs/index.html",
             ],
         ),
     }
@@ -3191,43 +3192,43 @@ def test_lifecycle_skill_routing_doc_is_discoverable():
         PUBLIC_INDEX_HTML.name: (
             public_index_html,
             [
-                "Recommended learning sequence",
+                "Learn the Framework",
                 "Beginner",
-                "Lifecycle Flow",
-                "Skill Routing Map",
-                "Written Spec",
+                "Context Engineering",
+                "Lifecycle",
+                "Governance",
                 'href="./delivery-harness-beginner-guide-en.html"',
+                'href="./dhf-context-engineering-en.html"',
                 'href="./project-lifecycle-harness-flow-en.html"',
-                'href="./project-lifecycle-harness-flow-skills-en-status-style.html"',
-                'href="./lifecycle-skill-routing-en.html"',
+                'href="./dhf-governance-decision-flow-en.html"',
             ],
         ),
         PUBLIC_INDEX_EN_HTML.name: (
             public_index_en_html,
             [
-                "Recommended learning sequence",
+                "Learn the Framework",
                 "Beginner",
-                "Lifecycle Flow",
-                "Skill Routing Map",
-                "Written Spec",
+                "Context Engineering",
+                "Lifecycle",
+                "Governance",
                 'href="./delivery-harness-beginner-guide-en.html"',
+                'href="./dhf-context-engineering-en.html"',
                 'href="./project-lifecycle-harness-flow-en.html"',
-                'href="./project-lifecycle-harness-flow-skills-en-status-style.html"',
-                'href="./lifecycle-skill-routing-en.html"',
+                'href="./dhf-governance-decision-flow-en.html"',
             ],
         ),
         PUBLIC_INDEX_ZH_HTML.name: (
             public_index_zh_html,
             [
-                "推荐学习顺序",
+                "Learn the Framework",
                 "Beginner",
-                "Lifecycle Flow",
-                "Skill Routing Map",
-                "Written Spec",
+                "Context Engineering",
+                "Lifecycle",
+                "Governance",
                 'href="./delivery-harness-beginner-guide-cn.html"',
+                'href="./dhf-context-engineering-cn.html"',
                 'href="./project-lifecycle-harness-flow-cn.html"',
-                'href="./project-lifecycle-harness-flow-skills-zh-status-style.html"',
-                'href="./lifecycle-skill-routing-en.html"',
+                'href="./dhf-governance-decision-flow-cn.html"',
             ],
         ),
     }
@@ -3236,11 +3237,11 @@ def test_lifecycle_skill_routing_doc_is_discoverable():
             require(term in text, f"{filename} missing recommended learning sequence term: {term}")
         require_in_order(
             text,
-            ["Beginner", "Lifecycle Flow", "Skill Routing Map", "Written Spec"],
+            ["Beginner", "Context Engineering", "Lifecycle", "Governance"],
             f"{filename} should show the recommended learning sequence",
         )
     require("Chinese-only" not in public_index_en_html, "English public path should be self-contained, not Chinese-only")
-    english_sequence_section = public_index_en_html.split('aria-label="Recommended learning sequence"', 1)[-1].split('<div class="card-row"', 1)[0]
+    english_sequence_section = public_index_en_html.split('data-dhf-learning-path', 1)[-1].split('</nav>', 1)[0]
     require("delivery-harness-beginner-guide-cn.html" not in english_sequence_section, "English sequence should not point beginner step at Chinese page")
     require("project-lifecycle-harness-flow-cn.html" not in english_sequence_section, "English sequence should not point lifecycle step at Chinese page")
 
@@ -3302,7 +3303,8 @@ def test_lifecycle_skill_routing_doc_is_discoverable():
         LIFECYCLE_SKILLS_HTML.name: skills_html,
     }
     for filename, text in brand_pages.items():
-        require(published_by in text, f"{filename} missing ShipAI.ca publisher statement")
+        expected_publisher = "由 ShipAI.ca 发布为公开 DHF 参考" if filename == PUBLIC_INDEX_ZH_HTML.name else published_by
+        require(expected_publisher in text, f"{filename} missing ShipAI.ca publisher statement")
         require("brand reference" not in text, f"{filename} should not use ambiguous brand reference wording")
 
     current_archive_expectations = {
@@ -10902,6 +10904,332 @@ def test_global_agents_layering_workflow_and_size_contract():
     print("[PASS] global AGENTS layering, workflow, and size contract")
 
 
+def test_public_dhf_information_architecture():
+    english_home_paths = [PUBLIC_INDEX_HTML, PUBLIC_INDEX_EN_HTML]
+    chinese_home_paths = [PUBLIC_INDEX_ZH_HTML]
+    home_paths = english_home_paths + chinese_home_paths
+    context_paths = [
+        ROOT / "docs" / "dhf-context-engineering-en.html",
+        ROOT / "docs" / "dhf-context-engineering-cn.html",
+    ]
+    current_public_paths = [
+        *home_paths,
+        *context_paths,
+        BEGINNER_GUIDE_EN_HTML,
+        BEGINNER_GUIDE_CN_HTML,
+        LIFECYCLE_FLOW_EN_HTML,
+        LIFECYCLE_FLOW_HTML,
+        ROOT / "docs" / "dhf-governance-decision-flow-en.html",
+        ROOT / "docs" / "dhf-governance-decision-flow-cn.html",
+        ROOT / "docs" / "dhf-protect-seven-components-en.html",
+        ROOT / "docs" / "dhf-protect-seven-components-cn.html",
+        ROOT / "docs" / "dhf-architecture-status-en.html",
+        ROOT / "docs" / "dhf-architecture-status-cn.html",
+        LIFECYCLE_SKILLS_EN_STATUS_HTML,
+        LIFECYCLE_SKILLS_ZH_STATUS_HTML,
+        ROOT / "docs" / "dhf-workflow-skills-en.html",
+        ROOT / "docs" / "dhf-workflow-skills-cn.html",
+        ROOT / "docs" / "dhf-for-product-and-field-en.html",
+        ROOT / "docs" / "dhf-for-product-and-field-cn.html",
+        ROOT / "docs" / "dhf-engineering-notes-en.html",
+        ROOT / "docs" / "dhf-engineering-notes-cn.html",
+        LIFECYCLE_SKILL_ROUTING_HTML,
+    ]
+    simplified_steps = [
+        "Trusted Sources",
+        "Session Bearing",
+        "Just-in-time Shaping",
+        "Permission Decision",
+        "Execution Feedback",
+        "Checkpoint / Recovery",
+    ]
+    canonical_steps = [
+        "Trusted Sources",
+        "Session Bearing",
+        "Prompt Shaping",
+        "Context Pressure",
+        "PreTool Guard",
+        "PostTool Evidence",
+        "Checkpoint",
+    ]
+
+    def primary_nav(text: str, filename: str) -> str:
+        match = re.search(r'<nav class="dhf-nav"[^>]*>(.*?)</nav>', text, re.DOTALL)
+        require(match is not None, f"{filename} missing primary navigation")
+        return match.group(1)
+
+    def marked_chain(text: str, kind: str, filename: str) -> str:
+        pattern = rf'<(?P<tag>[a-z][a-z0-9-]*)\b[^>]*data-dhf-chain="{kind}"[^>]*>(?P<body>.*?)</(?P=tag)>'
+        matches = list(re.finditer(pattern, text, re.DOTALL | re.IGNORECASE))
+        require(len(matches) == 1, f"{filename} should contain exactly one {kind} DHF chain")
+        return matches[0].group("body")
+
+    def normalized_home(text: str) -> str:
+        text = re.sub(
+            r'(<link\s+rel="canonical"\s+href=")[^"]+("\s*/?>)',
+            r'\1__CANONICAL__\2',
+            text,
+        )
+        return re.sub(
+            r'(<meta\s+property="og:url"\s+content=")[^"]+("\s*/?>)',
+            r'\1__OG_URL__\2',
+            text,
+        )
+
+    for path in current_public_paths:
+        text = path.read_text(encoding="utf-8")
+        require(
+            text.count('data-dhf-status="2026-08-11"') == 1,
+            f"{path.name} must preserve the canonical DHF status attribute",
+        )
+
+    for path in english_home_paths:
+        text = path.read_text(encoding="utf-8")
+        nav = primary_nav(text, path.name)
+        require_in_order(
+            nav,
+            ["Home", "Beginner", "Context", "Lifecycle", "Governance", "Status"],
+            f"{path.name} compact primary navigation order",
+        )
+        for term in ["Engineering Notes", "Workflow Skills", "Written Spec"]:
+            require(term not in nav, f"{path.name} primary navigation should demote {term}")
+
+    for path in chinese_home_paths:
+        text = path.read_text(encoding="utf-8")
+        nav = primary_nav(text, path.name)
+        require_in_order(
+            nav,
+            ["首页", "新手指南", "上下文工程", "生命周期", "治理判定", "架构状态"],
+            f"{path.name} compact primary navigation order",
+        )
+        for term in ["工程笔记", "工作流 Skills", "文字规范"]:
+            require(term not in nav, f"{path.name} primary navigation should demote {term}")
+
+    for path in home_paths:
+        text = path.read_text(encoding="utf-8")
+        require(text.count("<h2") <= 6, f"{path.name} should contain no more than six H2 sections")
+        require(
+            text.count("data-dhf-primary-cta") == 3,
+            f"{path.name} should contain exactly three primary CTAs",
+        )
+        learning_match = re.search(
+            r'<(?P<tag>[a-z][a-z0-9-]*)\b[^>]*data-dhf-learning-path[^>]*>(?P<body>.*?)</(?P=tag)>',
+            text,
+            re.DOTALL | re.IGNORECASE,
+        )
+        require(learning_match is not None, f"{path.name} missing marked learning path")
+        require_in_order(
+            learning_match.group("body"),
+            ["Beginner", "Context Engineering", "Lifecycle", "Governance"],
+            f"{path.name} learning path order",
+        )
+        chain = marked_chain(text, "simplified", path.name)
+        require_in_order(chain, simplified_steps, f"{path.name} simplified DHF chain order")
+        require("dhf-context-engineering-" in chain, f"{path.name} simplified chain should link to Context Engineering")
+
+    for path in context_paths:
+        text = path.read_text(encoding="utf-8")
+        for term in [
+            "finite box",
+            "Access",
+            "Institutional Knowledge",
+            "Tooling",
+            "Hook",
+            "Skill",
+            "Sub-agent",
+            "MCP",
+            "Memory",
+            "Context",
+            "Checkpoint",
+            "Evidence",
+            'data-capability-state="current"',
+            'data-capability-state="planned"',
+        ]:
+            require(term in text, f"{path.name} missing context engineering concept: {term}")
+        chain = marked_chain(text, "canonical", path.name)
+        require_in_order(chain, canonical_steps, f"{path.name} canonical DHF chain order")
+
+    all_chain_markers: list[tuple[str, str]] = []
+    for path in current_public_paths:
+        text = path.read_text(encoding="utf-8")
+        markers = re.findall(r'data-dhf-chain="([^"]+)"', text)
+        all_chain_markers.extend((path.name, marker) for marker in markers)
+        outside = re.sub(
+            r'<(?P<tag>[a-z][a-z0-9-]*)\b[^>]*data-dhf-chain="(?:simplified|canonical)"[^>]*>.*?</(?P=tag)>',
+            "",
+            text,
+            flags=re.DOTALL | re.IGNORECASE,
+        )
+        require(
+            "data-dhf-chain-step" not in outside,
+            f"{path.name} renders DHF chain steps outside a marked container",
+        )
+    require(
+        all(marker in {"simplified", "canonical"} for _, marker in all_chain_markers),
+        "public pages must not introduce a third DHF chain form",
+    )
+    require(
+        len(all_chain_markers) == 5,
+        "the DHF supply chain should appear only on three home pages and two Context pages",
+    )
+
+    require(
+        normalized_home(PUBLIC_INDEX_HTML.read_text(encoding="utf-8"))
+        == normalized_home(PUBLIC_INDEX_EN_HTML.read_text(encoding="utf-8")),
+        "index.html and index-en.html should differ only in canonical and og:url values",
+    )
+
+    path_expectations = {
+        "delivery-harness-beginner-guide-en.html": [
+            "./dhf-context-engineering-en.html",
+            "./project-lifecycle-harness-flow-en.html",
+        ],
+        "delivery-harness-beginner-guide-cn.html": [
+            "./dhf-context-engineering-cn.html",
+            "./project-lifecycle-harness-flow-cn.html",
+        ],
+        "dhf-context-engineering-en.html": [
+            "./delivery-harness-beginner-guide-en.html",
+            "./project-lifecycle-harness-flow-en.html",
+        ],
+        "dhf-context-engineering-cn.html": [
+            "./delivery-harness-beginner-guide-cn.html",
+            "./project-lifecycle-harness-flow-cn.html",
+        ],
+        "project-lifecycle-harness-flow-en.html": [
+            "./dhf-context-engineering-en.html",
+            "./dhf-governance-decision-flow-en.html",
+        ],
+        "project-lifecycle-harness-flow-cn.html": [
+            "./dhf-context-engineering-cn.html",
+            "./dhf-governance-decision-flow-cn.html",
+        ],
+        "dhf-governance-decision-flow-en.html": [
+            "./project-lifecycle-harness-flow-en.html",
+            "./lifecycle-skill-routing-en.html",
+        ],
+        "dhf-governance-decision-flow-cn.html": [
+            "./project-lifecycle-harness-flow-cn.html",
+            "./lifecycle-skill-routing-en.html",
+        ],
+    }
+    for filename, hrefs in path_expectations.items():
+        text = (ROOT / "docs" / filename).read_text(encoding="utf-8")
+        match = re.search(
+            r'<(?P<tag>[a-z][a-z0-9-]*)\b[^>]*data-dhf-path-links[^>]*>(?P<body>.*?)</(?P=tag)>',
+            text,
+            re.DOTALL | re.IGNORECASE,
+        )
+        require(match is not None, f"{filename} missing marked learning-path links")
+        require_in_order(match.group("body"), hrefs, f"{filename} previous/next learning path")
+    chinese_governance = (ROOT / "docs" / "dhf-governance-decision-flow-cn.html").read_text(encoding="utf-8")
+    require(
+        "技能路由（英文）" in chinese_governance,
+        "Chinese Governance should disclose the English-only Skill Routing destination",
+    )
+
+    english_current_paths = [
+        PUBLIC_INDEX_HTML,
+        PUBLIC_INDEX_EN_HTML,
+        BEGINNER_GUIDE_EN_HTML,
+        context_paths[0],
+        LIFECYCLE_FLOW_EN_HTML,
+        ROOT / "docs" / "dhf-governance-decision-flow-en.html",
+        ROOT / "docs" / "dhf-protect-seven-components-en.html",
+        ROOT / "docs" / "dhf-architecture-status-en.html",
+        LIFECYCLE_SKILLS_EN_STATUS_HTML,
+        ROOT / "docs" / "dhf-workflow-skills-en.html",
+        ROOT / "docs" / "dhf-for-product-and-field-en.html",
+        ROOT / "docs" / "dhf-engineering-notes-en.html",
+        LIFECYCLE_SKILL_ROUTING_HTML,
+    ]
+    chinese_current_paths = [
+        PUBLIC_INDEX_ZH_HTML,
+        BEGINNER_GUIDE_CN_HTML,
+        context_paths[1],
+        LIFECYCLE_FLOW_HTML,
+        ROOT / "docs" / "dhf-governance-decision-flow-cn.html",
+        ROOT / "docs" / "dhf-protect-seven-components-cn.html",
+        ROOT / "docs" / "dhf-architecture-status-cn.html",
+        LIFECYCLE_SKILLS_ZH_STATUS_HTML,
+        ROOT / "docs" / "dhf-workflow-skills-cn.html",
+        ROOT / "docs" / "dhf-for-product-and-field-cn.html",
+        ROOT / "docs" / "dhf-engineering-notes-cn.html",
+    ]
+    current_hrefs = {
+        "index.html": "./",
+        "index-en.html": "./",
+        "index-zh.html": "./index-zh.html",
+        "delivery-harness-beginner-guide-en.html": "./delivery-harness-beginner-guide-en.html",
+        "delivery-harness-beginner-guide-cn.html": "./delivery-harness-beginner-guide-cn.html",
+        "dhf-context-engineering-en.html": "./dhf-context-engineering-en.html",
+        "dhf-context-engineering-cn.html": "./dhf-context-engineering-cn.html",
+        "project-lifecycle-harness-flow-en.html": "./project-lifecycle-harness-flow-en.html",
+        "project-lifecycle-harness-flow-cn.html": "./project-lifecycle-harness-flow-cn.html",
+        "dhf-governance-decision-flow-en.html": "./dhf-governance-decision-flow-en.html",
+        "dhf-governance-decision-flow-cn.html": "./dhf-governance-decision-flow-cn.html",
+        "dhf-architecture-status-en.html": "./dhf-architecture-status-en.html",
+        "dhf-architecture-status-cn.html": "./dhf-architecture-status-cn.html",
+    }
+    language_twins = {
+        "index.html": "./index-zh.html",
+        "index-en.html": "./index-zh.html",
+        "index-zh.html": "./",
+        "delivery-harness-beginner-guide-en.html": "./delivery-harness-beginner-guide-cn.html",
+        "delivery-harness-beginner-guide-cn.html": "./delivery-harness-beginner-guide-en.html",
+        "dhf-context-engineering-en.html": "./dhf-context-engineering-cn.html",
+        "dhf-context-engineering-cn.html": "./dhf-context-engineering-en.html",
+        "project-lifecycle-harness-flow-en.html": "./project-lifecycle-harness-flow-cn.html",
+        "project-lifecycle-harness-flow-cn.html": "./project-lifecycle-harness-flow-en.html",
+        "dhf-governance-decision-flow-en.html": "./dhf-governance-decision-flow-cn.html",
+        "dhf-governance-decision-flow-cn.html": "./dhf-governance-decision-flow-en.html",
+        "dhf-protect-seven-components-en.html": "./dhf-protect-seven-components-cn.html",
+        "dhf-protect-seven-components-cn.html": "./dhf-protect-seven-components-en.html",
+        "dhf-architecture-status-en.html": "./dhf-architecture-status-cn.html",
+        "dhf-architecture-status-cn.html": "./dhf-architecture-status-en.html",
+        "project-lifecycle-harness-flow-skills-en-status-style.html": "./project-lifecycle-harness-flow-skills-zh-status-style.html",
+        "project-lifecycle-harness-flow-skills-zh-status-style.html": "./project-lifecycle-harness-flow-skills-en-status-style.html",
+        "dhf-workflow-skills-en.html": "./dhf-workflow-skills-cn.html",
+        "dhf-workflow-skills-cn.html": "./dhf-workflow-skills-en.html",
+        "dhf-for-product-and-field-en.html": "./dhf-for-product-and-field-cn.html",
+        "dhf-for-product-and-field-cn.html": "./dhf-for-product-and-field-en.html",
+        "dhf-engineering-notes-en.html": "./dhf-engineering-notes-cn.html",
+        "dhf-engineering-notes-cn.html": "./dhf-engineering-notes-en.html",
+        "lifecycle-skill-routing-en.html": "./index-zh.html",
+    }
+
+    for path, labels, demoted in [
+        (path, ["Home", "Beginner", "Context", "Lifecycle", "Governance", "Status"], ["Skill Routing", "Workflow Skills", "PROTECT", "PM &amp; FDE", "Engineering Notes", "Written Spec"])
+        for path in english_current_paths
+    ] + [
+        (path, ["首页", "新手指南", "上下文工程", "生命周期", "治理判定", "架构状态"], ["Skill 路由", "工作流 Skills", "PROTECT", "产品与交付", "工程笔记", "文字规范"])
+        for path in chinese_current_paths
+    ]:
+        text = path.read_text(encoding="utf-8")
+        nav = primary_nav(text, path.name)
+        links_match = re.search(r'<div class="dhf-nav-links"[^>]*>(.*?)</div>', nav, re.DOTALL)
+        require(links_match is not None, f"{path.name} missing compact nav link container")
+        links = links_match.group(1)
+        require_in_order(links, labels, f"{path.name} compact navigation order")
+        require(links.count("<a ") == 6, f"{path.name} compact navigation should contain six content links")
+        for term in demoted:
+            require(term not in links, f"{path.name} primary navigation should demote {term}")
+        expected_current = current_hrefs.get(path.name)
+        expected_count = 1 if expected_current else 0
+        require(nav.count('aria-current="page"') == expected_count, f"{path.name} aria-current count")
+        if expected_current:
+            require(
+                re.search(rf'href="{re.escape(expected_current)}"[^>]*aria-current="page"', links) is not None,
+                f"{path.name} aria-current should identify its primary route",
+            )
+        require(
+            f'href="{language_twins[path.name]}"' in nav,
+            f"{path.name} missing its language destination",
+        )
+
+    print("[PASS] public DHF information architecture")
+
+
 def test_public_dhf_architecture_status_alignment():
     english_pages = [
         "index.html",
@@ -10915,6 +11243,7 @@ def test_public_dhf_architecture_status_alignment():
         "dhf-workflow-skills-en.html",
         "project-lifecycle-harness-flow-skills-en.html",
         "dhf-architecture-status-en.html",
+        "dhf-context-engineering-en.html",
     ]
     chinese_pages = [
         "index-zh.html",
@@ -10926,6 +11255,7 @@ def test_public_dhf_architecture_status_alignment():
         "dhf-workflow-skills-cn.html",
         "project-lifecycle-harness-flow-skills.html",
         "dhf-architecture-status-cn.html",
+        "dhf-context-engineering-cn.html",
     ]
     for filename in english_pages + chinese_pages:
         path = ROOT / "docs" / filename
@@ -10945,6 +11275,8 @@ def test_public_dhf_architecture_status_alignment():
 
     english_status = (ROOT / "docs" / "dhf-architecture-status-en.html").read_text(encoding="utf-8")
     chinese_status = (ROOT / "docs" / "dhf-architecture-status-cn.html").read_text(encoding="utf-8")
+    english_context = (ROOT / "docs" / "dhf-context-engineering-en.html").read_text(encoding="utf-8")
+    chinese_context = (ROOT / "docs" / "dhf-context-engineering-cn.html").read_text(encoding="utf-8")
     for term in [
         "Source available is not runtime active",
         "Local runtime parity: verified 2026-08-10",
@@ -10968,6 +11300,33 @@ def test_public_dhf_architecture_status_alignment():
     ]:
         require(term in chinese_status, f"Chinese DHF status page missing truth boundary: {term}")
 
+    for term in [
+        "Session Bearing",
+        "PreTool Guard",
+        "PostTool Evidence",
+        "Recovery restores facts, not permission",
+        'data-capability-state="current"',
+        'data-capability-state="planned"',
+    ]:
+        require(term in english_context, f"English context engineering page missing contract: {term}")
+    for term in [
+        "Session Bearing",
+        "PreTool Guard",
+        "PostTool Evidence",
+        "恢复事实不等于恢复权限",
+        'data-capability-state="current"',
+        'data-capability-state="planned"',
+    ]:
+        require(term in chinese_context, f"Chinese context engineering page missing contract: {term}")
+    require("dhf-context-engineering-cn.html" in english_context and
+            "dhf-context-engineering-en.html" in chinese_context,
+            "context engineering pages must link to their language twin")
+    for filename in ["index.html", "index-en.html", "delivery-harness-beginner-guide-en.html", "project-lifecycle-harness-flow-en.html", "dhf-engineering-notes-en.html", "dhf-architecture-status-en.html"]:
+        require("./dhf-context-engineering-en.html" in (ROOT / "docs" / filename).read_text(encoding="utf-8"),
+                f"English public page missing context engineering link: {filename}")
+    for filename in ["index-zh.html", "delivery-harness-beginner-guide-cn.html", "project-lifecycle-harness-flow-cn.html", "dhf-engineering-notes-cn.html", "dhf-architecture-status-cn.html"]:
+        require("./dhf-context-engineering-cn.html" in (ROOT / "docs" / filename).read_text(encoding="utf-8"),
+                f"Chinese public page missing context engineering link: {filename}")
     public_markdown = [
         "LIFECYCLE_SKILL_ROUTING.md",
         "HARNESS_RUNTIME.md",
@@ -11177,6 +11536,7 @@ TESTS = [
     test_codex_fluent_markdown_golden,
     test_codex_fluent_markdown_metadata_is_inert,
     test_codex_fluent_report_only_contract,
+    test_public_dhf_information_architecture,
     test_public_dhf_architecture_status_alignment,
     test_shipq_dhf_visual_pages_are_mutually_linked,
     test_runner_registry_complete,

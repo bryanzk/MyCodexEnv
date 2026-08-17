@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en" data-dhf-palette="warm">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="How DHF turns trusted sources, Session Bearing, permission guards, execution evidence, and checkpoints into a governed context supply chain.">
+  <title>DHF Context Engineering: A Governed Context Supply Chain</title>
+  <link rel="canonical" href="https://deliveryharness.com/dhf-context-engineering-en.html">
+  <link rel="alternate" hreflang="en" href="https://deliveryharness.com/dhf-context-engineering-en.html">
+  <link rel="alternate" hreflang="zh-CN" href="https://deliveryharness.com/dhf-context-engineering-cn.html">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,650;9..144,760&family=IBM+Plex+Mono:wght@400;500;600&family=Atkinson+Hyperlegible:wght@400;700&display=swap" rel="stylesheet">
+  <style>
+    :root { --font-body: 'Atkinson Hyperlegible', Verdana, sans-serif; --font-display: 'Fraunces', Georgia, serif; --font-mono: 'IBM Plex Mono', monospace; --bg: #f7f4ec; --surface: #fffdf8; --surface2: #ebe6da; --border: rgba(51,42,33,.14); --text: #231f1a; --text-dim: #665f55; --green: #147a62; --green-dim: rgba(20,122,98,.11); --amber: #a15f22; --amber-dim: rgba(161,95,34,.12); --rose: #a9475b; --rose-dim: rgba(169,71,91,.10); --blue: #2f6f92; --blue-dim: rgba(47,111,146,.10); --shadow: 0 18px 44px rgba(51,42,33,.10), 0 2px 10px rgba(51,42,33,.06); }
+    * { box-sizing: border-box; }
+    body { margin: 0; min-height: 100vh; color: var(--text); font-family: var(--font-body); background: var(--bg); overflow-wrap: break-word; }
+    .wrap { max-width: 1180px; margin: 0 auto; display: grid; gap: 24px; }
+    .wrap > * { min-width: 0; }
+    .hero { min-height: 390px; display: grid; align-content: center; padding: clamp(28px,5vw,58px); background: color-mix(in srgb,var(--surface) 88%,var(--green) 12%); border: 1px solid color-mix(in srgb,var(--border) 70%,var(--green) 30%); border-radius: 22px; box-shadow: var(--shadow); }
+    .eyebrow,.label,.tag,.meta { font-family: var(--font-mono); letter-spacing: .1em; text-transform: uppercase; }
+    .eyebrow { margin-bottom: 18px; color: var(--green); font-size: 13px; font-weight: 600; }
+    h1 { max-width: 980px; margin: 0; font-family: var(--font-display); font-size: clamp(38px,5.4vw,70px); line-height: .98; }
+    .lead { max-width: 900px; margin: 24px 0 0; color: var(--text-dim); font-size: clamp(18px,2.2vw,24px); line-height: 1.55; }
+    .strip { display: flex; flex-wrap: wrap; gap: 10px; padding: 14px; background: color-mix(in srgb,var(--surface) 76%,transparent); border: 1px solid var(--border); border-radius: 16px; }
+    .tag { display: inline-flex; align-items: center; min-height: 34px; padding: 7px 12px; color: var(--green); background: var(--green-dim); border: 1px solid color-mix(in srgb,var(--green) 24%,transparent); border-radius: 999px; font-size: 11px; text-decoration: none; }
+    .section-block { display: grid; gap: 16px; padding-top: 6px; }
+    .section-heading { display: flex; justify-content: space-between; align-items: end; gap: 20px; padding-top: 20px; border-top: 1px solid var(--border); }
+    .section-heading h2 { margin: 0; font-family: var(--font-display); font-size: clamp(30px,3.4vw,46px); line-height: 1; }
+    .section-heading p { max-width: 580px; margin: 0; color: var(--text-dim); line-height: 1.55; }
+    .label { margin-bottom: 10px; color: var(--amber); font-size: 11px; font-weight: 600; }
+    .card-grid { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 16px; }
+    .card-grid.four { grid-template-columns: repeat(4,minmax(0,1fr)); }
+    .card { min-width: 0; padding: 22px; background: var(--surface); border: 1px solid var(--border); border-radius: 18px; box-shadow: 0 8px 26px rgba(51,42,33,.06); }
+    .card h3 { margin: 0 0 10px; font-family: var(--font-display); font-size: 25px; line-height: 1.08; }
+    .card p,.card li { color: var(--text-dim); font-size: 15.5px; line-height: 1.58; }
+    .card p { margin: 0; }
+    .card ul { margin: 0; padding-left: 20px; }
+    .supply-chain { display: grid; grid-template-columns: repeat(7,minmax(120px,1fr)); gap: 10px; padding: 0; list-style: none; }
+    .supply-chain li { position: relative; min-width: 0; padding: 18px 14px; background: var(--surface); border: 1px solid var(--border); border-radius: 14px; }
+    .supply-chain li:not(:last-child)::after { content: "→"; position: absolute; right: -10px; top: 50%; z-index: 2; color: var(--green); font-weight: 700; transform: translate(50%,-50%); }
+    .supply-chain strong { display: block; margin-bottom: 8px; font-size: 15px; }
+    .supply-chain span { color: var(--text-dim); font-size: 13px; line-height: 1.4; }
+    .table-wrap { overflow-x: auto; background: var(--surface); border: 1px solid var(--border); border-radius: 18px; }
+    table { width: 100%; border-collapse: collapse; }
+    th,td { padding: 14px 16px; text-align: left; vertical-align: top; border-bottom: 1px solid var(--border); line-height: 1.5; }
+    th { color: var(--green); font-family: var(--font-mono); font-size: 12px; letter-spacing: .06em; text-transform: uppercase; }
+    tr:last-child td { border-bottom: 0; }
+    .primitive-table { min-width: 760px; }
+    code { font-family: var(--font-mono); font-size: .9em; }
+    .callout { padding: 20px 24px; background: color-mix(in srgb,var(--surface) 78%,var(--blue) 22%); border: 1px solid color-mix(in srgb,var(--border) 65%,var(--blue) 35%); border-radius: 16px; line-height: 1.6; }
+    [data-capability-state] { border-width: 2px; }
+    [data-capability-state="current"] { border-color: color-mix(in srgb,var(--green) 55%,var(--border)); }
+    [data-capability-state="planned"] { border-style: dashed; border-color: color-mix(in srgb,var(--amber) 60%,var(--border)); }
+    .state { display: inline-block; margin-bottom: 12px; padding: 5px 8px; border-radius: 999px; font: 600 10px/1 var(--font-mono); letter-spacing: .08em; text-transform: uppercase; }
+    .state.current { color: var(--green); background: var(--green-dim); }
+    .state.planned { color: var(--amber); background: var(--amber-dim); }
+    .footer { display: flex; justify-content: space-between; gap: 16px; padding-top: 18px; color: var(--text-dim); border-top: 1px solid var(--border); font: 12px/1.5 var(--font-mono); }
+    .footer a { color: var(--green); }
+    @media (max-width: 960px) { .supply-chain { grid-template-columns: 1fr; } .supply-chain li:not(:last-child)::after { content: "↓"; right: 50%; top: auto; bottom: -11px; transform: translate(50%,50%); } .card-grid.four { grid-template-columns: repeat(2,minmax(0,1fr)); } }
+    @media (max-width: 760px) { .hero { min-height: 0; } .card-grid,.card-grid.four { grid-template-columns: 1fr; } .section-heading,.footer { align-items: start; flex-direction: column; } }
+  </style>
+  <link rel="stylesheet" href="./dhf-site-status.css?v=20260812a">
+</head>
+<body>
+  <a class="dhf-skip" href="#dhf-main">Skip to content</a>
+  <nav class="dhf-nav" aria-label="Site navigation">
+    <a class="dhf-nav-home" href="./">DHF</a>
+    <div class="dhf-nav-links">
+        <a href="./">Home</a>
+        <a href="./delivery-harness-beginner-guide-en.html">Beginner</a>
+        <a href="./dhf-context-engineering-en.html" aria-current="page">Context</a>
+        <a href="./project-lifecycle-harness-flow-en.html">Lifecycle</a>
+        <a href="./dhf-governance-decision-flow-en.html">Governance</a>
+        <a href="./dhf-architecture-status-en.html">Status</a>
+    </div>
+    <a class="dhf-nav-lang" href="./dhf-context-engineering-cn.html" lang="zh-CN" hreflang="zh-CN">中文</a>
+  </nav>
+  <main id="dhf-main" class="wrap dhf-has-toc">
+    <nav class="dhf-toc" aria-label="On this page"><div class="dhf-toc-title">On this page</div><a href="#finite-box">Finite box</a><a href="#inputs">Three inputs</a><a href="#overview">Supply chain</a><a href="#primitives">Primitives</a><a href="#memory">Memory boundary</a><a href="#boundaries">Capabilities</a></nav>
+    <div class="dhf-col">
+      <aside class="dhf-status-bar" data-dhf-status="2026-08-11" aria-label="Current DHF status"><strong>Architecture status · 2026-08-11</strong><span>This page explains the design; source, runtime, publication, and independent-core status remain separate.</span><a href="./dhf-architecture-status-en.html">Open current status</a></aside>
+      <section class="hero"><div class="eyebrow">DHF / Context Engineering</div><h1>Build a governed<br>context supply chain.</h1><p class="lead">Agents often fail not because the model is incapable, but because it uses the wrong, stale, or unauthorized context at the wrong time. DHF does not try to make an agent know everything. It supplies the smallest trustworthy state the current work needs—and makes clear what that state permits.</p></section>
+      <nav class="strip" data-dhf-path-links aria-label="Learning path"><a class="tag" href="./delivery-harness-beginner-guide-en.html">Previous: Beginner</a><a class="tag" href="./project-lifecycle-harness-flow-en.html">Next: Lifecycle</a><a class="tag" href="./dhf-architecture-status-en.html">Current status</a><a class="tag" href="./dhf-context-engineering-cn.html" hreflang="zh-CN">中文</a></nav>
+
+      <section id="finite-box" class="section-block"><div class="section-heading"><div><div class="label">Chapter 1 · finite box</div><h2>Context is a finite workspace</h2></div><p>Every instruction loaded up front consumes room the task could use for reasoning, evidence, and decisions.</p></div>
+        <div class="card-grid"><div class="card"><h3>Capacity is finite</h3><p>A longer prompt does not create a larger working space. Upfront content occupies the same finite box the active task needs.</p></div><div class="card"><h3>Relevance protects quality</h3><p>Irrelevant material weakens retrieval and decision quality, even when every individual fact is correct.</p></div></div>
+        <div class="callout"><strong>Governing principle:</strong> do not pay context cost for information the current task does not need.</div>
+      </section>
+
+      <section id="inputs" class="section-block"><div class="section-heading"><div><div class="label">Chapter 2 · required inputs</div><h2>Three inputs make context useful</h2></div><p>Useful context combines reach, organization-specific knowledge, and a just-in-time delivery mechanism.</p></div>
+        <div class="card-grid"><div class="card"><h3>Access</h3><p>What repositories, systems, files, and services the agent can reach—and where access must stop.</p></div><div class="card"><h3>Institutional Knowledge</h3><p>What the organization knows that the model does not naturally know: terminology, decisions, ownership, and operating constraints.</p></div><div class="card"><h3>Tooling</h3><p>How the right information enters at the right event or task stage instead of occupying every prompt.</p></div></div>
+      </section>
+
+      <section id="overview" class="section-block"><div class="section-heading"><div><div class="label">Chapter 3 · governed supply chain</div><h2>Information enters action, then returns as fact</h2></div><p>Select trustworthy facts, recover position, shape by need, observe pressure, constrain action, and preserve actual results.</p></div>
+        <ol class="supply-chain" data-dhf-chain="canonical" aria-label="Canonical DHF context supply chain"><li data-dhf-chain-step><strong>Trusted Sources</strong><span>Rules, maps, ADRs, source, and state</span></li><li data-dhf-chain-step><strong>Session Bearing</strong><span>Recover current position</span></li><li data-dhf-chain-step><strong>Prompt Shaping</strong><span>Load by stage and risk</span></li><li data-dhf-chain-step><strong>Context Pressure</strong><span>Observe compaction and capacity</span></li><li data-dhf-chain-step><strong>PreTool Guard</strong><span>Turn context into permission</span></li><li data-dhf-chain-step><strong>PostTool Evidence</strong><span>Record what happened</span></li><li data-dhf-chain-step><strong>Checkpoint</strong><span>Form the next context</span></li></ol>
+        <div class="callout"><strong>Core principle:</strong> chat history can provide leads, but it cannot establish facts by itself. Recovered history also cannot grant new execution authority.</div>
+      </section>
+
+      <section id="primitives" class="section-block"><div class="section-heading"><div><div class="label">Chapter 4 · primitive selection</div><h2>Use the smallest primitive that delivers context on time</h2></div><p>Choose by trigger and context cost, not by novelty.</p></div>
+        <div class="table-wrap"><table class="primitive-table"><thead><tr><th>Primitive</th><th>Use when</th><th>Context cost</th><th>DHF role</th></tr></thead><tbody><tr><td><strong>Hook</strong></td><td>An event should decide whether information is relevant</td><td>Pay only when relevant</td><td>Guard, Evidence, Bearing</td></tr><tr><td><strong>Skill</strong></td><td>The task needs complete specialist guidance</td><td>Description stays resident; body loads on demand</td><td>Specialist workflow</td></tr><tr><td><strong>Sub-agent</strong></td><td>Work needs an independent reasoning window</td><td>Parent receives a compact result</td><td>Isolated research or review</td></tr><tr><td><strong>MCP/Tool</strong></td><td>Work needs an external capability</td><td>Names and schemas consume context</td><td>Permission-governed execution</td></tr></tbody></table></div>
+        <div class="callout"><strong>Selection order:</strong> Existing CLI or script → Skill; event-driven feedback → Hook; independent reasoning → Sub-agent; cross-client external capability → MCP.</div>
+      </section>
+
+      <section id="memory" class="section-block"><div class="section-heading"><div><div class="label">Chapter 5 · memory boundary</div><h2>Memory is not governed context</h2></div><p>Historical clues become useful only after source, timing, freshness, and permission select them for the current task.</p></div>
+        <div class="card-grid"><div class="card"><h3>Memory</h3><p>Model-curated historical clues. Useful for search, but not an authority surface.</p></div><div class="card"><h3>Context</h3><p>Task-relevant information selected by source, timing, freshness, and permission.</p></div><div class="card"><h3>Checkpoint</h3><p>Durable, recoverable task state with boundaries and a next safe action.</p></div><div class="card"><h3>Evidence</h3><p>The recorded outcome of actual execution, with enough detail to verify the claim.</p></div></div>
+      </section>
+
+      <section id="sources" class="section-block"><div class="section-heading"><div><div class="label">01 · Establish trusted input</div><h2>Define what counts as context</h2></div><p>Information with different stability, purpose, and trust levels should not be mixed into one ever-growing prompt.</p></div>
+        <div class="table-wrap"><table><thead><tr><th>Context type</th><th>Primary carrier</th><th>Question answered</th></tr></thead><tbody><tr><td>Stable rules</td><td><code>AGENTS.md</code></td><td>What must the agent obey?</td></tr><tr><td>Repository map</td><td><code>docs/repo-index.md</code></td><td>Where should facts be found?</td></tr><tr><td>Business language</td><td><code>CONTEXT.md</code></td><td>What do shared terms mean?</td></tr><tr><td>Current state</td><td>Harness state</td><td>Where is the task now?</td></tr><tr><td>Decision basis</td><td>Requirements, ADRs, contracts</td><td>Why was this path chosen?</td></tr><tr><td>Real implementation</td><td>Git, source, tests</td><td>What exists now?</td></tr><tr><td>Execution evidence</td><td>Local evidence</td><td>What actually happened?</td></tr><tr><td>Chat history</td><td>Lowest-priority hint</td><td>Where should we look next?</td></tr></tbody></table></div>
+        <div class="card-grid"><div class="card"><h3>Order the sources</h3><p>Repository rules → low-token map → terminology contract → current state → decision contracts → source and Git → local evidence → chat history.</p></div><div class="card"><h3>Preserve conflicts</h3><p>When durable sources disagree, do not pick the plausible one. Conflicts affecting architecture, data, security, or release enter an ADR or architecture checkpoint.</p></div></div>
+      </section>
+
+      <section id="bearing" class="section-block"><div class="section-heading"><div><div class="label">02 · Recover position</div><h2>Session Bearing is a business navigation card</h2></div><p>After interruption, the dangerous loss is not a paragraph. It is the loss of stage, boundary, ownership, and next-step orientation.</p></div>
+        <div class="card-grid four"><div class="card"><h3><code>phase</code></h3><p>Research, planning, development, verification, release, or handoff.</p></div><div class="card"><h3><code>next_safe_task</code></h3><p>The next action that does not require guessing.</p></div><div class="card"><h3><code>boundary_verdict</code></h3><p>Whether current state and evidence are sufficient to continue.</p></div><div class="card"><h3><code>dirty_status</code></h3><p>Whether the workspace contains unowned or unverified changes.</p></div></div>
+        <div class="callout"><strong>Recovery restores facts, not permission.</strong> Recovery may say where the prior session stopped. It cannot authorize remote access, production mutation, publishing, protected-directory writes, or retrying a failed external action.</div>
+        <div class="card-grid"><div class="card"><h3>Do not guess missing state</h3><p>Missing state, damaged format, unknown verification time, or indeterminate workspace state returns <code>unknown</code>. When authority is required, unknown is unsafe.</p></div><div class="card"><h3>Small and trustworthy</h3><p>Inject only the current phase, confirmed facts, blockers, and next safe action—not the full conversation or state log.</p></div></div>
+      </section>
+
+      <section id="permission" class="section-block"><div class="section-heading"><div><div class="label">03 · Constrain action</div><h2>Context is a control input, not just a reference</h2></div><p>Task phase, execution lane, scope, risk, and authorization jointly decide whether a tool call is allowed or blocked.</p></div>
+        <div class="card-grid"><div class="card"><h3>Prompt Shaping</h3><p><code>light</code> keeps simple work lean; <code>standard</code> adds normal recovery and verification; <code>governed</code> covers privacy, architecture conflict, remote, or destructive work.</p></div><div class="card"><h3>Context Pressure</h3><p>Observe compaction the host actually reports. If token data is unavailable, report unknown rather than inventing remaining capacity.</p></div><div class="card"><h3>PreTool Guard</h3><p>Before execution, read phase, lane, scope, risk, and authorization, then turn context into executable permission.</p></div><div class="card"><h3>PostTool Evidence</h3><p>After execution, record the actual result and distinguish decision evidence from routine evidence.</p></div></div>
+      </section>
+
+      <section id="continuity" class="section-block"><div class="section-heading"><div><div class="label">04 · Form the next context</div><h2>Actual results must leave the chat</h2></div><p>Verified stage, change, blocker, and next safe task become a checkpoint. The next session recovers from durable fact, not old conversation.</p></div>
+        <div class="card-grid"><div class="card"><h3>Checkpoint</h3><p>Preserve phase, verification evidence, remaining risk, and next safe action. A checkpoint is recovery input, not another name for a commit.</p></div><div class="card"><h3>Multi-agent isolation</h3><p>Each agent needs explicit ownership, scope, and evidence boundaries. A shared repository does not imply shared write authority.</p></div><div class="card"><h3>Freshness</h3><p>A new commit, relevant source change, or external-state change can expire evidence. Historical green cannot support a new completion claim.</p></div><div class="card"><h3>Closed loop</h3><p>Sources → Bearing → Guard → execution → Evidence → Checkpoint → new Bearing.</p></div></div>
+      </section>
+
+      <section id="boundaries" class="section-block"><div class="section-heading"><div><div class="label">Chapter 6 · capability boundary</div><h2>Current capability and roadmap stay separate</h2></div><p>This page explains the design; it does not prove current source, runtime, or production state. Use the status page and fresh verification for that.</p></div>
+        <div class="card-grid"><div class="card" data-capability-state="current"><span class="state current">Current</span><h3>Current supply chain</h3><ul><li>Source ordering</li><li>Session Bearing</li><li>Prompt Shaping</li><li>PreTool Guard</li><li>PostTool Evidence</li><li>Checkpoint / Recovery</li></ul><p class="meta">Activation status requires separate verification</p></div><div class="card" data-capability-state="planned"><span class="state planned">Planned</span><h3>Next-stage capabilities</h3><ul><li>Tighter immediate feedback loops</li><li>Context budgets</li><li>Access catalogs</li><li>Fleet and attention views</li></ul><p class="meta">Roadmap is not an implementation claim</p></div></div>
+        <div class="callout"><strong>Publication boundary:</strong> public documentation does not prove local runtime activation; implemented source does not prove production enforcement; HTTP 200 does not prove customer adoption or commercial validation.</div>
+      </section>
+
+      <footer class="footer"><span>Context Engineering: <strong>docs/dhf-context-engineering-en.html</strong></span><span><a href="./dhf-context-engineering-cn.html" hreflang="zh-CN">中文版本</a> · <a href="./dhf-architecture-status-en.html">Current architecture status</a></span></footer>
+    </div>
+  </main>
+</body>
+</html>

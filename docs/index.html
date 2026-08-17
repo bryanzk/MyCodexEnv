@@ -252,6 +252,9 @@
       gap: 12px;
     }
 
+    .chain-grid { grid-template-columns: repeat(6, minmax(0, 1fr)); padding: 0; list-style: none; }
+    .chain-grid a { color: inherit; text-decoration: none; }
+
     .sequence-step {
       min-width: 0;
       padding: 16px;
@@ -348,19 +351,15 @@
 </head>
 <body>
   <a class="dhf-skip" href="#dhf-main">Skip to content</a>
-  <nav class="dhf-nav" aria-label="Site">
-    <a class="dhf-nav-home" href="./" aria-current="page">DHF</a>
+  <nav class="dhf-nav" aria-label="Site navigation">
+    <a class="dhf-nav-home" href="./">DHF</a>
     <div class="dhf-nav-links">
         <a href="./" aria-current="page">Home</a>
         <a href="./delivery-harness-beginner-guide-en.html">Beginner</a>
-        <a href="./project-lifecycle-harness-flow-en.html">Lifecycle Flow</a>
-        <a href="./project-lifecycle-harness-flow-skills-en-status-style.html">Skill Routing</a>
+        <a href="./dhf-context-engineering-en.html">Context</a>
+        <a href="./project-lifecycle-harness-flow-en.html">Lifecycle</a>
         <a href="./dhf-governance-decision-flow-en.html">Governance</a>
-        <a href="./dhf-protect-seven-components-en.html">PROTECT</a>
-        <a href="./dhf-workflow-skills-en.html">Workflow Skills</a>
-        <a href="./dhf-for-product-and-field-en.html">PM &amp; FDE</a>
-        <a href="./dhf-engineering-notes-en.html">Engineering Notes</a>
-        <a href="./lifecycle-skill-routing-en.html">Written Spec</a>
+        <a href="./dhf-architecture-status-en.html">Status</a>
     </div>
     <a class="dhf-nav-lang" href="./index-zh.html" lang="zh-CN" hreflang="zh-CN">中文</a>
   </nav>
@@ -373,318 +372,78 @@
     <section class="hero" style="--i:0">
       <div class="eyebrow">Delivery Harness Framework / DHF Public Guide</div>
       <h1>From ambiguous requests<br>to verifiable delivery.</h1>
-      <p class="lead">These pages explain how Delivery Harness Framework (DHF) turns agentic engineering work into fact recovery, domain and ADR alignment, lifecycle routing, verification evidence, and recoverable handoff. Prompt instructions do not make an agent reliable. DHF is the enforcement layer underneath them: a phase-scoped capability model, hooks that return a real block, and an evidence trail for every guarded decision.</p>
+      <p class="lead">DHF gives agents the right, fresh, authorized context at the right delivery stage, then closes the work with checkable evidence.</p>
       <div class="hero-actions" aria-label="Primary actions">
-        <a class="primary-link" href="./project-lifecycle-harness-flow-en.html">Open the English Flow Map</a>
-        <a class="secondary-link" href="./lifecycle-skill-routing-en.html">Read the Written Spec</a>
+        <a class="primary-link" data-dhf-primary-cta href="./delivery-harness-beginner-guide-en.html">Read the Beginner Guide</a>
+        <a class="secondary-link" data-dhf-primary-cta href="./dhf-context-engineering-en.html">Understand Context Engineering</a>
+        <a class="secondary-link" data-dhf-primary-cta href="./dhf-architecture-status-en.html">Check Current Status</a>
       </div>
     </section>
 
-    <section class="audience-strip" aria-label="Choose a perspective" style="--i:1">
-      <a class="audience-path" href="./dhf-for-product-and-field-en.html"><strong>Product perspective</strong><span>See how delivery guarantees make scope, risk, and completion checkable.</span></a>
-      <div class="audience-path"><strong>Field engineering</strong><span>Start with deployment guarantees, then confirm the current source and runtime boundary.</span><div class="path-links"><a href="./dhf-for-product-and-field-en.html">Field guide</a><a href="./dhf-architecture-status-en.html">Current status</a></div></div>
-      <a class="audience-path" href="./dhf-engineering-notes-en.html"><strong>Engineering depth</strong><span>Study compaction governance, version transitions, and executable policy text.</span></a>
-    </section>
-
-    <nav class="strip" aria-label="Quick links" style="--i:1">
-      <a class="tag" href="./index-zh.html" hreflang="zh-CN">Chinese landing</a>
-      <a class="tag" href="./delivery-harness-beginner-guide-en.html">Beginner</a>
-      <a class="tag" href="./project-lifecycle-harness-flow-en.html">Lifecycle Flow</a>
-      <a class="tag" href="./project-lifecycle-harness-flow-skills-en-status-style.html">Skill routing map</a>
-      <a class="tag" href="./dhf-workflow-skills-en.html">Workflow skills</a>
-      <a class="tag" href="./dhf-for-product-and-field-en.html">For PM &amp; FDE</a>
-      <a class="tag" href="./dhf-governance-decision-flow-en.html">Governance decision flow</a>
-      <a class="tag" href="#reliability-heading">Agent reliability</a>
-      <a class="tag" href="./lifecycle-skill-routing-en.html">Written spec</a>
-    </nav>
-
-    <section class="section-block" aria-labelledby="latest-heading" style="--i:2">
+    <section class="section-block" aria-labelledby="chain-heading" style="--i:1">
       <div class="section-heading">
-        <div>
-          <div class="label">Current Routing Contract</div>
-          <h2 id="latest-heading">DHF routes decisions before work starts</h2>
-        </div>
-        <p>The public guide now reflects the current skill contract: recover state, classify execution lane, resolve architecture conflicts, choose the specialist route, and finish with fresh evidence.</p>
+        <div><div class="label">Core Context Supply Chain</div><h2 id="chain-heading">Give information only when the work needs it</h2></div>
+        <p>The homepage keeps one simplified model. Context Engineering owns the canonical explanation and the fixed mapping.</p>
       </div>
-      <div class="card-row three">
-        <div class="card">
-          <div>
-            <div class="label">Lane Gate</div>
-            <h2>Local, demo, or production</h2>
-            <p>DHF separates local development, operator live demo work, and customer or production paths so external systems, secrets, deploys, and customer data stay approval-gated.</p>
-          </div>
-          <div class="meta">execution lane first</div>
-        </div>
-        <div class="card">
-          <div>
-            <div class="label">Alignment Gate</div>
-            <h2>Architecture checkpoint</h2>
-            <p>When durable sources disagree, DHF captures a decision-focused checkpoint, recuts vertical slices around outcomes, and validates agent-team write sets before dispatch.</p>
-          </div>
-          <div class="meta">decision surface before edits</div>
-        </div>
-        <div class="card">
-          <div>
-            <div class="label">Review Boundary</div>
-            <h2>Committee loops are explicit</h2>
-            <p>Ordinary review, QA, security, and design routes stay specialized. Committee loops run only when the user asks for reviewers, a revision worker, and a target score.</p>
-          </div>
-          <div class="meta">committee-review-loop</div>
-        </div>
+      <ol class="sequence chain-grid" data-dhf-chain="simplified" aria-label="Simplified DHF context supply chain">
+        <li class="sequence-step" data-dhf-chain-step><a href="./dhf-context-engineering-en.html"><strong>Trusted Sources</strong><span>Start from durable, attributable facts.</span></a></li>
+        <li class="sequence-step" data-dhf-chain-step><a href="./dhf-context-engineering-en.html"><strong>Session Bearing</strong><span>Recover stage, ownership, and the next safe task.</span></a></li>
+        <li class="sequence-step" data-dhf-chain-step><a href="./dhf-context-engineering-en.html"><strong>Just-in-time Shaping</strong><span>Load only what the current risk and stage require.</span></a></li>
+        <li class="sequence-step" data-dhf-chain-step><a href="./dhf-context-engineering-en.html"><strong>Permission Decision</strong><span>Turn phase, scope, and authority into allow or block.</span></a></li>
+        <li class="sequence-step" data-dhf-chain-step><a href="./dhf-context-engineering-en.html"><strong>Execution Feedback</strong><span>Record what actually happened.</span></a></li>
+        <li class="sequence-step" data-dhf-chain-step><a href="./dhf-context-engineering-en.html"><strong>Checkpoint / Recovery</strong><span>Preserve a trustworthy restart point.</span></a></li>
+      </ol>
+    </section>
+
+    <section class="section-block" aria-labelledby="learn-heading" style="--i:2">
+      <div class="section-heading">
+        <div><div class="label">Learn the Framework</div><h2 id="learn-heading">Follow the system in four steps</h2></div>
+        <p>Start with purpose, then context, lifecycle timing, and permission.</p>
+      </div>
+      <nav class="sequence" data-dhf-learning-path aria-label="Recommended learning path">
+        <a class="sequence-step" href="./delivery-harness-beginner-guide-en.html"><div class="label">01</div><strong>Beginner</strong><span>Why DHF exists and what verifiable delivery means.</span></a>
+        <a class="sequence-step" href="./dhf-context-engineering-en.html"><div class="label">02</div><strong>Context Engineering</strong><span>What information enters and how it stays governed.</span></a>
+        <a class="sequence-step" href="./project-lifecycle-harness-flow-en.html"><div class="label">03</div><strong>Lifecycle</strong><span>When information enters the delivery flow.</span></a>
+        <a class="sequence-step" href="./dhf-governance-decision-flow-en.html"><div class="label">04</div><strong>Governance</strong><span>What actions the information permits.</span></a>
+      </nav>
+    </section>
+
+    <section class="section-block" aria-labelledby="goals-heading" style="--i:3">
+      <div class="section-heading">
+        <div><div class="label">Choose by Goal</div><h2 id="goals-heading">Take the shortest useful path</h2></div>
+        <p>Each path contains only the pages needed for that goal.</p>
+      </div>
+      <div class="audience-strip">
+        <div class="audience-path"><strong>I am learning DHF for the first time</strong><span>Understand the purpose and conceptual model.</span><div class="path-links"><a href="./delivery-harness-beginner-guide-en.html">Beginner</a><a href="./dhf-context-engineering-en.html">Context</a><a href="./project-lifecycle-harness-flow-en.html">Lifecycle</a></div></div>
+        <div class="audience-path"><strong>I am integrating DHF into an engineering workflow</strong><span>Follow the lifecycle, permission rules, and operational owner.</span><div class="path-links"><a href="./project-lifecycle-harness-flow-en.html">Lifecycle</a><a href="./dhf-governance-decision-flow-en.html">Governance</a><a href="./lifecycle-skill-routing-en.html">Skill Routing</a></div></div>
+        <div class="audience-path"><strong>I am checking implementation status and evidence</strong><span>Keep source, runtime, publication, and enforcement separate.</span><div class="path-links"><a href="./dhf-architecture-status-en.html">Architecture Status</a><a href="./dhf-protect-seven-components-en.html">PROTECT</a><a href="./dhf-engineering-notes-en.html">Engineering Notes</a></div></div>
       </div>
     </section>
 
-    <section class="section-block" aria-labelledby="governance-heading" style="--i:3">
+    <section class="section-block" aria-labelledby="status-resources-heading" style="--i:4">
       <div class="section-heading">
-        <div>
-          <div class="label">Runtime Governance · 2026-08-11</div>
-          <h2 id="governance-heading">Compaction governance and rollback prevention</h2>
-        </div>
-        <p>The harness now treats context compaction and runtime deployment as governed control flow: host-observed signals, idempotent successor transitions, and a source transition guard that refuses to let an older source overwrite a newer runtime.</p>
-      </div>
-      <div class="card-row three">
-        <a class="card" href="./dhf-engineering-notes-en.html">
-          <div>
-            <div class="label">Compaction Governance</div>
-            <h2>Second compaction is control flow</h2>
-            <p>A host-observed compaction probe with incremental JSONL scanning, an append-only transition store for exactly-one successor tasks, a freshness-aware recovery boundary verdict, and a session bearing hook that injects phase and next safe task at session start.</p>
-          </div>
-          <div class="meta">probe / transition store / boundary / bearing</div>
-        </a>
-        <a class="card" href="./dhf-engineering-notes-en.html">
-          <div>
-            <div class="label">Rollback Prevention v0</div>
-            <h2>Old sources cannot overwrite new runtimes</h2>
-            <p>Runtime sync now checks a source transition matrix against a schema-v2 manifest: equal is a no-op, forward requires the pushed remote tip, and stale, diverged, or downgrade transitions fail closed. Deleted files are retained in backups, and the daily refresh is report-only with a quarantined-definition denylist.</p>
-          </div>
-          <div class="meta">transition matrix / manifest v2 / report-only refresh</div>
-        </a>
-        <a class="card" href="./dhf-engineering-notes-en.html">
-          <div>
-            <div class="label">Enforceable Guardrails</div>
-            <h2>Guards that actually block</h2>
-            <p>The live PreToolUse guard emits the enforceable block shape proven by isolated probes, guard decisions carry risk tiers, acceptance criteria live in a tamper-evident ledger, and behavior evals verify recovery, handoff completeness, and successor idempotency.</p>
-          </div>
-          <div class="meta">block shape / risk tiers / ledger / behavior evals</div>
-        </a>
+        <div><div class="label">Status Boundary</div><h2 id="status-resources-heading">One proof surface, four independent states</h2></div>
+        <p>Architecture Status owns current dates, parity evidence, publication status, and adoption evidence. Concept pages link to it instead of copying proof.</p>
       </div>
       <div class="card-row">
-        <a class="card" href="./dhf-architecture-status-en.html">
-          <div>
-            <div class="label">Scoped Governance</div>
-            <h2>An agent cannot widen its own blast radius</h2>
-            <p>The guard governs a declared root and keeps the harness install directory protected. An agent may self-declare a work phase to unblock ordinary low and medium actions, but a self-declared phase never unlocks protected roots, and shell-profile, LaunchAgent, and crontab persistence writes stay blocked in every phase.</p>
-          </div>
-          <div class="meta">governed roots / protected roots / self-declare cannot escalate</div>
-        </a>
-        <a class="card" href="./dhf-architecture-status-en.html">
-          <div>
-            <div class="label">Promotion Evidence</div>
-            <h2>Source available is not runtime active</h2>
-            <p>Runtime promotion moves a seven-target manifest and is authorized separately from writing the code. The 2026-08-10 comparison found 24/24 tracked managed runtime files byte-identical to repository source, and an isolated Codex CLI 0.147.0 host probe matched the expected guard matrix in 18/18 rounds. Production enforcement is still called unverified, because it is.</p>
-          </div>
-          <div class="meta">seven-target manifest / 24-24 parity / 18-18 host probe</div>
-        </a>
+        <a class="card" href="./dhf-architecture-status-en.html"><div><div class="label">Independent State</div><h3>Repository source</h3><p>What the tracked implementation contains.</p></div></a>
+        <a class="card" href="./dhf-architecture-status-en.html"><div><div class="label">Independent State</div><h3>Local runtime</h3><p>What fresh parity evidence proves active.</p></div></a>
+        <a class="card" href="./dhf-architecture-status-en.html"><div><div class="label">Independent State</div><h3>Public documentation</h3><p>What readers can reach on the site.</p></div></a>
+        <a class="card" href="./dhf-architecture-status-en.html"><div><div class="label">Independent State</div><h3>Production enforcement</h3><p>What production evidence proves enforced.</p></div></a>
       </div>
-    </section>
-
-    <section class="section-block" aria-labelledby="reliability-heading" style="--i:3">
-      <div class="section-heading">
-        <div>
-          <div class="label">Agent Reliability Engineering</div>
-          <h2 id="reliability-heading">What actually makes a multi-step agent dependable</h2>
-        </div>
-        <p>Every mechanism below exists because a demo-grade agent failed without it. This is the map for readers evaluating DHF as an enforcement, permission, and audit layer rather than as a writing style.</p>
-      </div>
-      <div class="card-row three">
-        <a class="card" href="./dhf-governance-decision-flow-en.html">
-          <div>
-            <div class="label">Capability Model</div>
-            <h2>Permissions are phase-scoped, not prompt-scoped</h2>
-            <p>Eight lifecycle phases each declare whether repository writes, network, remote access, and subagent dispatch are permitted, plus the minimum gate that phase must clear. Tool categories carry risk tiers, and an unresolved phase falls back to read-only rather than to trust.</p>
-          </div>
-          <div class="meta">8 phases / 4 capability flags / unknown phase fails closed</div>
-        </a>
-        <a class="card" href="./dhf-for-product-and-field-en.html">
-          <div>
-            <div class="label">Human In The Loop</div>
-            <h2>High-impact actions wait for a person</h2>
-            <p>Execution lanes separate local work from operator demos and customer or production paths. Runtime promotion, remote pushes, and commits are authorized as their own step, and multi-worker dispatch is intercepted until a write-set decision receipt exists.</p>
-          </div>
-          <div class="meta">lane gate / separate promotion authorization / dispatch ask-gate</div>
-        </a>
-        <a class="card" href="./dhf-engineering-notes-en.html">
-          <div>
-            <div class="label">Determinism</div>
-            <h2>Retries must not fan out</h2>
-            <p>An append-only transition store with first-record-wins resolution guarantees exactly one successor task across compaction and restart. Acceptance criteria are content-hashed in a ledger, and a source transition matrix fails closed on stale, diverged, or downgrade syncs.</p>
-          </div>
-          <div class="meta">exactly-one successor / content-hashed ledger / fail-closed sync</div>
-        </a>
-      </div>
-      <div class="card-row three">
-        <a class="card" href="./dhf-engineering-notes-en.html">
-          <div>
-            <div class="label">Memory Lifecycle</div>
-            <h2>Recovered state carries a freshness verdict</h2>
-            <p>Session state is an append-only checkpoint log, not a growing prompt. Recovery returns a boundary verdict that is fail-closed when freshness is unknown, and a session bearing hook injects the current phase and the next safe task at session start instead of asking the model to remember.</p>
-          </div>
-          <div class="meta">append-only state / fail-closed recovery / session bearing</div>
-        </a>
-        <a class="card" href="./dhf-engineering-notes-en.html">
-          <div>
-            <div class="label">Observability</div>
-            <h2>Every guarded decision leaves a record</h2>
-            <p>Guard decisions, verification runs, and checkpoints are written as schema-validated JSONL evidence with pass, fail, and skip states preserved. Reports are generated from that evidence, so a completion claim can be checked against what the agent actually did.</p>
-          </div>
-          <div class="meta">evidence schema / guardrail decisions / generated reports</div>
-        </a>
-        <a class="card" href="./dhf-architecture-status-en.html">
-          <div>
-            <div class="label">Excessive Agency</div>
-            <h2>Designed against the known agentic failure modes</h2>
-            <p>The controls here line up with the OWASP agentic-AI concerns of excessive agency, excessive permission, and unbounded consumption: capability flags bound what a phase may do, protected roots and persistence patterns bound where it may reach, and integrity watch limits bound how much it may read at once.</p>
-          </div>
-          <div class="meta">excessive agency / excessive permission / bounded consumption</div>
-        </a>
-      </div>
-    </section>
-
-    <section class="section-block" aria-labelledby="learn-heading" style="--i:4">
-      <div class="section-heading">
-        <div>
-          <div class="label">Start Here</div>
-          <h2 id="learn-heading">Learn the framework</h2>
-        </div>
-        <p>Recommended learning sequence: Beginner -> Lifecycle Flow -> Skill Routing Map -> Written Spec. The English path is now self-contained, with the written spec as the exact routing contract.</p>
-      </div>
-      <div class="sequence" aria-label="Recommended learning sequence">
-        <a class="sequence-step" href="./delivery-harness-beginner-guide-en.html">
-          <div class="label">01</div>
-          <strong>Beginner</strong>
-          <span>Plain-English DHF guide for completion evidence and handoff basics.</span>
-        </a>
-        <a class="sequence-step" href="./project-lifecycle-harness-flow-en.html">
-          <div class="label">02</div>
-          <strong>Lifecycle Flow</strong>
-          <span>English Flow Map for the end-to-end lifecycle from request intake to handoff.</span>
-        </a>
-        <a class="sequence-step" href="./project-lifecycle-harness-flow-skills-en-status-style.html">
-          <div class="label">03 / Current</div>
-          <strong>Skill Routing Map</strong>
-          <span>Primary English map for which skill or helper owns each DHF stage.</span>
-        </a>
-        <a class="sequence-step" href="./lifecycle-skill-routing-en.html">
-          <div class="label">04 / Reference</div>
-          <strong>Written Spec</strong>
-          <span>Source-of-truth routing rules, helper commands, and evidence standards.</span>
-        </a>
-      </div>
-      <div class="card-row">
-        <a class="card" href="./project-lifecycle-harness-flow-en.html">
-          <div>
-            <div class="label">Flow Map</div>
-            <h2>English Flow Map</h2>
-            <p>A lightweight English lifecycle map showing how DHF moves from fact recovery and requirements through verification evidence and handoff.</p>
-          </div>
-          <div class="meta">self-contained English path</div>
-        </a>
-        <a class="card" href="./project-lifecycle-harness-flow-skills-en-status-style.html">
-          <div>
-            <div class="label">Primary Path</div>
-            <h2>Skill Routing Map</h2>
-            <p>The public DHF skill and helper routing map, including domain docs, ADR checks, vertical slices, feedback loops, prototypes, durable briefs, and handoff gates.</p>
-          </div>
-          <div class="meta">primary visual guide</div>
-        </a>
-      </div>
-      <div class="card-row">
-        <a class="card" href="./dhf-for-product-and-field-en.html">
-          <div>
-            <div class="label">Non-Builders Start Here</div>
-            <h2>For Product &amp; Field Teams</h2>
-            <p>The five guarantees of the harness explained in diagrams — delivery loop, verification receipts, lane gates, long-running work, and forward-only deployments — for readers who will never open the code.</p>
-          </div>
-          <div class="meta">diagram-first overview</div>
-        </a>
-        <a class="card" href="./dhf-workflow-skills-en.html">
-          <div>
-            <div class="label">Skill Inventory</div>
-            <h2>Workflow Skills Matrix</h2>
-            <p>A step-by-step inventory of every current DHF workflow step, the skills it uses, what each skill does, and the GitHub source link for each skill.</p>
-          </div>
-          <div class="meta">English skill matrix</div>
-        </a>
-        <a class="card" href="./lifecycle-skill-routing-en.html">
-          <div>
-            <div class="label">Reference</div>
-            <h2>Written Routing Spec</h2>
-            <p>The source-of-truth lifecycle guide for stage ownership, specialist skills, runtime helpers, agent briefs, evidence standards, and completion gates.</p>
-          </div>
-          <div class="meta">docs/LIFECYCLE_SKILL_ROUTING.md</div>
-        </a>
-      </div>
-    </section>
-
-    <section class="section-block" aria-labelledby="resources-heading" style="--i:4">
-      <div class="section-heading">
-        <div>
-          <div class="label">Resources</div>
-          <h2 id="resources-heading">Share or switch language</h2>
-        </div>
-        <p>Use these when the reader needs a presentation asset or the Chinese version of the same guide.</p>
-      </div>
-      <div class="card-row">
-        <a class="card" href="./project-lifecycle-harness-flow-skills-en-status-style-flowchart@2x.png">
-          <div>
-            <div class="label">Assets</div>
-            <h2>Shareable PNG</h2>
-            <p>A high-resolution flowchart image for articles, social posts, talks, and handoff decks.</p>
-          </div>
-          <div class="meta">image asset</div>
-        </a>
-        <a class="card" href="./index-zh.html" hreflang="zh-CN">
-          <div>
-            <div class="label">Chinese Docs</div>
-            <h2>Chinese Landing</h2>
-            <p>The Chinese entry point groups the beginner guide, lifecycle flow, skill routing map, written spec, and shareable image.</p>
-          </div>
-          <div class="meta">localized guide</div>
-        </a>
-      </div>
-    </section>
-
-    <section class="section-block" aria-labelledby="implementation-heading" style="--i:5">
-      <div class="section-heading">
-        <div>
-          <div class="label">Implementation Notes</div>
-          <h2 id="implementation-heading">For maintainers</h2>
-        </div>
-        <p>These are useful after the public concept is clear. They should not compete with the learning path.</p>
-      </div>
-      <div class="card-row">
-        <a class="card" href="./HARNESS_RUNTIME.md">
-          <div>
-            <div class="label">Runtime Reference</div>
-            <h2>Harness Runtime</h2>
-            <p>The implementation contract for workflow state, helper scripts, evidence, checkpoints, permissions, hooks, and agent teams.</p>
-          </div>
-          <div class="meta">reference docs</div>
-        </a>
-        <a class="card" href="./project-lifecycle-harness-flow-skills-en.html">
-          <div>
-            <div class="label">Archive</div>
-            <h2>Classic Skill Map</h2>
-            <p>Archive only. The older English visual remains available for comparison, but the status-style Skill Routing Map is the primary public path.</p>
-          </div>
-          <div class="meta">legacy visual page</div>
-        </a>
-      </div>
+      <nav class="strip" aria-label="Engineering Resources">
+        <a class="tag" href="./lifecycle-skill-routing-en.html">Skill Routing</a>
+        <a class="tag" href="./dhf-workflow-skills-en.html">Workflow Skills</a>
+        <a class="tag" href="./dhf-protect-seven-components-en.html">PROTECT</a>
+        <a class="tag" href="./dhf-for-product-and-field-en.html">PM &amp; FDE</a>
+        <a class="tag" href="./dhf-engineering-notes-en.html">Engineering Notes</a>
+        <a class="tag" href="./lifecycle-skill-routing-en.html">Written Spec</a>
+      </nav>
     </section>
 
     <footer class="footer">
-      <span>English docs entry: <strong>docs/index-en.html</strong></span>
-      <span><a href="./dhf-engineering-notes-en.html">Engineering Notes</a> · Published by ShipAI.ca as a public DHF reference</span>
+      <span>Canonical English entry: <strong>docs/index.html</strong></span>
+      <span><a href="./index-zh.html" hreflang="zh-CN">中文</a> · Published by ShipAI.ca as a public DHF reference</span>
     </footer>
   </main>
 </body>
