@@ -1,0 +1,4 @@
+interface:
+  display_name: "Invoice Filing"
+  short_description: "Archive invoices and set up receivables follow-up"
+  default_prompt: "Use $invoice-filing to archive this customer invoice, sync authorized records, and set up collection follow-up."
