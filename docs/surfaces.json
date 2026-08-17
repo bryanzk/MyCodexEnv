@@ -54,8 +54,7 @@
     {
       "path": "docs/HARNESS_RUNTIME.md",
       "role": "runtime workflow, evidence, permission, checkpoint, and agent-team contract",
-      "audience": ["codex", "human"],
-      "public_nav": ["docs/index.html"]
+      "audience": ["codex", "human"]
     },
     {
       "path": "docs/AGENT_HARNESS_STATUS.md",
@@ -531,20 +530,17 @@
     {
       "path": "docs/project-lifecycle-harness-flow-skills-zh-status-style.html",
       "role": "current status-style skill and helper routing map",
-      "audience": ["human"],
-      "public_nav": ["docs/index-zh.html"]
+      "audience": ["human"]
     },
     {
       "path": "docs/project-lifecycle-harness-flow-skills-en-status-style.html",
       "role": "current English status-style skill and helper routing map",
-      "audience": ["human"],
-      "public_nav": ["docs/index.html"]
+      "audience": ["human"]
     },
     {
       "path": "docs/project-lifecycle-harness-flow-skills-en.html",
       "role": "archived English skill and helper routing map",
-      "audience": ["human"],
-      "public_nav": ["docs/index.html"]
+      "audience": ["human"]
     },
     {
       "path": "codex/skills/codex-fluent/scripts/report_active_sessions.py",

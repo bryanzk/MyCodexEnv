@@ -17,7 +17,7 @@
 - Keep English and Chinese information structures semantically aligned, with one documented exception: Skill Routing exists only in English (see Secondary engineering resources).
 - Treat `docs/index.html` as the canonical English root, `docs/index-en.html` as the compatibility copy, and `docs/index-zh.html` as the Chinese root.
 - Keep repository source, local runtime, public documentation, production enforcement, adoption, and roadmap status separate.
-- Do not change the public status date or runtime claims without fresh status evidence.
+- Do not change the public status date or runtime claims without fresh status evidence. Concretely: every canonical page carries `data-dhf-status="2026-08-11"`; all mechanical edits in this plan must leave every `data-dhf-status` attribute byte-identical.
 - The Claude artifact is an information-architecture lens, not proof of current DHF or Claude product behavior.
 - This plan does not authorize commit, push, deployment, Cloudflare/DNS changes, or runtime synchronization.
 
@@ -142,6 +142,8 @@ Rules:
 
 - The supply chain appears on the site in exactly these two forms; no page may introduce a third variant or rename a step.
 - The homepage section links to the Context Engineering page as the single authoritative explanation, consistent with the migration-map rule "keep one authoritative explanation and link to it."
+- **Bilingual label convention (matches the existing site convention, verified on the CN Context page):** step names stay in English on both language homepages; Chinese pages may add a one-line Chinese gloss under each step (e.g. 可信来源 for Trusted Sources) but the English step name is the machine-checked label. "Just-in-time Shaping" is a homepage-only simplification term that does not appear on the Context page; this is accepted and documented by the mapping table above — do not introduce it anywhere else.
+- **Markup contract:** the homepage chain container carries `data-dhf-chain="simplified"`; the Context page canonical chain container carries `data-dhf-chain="canonical"`. These attributes are what the IA contract test checks; chain step sequences must not render outside a marked container.
 
 ### Section 3: Learn the framework
 
@@ -178,7 +180,7 @@ Adoption and roadmap remain separate status boundaries (per Global Constraints) 
 - **Adoption** evidence is owned by Architecture Status.
 - **Roadmap** items are owned by Context Engineering Chapter 6 as `data-capability-state="planned"` entries.
 
-Architecture Status stays the only current-state proof surface for both.
+Architecture Status stays the only current-state proof surface for both. Scope note: this plan only declares adoption ownership; adding an adoption-evidence section to the Status pages is separately scoped work and is not part of this plan's write set.
 
 Move dates, file counts, test counts, parity receipts, and version details to Architecture Status.
 
@@ -442,9 +444,11 @@ def test_public_dhf_information_architecture():
 - [ ] Assert each homepage contains exactly three primary CTAs.
 - [ ] Assert the learning order is Beginner → Context → Lifecycle → Governance.
 - [ ] Assert both Context pages contain finite box, Access, Institutional Knowledge, Tooling, Hook, Skill, Sub-agent, MCP, memory boundary, current, and planned concepts.
-- [ ] Assert each homepage supply-chain section uses exactly the six simplified step labels from Section 2 and links to the Context Engineering page.
-- [ ] Assert both Context pages contain the seven canonical step labels from Chapter 3.
-- [ ] Assert no canonical page renders a supply-chain variant other than these two forms (guard the fixed homepage↔canonical mapping).
+- [ ] Assert each homepage contains exactly one `data-dhf-chain="simplified"` container holding the six English step labels from Section 2 and linking to the Context Engineering page.
+- [ ] Assert each Context page contains exactly one `data-dhf-chain="canonical"` container holding the seven English step labels from Chapter 3.
+- [ ] Assert no other `data-dhf-chain` containers exist, and no canonical page renders three or more consecutive step labels outside a marked container (mechanical guard for the two-forms rule).
+- [ ] Assert `docs/index.html` and `docs/index-en.html` are byte-identical after normalizing only the `<link rel="canonical">` href and `og:url` content values — this is the concrete definition of "semantically identical" used throughout this plan.
+- [ ] Assert every page in the write set still carries its unmodified `data-dhf-status` attribute value.
 
 - [ ] Run the RED gate:
 
@@ -511,6 +515,7 @@ Run the focused IA test and expect GREEN.
 
 - [ ] Update English pages mechanically.
 - [ ] Update Chinese pages mechanically.
+- [ ] Leave every `data-dhf-status` attribute byte-identical; verify with `git diff -U0 -- docs | grep -c 'data-dhf-status'` expecting `0`.
 - [ ] Preserve the correct `aria-current="page"` on each page.
 - [ ] Preserve each language twin.
 - [ ] Leave archived pages out of the canonical navigation refactor; give them only a clear link back to the current page.

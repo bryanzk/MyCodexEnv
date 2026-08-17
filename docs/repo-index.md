@@ -77,6 +77,14 @@ behavior live in `codex/hooks/dhf_preprompt.py`.
 - `docs/project-lifecycle-harness-flow-skills-en.html`: archived English Delivery Harness Framework skill/helper routing guide.
 - `codex/AGENTS.md`: global Codex rules source copied into `~/.codex/AGENTS.md`.
 
+### Public DHF reading order
+
+`Beginner → Context Engineering → Lifecycle → Governance → Skill Routing → Architecture Status`
+
+- Context Engineering is the conceptual bridge between the beginner explanation and lifecycle execution.
+- Skill Routing is an English-only operational resource; Chinese links disclose the language switch as `技能路由（英文）`.
+- Architecture Status is the only current-state proof surface. Concept, workflow, and resource pages link to it instead of copying dates, parity receipts, test counts, publication status, or adoption evidence.
+
 ## Runtime Surfaces
 - `docs/surfaces.json`: canonical machine-readable runtime surface inventory; edit this first when adding, renaming, or retiring runtime surfaces.
 - `scripts/check_surfaces.py`: validates `docs/surfaces.json` against files on disk, this Runtime Surfaces mirror, and opt-in public landing nav links.
