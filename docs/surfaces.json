@@ -423,6 +423,18 @@
       "public_nav": ["docs/index.html"]
     },
     {
+      "path": "docs/dhf-protect-seven-components-cn.html",
+      "role": "Chinese PROTECT map for the seven WAL-protected DHF runtime promotion targets",
+      "audience": ["human"],
+      "public_nav": ["docs/index-zh.html"]
+    },
+    {
+      "path": "docs/dhf-protect-seven-components-en.html",
+      "role": "English PROTECT map for the seven WAL-protected DHF runtime promotion targets",
+      "audience": ["human"],
+      "public_nav": ["docs/index.html"]
+    },
+    {
       "path": "docs/dhf-workflow-skills-cn.html",
       "role": "Chinese workflow skill inventory page",
       "audience": ["human"],
