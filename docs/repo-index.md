@@ -53,6 +53,8 @@ behavior live in `codex/hooks/dhf_preprompt.py`.
 - `docs/index-zh.html`: Chinese Delivery Harness Framework docs landing page for GitHub Pages.
 - `docs/dhf-architecture-status-cn.html`: canonical Chinese DHF architecture and source/runtime/publication status.
 - `docs/dhf-architecture-status-en.html`: canonical English DHF architecture and source/runtime/publication status.
+- `docs/dhf-protect-seven-components-cn.html`: Chinese PROTECT map for the seven WAL-protected runtime promotion targets.
+- `docs/dhf-protect-seven-components-en.html`: English PROTECT map for the seven WAL-protected runtime promotion targets.
 - `docs/delivery-harness-framework-manual-cn.md`: Chinese PM-facing Delivery Harness Framework manual draft.
 - `docs/DHF_SIMPLIFICATION_PRODUCT_GUIDE.md`: Chinese product guide for simplified DHF behavior, activation, daily usage, verification, and rollback.
 - `docs/dhf-workflow-skills-cn.html`: Chinese DHF workflow skill inventory with GitHub source links.
@@ -157,6 +159,8 @@ behavior live in `codex/hooks/dhf_preprompt.py`.
 - `docs/index.html`: English canonical public docs landing page.
 - `docs/index-en.html`: English compatibility public docs landing page.
 - `docs/index-zh.html`: Chinese public docs landing page.
+- `docs/dhf-protect-seven-components-cn.html`: Chinese PROTECT map for the seven WAL-protected runtime promotion targets.
+- `docs/dhf-protect-seven-components-en.html`: English PROTECT map for the seven WAL-protected runtime promotion targets.
 - `docs/CNAME`: GitHub Pages custom-domain marker for `deliveryharness.com`.
 - `docs/delivery-harness-framework-manual-cn.md`: Chinese PM-facing Delivery Harness Framework manual draft.
 - `docs/dhf-workflow-skills-cn.html`: Chinese workflow skill inventory with GitHub links.
