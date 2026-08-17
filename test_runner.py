@@ -3194,12 +3194,12 @@ def test_lifecycle_skill_routing_doc_is_discoverable():
                 "Recommended learning sequence",
                 "Beginner",
                 "Lifecycle Flow",
+                "Context Engineering",
                 "Skill Routing Map",
-                "Written Spec",
                 'href="./delivery-harness-beginner-guide-en.html"',
                 'href="./project-lifecycle-harness-flow-en.html"',
+                'href="./dhf-context-engineering-en.html"',
                 'href="./project-lifecycle-harness-flow-skills-en-status-style.html"',
-                'href="./lifecycle-skill-routing-en.html"',
             ],
         ),
         PUBLIC_INDEX_EN_HTML.name: (
@@ -3208,12 +3208,12 @@ def test_lifecycle_skill_routing_doc_is_discoverable():
                 "Recommended learning sequence",
                 "Beginner",
                 "Lifecycle Flow",
+                "Context Engineering",
                 "Skill Routing Map",
-                "Written Spec",
                 'href="./delivery-harness-beginner-guide-en.html"',
                 'href="./project-lifecycle-harness-flow-en.html"',
+                'href="./dhf-context-engineering-en.html"',
                 'href="./project-lifecycle-harness-flow-skills-en-status-style.html"',
-                'href="./lifecycle-skill-routing-en.html"',
             ],
         ),
         PUBLIC_INDEX_ZH_HTML.name: (
@@ -3222,12 +3222,12 @@ def test_lifecycle_skill_routing_doc_is_discoverable():
                 "推荐学习顺序",
                 "Beginner",
                 "Lifecycle Flow",
+                "Context Engineering",
                 "Skill Routing Map",
-                "Written Spec",
                 'href="./delivery-harness-beginner-guide-cn.html"',
                 'href="./project-lifecycle-harness-flow-cn.html"',
+                'href="./dhf-context-engineering-cn.html"',
                 'href="./project-lifecycle-harness-flow-skills-zh-status-style.html"',
-                'href="./lifecycle-skill-routing-en.html"',
             ],
         ),
     }
@@ -3236,7 +3236,7 @@ def test_lifecycle_skill_routing_doc_is_discoverable():
             require(term in text, f"{filename} missing recommended learning sequence term: {term}")
         require_in_order(
             text,
-            ["Beginner", "Lifecycle Flow", "Skill Routing Map", "Written Spec"],
+            ["Beginner", "Lifecycle Flow", "Context Engineering", "Skill Routing Map"],
             f"{filename} should show the recommended learning sequence",
         )
     require("Chinese-only" not in public_index_en_html, "English public path should be self-contained, not Chinese-only")
@@ -10915,6 +10915,7 @@ def test_public_dhf_architecture_status_alignment():
         "dhf-workflow-skills-en.html",
         "project-lifecycle-harness-flow-skills-en.html",
         "dhf-architecture-status-en.html",
+        "dhf-context-engineering-en.html",
     ]
     chinese_pages = [
         "index-zh.html",
@@ -10926,6 +10927,7 @@ def test_public_dhf_architecture_status_alignment():
         "dhf-workflow-skills-cn.html",
         "project-lifecycle-harness-flow-skills.html",
         "dhf-architecture-status-cn.html",
+        "dhf-context-engineering-cn.html",
     ]
     for filename in english_pages + chinese_pages:
         path = ROOT / "docs" / filename
@@ -10945,6 +10947,8 @@ def test_public_dhf_architecture_status_alignment():
 
     english_status = (ROOT / "docs" / "dhf-architecture-status-en.html").read_text(encoding="utf-8")
     chinese_status = (ROOT / "docs" / "dhf-architecture-status-cn.html").read_text(encoding="utf-8")
+    english_context = (ROOT / "docs" / "dhf-context-engineering-en.html").read_text(encoding="utf-8")
+    chinese_context = (ROOT / "docs" / "dhf-context-engineering-cn.html").read_text(encoding="utf-8")
     for term in [
         "Source available is not runtime active",
         "Local runtime parity: verified 2026-08-10",
@@ -10968,6 +10972,33 @@ def test_public_dhf_architecture_status_alignment():
     ]:
         require(term in chinese_status, f"Chinese DHF status page missing truth boundary: {term}")
 
+    for term in [
+        "Session Bearing",
+        "PreTool Guard",
+        "PostTool Evidence",
+        "Recovery restores facts, not permission",
+        'data-capability-state="current"',
+        'data-capability-state="planned"',
+    ]:
+        require(term in english_context, f"English context engineering page missing contract: {term}")
+    for term in [
+        "Session Bearing",
+        "PreTool Guard",
+        "PostTool Evidence",
+        "恢复事实不等于恢复权限",
+        'data-capability-state="current"',
+        'data-capability-state="planned"',
+    ]:
+        require(term in chinese_context, f"Chinese context engineering page missing contract: {term}")
+    require("dhf-context-engineering-cn.html" in english_context and
+            "dhf-context-engineering-en.html" in chinese_context,
+            "context engineering pages must link to their language twin")
+    for filename in ["index.html", "index-en.html", "delivery-harness-beginner-guide-en.html", "project-lifecycle-harness-flow-en.html", "dhf-engineering-notes-en.html", "dhf-architecture-status-en.html"]:
+        require("./dhf-context-engineering-en.html" in (ROOT / "docs" / filename).read_text(encoding="utf-8"),
+                f"English public page missing context engineering link: {filename}")
+    for filename in ["index-zh.html", "delivery-harness-beginner-guide-cn.html", "project-lifecycle-harness-flow-cn.html", "dhf-engineering-notes-cn.html", "dhf-architecture-status-cn.html"]:
+        require("./dhf-context-engineering-cn.html" in (ROOT / "docs" / filename).read_text(encoding="utf-8"),
+                f"Chinese public page missing context engineering link: {filename}")
     public_markdown = [
         "LIFECYCLE_SKILL_ROUTING.md",
         "HARNESS_RUNTIME.md",

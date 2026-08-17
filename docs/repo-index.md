@@ -53,6 +53,8 @@ behavior live in `codex/hooks/dhf_preprompt.py`.
 - `docs/index-zh.html`: Chinese Delivery Harness Framework docs landing page for GitHub Pages.
 - `docs/dhf-architecture-status-cn.html`: canonical Chinese DHF architecture and source/runtime/publication status.
 - `docs/dhf-architecture-status-en.html`: canonical English DHF architecture and source/runtime/publication status.
+- `docs/dhf-context-engineering-cn.html`: Chinese guide to DHF's governed context supply chain, from trusted sources through recovery, permission, evidence, and checkpoint.
+- `docs/dhf-context-engineering-en.html`: English guide to DHF's governed context supply chain, from trusted sources through recovery, permission, evidence, and checkpoint.
 - `docs/dhf-protect-seven-components-cn.html`: Chinese PROTECT map for the seven WAL-protected runtime promotion targets.
 - `docs/dhf-protect-seven-components-en.html`: English PROTECT map for the seven WAL-protected runtime promotion targets.
 - `docs/delivery-harness-framework-manual-cn.md`: Chinese PM-facing Delivery Harness Framework manual draft.
@@ -88,6 +90,8 @@ behavior live in `codex/hooks/dhf_preprompt.py`.
 - `docs/dhf-site-status.css`: shared status banner and canonical architecture-page styling.
 - `docs/dhf-architecture-status-cn.html`: canonical Chinese DHF architecture and source/runtime/publication status.
 - `docs/dhf-architecture-status-en.html`: canonical English DHF architecture and source/runtime/publication status.
+- `docs/dhf-context-engineering-cn.html`: Chinese guide to the governed DHF context supply chain.
+- `docs/dhf-context-engineering-en.html`: English guide to the governed DHF context supply chain.
 - `codex/skills/delivery-harness-framework/`: lifecycle router skill.
 - `codex/skills/committee-review-loop/`: explicit expert-committee review and revision loop skill.
 - `codex/skills/codex-fluent/scripts/report_active_sessions.py`: read-only active Codex session ranking and handoff audit.

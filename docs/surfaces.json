@@ -423,6 +423,18 @@
       "public_nav": ["docs/index.html"]
     },
     {
+      "path": "docs/dhf-context-engineering-cn.html",
+      "role": "Chinese guide to the governed DHF context supply chain",
+      "audience": ["human"],
+      "public_nav": ["docs/index-zh.html"]
+    },
+    {
+      "path": "docs/dhf-context-engineering-en.html",
+      "role": "English guide to the governed DHF context supply chain",
+      "audience": ["human"],
+      "public_nav": ["docs/index.html"]
+    },
+    {
       "path": "docs/dhf-protect-seven-components-cn.html",
       "role": "Chinese PROTECT map for the seven WAL-protected DHF runtime promotion targets",
       "audience": ["human"],

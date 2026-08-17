@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-dhf-palette="warm">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="DHF 如何把可信来源、Session Bearing、权限守卫、执行证据和 checkpoint 组织成一条可治理的上下文供应链。">
+  <title>DHF 的上下文工程：建立一条可治理的上下文供应链</title>
+  <link rel="canonical" href="https://deliveryharness.com/dhf-context-engineering-cn.html">
+  <link rel="alternate" hreflang="en" href="https://deliveryharness.com/dhf-context-engineering-en.html">
+  <link rel="alternate" hreflang="zh-CN" href="https://deliveryharness.com/dhf-context-engineering-cn.html">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,650;9..144,760&family=IBM+Plex+Mono:wght@400;500;600&family=Atkinson+Hyperlegible:wght@400;700&display=swap" rel="stylesheet">
+  <style>
+    :root { --font-body: 'Atkinson Hyperlegible', Verdana, sans-serif; --font-display: 'Fraunces', Georgia, serif; --font-mono: 'IBM Plex Mono', monospace; --bg: #f7f4ec; --surface: #fffdf8; --surface2: #ebe6da; --border: rgba(51,42,33,.14); --text: #231f1a; --text-dim: #665f55; --green: #147a62; --green-dim: rgba(20,122,98,.11); --amber: #a15f22; --amber-dim: rgba(161,95,34,.12); --rose: #a9475b; --rose-dim: rgba(169,71,91,.10); --blue: #2f6f92; --blue-dim: rgba(47,111,146,.10); --shadow: 0 18px 44px rgba(51,42,33,.10), 0 2px 10px rgba(51,42,33,.06); }
+    * { box-sizing: border-box; }
+    body { margin: 0; min-height: 100vh; color: var(--text); font-family: var(--font-body); background: var(--bg); overflow-wrap: break-word; }
+    .wrap { max-width: 1180px; margin: 0 auto; display: grid; gap: 24px; }
+    .wrap > * { min-width: 0; }
+    .hero { min-height: 390px; display: grid; align-content: center; padding: clamp(28px,5vw,58px); background: color-mix(in srgb,var(--surface) 88%,var(--green) 12%); border: 1px solid color-mix(in srgb,var(--border) 70%,var(--green) 30%); border-radius: 22px; box-shadow: var(--shadow); }
+    .eyebrow,.label,.tag,.meta { font-family: var(--font-mono); letter-spacing: .1em; text-transform: uppercase; }
+    .eyebrow { margin-bottom: 18px; color: var(--green); font-size: 13px; font-weight: 600; }
+    h1 { max-width: 980px; margin: 0; font-family: var(--font-display); font-size: clamp(38px,5.4vw,70px); line-height: .98; }
+    .lead { max-width: 900px; margin: 24px 0 0; color: var(--text-dim); font-size: clamp(18px,2.2vw,24px); line-height: 1.55; }
+    .strip { display: flex; flex-wrap: wrap; gap: 10px; padding: 14px; background: color-mix(in srgb,var(--surface) 76%,transparent); border: 1px solid var(--border); border-radius: 16px; }
+    .tag { display: inline-flex; align-items: center; min-height: 34px; padding: 7px 12px; color: var(--green); background: var(--green-dim); border: 1px solid color-mix(in srgb,var(--green) 24%,transparent); border-radius: 999px; font-size: 11px; text-decoration: none; }
+    .section-block { display: grid; gap: 16px; padding-top: 6px; }
+    .section-heading { display: flex; justify-content: space-between; align-items: end; gap: 20px; padding-top: 20px; border-top: 1px solid var(--border); }
+    .section-heading h2 { margin: 0; font-family: var(--font-display); font-size: clamp(30px,3.4vw,46px); line-height: 1; }
+    .section-heading p { max-width: 580px; margin: 0; color: var(--text-dim); line-height: 1.55; }
+    .label { margin-bottom: 10px; color: var(--amber); font-size: 11px; font-weight: 600; }
+    .card-grid { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 16px; }
+    .card-grid.four { grid-template-columns: repeat(4,minmax(0,1fr)); }
+    .card { min-width: 0; padding: 22px; background: var(--surface); border: 1px solid var(--border); border-radius: 18px; box-shadow: 0 8px 26px rgba(51,42,33,.06); }
+    .card h3 { margin: 0 0 10px; font-family: var(--font-display); font-size: 25px; line-height: 1.08; }
+    .card p,.card li { color: var(--text-dim); font-size: 15.5px; line-height: 1.58; }
+    .card p { margin: 0; }
+    .card ul { margin: 0; padding-left: 20px; }
+    .supply-chain { display: grid; grid-template-columns: repeat(7,minmax(120px,1fr)); gap: 10px; padding: 0; list-style: none; }
+    .supply-chain li { position: relative; min-width: 0; padding: 18px 14px; background: var(--surface); border: 1px solid var(--border); border-radius: 14px; }
+    .supply-chain li:not(:last-child)::after { content: "→"; position: absolute; right: -10px; top: 50%; z-index: 2; color: var(--green); font-weight: 700; transform: translate(50%,-50%); }
+    .supply-chain strong { display: block; margin-bottom: 8px; font-size: 15px; }
+    .supply-chain span { color: var(--text-dim); font-size: 13px; line-height: 1.4; }
+    .table-wrap { overflow-x: auto; background: var(--surface); border: 1px solid var(--border); border-radius: 18px; }
+    table { width: 100%; border-collapse: collapse; }
+    th,td { padding: 14px 16px; text-align: left; vertical-align: top; border-bottom: 1px solid var(--border); line-height: 1.5; }
+    th { color: var(--green); font-family: var(--font-mono); font-size: 12px; letter-spacing: .06em; text-transform: uppercase; }
+    tr:last-child td { border-bottom: 0; }
+    code { font-family: var(--font-mono); font-size: .9em; }
+    .callout { padding: 20px 24px; background: color-mix(in srgb,var(--surface) 78%,var(--blue) 22%); border: 1px solid color-mix(in srgb,var(--border) 65%,var(--blue) 35%); border-radius: 16px; line-height: 1.6; }
+    [data-capability-state] { border-width: 2px; }
+    [data-capability-state="current"] { border-color: color-mix(in srgb,var(--green) 55%,var(--border)); }
+    [data-capability-state="planned"] { border-style: dashed; border-color: color-mix(in srgb,var(--amber) 60%,var(--border)); }
+    .state { display: inline-block; margin-bottom: 12px; padding: 5px 8px; border-radius: 999px; font: 600 10px/1 var(--font-mono); letter-spacing: .08em; text-transform: uppercase; }
+    .state.current { color: var(--green); background: var(--green-dim); }
+    .state.planned { color: var(--amber); background: var(--amber-dim); }
+    .footer { display: flex; justify-content: space-between; gap: 16px; padding-top: 18px; color: var(--text-dim); border-top: 1px solid var(--border); font: 12px/1.5 var(--font-mono); }
+    .footer a { color: var(--green); }
+    @media (max-width: 960px) { .supply-chain { grid-template-columns: 1fr; } .supply-chain li:not(:last-child)::after { content: "↓"; right: 50%; top: auto; bottom: -11px; transform: translate(50%,50%); } .card-grid.four { grid-template-columns: repeat(2,minmax(0,1fr)); } }
+    @media (max-width: 760px) { .hero { min-height: 0; } .card-grid,.card-grid.four { grid-template-columns: 1fr; } .section-heading,.footer { align-items: start; flex-direction: column; } }
+  </style>
+  <link rel="stylesheet" href="./dhf-site-status.css?v=20260812a">
+</head>
+<body>
+  <a class="dhf-skip" href="#dhf-main">跳到正文</a>
+  <nav class="dhf-nav" aria-label="站点导航">
+    <a class="dhf-nav-home" href="./index-zh.html">DHF</a>
+    <div class="dhf-nav-links">
+      <a href="./index-zh.html">首页</a><a href="./delivery-harness-beginner-guide-cn.html">新手指南</a><a href="./project-lifecycle-harness-flow-cn.html">生命周期</a><a href="./dhf-context-engineering-cn.html" aria-current="page">上下文工程</a><a href="./dhf-governance-decision-flow-cn.html">治理判定</a><a href="./dhf-protect-seven-components-cn.html">PROTECT</a><a href="./dhf-architecture-status-cn.html">架构状态</a>
+    </div>
+    <a class="dhf-nav-lang" href="./dhf-context-engineering-en.html" lang="en" hreflang="en">English</a>
+  </nav>
+  <main id="dhf-main" class="wrap dhf-has-toc">
+    <nav class="dhf-toc" aria-label="本页目录"><div class="dhf-toc-title">本页目录</div><a href="#overview">供应链</a><a href="#sources">可信输入</a><a href="#bearing">恢复位置</a><a href="#permission">约束行动</a><a href="#continuity">形成下一轮</a><a href="#boundaries">能力边界</a></nav>
+    <div class="dhf-col">
+      <aside class="dhf-status-bar" data-dhf-status="2026-08-11" aria-label="当前 DHF 状态"><strong>架构状态 · 2026-08-11</strong><span>本页解释设计；源码、运行时、公开页面和独立核心仍分别判定。</span><a href="./dhf-architecture-status-cn.html">查看当前状态</a></aside>
+      <section class="hero"><div class="eyebrow">DHF / Context Engineering</div><h1>建立一条可治理的<br>上下文供应链。</h1><p class="lead">智能体失败，很多时候不是模型能力不足，而是它在错误的时间使用了错误、过期或未经授权的上下文。DHF 不追求让智能体知道一切，而是让它只获得当前工作需要的可信事实，并说明这些事实允许它做什么。</p></section>
+      <nav class="strip" aria-label="快速入口"><a class="tag" href="./project-lifecycle-harness-flow-cn.html">上一篇：生命周期</a><a class="tag" href="./dhf-governance-decision-flow-cn.html">下一篇：治理判定</a><a class="tag" href="./dhf-protect-seven-components-cn.html">PROTECT</a><a class="tag" href="./dhf-context-engineering-en.html" hreflang="en">English</a></nav>
+
+      <section id="overview" class="section-block"><div class="section-heading"><div><div class="label">总览</div><h2>信息从事实进入行动，再回到事实</h2></div><p>选择可信事实，压缩为当前任务状态，按风险注入，用它约束行动，再把实际结果沉淀为下一轮可恢复事实。</p></div>
+        <ol class="supply-chain" aria-label="DHF 上下文供应链"><li><strong>可信来源</strong><span>规则、索引、ADR、源码和状态</span></li><li><strong>Session Bearing</strong><span>恢复当前位置</span></li><li><strong>Prompt Shaping</strong><span>按阶段和风险加载</span></li><li><strong>PreTool Guard</strong><span>把上下文转成权限</span></li><li><strong>执行</strong><span>在边界内行动</span></li><li><strong>PostTool Evidence</strong><span>记录实际结果</span></li><li><strong>Checkpoint</strong><span>形成下一轮上下文</span></li></ol>
+        <div class="callout"><strong>核心原则：</strong>聊天历史提供线索，但不能单独构成事实；恢复出的历史状态也不能自动成为新的执行授权。</div>
+      </section>
+
+      <section id="sources" class="section-block"><div class="section-heading"><div><div class="label">01 · 建立可信输入</div><h2>先定义什么算上下文</h2></div><p>不同信息拥有不同稳定性、用途和可信度，不能堆进一个不断增长的 prompt。</p></div>
+        <div class="table-wrap"><table><thead><tr><th>上下文类型</th><th>主要载体</th><th>回答的问题</th></tr></thead><tbody><tr><td>稳定规则</td><td><code>AGENTS.md</code></td><td>智能体必须遵守什么</td></tr><tr><td>仓库地图</td><td><code>docs/repo-index.md</code></td><td>到哪里查找事实</td></tr><tr><td>业务语言</td><td><code>CONTEXT.md</code></td><td>术语应该如何理解</td></tr><tr><td>当前状态</td><td>Harness state</td><td>任务现在做到哪里</td></tr><tr><td>决策依据</td><td>Requirements、ADR、contracts</td><td>为什么选择这条路径</td></tr><tr><td>真实实现</td><td>Git、源码、测试</td><td>当前实现是什么</td></tr><tr><td>执行证据</td><td>本地 evidence</td><td>实际发生了什么</td></tr><tr><td>聊天历史</td><td>最低优先级提示</td><td>从哪里继续查找</td></tr></tbody></table></div>
+        <div class="card-grid"><div class="card"><h3>明确来源顺序</h3><p>仓库规则 → 低 token 索引 → 术语合同 → 当前状态 → 决策合同 → 源码与 Git → 本地 evidence → 聊天历史。</p></div><div class="card"><h3>保留冲突</h3><p>耐久来源冲突时，不选择“看起来合理”的一边。影响架构、数据、安全或发布的冲突必须进入 ADR 或 architecture checkpoint。</p></div></div>
+      </section>
+
+      <section id="bearing" class="section-block"><div class="section-heading"><div><div class="label">02 · 恢复当前位置</div><h2>Session Bearing 是业务导航卡</h2></div><p>中断后最危险的不是忘记一段文字，而是失去阶段、边界、所有权和下一步方位。</p></div>
+        <div class="card-grid four"><div class="card"><h3><code>phase</code></h3><p>研究、规划、开发、验证、发布或交接。</p></div><div class="card"><h3><code>next_safe_task</code></h3><p>不需要猜测即可执行的下一项动作。</p></div><div class="card"><h3><code>boundary_verdict</code></h3><p>当前状态和证据是否足以继续。</p></div><div class="card"><h3><code>dirty_status</code></h3><p>工作区是否有未归属或未验证的修改。</p></div></div>
+        <div class="callout"><strong>恢复事实不等于恢复权限。</strong>Recovery 可以说明上次做到哪里，但不能自动授权远端访问、生产修改、发布、受保护目录写入或失败外部动作的重试。</div>
+        <div class="card-grid"><div class="card"><h3>找不到就不猜</h3><p>状态缺失、格式损坏、验证时间不明或工作区不可判定时，返回 <code>unknown</code>；需要执行权限时，unknown 按不安全处理。</p></div><div class="card"><h3>少而可信</h3><p>只注入当前任务需要的阶段、已确认事实、阻塞项和下一安全动作，不复制完整聊天或状态日志。</p></div></div>
+      </section>
+
+      <section id="permission" class="section-block"><div class="section-heading"><div><div class="label">03 · 约束行动</div><h2>上下文不只是参考，也是控制输入</h2></div><p>任务阶段、执行 lane、scope、风险等级和授权状态共同决定工具调用允许还是阻断。</p></div>
+        <div class="card-grid"><div class="card"><h3>Prompt Shaping</h3><p><code>light</code> 保持简单任务轻量；<code>standard</code> 增加常规恢复与验证；<code>governed</code> 用于隐私、架构冲突、远端或破坏性动作。</p></div><div class="card"><h3>Context Pressure</h3><p>观察宿主实际发生的 compaction。token 数据不可观察时明确报告 unknown，不虚构剩余容量。</p></div><div class="card"><h3>PreTool Guard</h3><p>在执行前读取 phase、lane、scope、风险和授权，把上下文转换成可执行权限。</p></div><div class="card"><h3>PostTool Evidence</h3><p>在执行后记录实际结果，并区分影响决策的 evidence 与普通 routine evidence。</p></div></div>
+      </section>
+
+      <section id="continuity" class="section-block"><div class="section-heading"><div><div class="label">04 · 形成下一轮</div><h2>实际结果必须离开聊天</h2></div><p>经过验证的阶段、变更、阻塞和 next safe task 进入 checkpoint，下一次会话从耐久事实恢复。</p></div>
+        <div class="card-grid"><div class="card"><h3>Checkpoint</h3><p>保存任务阶段、验证证据、剩余风险和下一安全动作；它是恢复输入，不是 commit 的别名。</p></div><div class="card"><h3>多智能体隔离</h3><p>每个 agent 都需要明确 ownership、scope 和证据边界。共享仓库不等于共享写入权。</p></div><div class="card"><h3>Freshness</h3><p>新 commit、相关源码变化或新的外部状态会使旧证据失效。历史 green 不能支撑新的完成声明。</p></div><div class="card"><h3>闭环</h3><p>来源 → Bearing → Guard → 执行 → Evidence → Checkpoint → 新的 Bearing。</p></div></div>
+      </section>
+
+      <section id="boundaries" class="section-block"><div class="section-heading"><div><div class="label">能力边界</div><h2>当前能力与路线图分开陈述</h2></div><p>本页解释设计，不替代当前源码、运行时或生产状态证明；实时状态以架构状态页和新鲜验证为准。</p></div>
+        <div class="card-grid"><div class="card" data-capability-state="current"><span class="state current">Current</span><h3>当前供应链</h3><ul><li>来源分层与 Session Bearing</li><li>风险 profile 与 PreTool Guard</li><li>PostTool Evidence 取证</li><li>Checkpoint 与 Recovery</li></ul><p class="meta">具体激活状态另行验证</p></div><div class="card" data-capability-state="planned"><span class="state planned">Planned</span><h3>下一阶段</h3><ul><li>统一即时反馈纠错</li><li>可观察的上下文预算</li><li>细粒度 Access 治理</li><li>Fleet 级跨 agent 协调</li></ul><p class="meta">路线图不是已实现声明</p></div></div>
+        <div class="callout"><strong>发布边界：</strong>公开文档可用不等于本机运行时已激活；源码已实现不等于生产已经强制；HTTP 200 也不等于客户采用或商业验证。</div>
+      </section>
+
+      <footer class="footer"><span>Context Engineering：<strong>docs/dhf-context-engineering-cn.html</strong></span><span><a href="./dhf-context-engineering-en.html" hreflang="en">English version</a> · <a href="./dhf-architecture-status-cn.html">当前架构状态</a></span></footer>
+    </div>
+  </main>
+</body>
+</html>
