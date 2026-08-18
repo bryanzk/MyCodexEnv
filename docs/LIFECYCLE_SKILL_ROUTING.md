@@ -93,6 +93,8 @@ behavior live in `codex/hooks/dhf_preprompt.py`.
 
 Evidence 语言边界：英文 Hub 和普通相关链接只进入英文页面，中文 Hub 和普通相关链接只进入中文页面；每个页面只通过显式语言切换进入另一语言 twin。Evidence 解释耐久价值与证明，Architecture Status 负责带日期的当前状态。
 
+Evidence 记忆合同：Hub 使用 `CAP → BRIDGE × SAFE → TRUST` 作为主记忆脊柱，并把 `RECOVER` 表达为失败后的条件分支。`BEST` 是系统、架构和演进视角；`CARE` 是实践、案例和恢复视角。普通子页面只突出与职责相关的最多三个核心词，中英文 twin 的关键词和视角组合必须一致。
+
 ## Related Documentation
 
 - `README.md`: top-level quick start and Harness Runtime overview.

@@ -10351,6 +10351,103 @@ def test_dhf_value_evidence_information_architecture():
     print("[PASS] DHF Value & Evidence information architecture")
 
 
+def test_dhf_evidence_memory_keyword_contract():
+    docs = ROOT / "docs"
+    stylesheet = docs / "dhf-evidence-memory.css"
+    hubs = ["dhf-value-evidence-en.html", "dhf-value-evidence-cn.html"]
+    core_terms = ["CAP", "BRIDGE", "SAFE", "TRUST", "RECOVER"]
+
+    for hub_name in hubs:
+        text = (docs / hub_name).read_text(encoding="utf-8")
+        require(text.count("data-dhf-memory-spine") == 1,
+                f"Evidence hub missing unique memory spine: {hub_name}")
+        spine_match = re.search(
+            r'<(?P<tag>[a-z][a-z0-9-]*)\b[^>]*data-dhf-memory-spine[^>]*>(?P<body>.*?)</(?P=tag)>',
+            text,
+            re.DOTALL | re.IGNORECASE,
+        )
+        require(spine_match is not None, f"Evidence hub memory spine must be a complete element: {hub_name}")
+        spine = spine_match.group("body")
+        require(re.findall(r'data-dhf-memory-key="([A-Z]+)"', spine) == core_terms,
+                f"Evidence hub memory spine terms drifted: {hub_name}")
+        require(
+            re.findall(r'data-dhf-memory-connector="([a-z]+)"', spine) == ["next", "multiply", "next"],
+            f"Evidence hub connectors must encode CAP → BRIDGE × SAFE → TRUST: {hub_name}",
+        )
+        require(spine.count('data-dhf-memory-branch="failure"') == 1,
+                f"Evidence hub must mark RECOVER as one conditional failure branch: {hub_name}")
+        require(
+            re.search(
+                r'<article\b[^>]*data-dhf-memory-key="RECOVER"[^>]*data-dhf-memory-branch="failure"',
+                spine,
+                re.IGNORECASE,
+            ) is not None,
+            f"RECOVER must own the conditional failure-branch marker: {hub_name}",
+        )
+        require(re.findall(r'data-dhf-memory-lens="([A-Z]+)"', spine) == ["BEST", "CARE"],
+                f"Evidence hub must expose BEST then CARE: {hub_name}")
+
+    page_contract = [
+        (("dhf-best-care-recover-en.html", "dhf-best-care-recover.html"),
+         ["CAP", "BRIDGE", "SAFE", "TRUST", "RECOVER"], ["BEST", "CARE"]),
+        (("dhf-data-business-value-explainer-en.html", "dhf-data-business-value-explainer.html"),
+         ["SAFE", "TRUST"], ["CARE"]),
+        (("dhf-safe-data-ai-comparison-en.html", "dhf-safe-data-ai-comparison.html"),
+         ["SAFE", "TRUST"], []),
+        (("dhf-protect-seven-components-en.html", "dhf-protect-seven-components-cn.html"),
+         ["SAFE", "TRUST"], ["BEST"]),
+        (("dhf-shipq-development-history-en.html", "dhf-shipq-development-history.html"),
+         ["CAP", "BRIDGE", "TRUST"], ["BEST"]),
+        (("dhf-case-safe-mapping-en.html", "dhf-case-safe-mapping.html"),
+         ["SAFE", "TRUST"], ["CARE"]),
+        (("dhf-examples-three-lenses-en.html", "dhf-examples-three-lenses.html"),
+         ["CAP", "TRUST"], ["CARE"]),
+        (("dhf-examples-three-lenses-safe-en.html", "dhf-examples-three-lenses-safe.html"),
+         ["SAFE", "TRUST"], ["CARE"]),
+        (("shipq-dhf-safe-controlled-recovery-en.html", "shipq-dhf-safe-controlled-recovery.html"),
+         ["SAFE", "RECOVER", "TRUST"], ["CARE"]),
+        (("shipq-dhf-incident-recovery-memory-map-en.html", "shipq-dhf-incident-recovery-memory-map.html"),
+         ["SAFE", "RECOVER"], ["CARE"]),
+    ]
+
+    for page_pair, expected_terms, expected_lenses in page_contract:
+        observed: list[tuple[list[str], list[str]]] = []
+        for page_name in page_pair:
+            text = (docs / page_name).read_text(encoding="utf-8")
+            require(text.count("data-dhf-memory-cue") == 1,
+                    f"Evidence child missing unique memory cue: {page_name}")
+            cue_match = re.search(
+                r'<(?P<tag>[a-z][a-z0-9-]*)\b[^>]*data-dhf-memory-cue[^>]*>(?P<body>.*?)</(?P=tag)>',
+                text,
+                re.DOTALL | re.IGNORECASE,
+            )
+            require(cue_match is not None, f"Evidence memory cue must be a complete element: {page_name}")
+            cue = cue_match.group("body")
+            terms = re.findall(r'data-dhf-memory-term="([A-Z]+)"', cue)
+            lenses = re.findall(r'data-dhf-memory-lens="([A-Z]+)"', cue)
+            require(terms == expected_terms, f"Evidence memory terms drifted for {page_name}: {terms}")
+            require(lenses == expected_lenses, f"Evidence memory lenses drifted for {page_name}: {lenses}")
+            if "best-care-recover" not in page_name:
+                require(len(terms) <= 3, f"Evidence child memory cue is overloaded: {page_name}")
+            observed.append((terms, lenses))
+        require(observed[0] == observed[1], f"bilingual Evidence memory cues diverged: {page_pair}")
+
+    for protect_name in ["dhf-protect-seven-components-en.html", "dhf-protect-seven-components-cn.html"]:
+        protect = (docs / protect_name).read_text(encoding="utf-8")
+        require(
+            '<div class="dhf-col protect-page"><aside class="dhf-memory-cue"' in protect,
+            f"PROTECT memory cue must live inside the content column: {protect_name}",
+        )
+
+    require(stylesheet.is_file(), "missing shared Evidence memory stylesheet")
+    for page_name in hubs + [name for pair, _, _ in page_contract for name in pair]:
+        text = (docs / page_name).read_text(encoding="utf-8")
+        require(text.count('href="./dhf-evidence-memory.css?v=20260818a"') == 1,
+                f"Evidence page missing shared memory stylesheet: {page_name}")
+
+    print("[PASS] DHF Evidence memory keyword contract")
+
+
 def test_runner_registry_complete():
     registered = [fn.__name__ for fn in TESTS]
     defined = defined_test_names()
@@ -10485,6 +10582,7 @@ TESTS = [
     test_public_dhf_architecture_status_alignment,
     test_dhf_models_and_patterns_information_architecture,
     test_dhf_value_evidence_information_architecture,
+    test_dhf_evidence_memory_keyword_contract,
     test_runner_registry_complete,
 ]
 
