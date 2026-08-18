@@ -192,7 +192,8 @@ def _patch_touches(patch: str) -> list[tuple[str, str]] | None:
 
 def structured_action(payload: dict[str, object]) -> list[tuple[str, tuple[str, str, str]]] | None:
     name = tool_name(payload)
-    if name not in READ_TOOLS | MUTATION_TOOLS or any(key in payload for key in ("command", "cmd")):
+    payload_commands = [payload[key] for key in ("command", "cmd") if key in payload]
+    if name not in READ_TOOLS | MUTATION_TOOLS or (name != "apply_patch" and payload_commands):
         return None
     data = tool_input(payload)
     raw_touches: list[tuple[str, str]] = []
@@ -200,6 +201,14 @@ def structured_action(payload: dict[str, object]) -> list[tuple[str, tuple[str, 
         raw_input = raw_tool_input(payload)
         patch_values = [data[key] for key in ("patch", "command") if key in data]
         patch = raw_input if isinstance(raw_input, str) else patch_values[0] if len(patch_values) == 1 else None
+        if patch is None and not patch_values and not isinstance(raw_input, str) and len(payload_commands) == 1:
+            # Codex code-mode host wire: the patch arrives as a top-level command
+            # with no input container (observed live on 2026-08-18).
+            candidate = payload_commands[0]
+            patch = candidate if isinstance(candidate, str) else None
+        elif patch is not None and payload_commands:
+            # Dual-source payloads stay ambiguous and defer to native policy.
+            patch = None
         if not isinstance(patch, str) or (raw_touches := _patch_touches(patch)) is None:
             return None
     elif name == "multi_edit":

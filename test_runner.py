@@ -4529,6 +4529,54 @@ def test_harness_guard_policy_decisions():
                 {"tool_name": "apply_patch", "tool_input": tool_input_value},
                 "active_control_plane_mutation",
             )
+        host_wire_patch = "\n".join(
+            [
+                "*** Begin Patch",
+                f"*** Add File: {codex_home / 'hooks.json'}",
+                "+x",
+                "*** End Patch",
+            ]
+        )
+        for wire_key in ("command", "cmd"):
+            require_block(
+                {"tool_name": "apply_patch", wire_key: host_wire_patch},
+                "active_control_plane_mutation",
+            )
+        credential_wire_patch = "\n".join(
+            [
+                "*** Begin Patch",
+                f"*** Update File: {codex_home / 'auth.json'}",
+                "@@",
+                "+x",
+                "*** End Patch",
+            ]
+        )
+        require_block(
+            {"tool_name": "apply_patch", "command": credential_wire_patch},
+            "credential_target_access",
+        )
+        ordinary_wire_patch = "\n".join(
+            ["*** Begin Patch", "*** Add File: wire-probe.tmp", "+x", "*** End Patch"]
+        )
+        require(
+            run({"tool_name": "apply_patch", "command": ordinary_wire_patch}) == {},
+            "top-level command patch with an ordinary target must defer to native policy",
+        )
+        require(
+            run({"tool_name": "apply_patch", "command": host_wire_patch, "cmd": host_wire_patch}) == {},
+            "conflicting top-level command containers must defer to native policy",
+        )
+        require(
+            run(
+                {
+                    "tool_name": "apply_patch",
+                    "tool_input": {"patch": host_wire_patch},
+                    "command": host_wire_patch,
+                }
+            )
+            == {},
+            "dual-source apply_patch payloads must defer to native policy",
+        )
         move_patch = "\n".join(
             [
                 "*** Begin Patch",
