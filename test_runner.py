@@ -4562,20 +4562,40 @@ def test_harness_guard_policy_decisions():
             run({"tool_name": "apply_patch", "command": ordinary_wire_patch}) == {},
             "top-level command patch with an ordinary target must defer to native policy",
         )
+        require_block(
+            {"tool_name": "apply_patch", "command": host_wire_patch, "cmd": host_wire_patch},
+            "active_control_plane_mutation",
+        )
+        require_block(
+            {
+                "tool_name": "apply_patch",
+                "tool_input": {"command": host_wire_patch},
+                "command": host_wire_patch,
+            },
+            "active_control_plane_mutation",
+        )
+        require_block(
+            {
+                "tool_name": "apply_patch",
+                "tool_input": {"patch": host_wire_patch},
+                "command": host_wire_patch,
+            },
+            "active_control_plane_mutation",
+        )
         require(
-            run({"tool_name": "apply_patch", "command": host_wire_patch, "cmd": host_wire_patch}) == {},
-            "conflicting top-level command containers must defer to native policy",
+            run({"tool_name": "apply_patch", "command": host_wire_patch, "cmd": ordinary_wire_patch}) == {},
+            "conflicting top-level patch sources must defer to native policy",
         )
         require(
             run(
                 {
                     "tool_name": "apply_patch",
-                    "tool_input": {"patch": host_wire_patch},
+                    "tool_input": {"patch": ordinary_wire_patch},
                     "command": host_wire_patch,
                 }
             )
             == {},
-            "dual-source apply_patch payloads must defer to native policy",
+            "conflicting dual-source apply_patch payloads must defer to native policy",
         )
         move_patch = "\n".join(
             [
@@ -4636,13 +4656,20 @@ def test_harness_guard_policy_decisions():
                 "tool_input": {"path": str(codex_home / "hooks.json"), "content": "fixture"},
                 "command": "pwd",
             },
+        ]
+        for payload in malformed_structured_payloads:
+            require(run(payload) == {}, f"ambiguous structured payload must defer: {payload}")
+        require_block(
             {
                 "tool_name": "apply_patch",
                 "tool_input": {"patch": move_patch, "command": move_patch},
             },
-        ]
-        for payload in malformed_structured_payloads:
-            require(run(payload) == {}, f"ambiguous structured payload must defer: {payload}")
+            "active_control_plane_mutation",
+        )
+        require(
+            run({"tool_name": "apply_patch", "tool_input": {"patch": move_patch, "command": prose_patch}}) == {},
+            "conflicting container patch sources must defer to native policy",
+        )
         partial_structured_payloads = [
             {"tool_name": "write", "tool_input": {"path": str(codex_home / "hooks.json")}},
             {

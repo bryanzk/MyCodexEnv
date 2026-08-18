@@ -200,15 +200,14 @@ def structured_action(payload: dict[str, object]) -> list[tuple[str, tuple[str, 
     if name == "apply_patch":
         raw_input = raw_tool_input(payload)
         patch_values = [data[key] for key in ("patch", "command") if key in data]
-        patch = raw_input if isinstance(raw_input, str) else patch_values[0] if len(patch_values) == 1 else None
-        if patch is None and not patch_values and not isinstance(raw_input, str) and len(payload_commands) == 1:
-            # Codex code-mode host wire: the patch arrives as a top-level command
-            # with no input container (observed live on 2026-08-18).
-            candidate = payload_commands[0]
-            patch = candidate if isinstance(candidate, str) else None
-        elif patch is not None and payload_commands:
-            # Dual-source payloads stay ambiguous and defer to native policy.
-            patch = None
+        # Codex host wires deliver the patch as freeform input, as
+        # tool_input.patch/command, or as a top-level command that some hosts
+        # mirror alongside the container copy (observed live on 2026-08-18).
+        # Identical duplicates collapse to one source; genuinely conflicting
+        # sources stay ambiguous and defer to native policy.
+        sources = ([raw_input] if raw_input is not None and not isinstance(raw_input, dict) else []) + patch_values + payload_commands
+        unique = {value for value in sources if isinstance(value, str)}
+        patch = unique.pop() if sources and len(unique) == 1 and all(isinstance(value, str) for value in sources) else None
         if not isinstance(patch, str) or (raw_touches := _patch_touches(patch)) is None:
             return None
     elif name == "multi_edit":
