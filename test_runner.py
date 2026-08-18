@@ -10599,6 +10599,11 @@ def test_dhf_evidence_child_navigation_and_controlled_recovery_contract():
     chinese_recovery = (docs / "shipq-dhf-safe-controlled-recovery.html").read_text(encoding="utf-8")
     require_in_order(chinese_recovery, ["05 · RECOVER", "06 · STATE MODEL", "07 · BUSINESS VALUE", "08 · EVIDENCE"],
                      "Chinese controlled-recovery section numbering")
+    english_recovery = (docs / "shipq-dhf-safe-controlled-recovery-en.html").read_text(encoding="utf-8")
+    english_shell = re.search(r'<main class="dhf-has-toc"[^>]*>', english_recovery)
+    require(english_shell is not None and "margin-inline:auto" in english_shell.group(0)
+            and "padding-inline:clamp(" in english_shell.group(0),
+            "English controlled-recovery layout must stay centered with responsive gutters")
 
     archive = ROOT / "tasks" / "archives" / "2026-08-18-dhf-controlled-recovery-interview"
     expected_hashes = {
