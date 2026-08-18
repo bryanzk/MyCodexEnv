@@ -5226,16 +5226,8 @@ def test_canonical_harness_hook_performance_budgets():
             ),
         }
 
-        def measure(guard, payload, expected_block, iterations):
-            timings = []
-            for _ in range(iterations):
-                started = time.perf_counter()
-                code, out, err = run_with_input([sys.executable, str(guard)], payload, env=env)
-                timings.append(time.perf_counter() - started)
-                require(code == 0, f"performance fixture failed: {err or out}")
-                if expected_block is not None:
-                    result = json.loads(out)
-                    require((result.get("decision") == "block") is expected_block, f"unexpected fixture result: {result}")
+        def summarize(timings):
+            require(timings, "performance measurements must retain samples")
             ordered = sorted(timings)
             p95_index = max(0, (len(ordered) * 95 + 99) // 100 - 1)
             return {
@@ -5244,8 +5236,86 @@ def test_canonical_harness_hook_performance_budgets():
                 "p95_seconds": ordered[p95_index],
             }
 
+        def sample(command, payload, expected_block):
+            started = time.perf_counter()
+            code, out, err = run_with_input(command, payload, env=env)
+            elapsed = time.perf_counter() - started
+            require(code == 0, f"performance fixture failed: {err or out}")
+            if expected_block is not None:
+                result = json.loads(out)
+                require((result.get("decision") == "block") is expected_block, f"unexpected fixture result: {result}")
+            return elapsed
+
+        def measure(guard, payload, expected_block, iterations):
+            timings = []
+            for _ in range(iterations):
+                timings.append(sample([sys.executable, str(guard)], payload, expected_block))
+            return summarize(timings)
+
+        def measure_interleaved(payload, expected_block, iterations):
+            commands = {
+                "entry": ([sys.executable, str(baseline_guard)], None),
+                "candidate": ([sys.executable, str(HARNESS_GUARD)], expected_block),
+                "empty": ([sys.executable, "-c", "pass"], None),
+            }
+            timings = {name: [] for name in commands}
+            order = tuple(commands)
+            for iteration in range(iterations):
+                rotated = order[iteration % len(order) :] + order[: iteration % len(order)]
+                for name in rotated:
+                    command, expected = commands[name]
+                    timings[name].append(sample(command, payload, expected))
+            return {name: summarize(samples) for name, samples in timings.items()}
+
+        guard_spec = importlib.util.spec_from_file_location("harness_guard_performance", HARNESS_GUARD)
+        require(guard_spec and guard_spec.loader, "candidate Guard decision seam must be importable")
+        guard_module = importlib.util.module_from_spec(guard_spec)
+        old_codex_home = os.environ.get("CODEX_HOME")
+        os.environ["CODEX_HOME"] = env["CODEX_HOME"]
+        try:
+            guard_spec.loader.exec_module(guard_module)
+        finally:
+            if old_codex_home is None:
+                os.environ.pop("CODEX_HOME", None)
+            else:
+                os.environ["CODEX_HOME"] = old_codex_home
+
+        def measure_in_process(payload, expected_block, iterations=1000):
+            timings = []
+            for _ in range(iterations):
+                started = time.perf_counter()
+                result = guard_module.decision(payload)
+                timings.append(time.perf_counter() - started)
+                require((result.get("decision") == "block") is expected_block, f"unexpected in-process result: {result}")
+            return summarize(timings)
+
         receipts = {}
-        for name, expected_block in (("no_match", False), ("hd02_deny", True), ("hardlink_deny", True)):
+        no_match_runs = measure_interleaved(payloads["no_match"], False, 90)
+        no_match_in_process = measure_in_process(json.loads(payloads["no_match"]), False)
+        no_match = {
+            **no_match_runs["candidate"],
+            "entry_median_seconds": no_match_runs["entry"]["median_seconds"],
+            "entry_p95_seconds": no_match_runs["entry"]["p95_seconds"],
+            "empty_median_seconds": no_match_runs["empty"]["median_seconds"],
+            "empty_p95_seconds": no_match_runs["empty"]["p95_seconds"],
+            "median_overhead_seconds": no_match_runs["candidate"]["median_seconds"]
+            - no_match_runs["empty"]["median_seconds"],
+            "p95_overhead_seconds": no_match_runs["candidate"]["p95_seconds"]
+            - no_match_runs["empty"]["p95_seconds"],
+            "in_process_p95_seconds": no_match_in_process["p95_seconds"],
+            "in_process_worst_seconds": no_match_in_process["worst_seconds"],
+        }
+        no_match["median_improvement"] = 1 - no_match["median_seconds"] / no_match["entry_median_seconds"]
+        receipts["no_match"] = no_match
+        require(no_match["worst_seconds"] <= 0.10, f"no_match worst exceeded 0.10s: {no_match}")
+        require(no_match["p95_seconds"] <= 0.05, f"no_match p95 exceeded 0.05s: {no_match}")
+        require(no_match["median_improvement"] >= 0.30, f"no_match median improvement was below 30%: {no_match}")
+        require(no_match["median_overhead_seconds"] <= 0.010, f"no_match median overhead exceeded 0.010s: {no_match}")
+        require(no_match["p95_overhead_seconds"] <= 0.020, f"no_match p95 overhead exceeded 0.020s: {no_match}")
+        require(no_match["in_process_p95_seconds"] <= 0.001, f"no_match in-process p95 exceeded 0.001s: {no_match}")
+        require(no_match["in_process_worst_seconds"] <= 0.010, f"no_match in-process worst exceeded 0.010s: {no_match}")
+
+        for name, expected_block in (("hd02_deny", True), ("hardlink_deny", True)):
             entry = measure(baseline_guard, payloads[name], None, 30)
             receipt = measure(HARNESS_GUARD, payloads[name], expected_block, 90)
             receipt["entry_median_seconds"] = entry["median_seconds"]
@@ -5254,6 +5324,16 @@ def test_canonical_harness_hook_performance_budgets():
             require(receipt["worst_seconds"] <= 0.10, f"{name} worst exceeded 0.10s: {receipt}")
             require(receipt["p95_seconds"] <= 0.05, f"{name} p95 exceeded 0.05s: {receipt}")
             require(receipt["median_improvement"] >= 0.30, f"{name} median improvement was below 30%: {receipt}")
+
+        for field in (
+            "empty_median_seconds",
+            "empty_p95_seconds",
+            "median_overhead_seconds",
+            "p95_overhead_seconds",
+            "in_process_p95_seconds",
+            "in_process_worst_seconds",
+        ):
+            require(field in no_match, f"no_match attributable performance receipt missing {field}: {no_match}")
 
         outside = tmp_path / "outside"
         outside.mkdir()
