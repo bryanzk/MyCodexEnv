@@ -80,9 +80,10 @@ behavior live in `codex/hooks/dhf_preprompt.py`.
 - `docs/dhf-context-engineering-en.html`: English guide to the governed DHF context supply chain.
 - `docs/dhf-protect-seven-components-cn.html`: 中文 PROTECT 图，逐个说明七个受 WAL 保护的运行时晋升目标。
 - `docs/dhf-protect-seven-components-en.html`: English PROTECT map for the seven WAL-protected runtime promotion targets.
-- `docs/dhf-best-care-recover.html`: 中文 DHF 记忆体系页，讲 BEST、CARE、RECOVER 三组记忆框架。
 - `docs/dhf-case-safe-mapping.html`: 中文页面，把真实 DHF case 对应到 SAFE 控制模型。
-- `docs/dhf-data-business-value-explainer.html`: 中文页面，对比两套执行系统如何交付同一业务价值。
+- `docs/dhf-best-care-recover.html`: 中文 Models & Patterns 总入口，组织 SAFE、PROTECT、TRUST、CAP/BRIDGE、BEST/CARE、RECOVER 与案例证据。
+- `docs/dhf-data-business-value-explainer.html`: 中文 SAFE → TRUST 通用控制与业务价值页面。
+- `docs/dhf-safe-data-ai-comparison.html`: 中文辅助子页面，对比数据与 AI 架构和 DHF 如何复用 SAFE。
 - `docs/dhf-examples-three-lenses.html`: 中文真实案例页，同一个 case 的三种面试讲法。
 - `docs/dhf-examples-three-lenses-safe.html`: 中文真实案例页，三种讲法叠加 SAFE 控制模型。
 - `docs/dhf-shipq-development-history.html`: 中文 DHF 演进史，从 ShipQ 业务阻塞讲到 SAFE 控制与 TRUST 价值。

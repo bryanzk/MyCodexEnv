@@ -544,8 +544,9 @@
     },
     {
       "path": "docs/dhf-best-care-recover.html",
-      "role": "Chinese DHF memory-system page covering the BEST, CARE, and RECOVER frames",
-      "audience": ["human"]
+      "role": "Chinese DHF Models and Patterns hub for control, runtime architecture, value, evolution, recovery, and evidence",
+      "audience": ["human"],
+      "public_nav": ["docs/index-zh.html"]
     },
     {
       "path": "docs/dhf-case-safe-mapping.html",
@@ -554,8 +555,15 @@
     },
     {
       "path": "docs/dhf-data-business-value-explainer.html",
-      "role": "Chinese explainer contrasting two execution systems that deliver the same business value",
-      "audience": ["human"]
+      "role": "Chinese generic SAFE to TRUST control-and-value explainer",
+      "audience": ["human"],
+      "public_nav": ["docs/dhf-best-care-recover.html"]
+    },
+    {
+      "path": "docs/dhf-safe-data-ai-comparison.html",
+      "role": "Chinese auxiliary comparison of SAFE across Data and AI architecture and DHF",
+      "audience": ["human"],
+      "public_nav": ["docs/dhf-best-care-recover.html"]
     },
     {
       "path": "docs/dhf-examples-three-lenses.html",

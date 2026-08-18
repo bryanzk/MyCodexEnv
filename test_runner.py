@@ -10146,22 +10146,110 @@ def test_public_dhf_architecture_status_alignment():
     print("[PASS] public DHF architecture status alignment")
 
 
-def test_shipq_dhf_visual_pages_are_mutually_linked():
-    pages = [
-        "dhf-best-care-recover.html",
+def test_dhf_models_and_patterns_information_architecture():
+    docs = ROOT / "docs"
+    hub_name = "dhf-best-care-recover.html"
+    safe_name = "dhf-data-business-value-explainer.html"
+    comparison_name = "dhf-safe-data-ai-comparison.html"
+    child_names = [
+        safe_name,
+        comparison_name,
+        "dhf-protect-seven-components-cn.html",
+        "dhf-protect-seven-components-en.html",
         "dhf-shipq-development-history.html",
-        "dhf-data-business-value-explainer.html",
-        "dhf-examples-three-lenses.html",
         "shipq-dhf-safe-controlled-recovery.html",
         "shipq-dhf-incident-recovery-memory-map.html",
+        "dhf-examples-three-lenses.html",
         "dhf-case-safe-mapping.html",
     ]
-    for page in pages:
-        text = (ROOT / "docs" / page).read_text(encoding="utf-8")
-        require("file://" not in text, f"DHF visual page contains a machine-local link: {page}")
-        for target in pages:
-            if target != page:
-                require(f'href="./{target}' in text, f"DHF visual page missing link: {page} -> {target}")
+
+    comparison_path = docs / comparison_name
+    require(comparison_path.is_file(), "missing SAFE Data/AI auxiliary comparison page")
+    hub = (docs / hub_name).read_text(encoding="utf-8")
+    safe = (docs / safe_name).read_text(encoding="utf-8")
+    comparison = comparison_path.read_text(encoding="utf-8")
+
+    require(hub.count("data-dhf-models-hub") == 1, "Models & Patterns hub marker must be unique")
+    for label in [
+        "Control &amp; Value",
+        "Runtime Architecture",
+        "Evolution",
+        "Operating Memory",
+        "Incident Response",
+        "Cases &amp; Evidence",
+    ]:
+        require(label in hub, f"Models & Patterns hub missing category: {label}")
+    for child in child_names:
+        require(f'href="./{child}' in hub, f"Models & Patterns hub missing child link: {child}")
+        child_text = (docs / child).read_text(encoding="utf-8")
+        require("file://" not in child_text, f"DHF model page contains a machine-local link: {child}")
+        require(f'href="./{hub_name}' in child_text, f"DHF model child missing hub link: {child}")
+
+    require('data-dhf-model-role="control-value"' in safe, "SAFE page missing control-value role")
+    require('data-dhf-comparison="data-ai-vs-dhf"' not in safe, "SAFE page must not own the full comparison")
+    require(safe.count('data-dhf-auxiliary-link="data-ai-comparison"') == 1,
+            "SAFE page must expose exactly one auxiliary comparison link")
+    auxiliary_match = re.search(
+        r'<a\b[^>]*data-dhf-auxiliary-link="data-ai-comparison"[^>]*>.*?</a>',
+        safe,
+        re.DOTALL | re.IGNORECASE,
+    )
+    require(auxiliary_match is not None, "SAFE auxiliary comparison link must be an anchor")
+    safe_without_auxiliary_link = safe.replace(auxiliary_match.group(0), "")
+    for term in [
+        "数据与 AI 架构",
+        "Data/AI",
+        "hero-system data",
+        "data architecture lane",
+        "model drift",
+        "data quality gate",
+        "特征工程 / 模型服务",
+    ]:
+        require(term not in safe_without_auxiliary_link, f"SAFE page retains Data/AI-specific content: {term}")
+
+    require('data-dhf-model-role="auxiliary-comparison"' in comparison,
+            "Data/AI page missing auxiliary-comparison role")
+    require(comparison.count('data-dhf-comparison="data-ai-vs-dhf"') == 1,
+            "Data/AI comparison owner marker must be unique")
+    for term in [
+        "数据与 AI 架构",
+        "DHF",
+        "质量与客户信任",
+        "风险与授权控制",
+        "运营效率与交付速度",
+        "韧性与业务连续性",
+        "审计、治理与规模化",
+        "Schema",
+        "data quality",
+        "model decision",
+        "drift",
+        "checkpoint",
+        "rollback",
+        "handoff",
+    ]:
+        require(term in comparison, f"Data/AI comparison missing migrated concept: {term}")
+    require(f'href="./{safe_name}' in comparison, "Data/AI comparison missing SAFE backlink")
+
+    for filename in ["index.html", "index-en.html", "index-zh.html"]:
+        text = (docs / filename).read_text(encoding="utf-8")
+        primary_match = re.search(r'<nav class="dhf-nav"[^>]*>(.*?)</nav>', text, re.DOTALL)
+        require(primary_match is not None, f"{filename} missing primary navigation")
+        require(hub_name not in primary_match.group(1), f"{filename} must not promote Models to primary navigation")
+        require(f'href="./{hub_name}' in text, f"{filename} missing Models & Patterns resource link")
+
+    for filename in [
+        "index.html",
+        "index-en.html",
+        "index-zh.html",
+        hub_name,
+        safe_name,
+        comparison_name,
+        "dhf-protect-seven-components-en.html",
+        "dhf-protect-seven-components-cn.html",
+    ]:
+        text = (docs / filename).read_text(encoding="utf-8")
+        require(text.count('data-dhf-status="2026-08-11"') == 1,
+                f"{filename} must preserve the current DHF status attribute")
 
     history = (ROOT / "docs" / "dhf-shipq-development-history.html").read_text(encoding="utf-8")
     require(history.count('class="safe-focus"') == 6, "each BRIDGE stage must name its SAFE focus")
@@ -10175,11 +10263,7 @@ def test_shipq_dhf_visual_pages_are_mutually_linked():
     ]:
         require(statement in history, f"BRIDGE SAFE focus missing: {statement}")
 
-    value_page = (ROOT / "docs" / "dhf-data-business-value-explainer.html").read_text(encoding="utf-8")
-    require('aria-label="DHF 页面底部阅读路径"' in value_page,
-            "business value page must keep its bottom related-page navigation")
-
-    print("[PASS] ShipQ DHF visual pages mutually linked")
+    print("[PASS] DHF Models & Patterns information architecture")
 
 
 def test_runner_registry_complete():
@@ -10314,7 +10398,7 @@ TESTS = [
     test_codex_fluent_report_only_contract,
     test_public_dhf_information_architecture,
     test_public_dhf_architecture_status_alignment,
-    test_shipq_dhf_visual_pages_are_mutually_linked,
+    test_dhf_models_and_patterns_information_architecture,
     test_runner_registry_complete,
 ]
 

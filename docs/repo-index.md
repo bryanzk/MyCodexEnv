@@ -191,9 +191,10 @@ behavior live in `codex/hooks/dhf_preprompt.py`.
 - `docs/project-lifecycle-harness-flow-skills-zh-status-style.html`: current status-style skill/helper routing map.
 - `docs/project-lifecycle-harness-flow-skills-en-status-style.html`: current English status-style skill/helper routing map.
 - `docs/project-lifecycle-harness-flow-skills-en.html`: archived English skill/helper routing map.
-- `docs/dhf-best-care-recover.html`: Chinese DHF memory-system page covering the BEST, CARE, and RECOVER frames.
+- `docs/dhf-best-care-recover.html`: Chinese DHF Models & Patterns hub for control, runtime architecture, value, evolution, recovery, and evidence.
 - `docs/dhf-case-safe-mapping.html`: Chinese mapping of a real DHF case onto the SAFE control model.
-- `docs/dhf-data-business-value-explainer.html`: Chinese explainer contrasting two execution systems that deliver the same business value.
+- `docs/dhf-data-business-value-explainer.html`: Chinese generic SAFE → TRUST control-and-value explainer.
+- `docs/dhf-safe-data-ai-comparison.html`: Chinese auxiliary comparison of SAFE across Data/AI architecture and DHF.
 - `docs/dhf-examples-three-lenses.html`: Chinese casebook telling one real DHF case through three interview lenses.
 - `docs/dhf-examples-three-lenses-safe.html`: Chinese casebook combining the three-lens narrative with the SAFE control model.
 - `docs/dhf-shipq-development-history.html`: Chinese DHF evolution history from ShipQ blockage to SAFE controls and TRUST value.
@@ -221,9 +222,10 @@ behavior live in `codex/hooks/dhf_preprompt.py`.
 - `docs/dhf-for-product-and-field-en.html`: GitHub Pages English diagram-first DHF overview for product and field teams.
 - `docs/dhf-for-product-and-field-cn.html`: GitHub Pages Chinese diagram-first DHF overview for product and field teams.
 - `docs/dhf-engineering-notes-en.html`: GitHub Pages English engineering deep-dive for agentic systems readers.
-- `docs/dhf-best-care-recover.html`: GitHub Pages Chinese DHF memory-system page (BEST / CARE / RECOVER).
+- `docs/dhf-best-care-recover.html`: GitHub Pages Chinese DHF Models & Patterns hub.
 - `docs/dhf-case-safe-mapping.html`: GitHub Pages Chinese mapping of a real DHF case onto the SAFE control model.
-- `docs/dhf-data-business-value-explainer.html`: GitHub Pages Chinese explainer contrasting two execution systems that deliver the same business value.
+- `docs/dhf-data-business-value-explainer.html`: GitHub Pages Chinese generic SAFE → TRUST explainer.
+- `docs/dhf-safe-data-ai-comparison.html`: GitHub Pages Chinese auxiliary Data/AI architecture versus DHF comparison.
 - `docs/dhf-examples-three-lenses.html`: GitHub Pages Chinese casebook telling one real DHF case through three interview lenses.
 - `docs/dhf-examples-three-lenses-safe.html`: GitHub Pages Chinese casebook combining the three-lens narrative with the SAFE control model.
 - `docs/dhf-shipq-development-history.html`: GitHub Pages Chinese DHF evolution history from ShipQ blockage to SAFE controls and TRUST value.

@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>DHF 记忆体系：BEST、CARE 与 RECOVER</title>
+  <title>DHF Models &amp; Patterns：控制、架构、价值、演进与恢复</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Noto+Serif+SC:wght@400;600;700;900&display=swap" rel="stylesheet">
@@ -275,18 +275,18 @@
     <a href="#lenses">BEST × CARE</a>
     <a href="#vocabulary">基础词汇</a>
     <a href="#recover">RECOVER</a>
-    <a href="#relationship">三层关系</a>
+    <a href="#relationship">模型层级</a>
     <a href="#related">关联页面</a>
   </nav>
-  <main class="main">
+  <main class="main" data-dhf-models-hub>
     <header id="overview" class="reveal" style="--i:0">
-      <div class="eyebrow">DHF × ShipQ · mnemonic architecture</div>
-      <h1>BEST 看全局，<br>CARE 讲行动，<br>RECOVER 管事故。</h1>
-      <p class="dek">DHF 的核心词汇不变：CAP 定义业务关注，BRIDGE 描述六阶段演进，SAFE 控制每次状态变化，TRUST 衡量最终业务价值。BEST 与 CARE 是两种四字母记忆入口；RECOVER 是写入失败或结构异常后的七步恢复闭环。</p>
+      <div class="eyebrow">DHF Models &amp; Patterns · 中文模型入口</div>
+      <h1>控制、架构、价值、<br>演进与恢复。</h1>
+      <p class="dek">这是 DHF 模型与实践的统一入口：SAFE 控制可信状态变化，PROTECT 解释 runtime 如何落实保护，TRUST 衡量业务价值，CAP / BRIDGE 描述关注点与演进路径，BEST / CARE 帮助沟通和实践，RECOVER 只在事故时展开。</p>
       <div class="hero-equation">
         <strong>BEST</strong><code>CAP → BRIDGE × SAFE → TRUST</code>
         <strong>CARE</strong><code>CAP → SAFE → TRUST → BRIDGE</code>
-        <p>中文总记忆：关注什么 → 如何演进 → 怎样安全 → 创造何种信任价值；遇到事故，则进入 RECOVER。</p>
+        <p>Operating Memory：BEST / CARE 负责怎么记；Core Models 与 Patterns 负责记什么。遇到事故，才进入 RECOVER。</p>
       </div>
     </header>
 
@@ -362,16 +362,17 @@
 
     <section id="relationship">
       <div class="sec-head reveal" style="--i:11">
-        <div class="kicker">04 · ONE SYSTEM</div>
-        <h2>记忆词很多，但控制结构只有一套</h2>
-        <p class="sec-intro">把这些词放在正确层级，团队就不会把价值语言、发展阶段和事故动作混成一件事。</p>
+        <div class="kicker">04 · MODEL TAXONOMY</div>
+        <h2>按问题选择模型，不把缩写当成竞争流程</h2>
+        <p class="sec-intro">每组模型只有一个职责；主生命周期仍由 Beginner、Context、Lifecycle、Governance 与 Status 解释。</p>
       </div>
-      <div class="relation-map">
-        <div class="relation-node business"><b>CAP + BRIDGE</b><p>业务关注与发展路径<br>BEST / CARE 提供两种讲法</p></div>
-        <div class="relation-arrow">→</div>
-        <div class="relation-node control"><b>SAFE</b><p>每次状态变化的控制内核<br>失败时展开 RECOVER</p></div>
-        <div class="relation-arrow">→</div>
-        <div class="relation-node outcome"><b>TRUST</b><p>最终业务结果<br>质量、风险、效率、连续性、可追溯</p></div>
+      <div class="vocabulary">
+        <article class="vocab safe"><b>Control &amp; Value</b><p><strong>SAFE → TRUST</strong><br>怎样可信推进，以及这些控制创造什么业务价值。</p></article>
+        <article class="vocab cap"><b>Runtime Architecture</b><p><strong>PROTECT</strong><br>七个受保护 runtime 组件如何共同落实控制。</p></article>
+        <article class="vocab bridge"><b>Evolution</b><p><strong>CAP / BRIDGE</strong><br>关注什么，以及从 Baseline 到 Enforcement 如何成熟。</p></article>
+        <article class="vocab cap"><b>Operating Memory</b><p><strong>BEST / CARE</strong><br>面向决策者和实践者的两种复述入口。</p></article>
+        <article class="vocab safe"><b>Incident Response</b><p><strong>RECOVER</strong><br>外部写入失败后的条件化停止、回滚、验证与重授权。</p></article>
+        <article class="vocab trust"><b>Cases &amp; Evidence</b><p><strong>Casebook / SAFE Map</strong><br>用真实交付案例验证模型，而不是创造新的流程。</p></article>
       </div>
       <div class="rule"><strong>一句话：</strong>用 BEST 介绍 DHF，用 CARE 指导日常实践；当 SAFE 检测到外部写入事故，就按 RECOVER 收口，最后以 TRUST 判断是否真正创造业务价值。</div>
     </section>
@@ -385,6 +386,9 @@
       <div class="related-grid" aria-label="DHF 相关页面">
         <a class="related-card reveal" style="--i:13" href="./dhf-shipq-development-history.html" target="_blank" rel="noopener"><span class="label">01 · EVOLUTION</span><strong>DHF × ShipQ 演进史</strong><span>CAP 三条主线、BRIDGE 六阶段，以及每阶段解决的业务痛点与价值。</span></a>
         <a class="related-card reveal" style="--i:14" href="./dhf-data-business-value-explainer.html#overview" target="_blank" rel="noopener"><span class="label">02 · VALUE</span><strong>SAFE → TRUST 业务价值</strong><span>解释控制内核如何转化为质量、风险、效率、连续性与规模化价值。</span></a>
+        <a class="related-card reveal" style="--i:14" href="./dhf-safe-data-ai-comparison.html" target="_blank" rel="noopener"><span class="label">AUXILIARY · DATA / AI</span><strong>数据与 AI 架构 vs DHF</strong><span>SAFE 在两套执行系统中的逐域对比；它是辅助案例，不是 SAFE 定义。</span></a>
+        <a class="related-card reveal" style="--i:14" href="./dhf-protect-seven-components-cn.html" target="_blank" rel="noopener"><span class="label">RUNTIME ARCHITECTURE</span><strong>PROTECT 组件</strong><span>七个受保护 runtime 目标与一笔 WAL promotion 的关系。</span></a>
+        <a class="related-card reveal" style="--i:14" href="./dhf-protect-seven-components-en.html" lang="en" hreflang="en" target="_blank" rel="noopener"><span class="label">ENGLISH REFERENCE</span><strong>PROTECT Components (EN)</strong><span>English runtime-architecture reference.</span></a>
         <a class="related-card reveal" style="--i:15" href="./dhf-examples-three-lenses.html" target="_blank" rel="noopener"><span class="label">03 · CASES</span><strong>DHF 十案例 · 三种讲法</strong><span>把抽象框架落到 MyCodexEnv、ShipQ 与其他真实交付案例。</span></a>
         <a class="related-card reveal" style="--i:16" href="./shipq-dhf-safe-controlled-recovery.html" target="_blank" rel="noopener"><span class="label">04 · DEEP DIVE</span><strong>ShipQ 受控恢复深挖</strong><span>Google Docs partial-write、回滚、独立回读与重新授权的完整案例。</span></a>
         <a class="related-card reveal" style="--i:17" href="./shipq-dhf-incident-recovery-memory-map.html" target="_blank" rel="noopener"><span class="label">05 · INCIDENT</span><strong>RECOVER 事故记忆图</strong><span>六拍时间线、角色泳道、状态机、SAFE 停点与事故自测。</span></a>

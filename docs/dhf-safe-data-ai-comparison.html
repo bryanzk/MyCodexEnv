@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-dhf-palette="warm">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="SAFE 在数据与 AI 架构和 Delivery Harness Framework 两套执行系统中的辅助对比。">
+  <title>SAFE 辅助案例：数据与 AI 架构和 DHF 的对比</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Noto+Serif+SC:wght@400;600;700;900&display=swap" rel="stylesheet">
+  <style>
+    :root{--serif:"Noto Serif SC","Songti SC",serif;--mono:"DM Mono",monospace;--bg:#f4f0e7;--paper:#fffdf8;--ink:#172836;--muted:#65706f;--line:rgba(23,40,54,.14);--data:#315f78;--dhf:#865233;--safe:#557148;--blue-d:rgba(49,95,120,.10);--warm-d:rgba(134,82,51,.10);--shadow:0 18px 44px rgba(48,39,25,.08)}
+    @media(prefers-color-scheme:dark){:root{--bg:#151b1e;--paper:#20282b;--ink:#edf0e9;--muted:#a9b0ad;--line:rgba(255,255,255,.11);--data:#8cc8df;--dhf:#efaa7f;--safe:#add09b;--blue-d:rgba(140,200,223,.12);--warm-d:rgba(239,170,127,.12);--shadow:0 18px 44px rgba(0,0,0,.24)}}
+    *{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;color:var(--ink);background:var(--bg);font:15px/1.65 var(--serif);overflow-wrap:break-word}.wrap{width:min(1180px,calc(100% - 36px));margin:auto;padding:28px 0 68px}.top{display:flex;flex-wrap:wrap;justify-content:space-between;gap:12px;margin-bottom:22px;padding:12px 14px;border:1px solid var(--line);background:var(--paper)}.top a{color:var(--safe);font:500 12px var(--mono)}.hero{padding:clamp(28px,6vw,64px);border:1px solid var(--line);border-top:6px solid var(--safe);border-radius:8px 8px 22px 22px;background:var(--paper);box-shadow:var(--shadow)}.eyebrow,.label{font:500 10px var(--mono);letter-spacing:.14em;text-transform:uppercase;color:var(--safe)}h1,h2,h3{font-family:var(--serif)}h1{max-width:960px;margin:10px 0 16px;font-size:clamp(38px,7vw,74px);line-height:1.05;letter-spacing:-.04em}.lead{max-width:880px;color:var(--muted);font-size:18px}.equation{display:grid;grid-template-columns:1fr auto 1fr;gap:12px;align-items:center;margin-top:26px}.system{min-width:0;padding:18px;border:1px solid var(--line);background:var(--bg)}.system strong{display:block;font-size:19px}.system span{color:var(--muted)}.system.data{border-top:4px solid var(--data)}.system.dhf{border-top:4px solid var(--dhf)}.equals{font:500 18px var(--mono);color:var(--safe)}section{margin-top:54px}.head{display:grid;grid-template-columns:120px 1fr;gap:18px;align-items:start;margin-bottom:18px}.head h2{margin:0;font-size:clamp(28px,4vw,44px);line-height:1.15}.head p{grid-column:2;margin:0;color:var(--muted)}.safe-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}.safe-card{padding:17px;border:1px solid var(--line);border-top:3px solid var(--safe);background:var(--paper)}.safe-card b{display:block;color:var(--safe);font:500 28px var(--mono)}.comparison{display:grid;grid-template-columns:1fr 1fr;gap:14px}.lane{min-width:0;padding:20px;border:1px solid var(--line);background:var(--paper)}.lane.data{border-top:4px solid var(--data)}.lane.dhf{border-top:4px solid var(--dhf)}.lane h3{margin:4px 0 12px;font-size:22px}.lane ul{margin:0;padding-left:20px}.lane li{margin:7px 0}.lane code{font-family:var(--mono);font-size:.86em}.boundary{margin-top:54px;padding:20px;border-left:5px solid var(--safe);background:var(--paper);color:var(--muted)}.boundary strong{color:var(--ink)}.footer{display:flex;flex-wrap:wrap;justify-content:space-between;gap:10px;margin-top:40px;padding-top:18px;border-top:1px solid var(--line);color:var(--muted);font:11px var(--mono)}.footer a{color:var(--safe)}
+    @media(max-width:760px){.equation,.head,.comparison{grid-template-columns:1fr}.head p{grid-column:1}.equals{text-align:center}.safe-grid{grid-template-columns:1fr 1fr}.wrap{width:calc(100% - 20px)}}
+    @media(max-width:430px){.safe-grid{grid-template-columns:1fr}}
+    @media(prefers-reduced-motion:reduce){*,*::before,*::after{scroll-behavior:auto!important;transition-duration:.01ms!important}}
+  </style>
+</head>
+<body data-dhf-status="2026-08-11">
+  <main class="wrap" data-dhf-model-role="auxiliary-comparison" data-dhf-comparison="data-ai-vs-dhf">
+    <nav class="top" aria-label="辅助页面导航"><a href="./dhf-best-care-recover.html">← Models &amp; Patterns</a><a href="./dhf-data-business-value-explainer.html">SAFE → TRUST 主页面</a><a href="./dhf-architecture-status-cn.html">当前状态边界</a></nav>
+    <header class="hero">
+      <div class="eyebrow">Auxiliary Comparison · Not a SAFE Definition</div>
+      <h1>同一个 SAFE，<br>两套执行系统。</h1>
+      <p class="lead">数据与 AI 架构和 DHF 处理不同业务对象，却可以复用同一套可信状态变化控制。此页承接具体机制对比；SAFE 的通用定义与 TRUST 价值模型仍由主页面负责。</p>
+      <div class="equation" aria-label="数据与 AI 架构和 DHF 共享 SAFE">
+        <div class="system data"><strong>数据与 AI 架构</strong><span>事件 · Schema · 数据质量 · model decision</span></div>
+        <div class="equals">SAFE</div>
+        <div class="system dhf"><strong>Delivery Harness Framework</strong><span>需求 · 变更 · 执行 · 验证结果</span></div>
+      </div>
+    </header>
+
+    <section id="safe">
+      <div class="head"><div class="label">Shared Control</div><h2>两套系统共享的 SAFE 条件</h2><p>实现机制不同，但都必须明确契约、授权、事实证据和错误恢复。</p></div>
+      <div class="safe-grid"><article class="safe-card"><b>S</b><strong>Specification</strong><span>正确状态和完成标准</span></article><article class="safe-card"><b>A</b><strong>Authorization</strong><span>谁能推进、影响多大</span></article><article class="safe-card"><b>F</b><strong>Facts</strong><span>来源、验证和 readback</span></article><article class="safe-card"><b>E</b><strong>Error-recovery</strong><span>重放、rollback 和恢复</span></article></div>
+    </section>
+
+    <section id="quality">
+      <div class="head"><div class="label">TRUST 01</div><h2>质量与客户信任</h2><p>共同目标：坏输入和未经验证的交付都不能冒充可信结果。</p></div>
+      <div class="comparison"><article class="lane data"><div class="label">DATA / AI</div><h3>Schema 与 data quality</h3><ul><li>Canonical Schema 统一下游数据语言</li><li>truth/challenge set 验证完整性、顺序和 exactly-once</li><li>幂等写入与 baseline guard 防止坏状态覆盖可信结果</li></ul></article><article class="lane dhf"><div class="label">DHF</div><h3>Requirements 与 fresh receipt</h3><ul><li>Acceptance criteria 定义完成条件</li><li>Validation / review gate 阻止未经验证推进</li><li>Fresh receipt 绑定本次命令、结果和时间</li></ul></article></div>
+    </section>
+
+    <section id="risk">
+      <div class="head"><div class="label">TRUST 02</div><h2>风险与授权控制</h2><p>共同目标：证据不足时降低能力，授权不足时停止执行。</p></div>
+      <div class="comparison"><article class="lane data"><div class="label">DATA / AI</div><h3>model decision 与风险分级</h3><ul><li>FULL / REDUCED / MINIMAL 表达证据充分性</li><li>证据不足时阻断模型判断或返回 <code>unknown</code></li><li>privacy、bias/fairness 与高风险建议进入人工复核</li></ul></article><article class="lane dhf"><div class="label">DHF</div><h3>Execution lane 与 owner approval</h3><ul><li>local、demo、production 分离权限</li><li>客户数据、远端系统和破坏性动作需要明确授权</li><li>Recovery evidence 不自动扩大权限</li></ul></article></div>
+    </section>
+
+    <section id="speed">
+      <div class="head"><div class="label">TRUST 03</div><h2>运营效率与交付速度</h2><p>共同目标：确定路径自动化，歧义和异常留给合适的责任主体。</p></div>
+      <div class="comparison"><article class="lane data"><div class="label">DATA / AI</div><h3>Adapter、stream 与 backfill</h3><ul><li>流式和 backfill 复用判断与写入语义</li><li>多源 adapter 隔离外部差异</li><li>规则处理确定场景，模型只补充剩余歧义</li></ul></article><article class="lane dhf"><div class="label">DHF</div><h3>Router、skill 与 profile</h3><ul><li>Lifecycle router 选择当前阶段</li><li>Repo Adapter 延迟加载项目规则</li><li>治理成本匹配任务风险</li></ul></article></div>
+    </section>
+
+    <section id="continuity">
+      <div class="head"><div class="label">TRUST 04</div><h2>韧性与业务连续性</h2><p>共同目标：从最近可信状态继续，而不是依赖进程记忆。</p></div>
+      <div class="comparison"><article class="lane data"><div class="label">DATA / AI</div><h3>Replay、DLQ 与 drift recovery</h3><ul><li>Raw archive 保存可重算输入</li><li>Retry / DLQ / replay / backfill 处理遗漏</li><li>data drift 和 model drift 触发重新验证</li></ul></article><article class="lane dhf"><div class="label">DHF</div><h3>checkpoint、rollback 与 handoff</h3><ul><li>Append-only checkpoint 保存最新可信状态</li><li>Rollback 后重新验证，不复用历史绿色结果</li><li>Handoff 与 next safe task 支持跨会话继续</li></ul></article></div>
+    </section>
+
+    <section id="scale">
+      <div class="head"><div class="label">TRUST 05</div><h2>审计、治理与规模化</h2><p>共同目标：能够回答发生了什么、依据什么、谁批准，以及状态属于哪一层。</p></div>
+      <div class="comparison"><article class="lane data"><div class="label">DATA / AI</div><h3>Provenance 与分层状态</h3><ul><li>Evidence ID、source path 和 trace 绑定结论</li><li>Raw / current / history / materialized 分离责任</li><li>降级原因和人工批准保留当时条件</li></ul></article><article class="lane dhf"><div class="label">DHF</div><h3>Source、runtime 与 publication</h3><ul><li>Repository、runtime、publication、production 分开声明</li><li>验证凭证记录 command、exit code、关键输出和时间</li><li>Ownership 与 source-of-truth 顺序明确责任</li></ul></article></div>
+    </section>
+
+    <section id="ownership">
+      <div class="head"><div class="label">Implementation Ownership</div><h2>控制合同与实现平台分层</h2><p>SAFE 定义条件，不要求 generic DHF 自己实现全部平台能力。</p></div>
+      <div class="comparison"><article class="lane data"><h3>Repo Adapter / Runtime Platform</h3><ul><li>领域 KPI、data quality、risk map 和 drift threshold 属于适配层</li><li>Telemetry、告警、服务恢复和模型平台属于 Runtime Platform</li></ul></article><article class="lane dhf"><h3>Generic DHF / Learning Workflow</h3><ul><li>Generic DHF 定义契约、权限、证据和恢复接口</li><li>Learning Workflow 负责复盘、root cause、行动项和关闭证据</li></ul></article></div>
+    </section>
+
+    <aside class="boundary"><strong>证据边界：</strong>本页是 SAFE 的跨领域辅助分析，不是 SAFE 定义页，也不证明任何当前生产部署、模型治理能力、客户采用或商业结果。</aside>
+    <footer class="footer"><span>Auxiliary model page · Data/AI vs DHF</span><span><a href="./dhf-data-business-value-explainer.html">SAFE → TRUST</a> · <a href="./dhf-best-care-recover.html">Models &amp; Patterns</a></span></footer>
+  </main>
+</body>
+</html>
