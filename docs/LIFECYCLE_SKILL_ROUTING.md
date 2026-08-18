@@ -56,7 +56,8 @@ behavior live in `codex/hooks/dhf_preprompt.py`.
 
 - `docs/dhf-architecture-status-en.html`: canonical English source/runtime/publication status.
 - `docs/dhf-architecture-status-cn.html`: canonical Chinese source/runtime/publication status.
-- `docs/index.html`: Chinese Delivery Harness Framework public landing page for GitHub Pages.
+- `docs/index.html`: English canonical Delivery Harness Framework public landing page for GitHub Pages.
+- `docs/index-zh.html`: 中文 Delivery Harness Framework 公开文档首页。
 - `docs/index-en.html`: English Delivery Harness Framework public landing page for English readers.
 - `docs/dhf-workflow-skills-cn.html`: 中文 DHF workflow skills matrix，逐步列出每个阶段使用的 skill、职责说明和 GitHub 源码链接。
 - `docs/dhf-workflow-skills-en.html`: English DHF workflow skills matrix with stage-by-stage skill explanations and GitHub source links.
@@ -75,6 +76,18 @@ behavior live in `codex/hooks/dhf_preprompt.py`.
 - `docs/project-lifecycle-harness-flow-skills.html`: 中文 skill/helper 路由速查页，帮助用户理解每个生命周期阶段应使用哪个 skill，以及 helper 的执行职责。
 - `docs/project-lifecycle-harness-flow-skills-zh-status-style.html`: 新版中文 Delivery Harness Framework skill/helper 路由图，使用和 LinkedIn 素材一致的状态风格。
 - `docs/project-lifecycle-harness-flow-skills-en-status-style.html`: English status-style Delivery Harness Framework flow map for public sharing.
+- `docs/dhf-context-engineering-cn.html`: 中文 DHF 上下文工程指南，讲清受治理的上下文供应链。
+- `docs/dhf-context-engineering-en.html`: English guide to the governed DHF context supply chain.
+- `docs/dhf-protect-seven-components-cn.html`: 中文 PROTECT 图，逐个说明七个受 WAL 保护的运行时晋升目标。
+- `docs/dhf-protect-seven-components-en.html`: English PROTECT map for the seven WAL-protected runtime promotion targets.
+- `docs/dhf-best-care-recover.html`: 中文 DHF 记忆体系页，讲 BEST、CARE、RECOVER 三组记忆框架。
+- `docs/dhf-case-safe-mapping.html`: 中文页面，把真实 DHF case 对应到 SAFE 控制模型。
+- `docs/dhf-data-business-value-explainer.html`: 中文页面，对比两套执行系统如何交付同一业务价值。
+- `docs/dhf-examples-three-lenses.html`: 中文真实案例页，同一个 case 的三种面试讲法。
+- `docs/dhf-examples-three-lenses-safe.html`: 中文真实案例页，三种讲法叠加 SAFE 控制模型。
+- `docs/dhf-shipq-development-history.html`: 中文 DHF 演进史，从 ShipQ 业务阻塞讲到 SAFE 控制与 TRUST 价值。
+- `docs/shipq-dhf-incident-recovery-memory-map.html`: 中文 ShipQ 事故与受控恢复记忆图。
+- `docs/shipq-dhf-safe-controlled-recovery.html`: 中文 ShipQ Google Docs 受控恢复案例页。
 
 ## Related Documentation
 

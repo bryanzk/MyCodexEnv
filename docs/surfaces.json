@@ -543,6 +543,46 @@
       "audience": ["human"]
     },
     {
+      "path": "docs/dhf-best-care-recover.html",
+      "role": "Chinese DHF memory-system page covering the BEST, CARE, and RECOVER frames",
+      "audience": ["human"]
+    },
+    {
+      "path": "docs/dhf-case-safe-mapping.html",
+      "role": "Chinese mapping of a real DHF case onto the SAFE control model",
+      "audience": ["human"]
+    },
+    {
+      "path": "docs/dhf-data-business-value-explainer.html",
+      "role": "Chinese explainer contrasting two execution systems that deliver the same business value",
+      "audience": ["human"]
+    },
+    {
+      "path": "docs/dhf-examples-three-lenses.html",
+      "role": "Chinese casebook telling one real DHF case through three interview lenses",
+      "audience": ["human"]
+    },
+    {
+      "path": "docs/dhf-examples-three-lenses-safe.html",
+      "role": "Chinese casebook combining the three-lens narrative with the SAFE control model",
+      "audience": ["human"]
+    },
+    {
+      "path": "docs/dhf-shipq-development-history.html",
+      "role": "Chinese DHF evolution history from ShipQ blockage to SAFE controls and TRUST value",
+      "audience": ["human"]
+    },
+    {
+      "path": "docs/shipq-dhf-incident-recovery-memory-map.html",
+      "role": "Chinese ShipQ incident and controlled-recovery memory map",
+      "audience": ["human"]
+    },
+    {
+      "path": "docs/shipq-dhf-safe-controlled-recovery.html",
+      "role": "Chinese ShipQ Google Docs controlled-recovery case walkthrough",
+      "audience": ["human"]
+    },
+    {
       "path": "codex/skills/codex-fluent/scripts/report_active_sessions.py",
       "role": "read-only active Codex session ranking and handoff audit",
       "audience": ["runtime", "codex", "human"]
