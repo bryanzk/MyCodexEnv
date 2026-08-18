@@ -5,7 +5,7 @@ Stable rules belong in `AGENTS.md`, `README.md`, `docs/repo-index.md`, or
 `docs/HARNESS_RUNTIME.md`; session facts and phase transitions are appended here.
 
 ## Current Snapshot
-- phase: handoff
+- phase: development
 - source_of_truth:
   - `AGENTS.md`
   - `docs/repo-index.md`
@@ -14,19 +14,19 @@ Stable rules belong in `AGENTS.md`, `README.md`, `docs/repo-index.md`, or
   - `codex/skills/delivery-harness-framework/SKILL.md`
 - blocked_sources: none
 - unsafe_inputs: none
-- next_safe_task: Stop with R7 unrun; await explicit direction for a fresh full-gate environment that permits the app-server sandbox and GitHub DNS
+- next_safe_task: implement-SHI-82-in-test_runner.py
 - required_commands:
   - `python3 test_runner.py`
   - `git diff --check`
   - `./scripts/verify_codex_env.sh --repo-root "$(pwd)" --codex-home "$HOME/.codex" --claude-home "$HOME/.claude"`
-- latest_checkpoint: 2026-08-17T23:38:52-04:00 R6 native apply_patch command-wire false allow fixed; frozen closure stopped after the single fresh full gate failed on sandbox and DNS infrastructure, so R7 was not run
-- latest_verification: 2026-08-17T23:38:52-04:00 command=PYTHONDONTWRITEBYTECODE=1 python3 test_runner.py; exit_code=1; key_output=ran=118 passed=115 skipped=1 failed=2; Guard structured contract, isolated promotion/hook-process probe/rollback, and performance passed; test_codex_skill_loader_gate failed because sandbox-exec operation was not permitted; test_verify_after_full_sync failed because github.com DNS resolution failed
-- compaction_ordinal: 1
+- latest_checkpoint: 2026-08-18T17:30:15-04:00 MCE-20260818-shi77-performance-gate-resumed-on-latest-origin-main
+- latest_verification: 2026-08-18T17:30:15-04:00 command=git-switch-c-codex-shi-77-performance-gate-origin-main; exit_code=0; key_output=branch-created-at-origin-main-834a1e5c
+- compaction_ordinal: 0
 - transition_key: MCE-20260802-harness-compaction-governance:W6a
-- gate_decision: none
-- constraints: ["Preserve main worktree staged user-owned documentation changes","No further R6 review, host capture, new HG, live runtime, policy/hooks modification, commit, rebase, merge, push, runtime sync, or cleanup"]
-- ownership: {"boundary":"Five-file candidate artifact plus authorized WAL; main staged documentation remains user-owned and untouched","files":{"codex/hooks/harness_guard.py":"task_owned","codex/hooks/harness_observer.py":"user_owned_candidate","codex/hooks/session_bearing.py":"user_owned_candidate","docs/harness-state.md":"agent_owned_checkpoint","docs/plans/2026-08-16-harness-guard-deny-only-plan.md":"task_owned","test_runner.py":"task_owned"}}
-- next_action: {"command":"await user direction","r7_status":"not_run","reason":"fresh_full_gate_exit_1"}
+- gate_decision: continue-to-boundary
+- constraints: ["exact-source-write-set-test_runner.py","one-authorized-checkpoint-append-docs/harness-state.md","no-live-runtime-promotion-or-broad-sync"]
+- ownership: {"boundary":"test_runner.py plus one authorized checkpoint append","files":{"docs/harness-state.md":"one_append_authorized","test_runner.py":"task_owned"}}
+- next_action: {"command":"implement-SHI-82-in-test_runner.py"}
 
 ## State Log
 
@@ -3178,3 +3178,25 @@ Stable rules belong in `AGENTS.md`, `README.md`, `docs/repo-index.md`, or
   - Full-sync gate cannot clone superpowers because github.com DNS resolution failed
 - next_safe_task: Stop with R7 unrun; await explicit direction for a fresh full-gate environment that permits the app-server sandbox and GitHub DNS
 - checkpoint_data: {"constraints":["Preserve main worktree staged user-owned documentation changes","No further R6 review, host capture, new HG, live runtime, policy/hooks modification, commit, rebase, merge, push, runtime sync, or cleanup"],"next_action":{"command":"await user direction","r7_status":"not_run","reason":"fresh_full_gate_exit_1"},"ownership":{"boundary":"Five-file candidate artifact plus authorized WAL; main staged documentation remains user-owned and untouched","files":{"codex/hooks/harness_guard.py":"task_owned","codex/hooks/harness_observer.py":"user_owned_candidate","codex/hooks/session_bearing.py":"user_owned_candidate","docs/harness-state.md":"agent_owned_checkpoint","docs/plans/2026-08-16-harness-guard-deny-only-plan.md":"task_owned","test_runner.py":"task_owned"}},"phase":"handoff","schema":"dhf_checkpoint_v1","verification_evidence":{"command":"PYTHONDONTWRITEBYTECODE=1 python3 test_runner.py","exit_code":1,"freshness":"fresh","key_output":"ran=118 passed=115 skipped=1 failed=2; Guard structured contract, isolated promotion/hook-process probe/rollback, and performance passed; test_codex_skill_loader_gate failed because sandbox-exec operation was not permitted; test_verify_after_full_sync failed because github.com DNS resolution failed","timestamp":"2026-08-18T03:33:03Z"}}
+
+### 2026-08-18T17:30:15-04:00
+- phase: development
+- event: checkpoint
+- summary: MCE-20260818-shi77-performance-gate-resumed-on-latest-origin-main
+- git:
+  - branch: codex/shi-77-performance-gate
+  - latest_commit: 834a1e5
+  - dirty_status: clean
+  - dirty_count: 0
+- compaction_ordinal: 0
+- gate_decision: continue-to-boundary
+- changed_surfaces:
+  - `docs/harness-state.md`
+- verification:
+  - command: `git-switch-c-codex-shi-77-performance-gate-origin-main`
+  - exit_code: 0
+  - key_output: branch-created-at-origin-main-834a1e5c
+- blockers:
+  - none
+- next_safe_task: implement-SHI-82-in-test_runner.py
+- checkpoint_data: {"constraints":["exact-source-write-set-test_runner.py","one-authorized-checkpoint-append-docs/harness-state.md","no-live-runtime-promotion-or-broad-sync"],"next_action":{"command":"implement-SHI-82-in-test_runner.py"},"ownership":{"boundary":"test_runner.py plus one authorized checkpoint append","files":{"docs/harness-state.md":"one_append_authorized","test_runner.py":"task_owned"}},"phase":"development","schema":"dhf_checkpoint_v1","verification_evidence":{"command":"git-switch-c-codex-shi-77-performance-gate-origin-main","exit_code":0,"freshness":"fresh","key_output":"branch-created-at-origin-main-834a1e5c","timestamp":"2026-08-18T21:29:52Z"}}
