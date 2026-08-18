@@ -10444,6 +10444,14 @@ def test_dhf_evidence_child_navigation_and_controlled_recovery_contract():
         "en": ["Home", "Beginner", "Context", "Lifecycle", "Governance", "Evidence", "Status"],
         "cn": ["首页", "新手指南", "上下文工程", "生命周期", "治理判定", "证据", "架构状态"],
     }
+    hrefs = {
+        "en": ["./", "./delivery-harness-beginner-guide-en.html", "./dhf-context-engineering-en.html",
+               "./project-lifecycle-harness-flow-en.html", "./dhf-governance-decision-flow-en.html",
+               "./dhf-value-evidence-en.html", "./dhf-architecture-status-en.html"],
+        "cn": ["./index-zh.html", "./delivery-harness-beginner-guide-cn.html", "./dhf-context-engineering-cn.html",
+               "./project-lifecycle-harness-flow-cn.html", "./dhf-governance-decision-flow-cn.html",
+               "./dhf-value-evidence-cn.html", "./dhf-architecture-status-cn.html"],
+    }
 
     for english_name, chinese_name in evidence_pairs:
         for language, name, twin in [
@@ -10455,6 +10463,10 @@ def test_dhf_evidence_child_navigation_and_controlled_recovery_contract():
             require(nav_match is not None, f"{name} missing global navigation")
             nav = nav_match.group(1)
             require_in_order(nav, labels[language], f"{name} global navigation order")
+            links_match = re.search(r'<div class="dhf-nav-links">(.*?)</div>', nav, re.DOTALL)
+            require(links_match is not None, f"{name} missing global navigation links")
+            require(re.findall(r'href="([^"]+)"', links_match.group(1)) == hrefs[language],
+                    f"{name} global navigation hrefs drifted")
             require(nav.count("<a ") == 9, f"{name} navigation should contain home, seven routes, and language twin")
             require('aria-current="page"' not in nav, f"{name} is an Evidence child, not a primary route")
             require(f'href="./{twin}"' in nav, f"{name} missing language twin")
@@ -10469,6 +10481,8 @@ def test_dhf_evidence_child_navigation_and_controlled_recovery_contract():
                 require(text.count(f'id="{target}"') == 1, f"{name} page navigation target must exist once: {target}")
             require(text.count('data-dhf-status="2026-08-11"') == 1,
                     f"{name} must preserve the canonical DHF status attribute")
+            require('href="./dhf-site-status.css?' in text,
+                    f"{name} missing shared navigation stylesheet")
 
     recovery_names = [
         "shipq-dhf-safe-controlled-recovery-en.html",
