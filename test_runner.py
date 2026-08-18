@@ -10611,6 +10611,8 @@ def test_dhf_evidence_child_navigation_and_controlled_recovery_contract():
         require(hashlib.sha256(path.read_bytes()).hexdigest() == expected_hash,
                 f"controlled-recovery archive hash drifted: {name}")
     require((archive / "manifest.md").is_file(), "missing controlled-recovery archive manifest")
+    require(":target { scroll-margin-top: 5rem; }" in (docs / "dhf-site-status.css").read_text(encoding="utf-8"),
+            "page-navigation targets must clear the sticky global navigation")
 
     print("[PASS] Evidence child navigation and controlled recovery contract")
 
