@@ -7,3 +7,4 @@ sha256:a635daae2dd644ed2e25e20b23e6f20fc1b9529d3cb42d386ff99c504b8efcd8  Approve
 sha256:9609668e529e863bb92f8f950fe996535796a4073b04e294753a944af6b1abc5  Approve bf6a68d: harness guard self-declare guidance fix (blind-reviewed)
 sha256:e63cdf2d0585656c4e37af6e082f537eb416494b3d10b503fbe3b29c78caa95e  Approve 24ffbad: tracked-only reproducible source attestation (blind-reviewed)
 sha256:4f174cbd7d3db9c6b78654cffb152ccbb57eda81e83bf25572e77a61c20778a5  Approve 3ba6d7d: protected runtime skill document read exception
+sha256:fe0cebf41a9daa66369922fcc604869a096bd2515fc676684166dbfd64a8fa2c  Approve 563bc2e (52912ce deny-only guard): live runtime promotion authorized 2026-08-18
