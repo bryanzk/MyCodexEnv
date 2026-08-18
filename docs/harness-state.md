@@ -14,16 +14,19 @@ Stable rules belong in `AGENTS.md`, `README.md`, `docs/repo-index.md`, or
   - `codex/skills/delivery-harness-framework/SKILL.md`
 - blocked_sources: none
 - unsafe_inputs: none
-- next_safe_task: Decide whether to delete the two merged local branches and four merged remote branches; no code convergence is required
+- next_safe_task: Stop with R7 unrun; await explicit direction for a fresh full-gate environment that permits the app-server sandbox and GitHub DNS
 - required_commands:
   - `python3 test_runner.py`
   - `git diff --check`
   - `./scripts/verify_codex_env.sh --repo-root "$(pwd)" --codex-home "$HOME/.codex" --claude-home "$HOME/.claude"`
-- latest_checkpoint: 2026-08-16T17:01:50-04:00 Completed Harness Skill branch cleanup and reviewed every remaining local and origin branch
-- latest_verification: 2026-08-16T17:01:50-04:00 command=branch_snapshot.sh; git branch --merged main; git branch --no-merged main; git branch -r --merged main; git branch -r --no-merged main; git worktree list; git stash list; exit_code=0; key_output=one main worktree; Harness feature removed; all 2 non-main local and 4 non-main origin branches fully merged and behind-only; no ahead/diverged branches; stash_count=0
+- latest_checkpoint: 2026-08-17T23:38:52-04:00 R6 native apply_patch command-wire false allow fixed; frozen closure stopped after the single fresh full gate failed on sandbox and DNS infrastructure, so R7 was not run
+- latest_verification: 2026-08-17T23:38:52-04:00 command=PYTHONDONTWRITEBYTECODE=1 python3 test_runner.py; exit_code=1; key_output=ran=118 passed=115 skipped=1 failed=2; Guard structured contract, isolated promotion/hook-process probe/rollback, and performance passed; test_codex_skill_loader_gate failed because sandbox-exec operation was not permitted; test_verify_after_full_sync failed because github.com DNS resolution failed
 - compaction_ordinal: 1
 - transition_key: MCE-20260802-harness-compaction-governance:W6a
 - gate_decision: none
+- constraints: ["Preserve main worktree staged user-owned documentation changes","No further R6 review, host capture, new HG, live runtime, policy/hooks modification, commit, rebase, merge, push, runtime sync, or cleanup"]
+- ownership: {"boundary":"Five-file candidate artifact plus authorized WAL; main staged documentation remains user-owned and untouched","files":{"codex/hooks/harness_guard.py":"task_owned","codex/hooks/harness_observer.py":"user_owned_candidate","codex/hooks/session_bearing.py":"user_owned_candidate","docs/harness-state.md":"agent_owned_checkpoint","docs/plans/2026-08-16-harness-guard-deny-only-plan.md":"task_owned","test_runner.py":"task_owned"}}
+- next_action: {"command":"await user direction","r7_status":"not_run","reason":"fresh_full_gate_exit_1"}
 
 ## State Log
 
@@ -3097,3 +3100,81 @@ Stable rules belong in `AGENTS.md`, `README.md`, `docs/repo-index.md`, or
   - none
 - next_safe_task: Decide whether to delete the two merged local branches and four merged remote branches; no code convergence is required
 - checkpoint_data: {"constraints":["No runtime sync; no deletion of branches outside the explicitly completed Harness feature cleanup","Rollback for removed Harness branch: recreate codex/mce-20260816-harness-skill-read at 1fe3d28 and add a worktree if needed"],"next_action":{"command":"Decide whether to delete the two merged local branches and four merged remote branches; no code convergence is required"},"ownership":{},"phase":"handoff","schema":"dhf_checkpoint_v1","verification_evidence":{"command":"branch_snapshot.sh; git branch --merged main; git branch --no-merged main; git branch -r --merged main; git branch -r --no-merged main; git worktree list; git stash list","exit_code":0,"freshness":"fresh","key_output":"one main worktree; Harness feature removed; all 2 non-main local and 4 non-main origin branches fully merged and behind-only; no ahead/diverged branches; stash_count=0","timestamp":"2026-08-16T21:01:25Z"}}
+
+### 2026-08-17T22:36:23-04:00
+- phase: handoff
+- event: checkpoint
+- summary: Structured deny-only Guard candidate passed source, performance, isolated, native-alignment, full, surface, diff, and scope gates; R6 stopped on native-valid hard-link alias false allow before R7 blind final
+- git:
+  - branch: codex/harness-guard-deny-only
+  - latest_commit: 56451d3
+  - dirty_status: dirty
+  - dirty_count: 5
+- gate_decision: none
+- changed_surfaces:
+  - `codex/hooks/harness_guard.py`
+  - `codex/hooks/harness_observer.py`
+  - `codex/hooks/session_bearing.py`
+  - `test_runner.py`
+  - `docs/plans/2026-08-16-harness-guard-deny-only-plan.md`
+  - `docs/harness-state.md`
+- verification:
+  - command: `PYTHONDONTWRITEBYTECODE=1 python3 test_runner.py`
+  - exit_code: 0
+  - key_output: ran=118 passed=117 skipped=1 failed=0; performance and isolated lifecycle passed
+- blockers:
+  - R6 security reviewer reproduced a native-valid hard-link alias false allow: outside workspace alias and protected hooks.json shared one inode; Guard returned no_match and native apply_patch mutated the protected inode
+  - R6 three-expert consensus is incomplete and R7 blind final has not run
+- next_safe_task: Decide whether native-valid hard-link aliases are ACCEPTED_RISK/UNSUPPORTED or authorize an inode-aware Guard fix; then rerun complete R6 closure and R7 blind final before commit, rebase, or merge
+- checkpoint_data: {"constraints":["Preserve the main worktree 11 staged user-owned documentation changes; do not edit, reset, stash, or commit them","No commit, rebase, ff-only merge, push, runtime sync, live promotion, branch deletion, or worktree cleanup before committee pass","Context-body false block is ACCEPTED_RISK and user LaunchDaemons is UNSUPPORTED; rulings recorded in plan and Linear SHI-41 comment 2cee0e57-6ad6-4aad-9a1a-e655de13c121"],"next_action":{"command":"Resolve hard-link alias scope, then rerun R6 closure and R7 blind final","forbidden_until_pass":["commit","rebase","merge","push","runtime_sync"],"requires_scope_decision":true},"ownership":{"boundary":"Candidate five-file Guard artifact belongs to the authorized task; main staged documentation is user-owned and untouched; this append-only checkpoint is agent-owned","files":{"codex/hooks/harness_guard.py":"task_owned","codex/hooks/harness_observer.py":"user_owned_candidate","codex/hooks/session_bearing.py":"user_owned_candidate","docs/harness-state.md":"agent_owned_checkpoint","docs/plans/2026-08-16-harness-guard-deny-only-plan.md":"task_owned","test_runner.py":"task_owned"}},"phase":"handoff","schema":"dhf_checkpoint_v1","verification_evidence":{"command":"PYTHONDONTWRITEBYTECODE=1 python3 test_runner.py","exit_code":0,"freshness":"fresh","key_output":"ran=118 passed=117 skipped=1 failed=0; performance and isolated lifecycle passed","timestamp":"2026-08-18T01:58:22Z"}}
+
+### 2026-08-17T23:08:26-04:00
+- phase: review
+- event: checkpoint
+- summary: Hard-link alias false allow fixed and verified across credential, control-plane, persistence, and native apply_patch; R6 independent reviews in progress and R7 blind final pending
+- git:
+  - branch: codex/harness-guard-deny-only
+  - latest_commit: 56451d3
+  - dirty_status: dirty
+  - dirty_count: 6
+- gate_decision: none
+- changed_surfaces:
+  - `codex/hooks/harness_guard.py`
+  - `test_runner.py`
+  - `docs/plans/2026-08-16-harness-guard-deny-only-plan.md`
+  - `docs/harness-state.md`
+- verification:
+  - command: `PYTHONDONTWRITEBYTECODE=1 python3 test_runner.py`
+  - exit_code: 0
+  - key_output: ran=118 passed=117 skipped=1 failed=0; hard-link matrix, performance, and isolated lifecycle passed
+- blockers:
+  - R6 three-expert consensus and R7 blind final remain pending; no current reproduced code-level false allow after hard-link fix
+- next_safe_task: Complete three-expert R6 closure; if threshold passes, run fresh R7 blind final; do not commit, rebase, merge, push, or sync runtime
+- checkpoint_data: {"constraints":["Preserve main worktree staged user-owned documentation changes","No commit, rebase, merge, push, runtime sync, or cleanup before R6 and R7 pass","Context false block=ACCEPTED_RISK; user LaunchDaemons=UNSUPPORTED; scope rulings recorded in Linear SHI-41"],"next_action":{"command":"Complete R6 closure then R7 blind final","forbidden_until_pass":["commit","rebase","merge","push","runtime_sync"],"requires_scope_decision":false},"ownership":{"boundary":"Five-file source artifact plus authorized append-only WAL; main staged documentation remains user-owned and untouched","files":{"codex/hooks/harness_guard.py":"task_owned","codex/hooks/harness_observer.py":"user_owned_candidate","codex/hooks/session_bearing.py":"user_owned_candidate","docs/harness-state.md":"agent_owned_checkpoint","docs/plans/2026-08-16-harness-guard-deny-only-plan.md":"task_owned","test_runner.py":"task_owned"}},"phase":"review","schema":"dhf_checkpoint_v1","verification_evidence":{"command":"PYTHONDONTWRITEBYTECODE=1 python3 test_runner.py","exit_code":0,"freshness":"fresh","key_output":"ran=118 passed=117 skipped=1 failed=0; hard-link matrix, performance, and isolated lifecycle passed","timestamp":"2026-08-18T02:54:56Z"}}
+
+### 2026-08-17T23:38:52-04:00
+- phase: handoff
+- event: checkpoint
+- summary: R6 native apply_patch command-wire false allow fixed; frozen closure stopped after the single fresh full gate failed on sandbox and DNS infrastructure, so R7 was not run
+- git:
+  - branch: codex/harness-guard-deny-only
+  - latest_commit: 56451d3
+  - dirty_status: dirty
+  - dirty_count: 6
+- gate_decision: none
+- changed_surfaces:
+  - `codex/hooks/harness_guard.py`
+  - `codex/hooks/harness_observer.py`
+  - `codex/hooks/session_bearing.py`
+  - `test_runner.py`
+  - `docs/plans/2026-08-16-harness-guard-deny-only-plan.md`
+  - `docs/harness-state.md`
+- verification:
+  - command: `PYTHONDONTWRITEBYTECODE=1 python3 test_runner.py`
+  - exit_code: 1
+  - key_output: ran=118 passed=115 skipped=1 failed=2; Guard structured contract, isolated promotion/hook-process probe/rollback, and performance passed; test_codex_skill_loader_gate failed because sandbox-exec operation was not permitted; test_verify_after_full_sync failed because github.com DNS resolution failed
+- blockers:
+  - Codex app-server loader gate cannot apply sandbox in the current environment: sandbox-exec operation not permitted
+  - Full-sync gate cannot clone superpowers because github.com DNS resolution failed
+- next_safe_task: Stop with R7 unrun; await explicit direction for a fresh full-gate environment that permits the app-server sandbox and GitHub DNS
+- checkpoint_data: {"constraints":["Preserve main worktree staged user-owned documentation changes","No further R6 review, host capture, new HG, live runtime, policy/hooks modification, commit, rebase, merge, push, runtime sync, or cleanup"],"next_action":{"command":"await user direction","r7_status":"not_run","reason":"fresh_full_gate_exit_1"},"ownership":{"boundary":"Five-file candidate artifact plus authorized WAL; main staged documentation remains user-owned and untouched","files":{"codex/hooks/harness_guard.py":"task_owned","codex/hooks/harness_observer.py":"user_owned_candidate","codex/hooks/session_bearing.py":"user_owned_candidate","docs/harness-state.md":"agent_owned_checkpoint","docs/plans/2026-08-16-harness-guard-deny-only-plan.md":"task_owned","test_runner.py":"task_owned"}},"phase":"handoff","schema":"dhf_checkpoint_v1","verification_evidence":{"command":"PYTHONDONTWRITEBYTECODE=1 python3 test_runner.py","exit_code":1,"freshness":"fresh","key_output":"ran=118 passed=115 skipped=1 failed=2; Guard structured contract, isolated promotion/hook-process probe/rollback, and performance passed; test_codex_skill_loader_gate failed because sandbox-exec operation was not permitted; test_verify_after_full_sync failed because github.com DNS resolution failed","timestamp":"2026-08-18T03:33:03Z"}}
