@@ -80,15 +80,18 @@ behavior live in `codex/hooks/dhf_preprompt.py`.
 - `docs/dhf-context-engineering-en.html`: English guide to the governed DHF context supply chain.
 - `docs/dhf-protect-seven-components-cn.html`: 中文 PROTECT 图，逐个说明七个受 WAL 保护的运行时晋升目标。
 - `docs/dhf-protect-seven-components-en.html`: English PROTECT map for the seven WAL-protected runtime promotion targets.
-- `docs/dhf-case-safe-mapping.html`: 中文页面，把真实 DHF case 对应到 SAFE 控制模型。
-- `docs/dhf-best-care-recover.html`: 中文 Models & Patterns 总入口，组织 SAFE、PROTECT、TRUST、CAP/BRIDGE、BEST/CARE、RECOVER 与案例证据。
-- `docs/dhf-data-business-value-explainer.html`: 中文 SAFE → TRUST 通用控制与业务价值页面。
-- `docs/dhf-safe-data-ai-comparison.html`: 中文辅助子页面，对比数据与 AI 架构和 DHF 如何复用 SAFE。
-- `docs/dhf-examples-three-lenses.html`: 中文真实案例页，同一个 case 的三种面试讲法。
-- `docs/dhf-examples-three-lenses-safe.html`: 中文真实案例页，三种讲法叠加 SAFE 控制模型。
-- `docs/dhf-shipq-development-history.html`: 中文 DHF 演进史，从 ShipQ 业务阻塞讲到 SAFE 控制与 TRUST 价值。
-- `docs/shipq-dhf-incident-recovery-memory-map.html`: 中文 ShipQ 事故与受控恢复记忆图。
-- `docs/shipq-dhf-safe-controlled-recovery.html`: 中文 ShipQ Google Docs 受控恢复案例页。
+- `docs/dhf-value-evidence-en.html` / `docs/dhf-value-evidence-cn.html`: 中英文 Evidence 总入口，按客户价值、证据成熟度、演进、控制、案例、恢复和当前边界组织内容。
+- `docs/dhf-best-care-recover-en.html` / `docs/dhf-best-care-recover.html`: 中英文 BEST / CARE / RECOVER 记忆与恢复辅助页，不再承担站点 Hub。
+- `docs/dhf-data-business-value-explainer-en.html` / `docs/dhf-data-business-value-explainer.html`: 中英文 SAFE → TRUST 通用控制与客户价值页面。
+- `docs/dhf-safe-data-ai-comparison-en.html` / `docs/dhf-safe-data-ai-comparison.html`: 中英文辅助分析页，对比数据与 AI 架构和 DHF 如何复用 SAFE；不构成生产或采用证明。
+- `docs/dhf-shipq-development-history-en.html` / `docs/dhf-shipq-development-history.html`: 中英文 DHF 演进证据，从 ShipQ 业务阻塞讲到受治理 enforcement。
+- `docs/dhf-case-safe-mapping-en.html` / `docs/dhf-case-safe-mapping.html`: 中英文真实案例 SAFE 控制映射。
+- `docs/dhf-examples-three-lenses-en.html` / `docs/dhf-examples-three-lenses.html`: 中英文十案例三种讲法。
+- `docs/dhf-examples-three-lenses-safe-en.html` / `docs/dhf-examples-three-lenses-safe.html`: 中英文三镜头案例与 SAFE 控制叠加页。
+- `docs/shipq-dhf-safe-controlled-recovery-en.html` / `docs/shipq-dhf-safe-controlled-recovery.html`: 中英文 ShipQ Google Docs 受控恢复证据页。
+- `docs/shipq-dhf-incident-recovery-memory-map-en.html` / `docs/shipq-dhf-incident-recovery-memory-map.html`: 中英文 ShipQ 事故恢复记忆图。
+
+Evidence 语言边界：英文 Hub 和普通相关链接只进入英文页面，中文 Hub 和普通相关链接只进入中文页面；每个页面只通过显式语言切换进入另一语言 twin。Evidence 解释耐久价值与证明，Architecture Status 负责带日期的当前状态。
 
 ## Related Documentation
 

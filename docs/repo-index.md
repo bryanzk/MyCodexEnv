@@ -191,15 +191,26 @@ behavior live in `codex/hooks/dhf_preprompt.py`.
 - `docs/project-lifecycle-harness-flow-skills-zh-status-style.html`: current status-style skill/helper routing map.
 - `docs/project-lifecycle-harness-flow-skills-en-status-style.html`: current English status-style skill/helper routing map.
 - `docs/project-lifecycle-harness-flow-skills-en.html`: archived English skill/helper routing map.
-- `docs/dhf-best-care-recover.html`: Chinese DHF Models & Patterns hub for control, runtime architecture, value, evolution, recovery, and evidence.
-- `docs/dhf-case-safe-mapping.html`: Chinese mapping of a real DHF case onto the SAFE control model.
-- `docs/dhf-data-business-value-explainer.html`: Chinese generic SAFE → TRUST control-and-value explainer.
+- `docs/dhf-value-evidence-en.html`: English Value & Evidence hub for customer value, evidence maturity, evolution, controls, cases, recovery, and current boundaries.
+- `docs/dhf-value-evidence-cn.html`: Chinese Value & Evidence hub for the same evidence architecture.
+- `docs/dhf-best-care-recover-en.html`: English BEST / CARE / RECOVER operating-memory aid.
+- `docs/dhf-best-care-recover.html`: Chinese BEST / CARE / RECOVER operating-memory aid.
+- `docs/dhf-data-business-value-explainer-en.html`: English generic SAFE → TRUST customer-value explainer.
+- `docs/dhf-data-business-value-explainer.html`: Chinese generic SAFE → TRUST customer-value explainer.
+- `docs/dhf-safe-data-ai-comparison-en.html`: English auxiliary comparison of SAFE across Data/AI architecture and DHF.
 - `docs/dhf-safe-data-ai-comparison.html`: Chinese auxiliary comparison of SAFE across Data/AI architecture and DHF.
-- `docs/dhf-examples-three-lenses.html`: Chinese casebook telling one real DHF case through three interview lenses.
-- `docs/dhf-examples-three-lenses-safe.html`: Chinese casebook combining the three-lens narrative with the SAFE control model.
-- `docs/dhf-shipq-development-history.html`: Chinese DHF evolution history from ShipQ blockage to SAFE controls and TRUST value.
+- `docs/dhf-shipq-development-history-en.html`: English DHF evolution evidence from ShipQ blockage to governed enforcement.
+- `docs/dhf-shipq-development-history.html`: Chinese DHF evolution evidence from ShipQ blockage to governed enforcement.
+- `docs/dhf-case-safe-mapping-en.html`: English mapping of a real DHF case onto the SAFE control model.
+- `docs/dhf-case-safe-mapping.html`: Chinese mapping of a real DHF case onto the SAFE control model.
+- `docs/dhf-examples-three-lenses-en.html`: English casebook telling ten delivery cases through three communication lenses.
+- `docs/dhf-examples-three-lenses.html`: Chinese casebook telling ten delivery cases through three communication lenses.
+- `docs/dhf-examples-three-lenses-safe-en.html`: English casebook combining the three-lens narrative with SAFE.
+- `docs/dhf-examples-three-lenses-safe.html`: Chinese casebook combining the three-lens narrative with SAFE.
+- `docs/shipq-dhf-safe-controlled-recovery-en.html`: English ShipQ Google Docs controlled-recovery evidence walkthrough.
+- `docs/shipq-dhf-safe-controlled-recovery.html`: Chinese ShipQ Google Docs controlled-recovery evidence walkthrough.
+- `docs/shipq-dhf-incident-recovery-memory-map-en.html`: English ShipQ incident and controlled-recovery memory map.
 - `docs/shipq-dhf-incident-recovery-memory-map.html`: Chinese ShipQ incident and controlled-recovery memory map.
-- `docs/shipq-dhf-safe-controlled-recovery.html`: Chinese ShipQ Google Docs controlled-recovery case walkthrough.
 
 ## Related Documentation
 - `README.md`: top-level quick start and Harness Runtime overview.
@@ -222,15 +233,14 @@ behavior live in `codex/hooks/dhf_preprompt.py`.
 - `docs/dhf-for-product-and-field-en.html`: GitHub Pages English diagram-first DHF overview for product and field teams.
 - `docs/dhf-for-product-and-field-cn.html`: GitHub Pages Chinese diagram-first DHF overview for product and field teams.
 - `docs/dhf-engineering-notes-en.html`: GitHub Pages English engineering deep-dive for agentic systems readers.
-- `docs/dhf-best-care-recover.html`: GitHub Pages Chinese DHF Models & Patterns hub.
-- `docs/dhf-case-safe-mapping.html`: GitHub Pages Chinese mapping of a real DHF case onto the SAFE control model.
-- `docs/dhf-data-business-value-explainer.html`: GitHub Pages Chinese generic SAFE → TRUST explainer.
-- `docs/dhf-safe-data-ai-comparison.html`: GitHub Pages Chinese auxiliary Data/AI architecture versus DHF comparison.
-- `docs/dhf-examples-three-lenses.html`: GitHub Pages Chinese casebook telling one real DHF case through three interview lenses.
-- `docs/dhf-examples-three-lenses-safe.html`: GitHub Pages Chinese casebook combining the three-lens narrative with the SAFE control model.
-- `docs/dhf-shipq-development-history.html`: GitHub Pages Chinese DHF evolution history from ShipQ blockage to SAFE controls and TRUST value.
-- `docs/shipq-dhf-incident-recovery-memory-map.html`: GitHub Pages Chinese ShipQ incident and controlled-recovery memory map.
-- `docs/shipq-dhf-safe-controlled-recovery.html`: GitHub Pages Chinese ShipQ Google Docs controlled-recovery case walkthrough.
+- `docs/dhf-value-evidence-en.html` and `docs/dhf-value-evidence-cn.html`: GitHub Pages bilingual Value & Evidence entry points.
+- `docs/dhf-best-care-recover-en.html` and `docs/dhf-best-care-recover.html`: GitHub Pages bilingual BEST / CARE / RECOVER aids.
+- `docs/dhf-data-business-value-explainer-en.html` and `docs/dhf-data-business-value-explainer.html`: GitHub Pages bilingual SAFE → TRUST customer-value explainers.
+- `docs/dhf-safe-data-ai-comparison-en.html` and `docs/dhf-safe-data-ai-comparison.html`: GitHub Pages bilingual auxiliary Data/AI versus DHF comparisons.
+- `docs/dhf-shipq-development-history-en.html` and `docs/dhf-shipq-development-history.html`: GitHub Pages bilingual evolution evidence.
+- `docs/dhf-case-safe-mapping-en.html` and `docs/dhf-case-safe-mapping.html`: GitHub Pages bilingual SAFE case mappings.
+- `docs/dhf-examples-three-lenses-en.html`, `docs/dhf-examples-three-lenses.html`, `docs/dhf-examples-three-lenses-safe-en.html`, and `docs/dhf-examples-three-lenses-safe.html`: GitHub Pages bilingual casebooks.
+- `docs/shipq-dhf-safe-controlled-recovery-en.html`, `docs/shipq-dhf-safe-controlled-recovery.html`, `docs/shipq-dhf-incident-recovery-memory-map-en.html`, and `docs/shipq-dhf-incident-recovery-memory-map.html`: GitHub Pages bilingual controlled-recovery evidence.
 - `docs/dhf-engineering-notes-cn.html`: GitHub Pages Chinese engineering deep-dive for agentic systems readers.
 - `docs/delivery-harness-beginner-guide-cn.html`: beginner guide explaining what Delivery Harness Framework does.
 - `docs/delivery-harness-beginner-guide-en.html`: English beginner guide explaining what Delivery Harness Framework does.

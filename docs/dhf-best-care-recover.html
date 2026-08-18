@@ -3,7 +3,11 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>DHF Models &amp; Patterns：控制、架构、价值、演进与恢复</title>
+  <meta name="description" content="用 BEST、CARE 与 RECOVER 记住 DHF 的业务关注、控制、价值、演进和事故恢复。">
+  <title>DHF BEST、CARE 与 RECOVER：记忆与恢复辅助</title>
+  <link rel="canonical" href="https://deliveryharness.com/dhf-best-care-recover.html">
+  <link rel="alternate" hreflang="en" href="https://deliveryharness.com/dhf-best-care-recover-en.html">
+  <link rel="alternate" hreflang="zh-CN" href="https://deliveryharness.com/dhf-best-care-recover.html">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Noto+Serif+SC:wght@400;600;700;900&display=swap" rel="stylesheet">
@@ -111,6 +115,8 @@
       letter-spacing: 1.6px;
     }
     .eyebrow { color: var(--best); font-size: 11px; margin-bottom: 14px; }
+    .evidence-nav { display:flex; flex-wrap:wrap; gap:10px; margin:0 0 22px; }
+    .evidence-nav a { padding:8px 12px; color:var(--best); background:var(--best-dim); border:1px solid var(--border); border-radius:999px; font:500 11px/1.3 var(--font-mono); text-decoration:none; }
     h1 { margin: 0; font-size: clamp(42px, 7vw, 82px); line-height: .98; letter-spacing: -3px; font-weight: 900; }
     .dek { max-width: 850px; margin: 20px 0 0; color: var(--dim); font-size: 17px; line-height: 1.75; }
     .hero-equation {
@@ -278,15 +284,16 @@
     <a href="#relationship">模型层级</a>
     <a href="#related">关联页面</a>
   </nav>
-  <main class="main" data-dhf-models-hub>
+  <main class="main" data-dhf-evidence-language="cn">
     <header id="overview" class="reveal" style="--i:0">
-      <div class="eyebrow">DHF Models &amp; Patterns · 中文模型入口</div>
-      <h1>控制、架构、价值、<br>演进与恢复。</h1>
-      <p class="dek">这是 DHF 模型与实践的统一入口：SAFE 控制可信状态变化，PROTECT 解释 runtime 如何落实保护，TRUST 衡量业务价值，CAP / BRIDGE 描述关注点与演进路径，BEST / CARE 帮助沟通和实践，RECOVER 只在事故时展开。</p>
+      <nav class="evidence-nav" aria-label="证据与语言导航"><a href="./dhf-value-evidence-cn.html">← DHF 价值与证据</a><a href="./dhf-best-care-recover-en.html" lang="en" hreflang="en">English</a></nav>
+      <div class="eyebrow">DHF Operating Memory · 中文</div>
+      <h1>BEST 看全局，CARE 讲行动，<br>RECOVER 管事故。</h1>
+      <p class="dek">本页是 DHF 的记忆与恢复辅助，不是总目录。BEST / CARE 帮助团队复述业务关注、控制、价值与演进；RECOVER 只在外部写入失败或结构异常时展开。完整价值主张和证据层级由 Evidence 页面负责。</p>
       <div class="hero-equation">
         <strong>BEST</strong><code>CAP → BRIDGE × SAFE → TRUST</code>
         <strong>CARE</strong><code>CAP → SAFE → TRUST → BRIDGE</code>
-        <p>Operating Memory：BEST / CARE 负责怎么记；Core Models 与 Patterns 负责记什么。遇到事故，才进入 RECOVER。</p>
+        <p>BEST / CARE 负责怎么记；Evidence 负责说明什么价值主张由什么事实支持。遇到事故，才进入 RECOVER。</p>
       </div>
     </header>
 
@@ -388,7 +395,6 @@
         <a class="related-card reveal" style="--i:14" href="./dhf-data-business-value-explainer.html#overview" target="_blank" rel="noopener"><span class="label">02 · VALUE</span><strong>SAFE → TRUST 业务价值</strong><span>解释控制内核如何转化为质量、风险、效率、连续性与规模化价值。</span></a>
         <a class="related-card reveal" style="--i:14" href="./dhf-safe-data-ai-comparison.html" target="_blank" rel="noopener"><span class="label">AUXILIARY · DATA / AI</span><strong>数据与 AI 架构 vs DHF</strong><span>SAFE 在两套执行系统中的逐域对比；它是辅助案例，不是 SAFE 定义。</span></a>
         <a class="related-card reveal" style="--i:14" href="./dhf-protect-seven-components-cn.html" target="_blank" rel="noopener"><span class="label">RUNTIME ARCHITECTURE</span><strong>PROTECT 组件</strong><span>七个受保护 runtime 目标与一笔 WAL promotion 的关系。</span></a>
-        <a class="related-card reveal" style="--i:14" href="./dhf-protect-seven-components-en.html" lang="en" hreflang="en" target="_blank" rel="noopener"><span class="label">ENGLISH REFERENCE</span><strong>PROTECT Components (EN)</strong><span>English runtime-architecture reference.</span></a>
         <a class="related-card reveal" style="--i:15" href="./dhf-examples-three-lenses.html" target="_blank" rel="noopener"><span class="label">03 · CASES</span><strong>DHF 十案例 · 三种讲法</strong><span>把抽象框架落到 MyCodexEnv、ShipQ 与其他真实交付案例。</span></a>
         <a class="related-card reveal" style="--i:16" href="./shipq-dhf-safe-controlled-recovery.html" target="_blank" rel="noopener"><span class="label">04 · DEEP DIVE</span><strong>ShipQ 受控恢复深挖</strong><span>Google Docs partial-write、回滚、独立回读与重新授权的完整案例。</span></a>
         <a class="related-card reveal" style="--i:17" href="./shipq-dhf-incident-recovery-memory-map.html" target="_blank" rel="noopener"><span class="label">05 · INCIDENT</span><strong>RECOVER 事故记忆图</strong><span>六拍时间线、角色泳道、状态机、SAFE 停点与事故自测。</span></a>
@@ -396,7 +402,7 @@
       </div>
     </section>
 
-    <footer class="source-note">Analysis scope: current DHF × ShipQ synthesis · RECOVER wording recovered from local Codex session 01a00a79-899f-7800-a0d2-b60a7332841f · SAFE/TRUST are cross-stage principles, not lifecycle stages.</footer>
+    <footer class="source-note">Operating-memory aid · Value claims and evidence levels belong to <a href="./dhf-value-evidence-cn.html">DHF 价值与证据</a> · SAFE/TRUST are cross-stage principles, not lifecycle stages.</footer>
   </main>
 </div>
 <script>

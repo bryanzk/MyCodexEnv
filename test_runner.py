@@ -9776,7 +9776,7 @@ def test_public_dhf_information_architecture():
         nav = primary_nav(text, path.name)
         require_in_order(
             nav,
-            ["Home", "Beginner", "Context", "Lifecycle", "Governance", "Status"],
+            ["Home", "Beginner", "Context", "Lifecycle", "Governance", "Evidence", "Status"],
             f"{path.name} compact primary navigation order",
         )
         for term in ["Engineering Notes", "Workflow Skills", "Written Spec"]:
@@ -9787,7 +9787,7 @@ def test_public_dhf_information_architecture():
         nav = primary_nav(text, path.name)
         require_in_order(
             nav,
-            ["首页", "新手指南", "上下文工程", "生命周期", "治理判定", "架构状态"],
+            ["首页", "新手指南", "上下文工程", "生命周期", "治理判定", "证据", "架构状态"],
             f"{path.name} compact primary navigation order",
         )
         for term in ["工程笔记", "工作流 Skills", "文字规范"]:
@@ -9923,6 +9923,7 @@ def test_public_dhf_information_architecture():
         context_paths[0],
         LIFECYCLE_FLOW_EN_HTML,
         ROOT / "docs" / "dhf-governance-decision-flow-en.html",
+        ROOT / "docs" / "dhf-value-evidence-en.html",
         ROOT / "docs" / "dhf-protect-seven-components-en.html",
         ROOT / "docs" / "dhf-architecture-status-en.html",
         LIFECYCLE_SKILLS_EN_STATUS_HTML,
@@ -9937,6 +9938,7 @@ def test_public_dhf_information_architecture():
         context_paths[1],
         LIFECYCLE_FLOW_HTML,
         ROOT / "docs" / "dhf-governance-decision-flow-cn.html",
+        ROOT / "docs" / "dhf-value-evidence-cn.html",
         ROOT / "docs" / "dhf-protect-seven-components-cn.html",
         ROOT / "docs" / "dhf-architecture-status-cn.html",
         LIFECYCLE_SKILLS_ZH_STATUS_HTML,
@@ -9956,6 +9958,8 @@ def test_public_dhf_information_architecture():
         "project-lifecycle-harness-flow-cn.html": "./project-lifecycle-harness-flow-cn.html",
         "dhf-governance-decision-flow-en.html": "./dhf-governance-decision-flow-en.html",
         "dhf-governance-decision-flow-cn.html": "./dhf-governance-decision-flow-cn.html",
+        "dhf-value-evidence-en.html": "./dhf-value-evidence-en.html",
+        "dhf-value-evidence-cn.html": "./dhf-value-evidence-cn.html",
         "dhf-architecture-status-en.html": "./dhf-architecture-status-en.html",
         "dhf-architecture-status-cn.html": "./dhf-architecture-status-cn.html",
     }
@@ -9971,6 +9975,8 @@ def test_public_dhf_information_architecture():
         "project-lifecycle-harness-flow-cn.html": "./project-lifecycle-harness-flow-en.html",
         "dhf-governance-decision-flow-en.html": "./dhf-governance-decision-flow-cn.html",
         "dhf-governance-decision-flow-cn.html": "./dhf-governance-decision-flow-en.html",
+        "dhf-value-evidence-en.html": "./dhf-value-evidence-cn.html",
+        "dhf-value-evidence-cn.html": "./dhf-value-evidence-en.html",
         "dhf-protect-seven-components-en.html": "./dhf-protect-seven-components-cn.html",
         "dhf-protect-seven-components-cn.html": "./dhf-protect-seven-components-en.html",
         "dhf-architecture-status-en.html": "./dhf-architecture-status-cn.html",
@@ -9987,10 +9993,10 @@ def test_public_dhf_information_architecture():
     }
 
     for path, labels, demoted in [
-        (path, ["Home", "Beginner", "Context", "Lifecycle", "Governance", "Status"], ["Skill Routing", "Workflow Skills", "PROTECT", "PM &amp; FDE", "Engineering Notes", "Written Spec"])
+        (path, ["Home", "Beginner", "Context", "Lifecycle", "Governance", "Evidence", "Status"], ["Skill Routing", "Workflow Skills", "PROTECT", "PM &amp; FDE", "Engineering Notes", "Written Spec"])
         for path in english_current_paths
     ] + [
-        (path, ["首页", "新手指南", "上下文工程", "生命周期", "治理判定", "架构状态"], ["Skill 路由", "工作流 Skills", "PROTECT", "产品与交付", "工程笔记", "文字规范"])
+        (path, ["首页", "新手指南", "上下文工程", "生命周期", "治理判定", "证据", "架构状态"], ["Skill 路由", "工作流 Skills", "PROTECT", "产品与交付", "工程笔记", "文字规范"])
         for path in chinese_current_paths
     ]:
         text = path.read_text(encoding="utf-8")
@@ -9999,7 +10005,7 @@ def test_public_dhf_information_architecture():
         require(links_match is not None, f"{path.name} missing compact nav link container")
         links = links_match.group(1)
         require_in_order(links, labels, f"{path.name} compact navigation order")
-        require(links.count("<a ") == 6, f"{path.name} compact navigation should contain six content links")
+        require(links.count("<a ") == 7, f"{path.name} compact navigation should contain seven content links")
         for term in demoted:
             require(term not in links, f"{path.name} primary navigation should demote {term}")
         expected_current = current_hrefs.get(path.name)
@@ -10148,122 +10154,201 @@ def test_public_dhf_architecture_status_alignment():
 
 def test_dhf_models_and_patterns_information_architecture():
     docs = ROOT / "docs"
-    hub_name = "dhf-best-care-recover.html"
-    safe_name = "dhf-data-business-value-explainer.html"
-    comparison_name = "dhf-safe-data-ai-comparison.html"
-    child_names = [
-        safe_name,
-        comparison_name,
-        "dhf-protect-seven-components-cn.html",
-        "dhf-protect-seven-components-en.html",
-        "dhf-shipq-development-history.html",
-        "shipq-dhf-safe-controlled-recovery.html",
-        "shipq-dhf-incident-recovery-memory-map.html",
-        "dhf-examples-three-lenses.html",
-        "dhf-case-safe-mapping.html",
+    memory_page = (docs / "dhf-best-care-recover.html").read_text(encoding="utf-8")
+    require("data-dhf-models-hub" not in memory_page,
+            "legacy Models & Patterns page must not remain a public hub")
+    require('data-dhf-evidence-language="cn"' in memory_page,
+            "legacy Models & Patterns page must become the Chinese memory aid")
+    require('href="./dhf-value-evidence-cn.html"' in memory_page,
+            "Chinese memory aid missing Evidence hub link")
+    require('href="./dhf-best-care-recover-en.html"' in memory_page,
+            "Chinese memory aid missing English twin")
+    print("[PASS] legacy Models & Patterns page migrated to Evidence")
+
+
+def test_dhf_value_evidence_information_architecture():
+    docs = ROOT / "docs"
+    english_hub_name = "dhf-value-evidence-en.html"
+    chinese_hub_name = "dhf-value-evidence-cn.html"
+    english_hub_path = docs / english_hub_name
+    chinese_hub_path = docs / chinese_hub_name
+
+    require(english_hub_path.is_file(), "missing English DHF Value & Evidence hub")
+    require(chinese_hub_path.is_file(), "missing Chinese DHF Value & Evidence hub")
+    english_hub = english_hub_path.read_text(encoding="utf-8")
+    chinese_hub = chinese_hub_path.read_text(encoding="utf-8")
+
+    require(english_hub.count('data-dhf-evidence-hub="en"') == 1,
+            "English Evidence hub marker must be unique")
+    require(chinese_hub.count('data-dhf-evidence-hub="cn"') == 1,
+            "Chinese Evidence hub marker must be unique")
+    require('data-dhf-models-hub' not in english_hub + chinese_hub,
+            "Evidence hubs must not retain the Models & Patterns hub marker")
+    require(f'href="./{chinese_hub_name}"' in english_hub,
+            "English Evidence hub missing Chinese language twin")
+    require(f'href="./{english_hub_name}"' in chinese_hub,
+            "Chinese Evidence hub missing English language twin")
+    for filename, text, label, target in [
+        (english_hub_name, english_hub, "Evidence", english_hub_name),
+        (chinese_hub_name, chinese_hub, "证据", chinese_hub_name),
+    ]:
+        nav_match = re.search(r'<nav class="dhf-nav"[^>]*>(.*?)</nav>', text, re.DOTALL)
+        require(nav_match is not None, f"{filename} missing global navigation")
+        links_match = re.search(r'<div class="dhf-nav-links"[^>]*>(.*?)</div>', nav_match.group(1), re.DOTALL)
+        require(links_match is not None, f"{filename} missing global navigation links")
+        links = links_match.group(1)
+        require(links.count("<a ") == 7, f"{filename} global navigation must contain seven content links")
+        require(
+            re.search(rf'href="\./{re.escape(target)}"[^>]*aria-current="page"[^>]*>{label}</a>', links) is not None,
+            f"{filename} must mark Evidence as the current global route",
+        )
+
+    ladder = [
+        "Design intent",
+        "Source implemented",
+        "Verification passed",
+        "Runtime active",
+        "Publicly published",
+        "Production enforced",
+        "Customer outcome validated",
     ]
-
-    comparison_path = docs / comparison_name
-    require(comparison_path.is_file(), "missing SAFE Data/AI auxiliary comparison page")
-    hub = (docs / hub_name).read_text(encoding="utf-8")
-    safe = (docs / safe_name).read_text(encoding="utf-8")
-    comparison = comparison_path.read_text(encoding="utf-8")
-
-    require(hub.count("data-dhf-models-hub") == 1, "Models & Patterns hub marker must be unique")
-    for label in [
-        "Control &amp; Value",
-        "Runtime Architecture",
-        "Evolution",
-        "Operating Memory",
-        "Incident Response",
-        "Cases &amp; Evidence",
-    ]:
-        require(label in hub, f"Models & Patterns hub missing category: {label}")
-    for child in child_names:
-        require(f'href="./{child}' in hub, f"Models & Patterns hub missing child link: {child}")
-        child_text = (docs / child).read_text(encoding="utf-8")
-        require("file://" not in child_text, f"DHF model page contains a machine-local link: {child}")
-        require(f'href="./{hub_name}' in child_text, f"DHF model child missing hub link: {child}")
-
-    require('data-dhf-model-role="control-value"' in safe, "SAFE page missing control-value role")
-    require('data-dhf-comparison="data-ai-vs-dhf"' not in safe, "SAFE page must not own the full comparison")
-    require(safe.count('data-dhf-auxiliary-link="data-ai-comparison"') == 1,
-            "SAFE page must expose exactly one auxiliary comparison link")
-    auxiliary_match = re.search(
-        r'<a\b[^>]*data-dhf-auxiliary-link="data-ai-comparison"[^>]*>.*?</a>',
-        safe,
-        re.DOTALL | re.IGNORECASE,
-    )
-    require(auxiliary_match is not None, "SAFE auxiliary comparison link must be an anchor")
-    safe_without_auxiliary_link = safe.replace(auxiliary_match.group(0), "")
-    for term in [
-        "数据与 AI 架构",
-        "Data/AI",
-        "hero-system data",
-        "data architecture lane",
-        "model drift",
-        "data quality gate",
-        "特征工程 / 模型服务",
-    ]:
-        require(term not in safe_without_auxiliary_link, f"SAFE page retains Data/AI-specific content: {term}")
-
-    require('data-dhf-model-role="auxiliary-comparison"' in comparison,
-            "Data/AI page missing auxiliary-comparison role")
-    require(comparison.count('data-dhf-comparison="data-ai-vs-dhf"') == 1,
-            "Data/AI comparison owner marker must be unique")
-    for term in [
-        "数据与 AI 架构",
-        "DHF",
-        "质量与客户信任",
-        "风险与授权控制",
-        "运营效率与交付速度",
-        "韧性与业务连续性",
-        "审计、治理与规模化",
-        "Schema",
-        "data quality",
-        "model decision",
-        "drift",
-        "checkpoint",
-        "rollback",
-        "handoff",
-    ]:
-        require(term in comparison, f"Data/AI comparison missing migrated concept: {term}")
-    require(f'href="./{safe_name}' in comparison, "Data/AI comparison missing SAFE backlink")
-
-    for filename in ["index.html", "index-en.html", "index-zh.html"]:
-        text = (docs / filename).read_text(encoding="utf-8")
-        primary_match = re.search(r'<nav class="dhf-nav"[^>]*>(.*?)</nav>', text, re.DOTALL)
-        require(primary_match is not None, f"{filename} missing primary navigation")
-        require(hub_name not in primary_match.group(1), f"{filename} must not promote Models to primary navigation")
-        require(f'href="./{hub_name}' in text, f"{filename} missing Models & Patterns resource link")
-
-    for filename in [
-        "index.html",
-        "index-en.html",
-        "index-zh.html",
-        hub_name,
-        safe_name,
-        comparison_name,
-        "dhf-protect-seven-components-en.html",
-        "dhf-protect-seven-components-cn.html",
-    ]:
-        text = (docs / filename).read_text(encoding="utf-8")
+    for filename, text in [(english_hub_name, english_hub), (chinese_hub_name, chinese_hub)]:
+        ladder_match = re.search(
+            r'<(?P<tag>[a-z][a-z0-9-]*)\b[^>]*data-dhf-evidence-ladder[^>]*>(?P<body>.*?)</(?P=tag)>',
+            text,
+            re.DOTALL | re.IGNORECASE,
+        )
+        require(ladder_match is not None, f"{filename} missing marked evidence ladder")
+        require_in_order(ladder_match.group("body"), ladder, f"{filename} evidence ladder order")
+        require(ladder_match.group("body").count("data-dhf-evidence-level") == 7,
+                f"{filename} evidence ladder must contain seven levels")
+        for section in ["value", "ladder", "evolution", "controls", "cases", "recovery", "boundaries"]:
+            require(f'data-dhf-evidence-section="{section}"' in text,
+                    f"{filename} missing Evidence section: {section}")
         require(text.count('data-dhf-status="2026-08-11"') == 1,
                 f"{filename} must preserve the current DHF status attribute")
 
-    history = (ROOT / "docs" / "dhf-shipq-development-history.html").read_text(encoding="utf-8")
-    require(history.count('class="safe-focus"') == 6, "each BRIDGE stage must name its SAFE focus")
-    for statement in [
-        "先恢复现场，再明确可续接状态。",
-        "把完成声明变成可复核事实。",
-        "先定义 ShipQ 的业务正确性，再用来源证据验证。",
-        "明确 core、runtime 与 ShipQ adapter 的责任及交接合同。",
-        "按风险决定需要多强的门禁、评审与授权。",
-        "把授权变成不可绕过、可回读、可恢复的执行控制。",
-    ]:
-        require(statement in history, f"BRIDGE SAFE focus missing: {statement}")
+    evidence_pairs = [
+        ("dhf-best-care-recover-en.html", "dhf-best-care-recover.html"),
+        ("dhf-data-business-value-explainer-en.html", "dhf-data-business-value-explainer.html"),
+        ("dhf-safe-data-ai-comparison-en.html", "dhf-safe-data-ai-comparison.html"),
+        ("dhf-protect-seven-components-en.html", "dhf-protect-seven-components-cn.html"),
+        ("dhf-shipq-development-history-en.html", "dhf-shipq-development-history.html"),
+        ("dhf-case-safe-mapping-en.html", "dhf-case-safe-mapping.html"),
+        ("dhf-examples-three-lenses-en.html", "dhf-examples-three-lenses.html"),
+        ("dhf-examples-three-lenses-safe-en.html", "dhf-examples-three-lenses-safe.html"),
+        ("shipq-dhf-safe-controlled-recovery-en.html", "shipq-dhf-safe-controlled-recovery.html"),
+        ("shipq-dhf-incident-recovery-memory-map-en.html", "shipq-dhf-incident-recovery-memory-map.html"),
+    ]
+    for english_name, chinese_name in evidence_pairs:
+        english_path = docs / english_name
+        chinese_path = docs / chinese_name
+        require(english_path.is_file(), f"missing English Evidence page: {english_name}")
+        require(chinese_path.is_file(), f"missing Chinese Evidence page: {chinese_name}")
+        english_text = english_path.read_text(encoding="utf-8")
+        chinese_text = chinese_path.read_text(encoding="utf-8")
+        require(f'data-dhf-evidence-language="en"' in english_text,
+                f"English Evidence page missing language marker: {english_name}")
+        require(f'data-dhf-evidence-language="cn"' in chinese_text,
+                f"Chinese Evidence page missing language marker: {chinese_name}")
+        require(f'href="./{english_hub_name}"' in english_text,
+                f"English Evidence page missing same-language hub link: {english_name}")
+        require(f'href="./{chinese_hub_name}"' in chinese_text,
+                f"Chinese Evidence page missing same-language hub link: {chinese_name}")
+        require(f'href="./{chinese_name}"' in english_text,
+                f"English Evidence page missing Chinese twin: {english_name}")
+        require(f'href="./{english_name}"' in chinese_text,
+                f"Chinese Evidence page missing English twin: {chinese_name}")
+        require(english_text.count('data-dhf-status="2026-08-11"') == 1,
+                f"English Evidence page must preserve status: {english_name}")
+        require(chinese_text.count('data-dhf-status="2026-08-11"') == 1,
+                f"Chinese Evidence page must preserve status: {chinese_name}")
 
-    print("[PASS] DHF Models & Patterns information architecture")
+    english_children = [english for english, _ in evidence_pairs]
+    chinese_children = [chinese for _, chinese in evidence_pairs]
+    for child in english_children:
+        require(f'href="./{child}' in english_hub, f"English Evidence hub missing child: {child}")
+        require(f'href="./{child}' not in chinese_hub,
+                f"Chinese Evidence hub must not ordinary-link English child: {child}")
+    for child in chinese_children:
+        require(f'href="./{child}' in chinese_hub, f"Chinese Evidence hub missing child: {child}")
+        require(f'href="./{child}' not in english_hub,
+                f"English Evidence hub must not ordinary-link Chinese child: {child}")
+
+    english_nav_files = [
+        "delivery-harness-beginner-guide-en.html",
+        "dhf-architecture-status-en.html",
+        "dhf-context-engineering-en.html",
+        "dhf-engineering-notes-en.html",
+        "dhf-for-product-and-field-en.html",
+        "dhf-governance-decision-flow-en.html",
+        "dhf-protect-seven-components-en.html",
+        "dhf-workflow-skills-en.html",
+        "index-en.html",
+        "index.html",
+        "lifecycle-skill-routing-en.html",
+        "project-lifecycle-harness-flow-en.html",
+        "project-lifecycle-harness-flow-skills-en-status-style.html",
+        "project-lifecycle-harness-flow-skills-en.html",
+    ]
+    chinese_nav_files = [
+        "delivery-harness-beginner-guide-cn.html",
+        "dhf-architecture-status-cn.html",
+        "dhf-context-engineering-cn.html",
+        "dhf-engineering-notes-cn.html",
+        "dhf-for-product-and-field-cn.html",
+        "dhf-governance-decision-flow-cn.html",
+        "dhf-protect-seven-components-cn.html",
+        "dhf-workflow-skills-cn.html",
+        "index-zh.html",
+        "project-lifecycle-harness-flow-cn.html",
+        "project-lifecycle-harness-flow-skills-zh-status-style.html",
+        "project-lifecycle-harness-flow-skills.html",
+    ]
+    require(len(english_nav_files + chinese_nav_files) == 26,
+            "Evidence navigation contract must preserve the 26-file baseline")
+    for filename, labels, target in [
+        *[(name, ["Governance", "Evidence", "Status"], english_hub_name) for name in english_nav_files],
+        *[(name, ["治理判定", "证据", "架构状态"], chinese_hub_name) for name in chinese_nav_files],
+    ]:
+        text = (docs / filename).read_text(encoding="utf-8")
+        nav_match = re.search(r'<nav class="dhf-nav"[^>]*>(.*?)</nav>', text, re.DOTALL)
+        require(nav_match is not None, f"{filename} missing global navigation")
+        nav = nav_match.group(1)
+        links_match = re.search(r'<div class="dhf-nav-links"[^>]*>(.*?)</div>', nav, re.DOTALL)
+        require(links_match is not None, f"{filename} missing global navigation links")
+        links = links_match.group(1)
+        require_in_order(links, labels, f"{filename} Evidence navigation order")
+        require(f'href="./{target}"' in links, f"{filename} missing same-language Evidence target")
+        require(links.count("<a ") == 7,
+                f"{filename} global navigation must contain seven content links")
+
+    for filename in ["index.html", "index-en.html", "index-zh.html"]:
+        text = (docs / filename).read_text(encoding="utf-8")
+        learning_match = re.search(
+            r'<(?P<tag>[a-z][a-z0-9-]*)\b[^>]*data-dhf-learning-path[^>]*>(?P<body>.*?)</(?P=tag)>',
+            text,
+            re.DOTALL | re.IGNORECASE,
+        )
+        require(learning_match is not None, f"{filename} missing learning path")
+        require(learning_match.group("body").count('class="sequence-step"') == 4,
+                f"{filename} learning path must remain four steps")
+
+    def normalized_home(text: str) -> str:
+        text = re.sub(r'(<link\s+rel="canonical"\s+href=")[^"]+("\s*/?>)', r'\1__CANONICAL__\2', text)
+        return re.sub(r'(<meta\s+property="og:url"\s+content=")[^"]+("\s*/?>)', r'\1__OG_URL__\2', text)
+
+    require(
+        normalized_home((docs / "index.html").read_text(encoding="utf-8"))
+        == normalized_home((docs / "index-en.html").read_text(encoding="utf-8")),
+        "index.html and index-en.html must retain normalized byte parity",
+    )
+    require("data-dhf-models-hub" not in "".join(
+        (docs / name).read_text(encoding="utf-8")
+        for name in [chinese_hub_name, english_hub_name, "dhf-best-care-recover.html"]
+    ), "former Models & Patterns hub marker must be removed")
+
+    print("[PASS] DHF Value & Evidence information architecture")
 
 
 def test_runner_registry_complete():
@@ -10399,6 +10484,7 @@ TESTS = [
     test_public_dhf_information_architecture,
     test_public_dhf_architecture_status_alignment,
     test_dhf_models_and_patterns_information_architecture,
+    test_dhf_value_evidence_information_architecture,
     test_runner_registry_complete,
 ]
 

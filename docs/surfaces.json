@@ -543,52 +543,124 @@
       "audience": ["human"]
     },
     {
-      "path": "docs/dhf-best-care-recover.html",
-      "role": "Chinese DHF Models and Patterns hub for control, runtime architecture, value, evolution, recovery, and evidence",
+      "path": "docs/dhf-value-evidence-en.html",
+      "role": "English DHF Value and Evidence hub for customer value, evidence maturity, evolution, controls, cases, recovery, and current boundaries",
+      "audience": ["human"],
+      "public_nav": ["docs/index.html"]
+    },
+    {
+      "path": "docs/dhf-value-evidence-cn.html",
+      "role": "Chinese DHF Value and Evidence hub for customer value, evidence maturity, evolution, controls, cases, recovery, and current boundaries",
       "audience": ["human"],
       "public_nav": ["docs/index-zh.html"]
     },
     {
+      "path": "docs/dhf-best-care-recover-en.html",
+      "role": "English BEST, CARE, and RECOVER operating-memory aid",
+      "audience": ["human"],
+      "public_nav": ["docs/dhf-value-evidence-en.html"]
+    },
+    {
+      "path": "docs/dhf-best-care-recover.html",
+      "role": "Chinese BEST, CARE, and RECOVER operating-memory aid",
+      "audience": ["human"],
+      "public_nav": ["docs/dhf-value-evidence-cn.html"]
+    },
+    {
+      "path": "docs/dhf-case-safe-mapping-en.html",
+      "role": "English mapping of a real DHF case onto the SAFE control model",
+      "audience": ["human"],
+      "public_nav": ["docs/dhf-value-evidence-en.html"]
+    },
+    {
       "path": "docs/dhf-case-safe-mapping.html",
       "role": "Chinese mapping of a real DHF case onto the SAFE control model",
-      "audience": ["human"]
+      "audience": ["human"],
+      "public_nav": ["docs/dhf-value-evidence-cn.html"]
+    },
+    {
+      "path": "docs/dhf-data-business-value-explainer-en.html",
+      "role": "English generic SAFE to TRUST customer-value explainer",
+      "audience": ["human"],
+      "public_nav": ["docs/dhf-value-evidence-en.html"]
     },
     {
       "path": "docs/dhf-data-business-value-explainer.html",
-      "role": "Chinese generic SAFE to TRUST control-and-value explainer",
+      "role": "Chinese generic SAFE to TRUST customer-value explainer",
       "audience": ["human"],
-      "public_nav": ["docs/dhf-best-care-recover.html"]
+      "public_nav": ["docs/dhf-value-evidence-cn.html"]
+    },
+    {
+      "path": "docs/dhf-safe-data-ai-comparison-en.html",
+      "role": "English auxiliary comparison of SAFE across Data and AI architecture and DHF",
+      "audience": ["human"],
+      "public_nav": ["docs/dhf-value-evidence-en.html"]
     },
     {
       "path": "docs/dhf-safe-data-ai-comparison.html",
       "role": "Chinese auxiliary comparison of SAFE across Data and AI architecture and DHF",
       "audience": ["human"],
-      "public_nav": ["docs/dhf-best-care-recover.html"]
+      "public_nav": ["docs/dhf-value-evidence-cn.html"]
+    },
+    {
+      "path": "docs/dhf-examples-three-lenses-en.html",
+      "role": "English casebook telling ten real delivery cases through three communication lenses",
+      "audience": ["human"],
+      "public_nav": ["docs/dhf-value-evidence-en.html"]
     },
     {
       "path": "docs/dhf-examples-three-lenses.html",
-      "role": "Chinese casebook telling one real DHF case through three interview lenses",
-      "audience": ["human"]
+      "role": "Chinese casebook telling ten real delivery cases through three communication lenses",
+      "audience": ["human"],
+      "public_nav": ["docs/dhf-value-evidence-cn.html"]
+    },
+    {
+      "path": "docs/dhf-examples-three-lenses-safe-en.html",
+      "role": "English casebook combining the three-lens narrative with the SAFE control model",
+      "audience": ["human"],
+      "public_nav": ["docs/dhf-value-evidence-en.html"]
     },
     {
       "path": "docs/dhf-examples-three-lenses-safe.html",
       "role": "Chinese casebook combining the three-lens narrative with the SAFE control model",
-      "audience": ["human"]
+      "audience": ["human"],
+      "public_nav": ["docs/dhf-value-evidence-cn.html"]
+    },
+    {
+      "path": "docs/dhf-shipq-development-history-en.html",
+      "role": "English DHF evolution evidence from ShipQ blockage to governed enforcement",
+      "audience": ["human"],
+      "public_nav": ["docs/dhf-value-evidence-en.html"]
     },
     {
       "path": "docs/dhf-shipq-development-history.html",
-      "role": "Chinese DHF evolution history from ShipQ blockage to SAFE controls and TRUST value",
-      "audience": ["human"]
+      "role": "Chinese DHF evolution evidence from ShipQ blockage to governed enforcement",
+      "audience": ["human"],
+      "public_nav": ["docs/dhf-value-evidence-cn.html"]
+    },
+    {
+      "path": "docs/shipq-dhf-incident-recovery-memory-map-en.html",
+      "role": "English ShipQ incident and controlled-recovery memory map",
+      "audience": ["human"],
+      "public_nav": ["docs/dhf-value-evidence-en.html"]
     },
     {
       "path": "docs/shipq-dhf-incident-recovery-memory-map.html",
       "role": "Chinese ShipQ incident and controlled-recovery memory map",
-      "audience": ["human"]
+      "audience": ["human"],
+      "public_nav": ["docs/dhf-value-evidence-cn.html"]
+    },
+    {
+      "path": "docs/shipq-dhf-safe-controlled-recovery-en.html",
+      "role": "English ShipQ Google Docs controlled-recovery evidence walkthrough",
+      "audience": ["human"],
+      "public_nav": ["docs/dhf-value-evidence-en.html"]
     },
     {
       "path": "docs/shipq-dhf-safe-controlled-recovery.html",
-      "role": "Chinese ShipQ Google Docs controlled-recovery case walkthrough",
-      "audience": ["human"]
+      "role": "Chinese ShipQ Google Docs controlled-recovery evidence walkthrough",
+      "audience": ["human"],
+      "public_nav": ["docs/dhf-value-evidence-cn.html"]
     },
     {
       "path": "codex/skills/codex-fluent/scripts/report_active_sessions.py",
