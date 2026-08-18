@@ -10426,6 +10426,83 @@ def test_dhf_value_evidence_information_architecture():
     print("[PASS] DHF Value & Evidence information architecture")
 
 
+def test_dhf_evidence_child_navigation_and_controlled_recovery_contract():
+    docs = ROOT / "docs"
+    evidence_pairs = [
+        ("dhf-best-care-recover-en.html", "dhf-best-care-recover.html"),
+        ("dhf-data-business-value-explainer-en.html", "dhf-data-business-value-explainer.html"),
+        ("dhf-safe-data-ai-comparison-en.html", "dhf-safe-data-ai-comparison.html"),
+        ("dhf-protect-seven-components-en.html", "dhf-protect-seven-components-cn.html"),
+        ("dhf-shipq-development-history-en.html", "dhf-shipq-development-history.html"),
+        ("dhf-case-safe-mapping-en.html", "dhf-case-safe-mapping.html"),
+        ("dhf-examples-three-lenses-en.html", "dhf-examples-three-lenses.html"),
+        ("dhf-examples-three-lenses-safe-en.html", "dhf-examples-three-lenses-safe.html"),
+        ("shipq-dhf-safe-controlled-recovery-en.html", "shipq-dhf-safe-controlled-recovery.html"),
+        ("shipq-dhf-incident-recovery-memory-map-en.html", "shipq-dhf-incident-recovery-memory-map.html"),
+    ]
+    labels = {
+        "en": ["Home", "Beginner", "Context", "Lifecycle", "Governance", "Evidence", "Status"],
+        "cn": ["首页", "新手指南", "上下文工程", "生命周期", "治理判定", "证据", "架构状态"],
+    }
+
+    for english_name, chinese_name in evidence_pairs:
+        for language, name, twin in [
+            ("en", english_name, chinese_name),
+            ("cn", chinese_name, english_name),
+        ]:
+            text = (docs / name).read_text(encoding="utf-8")
+            nav_match = re.search(r'<nav class="dhf-nav"[^>]*>(.*?)</nav>', text, re.DOTALL)
+            require(nav_match is not None, f"{name} missing global navigation")
+            nav = nav_match.group(1)
+            require_in_order(nav, labels[language], f"{name} global navigation order")
+            require(nav.count("<a ") == 9, f"{name} navigation should contain home, seven routes, and language twin")
+            require('aria-current="page"' not in nav, f"{name} is an Evidence child, not a primary route")
+            require(f'href="./{twin}"' in nav, f"{name} missing language twin")
+            toc_match = re.search(r'<nav class="(?:dhf-toc|toc|rail)"[^>]*>(.*?)</nav>', text, re.DOTALL)
+            require(toc_match is not None, f"{name} page navigation is incomplete")
+            if 'class="dhf-toc"' in text:
+                require(text.count("dhf-has-toc") == 1, f"{name} missing page-navigation layout")
+                require(text.count("dhf-col") == 1, f"{name} missing content column")
+            targets = re.findall(r'href="#([^"]+)"', toc_match.group(1))
+            require(targets, f"{name} page navigation has no targets")
+            for target in targets:
+                require(text.count(f'id="{target}"') == 1, f"{name} page navigation target must exist once: {target}")
+            require(text.count('data-dhf-status="2026-08-11"') == 1,
+                    f"{name} must preserve the canonical DHF status attribute")
+
+    recovery_names = [
+        "shipq-dhf-safe-controlled-recovery-en.html",
+        "shipq-dhf-safe-controlled-recovery.html",
+    ]
+    recovery_sections = ["verdict", "selection", "context", "dhf", "safe", "recover", "states", "value", "evidence"]
+    recovery_terms = [
+        "Recognize", "End further mutation", "Capture", "Obtain", "Verify", "Escalate", "Resume",
+        "readback_structure_mismatch", "MISMATCH", "RETRY", "RESTORED", "EXECUTE",
+    ]
+    for name in recovery_names:
+        text = (docs / name).read_text(encoding="utf-8")
+        require_in_order(text, [f'id="{section}"' for section in recovery_sections],
+                         f"{name} controlled-recovery section order")
+        for term in recovery_terms:
+            require(term in text, f"{name} missing controlled-recovery fact: {term}")
+        for forbidden in ["interview", "INTERVIEW", "面试", "90 秒版本"]:
+            require(forbidden not in text, f"{name} retains interview-only content: {forbidden}")
+
+    archive = ROOT / "tasks" / "archives" / "2026-08-18-dhf-controlled-recovery-interview"
+    expected_hashes = {
+        "shipq-dhf-safe-controlled-recovery-en.html": "2ae38688ec7b5bc3ddea99c0c469b76456a25c00f21300f4334e00951ca939f6",
+        "shipq-dhf-safe-controlled-recovery.html": "6c7a11b3075b290845f9b7ca4cf043286cccfb833a11de521b2b7c1bb37b800b",
+    }
+    for name, expected_hash in expected_hashes.items():
+        path = archive / name
+        require(path.is_file(), f"missing pre-edit controlled-recovery archive: {name}")
+        require(hashlib.sha256(path.read_bytes()).hexdigest() == expected_hash,
+                f"controlled-recovery archive hash drifted: {name}")
+    require((archive / "manifest.md").is_file(), "missing controlled-recovery archive manifest")
+
+    print("[PASS] Evidence child navigation and controlled recovery contract")
+
+
 def test_dhf_evidence_memory_keyword_contract():
     docs = ROOT / "docs"
     stylesheet = docs / "dhf-evidence-memory.css"
@@ -10657,6 +10734,7 @@ TESTS = [
     test_public_dhf_architecture_status_alignment,
     test_dhf_models_and_patterns_information_architecture,
     test_dhf_value_evidence_information_architecture,
+    test_dhf_evidence_child_navigation_and_controlled_recovery_contract,
     test_dhf_evidence_memory_keyword_contract,
     test_runner_registry_complete,
 ]
