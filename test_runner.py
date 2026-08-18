@@ -10501,6 +10501,9 @@ def test_dhf_evidence_child_navigation_and_controlled_recovery_contract():
             require(term in text, f"{name} missing controlled-recovery fact: {term}")
         for forbidden in ["interview", "INTERVIEW", "面试", "90 秒版本"]:
             require(forbidden not in text, f"{name} retains interview-only content: {forbidden}")
+    chinese_recovery = (docs / "shipq-dhf-safe-controlled-recovery.html").read_text(encoding="utf-8")
+    require_in_order(chinese_recovery, ["05 · RECOVER", "06 · STATE MODEL", "07 · BUSINESS VALUE", "08 · EVIDENCE"],
+                     "Chinese controlled-recovery section numbering")
 
     archive = ROOT / "tasks" / "archives" / "2026-08-18-dhf-controlled-recovery-interview"
     expected_hashes = {

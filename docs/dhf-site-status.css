@@ -402,7 +402,13 @@ body { padding: 0 0 clamp(1.5rem, 4vw, 2.4rem) !important; }
   .dhf-toc-title,
   .dhf-toc a { flex: none; }
   .dhf-toc-title { margin: 0; padding: 0.55rem 0.6rem; border-bottom: 0; }
-  .dhf-toc a { border-left: 0; border-bottom: 2px solid transparent; }
+  .dhf-toc a {
+    display: flex;
+    align-items: center;
+    min-height: 44px;
+    border-left: 0;
+    border-bottom: 2px solid transparent;
+  }
 }
 
 /* 2.5.5 — landing-page quick-link chips were 34px tall. */
