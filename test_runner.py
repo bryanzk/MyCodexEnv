@@ -5195,6 +5195,15 @@ def test_canonical_harness_hook_performance_budgets():
         )
         require(baseline.returncode == 0, f"entry Guard must be available for performance comparison: {baseline.stderr!r}")
         baseline_guard.write_bytes(baseline.stdout)
+        empty_guard = tmp_path / "empty-harness_guard.py"
+        empty_guard.write_text(
+            "import json\n"
+            "import sys\n"
+            "json.load(sys.stdin)\n"
+            "json.dump({}, sys.stdout, ensure_ascii=False)\n"
+            "sys.stdout.write('\\n')\n",
+            encoding="utf-8",
+        )
         codex_home = Path(env["CODEX_HOME"])
         repo = tmp_path / "workspace"
         repo.mkdir()
@@ -5252,7 +5261,7 @@ def test_canonical_harness_hook_performance_budgets():
             commands = {
                 "entry": ([sys.executable, str(baseline_guard)], None, None),
                 "candidate": ([sys.executable, str(HARNESS_GUARD)], expected_block, expected_reason),
-                "empty": ([sys.executable, "-c", "pass"], None, None),
+                "empty": ([sys.executable, str(empty_guard)], False, None),
             }
             timings = {name: [] for name in commands}
             order = tuple(commands)
