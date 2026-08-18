@@ -10,19 +10,6 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any
 
-try:
-    from harness_guard import current_phase, git_root, load_policy
-except Exception:  # Observer must keep logging best-effort if guard imports fail.
-    current_phase = None
-    git_root = None
-    load_policy = None
-
-try:
-    from harness_guard import phase_with_trace
-except Exception:
-    phase_with_trace = None
-
-
 COMMAND_HEAD_LIMIT = 200
 KEY_OUTPUT_LIMIT = 500
 TEXT_FIELD_LIMIT = 500
@@ -35,7 +22,7 @@ FILE_MODE = 0o600
 def load_payload() -> dict[str, Any]:
     try:
         return json.load(sys.stdin)
-    except json.JSONDecodeError:
+    except (json.JSONDecodeError, OSError):
         return {}
 
 
@@ -71,32 +58,14 @@ def cwd_text(payload: dict[str, Any]) -> str:
 
 
 def fallback_phase(payload: dict[str, Any]) -> str:
-    return str(payload.get("phase") or tool_input(payload).get("phase") or os.environ.get("CODEX_HARNESS_PHASE") or "unknown")
-
-
-def resolved_phase(payload: dict[str, Any], cwd: str) -> str:
-    if current_phase is None or git_root is None or load_policy is None:
-        return fallback_phase(payload)
-    try:
-        policy = load_policy()
-        if not policy:
-            return fallback_phase(payload)
-        return current_phase(payload, policy, git_root(cwd))
-    except Exception:
-        return fallback_phase(payload)
-
-
-def resolved_phase_and_trace(payload: dict[str, Any], cwd: str) -> tuple[str, dict[str, Any] | None]:
-    if phase_with_trace is None or git_root is None or load_policy is None:
-        return resolved_phase(payload, cwd), None
-    try:
-        policy = load_policy()
-        if not policy:
-            return fallback_phase(payload), None
-        phase, _, trace = phase_with_trace(payload, policy, git_root(cwd))
-        return phase, trace
-    except Exception:
-        return resolved_phase(payload, cwd), None
+    value = str(
+        payload.get("phase")
+        or tool_input(payload).get("phase")
+        or os.environ.get("CODEX_HARNESS_PHASE")
+        or "unknown"
+    )
+    allowed = {"research", "requirements", "planning", "development", "validation", "review", "ship", "handoff"}
+    return value if value in allowed else "unknown"
 
 
 def sha256_prefix(value: str) -> str:
@@ -188,7 +157,7 @@ def build_event(payload: dict[str, Any]) -> dict[str, Any]:
     command = command_text(payload) or ""
     output = str(payload.get("key_output") or payload.get("result") or payload.get("output") or "")
     raw_capture = os.environ.get("CODEX_HARNESS_EVIDENCE_RAW") == "1"
-    phase, phase_trace = resolved_phase_and_trace(payload, cwd)
+    phase = fallback_phase(payload)
     event = {
         "schema_version": 1,
         "timestamp": timestamp,
@@ -207,9 +176,8 @@ def build_event(payload: dict[str, Any]) -> dict[str, Any]:
         "output_sha256_prefix": sha256_prefix(output),
         "approval_state": "unknown",
         "failure_class": "none",
+        "phase_trace": {"authoritative": False, "source": "payload_or_environment"},
     }
-    if phase_trace is not None:
-        event["phase_trace"] = phase_trace
     if raw_capture:
         event["command_head"] = command[:COMMAND_HEAD_LIMIT]
     if len(command.encode("utf-8")) > MAX_RECORD_BYTES or len(output) > KEY_OUTPUT_LIMIT:
