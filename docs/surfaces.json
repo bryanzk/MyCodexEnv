@@ -410,6 +410,11 @@
       "audience": ["human"]
     },
     {
+      "path": "docs/dhf-evidence-memory.css",
+      "role": "shared DHF Evidence memory spine, keyword cue, BEST and CARE lens styles",
+      "audience": ["human"]
+    },
+    {
       "path": "docs/dhf-architecture-status-cn.html",
       "role": "canonical Chinese DHF architecture and source runtime publication status",
       "audience": ["human"],

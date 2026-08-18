@@ -96,6 +96,7 @@ behavior live in `codex/hooks/dhf_preprompt.py`.
 - `docs/HARNESS_RUNTIME.md`: runtime workflow, evidence, permission, checkpoint, and agent-team contract.
 - `docs/AGENT_HARNESS_STATUS.md`: Agent Harness workflow and runtime governance status map.
 - `docs/dhf-site-status.css`: shared status banner and canonical architecture-page styling.
+- `docs/dhf-evidence-memory.css`: shared Evidence memory spine, keyword cue, and BEST / CARE lens styling.
 - `docs/dhf-architecture-status-cn.html`: canonical Chinese DHF architecture and source/runtime/publication status.
 - `docs/dhf-architecture-status-en.html`: canonical English DHF architecture and source/runtime/publication status.
 - `docs/dhf-context-engineering-cn.html`: Chinese guide to the governed DHF context supply chain.
