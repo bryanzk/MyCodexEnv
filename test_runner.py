@@ -10677,6 +10677,16 @@ def test_dhf_value_evidence_information_architecture():
     print("[PASS] DHF Value & Evidence information architecture")
 
 
+def test_dhf_value_page_has_single_local_navigation():
+    text = (ROOT / "docs" / "dhf-data-business-value-explainer.html").read_text(encoding="utf-8")
+    require(text.count('class="dhf-nav"') == 1, "Chinese SAFE → TRUST page global navigation count")
+    require(text.count('class="dhf-toc"') == 1, "Chinese SAFE → TRUST page local navigation count")
+    require('class="side-nav"' not in text, "Chinese SAFE → TRUST page retains legacy side navigation")
+    require("querySelectorAll('.nav-link')" not in text,
+            "Chinese SAFE → TRUST page retains legacy navigation observer")
+    print("[PASS] Chinese SAFE → TRUST page has one local navigation")
+
+
 def test_dhf_evidence_child_navigation_and_controlled_recovery_contract():
     docs = ROOT / "docs"
     evidence_pairs = [
@@ -11052,6 +11062,7 @@ TESTS = [
     test_public_dhf_architecture_status_alignment,
     test_dhf_models_and_patterns_information_architecture,
     test_dhf_value_evidence_information_architecture,
+    test_dhf_value_page_has_single_local_navigation,
     test_dhf_evidence_child_navigation_and_controlled_recovery_contract,
     test_dhf_evidence_memory_keyword_contract,
     test_runner_registry_complete,

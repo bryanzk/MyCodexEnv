@@ -64,44 +64,13 @@
       line-height: 1.65;
     }
     a { color: inherit; }
-    code, .mono, .eyebrow, .section-index, .legend, .nav-link, .micro-label {
+    code, .mono, .eyebrow, .section-index, .legend, .micro-label {
       font-family: "IBM Plex Mono", Menlo, monospace;
     }
     .shell {
       width: min(1460px, 100%);
       margin: 0 auto;
-      display: grid;
-      grid-template-columns: 220px minmax(0, 1fr);
-      gap: 34px;
       padding: 26px 34px 72px;
-    }
-    .side-nav {
-      position: sticky;
-      top: 24px;
-      align-self: start;
-      min-width: 0;
-      padding-top: 18px;
-    }
-    .nav-title {
-      margin-bottom: 18px;
-      color: var(--text-dim);
-      font-size: 12px;
-      letter-spacing: .12em;
-      text-transform: uppercase;
-    }
-    .nav-link {
-      display: block;
-      padding: 9px 0 9px 15px;
-      border-left: 2px solid var(--border);
-      color: var(--text-dim);
-      font-size: 12px;
-      text-decoration: none;
-      transition: color .2s ease, border-color .2s ease, transform .2s ease;
-    }
-    .nav-link:hover, .nav-link.active {
-      color: var(--text);
-      border-color: var(--shared);
-      transform: translateX(3px);
     }
     .related-pages {
       display: flex;
@@ -480,27 +449,12 @@
     @keyframes fadeUp { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
     @media (prefers-reduced-motion: reduce) { * { scroll-behavior: auto !important; animation: none !important; transition: none !important; } }
     @media (max-width: 900px) {
-      .shell { grid-template-columns: 1fr; padding: 0 18px 54px; }
-      .side-nav {
-        z-index: 10;
-        top: 0;
-        margin: 0 -18px;
-        padding: 0 18px;
-        overflow-x: auto;
-        white-space: nowrap;
-        background: color-mix(in srgb, var(--bg) 93%, transparent);
-        backdrop-filter: blur(14px);
-        border-bottom: 1px solid var(--border);
-      }
-      .nav-title { display: none; }
-      .nav-link { display: inline-block; padding: 13px 10px; border-left: 0; border-bottom: 2px solid transparent; }
-      .nav-link:hover, .nav-link.active { border-color: var(--shared); transform: none; }
+      .shell { padding: 0 18px 54px; }
       .hero { margin-top: 18px; }
       .control-spine { grid-template-columns: repeat(2, minmax(0, 1fr)); }
     }
     @media (max-width: 660px) {
       .shell { padding-inline: 12px; }
-      .side-nav { margin-inline: -12px; padding-inline: 12px; }
       .hero { padding: 26px 20px; }
       .hero-equation, .comparison, .pattern-band, .value-box { grid-template-columns: 1fr; }
       .recommendation-grid { grid-template-columns: 1fr; }
@@ -518,18 +472,6 @@
 </head>
 <body data-dhf-status="2026-08-11"><nav class="dhf-nav" aria-label="站点导航"><a class="dhf-nav-home" href="./index-zh.html">DHF</a><div class="dhf-nav-links"><a href="./index-zh.html">首页</a><a href="./delivery-harness-beginner-guide-cn.html">新手指南</a><a href="./dhf-context-engineering-cn.html">上下文工程</a><a href="./project-lifecycle-harness-flow-cn.html">生命周期</a><a href="./dhf-governance-decision-flow-cn.html">治理判定</a><a href="./dhf-value-evidence-cn.html">证据</a><a href="./dhf-architecture-status-cn.html">架构状态</a></div><a class="dhf-nav-lang" href="./dhf-data-business-value-explainer-en.html" lang="en" hreflang="en">English</a></nav><div class="dhf-has-toc" style="width:100%;margin-inline:auto;padding-inline:clamp(1rem,3vw,2.4rem)"><nav class="dhf-toc" aria-label="本页目录"><div class="dhf-toc-title">本页目录</div><a href="#overview">总览</a><a href="#quality">质量</a><a href="#risk">风险</a><a href="#speed">速度</a><a href="#continuity">连续性</a><a href="#scale">规模</a><a href="#gap-audit">差距审计</a><a href="#conclusion">结论</a></nav><div class="dhf-col">
   <div class="shell">
-    <nav class="side-nav" aria-label="页面章节">
-      <div class="nav-title">SAFE → TRUST</div>
-      <a class="nav-link active" href="#overview">总览</a>
-      <a class="nav-link" href="#quality">质量与信任</a>
-      <a class="nav-link" href="#risk">风险与授权</a>
-      <a class="nav-link" href="#speed">效率与速度</a>
-      <a class="nav-link" href="#continuity">韧性与连续性</a>
-      <a class="nav-link" href="#scale">治理与规模化</a>
-      <a class="nav-link" href="#gap-audit">DHF 缺口审查</a>
-      <a class="nav-link" href="#conclusion">结论</a>
-    </nav>
-
     <main data-dhf-model-role="control-value" data-dhf-evidence-language="cn"><aside class="dhf-memory-cue" data-dhf-memory-cue aria-label="DHF 记忆提示"><strong>记住：</strong><span class="dhf-memory-term" data-dhf-memory-term="SAFE">SAFE</span><span>控制可信推进；</span><span class="dhf-memory-term" data-dhf-memory-term="TRUST">TRUST</span><span>衡量客户价值。</span><span class="dhf-memory-lens" data-dhf-memory-lens="CARE">CARE · 行动视角</span></aside>
       <header class="hero">
         <div class="eyebrow">DHF Models &amp; Patterns · Control &amp; Value</div>
@@ -653,15 +595,5 @@
     </main>
   </div>
 
-  <script>
-    const links = [...document.querySelectorAll('.nav-link')];
-    const sections = links.map(link => document.querySelector(link.getAttribute('href'))).filter(Boolean);
-    const observer = new IntersectionObserver(entries => {
-      const visible = entries.filter(entry => entry.isIntersecting).sort((a, b) => b.intersectionRatio - a.intersectionRatio)[0];
-      if (!visible) return;
-      links.forEach(link => link.classList.toggle('active', link.getAttribute('href') === `#${visible.target.id}`));
-    }, { rootMargin: '-18% 0px -64% 0px', threshold: [0, .25, .5] });
-    sections.forEach(section => observer.observe(section));
-  </script>
 </div></div></body>
 </html>
