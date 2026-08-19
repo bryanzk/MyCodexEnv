@@ -10694,6 +10694,9 @@ def test_dhf_evolution_bilingual_information_architecture():
         require_in_order(text, [f'id="{section}"' for section in expected_sections],
                          f"{name} canonical evolution section order")
     english = (ROOT / "docs" / "dhf-shipq-development-history-en.html").read_text(encoding="utf-8")
+    require(re.search(r'<div class="section-head" id="timeline"[^>]*>.*?<h2>Six stages of evolution: BRIDGE</h2>',
+                      english, re.DOTALL) is not None,
+            "English timeline anchor must label the BRIDGE stage heading")
     for fragment in ["overview", "recover-position", "route-lifecycle", "bind-truth", "completion", "risk", "protect"]:
         require(english.count(f'id="{fragment}"') == 1,
                 f"English evolution page must preserve legacy fragment: {fragment}")
