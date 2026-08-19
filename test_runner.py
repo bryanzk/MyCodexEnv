@@ -10703,6 +10703,54 @@ def test_dhf_evolution_bilingual_information_architecture():
     print("[PASS] bilingual DHF evolution information architecture")
 
 
+def test_dhf_evidence_wave1_bilingual_information_architecture():
+    docs = ROOT / "docs"
+    contracts = {
+        ("dhf-best-care-recover-en.html", "dhf-best-care-recover.html"): {
+            "sections": ["overview", "lenses", "vocabulary", "recover", "relationship", "related"],
+            "legacy": [],
+        },
+        ("dhf-data-business-value-explainer-en.html", "dhf-data-business-value-explainer.html"): {
+            "sections": ["overview", "quality", "risk", "speed", "continuity", "scale", "gap-audit", "conclusion"],
+            "legacy": ["value", "limits"],
+        },
+        ("dhf-safe-data-ai-comparison-en.html", "dhf-safe-data-ai-comparison.html"): {
+            "sections": ["safe", "quality", "risk", "speed", "continuity", "scale", "ownership"],
+            "legacy": ["overview"],
+        },
+    }
+    for (english_name, chinese_name), contract in contracts.items():
+        for name, twin, hub in [
+            (english_name, chinese_name, "dhf-value-evidence-en.html"),
+            (chinese_name, english_name, "dhf-value-evidence-cn.html"),
+        ]:
+            text = (docs / name).read_text(encoding="utf-8")
+            require(text.count('data-dhf-status="2026-08-11"') == 1,
+                    f"{name} must preserve the public status byte value")
+            require(text.count('class="dhf-nav"') == 1, f"{name} global navigation count")
+            require_in_order(text, [f'id="{section}"' for section in contract["sections"]],
+                             f"{name} Wave 1 canonical section order")
+            required_fragments = contract["sections"] + (contract["legacy"] if name == english_name else [])
+            for section in required_fragments:
+                require(text.count(f'id="{section}"') == 1,
+                        f"{name} must expose exactly one #{section} fragment")
+            require(f'href="./{twin}"' in text, f"{name} bilingual twin link")
+            require(f'href="./{hub}"' in text, f"{name} Evidence hub link")
+
+    recover_cn = (docs / "dhf-best-care-recover.html").read_text(encoding="utf-8")
+    require_in_order(recover_cn, [
+        ">Recognize<", ">End<", ">Capture<", ">Obtain<", ">Verify<", ">Escalate<", ">Resume<",
+    ], "Chinese RECOVER must use the canonical seven-stage vocabulary")
+    value_en = (docs / "dhf-data-business-value-explainer-en.html").read_text(encoding="utf-8")
+    for phrase in ["Quality and trust", "Risk and authorization", "Efficiency and speed",
+                   "Resilience and continuity", "Governance and scale", "Gap audit"]:
+        require(phrase in value_en, f"English SAFE → TRUST page missing domain: {phrase}")
+    comparison_en = (docs / "dhf-safe-data-ai-comparison-en.html").read_text(encoding="utf-8")
+    for phrase in ["SAFE contract", "Quality", "Risk", "Speed", "Continuity", "Scale", "Ownership"]:
+        require(phrase in comparison_en, f"English Data/AI comparison missing domain: {phrase}")
+    print("[PASS] DHF Evidence Wave 1 bilingual information architecture")
+
+
 def test_dhf_evidence_child_navigation_and_controlled_recovery_contract():
     docs = ROOT / "docs"
     evidence_pairs = [
@@ -11080,6 +11128,7 @@ TESTS = [
     test_dhf_value_evidence_information_architecture,
     test_dhf_value_page_has_single_local_navigation,
     test_dhf_evolution_bilingual_information_architecture,
+    test_dhf_evidence_wave1_bilingual_information_architecture,
     test_dhf_evidence_child_navigation_and_controlled_recovery_contract,
     test_dhf_evidence_memory_keyword_contract,
     test_runner_registry_complete,
