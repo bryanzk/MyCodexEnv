@@ -14,19 +14,19 @@ Stable rules belong in `AGENTS.md`, `README.md`, `docs/repo-index.md`, or
   - `codex/skills/delivery-harness-framework/SKILL.md`
 - blocked_sources: none
 - unsafe_inputs: none
-- next_safe_task: Commit, push, create and merge the Wave 2 PR
+- next_safe_task: Commit, push, create and merge the Wave 3 PR
 - required_commands:
   - `python3 test_runner.py`
   - `git diff --check`
   - `./scripts/verify_codex_env.sh --repo-root "$(pwd)" --codex-home "$HOME/.codex" --claude-home "$HOME/.claude"`
-- latest_checkpoint: 2026-08-19T13:47:58-04:00 Wave 2 PROTECT audit and SAFE Case Mapping alignment verified and ready for PR
-- latest_verification: 2026-08-19T13:47:58-04:00 command=PYTHONDONTWRITEBYTECODE=1 python3 test_runner.py; exit_code=0; key_output=ran=130 passed=128 skipped=2 failed=0; allowed host-only skips only
+- latest_checkpoint: 2026-08-19T14:07:22-04:00 Wave 3 casebook archive, interview cleanup, and SAFE responsibility split verified
+- latest_verification: 2026-08-19T14:07:22-04:00 command=PYTHONDONTWRITEBYTECODE=1 python3 test_runner.py; exit_code=0; key_output=ran=131 passed=129 skipped=2 failed=0; allowed host-only skips only
 - compaction_ordinal: 0
-- transition_key: wave2-ship
+- transition_key: wave3-ship
 - gate_decision: continue-to-boundary
-- constraints: ["Do not start Wave 3 until Wave 2 is merged to main"]
-- ownership: {"boundary":"Wave 2 two SAFE Map pages, PROTECT audit test, and append-only checkpoint only","files":{"docs/dhf-case-safe-mapping-en.html":"task_owned","docs/dhf-case-safe-mapping.html":"task_owned","docs/harness-state.md":"agent_owned_checkpoint","test_runner.py":"task_owned"}}
-- next_action: {"branch":"codex/dhf-evidence-wave2","command":"Commit, push, create and merge the Wave 2 PR","scope":"Wave 2"}
+- constraints: ["Do not start Wave 4 until Wave 3 is merged to main"]
+- ownership: {"boundary":"Wave 3 four public casebook pages, exact non-public archive, test contract, and append-only checkpoint only","files":{"docs/dhf-examples-three-lenses-en.html":"task_owned","docs/dhf-examples-three-lenses-safe-en.html":"task_owned","docs/dhf-examples-three-lenses-safe.html":"task_owned","docs/dhf-examples-three-lenses.html":"task_owned","docs/harness-state.md":"agent_owned_checkpoint","tasks/archives/2026-08-19-dhf-casebook-interview":"task_owned_archive","test_runner.py":"task_owned"}}
+- next_action: {"branch":"codex/dhf-evidence-wave3","command":"Commit, push, create and merge the Wave 3 PR","scope":"Wave 3"}
 
 ## State Log
 
@@ -3355,3 +3355,58 @@ Stable rules belong in `AGENTS.md`, `README.md`, `docs/repo-index.md`, or
   - none
 - next_safe_task: Commit, push, create and merge the Wave 2 PR
 - checkpoint_data: {"constraints":["Do not start Wave 3 until Wave 2 is merged to main"],"next_action":{"branch":"codex/dhf-evidence-wave2","command":"Commit, push, create and merge the Wave 2 PR","scope":"Wave 2"},"ownership":{"boundary":"Wave 2 two SAFE Map pages, PROTECT audit test, and append-only checkpoint only","files":{"docs/dhf-case-safe-mapping-en.html":"task_owned","docs/dhf-case-safe-mapping.html":"task_owned","docs/harness-state.md":"agent_owned_checkpoint","test_runner.py":"task_owned"}},"phase":"ship","schema":"dhf_checkpoint_v1","verification_evidence":{"command":"PYTHONDONTWRITEBYTECODE=1 python3 test_runner.py","exit_code":0,"freshness":"fresh","key_output":"ran=130 passed=128 skipped=2 failed=0; allowed host-only skips only","timestamp":"2026-08-19T17:42:34Z"}}
+
+### 2026-08-19T13:54:14-04:00
+- phase: development
+- event: checkpoint
+- summary: Wave 3 started from merged Wave 2 main; archive and casebook cleanup contract pending
+- git:
+  - branch: codex/dhf-evidence-wave3
+  - latest_commit: e637365
+  - dirty_status: clean
+  - dirty_count: 0
+- transition_key: wave3-start
+- gate_decision: continue-to-boundary
+- changed_surfaces:
+  - `test_runner.py`
+  - `tasks/archives/2026-08-19-dhf-casebook-interview`
+  - `docs/dhf-examples-three-lenses-en.html`
+  - `docs/dhf-examples-three-lenses.html`
+  - `docs/dhf-examples-three-lenses-safe-en.html`
+  - `docs/dhf-examples-three-lenses-safe.html`
+- verification:
+  - command: `PYTHONDONTWRITEBYTECODE=1 python3 -c import-test_runner-focused-evidence-contracts`
+  - exit_code: 0
+  - key_output: Evidence child navigation PASS; Evidence memory keyword PASS
+- blockers:
+  - none
+- next_safe_task: Write and run the Wave 3 archive and bilingual contract to RED
+- checkpoint_data: {"constraints":["Archive hash must pass before any public casebook page is modified"],"next_action":{"branch":"codex/dhf-evidence-wave3","command":"Write and run the Wave 3 archive and bilingual contract to RED","scope":"Wave 3"},"ownership":{"boundary":"Wave 3 four casebook pages, non-public archive, test contract, and append-only checkpoint only","files":{"docs/harness-state.md":"agent_owned_checkpoint","test_runner.py":"task_owned"}},"phase":"development","schema":"dhf_checkpoint_v1","verification_evidence":{"command":"PYTHONDONTWRITEBYTECODE=1 python3 -c import-test_runner-focused-evidence-contracts","exit_code":0,"freshness":"fresh","key_output":"Evidence child navigation PASS; Evidence memory keyword PASS","timestamp":"2026-08-19T17:54:14Z"}}
+
+### 2026-08-19T14:07:22-04:00
+- phase: ship
+- event: checkpoint
+- summary: Wave 3 casebook archive, interview cleanup, and SAFE responsibility split verified
+- git:
+  - branch: codex/dhf-evidence-wave3
+  - latest_commit: e637365
+  - dirty_status: dirty
+  - dirty_count: 7
+- transition_key: wave3-ship
+- gate_decision: continue-to-boundary
+- changed_surfaces:
+  - `tasks/archives/2026-08-19-dhf-casebook-interview`
+  - `docs/dhf-examples-three-lenses-en.html`
+  - `docs/dhf-examples-three-lenses.html`
+  - `docs/dhf-examples-three-lenses-safe-en.html`
+  - `docs/dhf-examples-three-lenses-safe.html`
+  - `test_runner.py`
+  - `docs/harness-state.md`
+- verification:
+  - command: `PYTHONDONTWRITEBYTECODE=1 python3 test_runner.py`
+  - exit_code: 0
+  - key_output: ran=131 passed=129 skipped=2 failed=0; allowed host-only skips only
+- blockers:
+  - none
+- next_safe_task: Commit, push, create and merge the Wave 3 PR
+- checkpoint_data: {"constraints":["Do not start Wave 4 until Wave 3 is merged to main"],"next_action":{"branch":"codex/dhf-evidence-wave3","command":"Commit, push, create and merge the Wave 3 PR","scope":"Wave 3"},"ownership":{"boundary":"Wave 3 four public casebook pages, exact non-public archive, test contract, and append-only checkpoint only","files":{"docs/dhf-examples-three-lenses-en.html":"task_owned","docs/dhf-examples-three-lenses-safe-en.html":"task_owned","docs/dhf-examples-three-lenses-safe.html":"task_owned","docs/dhf-examples-three-lenses.html":"task_owned","docs/harness-state.md":"agent_owned_checkpoint","tasks/archives/2026-08-19-dhf-casebook-interview":"task_owned_archive","test_runner.py":"task_owned"}},"phase":"ship","schema":"dhf_checkpoint_v1","verification_evidence":{"command":"PYTHONDONTWRITEBYTECODE=1 python3 test_runner.py","exit_code":0,"freshness":"fresh","key_output":"ran=131 passed=129 skipped=2 failed=0; allowed host-only skips only","timestamp":"2026-08-19T18:01:58Z"}}
