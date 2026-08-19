@@ -10751,6 +10751,53 @@ def test_dhf_evidence_wave1_bilingual_information_architecture():
     print("[PASS] DHF Evidence Wave 1 bilingual information architecture")
 
 
+def test_dhf_evidence_wave2_bilingual_information_architecture():
+    docs = ROOT / "docs"
+    protect_sections = ["overview", "components", "flow", "wal", "boundary", "related"]
+    for name, twin, hub in [
+        ("dhf-protect-seven-components-en.html", "dhf-protect-seven-components-cn.html", "dhf-value-evidence-en.html"),
+        ("dhf-protect-seven-components-cn.html", "dhf-protect-seven-components-en.html", "dhf-value-evidence-cn.html"),
+    ]:
+        text = (docs / name).read_text(encoding="utf-8")
+        require_in_order(text, [f'id="{section}"' for section in protect_sections],
+                         f"{name} PROTECT canonical section order")
+        for section in protect_sections:
+            require(text.count(f'id="{section}"') == 1,
+                    f"{name} must expose exactly one #{section} fragment")
+        require(text.count('<article class="component') == 7,
+                f"{name} must retain seven PROTECT components")
+        require(f'href="./{twin}"' in text, f"{name} bilingual twin link")
+        require(f'href="./{hub}"' in text, f"{name} Evidence hub link")
+        require(text.count('data-dhf-status="2026-08-11"') == 1,
+                f"{name} must preserve the public status byte value")
+
+    safe_sections = ["overview", "controls", "cases", "claims"]
+    safe_pages = [
+        ("dhf-case-safe-mapping-en.html", "dhf-case-safe-mapping.html", "dhf-value-evidence-en.html"),
+        ("dhf-case-safe-mapping.html", "dhf-case-safe-mapping-en.html", "dhf-value-evidence-cn.html"),
+    ]
+    for name, twin, hub in safe_pages:
+        text = (docs / name).read_text(encoding="utf-8")
+        require_in_order(text, [f'id="{section}"' for section in safe_sections],
+                         f"{name} SAFE Map canonical section order")
+        for section in safe_sections:
+            require(text.count(f'id="{section}"') == 1,
+                    f"{name} must expose exactly one #{section} fragment")
+        for term in ["Specification", "Authorization", "Facts", "Error-recovery"]:
+            require(term in text, f"{name} missing SAFE control: {term}")
+        require(f'href="./{twin}"' in text, f"{name} bilingual twin link")
+        require(f'href="./{hub}"' in text, f"{name} Evidence hub link")
+        require(text.count('data-dhf-status="2026-08-11"') == 1,
+                f"{name} must preserve the public status byte value")
+    english_map = (docs / "dhf-case-safe-mapping-en.html").read_text(encoding="utf-8")
+    chinese_map = (docs / "dhf-case-safe-mapping.html").read_text(encoding="utf-8")
+    require(english_map.count("data-dhf-case=") == 10, "English SAFE Map must cover ten cases")
+    require(chinese_map.count('class="case"') == 10, "Chinese SAFE Map must retain ten cases")
+    require("do not upgrade" in english_map, "English SAFE Map claim boundary")
+    require("不会升级" in chinese_map, "Chinese SAFE Map claim boundary")
+    print("[PASS] DHF Evidence Wave 2 bilingual information architecture")
+
+
 def test_dhf_evidence_child_navigation_and_controlled_recovery_contract():
     docs = ROOT / "docs"
     evidence_pairs = [
@@ -11129,6 +11176,7 @@ TESTS = [
     test_dhf_value_page_has_single_local_navigation,
     test_dhf_evolution_bilingual_information_architecture,
     test_dhf_evidence_wave1_bilingual_information_architecture,
+    test_dhf_evidence_wave2_bilingual_information_architecture,
     test_dhf_evidence_child_navigation_and_controlled_recovery_contract,
     test_dhf_evidence_memory_keyword_contract,
     test_runner_registry_complete,
