@@ -11079,6 +11079,30 @@ def test_dhf_evidence_memory_keyword_contract():
         require(observed_links == hub_link_contract[hub_name],
                 f"Evidence memory module destinations drifted: {hub_name}: {observed_links}")
 
+    # Since 2026-08-19 every evidence child page carries all six first-class
+    # terms (CAP, BRIDGE, SAFE, TRUST, RECOVER, PROTECT) as navigation links
+    # to each term's home page; the page's own terms are marked with
+    # data-dhf-memory-emphasis and the rest render dimmed. The contract below
+    # pins the emphasised set per page, not the full term list.
+    all_terms = ["CAP", "BRIDGE", "SAFE", "TRUST", "RECOVER", "PROTECT"]
+    term_home = {
+        "en": {
+            "CAP": "./dhf-shipq-development-history-en.html",
+            "BRIDGE": "./dhf-shipq-development-history-en.html",
+            "SAFE": "./dhf-case-safe-mapping-en.html",
+            "TRUST": "./dhf-data-business-value-explainer-en.html",
+            "RECOVER": "./shipq-dhf-safe-controlled-recovery-en.html",
+            "PROTECT": "./dhf-protect-seven-components-en.html",
+        },
+        "cn": {
+            "CAP": "./dhf-shipq-development-history.html",
+            "BRIDGE": "./dhf-shipq-development-history.html",
+            "SAFE": "./dhf-case-safe-mapping.html",
+            "TRUST": "./dhf-data-business-value-explainer.html",
+            "RECOVER": "./shipq-dhf-safe-controlled-recovery.html",
+            "PROTECT": "./dhf-protect-seven-components-cn.html",
+        },
+    }
     page_contract = [
         (("dhf-best-care-recover-en.html", "dhf-best-care-recover.html"),
          ["CAP", "BRIDGE", "SAFE", "TRUST", "RECOVER"], ["BEST", "CARE"]),
@@ -11087,7 +11111,7 @@ def test_dhf_evidence_memory_keyword_contract():
         (("dhf-safe-data-ai-comparison-en.html", "dhf-safe-data-ai-comparison.html"),
          ["SAFE", "TRUST"], []),
         (("dhf-protect-seven-components-en.html", "dhf-protect-seven-components-cn.html"),
-         ["SAFE", "TRUST"], ["BEST"]),
+         ["SAFE", "TRUST", "PROTECT"], ["BEST"]),
         (("dhf-shipq-development-history-en.html", "dhf-shipq-development-history.html"),
          ["CAP", "BRIDGE", "TRUST"], ["BEST"]),
         (("dhf-case-safe-mapping-en.html", "dhf-case-safe-mapping.html"),
@@ -11097,14 +11121,15 @@ def test_dhf_evidence_memory_keyword_contract():
         (("dhf-examples-three-lenses-safe-en.html", "dhf-examples-three-lenses-safe.html"),
          ["SAFE", "TRUST"], ["CARE"]),
         (("shipq-dhf-safe-controlled-recovery-en.html", "shipq-dhf-safe-controlled-recovery.html"),
-         ["SAFE", "RECOVER", "TRUST"], ["CARE"]),
+         ["SAFE", "TRUST", "RECOVER"], ["CARE"]),
         (("shipq-dhf-incident-recovery-memory-map-en.html", "shipq-dhf-incident-recovery-memory-map.html"),
          ["SAFE", "RECOVER"], ["CARE"]),
     ]
 
-    for page_pair, expected_terms, expected_lenses in page_contract:
+    for page_pair, expected_emphasis, expected_lenses in page_contract:
         observed: list[tuple[list[str], list[str]]] = []
         for page_name in page_pair:
+            language = "en" if page_name.endswith("-en.html") else "cn"
             text = (docs / page_name).read_text(encoding="utf-8")
             require(text.count("data-dhf-memory-cue") == 1,
                     f"Evidence child missing unique memory cue: {page_name}")
@@ -11117,11 +11142,29 @@ def test_dhf_evidence_memory_keyword_contract():
             cue = cue_match.group("body")
             terms = re.findall(r'data-dhf-memory-term="([A-Z]+)"', cue)
             lenses = re.findall(r'data-dhf-memory-lens="([A-Z]+)"', cue)
-            require(terms == expected_terms, f"Evidence memory terms drifted for {page_name}: {terms}")
+            require(terms == all_terms,
+                    f"Evidence memory cue must carry all six terms in canonical order: {page_name}: {terms}")
+            emphasised = re.findall(
+                r'data-dhf-memory-term="([A-Z]+)"[^>]*\bdata-dhf-memory-emphasis\b', cue)
+            require(sorted(emphasised) == sorted(expected_emphasis),
+                    f"Evidence memory emphasis drifted for {page_name}: {emphasised}")
             require(lenses == expected_lenses, f"Evidence memory lenses drifted for {page_name}: {lenses}")
             if "best-care-recover" not in page_name:
-                require(len(terms) <= 3, f"Evidence child memory cue is overloaded: {page_name}")
-            observed.append((terms, lenses))
+                require(len(emphasised) <= 3,
+                        f"Evidence child emphasises too many terms: {page_name}")
+            for link_match in re.finditer(
+                    r'<a\b[^>]*data-dhf-memory-term="(?P<term>[A-Z]+)"[^>]*>', cue, re.IGNORECASE):
+                tag = link_match.group(0)
+                href_match = re.search(r'href="([^"]+)"', tag)
+                require(href_match is not None,
+                        f"Evidence memory term must navigate somewhere: {page_name}")
+                require(href_match.group(1) == term_home[language][link_match.group("term")],
+                        f"Evidence memory term destination drifted: {page_name}: {link_match.group('term')}")
+                require("target=" not in tag,
+                        f"Evidence memory term must use current-window navigation: {page_name}")
+            require(len(re.findall(r'<a\b[^>]*data-dhf-memory-term=', cue)) == len(all_terms),
+                    f"Evidence memory terms must all be links: {page_name}")
+            observed.append((emphasised, lenses))
         require(observed[0] == observed[1], f"bilingual Evidence memory cues diverged: {page_pair}")
 
     for protect_name in ["dhf-protect-seven-components-en.html", "dhf-protect-seven-components-cn.html"]:
@@ -11134,7 +11177,7 @@ def test_dhf_evidence_memory_keyword_contract():
     require(stylesheet.is_file(), "missing shared Evidence memory stylesheet")
     for page_name in hubs + [name for pair, _, _ in page_contract for name in pair]:
         text = (docs / page_name).read_text(encoding="utf-8")
-        require(text.count('href="./dhf-evidence-memory.css?v=20260818a"') == 1,
+        require(text.count('href="./dhf-evidence-memory.css?v=20260819a"') == 1,
                 f"Evidence page missing shared memory stylesheet: {page_name}")
 
     print("[PASS] DHF Evidence memory keyword contract")
