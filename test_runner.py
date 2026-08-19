@@ -10863,6 +10863,52 @@ def test_dhf_evidence_wave3_casebook_archive_and_information_architecture():
     print("[PASS] DHF Evidence Wave 3 archive and casebook information architecture")
 
 
+def test_dhf_evidence_wave4_recovery_information_architecture():
+    docs = ROOT / "docs"
+    controlled_sections = ["verdict", "selection", "context", "dhf", "safe", "recover", "states", "value", "evidence"]
+    recover_terms = ["Recognize", "End", "Capture", "Obtain", "Verify", "Escalate", "Resume"]
+    forbidden_transitions = ["MISMATCH", "RETRY", "RESTORED", "EXECUTE"]
+    controlled_facts = {
+        "shipq-dhf-safe-controlled-recovery-en.html": [">5<", ">4<", ">3<", ">2 / 0<"],
+        "shipq-dhf-safe-controlled-recovery.html": [">5<", ">4<", ">3<", ">0<"],
+    }
+    for name, facts in controlled_facts.items():
+        text = (docs / name).read_text(encoding="utf-8")
+        require_in_order(text, [f'id="{section}"' for section in controlled_sections],
+                         f"{name} controlled-recovery canonical section order")
+        for section in controlled_sections:
+            require(text.count(f'id="{section}"') == 1,
+                    f"{name} must expose exactly one #{section} fragment")
+        require_in_order(text, recover_terms, f"{name} canonical RECOVER order")
+        for term in forbidden_transitions:
+            require(term in text, f"{name} missing forbidden transition fact: {term}")
+        for fact in facts:
+            require(fact in text, f"{name} missing fixed recovery fact: {fact}")
+
+    incident_sections = ["hook", "timeline", "roles", "states", "safe", "paths", "rules", "quiz"]
+    incident_pages = [
+        ("shipq-dhf-incident-recovery-memory-map-en.html", "shipq-dhf-incident-recovery-memory-map.html"),
+        ("shipq-dhf-incident-recovery-memory-map.html", "shipq-dhf-incident-recovery-memory-map-en.html"),
+    ]
+    for name, twin in incident_pages:
+        text = (docs / name).read_text(encoding="utf-8")
+        require_in_order(text, [f'id="{section}"' for section in incident_sections],
+                         f"{name} incident-recovery canonical section order")
+        for section in incident_sections:
+            require(text.count(f'id="{section}"') == 1,
+                    f"{name} must expose exactly one #{section} fragment")
+        require(text.count('data-dhf-status="2026-08-11"') == 1,
+                f"{name} must preserve the public status byte value")
+        require(f'href="./{twin}"' in text, f"{name} bilingual twin link")
+        for term in ["OWNER", "AGENT", "WRITER", "SAFE", "MISMATCH", "RETRY", "RESTORED", "EXECUTE"]:
+            require(term in text.upper(), f"{name} missing recovery fact: {term}")
+    english_incident = (docs / "shipq-dhf-incident-recovery-memory-map-en.html").read_text(encoding="utf-8")
+    for phrase in ["Uncontrolled path", "Controlled path", "Q1", "Q2", "Q3", "Q4",
+                   "does not authorize a new write"]:
+        require(phrase in english_incident, f"English incident recovery missing: {phrase}")
+    print("[PASS] DHF Evidence Wave 4 recovery information architecture")
+
+
 def test_dhf_evidence_child_navigation_and_controlled_recovery_contract():
     docs = ROOT / "docs"
     evidence_pairs = [
@@ -11243,6 +11289,7 @@ TESTS = [
     test_dhf_evidence_wave1_bilingual_information_architecture,
     test_dhf_evidence_wave2_bilingual_information_architecture,
     test_dhf_evidence_wave3_casebook_archive_and_information_architecture,
+    test_dhf_evidence_wave4_recovery_information_architecture,
     test_dhf_evidence_child_navigation_and_controlled_recovery_contract,
     test_dhf_evidence_memory_keyword_contract,
     test_runner_registry_complete,
