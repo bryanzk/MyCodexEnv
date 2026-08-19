@@ -179,6 +179,11 @@ python3 test_runner.py
   --claude-home "<claude-home>"
 ```
 
+If the full suite reports an explicit host-capability skip for the Codex loader
+or full-sync gate, do not rerun the full suite outside the sandbox. Run only the
+required host integrations with `python3 test_runner.py --host-only`; that
+command fails if either test skips.
+
 ### Check skills
 
 ```bash

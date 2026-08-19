@@ -256,6 +256,7 @@ behavior live in `codex/hooks/dhf_preprompt.py`.
 
 ## Verification
 - Primary: `python3 test_runner.py`.
+- Host integration retry after an explicit sandbox capability skip: `python3 test_runner.py --host-only`; do not rerun the complete suite.
 - CI gate: `.github/workflows/ci.yml` runs `python3 test_runner.py`, `git diff --check`, and `python3 scripts/check_surfaces.py --repo-root "$(pwd)" --check-public-nav` on `push` to `main`, `pull_request`, and manual dispatch.
 - Runtime sync: `./scripts/verify_codex_env.sh --repo-root "$(pwd)" --codex-home "$HOME/.codex" --claude-home "$HOME/.claude"`.
 - Skill compatibility: `python3 scripts/check_skill_compatibility.py --repo-root "$(pwd)" --codex-home "$HOME/.codex" --claude-home "$HOME/.claude" --plugin-root "$HOME/.codex/plugins/cache" --plugin-root "$HOME/.cache/codex-runtimes/codex-primary-runtime/plugins"`.

@@ -6,6 +6,7 @@
   - For `plan`, `review`, and `report-only`, validate only the target artifact, its references, and the authorized write set. Do not run repository or runtime gates unless the task explicitly audits that gate.
   - For low-risk docs or visuals whose write set is limited to root `README.md`/`AGENTS.md` or Markdown, HTML, CSS, and image files under `docs/`, run targeted content/link checks, any relevant surface check, and write-set `git diff --check`; the existing CI owns the full gate. Do not run the public-nav surface gate when the public surface is unchanged.
   - For source, test, or shared-contract changes, run focused or domain tests during iteration, then run `python3 test_runner.py` exactly once after the final material change.
+  - If that final gate explicitly skips `test_codex_skill_loader_gate` or `test_verify_after_full_sync` because the sandbox lacks a required host capability, do not rerun the full suite. When the changed layer requires those integrations, run `python3 test_runner.py --host-only` outside the sandbox; both tests must pass with zero skips.
   - For source-only changes under `codex/`, do not run live runtime parity.
 - Capture `command`, `exit_code`, `key_output`, and `timestamp` on the first invocation. Do not rerun an unchanged gate only to complete its receipt.
 - A later change to relevant source, test, fixture, manifest, or runtime-target content invalidates the prior gate. A commit or push with unchanged tree content does not.

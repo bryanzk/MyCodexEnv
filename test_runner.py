@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 from __future__ import annotations
 
+import argparse
 import datetime as dt
 import fcntl
 import hashlib
@@ -11,16 +12,18 @@ import json
 import re
 import shlex
 import shutil
+import socket
 import statistics
 import sys
 import tempfile
-from contextlib import contextmanager
+from contextlib import contextmanager, redirect_stdout
 from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
 import os
 import time
 import traceback
+from unittest import mock
 
 
 ROOT = Path(__file__).resolve().parent
@@ -226,7 +229,7 @@ def run_all(tests: list, *, fail_output=None) -> TestRunResult:
     return TestRunResult(ran_names, failures, skipped_names)
 
 
-def run_registered_tests(tests: list, *, output=None, error_output=None) -> int:
+def run_registered_tests(tests: list, *, output=None, error_output=None, require_no_skips: bool = False) -> int:
     if output is None:
         output = sys.stdout
     if error_output is None:
@@ -234,15 +237,37 @@ def run_registered_tests(tests: list, *, output=None, error_output=None) -> int:
 
     result = run_all(tests, fail_output=output)
     print(f"ran={result.ran} passed={result.passed} skipped={result.skipped} failed={result.failed}", file=output)
-    if result.failed or result.ran != len(tests):
+    required_tests_skipped = require_no_skips and result.skipped
+    if result.failed or result.ran != len(tests) or required_tests_skipped:
         for name, tb in result.failures:
             print(f"\n----- {name} -----\n{tb}", file=error_output)
         if result.ran != len(tests):
             print(f"expected={len(tests)} ran={result.ran}", file=error_output)
+        if required_tests_skipped:
+            print(f"required tests skipped: {', '.join(result.skipped_names)}", file=error_output)
         return 1
 
     print("[PASS] all tests", file=output)
     return 0
+
+
+def select_registered_tests(tests: list, *, host_only: bool) -> list:
+    if not host_only:
+        return tests
+    missing = [fn.__name__ for fn in HOST_INTEGRATION_TESTS if fn not in tests]
+    if missing:
+        raise ValueError(f"host integration tests missing from registry: {missing}")
+    return list(HOST_INTEGRATION_TESTS)
+
+
+def parse_runner_args(argv=None):
+    parser = argparse.ArgumentParser(description="Run the MyCodexEnv repository test suite.")
+    parser.add_argument(
+        "--host-only",
+        action="store_true",
+        help="run only required host integration gates and fail if either gate skips",
+    )
+    return parser.parse_args(argv)
 
 
 def count_top_dirs(path: Path) -> int:
@@ -1380,6 +1405,15 @@ def test_codex_skill_loader_gate():
     code, codex_bin, _ = run([str(CODEX_CLI_RESOLVER)])
     if code != 0:
         raise SkipTest("functional Codex CLI unavailable for app-server skill loader gate")
+    sandbox_exec = Path("/usr/bin/sandbox-exec")
+    if sandbox_exec.is_file():
+        code, out, err = run(
+            [str(sandbox_exec), "-p", "(version 1)(allow default)(deny network*)", "/usr/bin/true"]
+        )
+        detail = err or out
+        if code != 0 and "Operation not permitted" in detail:
+            raise SkipTest("nested sandbox unavailable; rerun with --host-only outside the sandbox")
+        require(code == 0, f"sandbox-exec capability probe failed: {detail}")
     with tempfile.TemporaryDirectory() as tmp:
         codex_home = Path(tmp) / ".codex"
         code, out, err = run(
@@ -8409,6 +8443,10 @@ def test_sync_claude_injects_integration_block():
 def test_verify_after_full_sync():
     if run(["bash", "-lc", "command -v codex"])[0] != 0:
         raise SkipTest("codex CLI not installed")
+    try:
+        socket.getaddrinfo("github.com", 443)
+    except socket.gaierror as exc:
+        raise SkipTest(f"GitHub DNS unavailable for full-sync host gate: {exc}") from exc
     with tempfile.TemporaryDirectory() as tmp:
         tmp_path = Path(tmp)
         codex_home = tmp_path / ".codex"
@@ -9234,6 +9272,124 @@ def test_runner_reports_skips_distinctly():
     )
 
     print("[PASS] runner reports skips distinctly")
+
+
+def test_runner_host_only_profile_contract():
+    selected = select_registered_tests(TESTS, host_only=True)
+    selected_names = [fn.__name__ for fn in selected]
+
+    require(
+        selected_names == [fn.__name__ for fn in HOST_INTEGRATION_TESTS],
+        f"host-only profile should select only required host gates: {selected_names}",
+    )
+    require(
+        select_registered_tests(TESTS, host_only=False) == TESTS,
+        "default profile should preserve the complete registered suite",
+    )
+
+    print("[PASS] test runner host-only profile contract")
+
+
+def test_runner_required_profile_rejects_skips():
+    def unavailable_host_gate():
+        raise SkipTest("host capability unavailable")
+
+    output = io.StringIO()
+    error_output = io.StringIO()
+    code = run_registered_tests(
+        [unavailable_host_gate],
+        output=output,
+        error_output=error_output,
+        require_no_skips=True,
+    )
+
+    require(code == 1, "required profile should fail when a host gate skips")
+    require(
+        "required tests skipped: unavailable_host_gate" in error_output.getvalue(),
+        "required profile should name skipped host gates",
+    )
+
+    print("[PASS] required test profile rejects skips")
+
+
+def test_runner_cli_parses_host_only_profile():
+    args = parse_runner_args(["--host-only"])
+    require(args.host_only is True, "--host-only should enable the required host profile")
+    require(parse_runner_args([]).host_only is False, "default CLI should preserve the complete suite")
+
+    print("[PASS] test runner CLI parses host-only profile")
+
+
+def test_host_gates_skip_only_when_required_capability_is_unavailable():
+    def loader_run(cmd, *args, **kwargs):
+        if cmd == [str(CODEX_CLI_RESOLVER)]:
+            return 0, "/tmp/codex", ""
+        if cmd and str(cmd[0]) == "/usr/bin/sandbox-exec":
+            return 71, "", "sandbox-exec: sandbox_apply: Operation not permitted"
+        raise AssertionError(f"loader gate crossed unavailable sandbox capability: {cmd}")
+
+    with mock.patch.object(Path, "is_file", return_value=True), mock.patch(
+        f"{__name__}.run", side_effect=loader_run
+    ):
+        try:
+            test_codex_skill_loader_gate()
+        except SkipTest as exc:
+            require("nested sandbox unavailable" in str(exc), "loader gate should explain capability skip")
+        else:
+            require(False, "loader gate should skip when nested sandbox is unavailable")
+
+    def sync_run(cmd, *args, **kwargs):
+        if cmd == ["bash", "-lc", "command -v codex"]:
+            return 0, "/tmp/codex", ""
+        raise AssertionError(f"full-sync gate crossed unavailable DNS capability: {cmd}")
+
+    with mock.patch(f"{__name__}.run", side_effect=sync_run), mock.patch(
+        f"{__name__}.socket.getaddrinfo", side_effect=socket.gaierror("DNS unavailable")
+    ):
+        try:
+            test_verify_after_full_sync()
+        except SkipTest as exc:
+            require("GitHub DNS unavailable" in str(exc), "full-sync gate should explain capability skip")
+        else:
+            require(False, "full-sync gate should skip when required DNS is unavailable")
+
+    def broken_sandbox_run(cmd, *args, **kwargs):
+        if cmd == [str(CODEX_CLI_RESOLVER)]:
+            return 0, "/tmp/codex", ""
+        if cmd and str(cmd[0]) == "/usr/bin/sandbox-exec":
+            return 2, "", "sandbox-exec: invalid profile"
+        raise AssertionError(f"loader gate crossed failed sandbox probe: {cmd}")
+
+    with mock.patch.object(Path, "is_file", return_value=True), mock.patch(
+        f"{__name__}.run", side_effect=broken_sandbox_run
+    ), redirect_stdout(io.StringIO()):
+        try:
+            test_codex_skill_loader_gate()
+        except SkipTest:
+            require(False, "unexpected sandbox failures must not be downgraded to skips")
+        except SystemExit as exc:
+            require(exc.code == 1, "unexpected sandbox failure should fail the loader gate")
+        else:
+            require(False, "unexpected sandbox failure should fail the loader gate")
+
+    def broken_sync_run(cmd, *args, **kwargs):
+        if cmd == ["bash", "-lc", "command -v codex"]:
+            return 0, "/tmp/codex", ""
+        return 1, "", "sync failed"
+
+    with mock.patch(f"{__name__}.run", side_effect=broken_sync_run), mock.patch(
+        f"{__name__}.socket.getaddrinfo", return_value=[]
+    ), redirect_stdout(io.StringIO()):
+        try:
+            test_verify_after_full_sync()
+        except SkipTest:
+            require(False, "sync failures after a successful DNS probe must not become skips")
+        except SystemExit as exc:
+            require(exc.code == 1, "full-sync failure should remain a failed host gate")
+        else:
+            require(False, "full-sync failure should remain a failed host gate")
+
+    print("[PASS] host gates classify unavailable capabilities as skips")
 
 
 def test_codex_fluent_active_session_report():
@@ -10733,12 +10889,22 @@ def test_runner_registry_complete():
     print("[PASS] test runner registry complete")
 
 
+HOST_INTEGRATION_TESTS = (
+    test_codex_skill_loader_gate,
+    test_verify_after_full_sync,
+)
+
+
 TESTS = [
     test_runner_preflight,
     test_runner_harness_isolation,
     test_runner_harness_catches_system_exit,
     test_runner_main_failure_contract,
     test_runner_reports_skips_distinctly,
+    test_runner_host_only_profile_contract,
+    test_runner_required_profile_rejects_skips,
+    test_runner_cli_parses_host_only_profile,
+    test_host_gates_skip_only_when_required_capability_is_unavailable,
     test_verify_supports_skip_check_argument,
     test_verify_skips_managed_skill_presence_behavior,
     test_codex_version_policy_accepts_current_cli,
@@ -10859,8 +11025,10 @@ TESTS = [
 ]
 
 
-def main():
-    exit_code = run_registered_tests(TESTS)
+def main(argv=None):
+    args = parse_runner_args(argv)
+    selected_tests = select_registered_tests(TESTS, host_only=args.host_only)
+    exit_code = run_registered_tests(selected_tests, require_no_skips=args.host_only)
     if exit_code:
         sys.exit(exit_code)
 

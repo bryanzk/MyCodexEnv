@@ -74,6 +74,12 @@ python3 scripts/sync_gstack_vendor.py --repo-root "$(pwd)" --source https://gith
 python3 test_runner.py
 ```
 
+If the repository gate explicitly skips the Codex loader or full-sync test
+because the sandbox cannot provide nested sandboxing or GitHub DNS, keep that
+single full-suite receipt and run `python3 test_runner.py --host-only` outside
+the sandbox. The host-only command requires both tests to pass and treats any
+skip as a failure.
+
 ## Codex Thread Discipline and Fluent Triage
 
 Thread discipline and old-session triage are guaranteed in three layers:

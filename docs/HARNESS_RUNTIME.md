@@ -489,6 +489,12 @@ Runtime events are written to local files under `~/.codex/harness/evidence`.
 Local logs are not migrated when the schema evolves. Old events that do not
 carry `evidence_kind` are read as `unknown`.
 
+`python3 test_runner.py` remains the complete repository gate. When its Codex
+loader or full-sync test skips because nested sandboxing or GitHub DNS is
+unavailable, keep that single full-suite receipt and run only
+`python3 test_runner.py --host-only` outside the sandbox. An explicit host-only
+run fails if either required test skips.
+
 The source observer minimizes new tool-call evidence by default. It omits the
 raw command and records only `command_present`, `command_length`, and the first
 12 hexadecimal characters of its SHA-256 digest. `key_output` remains capped at
