@@ -10627,6 +10627,26 @@ def test_dhf_evidence_memory_keyword_contract():
     stylesheet = docs / "dhf-evidence-memory.css"
     hubs = ["dhf-value-evidence-en.html", "dhf-value-evidence-cn.html"]
     core_terms = ["CAP", "BRIDGE", "SAFE", "TRUST", "RECOVER"]
+    hub_link_contract = {
+        "dhf-value-evidence-en.html": [
+            ("CAP", "./dhf-shipq-development-history-en.html"),
+            ("BRIDGE", "./dhf-shipq-development-history-en.html"),
+            ("SAFE", "./dhf-case-safe-mapping-en.html"),
+            ("TRUST", "./dhf-data-business-value-explainer-en.html"),
+            ("RECOVER", "./shipq-dhf-safe-controlled-recovery-en.html"),
+            ("BEST", "./dhf-best-care-recover-en.html"),
+            ("CARE", "./dhf-best-care-recover-en.html"),
+        ],
+        "dhf-value-evidence-cn.html": [
+            ("CAP", "./dhf-shipq-development-history.html"),
+            ("BRIDGE", "./dhf-shipq-development-history.html"),
+            ("SAFE", "./dhf-case-safe-mapping.html"),
+            ("TRUST", "./dhf-data-business-value-explainer.html"),
+            ("RECOVER", "./shipq-dhf-safe-controlled-recovery.html"),
+            ("BEST", "./dhf-best-care-recover.html"),
+            ("CARE", "./dhf-best-care-recover.html"),
+        ],
+    }
 
     for hub_name in hubs:
         text = (docs / hub_name).read_text(encoding="utf-8")
@@ -10649,7 +10669,7 @@ def test_dhf_evidence_memory_keyword_contract():
                 f"Evidence hub must mark RECOVER as one conditional failure branch: {hub_name}")
         require(
             re.search(
-                r'<article\b[^>]*data-dhf-memory-key="RECOVER"[^>]*data-dhf-memory-branch="failure"',
+                r'<a\b[^>]*data-dhf-memory-key="RECOVER"[^>]*data-dhf-memory-branch="failure"',
                 spine,
                 re.IGNORECASE,
             ) is not None,
@@ -10657,6 +10677,19 @@ def test_dhf_evidence_memory_keyword_contract():
         )
         require(re.findall(r'data-dhf-memory-lens="([A-Z]+)"', spine) == ["BEST", "CARE"],
                 f"Evidence hub must expose BEST then CARE: {hub_name}")
+        observed_links: list[tuple[str, str]] = []
+        for link_match in re.finditer(
+            r'<a\b[^>]*data-dhf-memory-(?:key|lens)="(?P<term>[A-Z]+)"[^>]*>',
+            spine,
+            re.IGNORECASE,
+        ):
+            tag = link_match.group(0)
+            href_match = re.search(r'href="([^"]+)"', tag)
+            require(href_match is not None, f"Evidence memory module missing destination: {hub_name}")
+            require("target=" not in tag, f"Evidence memory module must use current-window navigation: {hub_name}")
+            observed_links.append((link_match.group("term"), href_match.group(1)))
+        require(observed_links == hub_link_contract[hub_name],
+                f"Evidence memory module destinations drifted: {hub_name}: {observed_links}")
 
     page_contract = [
         (("dhf-best-care-recover-en.html", "dhf-best-care-recover.html"),
