@@ -363,6 +363,8 @@ body { padding: 0 0 clamp(1.5rem, 4vw, 2.4rem) !important; }
 
 .dhf-col > * { min-width: 0; }
 
+:target { scroll-margin-top: 5rem; }
+
 @media (min-width: 1100px) {
   .dhf-col { grid-column: 2; }
   .dhf-has-toc {
@@ -389,9 +391,26 @@ body { padding: 0 0 clamp(1.5rem, 4vw, 2.4rem) !important; }
   }
 }
 
-/* Below the two-column breakpoint the top nav already covers wayfinding. */
+/* Below the two-column breakpoint, keep page-local wayfinding as a compact
+   horizontal rail beneath the global navigation. */
 @media (max-width: 1099px) {
-  .dhf-toc { display: none; }
+  .dhf-toc {
+    display: flex;
+    gap: 0.25rem;
+    overflow-x: auto;
+    padding: 0.4rem 0;
+    scrollbar-width: thin;
+  }
+  .dhf-toc-title,
+  .dhf-toc a { flex: none; }
+  .dhf-toc-title { margin: 0; padding: 0.55rem 0.6rem; border-bottom: 0; }
+  .dhf-toc a {
+    display: flex;
+    align-items: center;
+    min-height: 44px;
+    border-left: 0;
+    border-bottom: 2px solid transparent;
+  }
 }
 
 /* 2.5.5 — landing-page quick-link chips were 34px tall. */
