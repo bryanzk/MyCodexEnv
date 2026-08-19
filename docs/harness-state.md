@@ -14,19 +14,19 @@ Stable rules belong in `AGENTS.md`, `README.md`, `docs/repo-index.md`, or
   - `codex/skills/delivery-harness-framework/SKILL.md`
 - blocked_sources: none
 - unsafe_inputs: none
-- next_safe_task: Commit, push, create and merge the Wave 1 PR
+- next_safe_task: Commit, push, create and merge the Wave 2 PR
 - required_commands:
   - `python3 test_runner.py`
   - `git diff --check`
   - `./scripts/verify_codex_env.sh --repo-root "$(pwd)" --codex-home "$HOME/.codex" --claude-home "$HOME/.claude"`
-- latest_checkpoint: 2026-08-19T13:32:57-04:00 Wave 1 bilingual terminology and value pages verified and ready for PR
-- latest_verification: 2026-08-19T13:32:57-04:00 command=PYTHONDONTWRITEBYTECODE=1 python3 test_runner.py; exit_code=0; key_output=ran=129 passed=127 skipped=2 failed=0; allowed host-only skips only
+- latest_checkpoint: 2026-08-19T13:47:58-04:00 Wave 2 PROTECT audit and SAFE Case Mapping alignment verified and ready for PR
+- latest_verification: 2026-08-19T13:47:58-04:00 command=PYTHONDONTWRITEBYTECODE=1 python3 test_runner.py; exit_code=0; key_output=ran=130 passed=128 skipped=2 failed=0; allowed host-only skips only
 - compaction_ordinal: 0
-- transition_key: wave1-ship
+- transition_key: wave2-ship
 - gate_decision: continue-to-boundary
-- constraints: ["Do not start Wave 2 until Wave 1 is merged to main"]
-- ownership: {"boundary":"Wave 1 four changed bilingual pages, test contract, and append-only checkpoint only","files":{"docs/dhf-best-care-recover-en.html":"task_owned","docs/dhf-best-care-recover.html":"task_owned","docs/dhf-data-business-value-explainer-en.html":"task_owned","docs/dhf-safe-data-ai-comparison-en.html":"task_owned","docs/harness-state.md":"agent_owned_checkpoint","test_runner.py":"task_owned"}}
-- next_action: {"branch":"codex/dhf-evidence-wave1","command":"Commit, push, create and merge the Wave 1 PR","scope":"Wave 1"}
+- constraints: ["Do not start Wave 3 until Wave 2 is merged to main"]
+- ownership: {"boundary":"Wave 2 two SAFE Map pages, PROTECT audit test, and append-only checkpoint only","files":{"docs/dhf-case-safe-mapping-en.html":"task_owned","docs/dhf-case-safe-mapping.html":"task_owned","docs/harness-state.md":"agent_owned_checkpoint","test_runner.py":"task_owned"}}
+- next_action: {"branch":"codex/dhf-evidence-wave2","command":"Commit, push, create and merge the Wave 2 PR","scope":"Wave 2"}
 
 ## State Log
 
@@ -3306,3 +3306,52 @@ Stable rules belong in `AGENTS.md`, `README.md`, `docs/repo-index.md`, or
   - none
 - next_safe_task: Commit, push, create and merge the Wave 1 PR
 - checkpoint_data: {"constraints":["Do not start Wave 2 until Wave 1 is merged to main"],"next_action":{"branch":"codex/dhf-evidence-wave1","command":"Commit, push, create and merge the Wave 1 PR","scope":"Wave 1"},"ownership":{"boundary":"Wave 1 four changed bilingual pages, test contract, and append-only checkpoint only","files":{"docs/dhf-best-care-recover-en.html":"task_owned","docs/dhf-best-care-recover.html":"task_owned","docs/dhf-data-business-value-explainer-en.html":"task_owned","docs/dhf-safe-data-ai-comparison-en.html":"task_owned","docs/harness-state.md":"agent_owned_checkpoint","test_runner.py":"task_owned"}},"phase":"ship","schema":"dhf_checkpoint_v1","verification_evidence":{"command":"PYTHONDONTWRITEBYTECODE=1 python3 test_runner.py","exit_code":0,"freshness":"fresh","key_output":"ran=129 passed=127 skipped=2 failed=0; allowed host-only skips only","timestamp":"2026-08-19T17:27:29Z"}}
+
+### 2026-08-19T13:38:44-04:00
+- phase: development
+- event: checkpoint
+- summary: Wave 2 started; PROTECT audit baseline passes and SAFE Map requires bilingual section alignment
+- git:
+  - branch: codex/dhf-evidence-wave2
+  - latest_commit: fa4b172
+  - dirty_status: clean
+  - dirty_count: 0
+- transition_key: wave2-start
+- gate_decision: continue-to-boundary
+- changed_surfaces:
+  - `test_runner.py`
+  - `docs/dhf-case-safe-mapping-en.html`
+  - `docs/dhf-case-safe-mapping.html`
+- verification:
+  - command: `PYTHONDONTWRITEBYTECODE=1 python3 -c import-test_runner-focused-evidence-contracts`
+  - exit_code: 0
+  - key_output: Evidence child navigation PASS; Evidence memory keyword PASS
+- blockers:
+  - none
+- next_safe_task: Write and run the Wave 2 bilingual contract to RED
+- checkpoint_data: {"constraints":["PROTECT content remains unchanged if the audit contract passes"],"next_action":{"branch":"codex/dhf-evidence-wave2","command":"Write and run the Wave 2 bilingual contract to RED","scope":"Wave 2"},"ownership":{"boundary":"Wave 2 SAFE Map pages, PROTECT audit test, and append-only checkpoint only","files":{"docs/harness-state.md":"agent_owned_checkpoint","test_runner.py":"task_owned"}},"phase":"development","schema":"dhf_checkpoint_v1","verification_evidence":{"command":"PYTHONDONTWRITEBYTECODE=1 python3 -c import-test_runner-focused-evidence-contracts","exit_code":0,"freshness":"fresh","key_output":"Evidence child navigation PASS; Evidence memory keyword PASS","timestamp":"2026-08-19T17:38:44Z"}}
+
+### 2026-08-19T13:47:58-04:00
+- phase: ship
+- event: checkpoint
+- summary: Wave 2 PROTECT audit and SAFE Case Mapping alignment verified and ready for PR
+- git:
+  - branch: codex/dhf-evidence-wave2
+  - latest_commit: fa4b172
+  - dirty_status: dirty
+  - dirty_count: 4
+- transition_key: wave2-ship
+- gate_decision: continue-to-boundary
+- changed_surfaces:
+  - `docs/dhf-case-safe-mapping-en.html`
+  - `docs/dhf-case-safe-mapping.html`
+  - `test_runner.py`
+  - `docs/harness-state.md`
+- verification:
+  - command: `PYTHONDONTWRITEBYTECODE=1 python3 test_runner.py`
+  - exit_code: 0
+  - key_output: ran=130 passed=128 skipped=2 failed=0; allowed host-only skips only
+- blockers:
+  - none
+- next_safe_task: Commit, push, create and merge the Wave 2 PR
+- checkpoint_data: {"constraints":["Do not start Wave 3 until Wave 2 is merged to main"],"next_action":{"branch":"codex/dhf-evidence-wave2","command":"Commit, push, create and merge the Wave 2 PR","scope":"Wave 2"},"ownership":{"boundary":"Wave 2 two SAFE Map pages, PROTECT audit test, and append-only checkpoint only","files":{"docs/dhf-case-safe-mapping-en.html":"task_owned","docs/dhf-case-safe-mapping.html":"task_owned","docs/harness-state.md":"agent_owned_checkpoint","test_runner.py":"task_owned"}},"phase":"ship","schema":"dhf_checkpoint_v1","verification_evidence":{"command":"PYTHONDONTWRITEBYTECODE=1 python3 test_runner.py","exit_code":0,"freshness":"fresh","key_output":"ran=130 passed=128 skipped=2 failed=0; allowed host-only skips only","timestamp":"2026-08-19T17:42:34Z"}}
