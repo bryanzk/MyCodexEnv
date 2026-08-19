@@ -3,10 +3,10 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>DHF 真实案例：三种证据表达</title>
+<title>DHF 真实案例：三种讲法 × SAFE 控制模型</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Noto+Serif+SC:wght@400;600;700;900&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&amp;family=Noto+Serif+SC:wght@400;600;700;900&amp;display=swap" rel="stylesheet">
 <style>
   :root {
     --font-body: "Noto Serif SC", "Songti SC", serif;
@@ -150,7 +150,7 @@
   .hero p { max-width: 820px; color: var(--ink-soft); font-size: 16px; margin: 0; }
   .kpis {
     display: grid;
-    grid-template-columns: repeat(4, minmax(0, 1fr));
+    grid-template-columns: repeat(5, minmax(0, 1fr));
     gap: 12px;
     margin-top: 30px;
     max-width: 920px;
@@ -172,6 +172,52 @@
   }
   .section-head .num { color: var(--brick); font: 600 11px var(--font-mono); letter-spacing: 1.5px; }
   .section-head h2 { margin: 5px 0 0; font-size: clamp(26px, 4vw, 40px); line-height: 1.2; letter-spacing: -.035em; }
+  .safe-intro {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 10px;
+    margin-bottom: 16px;
+  }
+  .safe-control {
+    min-width: 0;
+    background: var(--paper);
+    border: 1px solid var(--line);
+    border-top: 3px solid var(--forest);
+    border-radius: 8px;
+    padding: 15px;
+  }
+  .safe-control b { color: var(--forest); font: 700 25px/1 var(--font-mono); }
+  .safe-control strong { display: block; margin: 7px 0 2px; font-size: 13px; }
+  .safe-control span { color: var(--ink-soft); font-size: 14px; }
+  .safe-summary { margin: 0 0 16px; color: var(--ink-soft); font-size: 16px; }
+  .safe-summary strong { color: var(--ink); }
+  .safe-cell { white-space: nowrap; }
+  .safe-cell b, .safe-map b {
+    display: inline-grid;
+    place-items: center;
+    width: 25px;
+    height: 25px;
+    margin-right: 3px;
+    border-radius: 50%;
+    background: var(--forest-dim);
+    border: 1px solid color-mix(in srgb, var(--line) 40%, var(--forest) 60%);
+    color: var(--forest);
+    font: 600 11px/1 var(--font-mono);
+  }
+  .safe-map {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    margin: -7px 0 18px;
+    padding: 10px 12px;
+    border: 1px dashed color-mix(in srgb, var(--line) 50%, var(--case-color) 50%);
+    border-radius: 8px;
+    color: var(--ink-soft);
+    font-size: 15px;
+  }
+  .safe-map > span { margin-right: 4px; color: var(--case-color); font: 600 10px var(--font-mono); letter-spacing: 1px; }
+  .safe-map em { margin-left: 3px; font-style: normal; }
+  .safe-map strong { color: var(--ink); }
   .summary-grid {
     display: grid;
     grid-template-columns: 1.2fr .8fr;
@@ -185,10 +231,8 @@
     padding: 22px;
   }
   .paper-card--recessed { background: var(--paper-2); box-shadow: inset 0 1px 3px rgba(0,0,0,.04); }
-  .trust-card { grid-column: 1 / -1; border-left: 5px solid var(--forest); }
-  .trust-card strong { color: var(--forest); }
   .paper-card h3 { margin: 0 0 10px; font-size: 18px; }
-  .paper-card p { margin: 0; color: var(--ink-soft); font-size: 13px; }
+  .paper-card p { margin: 0; color: var(--ink-soft); font-size: 16px; }
   .reading-order { list-style: none; padding: 0; margin: 14px 0 0; }
   .reading-order li { position: relative; padding: 8px 0 8px 34px; border-top: 1px solid var(--line); font-size: 13px; }
   .reading-order li::before { content: attr(data-n); position: absolute; left: 0; top: 8px; color: var(--forest); font: 600 11px var(--font-mono); }
@@ -211,7 +255,7 @@
   .filter button:hover, .filter button.active { color: var(--paper); background: var(--brick); border-color: var(--brick); }
   .table-wrap { background: var(--paper); border: 1px solid var(--line); border-radius: 12px; overflow: hidden; }
   .table-scroll { overflow-x: auto; }
-  table { width: 100%; border-collapse: collapse; font-size: 12px; }
+  table { width: 100%; border-collapse: collapse; font-size: 14px; }
   th { background: var(--paper-2); color: var(--ink-soft); font: 600 10px var(--font-mono); letter-spacing: .8px; text-transform: uppercase; text-align: left; padding: 12px 14px; border-bottom: 2px solid var(--line-strong); white-space: nowrap; }
   td { padding: 12px 14px; border-bottom: 1px solid var(--line); vertical-align: top; }
   tbody tr:nth-child(even) { background: color-mix(in srgb, var(--paper) 95%, var(--forest) 5%); }
@@ -235,14 +279,14 @@
   .case-head { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 20px; align-items: start; }
   .case-no { color: var(--case-color); font-size: 10px; letter-spacing: 1.6px; text-transform: uppercase; }
   .case h2 { margin: 4px 0 8px; font-size: clamp(25px, 3vw, 38px); line-height: 1.18; letter-spacing: -.035em; }
-  .case-sub { color: var(--ink-soft); font-size: 13px; max-width: 850px; }
+  .case-sub { color: var(--ink-soft); font-size: 16px; max-width: 850px; }
   .outcome {
     max-width: 260px;
     background: color-mix(in srgb, var(--paper) 86%, var(--case-color) 14%);
     border: 1px solid color-mix(in srgb, var(--line) 45%, var(--case-color) 55%);
     border-radius: 10px;
     padding: 12px 14px;
-    font-size: 12px;
+    font-size: 14px;
   }
   .outcome strong { color: var(--case-color); display: block; font: 600 10px var(--font-mono); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 4px; }
   .meta {
@@ -259,11 +303,12 @@
     background: color-mix(in srgb, var(--paper) 90%, var(--case-color) 10%);
     color: var(--case-color);
     border-radius: 8px;
-    font-size: 11px;
+    font-size: 13px;
     line-height: 1.6;
     margin-bottom: 18px;
   }
   .lenses { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 13px; }
+  .lenses.filtered { grid-template-columns: 1fr; }
   .lens {
     min-width: 0;
     background: var(--paper-2);
@@ -276,12 +321,12 @@
   .lens.hidden { display: none; }
   .lens-label { font-size: 10px; color: var(--case-color); text-transform: uppercase; letter-spacing: 1.4px; margin-bottom: 10px; }
   .lens h3 { font-size: 17px; margin: 0 0 10px; }
-  .lens p { margin: 0 0 10px; font-size: 12.5px; color: var(--ink-soft); }
+  .lens p { margin: 0 0 10px; font-size: 16px; color: var(--ink-soft); }
   .lens p:last-child { margin-bottom: 0; }
   .lens strong { color: var(--ink); }
   .story { border-left: 3px solid var(--case-color); }
-  .story p { font-size: 13px; color: var(--ink); }
-  .five-grid { display: grid; grid-template-columns: auto 1fr; gap: 5px 10px; font-size: 11.5px; }
+  .story p { font-size: 16px; color: var(--ink); }
+  .five-grid { display: grid; grid-template-columns: auto 1fr; gap: 5px 10px; font-size: 16px; }
   .five-grid dt { color: var(--case-color); font-family: var(--font-mono); font-weight: 600; }
   .five-grid dd { margin: 0; color: var(--ink-soft); }
   .evidence { margin-top: 16px; border-top: 1px dashed var(--line-strong); padding-top: 12px; color: var(--ink-soft); font: 10px/1.65 var(--font-mono); }
@@ -293,21 +338,7 @@
     padding: 22px;
   }
   .caveat h3 { margin: 0 0 8px; }
-  .caveat p { color: var(--ink-soft); margin: 0; font-size: 13px; }
-  .related-page {
-    display: flex;
-    justify-content: space-between;
-    gap: 18px;
-    align-items: center;
-    margin-top: 16px;
-    padding: 16px 18px;
-    border: 1px solid var(--line-strong);
-    border-radius: 10px;
-    background: var(--paper);
-  }
-  .related-page span { color: var(--ink-soft); font-size: 14px; }
-  .related-links { display: flex; flex-wrap: wrap; gap: 8px 18px; }
-  .related-page a { color: var(--forest); font: 600 12px var(--font-mono); text-decoration-thickness: 1px; text-underline-offset: 4px; }
+  .caveat p { color: var(--ink-soft); margin: 0; font-size: 16px; }
   .footer { margin-top: 46px; padding-top: 20px; border-top: 1px solid var(--line); color: var(--ink-soft); font: 10px/1.7 var(--font-mono); }
   @keyframes fadeUp { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
   @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; scroll-behavior: auto !important; } }
@@ -325,22 +356,23 @@
     .toc { margin: 0; padding-left: 18px; padding-right: 18px; }
     .kpis, .meta { grid-template-columns: repeat(2, minmax(0, 1fr)); }
     .summary-grid, .lenses { grid-template-columns: 1fr; }
+    .safe-intro { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .safe-map { align-items: flex-start; flex-wrap: wrap; }
+    .table-scroll table { min-width: 760px; }
     .case-head { grid-template-columns: 1fr; }
     .outcome { max-width: none; }
-    .related-page { align-items: flex-start; flex-direction: column; }
     .hero::after { opacity: .45; }
   }
 </style>
 <link rel="stylesheet" href="./dhf-evidence-memory.css?v=20260818a">
 <link rel="stylesheet" href="./dhf-site-status.css?v=20260817a">
 </head>
-<body data-dhf-status="2026-08-11"><nav class="dhf-nav" aria-label="站点导航"><a class="dhf-nav-home" href="./index-zh.html">DHF</a><div class="dhf-nav-links"><a href="./index-zh.html">首页</a><a href="./delivery-harness-beginner-guide-cn.html">新手指南</a><a href="./dhf-context-engineering-cn.html">上下文工程</a><a href="./project-lifecycle-harness-flow-cn.html">生命周期</a><a href="./dhf-governance-decision-flow-cn.html">治理判定</a><a href="./dhf-value-evidence-cn.html">证据</a><a href="./dhf-architecture-status-cn.html">架构状态</a></div><a class="dhf-nav-lang" href="./dhf-examples-three-lenses-en.html" lang="en" hreflang="en">English</a></nav>
+<body data-dhf-status="2026-08-11"><nav class="dhf-nav" aria-label="站点导航"><a class="dhf-nav-home" href="./index-zh.html">DHF</a><div class="dhf-nav-links"><a href="./index-zh.html">首页</a><a href="./delivery-harness-beginner-guide-cn.html">新手指南</a><a href="./dhf-context-engineering-cn.html">上下文工程</a><a href="./project-lifecycle-harness-flow-cn.html">生命周期</a><a href="./dhf-governance-decision-flow-cn.html">治理判定</a><a href="./dhf-value-evidence-cn.html">证据</a><a href="./dhf-architecture-status-cn.html">架构状态</a></div><a class="dhf-nav-lang" href="./dhf-examples-three-lenses-safe-en.html" lang="en" hreflang="en">English</a></nav>
 <div class="wrap">
   <nav class="toc" id="toc" aria-label="案例目录">
-    <div class="toc-title">Evidence casebook</div>
+    <div class="toc-title">Interview casebook</div>
     <a href="#overview">总览</a>
-    <a href="#lenses">三种表达</a>
-    <a href="#coverage">流程覆盖</a>
+    <a href="#safe">SAFE 关联</a>
     <a href="#case1">01 恢复治理</a>
     <a href="#case2">02 直接实现</a>
     <a href="#case3">03 需求成形</a>
@@ -354,33 +386,29 @@
     <a href="#caveat">图示边界</a>
   </nav>
 
-  <main class="main" data-dhf-evidence-language="cn"><aside class="dhf-memory-cue" data-dhf-memory-cue aria-label="DHF 记忆提示"><strong>记住：</strong><span class="dhf-memory-term" data-dhf-memory-term="CAP">CAP</span><span>锚定业务关注；</span><span class="dhf-memory-term" data-dhf-memory-term="TRUST">TRUST</span><span>约束结果声明。</span><span class="dhf-memory-lens" data-dhf-memory-lens="CARE">CARE · 行动视角</span></aside>
-    <nav aria-label="证据与语言导航" style="display:flex;flex-wrap:wrap;gap:10px;margin:0 0 22px"><a href="./dhf-value-evidence-cn.html" style="color:inherit">← DHF 价值与证据</a><a href="./dhf-examples-three-lenses-en.html" lang="en" hreflang="en" style="color:inherit">English</a></nav>
+  <main class="main" data-dhf-evidence-language="cn"><aside class="dhf-memory-cue" data-dhf-memory-cue aria-label="DHF 记忆提示"><strong>记住：</strong><span class="dhf-memory-term" data-dhf-memory-term="SAFE">SAFE</span><span>说明案例如何受控；</span><span class="dhf-memory-term" data-dhf-memory-term="TRUST">TRUST</span><span>限制案例能证明什么。</span><span class="dhf-memory-lens" data-dhf-memory-lens="CARE">CARE · 行动视角</span></aside>
+    <nav aria-label="证据与语言导航" style="display:flex;flex-wrap:wrap;gap:10px;margin:0 0 22px"><a href="./dhf-value-evidence-cn.html" style="color:inherit">← DHF 价值与证据</a><a href="./dhf-examples-three-lenses-safe-en.html" lang="en" hreflang="en" style="color:inherit">English</a></nav>
     <header class="hero" id="overview">
-      <div class="eyebrow">Delivery Harness Framework · Evidence Casebook</div>
+      <div class="eyebrow">Delivery Harness Framework · Interview Edition</div>
       <h1>同一个案例，三种讲法。</h1>
-      <p>十个来自过去两个月 Codex 会话的真实案例。每个案例先补齐上下文，再用 Why–What–How、Story、5W2H 三种结构解释；表达方式可以切换，事实、结果和证据边界保持不变。</p>
+      <p>十个来自过去两个月 Codex 会话的真实案例。每个案例先补齐上下文，再用 Why–What–How、故事、5W2H 三种结构解释，帮助你根据面试官的问题深浅切换表达。</p>
       <div class="kpis">
         <div class="kpi"><strong>10</strong><span>真实会话案例</span></div>
         <div class="kpi"><strong>3</strong><span>每例三种讲法</span></div>
         <div class="kpi"><strong>14</strong><span>DHF 分支/节点覆盖</span></div>
+        <div class="kpi"><strong>4</strong><span>SAFE 控制能力</span></div>
         <div class="kpi"><strong>2 mo</strong><span>2026-06-14 → 08-14</span></div>
       </div>
     </header>
 
-    <aside class="related-page" aria-label="DHF 页面阅读路径">
-      <span>DHF × ShipQ 关联阅读</span>
-      <div class="related-links"><a href="./dhf-best-care-recover.html">助记总览</a><a href="./dhf-shipq-development-history.html">六阶段演进</a><a href="./dhf-data-business-value-explainer.html#overview">业务价值</a><a href="./shipq-dhf-safe-controlled-recovery.html">受控恢复</a><a href="./shipq-dhf-incident-recovery-memory-map.html">事故记忆图</a><a href="./dhf-case-safe-mapping.html">SAFE 映射</a></div>
-    </aside>
-
-    <div class="section-head" id="lenses">
+    <div class="section-head">
       <div class="num">00 — HOW TO USE</div>
-      <h2>如何选择表达结构</h2>
+      <h2>面试时怎么选讲法</h2>
     </div>
     <div class="summary-grid">
       <article class="paper-card">
         <h3>先给判断，再给证据</h3>
-        <p>先用 Why–What–How 给出判断；需要理解冲突、决策或失败时切换到 Story；需要完整项目细节时再展开 5W2H。</p>
+        <p>面试官通常不需要完整流水账。先用 Why–What–How 给出判断；如果对方追问冲突、决策或失败，切换到故事；如果对方需要项目管理细节，再展开 5W2H。</p>
         <ol class="reading-order">
           <li data-n="01">30–45 秒：Why–What–How，快速说明价值与方法。</li>
           <li data-n="02">60–90 秒：故事，呈现冲突、判断、行动和结果。</li>
@@ -389,21 +417,49 @@
       </article>
       <article class="paper-card paper-card--recessed">
         <h3>镜头筛选</h3>
-        <p>按钮会同时筛选十个案例的解释卡，便于按一种结构连续阅读和比较。</p>
+        <p>按钮会同时筛选十个案例的解释卡。面试练习时，可以只看一种框架，连续讲十个案例。</p>
         <div class="filter" role="group" aria-label="解释方法筛选">
-          <button class="active" data-filter="all">全部</button>
-          <button data-filter="why">Why–What–How</button>
-          <button data-filter="story">故事</button>
-          <button data-filter="5w2h">5W2H</button>
+          <button class="active" data-filter="all" aria-pressed="true">全部</button>
+          <button data-filter="why" aria-pressed="false">Why–What–How</button>
+          <button data-filter="story" aria-pressed="false">故事</button>
+          <button data-filter="5w2h" aria-pressed="false">5W2H</button>
         </div>
-      </article>
-      <article class="paper-card trust-card">
-        <h3>TRUST 先回答“为什么值得做”</h3>
-        <p><strong>T — Trust &amp; quality</strong> 质量与客户信任；<strong>R — Risk control</strong> 风险与授权控制；<strong>U — Unit productivity</strong> 运营效率与交付速度；<strong>S — Service continuity</strong> 韧性与业务连续性；<strong>T — Traceability at scale</strong> 审计、治理与规模化。三种讲法解释案例如何发生，TRUST 则帮助你先说清它创造了什么业务价值。</p>
       </article>
     </div>
 
-    <div class="section-head" id="coverage">
+
+    <div class="section-head" id="safe">
+      <div class="num">SAFE CONTROL MODEL</div>
+      <h2>DHF 路由如何形成可信状态变化</h2>
+    </div>
+    <p class="safe-summary"><strong>SAFE 不是另一条流程，而是每条 DHF 路径的控制内核：</strong>Specification 定义“什么算完成”，Authorization 决定“谁能推进”，Facts 证明“实际发生了什么”，Error-recovery 保证“失败后能从可信状态继续”。低风险任务通常以 S+F 为主；涉及远端、高风险或跨会话恢复时，A 与 E 会成为关键控制。</p>
+    <div class="safe-intro" aria-label="SAFE 四项控制">
+      <article class="safe-control"><b>S</b><strong>Specification · 契约</strong><span>范围、需求、验收标准、状态定义</span></article>
+      <article class="safe-control"><b>A</b><strong>Authorization · 门禁</strong><span>权限、所有权、人工批准、fail-closed</span></article>
+      <article class="safe-control"><b>F</b><strong>Facts · 证据</strong><span>fresh receipt、readback、测试与事实分层</span></article>
+      <article class="safe-control"><b>E</b><strong>Error-recovery · 可恢复</strong><span>checkpoint、rollback、handoff、重新验证</span></article>
+    </div>
+    <div class="table-wrap">
+      <div class="table-scroll">
+        <table aria-label="案例与 SAFE 控制模型关联表">
+          <thead><tr><th>案例</th><th>SAFE 主控制</th><th>可信推进逻辑</th><th>业务价值</th></tr></thead>
+          <tbody>
+            <tr><td><a href="#case1">01 Worktree 治理</a></td><td class="safe-cell"><b>S</b><b>A</b><b>F</b><b>E</b></td><td>所有权契约 → 受控操作 → 现场事实 → 恢复锚点</td><td>风险控制 · 业务连续性</td></tr>
+            <tr><td><a href="#case2">02 Upwork CV</a></td><td class="safe-cell"><b>S</b><b>F</b></td><td>两页交付标准 → PDF 与视觉证据</td><td>质量 · 交付速度</td></tr>
+            <tr><td><a href="#case3">03 DHF 做减法</a></td><td class="safe-cell"><b>S</b><b>A</b><b>F</b></td><td>需求锁定 → 委员会门禁 → 测试证据</td><td>质量 · 治理规模化</td></tr>
+            <tr><td><a href="#case4">04 商业定位</a></td><td class="safe-cell"><b>S</b><b>F</b></td><td>单一定位约束 → 事实/推断/假设分层</td><td>决策质量 · 运营效率</td></tr>
+            <tr><td><a href="#case5">05 ONEART</a></td><td class="safe-cell"><b>S</b><b>A</b><b>F</b></td><td>原型边界 → 无生产授权 → 本地验证</td><td>创新速度 · 风险控制</td></tr>
+            <tr><td><a href="#case6">06 ShipQ</a></td><td class="safe-cell"><b>S</b><b>A</b><b>F</b><b>E</b></td><td>动作契约 → lane grant → readback → rollback</td><td>风险控制 · 韧性</td></tr>
+            <tr><td><a href="#case7">07 委员会评审</a></td><td class="safe-cell"><b>S</b><b>A</b><b>F</b><b>E</b></td><td>评分标准 → 独立门禁 → blind score → 再验证</td><td>质量 · 可审计治理</td></tr>
+            <tr><td><a href="#case8">08 SimonSays</a></td><td class="safe-cell"><b>S</b><b>F</b></td><td>访问者定义 → RUM/HTTP/缺口分层</td><td>决策质量 · 客户信任</td></tr>
+            <tr><td><a href="#case9">09 公共文档</a></td><td class="safe-cell"><b>S</b><b>A</b><b>F</b></td><td>状态词汇 → 发布声明门禁 → 浏览器证据</td><td>信任 · 审计治理</td></tr>
+            <tr><td><a href="#case10">10 发布路径</a></td><td class="safe-cell"><b>S</b><b>A</b><b>F</b></td><td>交付合同 → 发布边界 → validator/远端 SHA</td><td>风险控制 · 客户信任</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="section-head">
       <div class="num">BRANCH COVERAGE</div>
       <h2>十个案例如何覆盖 DHF 流程</h2>
     </div>
@@ -434,6 +490,7 @@
       </div>
       <div class="meta"><div class="meta-item"><span class="meta-label">风险</span><span class="meta-value">数据丢失 / 错误 rebase</span></div><div class="meta-item"><span class="meta-label">所有权</span><span class="meta-value">既有改动全部 user_owned</span></div><div class="meta-item"><span class="meta-label">Lane</span><span class="meta-value">local_dev</span></div><div class="meta-item"><span class="meta-label">状态</span><span class="meta-value">Partial by design</span></div></div>
       <div class="route">governed → Recover → Env → 需求清晰 → 直接实现 → 单 agent → Val → Handoff</div>
+      <div class="safe-map"><span>SAFE</span><b>S</b><b>A</b><b>F</b><b>E</b><em>所有权契约 → 受控操作 → 现场事实 → 恢复锚点与 handoff。<strong>业务价值：</strong>限制数据丢失半径，支持跨会话连续推进。</em></div>
       <div class="lenses">
         <article class="lens" data-lens="why"><div class="lens-label">Why–What–How</div><h3>先恢复事实，再移动状态</h3><p><strong>Why：</strong>聊天记录可能过时，任何一次 reset、rebase 或 stash 误判都可能覆盖用户工作。</p><p><strong>What：</strong>恢复 phase、worktree、branch、stash、dirty ownership 和 next safe task。</p><p><strong>How：</strong>读取 durable state；给每份改动建立固定 hash 恢复锚点；只做 fast-forward/rebase；用 apply 恢复；验证后在 runtime 写入前停下。</p></article>
         <article class="lens story" data-lens="story"><div class="lens-label">Story</div><h3>“最危险的不是冲突，是自信地整理现场”</h3><p>接手时，主工作树、功能 worktree 和 detached worktree 都有不同来源的修改。与其把它们当噪声清理，我先把每一处都视为用户资产。建立恢复分支和固定 stash hash 后，我才移动 main 和功能分支。最后发现下一步要碰 runtime，于是没有借着前面成功的 Git 操作扩大权限，而是留下可执行 handoff。</p></article>
@@ -449,6 +506,7 @@
       </div>
       <div class="meta"><div class="meta-item"><span class="meta-label">Profile</span><span class="meta-value">Light / standard</span></div><div class="meta-item"><span class="meta-label">交付物</span><span class="meta-value">Markdown + 2-page PDF</span></div><div class="meta-item"><span class="meta-label">团队</span><span class="meta-value">单 agent</span></div><div class="meta-item"><span class="meta-label">状态</span><span class="meta-value">Verified</span></div></div>
       <div class="route">skip Recover / Env → 需求清晰 → 可直接实现 → 单 agent → PDF / visual validation → Done</div>
+      <div class="safe-map"><span>SAFE</span><b>S</b><b>F</b><em>两页交付契约 → PDF、视觉与残留检查。<strong>业务价值：</strong>用轻量控制保证质量和速度。</em></div>
       <div class="lenses">
         <article class="lens" data-lens="why"><div class="lens-label">Why–What–How</div><h3>轻任务也要有明确证据</h3><p><strong>Why：</strong>简历的失败不是程序崩溃，而是两页失衡、残留旧公司信息或视觉不可读。</p><p><strong>What：</strong>把原 CV 转成 Agentic Engineer 定位的新版本。</p><p><strong>How：</strong>先做内容重构；渲染 PDF；逐页视觉检查；两次调整分页与重复信息；最后检查页数、链接、页脚、残留和文件完整性。</p></article>
         <article class="lens story" data-lens="story"><div class="lens-label">Story</div><h3>第一次“两页”并不等于完成</h3><p>首版虽然是两页，但第一页留白太大、第二页太密。移动分页后，第二版又出现项目符号挤连。我没有继续缩小字体，而是删掉重复的指标和 MCP 描述。第三版既满足两页，也保持可读，最后才报告完成。</p></article>
@@ -464,6 +522,7 @@
       </div>
       <div class="meta"><div class="meta-item"><span class="meta-label">起点</span><span class="meta-value">模糊产品/工程问题</span></div><div class="meta-item"><span class="meta-label">策略</span><span class="meta-value">Thin core + progressive governance</span></div><div class="meta-item"><span class="meta-label">评审</span><span class="meta-value">Committee + blind review</span></div><div class="meta-item"><span class="meta-label">状态</span><span class="meta-value">Merged</span></div></div>
       <div class="route">需求不清晰 → Requirements lock / validate → 工程规划 → 并行评审 → Dev → Val → Merge / Handoff</div>
+      <div class="safe-map"><span>SAFE</span><b>S</b><b>A</b><b>F</b><em>需求锁定 → 委员会合并门禁 → 测试与评审证据。<strong>业务价值：</strong>减少返工并支持规模化治理。</em></div>
       <div class="lenses">
         <article class="lens" data-lens="why"><div class="lens-label">Why–What–How</div><h3>做减法前，先定义不能删什么</h3><p><strong>Why：</strong>直接删流程容易把安全边界、恢复能力和验证证据一起删掉。</p><p><strong>What：</strong>把 DHF 拆成薄核心、标准能力和按风险启用的 governed 能力。</p><p><strong>How：</strong>先写可审查 contract 与 plan；定义 profile、升级信号和验收；委员会复核；再实施、测试和合并。</p></article>
         <article class="lens story" data-lens="story"><div class="lens-label">Story</div><h3>从一句“做减法”到可合并的制度</h3><p>问题看似是删代码，真正难点是决定哪些控制必须始终存在。我先锁定结果标准，把“所有任务都跑完整仪式”改为“风险触发治理”。委员会继续寻找被过度简化的边界，修订后才进入实施。结果不是少写几个脚本，而是让轻任务更轻、危险任务仍然可恢复。</p></article>
@@ -479,6 +538,7 @@
       </div>
       <div class="meta"><div class="meta-item"><span class="meta-label">Mode</span><span class="meta-value">Read-only audit</span></div><div class="meta-item"><span class="meta-label">ICP</span><span class="meta-value">内部 AI / platform 负责人</span></div><div class="meta-item"><span class="meta-label">Service</span><span class="meta-value">30-day Reliability Sprint</span></div><div class="meta-item"><span class="meta-label">状态</span><span class="meta-value">Decision complete</span></div></div>
       <div class="route">需求清晰 → 产品 / 范围判断 → 证据矩阵 → 优先级建议 → Done（无实现授权）</div>
+      <div class="safe-map"><span>SAFE</span><b>S</b><b>F</b><em>单一定位约束 → 事实、推断和假设分层。<strong>业务价值：</strong>提高决策质量与资源效率。</em></div>
       <div class="lenses">
         <article class="lens" data-lens="why"><div class="lens-label">Why–What–How</div><h3>缺口不是网站，而是买方理解</h3><p><strong>Why：</strong>能力很多，但客户不知道该为什么问题购买。</p><p><strong>What：</strong>选择一个 ICP、一项产品化服务和一句客户价值主张。</p><p><strong>How：</strong>审阅源码、runtime、公开页面和案例授权；分开事实、推断与假设；按商业影响、信任提升和成本排序。</p></article>
         <article class="lens story" data-lens="story"><div class="lens-label">Story</div><h3>我拒绝用“再建一个网站”掩盖证据问题</h3><p>最初很容易得出“需要 portfolio”的结论。但审计发现，真正问题是现有页面对买方、服务和证明链表达不一致。于是我把建议反过来：先让 MyCodexEnv 成为旗舰 proof center，等有 2–3 个获准公开的案例后，再考虑独立站。</p></article>
@@ -494,6 +554,7 @@
       </div>
       <div class="meta"><div class="meta-item"><span class="meta-label">产品目标</span><span class="meta-value">低摩擦私人回应</span></div><div class="meta-item"><span class="meta-label">隐私</span><span class="meta-value">不收邮箱 / 原始 IP</span></div><div class="meta-item"><span class="meta-label">技术</span><span class="meta-value">Pages Function + D1</span></div><div class="meta-item"><span class="meta-label">状态</span><span class="meta-value">Local verified</span></div></div>
       <div class="route">设计规划 → 本地 Prototype → 单 agent → Dev → Browser / static Val → 生产前 Handoff</div>
+      <div class="safe-map"><span>SAFE</span><b>S</b><b>A</b><b>F</b><em>原型边界 → 无生产权限 → 本地测试与页面产物。<strong>业务价值：</strong>低成本学习并控制生产风险。</em></div>
       <div class="lenses">
         <article class="lens" data-lens="why"><div class="lens-label">Why–What–How</div><h3>先验证互动是否值得存在</h3><p><strong>Why：</strong>增加联系入口可能带来隐私、垃圾信息和维护成本。</p><p><strong>What：</strong>提供匿名短回应；需要深入沟通时再转入专用邮箱。</p><p><strong>How：</strong>先完成 user context 和视觉方案；本地原型验证；实现 D1、来源校验、蜜罐与限流；桌面和静态全站验证；生产前停止。</p></article>
         <article class="lens story" data-lens="story"><div class="lens-label">Story</div><h3>一个“留言框”背后是数据最小化</h3><p>表面需求只是增加回应入口，但如果默认收邮箱和 IP，就改变了网站的信任关系。我把短回应与深度沟通拆开：短回应保持匿名；只有用户明确需要回复，才进入邮箱渠道。原型跑通后仍没有直接部署，因为远程 D1、secret 和正式邮箱都需要新的授权与核实。</p></article>
@@ -509,6 +570,7 @@
       </div>
       <div class="meta"><div class="meta-item"><span class="meta-label">Adapter</span><span class="meta-value">ShipQ lifecycle harness</span></div><div class="meta-item"><span class="meta-label">策略</span><span class="meta-value">Level 2 default deny</span></div><div class="meta-item"><span class="meta-label">外部系统</span><span class="meta-value">Google Docs / Drive</span></div><div class="meta-item"><span class="meta-label">状态</span><span class="meta-value">Mixed / fail-closed</span></div></div>
       <div class="route">Governed → Repo adapter → Phase gate → Dev → Readback → mismatch 时 rollback → Val</div>
+      <div class="safe-map"><span>SAFE</span><b>S</b><b>A</b><b>F</b><b>E</b><em>动作契约 → lane grant → 独立 readback → rollback 后重验。<strong>业务价值：</strong>限制远端错误半径并加快恢复。</em></div>
       <div class="lenses">
         <article class="lens" data-lens="why"><div class="lens-label">Why–What–How</div><h3>通用流程不能替代业务授权</h3><p><strong>Why：</strong>外部文档写入可能接触客户数据，也可能在最终断言前已经发生部分变更。</p><p><strong>What：</strong>让 ShipQ adapter 持有 action registry、lane grant、业务 readback 和 rollback 规则。</p><p><strong>How：</strong>先 recovery；receipt 与 State Log 冲突时停止；owner 裁定后继续；文档结构回读不一致时保留失败 receipt、恢复旧 revision，再独立读取确认。</p></article>
         <article class="lens story" data-lens="story"><div class="lens-label">Story</div><h3>失败不是“没写进去”，而是“已经写了一半”</h3><p>Phase 0 首先发现历史 receipt 与 State Log 不一致，我没有选择其中一个继续，而是等待 owner 裁定。后续 Google Docs writer 返回结构不匹配；这时盲目重试可能重复破坏文档。我保留失败证据，恢复之前 revision，再用独立 readback 验证。系统从“调用成功”转向“结果可证明”。</p></article>
@@ -524,6 +586,7 @@
       </div>
       <div class="meta"><div class="meta-item"><span class="meta-label">团队</span><span class="meta-value">Committee + worker + blind</span></div><div class="meta-item"><span class="meta-label">轮次</span><span class="meta-value">5 / 5</span></div><div class="meta-item"><span class="meta-label">写入</span><span class="meta-value">无 repo 改动</span></div><div class="meta-item"><span class="meta-label">状态</span><span class="meta-value">Incomplete</span></div></div>
       <div class="route">Review → 并行 agents → 修订循环 → 独立 blind Val → 门禁失败 → 不宣称 Done</div>
+      <div class="safe-map"><span>SAFE</span><b>S</b><b>A</b><b>F</b><b>E</b><em>评分标准 → 独立门禁 → blind score → 修订再验证。<strong>业务价值：</strong>提高质量可信度和可审计性。</em></div>
       <div class="lenses">
         <article class="lens" data-lens="why"><div class="lens-label">Why–What–How</div><h3>让评分绑定 artifact，而不是团队信心</h3><p><strong>Why：</strong>同一批评审者容易对自己参与修订的版本产生确认偏差。</p><p><strong>What：</strong>冻结 rubric、evidence、unknowns 和 append-only finding ledger。</p><p><strong>How：</strong>委员会提出 finding；worker 修订；委员会 closure；独立 reviewer 盲审；超过 max rounds 就停，不补算平均分。</p></article>
         <article class="lens story" data-lens="story"><div class="lens-label">Story</div><h3>最能证明治理的，是拒绝一个看似漂亮的通过</h3><p>第五轮时，迭代委员会已经给出 10/10，所有 ledger finding 也已关闭。但 blind reviewer 审的是修订前版本，只给 7/10；新版本没有剩余轮次再做 blind final。因此我没有把 10 和 7 平均成“足够好”，而是把任务标为 incomplete，并明确只需增加一轮独立复核。</p></article>
@@ -539,6 +602,7 @@
       </div>
       <div class="meta"><div class="meta-item"><span class="meta-label">Mode</span><span class="meta-value">Report-only</span></div><div class="meta-item"><span class="meta-label">Window</span><span class="meta-value">2026-08-13 Toronto</span></div><div class="meta-item"><span class="meta-label">RUM</span><span class="meta-value">No records after 08-01</span></div><div class="meta-item"><span class="meta-label">HTTP</span><span class="meta-value">231 raw requests</span></div></div>
       <div class="route">Classify=Validation → 只读查询 → 证据分层 → 数据缺口报告 → Done（无 checkpoint）</div>
+      <div class="safe-map"><span>SAFE</span><b>S</b><b>F</b><em>访问者定义 → RUM、HTTP 与缺口的事实分层。<strong>业务价值：</strong>避免错误运营判断。</em></div>
       <div class="lenses">
         <article class="lens" data-lens="why"><div class="lens-label">Why–What–How</div><h3>指标定义比查询成功更重要</h3><p><strong>Why：</strong>原始 HTTP requests 混合真人、机器人、缓存和探测，不能作为访问人数。</p><p><strong>What：</strong>以 bot-filtered RUM 为访客主指标，HTTP 只作安全噪声上下文。</p><p><strong>How：</strong>固定 Toronto 时间窗；查 RUM；发现断档后停止访客推断；单独比较 HTTP、504 和 challenge；报告 exact gap。</p></article>
         <article class="lens story" data-lens="story"><div class="lens-label">Story</div><h3>数据存在，但答案不存在</h3><p>查询拿到了 231 个请求，看起来足以生成日报。但 RUM 最后记录停在 8 月 1 日，这意味着真正的访客测量链断了。与其填一个看似完整的趋势，我明确写下“无法判断，不是零访问”，并把 HTTP 数据降级为噪声和安全上下文。</p></article>
@@ -554,6 +618,7 @@
       </div>
       <div class="meta"><div class="meta-item"><span class="meta-label">页面</span><span class="meta-value">14 HTML targets</span></div><div class="meta-item"><span class="meta-label">Viewport</span><span class="meta-value">Desktop + 375px</span></div><div class="meta-item"><span class="meta-label">Full suite</span><span class="meta-value">99 pass / 2 baseline fail</span></div><div class="meta-item"><span class="meta-label">状态</span><span class="meta-value">Local only</span></div></div>
       <div class="route">QA / Docs → 页面实现 → focused gate → Browser QA → full-suite boundary → 未发布</div>
+      <div class="safe-map"><span>SAFE</span><b>S</b><b>A</b><b>F</b><em>状态词汇 → 发布声明门禁 → 浏览器与测试证据。<strong>业务价值：</strong>减少状态误导并增强公开信任。</em></div>
       <div class="lenses">
         <article class="lens" data-lens="why"><div class="lens-label">Why–What–How</div><h3>公开页面必须说明“哪一层完成了”</h3><p><strong>Why：</strong>公开页面 HTTP 200 不证明当前机器 runtime 已同步，更不证明生产 enforcement。</p><p><strong>What：</strong>统一双语状态横幅、架构状态页和移动端布局。</p><p><strong>How：</strong>建立状态词汇；更新 12 个既有页面并新增 2 个状态页；focused tests；桌面/375px 浏览器 QA；完整门禁保留基线失败。</p></article>
         <article class="lens story" data-lens="story"><div class="lens-label">Story</div><h3>修好文档，同时拒绝把文档当 runtime</h3><p>页面对 DHF 能力的描述彼此不一致，我先统一“source、runtime、public docs、independent core”四层状态。浏览器检查又发现英文 lifecycle 页在 375px 横向溢出，于是修复并重测。尽管页面 14/14 通过，完整测试仍有两个基线失败，所以最终只说“本地文档具备发布条件”。</p></article>
@@ -569,6 +634,7 @@
       </div>
       <div class="meta"><div class="meta-item"><span class="meta-label">Scope</span><span class="meta-value">Project-local skill</span></div><div class="meta-item"><span class="meta-label">Asset</span><span class="meta-value">1080×1350 PNG</span></div><div class="meta-item"><span class="meta-label">Git</span><span class="meta-value">main = origin/main</span></div><div class="meta-item"><span class="meta-label">状态</span><span class="meta-value">Repo shipped</span></div></div>
       <div class="route">Classify=Ship → 当前事件核实 → Contract / asset Val → Commit / Push → Remote readback → Done</div>
+      <div class="safe-map"><span>SAFE</span><b>S</b><b>A</b><b>F</b><em>交付合同 → 发布权限边界 → validator 与远端 SHA。<strong>业务价值：</strong>防止旧活动和发布状态混淆。</em></div>
       <div class="lenses">
         <article class="lens" data-lens="why"><div class="lens-label">Why–What–How</div><h3>发布状态必须分层</h3><p><strong>Why：</strong>旧活动图片、错误 URL 或“已生成=已发布”的状态混淆会造成公开传播错误。</p><p><strong>What：</strong>强化 current-event Moments contract，要求 generated、checked、used 三个独立 receipt。</p><p><strong>How：</strong>核对 #96 标题、日期、地点和三条报名 URL；检查单张 1080×1350 图片；运行 validator；commit/push；比较本地与远端 SHA。</p></article>
         <article class="lens story" data-lens="story"><div class="lens-label">Story</div><h3>Push 成功后，我仍然说“没有观察到朋友圈发布”</h3><p>skill 合同、图片和当前活动链接都通过验证，代码也推到了 main。最容易犯的错误是把这一步写成“活动已发布”。但 GitHub push 只证明项目源码已发布；它不证明用户已把图片发到微信。因此最终状态明确分成 repo shipped 与 social usage not observed。</p></article>
@@ -583,12 +649,12 @@
     </div>
     <aside class="caveat">
       <h3><span class="mono">Val → Docs → Handoff → Done</span> 不是每个任务的固定仪式</h3>
-      <p>真实会话显示：light/standard 的验证型任务可以从 Val 直接结束；只有需要更新交付文档时才进入 Docs；只有 governed matching signal 命中 resume、handoff、ownership、remote、destructive 等条件时才写 checkpoint。这说明图示表达的是治理语义，而不是机械固定流程。</p>
+      <p>真实会话显示：light/standard 的验证型任务可以从 Val 直接结束；只有需要更新交付文档时才进入 Docs；只有 governed matching signal 命中 resume、handoff、ownership、remote、destructive 等条件时才写 checkpoint。面试中主动指出这一点，能说明你理解的是治理语义，而不是机械照图执行。</p>
     </aside>
 
     <footer class="footer">
       SOURCE WINDOW · Local Codex history · 2026-06-14 to 2026-08-14<br>
-      PURPOSE · Evidence explanation, not current runtime or production proof · Generated 2026-08-14
+      PURPOSE · Interview explanation, not current runtime or production proof · Generated 2026-08-14
     </footer>
   </main>
 </div>
@@ -596,11 +662,17 @@
   (function () {
     const filterButtons = document.querySelectorAll('[data-filter]');
     const lenses = document.querySelectorAll('[data-lens]');
+    const lensGroups = document.querySelectorAll('.lenses');
     filterButtons.forEach((button) => {
       button.addEventListener('click', () => {
         const selected = button.dataset.filter;
-        filterButtons.forEach((item) => item.classList.toggle('active', item === button));
+        filterButtons.forEach((item) => {
+          const active = item === button;
+          item.classList.toggle('active', active);
+          item.setAttribute('aria-pressed', String(active));
+        });
         lenses.forEach((lens) => lens.classList.toggle('hidden', selected !== 'all' && lens.dataset.lens !== selected));
+        lensGroups.forEach((group) => group.classList.toggle('filtered', selected !== 'all'));
       });
     });
 

@@ -10798,6 +10798,71 @@ def test_dhf_evidence_wave2_bilingual_information_architecture():
     print("[PASS] DHF Evidence Wave 2 bilingual information architecture")
 
 
+def test_dhf_evidence_wave3_casebook_archive_and_information_architecture():
+    docs = ROOT / "docs"
+    archive_root = ROOT / "tasks" / "archives" / "2026-08-19-dhf-casebook-interview"
+    manifest_path = archive_root / "manifest.json"
+    require(manifest_path.exists(), "Wave 3 archive manifest must exist before public cleanup")
+    manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+    expected_sources = {
+        "docs/dhf-examples-three-lenses-en.html",
+        "docs/dhf-examples-three-lenses.html",
+        "docs/dhf-examples-three-lenses-safe-en.html",
+        "docs/dhf-examples-three-lenses-safe.html",
+    }
+    entries = manifest.get("entries", [])
+    require({entry.get("source") for entry in entries} == expected_sources,
+            "Wave 3 archive manifest source set")
+    require(re.fullmatch(r"[0-9a-f]{40}", manifest.get("baseline_commit", "")) is not None,
+            "Wave 3 archive baseline commit")
+    for entry in entries:
+        archive_path = ROOT / entry["archive"]
+        require("docs" not in archive_path.relative_to(ROOT).parts,
+                f"archive must remain outside public docs: {archive_path}")
+        require(archive_path.exists(), f"missing Wave 3 archive: {archive_path}")
+        digest = hashlib.sha256(archive_path.read_bytes()).hexdigest()
+        require(digest == entry.get("source_sha256") == entry.get("archive_sha256"),
+                f"Wave 3 archive digest mismatch: {archive_path}")
+        require(entry.get("restore") == f"cp {entry['archive']} {entry['source']}",
+                f"Wave 3 restore command mismatch: {entry['source']}")
+
+    main_sections = ["overview", "lenses", "coverage"] + [f"case{i}" for i in range(1, 11)] + ["caveat"]
+    safe_sections = ["overview", "safe"] + [f"case{i}" for i in range(1, 11)] + ["caveat"]
+    pages = [
+        ("dhf-examples-three-lenses-en.html", "dhf-examples-three-lenses.html", main_sections),
+        ("dhf-examples-three-lenses.html", "dhf-examples-three-lenses-en.html", main_sections),
+        ("dhf-examples-three-lenses-safe-en.html", "dhf-examples-three-lenses-safe.html", safe_sections),
+        ("dhf-examples-three-lenses-safe.html", "dhf-examples-three-lenses-safe-en.html", safe_sections),
+    ]
+    for name, twin, sections in pages:
+        text = (docs / name).read_text(encoding="utf-8")
+        lower = text.lower()
+        require("interview" not in lower and "面试" not in text,
+                f"{name} retains interview-only copy")
+        require_in_order(text, [f'id="{section}"' for section in sections],
+                         f"{name} Wave 3 canonical section order")
+        for section in sections:
+            require(text.count(f'id="{section}"') == 1,
+                    f"{name} must expose exactly one #{section} fragment")
+        require(text.count('class="dhf-nav"') == 1, f"{name} global navigation count")
+        require(text.count('data-dhf-status="2026-08-11"') == 1,
+                f"{name} must preserve the public status byte value")
+        require(f'href="./{twin}"' in text, f"{name} bilingual twin link")
+    for name in ["dhf-examples-three-lenses-en.html", "dhf-examples-three-lenses.html"]:
+        text = (docs / name).read_text(encoding="utf-8")
+        for label in ["Why–What–How", "Story", "5W2H"]:
+            require(label in text, f"{name} must retain general lens: {label}")
+    english_main = (docs / "dhf-examples-three-lenses-en.html").read_text(encoding="utf-8")
+    for fragment in ["lens-why", "lens-story", "lens-5w2h"]:
+        require(english_main.count(f'id="{fragment}"') == 1,
+                f"English Three Lenses must preserve legacy fragment: {fragment}")
+    for name in ["dhf-examples-three-lenses-safe-en.html", "dhf-examples-three-lenses-safe.html"]:
+        text = (docs / name).read_text(encoding="utf-8")
+        require("data-filter=" not in text and "data-lens=" not in text,
+                f"{name} must remain a SAFE inspection page, not a duplicate lens guide")
+    print("[PASS] DHF Evidence Wave 3 archive and casebook information architecture")
+
+
 def test_dhf_evidence_child_navigation_and_controlled_recovery_contract():
     docs = ROOT / "docs"
     evidence_pairs = [
@@ -11177,6 +11242,7 @@ TESTS = [
     test_dhf_evolution_bilingual_information_architecture,
     test_dhf_evidence_wave1_bilingual_information_architecture,
     test_dhf_evidence_wave2_bilingual_information_architecture,
+    test_dhf_evidence_wave3_casebook_archive_and_information_architecture,
     test_dhf_evidence_child_navigation_and_controlled_recovery_contract,
     test_dhf_evidence_memory_keyword_contract,
     test_runner_registry_complete,

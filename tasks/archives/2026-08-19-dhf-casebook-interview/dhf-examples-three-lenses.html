@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>DHF 真实案例：三种证据表达</title>
+<title>DHF 真实案例：三种面试讲法</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Noto+Serif+SC:wght@400;600;700;900&display=swap" rel="stylesheet">
@@ -337,10 +337,8 @@
 <body data-dhf-status="2026-08-11"><nav class="dhf-nav" aria-label="站点导航"><a class="dhf-nav-home" href="./index-zh.html">DHF</a><div class="dhf-nav-links"><a href="./index-zh.html">首页</a><a href="./delivery-harness-beginner-guide-cn.html">新手指南</a><a href="./dhf-context-engineering-cn.html">上下文工程</a><a href="./project-lifecycle-harness-flow-cn.html">生命周期</a><a href="./dhf-governance-decision-flow-cn.html">治理判定</a><a href="./dhf-value-evidence-cn.html">证据</a><a href="./dhf-architecture-status-cn.html">架构状态</a></div><a class="dhf-nav-lang" href="./dhf-examples-three-lenses-en.html" lang="en" hreflang="en">English</a></nav>
 <div class="wrap">
   <nav class="toc" id="toc" aria-label="案例目录">
-    <div class="toc-title">Evidence casebook</div>
+    <div class="toc-title">Interview casebook</div>
     <a href="#overview">总览</a>
-    <a href="#lenses">三种表达</a>
-    <a href="#coverage">流程覆盖</a>
     <a href="#case1">01 恢复治理</a>
     <a href="#case2">02 直接实现</a>
     <a href="#case3">03 需求成形</a>
@@ -357,9 +355,9 @@
   <main class="main" data-dhf-evidence-language="cn"><aside class="dhf-memory-cue" data-dhf-memory-cue aria-label="DHF 记忆提示"><strong>记住：</strong><span class="dhf-memory-term" data-dhf-memory-term="CAP">CAP</span><span>锚定业务关注；</span><span class="dhf-memory-term" data-dhf-memory-term="TRUST">TRUST</span><span>约束结果声明。</span><span class="dhf-memory-lens" data-dhf-memory-lens="CARE">CARE · 行动视角</span></aside>
     <nav aria-label="证据与语言导航" style="display:flex;flex-wrap:wrap;gap:10px;margin:0 0 22px"><a href="./dhf-value-evidence-cn.html" style="color:inherit">← DHF 价值与证据</a><a href="./dhf-examples-three-lenses-en.html" lang="en" hreflang="en" style="color:inherit">English</a></nav>
     <header class="hero" id="overview">
-      <div class="eyebrow">Delivery Harness Framework · Evidence Casebook</div>
+      <div class="eyebrow">Delivery Harness Framework · Interview Edition</div>
       <h1>同一个案例，三种讲法。</h1>
-      <p>十个来自过去两个月 Codex 会话的真实案例。每个案例先补齐上下文，再用 Why–What–How、Story、5W2H 三种结构解释；表达方式可以切换，事实、结果和证据边界保持不变。</p>
+      <p>十个来自过去两个月 Codex 会话的真实案例。每个案例先补齐上下文，再用 Why–What–How、故事、5W2H 三种结构解释，帮助你根据面试官的问题深浅切换表达。</p>
       <div class="kpis">
         <div class="kpi"><strong>10</strong><span>真实会话案例</span></div>
         <div class="kpi"><strong>3</strong><span>每例三种讲法</span></div>
@@ -373,14 +371,14 @@
       <div class="related-links"><a href="./dhf-best-care-recover.html">助记总览</a><a href="./dhf-shipq-development-history.html">六阶段演进</a><a href="./dhf-data-business-value-explainer.html#overview">业务价值</a><a href="./shipq-dhf-safe-controlled-recovery.html">受控恢复</a><a href="./shipq-dhf-incident-recovery-memory-map.html">事故记忆图</a><a href="./dhf-case-safe-mapping.html">SAFE 映射</a></div>
     </aside>
 
-    <div class="section-head" id="lenses">
+    <div class="section-head">
       <div class="num">00 — HOW TO USE</div>
-      <h2>如何选择表达结构</h2>
+      <h2>面试时怎么选讲法</h2>
     </div>
     <div class="summary-grid">
       <article class="paper-card">
         <h3>先给判断，再给证据</h3>
-        <p>先用 Why–What–How 给出判断；需要理解冲突、决策或失败时切换到 Story；需要完整项目细节时再展开 5W2H。</p>
+        <p>面试官通常不需要完整流水账。先用 Why–What–How 给出判断；如果对方追问冲突、决策或失败，切换到故事；如果对方需要项目管理细节，再展开 5W2H。</p>
         <ol class="reading-order">
           <li data-n="01">30–45 秒：Why–What–How，快速说明价值与方法。</li>
           <li data-n="02">60–90 秒：故事，呈现冲突、判断、行动和结果。</li>
@@ -389,7 +387,7 @@
       </article>
       <article class="paper-card paper-card--recessed">
         <h3>镜头筛选</h3>
-        <p>按钮会同时筛选十个案例的解释卡，便于按一种结构连续阅读和比较。</p>
+        <p>按钮会同时筛选十个案例的解释卡。面试练习时，可以只看一种框架，连续讲十个案例。</p>
         <div class="filter" role="group" aria-label="解释方法筛选">
           <button class="active" data-filter="all">全部</button>
           <button data-filter="why">Why–What–How</button>
@@ -403,7 +401,7 @@
       </article>
     </div>
 
-    <div class="section-head" id="coverage">
+    <div class="section-head">
       <div class="num">BRANCH COVERAGE</div>
       <h2>十个案例如何覆盖 DHF 流程</h2>
     </div>
@@ -583,12 +581,12 @@
     </div>
     <aside class="caveat">
       <h3><span class="mono">Val → Docs → Handoff → Done</span> 不是每个任务的固定仪式</h3>
-      <p>真实会话显示：light/standard 的验证型任务可以从 Val 直接结束；只有需要更新交付文档时才进入 Docs；只有 governed matching signal 命中 resume、handoff、ownership、remote、destructive 等条件时才写 checkpoint。这说明图示表达的是治理语义，而不是机械固定流程。</p>
+      <p>真实会话显示：light/standard 的验证型任务可以从 Val 直接结束；只有需要更新交付文档时才进入 Docs；只有 governed matching signal 命中 resume、handoff、ownership、remote、destructive 等条件时才写 checkpoint。面试中主动指出这一点，能说明你理解的是治理语义，而不是机械照图执行。</p>
     </aside>
 
     <footer class="footer">
       SOURCE WINDOW · Local Codex history · 2026-06-14 to 2026-08-14<br>
-      PURPOSE · Evidence explanation, not current runtime or production proof · Generated 2026-08-14
+      PURPOSE · Interview explanation, not current runtime or production proof · Generated 2026-08-14
     </footer>
   </main>
 </div>

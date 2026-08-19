@@ -1,0 +1,34 @@
+{
+  "baseline_commit": "e6373656c1cea0ae03a8e0ba80c1b8ac8bcb76de",
+  "created_at": "2026-08-19T17:55:20Z",
+  "entries": [
+    {
+      "source": "docs/dhf-examples-three-lenses-en.html",
+      "archive": "tasks/archives/2026-08-19-dhf-casebook-interview/dhf-examples-three-lenses-en.html",
+      "source_sha256": "334141a90610821bcda86d992b932251df3ec2d53d895efcd518712bea56bcb2",
+      "archive_sha256": "334141a90610821bcda86d992b932251df3ec2d53d895efcd518712bea56bcb2",
+      "restore": "cp tasks/archives/2026-08-19-dhf-casebook-interview/dhf-examples-three-lenses-en.html docs/dhf-examples-three-lenses-en.html"
+    },
+    {
+      "source": "docs/dhf-examples-three-lenses.html",
+      "archive": "tasks/archives/2026-08-19-dhf-casebook-interview/dhf-examples-three-lenses.html",
+      "source_sha256": "9a165b82246ffb7587079cffad9926989d95238cea775a93e8158e19e9c6fa26",
+      "archive_sha256": "9a165b82246ffb7587079cffad9926989d95238cea775a93e8158e19e9c6fa26",
+      "restore": "cp tasks/archives/2026-08-19-dhf-casebook-interview/dhf-examples-three-lenses.html docs/dhf-examples-three-lenses.html"
+    },
+    {
+      "source": "docs/dhf-examples-three-lenses-safe-en.html",
+      "archive": "tasks/archives/2026-08-19-dhf-casebook-interview/dhf-examples-three-lenses-safe-en.html",
+      "source_sha256": "edc43c121cfa04d17286711161ceed1a59e083654ae392ab33b2ad5e5c8aa1e3",
+      "archive_sha256": "edc43c121cfa04d17286711161ceed1a59e083654ae392ab33b2ad5e5c8aa1e3",
+      "restore": "cp tasks/archives/2026-08-19-dhf-casebook-interview/dhf-examples-three-lenses-safe-en.html docs/dhf-examples-three-lenses-safe-en.html"
+    },
+    {
+      "source": "docs/dhf-examples-three-lenses-safe.html",
+      "archive": "tasks/archives/2026-08-19-dhf-casebook-interview/dhf-examples-three-lenses-safe.html",
+      "source_sha256": "6633e934639bbea32b743d40630fa20936c971756847568ebc5f8a205250e9db",
+      "archive_sha256": "6633e934639bbea32b743d40630fa20936c971756847568ebc5f8a205250e9db",
+      "restore": "cp tasks/archives/2026-08-19-dhf-casebook-interview/dhf-examples-three-lenses-safe.html docs/dhf-examples-three-lenses-safe.html"
+    }
+  ]
+}
