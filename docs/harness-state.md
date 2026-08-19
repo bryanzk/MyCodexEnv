@@ -5,7 +5,7 @@ Stable rules belong in `AGENTS.md`, `README.md`, `docs/repo-index.md`, or
 `docs/HARNESS_RUNTIME.md`; session facts and phase transitions are appended here.
 
 ## Current Snapshot
-- phase: development
+- phase: ship
 - source_of_truth:
   - `AGENTS.md`
   - `docs/repo-index.md`
@@ -14,19 +14,19 @@ Stable rules belong in `AGENTS.md`, `README.md`, `docs/repo-index.md`, or
   - `codex/skills/delivery-harness-framework/SKILL.md`
 - blocked_sources: none
 - unsafe_inputs: none
-- next_safe_task: implement-SHI-82-in-test_runner.py
+- next_safe_task: Commit, push, create and merge the Wave 0 PR
 - required_commands:
   - `python3 test_runner.py`
   - `git diff --check`
   - `./scripts/verify_codex_env.sh --repo-root "$(pwd)" --codex-home "$HOME/.codex" --claude-home "$HOME/.claude"`
-- latest_checkpoint: 2026-08-18T17:30:15-04:00 MCE-20260818-shi77-performance-gate-resumed-on-latest-origin-main
-- latest_verification: 2026-08-18T17:30:15-04:00 command=git-switch-c-codex-shi-77-performance-gate-origin-main; exit_code=0; key_output=branch-created-at-origin-main-834a1e5c
+- latest_checkpoint: 2026-08-19T13:12:56-04:00 Wave 0 final review findings resolved and all applicable gates passed
+- latest_verification: 2026-08-19T13:12:56-04:00 command=PYTHONDONTWRITEBYTECODE=1 python3 test_runner.py; exit_code=0; key_output=ran=128 passed=126 skipped=2 failed=0; allowed host-only skips only
 - compaction_ordinal: 0
-- transition_key: MCE-20260802-harness-compaction-governance:W6a
+- transition_key: wave0-ship
 - gate_decision: continue-to-boundary
-- constraints: ["exact-source-write-set-test_runner.py","one-authorized-checkpoint-append-docs/harness-state.md","no-live-runtime-promotion-or-broad-sync"]
-- ownership: {"boundary":"test_runner.py plus one authorized checkpoint append","files":{"docs/harness-state.md":"one_append_authorized","test_runner.py":"task_owned"}}
-- next_action: {"command":"implement-SHI-82-in-test_runner.py"}
+- constraints: ["Do not start Wave 1 until Wave 0 is merged to main"]
+- ownership: {"boundary":"Wave 0 branch files and append-only checkpoint only","files":{"docs/dhf-data-business-value-explainer.html":"task_owned","docs/dhf-shipq-development-history-en.html":"task_owned","docs/harness-state.md":"agent_owned_checkpoint","test_runner.py":"task_owned"}}
+- next_action: {"branch":"codex/dhf-evolution-ia","command":"Commit, push, create and merge the Wave 0 PR","scope":"Wave 0"}
 
 ## State Log
 
@@ -3200,3 +3200,54 @@ Stable rules belong in `AGENTS.md`, `README.md`, `docs/repo-index.md`, or
   - none
 - next_safe_task: implement-SHI-82-in-test_runner.py
 - checkpoint_data: {"constraints":["exact-source-write-set-test_runner.py","one-authorized-checkpoint-append-docs/harness-state.md","no-live-runtime-promotion-or-broad-sync"],"next_action":{"command":"implement-SHI-82-in-test_runner.py"},"ownership":{"boundary":"test_runner.py plus one authorized checkpoint append","files":{"docs/harness-state.md":"one_append_authorized","test_runner.py":"task_owned"}},"phase":"development","schema":"dhf_checkpoint_v1","verification_evidence":{"command":"git-switch-c-codex-shi-77-performance-gate-origin-main","exit_code":0,"freshness":"fresh","key_output":"branch-created-at-origin-main-834a1e5c","timestamp":"2026-08-18T21:29:52Z"}}
+
+### 2026-08-19T13:01:42-04:00
+- phase: validation
+- event: checkpoint
+- summary: Wave 0 SAFE TRUST navigation and bilingual ShipQ Evolution IA verified; ready for final review and PR
+- git:
+  - branch: codex/dhf-evolution-ia
+  - latest_commit: 2c8574e
+  - dirty_status: clean
+  - dirty_count: 0
+- transition_key: wave0-ready-for-pr
+- gate_decision: continue-to-boundary
+- changed_surfaces:
+  - `docs/dhf-data-business-value-explainer.html`
+  - `docs/dhf-shipq-development-history-en.html`
+  - `test_runner.py`
+  - `docs/superpowers/specs/2026-08-19-dhf-evolution-ia-design.md`
+  - `docs/superpowers/plans/2026-08-19-dhf-evolution-ia.md`
+- verification:
+  - command: `python3 test_runner.py`
+  - exit_code: 0
+  - key_output: ran=128 passed=128 skipped=0 failed=0
+- blockers:
+  - none
+- next_safe_task: Review, push, create and merge the Wave 0 PR
+- checkpoint_data: {"constraints":["Do not start Wave 1 until Wave 0 is merged to main"],"next_action":{"branch":"codex/dhf-evolution-ia","command":"Review, push, create and merge the Wave 0 PR","scope":"Wave 0"},"ownership":{"boundary":"Wave 0 branch files and one append-only checkpoint only","files":{"docs/dhf-data-business-value-explainer.html":"task_owned","docs/dhf-shipq-development-history-en.html":"task_owned","docs/harness-state.md":"agent_owned_checkpoint","test_runner.py":"task_owned"}},"phase":"validation","schema":"dhf_checkpoint_v1","verification_evidence":{"command":"python3 test_runner.py","exit_code":0,"freshness":"fresh","key_output":"ran=128 passed=128 skipped=0 failed=0","timestamp":"2026-08-19T17:01:42Z"}}
+
+### 2026-08-19T13:12:56-04:00
+- phase: ship
+- event: checkpoint
+- summary: Wave 0 final review findings resolved and all applicable gates passed
+- git:
+  - branch: codex/dhf-evolution-ia
+  - latest_commit: 2c8574e
+  - dirty_status: dirty
+  - dirty_count: 3
+- transition_key: wave0-ship
+- gate_decision: continue-to-boundary
+- changed_surfaces:
+  - `docs/dhf-data-business-value-explainer.html`
+  - `docs/dhf-shipq-development-history-en.html`
+  - `test_runner.py`
+  - `docs/harness-state.md`
+- verification:
+  - command: `PYTHONDONTWRITEBYTECODE=1 python3 test_runner.py`
+  - exit_code: 0
+  - key_output: ran=128 passed=126 skipped=2 failed=0; allowed host-only skips only
+- blockers:
+  - none
+- next_safe_task: Commit, push, create and merge the Wave 0 PR
+- checkpoint_data: {"constraints":["Do not start Wave 1 until Wave 0 is merged to main"],"next_action":{"branch":"codex/dhf-evolution-ia","command":"Commit, push, create and merge the Wave 0 PR","scope":"Wave 0"},"ownership":{"boundary":"Wave 0 branch files and append-only checkpoint only","files":{"docs/dhf-data-business-value-explainer.html":"task_owned","docs/dhf-shipq-development-history-en.html":"task_owned","docs/harness-state.md":"agent_owned_checkpoint","test_runner.py":"task_owned"}},"phase":"ship","schema":"dhf_checkpoint_v1","verification_evidence":{"command":"PYTHONDONTWRITEBYTECODE=1 python3 test_runner.py","exit_code":0,"freshness":"fresh","key_output":"ran=128 passed=126 skipped=2 failed=0; allowed host-only skips only","timestamp":"2026-08-19T17:07:22Z"}}

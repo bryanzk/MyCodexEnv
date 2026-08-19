@@ -10677,6 +10677,32 @@ def test_dhf_value_evidence_information_architecture():
     print("[PASS] DHF Value & Evidence information architecture")
 
 
+def test_dhf_value_page_has_single_local_navigation():
+    text = (ROOT / "docs" / "dhf-data-business-value-explainer.html").read_text(encoding="utf-8")
+    require(text.count('class="dhf-nav"') == 1, "Chinese SAFE → TRUST page global navigation count")
+    require(text.count('class="dhf-toc"') == 1, "Chinese SAFE → TRUST page local navigation count")
+    require('class="side-nav"' not in text, "Chinese SAFE → TRUST page retains legacy side navigation")
+    require("querySelectorAll('.nav-link')" not in text,
+            "Chinese SAFE → TRUST page retains legacy navigation observer")
+    print("[PASS] Chinese SAFE → TRUST page has one local navigation")
+
+
+def test_dhf_evolution_bilingual_information_architecture():
+    expected_sections = ["thesis", "timeline", "business", "safe-trust", "matrix", "current", "evidence"]
+    for name in ["dhf-shipq-development-history-en.html", "dhf-shipq-development-history.html"]:
+        text = (ROOT / "docs" / name).read_text(encoding="utf-8")
+        require_in_order(text, [f'id="{section}"' for section in expected_sections],
+                         f"{name} canonical evolution section order")
+    english = (ROOT / "docs" / "dhf-shipq-development-history-en.html").read_text(encoding="utf-8")
+    require(re.search(r'<div class="section-head" id="timeline"[^>]*>.*?<h2>Six stages of evolution: BRIDGE</h2>',
+                      english, re.DOTALL) is not None,
+            "English timeline anchor must label the BRIDGE stage heading")
+    for fragment in ["overview", "recover-position", "route-lifecycle", "bind-truth", "completion", "risk", "protect"]:
+        require(english.count(f'id="{fragment}"') == 1,
+                f"English evolution page must preserve legacy fragment: {fragment}")
+    print("[PASS] bilingual DHF evolution information architecture")
+
+
 def test_dhf_evidence_child_navigation_and_controlled_recovery_contract():
     docs = ROOT / "docs"
     evidence_pairs = [
@@ -11052,6 +11078,8 @@ TESTS = [
     test_public_dhf_architecture_status_alignment,
     test_dhf_models_and_patterns_information_architecture,
     test_dhf_value_evidence_information_architecture,
+    test_dhf_value_page_has_single_local_navigation,
+    test_dhf_evolution_bilingual_information_architecture,
     test_dhf_evidence_child_navigation_and_controlled_recovery_contract,
     test_dhf_evidence_memory_keyword_contract,
     test_runner_registry_complete,
