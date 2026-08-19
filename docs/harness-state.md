@@ -14,19 +14,19 @@ Stable rules belong in `AGENTS.md`, `README.md`, `docs/repo-index.md`, or
   - `codex/skills/delivery-harness-framework/SKILL.md`
 - blocked_sources: none
 - unsafe_inputs: none
-- next_safe_task: Commit, push, create and merge the Wave 0 PR
+- next_safe_task: Commit, push, create and merge the Wave 1 PR
 - required_commands:
   - `python3 test_runner.py`
   - `git diff --check`
   - `./scripts/verify_codex_env.sh --repo-root "$(pwd)" --codex-home "$HOME/.codex" --claude-home "$HOME/.claude"`
-- latest_checkpoint: 2026-08-19T13:12:56-04:00 Wave 0 final review findings resolved and all applicable gates passed
-- latest_verification: 2026-08-19T13:12:56-04:00 command=PYTHONDONTWRITEBYTECODE=1 python3 test_runner.py; exit_code=0; key_output=ran=128 passed=126 skipped=2 failed=0; allowed host-only skips only
+- latest_checkpoint: 2026-08-19T13:32:57-04:00 Wave 1 bilingual terminology and value pages verified and ready for PR
+- latest_verification: 2026-08-19T13:32:57-04:00 command=PYTHONDONTWRITEBYTECODE=1 python3 test_runner.py; exit_code=0; key_output=ran=129 passed=127 skipped=2 failed=0; allowed host-only skips only
 - compaction_ordinal: 0
-- transition_key: wave0-ship
+- transition_key: wave1-ship
 - gate_decision: continue-to-boundary
-- constraints: ["Do not start Wave 1 until Wave 0 is merged to main"]
-- ownership: {"boundary":"Wave 0 branch files and append-only checkpoint only","files":{"docs/dhf-data-business-value-explainer.html":"task_owned","docs/dhf-shipq-development-history-en.html":"task_owned","docs/harness-state.md":"agent_owned_checkpoint","test_runner.py":"task_owned"}}
-- next_action: {"branch":"codex/dhf-evolution-ia","command":"Commit, push, create and merge the Wave 0 PR","scope":"Wave 0"}
+- constraints: ["Do not start Wave 2 until Wave 1 is merged to main"]
+- ownership: {"boundary":"Wave 1 four changed bilingual pages, test contract, and append-only checkpoint only","files":{"docs/dhf-best-care-recover-en.html":"task_owned","docs/dhf-best-care-recover.html":"task_owned","docs/dhf-data-business-value-explainer-en.html":"task_owned","docs/dhf-safe-data-ai-comparison-en.html":"task_owned","docs/harness-state.md":"agent_owned_checkpoint","test_runner.py":"task_owned"}}
+- next_action: {"branch":"codex/dhf-evidence-wave1","command":"Commit, push, create and merge the Wave 1 PR","scope":"Wave 1"}
 
 ## State Log
 
@@ -3251,3 +3251,58 @@ Stable rules belong in `AGENTS.md`, `README.md`, `docs/repo-index.md`, or
   - none
 - next_safe_task: Commit, push, create and merge the Wave 0 PR
 - checkpoint_data: {"constraints":["Do not start Wave 1 until Wave 0 is merged to main"],"next_action":{"branch":"codex/dhf-evolution-ia","command":"Commit, push, create and merge the Wave 0 PR","scope":"Wave 0"},"ownership":{"boundary":"Wave 0 branch files and append-only checkpoint only","files":{"docs/dhf-data-business-value-explainer.html":"task_owned","docs/dhf-shipq-development-history-en.html":"task_owned","docs/harness-state.md":"agent_owned_checkpoint","test_runner.py":"task_owned"}},"phase":"ship","schema":"dhf_checkpoint_v1","verification_evidence":{"command":"PYTHONDONTWRITEBYTECODE=1 python3 test_runner.py","exit_code":0,"freshness":"fresh","key_output":"ran=128 passed=126 skipped=2 failed=0; allowed host-only skips only","timestamp":"2026-08-19T17:07:22Z"}}
+
+### 2026-08-19T13:19:23-04:00
+- phase: development
+- event: checkpoint
+- summary: Wave 1 started from merged Wave 0 main with clean focused baseline
+- git:
+  - branch: codex/dhf-evidence-wave1
+  - latest_commit: 6daa271
+  - dirty_status: clean
+  - dirty_count: 0
+- transition_key: wave1-start
+- gate_decision: continue-to-boundary
+- changed_surfaces:
+  - `test_runner.py`
+  - `docs/dhf-best-care-recover-en.html`
+  - `docs/dhf-best-care-recover.html`
+  - `docs/dhf-data-business-value-explainer-en.html`
+  - `docs/dhf-data-business-value-explainer.html`
+  - `docs/dhf-safe-data-ai-comparison-en.html`
+  - `docs/dhf-safe-data-ai-comparison.html`
+- verification:
+  - command: `PYTHONDONTWRITEBYTECODE=1 python3 -c import-test_runner-focused-evidence-contracts`
+  - exit_code: 0
+  - key_output: DHF Value Evidence IA PASS; Evidence child navigation contract PASS
+- blockers:
+  - none
+- next_safe_task: Write and run the Wave 1 bilingual contract to RED
+- checkpoint_data: {"constraints":["Do not modify Wave 2 through Wave 4 pages"],"next_action":{"branch":"codex/dhf-evidence-wave1","command":"Write and run the Wave 1 bilingual contract to RED","scope":"Wave 1"},"ownership":{"boundary":"Wave 1 six bilingual pages, focused test contract, and append-only checkpoint only","files":{"docs/harness-state.md":"agent_owned_checkpoint","test_runner.py":"task_owned"}},"phase":"development","schema":"dhf_checkpoint_v1","verification_evidence":{"command":"PYTHONDONTWRITEBYTECODE=1 python3 -c import-test_runner-focused-evidence-contracts","exit_code":0,"freshness":"fresh","key_output":"DHF Value Evidence IA PASS; Evidence child navigation contract PASS","timestamp":"2026-08-19T17:19:23Z"}}
+
+### 2026-08-19T13:32:57-04:00
+- phase: ship
+- event: checkpoint
+- summary: Wave 1 bilingual terminology and value pages verified and ready for PR
+- git:
+  - branch: codex/dhf-evidence-wave1
+  - latest_commit: 6daa271
+  - dirty_status: dirty
+  - dirty_count: 6
+- transition_key: wave1-ship
+- gate_decision: continue-to-boundary
+- changed_surfaces:
+  - `docs/dhf-best-care-recover-en.html`
+  - `docs/dhf-best-care-recover.html`
+  - `docs/dhf-data-business-value-explainer-en.html`
+  - `docs/dhf-safe-data-ai-comparison-en.html`
+  - `test_runner.py`
+  - `docs/harness-state.md`
+- verification:
+  - command: `PYTHONDONTWRITEBYTECODE=1 python3 test_runner.py`
+  - exit_code: 0
+  - key_output: ran=129 passed=127 skipped=2 failed=0; allowed host-only skips only
+- blockers:
+  - none
+- next_safe_task: Commit, push, create and merge the Wave 1 PR
+- checkpoint_data: {"constraints":["Do not start Wave 2 until Wave 1 is merged to main"],"next_action":{"branch":"codex/dhf-evidence-wave1","command":"Commit, push, create and merge the Wave 1 PR","scope":"Wave 1"},"ownership":{"boundary":"Wave 1 four changed bilingual pages, test contract, and append-only checkpoint only","files":{"docs/dhf-best-care-recover-en.html":"task_owned","docs/dhf-best-care-recover.html":"task_owned","docs/dhf-data-business-value-explainer-en.html":"task_owned","docs/dhf-safe-data-ai-comparison-en.html":"task_owned","docs/harness-state.md":"agent_owned_checkpoint","test_runner.py":"task_owned"}},"phase":"ship","schema":"dhf_checkpoint_v1","verification_evidence":{"command":"PYTHONDONTWRITEBYTECODE=1 python3 test_runner.py","exit_code":0,"freshness":"fresh","key_output":"ran=129 passed=127 skipped=2 failed=0; allowed host-only skips only","timestamp":"2026-08-19T17:27:29Z"}}

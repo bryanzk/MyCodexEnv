@@ -352,13 +352,13 @@
       <div class="recover-box reveal" style="--i:10">
         <div class="label" style="color:var(--recover);font-size:10px">Source: session 01a00a79-899f-7800-a0d2-b60a7332841f</div>
         <div class="recover-flow">
-          <div class="recover-step"><b>R</b><strong>Record</strong><small>锁定 manifest、revision、digest</small></div>
-          <div class="recover-step"><b>E</b><strong>Execute</strong><small>执行小范围 canary 写入</small></div>
-          <div class="recover-step"><b>C</b><strong>Cut off</strong><small>失败立即停止</small></div>
-          <div class="recover-step"><b>O</b><strong>Owner rollback</strong><small>Owner 原生回滚</small></div>
-          <div class="recover-step"><b>V</b><strong>Verify</strong><small>独立回读并修复验证</small></div>
-          <div class="recover-step"><b>E</b><strong>Explicitly reauthorize</strong><small>重新明确授权</small></div>
-          <div class="recover-step"><b>R</b><strong>Read back</strong><small>全量回读，可信收口</small></div>
+          <div class="recover-step"><b>R</b><strong>Recognize</strong><small>识别部分成功或结果不确定</small></div>
+          <div class="recover-step"><b>E</b><strong>End</strong><small>立即停止后续写入</small></div>
+          <div class="recover-step"><b>C</b><strong>Capture</strong><small>保留失败回执和影响范围</small></div>
+          <div class="recover-step"><b>O</b><strong>Obtain</strong><small>取得最后一个可信状态</small></div>
+          <div class="recover-step"><b>V</b><strong>Verify</strong><small>独立验证恢复结果</small></div>
+          <div class="recover-step"><b>E</b><strong>Escalate</strong><small>申请新的明确授权</small></div>
+          <div class="recover-step"><b>R</b><strong>Resume</strong><small>仅从已证明状态恢复执行</small></div>
         </div>
         <div class="incident">
           <div class="incident-card"><b>ShipQ 事故触发</b><p>Google Docs writer 在最终结构检查之前已经修改文档，随后返回 <code>readback_structure_mismatch</code>。此时“失败”不代表“没有写入”。</p></div>
