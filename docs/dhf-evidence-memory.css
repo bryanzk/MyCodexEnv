@@ -15,12 +15,21 @@
 }
 
 .dhf-memory-key {
+  --dhf-memory-link-accent: var(--green, var(--accent, #147a62));
   position: relative;
   min-width: 0;
   padding: 1rem;
   background: var(--surface, var(--paper, Canvas));
   border: 1px solid var(--border, var(--line, color-mix(in srgb, CanvasText 15%, transparent)));
   border-radius: 14px;
+  color: inherit;
+  text-decoration: none;
+  transition: border-color 160ms ease, background-color 160ms ease;
+}
+
+.dhf-memory-key:hover {
+  background: color-mix(in srgb, var(--surface, var(--paper, Canvas)) 94%, var(--dhf-memory-link-accent) 6%);
+  border-color: color-mix(in srgb, var(--dhf-memory-link-accent) 45%, transparent);
 }
 
 .dhf-memory-key[data-dhf-memory-connector]::after {
@@ -42,6 +51,7 @@
 }
 
 .dhf-memory-key[data-dhf-memory-key="RECOVER"] {
+  --dhf-memory-link-accent: var(--amber, var(--warm, #a15f22));
   grid-column: 3 / 5;
   margin-top: 0.75rem;
   border-style: dashed;
@@ -96,6 +106,22 @@
   border-radius: 12px;
   font-size: 0.78rem;
   line-height: 1.5;
+}
+
+a.dhf-memory-lens {
+  display: flex;
+  align-items: center;
+  min-height: 44px;
+  text-decoration: none;
+  transition: box-shadow 160ms ease;
+}
+
+a.dhf-memory-lens:hover { box-shadow: inset 0 0 0 1px currentColor; }
+
+.dhf-memory-key:focus-visible,
+a.dhf-memory-lens:focus-visible {
+  outline: 3px solid var(--dhf-memory-link-accent, currentColor);
+  outline-offset: 3px;
 }
 
 .dhf-memory-lens[data-dhf-memory-lens="BEST"] {
@@ -162,5 +188,6 @@
 
 @media (prefers-reduced-motion: reduce) {
   .dhf-memory-key,
+  .dhf-memory-lens,
   .dhf-memory-cue { transition: none !important; }
 }
