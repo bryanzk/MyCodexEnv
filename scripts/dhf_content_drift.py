@@ -170,7 +170,11 @@ def page_shape(text: str) -> dict:
         "sections": len(re.findall(r"<section\b", text)),
         "headings": len(re.findall(r"<h[23]\b", text)),
         "edges": mermaid.count("-->"),
-        "branches": len(re.findall(r'--\s*"', mermaid)),
+        # A labelled edge is written `A -- "label" --> B` on the English pages
+        # and `A -- 标签 --> B` (no quotes) on the Chinese ones. Counting only
+        # the quoted form manufactured drift between identical diagrams, so
+        # accept both quoting styles: anything between `--` and `-->` counts.
+        "branches": len(re.findall(r'--\s+(?:"[^"\n]*"|[^>\s][^\n]*?)\s+-->', mermaid)),
     }
 
 
@@ -184,11 +188,21 @@ def check_bilingual(docs: Path) -> list[dict]:
     """
     findings: list[dict] = []
     for en in public_html(docs):
-        if "-en.html" not in en.name:
+        if not en.name.endswith("-en.html"):
             continue
         cn = docs / en.name.replace("-en.html", "-cn.html")
         if not cn.is_file():
-            continue
+            # The evidence family names its Chinese pages without a suffix
+            # (shipq-dhf-safe-controlled-recovery.html is the Chinese twin of
+            # shipq-dhf-safe-controlled-recovery-en.html). Pair those too, but
+            # only when the unsuffixed file really declares a Chinese lang —
+            # index.html is English and must not be compared with index-en.html.
+            candidate = docs / en.name.replace("-en.html", ".html")
+            if not candidate.is_file():
+                continue
+            if 'lang="zh' not in candidate.read_text(encoding="utf-8")[:400]:
+                continue
+            cn = candidate
         a, b = page_shape(en.read_text(encoding="utf-8")), page_shape(cn.read_text(encoding="utf-8"))
         for key in ("sections", "headings", "branches"):
             hi, lo = max(a[key], b[key]), min(a[key], b[key])

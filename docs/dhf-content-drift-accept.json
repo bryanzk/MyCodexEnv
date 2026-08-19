@@ -11,6 +11,36 @@
       "key": "bilingual:project-lifecycle-harness-flow-en.html:branches",
       "reason": "Same deliberate split as the headings entry. The Chinese page carries the security and browser-QA specialist branches that the routing spec defines; the English page stays a simple intake-to-handoff line on purpose. Adding branches here would destroy the lightweight positioning rather than fix drift.",
       "accepted_on": "2026-08-11"
+    },
+    {
+      "key": "bilingual:dhf-examples-three-lenses-en.html:sections",
+      "reason": "Owner decision on 2026-08-19: the English casebook is deliberately the case index, not a translation of the 53KB Chinese ten-case narrative. The English deep-dive evidence is shipq-dhf-safe-controlled-recovery-en.html, and dhf-examples-three-lenses-safe-en.html carries the SAFE control lens. The page states this positioning in its own lead text. Revisit only if English readers start asking for per-case detail the index cannot answer; then expand the most-asked cases rather than all ten.",
+      "accepted_on": "2026-08-19"
+    },
+    {
+      "key": "bilingual:dhf-examples-three-lenses-en.html:headings",
+      "reason": "Same owner decision as the sections entry: the English page is the index by design, so it carries one heading per case instead of the Chinese page's per-lens sub-headings.",
+      "accepted_on": "2026-08-19"
+    },
+    {
+      "key": "bilingual:dhf-best-care-recover-en.html:headings",
+      "reason": "Markup-vocabulary difference, not a missed update: both pages carry the same five sections (enforced by test_dhf_evidence_wave1_bilingual_information_architecture), but the English page renders letter rows and vocabulary cards as h3 headings while the Chinese page renders them as strong-in-div rows. Content-depth parity for this pair is tracked separately in the P4 plan (tasks/dhf-evidence-concept-network-plan-2026-08-19.md); this heading count is noise of the same kind as the CSS-class comparison the detector already refuses to do.",
+      "accepted_on": "2026-08-19"
+    },
+    {
+      "key": "bilingual:dhf-case-safe-mapping-en.html:headings",
+      "reason": "Markup-vocabulary difference: both pages carry ten cases (enforced by test_dhf_evidence_wave2_bilingual_information_architecture), but the Chinese page gives each case an h3 title while the English page renders cases as compact article rows without headings. Same-cases parity is test-enforced; the heading count compares typography, not content.",
+      "accepted_on": "2026-08-19"
+    },
+    {
+      "key": "bilingual:dhf-data-business-value-explainer-en.html:headings",
+      "reason": "The English page has MORE h3 headings than the Chinese page (19 vs 12) because it splits value domains into smaller cards; the Chinese page carries the fuller prose under fewer headings. Neither direction is a missed update: section identity is pinned by test_dhf_evidence_wave1_bilingual_information_architecture. English content depth for this pair is a P4 item in tasks/dhf-evidence-concept-network-plan-2026-08-19.md, and deepening it will not change this heading asymmetry.",
+      "accepted_on": "2026-08-19"
+    },
+    {
+      "key": "bilingual:shipq-dhf-incident-recovery-memory-map-en.html:headings",
+      "reason": "Markup-vocabulary difference: the English page renders each memory card, role, and quiz item as an h3 while the Chinese page uses styled divs, so English counts 34 headings against 19 despite covering the same eight sections (enforced by test_dhf_evidence_wave4_recovery_information_architecture). The genuine English gap for this pair is the missing SAFE stop-point matrix table, tracked as a P4 item in tasks/dhf-evidence-concept-network-plan-2026-08-19.md - a table the heading count cannot see either way.",
+      "accepted_on": "2026-08-19"
     }
   ]
 }
