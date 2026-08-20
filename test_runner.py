@@ -11014,13 +11014,14 @@ def test_dhf_evidence_memory_keyword_contract():
     docs = ROOT / "docs"
     stylesheet = docs / "dhf-evidence-memory.css"
     hubs = ["dhf-value-evidence-en.html", "dhf-value-evidence-cn.html"]
-    core_terms = ["CAP", "BRIDGE", "SAFE", "TRUST", "RECOVER"]
+    core_terms = ["CAP", "BRIDGE", "SAFE", "TRUST", "PROTECT", "RECOVER"]
     hub_link_contract = {
         "dhf-value-evidence-en.html": [
             ("CAP", "./dhf-shipq-development-history-en.html"),
             ("BRIDGE", "./dhf-shipq-development-history-en.html"),
             ("SAFE", "./dhf-case-safe-mapping-en.html"),
             ("TRUST", "./dhf-data-business-value-explainer-en.html"),
+            ("PROTECT", "./dhf-protect-seven-components-en.html"),
             ("RECOVER", "./shipq-dhf-safe-controlled-recovery-en.html"),
             ("BEST", "./dhf-best-care-recover-en.html"),
             ("CARE", "./dhf-best-care-recover-en.html"),
@@ -11030,6 +11031,7 @@ def test_dhf_evidence_memory_keyword_contract():
             ("BRIDGE", "./dhf-shipq-development-history.html"),
             ("SAFE", "./dhf-case-safe-mapping.html"),
             ("TRUST", "./dhf-data-business-value-explainer.html"),
+            ("PROTECT", "./dhf-protect-seven-components-cn.html"),
             ("RECOVER", "./shipq-dhf-safe-controlled-recovery.html"),
             ("BEST", "./dhf-best-care-recover.html"),
             ("CARE", "./dhf-best-care-recover.html"),
@@ -11055,6 +11057,16 @@ def test_dhf_evidence_memory_keyword_contract():
         )
         require(spine.count('data-dhf-memory-branch="failure"') == 1,
                 f"Evidence hub must mark RECOVER as one conditional failure branch: {hub_name}")
+        require(spine.count('data-dhf-memory-layer="runtime"') == 1,
+                f"Evidence hub must mark PROTECT as one runtime implementation layer: {hub_name}")
+        require(
+            re.search(
+                r'<a\b[^>]*data-dhf-memory-key="PROTECT"[^>]*data-dhf-memory-layer="runtime"',
+                spine,
+                re.IGNORECASE,
+            ) is not None,
+            f"PROTECT must own the runtime implementation marker: {hub_name}",
+        )
         require(
             re.search(
                 r'<a\b[^>]*data-dhf-memory-key="RECOVER"[^>]*data-dhf-memory-branch="failure"',
