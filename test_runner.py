@@ -10703,6 +10703,38 @@ def test_dhf_evolution_bilingual_information_architecture():
     print("[PASS] bilingual DHF evolution information architecture")
 
 
+def test_dhf_bridge_bilingual_vocabulary_contract():
+    docs = ROOT / "docs"
+    stages = [
+        ("B", "Baseline"),
+        ("R", "Receipts"),
+        ("I", "Inspection"),
+        ("D", "Decoupling"),
+        ("G", "Grading"),
+        ("E", "Enforcement"),
+    ]
+    history_en = (docs / "dhf-shipq-development-history-en.html").read_text(encoding="utf-8")
+    history_cn = (docs / "dhf-shipq-development-history.html").read_text(encoding="utf-8")
+    memory_en = (docs / "dhf-best-care-recover-en.html").read_text(encoding="utf-8")
+    memory_cn = (docs / "dhf-best-care-recover.html").read_text(encoding="utf-8")
+
+    require_in_order(history_en, [f">{letter} · {stage}<" for letter, stage in stages],
+                     "English BRIDGE history stages")
+    require_in_order(history_cn, [f'>{stage} ·' for _, stage in stages],
+                     "Chinese BRIDGE history stages")
+    require(
+        "Baseline, Receipts, Inspection, Decoupling, Grading, and Enforcement describe evolution."
+        in memory_en,
+        "English BRIDGE memory vocabulary must match the canonical stages",
+    )
+    require_in_order(memory_cn, [f"<span>{stage}</span>" for _, stage in stages],
+                     "Chinese BRIDGE memory vocabulary")
+    for deprecated in ["R · Routing", "I · Integration", "D · Delivery", "G · Governance"]:
+        require(f">{deprecated}<" not in history_en,
+                f"English BRIDGE history retains deprecated stage label: {deprecated}")
+    print("[PASS] bilingual BRIDGE vocabulary contract")
+
+
 def test_dhf_evidence_wave1_bilingual_information_architecture():
     docs = ROOT / "docs"
     contracts = {
@@ -11341,6 +11373,7 @@ TESTS = [
     test_dhf_value_evidence_information_architecture,
     test_dhf_value_page_has_single_local_navigation,
     test_dhf_evolution_bilingual_information_architecture,
+    test_dhf_bridge_bilingual_vocabulary_contract,
     test_dhf_evidence_wave1_bilingual_information_architecture,
     test_dhf_evidence_wave2_bilingual_information_architecture,
     test_dhf_evidence_wave3_casebook_archive_and_information_architecture,
