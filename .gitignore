@@ -35,3 +35,10 @@ TEST_VERIFICATION.md
 
 # Personal job-application drafts, not part of the public DHF reference.
 application-*.md
+
+# Local committee review draft
+committee-review/DHF-Matt-实验复盘_定稿v3.md
+committee-review/评审记录_committee-review-loop.md
+
+# Local deletion staging
+/_to_delete/
