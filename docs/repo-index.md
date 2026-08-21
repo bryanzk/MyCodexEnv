@@ -67,6 +67,8 @@ behavior live in `codex/hooks/dhf_preprompt.py`.
 - `docs/dhf-engineering-notes-cn.html`: Chinese engineering notes on compaction governance and deployment safety.
 - `docs/delivery-harness-beginner-guide-cn.html`: Chinese beginner guide for agentic engineering readers.
 - `docs/delivery-harness-beginner-guide-en.html`: English beginner guide for agentic engineering readers.
+- `docs/dhf-memory-map.html`: Chinese airline-operations memory map for the complete DHF mnemonic system.
+- `docs/dhf-memory-map-en.html`: English airline-operations memory map for the complete DHF mnemonic system.
 - `docs/dhf-governance-decision-flow-cn.html`: Chinese governance decision flow for a single tool call.
 - `docs/dhf-governance-decision-flow-en.html`: English governance decision flow for a single tool call.
 - `docs/project-lifecycle-harness-flow-cn.html`: Chinese vertical lifecycle flow visual guide.
@@ -79,7 +81,7 @@ behavior live in `codex/hooks/dhf_preprompt.py`.
 
 ### Public DHF reading order
 
-`Beginner → Context Engineering → Lifecycle → Governance → Skill Routing → Architecture Status`
+`Home → Beginner → Memory Map → Context → Lifecycle → Governance → Evidence → Status`
 
 - Context Engineering is the conceptual bridge between the beginner explanation and lifecycle execution.
 - Skill Routing is an English-only operational resource; Chinese links disclose the language switch as `技能路由（英文）`.
@@ -184,6 +186,8 @@ behavior live in `codex/hooks/dhf_preprompt.py`.
 - `docs/dhf-engineering-notes-cn.html`: Chinese deep-dive on governed compaction and forward-only deployment.
 - `docs/delivery-harness-beginner-guide-cn.html`: beginner-oriented Delivery Harness Framework explanation.
 - `docs/delivery-harness-beginner-guide-en.html`: English beginner-oriented Delivery Harness Framework explanation.
+- `docs/dhf-memory-map.html`: Chinese airline-operations memory map for the complete DHF mnemonic system.
+- `docs/dhf-memory-map-en.html`: English airline-operations memory map for the complete DHF mnemonic system.
 - `docs/dhf-governance-decision-flow-cn.html`: governance decision flow for a single tool call.
 - `docs/dhf-governance-decision-flow-en.html`: English governance decision flow for a single tool call.
 - `docs/project-lifecycle-harness-flow-cn.html`: visual vertical lifecycle flow.
@@ -245,6 +249,7 @@ behavior live in `codex/hooks/dhf_preprompt.py`.
 - `docs/dhf-engineering-notes-cn.html`: GitHub Pages Chinese engineering deep-dive for agentic systems readers.
 - `docs/delivery-harness-beginner-guide-cn.html`: beginner guide explaining what Delivery Harness Framework does.
 - `docs/delivery-harness-beginner-guide-en.html`: English beginner guide explaining what Delivery Harness Framework does.
+- `docs/dhf-memory-map.html` and `docs/dhf-memory-map-en.html`: bilingual airline-operations memory maps for the complete DHF mnemonic system.
 - `docs/dhf-governance-decision-flow-cn.html`: Chinese governance decision flow, lane gate through refusal and verification back-edge.
 - `docs/dhf-governance-decision-flow-en.html`: English governance decision flow, lane gate through refusal and verification back-edge.
 - `docs/project-lifecycle-harness-flow-cn.html`: Chinese vertical lifecycle flow.

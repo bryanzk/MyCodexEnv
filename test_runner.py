@@ -10026,8 +10026,13 @@ def test_public_dhf_information_architecture():
         ROOT / "docs" / "dhf-context-engineering-en.html",
         ROOT / "docs" / "dhf-context-engineering-cn.html",
     ]
+    memory_paths = [
+        ROOT / "docs" / "dhf-memory-map-en.html",
+        ROOT / "docs" / "dhf-memory-map.html",
+    ]
     current_public_paths = [
         *home_paths,
+        *memory_paths,
         *context_paths,
         BEGINNER_GUIDE_EN_HTML,
         BEGINNER_GUIDE_CN_HTML,
@@ -10102,7 +10107,7 @@ def test_public_dhf_information_architecture():
         nav = primary_nav(text, path.name)
         require_in_order(
             nav,
-            ["Home", "Beginner", "Context", "Lifecycle", "Governance", "Evidence", "Status"],
+            ["Home", "Beginner", "Memory Map", "Context", "Lifecycle", "Governance", "Evidence", "Status"],
             f"{path.name} compact primary navigation order",
         )
         for term in ["Engineering Notes", "Workflow Skills", "Written Spec"]:
@@ -10113,7 +10118,7 @@ def test_public_dhf_information_architecture():
         nav = primary_nav(text, path.name)
         require_in_order(
             nav,
-            ["首页", "新手指南", "上下文工程", "生命周期", "治理判定", "证据", "架构状态"],
+            ["首页", "新手指南", "记忆地图", "上下文工程", "生命周期", "治理判定", "证据", "架构状态"],
             f"{path.name} compact primary navigation order",
         )
         for term in ["工程笔记", "工作流 Skills", "文字规范"]:
@@ -10246,6 +10251,7 @@ def test_public_dhf_information_architecture():
         PUBLIC_INDEX_HTML,
         PUBLIC_INDEX_EN_HTML,
         BEGINNER_GUIDE_EN_HTML,
+        memory_paths[0],
         context_paths[0],
         LIFECYCLE_FLOW_EN_HTML,
         ROOT / "docs" / "dhf-governance-decision-flow-en.html",
@@ -10261,6 +10267,7 @@ def test_public_dhf_information_architecture():
     chinese_current_paths = [
         PUBLIC_INDEX_ZH_HTML,
         BEGINNER_GUIDE_CN_HTML,
+        memory_paths[1],
         context_paths[1],
         LIFECYCLE_FLOW_HTML,
         ROOT / "docs" / "dhf-governance-decision-flow-cn.html",
@@ -10278,6 +10285,8 @@ def test_public_dhf_information_architecture():
         "index-zh.html": "./index-zh.html",
         "delivery-harness-beginner-guide-en.html": "./delivery-harness-beginner-guide-en.html",
         "delivery-harness-beginner-guide-cn.html": "./delivery-harness-beginner-guide-cn.html",
+        "dhf-memory-map-en.html": "./dhf-memory-map-en.html",
+        "dhf-memory-map.html": "./dhf-memory-map.html",
         "dhf-context-engineering-en.html": "./dhf-context-engineering-en.html",
         "dhf-context-engineering-cn.html": "./dhf-context-engineering-cn.html",
         "project-lifecycle-harness-flow-en.html": "./project-lifecycle-harness-flow-en.html",
@@ -10295,6 +10304,8 @@ def test_public_dhf_information_architecture():
         "index-zh.html": "./",
         "delivery-harness-beginner-guide-en.html": "./delivery-harness-beginner-guide-cn.html",
         "delivery-harness-beginner-guide-cn.html": "./delivery-harness-beginner-guide-en.html",
+        "dhf-memory-map-en.html": "./dhf-memory-map.html",
+        "dhf-memory-map.html": "./dhf-memory-map-en.html",
         "dhf-context-engineering-en.html": "./dhf-context-engineering-cn.html",
         "dhf-context-engineering-cn.html": "./dhf-context-engineering-en.html",
         "project-lifecycle-harness-flow-en.html": "./project-lifecycle-harness-flow-cn.html",
@@ -10319,10 +10330,10 @@ def test_public_dhf_information_architecture():
     }
 
     for path, labels, demoted in [
-        (path, ["Home", "Beginner", "Context", "Lifecycle", "Governance", "Evidence", "Status"], ["Skill Routing", "Workflow Skills", "PROTECT", "PM &amp; FDE", "Engineering Notes", "Written Spec"])
+        (path, ["Home", "Beginner", "Memory Map", "Context", "Lifecycle", "Governance", "Evidence", "Status"], ["Skill Routing", "Workflow Skills", "PROTECT", "PM &amp; FDE", "Engineering Notes", "Written Spec"])
         for path in english_current_paths
     ] + [
-        (path, ["首页", "新手指南", "上下文工程", "生命周期", "治理判定", "证据", "架构状态"], ["Skill 路由", "工作流 Skills", "PROTECT", "产品与交付", "工程笔记", "文字规范"])
+        (path, ["首页", "新手指南", "记忆地图", "上下文工程", "生命周期", "治理判定", "证据", "架构状态"], ["Skill 路由", "工作流 Skills", "PROTECT", "产品与交付", "工程笔记", "文字规范"])
         for path in chinese_current_paths
     ]:
         text = path.read_text(encoding="utf-8")
@@ -10331,7 +10342,7 @@ def test_public_dhf_information_architecture():
         require(links_match is not None, f"{path.name} missing compact nav link container")
         links = links_match.group(1)
         require_in_order(links, labels, f"{path.name} compact navigation order")
-        require(links.count("<a ") == 7, f"{path.name} compact navigation should contain seven content links")
+        require(links.count("<a ") == 8, f"{path.name} compact navigation should contain eight content links")
         for term in demoted:
             require(term not in links, f"{path.name} primary navigation should demote {term}")
         expected_current = current_hrefs.get(path.name)
@@ -10350,11 +10361,22 @@ def test_public_dhf_information_architecture():
     print("[PASS] public DHF information architecture")
 
 
+def test_dhf_language_switch_border_contract():
+    css = (ROOT / "docs" / "dhf-site-status.css").read_text(encoding="utf-8")
+    language_rule = re.search(r"\.dhf-nav a\.dhf-nav-lang\s*\{([^}]*)\}", css, re.DOTALL)
+    require(language_rule is not None,
+            "language switch needs enough selector specificity to override the generic nav underline")
+    require(re.search(r"\bborder:\s*1px\s+solid\b", language_rule.group(1)) is not None,
+            "language switch must render a complete resting border")
+    print("[PASS] DHF language switch resting border contract")
+
+
 def test_public_dhf_architecture_status_alignment():
     english_pages = [
         "index.html",
         "index-en.html",
         "delivery-harness-beginner-guide-en.html",
+        "dhf-memory-map-en.html",
         "dhf-for-product-and-field-en.html",
         "dhf-engineering-notes-en.html",
         "lifecycle-skill-routing-en.html",
@@ -10368,6 +10390,7 @@ def test_public_dhf_architecture_status_alignment():
     chinese_pages = [
         "index-zh.html",
         "delivery-harness-beginner-guide-cn.html",
+        "dhf-memory-map.html",
         "dhf-for-product-and-field-cn.html",
         "dhf-engineering-notes-cn.html",
         "project-lifecycle-harness-flow-cn.html",
@@ -10492,6 +10515,69 @@ def test_dhf_models_and_patterns_information_architecture():
     print("[PASS] legacy Models & Patterns page migrated to Evidence")
 
 
+def test_dhf_memory_map_bilingual_information_architecture():
+    docs = ROOT / "docs"
+    pages = {"en": docs / "dhf-memory-map-en.html", "cn": docs / "dhf-memory-map.html"}
+    expected = {
+        "en": {
+            "labels": ["Home", "Beginner", "Memory Map", "Context", "Lifecycle", "Governance", "Evidence", "Status"],
+            "hrefs": ["./", "./delivery-harness-beginner-guide-en.html", "./dhf-memory-map-en.html",
+                      "./dhf-context-engineering-en.html", "./project-lifecycle-harness-flow-en.html",
+                      "./dhf-governance-decision-flow-en.html", "./dhf-value-evidence-en.html",
+                      "./dhf-architecture-status-en.html"],
+            "twin": "./dhf-memory-map.html",
+        },
+        "cn": {
+            "labels": ["首页", "新手指南", "记忆地图", "上下文工程", "生命周期", "治理判定", "证据", "架构状态"],
+            "hrefs": ["./index-zh.html", "./delivery-harness-beginner-guide-cn.html", "./dhf-memory-map.html",
+                      "./dhf-context-engineering-cn.html", "./project-lifecycle-harness-flow-cn.html",
+                      "./dhf-governance-decision-flow-cn.html", "./dhf-value-evidence-cn.html",
+                      "./dhf-architecture-status-cn.html"],
+            "twin": "./dhf-memory-map-en.html",
+        },
+    }
+    anchors = ["overview", "cap", "bridge", "aircraft", "safe", "protect", "recover", "trust", "recall"]
+
+    texts = {}
+    for language, path in pages.items():
+        require(path.is_file(), f"missing {language} DHF Memory Map")
+        text = path.read_text(encoding="utf-8")
+        texts[language] = text
+        require(text.count('class="dhf-nav"') == 1, f"{path.name} must contain one global navigation")
+        nav_match = re.search(r'<nav class="dhf-nav"[^>]*>(.*?)</nav>', text, re.DOTALL)
+        require(nav_match is not None, f"{path.name} missing global navigation")
+        links_match = re.search(r'<div class="dhf-nav-links"[^>]*>(.*?)</div>', nav_match.group(1), re.DOTALL)
+        require(links_match is not None, f"{path.name} missing global navigation links")
+        links = links_match.group(1)
+        require_in_order(links, expected[language]["labels"], f"{path.name} global navigation order")
+        require(re.findall(r'href="([^"]+)"', links) == expected[language]["hrefs"],
+                f"{path.name} global navigation hrefs drifted")
+        require(links.count("<a ") == 8, f"{path.name} global navigation must contain eight content links")
+        require(links.count('aria-current="page"') == 1,
+                f"{path.name} must mark exactly one current global route")
+        memory_href = expected[language]["hrefs"][2]
+        require(re.search(rf'href="{re.escape(memory_href)}"[^>]*aria-current="page"', links) is not None,
+                f"{path.name} must mark Memory Map as current")
+        require(f'href="{expected[language]["twin"]}"' in nav_match.group(1),
+                f"{path.name} missing language twin")
+        require(text.count('data-dhf-status="2026-08-11"') == 1,
+                f"{path.name} must preserve the canonical DHF status attribute")
+        require(text.count(f'data-dhf-memory-map-language="{language}"') == 1,
+                f"{path.name} missing language marker")
+        require(text.count('class="island-nav"') == 1,
+                f"{path.name} must contain one section navigation")
+        for anchor in anchors:
+            require(text.count(f'id="{anchor}"') == 1, f"{path.name} missing section anchor: {anchor}")
+            require(f'href="#{anchor}"' in text, f"{path.name} section navigation missing target: {anchor}")
+
+    extract = lambda tag, text: re.search(rf'<{tag}>(.*?)</{tag}>', text, re.DOTALL).group(1)
+    require(extract("style", texts["en"]) == extract("style", texts["cn"]),
+            "Memory Map pages must share one CSS structure")
+    require(extract("script", texts["en"]) == extract("script", texts["cn"]),
+            "Memory Map pages must share one script structure")
+    print("[PASS] bilingual DHF Memory Map information architecture")
+
+
 def test_dhf_value_evidence_information_architecture():
     docs = ROOT / "docs"
     english_hub_name = "dhf-value-evidence-en.html"
@@ -10523,7 +10609,7 @@ def test_dhf_value_evidence_information_architecture():
         links_match = re.search(r'<div class="dhf-nav-links"[^>]*>(.*?)</div>', nav_match.group(1), re.DOTALL)
         require(links_match is not None, f"{filename} missing global navigation links")
         links = links_match.group(1)
-        require(links.count("<a ") == 7, f"{filename} global navigation must contain seven content links")
+        require(links.count("<a ") == 8, f"{filename} global navigation must contain eight content links")
         require(
             re.search(rf'href="\./{re.escape(target)}"[^>]*aria-current="page"[^>]*>{label}</a>', links) is not None,
             f"{filename} must mark Evidence as the current global route",
@@ -10646,8 +10732,8 @@ def test_dhf_value_evidence_information_architecture():
         links = links_match.group(1)
         require_in_order(links, labels, f"{filename} Evidence navigation order")
         require(f'href="./{target}"' in links, f"{filename} missing same-language Evidence target")
-        require(links.count("<a ") == 7,
-                f"{filename} global navigation must contain seven content links")
+        require(links.count("<a ") == 8,
+                f"{filename} global navigation must contain eight content links")
 
     for filename in ["index.html", "index-en.html", "index-zh.html"]:
         text = (docs / filename).read_text(encoding="utf-8")
@@ -10956,14 +11042,14 @@ def test_dhf_evidence_child_navigation_and_controlled_recovery_contract():
         ("shipq-dhf-incident-recovery-memory-map-en.html", "shipq-dhf-incident-recovery-memory-map.html"),
     ]
     labels = {
-        "en": ["Home", "Beginner", "Context", "Lifecycle", "Governance", "Evidence", "Status"],
-        "cn": ["首页", "新手指南", "上下文工程", "生命周期", "治理判定", "证据", "架构状态"],
+        "en": ["Home", "Beginner", "Memory Map", "Context", "Lifecycle", "Governance", "Evidence", "Status"],
+        "cn": ["首页", "新手指南", "记忆地图", "上下文工程", "生命周期", "治理判定", "证据", "架构状态"],
     }
     hrefs = {
-        "en": ["./", "./delivery-harness-beginner-guide-en.html", "./dhf-context-engineering-en.html",
+        "en": ["./", "./delivery-harness-beginner-guide-en.html", "./dhf-memory-map-en.html", "./dhf-context-engineering-en.html",
                "./project-lifecycle-harness-flow-en.html", "./dhf-governance-decision-flow-en.html",
                "./dhf-value-evidence-en.html", "./dhf-architecture-status-en.html"],
-        "cn": ["./index-zh.html", "./delivery-harness-beginner-guide-cn.html", "./dhf-context-engineering-cn.html",
+        "cn": ["./index-zh.html", "./delivery-harness-beginner-guide-cn.html", "./dhf-memory-map.html", "./dhf-context-engineering-cn.html",
                "./project-lifecycle-harness-flow-cn.html", "./dhf-governance-decision-flow-cn.html",
                "./dhf-value-evidence-cn.html", "./dhf-architecture-status-cn.html"],
     }
@@ -10982,7 +11068,7 @@ def test_dhf_evidence_child_navigation_and_controlled_recovery_contract():
             require(links_match is not None, f"{name} missing global navigation links")
             require(re.findall(r'href="([^"]+)"', links_match.group(1)) == hrefs[language],
                     f"{name} global navigation hrefs drifted")
-            require(nav.count("<a ") == 9, f"{name} navigation should contain home, seven routes, and language twin")
+            require(nav.count("<a ") == 10, f"{name} navigation should contain home, eight routes, and language twin")
             require('aria-current="page"' not in nav, f"{name} is an Evidence child, not a primary route")
             require(f'href="./{twin}"' in nav, f"{name} missing language twin")
             toc_match = re.search(r'<nav class="(?:dhf-toc|toc|rail)"[^>]*>(.*?)</nav>', text, re.DOTALL)
@@ -11368,8 +11454,10 @@ TESTS = [
     test_codex_fluent_markdown_metadata_is_inert,
     test_codex_fluent_report_only_contract,
     test_public_dhf_information_architecture,
+    test_dhf_language_switch_border_contract,
     test_public_dhf_architecture_status_alignment,
     test_dhf_models_and_patterns_information_architecture,
+    test_dhf_memory_map_bilingual_information_architecture,
     test_dhf_value_evidence_information_architecture,
     test_dhf_value_page_has_single_local_navigation,
     test_dhf_evolution_bilingual_information_architecture,

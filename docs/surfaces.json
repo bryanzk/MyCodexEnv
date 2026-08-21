@@ -439,6 +439,18 @@
       "public_nav": ["docs/index.html"]
     },
     {
+      "path": "docs/dhf-memory-map.html",
+      "role": "Chinese airline-operations memory map for the complete DHF mnemonic system",
+      "audience": ["human"],
+      "public_nav": ["docs/index-zh.html"]
+    },
+    {
+      "path": "docs/dhf-memory-map-en.html",
+      "role": "English airline-operations memory map for the complete DHF mnemonic system",
+      "audience": ["human"],
+      "public_nav": ["docs/index.html"]
+    },
+    {
       "path": "docs/dhf-protect-seven-components-cn.html",
       "role": "Chinese PROTECT map for the seven WAL-protected DHF runtime promotion targets",
       "audience": ["human"],

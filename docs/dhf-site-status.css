@@ -251,7 +251,7 @@ body { padding: 0 0 clamp(1.5rem, 4vw, 2.4rem) !important; }
   font-weight: 500;
 }
 
-.dhf-nav-lang {
+.dhf-nav a.dhf-nav-lang {
   flex: none;
   margin-left: 0.25rem;
   padding: 0 0.6rem !important;
@@ -262,7 +262,7 @@ body { padding: 0 0 clamp(1.5rem, 4vw, 2.4rem) !important; }
   font-size: 0.8125rem;
 }
 
-.dhf-nav-lang:hover {
+.dhf-nav a.dhf-nav-lang:hover {
   border-color: color-mix(in srgb, currentColor 60%, transparent);
 }
 

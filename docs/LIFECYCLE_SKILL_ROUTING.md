@@ -62,6 +62,8 @@ behavior live in `codex/hooks/dhf_preprompt.py`.
 - `docs/dhf-workflow-skills-cn.html`: 中文 DHF workflow skills matrix，逐步列出每个阶段使用的 skill、职责说明和 GitHub 源码链接。
 - `docs/dhf-workflow-skills-en.html`: English DHF workflow skills matrix with stage-by-stage skill explanations and GitHub source links.
 - `docs/delivery-harness-beginner-guide-cn.html`: 中文 beginner guide，用一句话定义、三层架构、五步流程、例子和术语表解释 Delivery Harness Framework。
+- `docs/dhf-memory-map.html`: 中文 DHF 航空运营记忆地图，用一条航线串联 CAP、BRIDGE、AIRCRAFT、SAFE、PROTECT、RECOVER 与 TRUST。
+- `docs/dhf-memory-map-en.html`: English DHF airline-operations memory map covering CAP, BRIDGE, AIRCRAFT, SAFE, PROTECT, RECOVER, and TRUST.
 - `docs/dhf-engineering-notes-cn.html`: 中文工程笔记，覆盖会话容量治理、版本转移与可执行政策文本。
 - `docs/dhf-engineering-notes-en.html`: English engineering notes on compaction governance, version transitions, and executable policy text.
 - `docs/dhf-for-product-and-field-cn.html`: 中文产品与现场交付视角，用图解说明交付保证。
