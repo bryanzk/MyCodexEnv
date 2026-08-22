@@ -1,0 +1,41 @@
+{
+  "baseline": "after-p0-2",
+  "codex_config_sha256": "0247f4ebc0bd25b9b5f68afc130709a2ab41b77a891de081b8412f24a54a9f07",
+  "git_head": "4dfac0331878bede6c13beb08616540ad033533c",
+  "identity_drift": false,
+  "malformed_lines": 0,
+  "rollout": "rollout-2026-08-22T15-21-00-01a02aeb-51e6-72b1-a649-81cbaddd9716.jsonl",
+  "run": 1,
+  "session_id": "01a02aeb-51e6-72b1-a649-81cbaddd9716",
+  "skills_lock_sha256": "0018fd4adb95bc011310ff8368f576d4ba7fc90e2b8737b66d61b14d65d4bcad",
+  "subagent_attribution": "not_available",
+  "subagent_attribution_reason": "No independent child rollout can be linked from the parent rollout metadata.",
+  "task": "light",
+  "task_exit_code": 0,
+  "tool_calls": {
+    "exec": 5
+  },
+  "totals": {
+    "cache_hit_rate": 0.809748309258785,
+    "cached_input": 268800,
+    "input": 331955,
+    "output": 1735,
+    "requests_total": 6,
+    "uncached_input": 63155
+  },
+  "turns": [
+    {
+      "cached_input": 65280,
+      "compaction_ordinal": 0,
+      "index": 1,
+      "input": 67862,
+      "input_sum": 331955,
+      "output": 590,
+      "requests": 6,
+      "timestamp": "2026-08-22T19:21:46.953Z",
+      "turn_id": "01a02aeb-55ad-7351-a80d-7713bab4f85c",
+      "uncached_input": 2582
+    }
+  ],
+  "wall_seconds": 45.828
+}

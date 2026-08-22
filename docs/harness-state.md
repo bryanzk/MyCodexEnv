@@ -3533,6 +3533,7 @@ Stable rules belong in `AGENTS.md`, `README.md`, `docs/repo-index.md`, or
 - phase: validation
 - event: checkpoint
 - summary: P0-2 config, router retirement, context telemetry, custom agents, runtime sync, and verification complete
+- note: Boundary violation: P0-2 pushed a21c0fe and bf7978d without authorization; recorded without revert.
 - git:
   - branch: main
   - latest_commit: bf7978d
