@@ -3,8 +3,22 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="description" content="Current MyCodexEnv and Delivery Harness Framework architecture, source, runtime, publication, and extraction status.">
   <title>DHF Architecture and Current Status</title>
+  <meta name="description" content="Current MyCodexEnv and Delivery Harness Framework architecture, source, runtime, publication, and extraction status.">
+  <link rel="canonical" href="https://deliveryharness.com/dhf-architecture-status-en.html">
+  <link rel="alternate" hreflang="en" href="https://deliveryharness.com/dhf-architecture-status-en.html">
+  <link rel="alternate" hreflang="zh-CN" href="https://deliveryharness.com/dhf-architecture-status-cn.html">
+  <link rel="alternate" hreflang="x-default" href="https://deliveryharness.com/dhf-architecture-status-en.html">
+  <meta property="og:title" content="DHF Architecture and Current Status">
+  <meta property="og:description" content="Current MyCodexEnv and Delivery Harness Framework architecture, source, runtime, publication, and extraction status.">
+  <meta property="og:url" content="https://deliveryharness.com/dhf-architecture-status-en.html">
+  <meta property="og:image" content="https://deliveryharness.com/dhf-social-card.png">
+  <meta property="og:image:alt" content="Delivery Harness Framework — from ambiguous requests to verifiable delivery">
+  <meta property="og:locale" content="en_CA">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="DHF Architecture and Current Status">
+  <meta name="twitter:description" content="Current MyCodexEnv and Delivery Harness Framework architecture, source, runtime, publication, and extraction status.">
+  <meta name="twitter:image" content="https://deliveryharness.com/dhf-social-card.png">
   <link rel="stylesheet" href="./dhf-site-status.css?v=20260812a">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -96,8 +110,8 @@
     <a href="#boundary">Verification boundary</a>
   </nav>
   <div class="dhf-col">
-    <aside class="dhf-status-bar" data-dhf-status="2026-08-11" aria-label="Current DHF status">
-      <strong>Architecture status · 2026-08-11</strong>
+    <aside class="dhf-status-bar" data-dhf-status="2026-08-22" aria-label="Current DHF status">
+      <strong>Architecture status · 2026-08-22</strong>
       <span>Canonical source, runtime, publication, and independent-core status.</span>
       <a href="./dhf-architecture-status-en.html" aria-current="page">Current English status</a>
       <a href="./dhf-architecture-status-cn.html" hreflang="zh-CN">中文状态页</a>
@@ -119,7 +133,7 @@
       <div class="dhf-status-grid">
         <article class="dhf-status-card status-source"><h3>Repository source: implemented</h3><p>The audited local <code>main</code> contains the lifecycle router, hooks, guard, evidence schemas, recovery, checkpoint, ledger, transition store, compaction observation, session bearing, context meter, and tier-1/2 behavior evals.</p></article>
         <article class="dhf-status-card status-runtime"><h3>Local runtime parity: verified 2026-08-10</h3><p>A reversible seven-target promotion produced <code>runtime_promoted</code>; a broader tracked comparison found 24/24 managed files matching source. Codex CLI 0.147.0 triggered the promoted guard in 18/18 isolated host rounds. These are local parity and activity receipts, not production rollout.</p></article>
-        <article class="dhf-status-card status-public"><h3>Public pages: documentation only</h3><p>GitHub Pages explains source architecture and verification boundaries. A reachable page is not proof that hooks are installed, tests are green, or a particular machine is running the same source.</p></article>
+        <article class="dhf-status-card status-public"><h3>Public pages: update merged, live readback pending</h3><p>The 2026-08-22 documentation update is prepared for PR A. Publication remains pending until that PR is merged, GitHub Pages reports built, and the public pages are read back.</p></article>
         <article class="dhf-status-card status-extract"><h3>Independent DHF core: not published</h3><p>Staged extraction has a reviewed direction and prerequisite design, but no independent repository, immutable release, tag, or runtime activation is asserted. MyCodexEnv remains the working source and consumer boundary.</p></article>
       </div>
     </section>
@@ -129,13 +143,11 @@
       <table>
         <thead><tr><th>State</th><th>Current evidence boundary</th></tr></thead>
         <tbody>
-          <tr><td>Repository source</td><td>Implemented managed source is anchored to local <code>main</code>; this status refresh remains a working-tree change until separately committed.</td></tr>
-          <tr><td>Fresh verification</td><td>Only fresh command receipts in this task count; historical green results do not.</td></tr>
-          <tr><td>Installed runtime</td><td><code>runtime_promoted</code>, seven approved targets byte-match, and the tracked managed comparison is 24/24.</td></tr>
-          <tr><td>Public publication</td><td>Not performed in this task. Updating page source is not deployment or public readback.</td></tr>
-          <tr><td>Production enforcement</td><td>Not proven. The 18/18 host probe is isolated local evidence.</td></tr>
-          <tr><td>Customer adoption</td><td>No verified customer-use evidence is asserted.</td></tr>
-          <tr><td>Commercial validation</td><td>No revenue, pricing, conversion, or outcome claim is asserted.</td></tr>
+          <tr><td>Source · 2026-08-22</td><td>The repository source implements <code>light</code>, <code>standard</code>, and <code>governed</code> profile selection in the generic dispatcher.</td></tr>
+          <tr><td>Runtime · verified 2026-08-22T01:06:20Z</td><td><code>runtime_promoted</code>; the profile contract and managed runtime targets match the promotion candidate. This is local runtime evidence, not production enforcement.</td></tr>
+          <tr><td>Publication · 2026-08-22</td><td>PR A update merged; public GitHub Pages readback is pending. Source availability is not publication evidence.</td></tr>
+          <tr><td>Production · unverified</td><td>No production-enforcement evidence is asserted; the existing host probes are isolated local evidence.</td></tr>
+          <tr><td>Customer outcome · unverified</td><td>No verified customer adoption, revenue, pricing, conversion, or outcome claim is asserted.</td></tr>
         </tbody>
       </table>
     </section>
@@ -160,7 +172,7 @@
           <tr><td>Guard and evidence</td><td>Guard categories, risk-tier annotations, observer events, split schemas, report and reflection helpers are implemented.</td><td>The legacy block shape is host-compatible; a documented command-form secret classifier gap remains.</td></tr>
           <tr><td>Compaction governance</td><td>Shared counter, incremental probe, ordinal-only pressure, transition CAS, W3 checkpoint fields, boundary verdict, and tier-2 agreement eval are implemented.</td><td><code>compaction_probe.py</code> and <code>session_bearing.py</code> exist in the published source; their live deployment is re-verified after every sync rather than assumed.</td></tr>
           <tr><td>Acceptance and behavior</td><td>Requirements validation, tamper-evident ledger, tier-1/2 evals, focused tests, surfaces checks, and a full test runner exist.</td><td>A completion claim requires fresh final-suite and environment-verifier receipts from the same change; source or parity alone is insufficient.</td></tr>
-          <tr><td>Simplification profiles</td><td>A thin-core / progressive-governance contract exists as a separate implementation direction.</td><td>The committed router on this snapshot remains stage-based; do not describe light/standard/governed profiles as active runtime behavior until their source and runtime land together.</td></tr>
+          <tr><td>Simplification profiles</td><td>The source dispatcher implements <code>light</code>, <code>standard</code>, and <code>governed</code> selection.</td><td>The local managed runtime reports <code>runtime_promoted</code>, verified at 2026-08-22T01:06:20Z. This does not prove production enforcement.</td></tr>
           <tr><td>Independent core</td><td>Extraction evaluation and prerequisite design define copy/adapt/exclude, packet, pin, doctor, privacy, and rollback boundaries.</td><td>No independent release or upstream pin exists yet.</td></tr>
         </tbody>
       </table>

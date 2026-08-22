@@ -5,7 +5,7 @@ Stable rules belong in `AGENTS.md`, `README.md`, `docs/repo-index.md`, or
 `docs/HARNESS_RUNTIME.md`; session facts and phase transitions are appended here.
 
 ## Current Snapshot
-- phase: ship
+- phase: validation
 - source_of_truth:
   - `AGENTS.md`
   - `docs/repo-index.md`
@@ -14,19 +14,19 @@ Stable rules belong in `AGENTS.md`, `README.md`, `docs/repo-index.md`, or
   - `codex/skills/delivery-harness-framework/SKILL.md`
 - blocked_sources: none
 - unsafe_inputs: none
-- next_safe_task: Commit, push, create and merge the Wave 4 PR
+- next_safe_task: Rerun final gates after checkpoint, then rebase after 22:00 sync before commit and push PR A
 - required_commands:
   - `python3 test_runner.py`
   - `git diff --check`
   - `./scripts/verify_codex_env.sh --repo-root "$(pwd)" --codex-home "$HOME/.codex" --claude-home "$HOME/.claude"`
-- latest_checkpoint: 2026-08-19T14:21:57-04:00 Wave 4 recovery audit and English Incident Recovery parity verified; full plan ready for final PR
-- latest_verification: 2026-08-19T14:21:57-04:00 command=PYTHONDONTWRITEBYTECODE=1 python3 test_runner.py; exit_code=0; key_output=ran=132 passed=130 skipped=2 failed=0; allowed host-only skips only
-- compaction_ordinal: 0
-- transition_key: wave4-ship
+- latest_checkpoint: 2026-08-21T21:57:52-04:00 DHF public-site Browser QA complete
+- latest_verification: 2026-08-21T21:57:52-04:00 command=node /tmp/dhf_public_site_qa.js; exit_code=0; key_output=16 pages; 96 viewport/theme checks; 16 reduced-motion; 16 print; 2 interactions; 51 internal links; 130 total checks; failures=[]
+- compaction_ordinal: 1
+- transition_key: public-site-fix-validation
 - gate_decision: continue-to-boundary
-- constraints: ["No runtime sync, deployment, Cloudflare, or DNS changes"]
-- ownership: {"boundary":"Wave 4 English Incident Recovery page, Controlled Recovery audit test, and append-only checkpoint only","files":{"docs/harness-state.md":"agent_owned_checkpoint","docs/shipq-dhf-incident-recovery-memory-map-en.html":"task_owned","test_runner.py":"task_owned"}}
-- next_action: {"branch":"codex/dhf-evidence-wave4","command":"Commit, push, create and merge the Wave 4 PR","scope":"Wave 4"}
+- constraints: []
+- ownership: {}
+- next_action: {"command":"Rerun final gates after checkpoint, then rebase after 22:00 sync before commit and push PR A"}
 
 ## State Log
 
@@ -3457,3 +3457,46 @@ Stable rules belong in `AGENTS.md`, `README.md`, `docs/repo-index.md`, or
   - none
 - next_safe_task: Commit, push, create and merge the Wave 4 PR
 - checkpoint_data: {"constraints":["No runtime sync, deployment, Cloudflare, or DNS changes"],"next_action":{"branch":"codex/dhf-evidence-wave4","command":"Commit, push, create and merge the Wave 4 PR","scope":"Wave 4"},"ownership":{"boundary":"Wave 4 English Incident Recovery page, Controlled Recovery audit test, and append-only checkpoint only","files":{"docs/harness-state.md":"agent_owned_checkpoint","docs/shipq-dhf-incident-recovery-memory-map-en.html":"task_owned","test_runner.py":"task_owned"}},"phase":"ship","schema":"dhf_checkpoint_v1","verification_evidence":{"command":"PYTHONDONTWRITEBYTECODE=1 python3 test_runner.py","exit_code":0,"freshness":"fresh","key_output":"ran=132 passed=130 skipped=2 failed=0; allowed host-only skips only","timestamp":"2026-08-19T18:16:58Z"}}
+
+### 2026-08-21T21:33:50-04:00
+- phase: validation
+- event: checkpoint
+- summary: DHF public-site Slices 0-6 implemented; truth, path, metadata, bilingual parity, social card, and accessibility focused gates pass
+- git:
+  - branch: codex/mce-20260822-public-site-truth-path-metadata
+  - latest_commit: 8c41f64
+  - dirty_status: dirty
+  - dirty_count: 59
+- changed_surfaces:
+  - `docs public site (48 metadata heads and scoped core bodies)`
+  - `test_runner.py`
+  - `tasks/dhf-public-site-fix-probe-2026-08-22.md`
+  - `docs/dhf-social-card.html and docs/dhf-social-card.png`
+- verification:
+  - command: `PYTHONDONTWRITEBYTECODE=1 python3 -c public-site-focused-gates`
+  - exit_code: 0
+  - key_output: 7/7 focused gates passed; drift count=0 stale=0 accepted=6
+- blockers:
+  - none
+- next_safe_task: Run Slice 7 final gates and Browser QA, then rebase after the 22:00 sync before push
+- checkpoint_data: {"constraints":[],"next_action":{"command":"Run Slice 7 final gates and Browser QA, then rebase after the 22:00 sync before push"},"ownership":{},"phase":"validation","schema":"dhf_checkpoint_v1","verification_evidence":{"command":"PYTHONDONTWRITEBYTECODE=1 python3 -c public-site-focused-gates","exit_code":0,"freshness":"fresh","key_output":"7/7 focused gates passed; drift count=0 stale=0 accepted=6","timestamp":"2026-08-21T21:33:50-04:00"}}
+
+### 2026-08-21T21:57:52-04:00
+- phase: validation
+- event: checkpoint
+- summary: DHF public-site Browser QA complete
+- git:
+  - branch: codex/mce-20260822-public-site-truth-path-metadata
+  - latest_commit: 8c41f64
+  - dirty_status: dirty
+  - dirty_count: 59
+- changed_surfaces:
+  - `docs/harness-state.md`
+- verification:
+  - command: `node /tmp/dhf_public_site_qa.js`
+  - exit_code: 0
+  - key_output: 16 pages; 96 viewport/theme checks; 16 reduced-motion; 16 print; 2 interactions; 51 internal links; 130 total checks; failures=[]
+- blockers:
+  - none
+- next_safe_task: Rerun final gates after checkpoint, then rebase after 22:00 sync before commit and push PR A
+- checkpoint_data: {"constraints":[],"next_action":{"command":"Rerun final gates after checkpoint, then rebase after 22:00 sync before commit and push PR A"},"ownership":{},"phase":"validation","schema":"dhf_checkpoint_v1","verification_evidence":{"command":"node /tmp/dhf_public_site_qa.js","exit_code":0,"freshness":"fresh","key_output":"16 pages; 96 viewport/theme checks; 16 reduced-motion; 16 print; 2 interactions; 51 internal links; 130 total checks; failures=[]","timestamp":"2026-08-21T21:57:52-04:00"}}

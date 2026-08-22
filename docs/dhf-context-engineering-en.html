@@ -3,11 +3,22 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="description" content="How DHF turns trusted sources, Session Bearing, permission guards, execution evidence, and checkpoints into a governed context supply chain.">
   <title>DHF Context Engineering: A Governed Context Supply Chain</title>
+  <meta name="description" content="How DHF turns trusted sources, Session Bearing, permission guards, execution evidence, and checkpoints into a governed context supply chain.">
   <link rel="canonical" href="https://deliveryharness.com/dhf-context-engineering-en.html">
   <link rel="alternate" hreflang="en" href="https://deliveryharness.com/dhf-context-engineering-en.html">
   <link rel="alternate" hreflang="zh-CN" href="https://deliveryharness.com/dhf-context-engineering-cn.html">
+  <link rel="alternate" hreflang="x-default" href="https://deliveryharness.com/dhf-context-engineering-en.html">
+  <meta property="og:title" content="DHF Context Engineering: A Governed Context Supply Chain">
+  <meta property="og:description" content="How DHF turns trusted sources, Session Bearing, permission guards, execution evidence, and checkpoints into a governed context supply chain.">
+  <meta property="og:url" content="https://deliveryharness.com/dhf-context-engineering-en.html">
+  <meta property="og:image" content="https://deliveryharness.com/dhf-social-card.png">
+  <meta property="og:image:alt" content="Delivery Harness Framework — from ambiguous requests to verifiable delivery">
+  <meta property="og:locale" content="en_CA">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="DHF Context Engineering: A Governed Context Supply Chain">
+  <meta name="twitter:description" content="How DHF turns trusted sources, Session Bearing, permission guards, execution evidence, and checkpoints into a governed context supply chain.">
+  <meta name="twitter:image" content="https://deliveryharness.com/dhf-social-card.png">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,650;9..144,760&family=IBM+Plex+Mono:wght@400;500;600&family=Atkinson+Hyperlegible:wght@400;700&display=swap" rel="stylesheet">
@@ -80,9 +91,9 @@
   <main id="dhf-main" class="wrap dhf-has-toc">
     <nav class="dhf-toc" aria-label="On this page"><div class="dhf-toc-title">On this page</div><a href="#finite-box">Finite box</a><a href="#inputs">Three inputs</a><a href="#overview">Supply chain</a><a href="#primitives">Primitives</a><a href="#memory">Memory boundary</a><a href="#boundaries">Capabilities</a></nav>
     <div class="dhf-col">
-      <aside class="dhf-status-bar" data-dhf-status="2026-08-11" aria-label="Current DHF status"><strong>Architecture status · 2026-08-11</strong><span>This page explains the design; source, runtime, publication, and independent-core status remain separate.</span><a href="./dhf-architecture-status-en.html">Open current status</a></aside>
+      <aside class="dhf-status-bar" data-dhf-status="2026-08-22" aria-label="Current DHF status"><strong>Architecture status · 2026-08-22</strong><span>This page explains the design; source, runtime, publication, and independent-core status remain separate.</span><a href="./dhf-architecture-status-en.html">Open current status</a></aside>
       <section class="hero"><div class="eyebrow">DHF / Context Engineering</div><h1>Build a governed<br>context supply chain.</h1><p class="lead">Agents often fail not because the model is incapable, but because it uses the wrong, stale, or unauthorized context at the wrong time. DHF does not try to make an agent know everything. It supplies the smallest trustworthy state the current work needs—and makes clear what that state permits.</p></section>
-      <nav class="strip" data-dhf-path-links aria-label="Learning path"><a class="tag" href="./delivery-harness-beginner-guide-en.html">Previous: Beginner</a><a class="tag" href="./project-lifecycle-harness-flow-en.html">Next: Lifecycle</a><a class="tag" href="./dhf-architecture-status-en.html">Current status</a><a class="tag" href="./dhf-context-engineering-cn.html" hreflang="zh-CN">中文</a></nav>
+      <nav class="strip" data-dhf-path-links aria-label="Learning path"><a class="tag" href="./dhf-memory-map-en.html">Previous: Memory Map</a><a class="tag" href="./project-lifecycle-harness-flow-en.html">Next: Lifecycle</a><a class="tag" href="./dhf-architecture-status-en.html">Current status</a><a class="tag" href="./dhf-context-engineering-cn.html" hreflang="zh-CN">中文</a></nav>
 
       <section id="finite-box" class="section-block"><div class="section-heading"><div><div class="label">Chapter 1 · finite box</div><h2>Context is a finite workspace</h2></div><p>Every instruction loaded up front consumes room the task could use for reasoning, evidence, and decisions.</p></div>
         <div class="card-grid"><div class="card"><h3>Capacity is finite</h3><p>A longer prompt does not create a larger working space. Upfront content occupies the same finite box the active task needs.</p></div><div class="card"><h3>Relevance protects quality</h3><p>Irrelevant material weakens retrieval and decision quality, even when every individual fact is correct.</p></div></div>

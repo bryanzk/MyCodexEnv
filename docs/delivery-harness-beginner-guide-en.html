@@ -4,6 +4,21 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Delivery Harness Framework (DHF) Beginner Guide</title>
+  <meta name="description" content="DHF is a delivery framework for agentic engineering. It selects a governance profile, routes scoped execution, and preserves verification evidence; full recovery or handoff is conditional rather…">
+  <link rel="canonical" href="https://deliveryharness.com/delivery-harness-beginner-guide-en.html">
+  <link rel="alternate" hreflang="en" href="https://deliveryharness.com/delivery-harness-beginner-guide-en.html">
+  <link rel="alternate" hreflang="zh-CN" href="https://deliveryharness.com/delivery-harness-beginner-guide-cn.html">
+  <link rel="alternate" hreflang="x-default" href="https://deliveryharness.com/delivery-harness-beginner-guide-en.html">
+  <meta property="og:title" content="Delivery Harness Framework (DHF) Beginner Guide">
+  <meta property="og:description" content="DHF is a delivery framework for agentic engineering. It selects a governance profile, routes scoped execution, and preserves verification evidence; full recovery or handoff is conditional rather…">
+  <meta property="og:url" content="https://deliveryharness.com/delivery-harness-beginner-guide-en.html">
+  <meta property="og:image" content="https://deliveryharness.com/dhf-social-card.png">
+  <meta property="og:image:alt" content="Delivery Harness Framework — from ambiguous requests to verifiable delivery">
+  <meta property="og:locale" content="en_CA">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Delivery Harness Framework (DHF) Beginner Guide">
+  <meta name="twitter:description" content="DHF is a delivery framework for agentic engineering. It selects a governance profile, routes scoped execution, and preserves verification evidence; full recovery or handoff is conditional rather…">
+  <meta name="twitter:image" content="https://deliveryharness.com/dhf-social-card.png">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,650;9..144,760&family=IBM+Plex+Mono:wght@400;500;600&family=Atkinson+Hyperlegible:wght@400;700&display=swap" rel="stylesheet">
@@ -267,18 +282,18 @@
     <a href="#next">Continue</a>
   </nav>
   <div class="dhf-col">
-    <aside class="dhf-status-bar" data-dhf-status="2026-08-11" aria-label="Current DHF status">
-      <strong>Architecture status · 2026-08-11</strong>
+    <aside class="dhf-status-bar" data-dhf-status="2026-08-22" aria-label="Current DHF status">
+      <strong>Architecture status · 2026-08-22</strong>
       <span>Source, runtime, publication, and independent-core status are separate.</span>
       <a href="./dhf-architecture-status-en.html">Open current status</a>
     </aside>
-    <section class="hero">
+    <section class="hero" id="what">
       <div class="eyebrow">Delivery Harness Framework / DHF Beginner Guide</div>
       <h1>What DHF does before an agent starts building.</h1>
       <p class="lead">DHF is a delivery framework for agentic engineering. It selects a governance profile, routes scoped execution, and preserves verification evidence; full recovery or handoff is conditional rather than universal.</p>
     </section>
 
-    <section class="section">
+    <section class="section" id="why">
       <div class="label">Why it exists</div>
       <h2 id="why">Why beginners need a harness</h2>
       <div class="grid">
@@ -302,7 +317,7 @@
       </div>
     </section>
 
-    <section class="section">
+    <section class="section" id="layers">
       <div class="label">Three-layer model</div>
       <h2 id="layers">Three layers keep responsibilities clear</h2>
       <div class="grid">
@@ -312,10 +327,10 @@
       </div>
     </section>
 
-    <section class="section">
+    <section class="section" id="flow">
       <div class="label">Five-step flow</div>
       <h2 id="flow">Five-step flow</h2>
-      <p>This is a checklist, not mandatory ceremony. Only <code>governed</code> work with a matching escalation signal runs <code>harness_recover.py</code>, <code>harness_env_probe.py</code>, or <code>harness_checkpoint.py</code>; <code>light</code> does not require those lifecycle helpers.</p>
+      <details><summary>Implementation details</summary><p>This is a checklist, not mandatory ceremony. Only <code>governed</code> work with a matching escalation signal runs <code>harness_recover.py</code>, <code>harness_env_probe.py</code>, or <code>harness_checkpoint.py</code>; <code>light</code> does not require those lifecycle helpers.</p></details>
       <div class="steps">
         <div class="step"><div class="step-num">1</div><div><strong>Recover when escalated</strong><p>Restore phase, dirty state, latest verification, and next safe task only when the governed signal requires it.</p></div></div>
         <div class="step"><div class="step-num">2</div><div><strong>Clarify</strong><p>If the goal, scope, vocabulary, or acceptance criteria are unclear, stop and lock requirements first.</p></div></div>
@@ -325,10 +340,10 @@
       </div>
     </section>
 
-    <section class="section">
+    <section class="section" id="example">
       <div class="label">Concrete IO</div>
       <h2 id="example">Input request -> DHF output</h2>
-      <div class="example">
+      <details><summary>Implementation details</summary><div class="example">
         <div class="example-box">
           <h3>input request</h3>
           <p>"Improve the public DHF docs so an English reader knows where to start, and prove the links are valid."</p>
@@ -343,10 +358,10 @@
             <li><code>timestamp</code>: <code>2026-05-14T00:00:00-04:00</code></li>
           </ul>
         </div>
-      </div>
+      </div></details>
     </section>
 
-    <section class="section">
+    <section class="section" id="glossary">
       <div class="label">Glossary</div>
       <h2 id="terms">Terms you will see on the next pages</h2>
       <div class="grid">
@@ -359,10 +374,11 @@
       </div>
     </section>
 
-    <section class="section">
+    <section class="section" id="next">
       <div class="label">Next</div>
       <h2 id="next">Continue the English path</h2>
       <div class="links" data-dhf-path-links>
+        <a class="link-card" href="./dhf-memory-map-en.html"><b>Memory Map</b><span>Remember the whole DHF system before studying its mechanics.</span></a>
         <a class="link-card" href="./dhf-context-engineering-en.html"><b>Context Engineering</b><span>See how trusted facts govern action and recovery.</span></a>
         <a class="link-card" href="./project-lifecycle-harness-flow-en.html"><b>Lifecycle Flow</b><span>See how a request moves from intake to handoff.</span></a>
         <a class="link-card" href="./project-lifecycle-harness-flow-skills-en-status-style.html"><b>Skill Routing Map</b><span>See which skill or helper owns each stage.</span></a>
@@ -371,7 +387,7 @@
       </div>
     </section>
 
-    <footer class="footer">Published by ShipAI.ca as a public DHF reference. File: <code>docs/delivery-harness-beginner-guide-en.html</code>.</footer>
+    <footer class="footer">Published by ShipAI.ca as a public DHF reference. <a href="./dhf-architecture-status-en.html">Current status</a>.</footer>
     </div>
 </main>
 

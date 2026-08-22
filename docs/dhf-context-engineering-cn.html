@@ -3,11 +3,22 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="description" content="DHF 如何把可信来源、Session Bearing、权限守卫、执行证据和 checkpoint 组织成一条可治理的上下文供应链。">
   <title>DHF 的上下文工程：建立一条可治理的上下文供应链</title>
+  <meta name="description" content="DHF 如何把可信来源、Session Bearing、权限守卫、执行证据和 checkpoint 组织成一条可治理的上下文供应链。">
   <link rel="canonical" href="https://deliveryharness.com/dhf-context-engineering-cn.html">
   <link rel="alternate" hreflang="en" href="https://deliveryharness.com/dhf-context-engineering-en.html">
   <link rel="alternate" hreflang="zh-CN" href="https://deliveryharness.com/dhf-context-engineering-cn.html">
+  <link rel="alternate" hreflang="x-default" href="https://deliveryharness.com/dhf-context-engineering-en.html">
+  <meta property="og:title" content="DHF 的上下文工程：建立一条可治理的上下文供应链">
+  <meta property="og:description" content="DHF 如何把可信来源、Session Bearing、权限守卫、执行证据和 checkpoint 组织成一条可治理的上下文供应链。">
+  <meta property="og:url" content="https://deliveryharness.com/dhf-context-engineering-cn.html">
+  <meta property="og:image" content="https://deliveryharness.com/dhf-social-card.png">
+  <meta property="og:image:alt" content="Delivery Harness Framework — from ambiguous requests to verifiable delivery">
+  <meta property="og:locale" content="zh_CN">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="DHF 的上下文工程：建立一条可治理的上下文供应链">
+  <meta name="twitter:description" content="DHF 如何把可信来源、Session Bearing、权限守卫、执行证据和 checkpoint 组织成一条可治理的上下文供应链。">
+  <meta name="twitter:image" content="https://deliveryharness.com/dhf-social-card.png">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,650;9..144,760&family=IBM+Plex+Mono:wght@400;500;600&family=Atkinson+Hyperlegible:wght@400;700&display=swap" rel="stylesheet">
@@ -80,9 +91,9 @@
   <main id="dhf-main" class="wrap dhf-has-toc">
     <nav class="dhf-toc" aria-label="本页目录"><div class="dhf-toc-title">本页目录</div><a href="#finite-box">有限容器</a><a href="#inputs">三个输入</a><a href="#overview">供应链</a><a href="#primitives">原语选择</a><a href="#memory">记忆边界</a><a href="#boundaries">能力边界</a></nav>
     <div class="dhf-col">
-      <aside class="dhf-status-bar" data-dhf-status="2026-08-11" aria-label="当前 DHF 状态"><strong>架构状态 · 2026-08-11</strong><span>本页解释设计；源码、运行时、公开页面和独立核心仍分别判定。</span><a href="./dhf-architecture-status-cn.html">查看当前状态</a></aside>
+      <aside class="dhf-status-bar" data-dhf-status="2026-08-22" aria-label="当前 DHF 状态"><strong>架构状态 · 2026-08-22</strong><span>本页解释设计；源码、运行时、公开页面和独立核心仍分别判定。</span><a href="./dhf-architecture-status-cn.html">查看当前状态</a></aside>
       <section class="hero"><div class="eyebrow">DHF / Context Engineering</div><h1>建立一条可治理的<br>上下文供应链。</h1><p class="lead">智能体失败，很多时候不是模型能力不足，而是它在错误的时间使用了错误、过期或未经授权的上下文。DHF 不追求让智能体知道一切，而是让它只获得当前工作需要的可信事实，并说明这些事实允许它做什么。</p></section>
-      <nav class="strip" data-dhf-path-links aria-label="学习路径"><a class="tag" href="./delivery-harness-beginner-guide-cn.html">上一篇：新手指南</a><a class="tag" href="./project-lifecycle-harness-flow-cn.html">下一篇：生命周期</a><a class="tag" href="./dhf-architecture-status-cn.html">当前状态</a><a class="tag" href="./dhf-context-engineering-en.html" hreflang="en">English</a></nav>
+      <nav class="strip" data-dhf-path-links aria-label="学习路径"><a class="tag" href="./dhf-memory-map.html">上一篇：记忆地图</a><a class="tag" href="./project-lifecycle-harness-flow-cn.html">下一篇：生命周期</a><a class="tag" href="./dhf-architecture-status-cn.html">当前状态</a><a class="tag" href="./dhf-context-engineering-en.html" hreflang="en">English</a></nav>
 
       <section id="finite-box" class="section-block"><div class="section-heading"><div><div class="label">Chapter 1 · finite box</div><h2>上下文是有限的工作容器</h2></div><p>所有预先加载的说明都会占用任务本可用于推理、证据和决策的空间。</p></div>
         <div class="card-grid"><div class="card"><h3>容量有限</h3><p>更长的 prompt 不会创造更大的工作空间；预置内容和当前任务共用同一个有限容器。</p></div><div class="card"><h3>相关性保护质量</h3><p>即使每条信息都正确，无关内容仍会降低检索和决策质量。</p></div></div>

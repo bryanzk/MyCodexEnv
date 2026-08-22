@@ -3176,7 +3176,7 @@ def test_lifecycle_skill_routing_doc_is_discoverable():
                 "Choose by Goal",
                 "Status Boundary",
                 'aria-label="Engineering Resources"',
-                "docs/index.html",
+                "Canonical English DHF public guide",
             ],
         ),
         PUBLIC_INDEX_EN_HTML.name: (
@@ -3199,7 +3199,7 @@ def test_lifecycle_skill_routing_doc_is_discoverable():
                 "Choose by Goal",
                 "Status Boundary",
                 'aria-label="Engineering Resources"',
-                "docs/index.html",
+                "Canonical English DHF public guide",
             ],
         ),
         PUBLIC_INDEX_ZH_HTML.name: (
@@ -3215,7 +3215,7 @@ def test_lifecycle_skill_routing_doc_is_discoverable():
                 "Choose by Goal",
                 "Status Boundary",
                 'aria-label="工程资源"',
-                "docs/index-zh.html",
+                "DHF 中文公开指南",
             ],
         ),
     }
@@ -3229,10 +3229,12 @@ def test_lifecycle_skill_routing_doc_is_discoverable():
             [
                 "Learn the Framework",
                 "Beginner",
+                "Memory Map",
                 "Context Engineering",
                 "Lifecycle",
                 "Governance",
                 'href="./delivery-harness-beginner-guide-en.html"',
+                'href="./dhf-memory-map-en.html"',
                 'href="./dhf-context-engineering-en.html"',
                 'href="./project-lifecycle-harness-flow-en.html"',
                 'href="./dhf-governance-decision-flow-en.html"',
@@ -3243,10 +3245,12 @@ def test_lifecycle_skill_routing_doc_is_discoverable():
             [
                 "Learn the Framework",
                 "Beginner",
+                "Memory Map",
                 "Context Engineering",
                 "Lifecycle",
                 "Governance",
                 'href="./delivery-harness-beginner-guide-en.html"',
+                'href="./dhf-memory-map-en.html"',
                 'href="./dhf-context-engineering-en.html"',
                 'href="./project-lifecycle-harness-flow-en.html"',
                 'href="./dhf-governance-decision-flow-en.html"',
@@ -3257,10 +3261,12 @@ def test_lifecycle_skill_routing_doc_is_discoverable():
             [
                 "Learn the Framework",
                 "Beginner",
+                "Memory Map",
                 "Context Engineering",
                 "Lifecycle",
                 "Governance",
                 'href="./delivery-harness-beginner-guide-cn.html"',
+                'href="./dhf-memory-map.html"',
                 'href="./dhf-context-engineering-cn.html"',
                 'href="./project-lifecycle-harness-flow-cn.html"',
                 'href="./dhf-governance-decision-flow-cn.html"',
@@ -3272,7 +3278,7 @@ def test_lifecycle_skill_routing_doc_is_discoverable():
             require(term in text, f"{filename} missing recommended learning sequence term: {term}")
         require_in_order(
             text,
-            ["Beginner", "Context Engineering", "Lifecycle", "Governance"],
+            ["Beginner", "Memory Map", "Context Engineering", "Lifecycle", "Governance"],
             f"{filename} should show the recommended learning sequence",
         )
     require("Chinese-only" not in public_index_en_html, "English public path should be self-contained, not Chinese-only")
@@ -10098,7 +10104,7 @@ def test_public_dhf_information_architecture():
     for path in current_public_paths:
         text = path.read_text(encoding="utf-8")
         require(
-            text.count('data-dhf-status="2026-08-11"') == 1,
+            text.count('data-dhf-status="2026-08-22"') == 1,
             f"{path.name} must preserve the canonical DHF status attribute",
         )
 
@@ -10128,8 +10134,8 @@ def test_public_dhf_information_architecture():
         text = path.read_text(encoding="utf-8")
         require(text.count("<h2") <= 6, f"{path.name} should contain no more than six H2 sections")
         require(
-            text.count("data-dhf-primary-cta") == 3,
-            f"{path.name} should contain exactly three primary CTAs",
+            text.count("data-dhf-primary-cta") == 4,
+            f"{path.name} should contain exactly four primary CTAs",
         )
         learning_match = re.search(
             r'<(?P<tag>[a-z][a-z0-9-]*)\b[^>]*data-dhf-learning-path[^>]*>(?P<body>.*?)</(?P=tag)>',
@@ -10139,9 +10145,11 @@ def test_public_dhf_information_architecture():
         require(learning_match is not None, f"{path.name} missing marked learning path")
         require_in_order(
             learning_match.group("body"),
-            ["Beginner", "Context Engineering", "Lifecycle", "Governance"],
+            ["Beginner", "Memory Map", "Context Engineering", "Lifecycle", "Governance"],
             f"{path.name} learning path order",
         )
+        require(learning_match.group("body").count('class="sequence-step"') == 5,
+                f"{path.name} learning path must contain five steps")
         chain = marked_chain(text, "simplified", path.name)
         require_in_order(chain, simplified_steps, f"{path.name} simplified DHF chain order")
         require("dhf-context-engineering-" in chain, f"{path.name} simplified chain should link to Context Engineering")
@@ -10200,19 +10208,19 @@ def test_public_dhf_information_architecture():
 
     path_expectations = {
         "delivery-harness-beginner-guide-en.html": [
+            "./dhf-memory-map-en.html",
             "./dhf-context-engineering-en.html",
-            "./project-lifecycle-harness-flow-en.html",
         ],
         "delivery-harness-beginner-guide-cn.html": [
+            "./dhf-memory-map.html",
             "./dhf-context-engineering-cn.html",
-            "./project-lifecycle-harness-flow-cn.html",
         ],
         "dhf-context-engineering-en.html": [
-            "./delivery-harness-beginner-guide-en.html",
+            "./dhf-memory-map-en.html",
             "./project-lifecycle-harness-flow-en.html",
         ],
         "dhf-context-engineering-cn.html": [
-            "./delivery-harness-beginner-guide-cn.html",
+            "./dhf-memory-map.html",
             "./project-lifecycle-harness-flow-cn.html",
         ],
         "project-lifecycle-harness-flow-en.html": [
@@ -10371,6 +10379,102 @@ def test_dhf_language_switch_border_contract():
     print("[PASS] DHF language switch resting border contract")
 
 
+def test_dhf_public_truth_contract():
+    docs = ROOT / "docs"
+    status_pages = [docs / "dhf-architecture-status-en.html", docs / "dhf-architecture-status-cn.html"]
+    combined = "\n".join(path.read_text(encoding="utf-8") for path in status_pages)
+    for stale in ["remains a working-tree change", "Not performed in this task", "仍是 working-tree 变更", "尚未提交"]:
+        require(stale not in combined, f"public Status retains stale claim: {stale}")
+    require("Local runtime parity: verified 2026-08-10" in combined,
+            "runtime parity date must remain independent from the public status date")
+    public_pages = []
+    for path in sorted(docs.glob("*.html")):
+        text = path.read_text(encoding="utf-8")
+        if 'class="dhf-nav-links"' in text:
+            public_pages.append((path, text))
+    require(len(public_pages) == 48, "public truth contract requires the 48-page baseline")
+    for path, text in public_pages:
+        require(text.count('data-dhf-status="2026-08-22"') == 1,
+                f"{path.name} must carry the 2026-08-22 public status date exactly once")
+    internal_pattern = re.compile(r"(?:docs|scripts)/[A-Za-z0-9_./@*-]+|~/\.codex|test_runner\.py|harness_[a-z_]+\.py")
+    for name in ["index.html", "index-en.html", "index-zh.html",
+                 "delivery-harness-beginner-guide-en.html", "delivery-harness-beginner-guide-cn.html"]:
+        body = (docs / name).read_text(encoding="utf-8").split("<body", 1)[1]
+        visible = re.sub(r"<details\b.*?</details>", "", body, flags=re.DOTALL | re.IGNORECASE)
+        require(internal_pattern.search(visible) is None,
+                f"{name} exposes implementation paths outside Implementation details")
+    print("[PASS] DHF public truth contract")
+
+
+def test_dhf_public_metadata_contract():
+    docs = ROOT / "docs"
+    pages = []
+    for path in sorted(docs.glob("*.html")):
+        text = path.read_text(encoding="utf-8")
+        if 'class="dhf-nav-links"' in text:
+            pages.append((path, text))
+    require(len(pages) == 48, "public metadata contract requires 48 pages")
+    require(sum(re.search(r'<html\b[^>]*lang="en"', text) is not None for _, text in pages) == 25,
+            "English metadata baseline")
+    require(sum(re.search(r'<html\b[^>]*lang="zh-CN"', text) is not None for _, text in pages) == 23,
+            "Chinese metadata baseline")
+    required_meta = [
+        ('name="description"', "description"), ('rel="canonical"', "canonical"),
+        ('hreflang="x-default"', "x-default"), ('property="og:title"', "og:title"),
+        ('property="og:description"', "og:description"), ('property="og:url"', "og:url"),
+        ('property="og:image"', "og:image"), ('property="og:image:alt"', "og:image:alt"),
+        ('property="og:locale"', "og:locale"), ('name="twitter:card"', "twitter:card"),
+    ]
+    for path, text in pages:
+        head = text.split("</head>", 1)[0]
+        for marker, label in required_meta:
+            require(head.count(marker) == 1, f"{path.name} must contain one {label}")
+        if path.name == "lifecycle-skill-routing-en.html":
+            require(head.count('rel="alternate"') == 2,
+                    "single-language routing page needs en and x-default")
+        else:
+            require('hreflang="en"' in head and 'hreflang="zh-CN"' in head,
+                    f"{path.name} missing bilingual hreflang mapping")
+    print("[PASS] DHF public metadata contract")
+
+
+def test_dhf_core_bilingual_parity_contract():
+    docs = ROOT / "docs"
+    def section_ids(name):
+        text = (docs / name).read_text(encoding="utf-8")
+        return re.findall(r'<(?:section|header)\b[^>]*\bid="([^"]+)"', text)
+    require(section_ids("delivery-harness-beginner-guide-en.html") ==
+            section_ids("delivery-harness-beginner-guide-cn.html"),
+            "Beginner twins must expose the same semantic sections")
+    require(section_ids("project-lifecycle-harness-flow-en.html") ==
+            section_ids("project-lifecycle-harness-flow-cn.html"),
+            "Lifecycle twins must expose the same semantic sections")
+    for english, chinese in [
+        ("dhf-memory-map-en.html", "dhf-memory-map.html"),
+        ("dhf-context-engineering-en.html", "dhf-context-engineering-cn.html"),
+    ]:
+        require(section_ids(english) == section_ids(chinese), f"{english} semantic section parity")
+    for english, chinese, marker in [
+        ("dhf-value-evidence-en.html", "dhf-value-evidence-cn.html", "data-dhf-evidence-section"),
+    ]:
+        e = re.findall(rf'{marker}="([^"]+)"', (docs / english).read_text(encoding="utf-8"))
+        c = re.findall(rf'{marker}="([^"]+)"', (docs / chinese).read_text(encoding="utf-8"))
+        require(e == c, f"{english} marked section parity")
+    print("[PASS] DHF core bilingual parity contract")
+
+
+def test_dhf_touch_target_contract():
+    css = (ROOT / "docs" / "dhf-site-status.css").read_text(encoding="utf-8")
+    language = re.search(r"\.dhf-nav a\.dhf-nav-lang\s*\{([^}]*)\}", css, re.DOTALL)
+    require(language is not None and re.search(r"min-height:\s*44px\s*!important", language.group(1)),
+            "language switch must preserve a 44px touch target")
+    for name in ["dhf-memory-map-en.html", "dhf-memory-map.html"]:
+        text = (ROOT / "docs" / name).read_text(encoding="utf-8")
+        require(re.search(r"\.island-nav a\{[^}]*min-height:44px", text),
+                f"{name} section navigation must preserve a 44px touch target")
+    print("[PASS] DHF touch target contract")
+
+
 def test_public_dhf_architecture_status_alignment():
     english_pages = [
         "index.html",
@@ -10406,7 +10510,7 @@ def test_public_dhf_architecture_status_alignment():
         text = path.read_text(encoding="utf-8")
         require('href="./dhf-site-status.css' in text,
                 f"public DHF page missing shared status styles: {filename}")
-        require('data-dhf-status="2026-08-11"' in text,
+        require('data-dhf-status="2026-08-22"' in text,
                 f"public DHF page missing current status marker: {filename}")
         expected_status = (
             "./dhf-architecture-status-en.html"
@@ -10560,7 +10664,7 @@ def test_dhf_memory_map_bilingual_information_architecture():
                 f"{path.name} must mark Memory Map as current")
         require(f'href="{expected[language]["twin"]}"' in nav_match.group(1),
                 f"{path.name} missing language twin")
-        require(text.count('data-dhf-status="2026-08-11"') == 1,
+        require(text.count('data-dhf-status="2026-08-22"') == 1,
                 f"{path.name} must preserve the canonical DHF status attribute")
         require(text.count(f'data-dhf-memory-map-language="{language}"') == 1,
                 f"{path.name} missing language marker")
@@ -10637,7 +10741,7 @@ def test_dhf_value_evidence_information_architecture():
         for section in ["value", "ladder", "evolution", "controls", "cases", "recovery", "boundaries"]:
             require(f'data-dhf-evidence-section="{section}"' in text,
                     f"{filename} missing Evidence section: {section}")
-        require(text.count('data-dhf-status="2026-08-11"') == 1,
+        require(text.count('data-dhf-status="2026-08-22"') == 1,
                 f"{filename} must preserve the current DHF status attribute")
 
     evidence_pairs = [
@@ -10671,9 +10775,9 @@ def test_dhf_value_evidence_information_architecture():
                 f"English Evidence page missing Chinese twin: {english_name}")
         require(f'href="./{english_name}"' in chinese_text,
                 f"Chinese Evidence page missing English twin: {chinese_name}")
-        require(english_text.count('data-dhf-status="2026-08-11"') == 1,
+        require(english_text.count('data-dhf-status="2026-08-22"') == 1,
                 f"English Evidence page must preserve status: {english_name}")
-        require(chinese_text.count('data-dhf-status="2026-08-11"') == 1,
+        require(chinese_text.count('data-dhf-status="2026-08-22"') == 1,
                 f"Chinese Evidence page must preserve status: {chinese_name}")
 
     english_children = [english for english, _ in evidence_pairs]
@@ -10743,8 +10847,8 @@ def test_dhf_value_evidence_information_architecture():
             re.DOTALL | re.IGNORECASE,
         )
         require(learning_match is not None, f"{filename} missing learning path")
-        require(learning_match.group("body").count('class="sequence-step"') == 4,
-                f"{filename} learning path must remain four steps")
+        require(learning_match.group("body").count('class="sequence-step"') == 5,
+                f"{filename} learning path must contain five steps")
 
     def normalized_home(text: str) -> str:
         text = re.sub(r'(<link\s+rel="canonical"\s+href=")[^"]+("\s*/?>)', r'\1__CANONICAL__\2', text)
@@ -10843,7 +10947,7 @@ def test_dhf_evidence_wave1_bilingual_information_architecture():
             (chinese_name, english_name, "dhf-value-evidence-cn.html"),
         ]:
             text = (docs / name).read_text(encoding="utf-8")
-            require(text.count('data-dhf-status="2026-08-11"') == 1,
+            require(text.count('data-dhf-status="2026-08-22"') == 1,
                     f"{name} must preserve the public status byte value")
             require(text.count('class="dhf-nav"') == 1, f"{name} global navigation count")
             require_in_order(text, [f'id="{section}"' for section in contract["sections"]],
@@ -10886,7 +10990,7 @@ def test_dhf_evidence_wave2_bilingual_information_architecture():
                 f"{name} must retain seven PROTECT components")
         require(f'href="./{twin}"' in text, f"{name} bilingual twin link")
         require(f'href="./{hub}"' in text, f"{name} Evidence hub link")
-        require(text.count('data-dhf-status="2026-08-11"') == 1,
+        require(text.count('data-dhf-status="2026-08-22"') == 1,
                 f"{name} must preserve the public status byte value")
 
     safe_sections = ["overview", "controls", "cases", "claims"]
@@ -10905,7 +11009,7 @@ def test_dhf_evidence_wave2_bilingual_information_architecture():
             require(term in text, f"{name} missing SAFE control: {term}")
         require(f'href="./{twin}"' in text, f"{name} bilingual twin link")
         require(f'href="./{hub}"' in text, f"{name} Evidence hub link")
-        require(text.count('data-dhf-status="2026-08-11"') == 1,
+        require(text.count('data-dhf-status="2026-08-22"') == 1,
                 f"{name} must preserve the public status byte value")
     english_map = (docs / "dhf-case-safe-mapping-en.html").read_text(encoding="utf-8")
     chinese_map = (docs / "dhf-case-safe-mapping.html").read_text(encoding="utf-8")
@@ -10963,7 +11067,7 @@ def test_dhf_evidence_wave3_casebook_archive_and_information_architecture():
             require(text.count(f'id="{section}"') == 1,
                     f"{name} must expose exactly one #{section} fragment")
         require(text.count('class="dhf-nav"') == 1, f"{name} global navigation count")
-        require(text.count('data-dhf-status="2026-08-11"') == 1,
+        require(text.count('data-dhf-status="2026-08-22"') == 1,
                 f"{name} must preserve the public status byte value")
         require(f'href="./{twin}"' in text, f"{name} bilingual twin link")
     for name in ["dhf-examples-three-lenses-en.html", "dhf-examples-three-lenses.html"]:
@@ -11015,7 +11119,7 @@ def test_dhf_evidence_wave4_recovery_information_architecture():
         for section in incident_sections:
             require(text.count(f'id="{section}"') == 1,
                     f"{name} must expose exactly one #{section} fragment")
-        require(text.count('data-dhf-status="2026-08-11"') == 1,
+        require(text.count('data-dhf-status="2026-08-22"') == 1,
                 f"{name} must preserve the public status byte value")
         require(f'href="./{twin}"' in text, f"{name} bilingual twin link")
         for term in ["OWNER", "AGENT", "WRITER", "SAFE", "MISMATCH", "RETRY", "RESTORED", "EXECUTE"]:
@@ -11080,7 +11184,7 @@ def test_dhf_evidence_child_navigation_and_controlled_recovery_contract():
             require(targets, f"{name} page navigation has no targets")
             for target in targets:
                 require(text.count(f'id="{target}"') == 1, f"{name} page navigation target must exist once: {target}")
-            require(text.count('data-dhf-status="2026-08-11"') == 1,
+            require(text.count('data-dhf-status="2026-08-22"') == 1,
                     f"{name} must preserve the canonical DHF status attribute")
             require('href="./dhf-site-status.css?' in text,
                     f"{name} missing shared navigation stylesheet")
@@ -11455,6 +11559,10 @@ TESTS = [
     test_codex_fluent_report_only_contract,
     test_public_dhf_information_architecture,
     test_dhf_language_switch_border_contract,
+    test_dhf_public_truth_contract,
+    test_dhf_public_metadata_contract,
+    test_dhf_core_bilingual_parity_contract,
+    test_dhf_touch_target_contract,
     test_public_dhf_architecture_status_alignment,
     test_dhf_models_and_patterns_information_architecture,
     test_dhf_memory_map_bilingual_information_architecture,

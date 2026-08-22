@@ -1,12 +1,12 @@
 <!-- 修改本文件后需重新生成 HTML 版 -->
 # Lifecycle And Skill Routing
 
-> **DHF_PUBLIC_STATUS_V1 · 2026-08-03:** This router documents the current
-> stage-based source architecture. Source availability does not prove runtime
+> **DHF_PUBLIC_STATUS_V1 · 2026-08-22:** This router documents the current
+> profile-aware source architecture. Source availability does not prove runtime
 > activation or publication. See the canonical status in
 > [English](./dhf-architecture-status-en.html) or
-> [中文](./dhf-architecture-status-cn.html). The proposed
-> light/standard/governed simplification profiles are not active.
+> [中文](./dhf-architecture-status-cn.html). The source and local managed runtime
+> implement light/standard/governed profiles; local runtime promotion was freshly observed at 2026-08-22T01:06:20Z and does not prove production enforcement.
 
 ## Purpose
 
@@ -64,6 +64,7 @@ behavior live in `codex/hooks/dhf_preprompt.py`.
 - `docs/delivery-harness-beginner-guide-cn.html`: 中文 beginner guide，用一句话定义、三层架构、五步流程、例子和术语表解释 Delivery Harness Framework。
 - `docs/dhf-memory-map.html`: 中文 DHF 航空运营记忆地图，用一条航线串联 CAP、BRIDGE、AIRCRAFT、SAFE、PROTECT、RECOVER 与 TRUST。
 - `docs/dhf-memory-map-en.html`: English DHF airline-operations memory map covering CAP, BRIDGE, AIRCRAFT, SAFE, PROTECT, RECOVER, and TRUST.
+- `docs/dhf-social-card.html`: reproducible 1200×630 public sharing-card source; rendered output is `docs/dhf-social-card.png`.
 - `docs/dhf-engineering-notes-cn.html`: 中文工程笔记，覆盖会话容量治理、版本转移与可执行政策文本。
 - `docs/dhf-engineering-notes-en.html`: English engineering notes on compaction governance, version transitions, and executable policy text.
 - `docs/dhf-for-product-and-field-cn.html`: 中文产品与现场交付视角，用图解说明交付保证。
