@@ -6637,7 +6637,12 @@ def test_harness_agent_team_validator():
                     "verification_command": "python3 test_runner.py",
                     "task_demand": demand("medium"),
                     "green_gate": gate("medium"),
-                    "context_policy": context_policy("worker"),
+                    "context_policy": context_policy(
+                        "worker",
+                        allowed_skills=["tdd"],
+                        allowed_mcp=["filesystem"],
+                        upstream_inputs=["artifacts/planner-summary.json"],
+                    ),
                     "brief": {
                         "category": "enhancement",
                         "summary": "Add runtime report behavior.",
@@ -6673,6 +6678,39 @@ def test_harness_agent_team_validator():
         require(code == 0, f"valid agent team should pass: {err or out}")
         require("Agent team valid" in out and "worker-runtime" in out, "valid summary should be handoff-ready")
         require("demand=medium" in out and "green_gate=python3 test_runner.py" in out, "valid summary should include demand gate")
+
+        code, out, err = run([
+            sys.executable,
+            str(HARNESS_AGENT_TEAM),
+            "brief",
+            str(plan_path),
+            "--agent",
+            "worker-runtime",
+            "--repo-root",
+            str(ROOT),
+        ])
+        require(code == 0, f"valid plan brief should render: {err or out}")
+        require_in_order(out, ["目标", "精确文件", "输出结构", "验证命令", "Context policy"], "brief sections out of order")
+        require("spawn 时传 fork_turns=none" in out, "brief should render fork_turns")
+        require("只允许 skill：tdd" in out and "只允许 MCP：filesystem" in out, "brief should render allowlists")
+        require(
+            "先读上游摘要：artifacts/planner-summary.json，不要重新加载这些 skill" in out,
+            "brief should render upstream summary instruction",
+        )
+        require("security-reviewer" not in out, "brief must not name an unlisted skill")
+
+        write(plan_path, json.dumps({"agents": []}))
+        code, out, err = run([
+            sys.executable,
+            str(HARNESS_AGENT_TEAM),
+            "brief",
+            str(plan_path),
+            "--agent",
+            "worker-runtime",
+            "--repo-root",
+            str(ROOT),
+        ])
+        require(code != 0 and "ERROR[plan_agents]" in err, "brief must reject a plan that does not validate")
 
         valid_custom_plan = {"agents": [worker_agent("worker")]}
         valid_custom_plan["agents"][0]["context_policy"] = {

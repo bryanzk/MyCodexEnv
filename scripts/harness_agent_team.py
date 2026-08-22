@@ -497,6 +497,75 @@ def cmd_validate(args: argparse.Namespace) -> int:
     return 0
 
 
+def bullet_lines(values: list[str]) -> list[str]:
+    return [f"- {value}" for value in values]
+
+
+def render_brief(agent: dict[str, Any]) -> str:
+    brief = agent.get("brief") or {}
+    objective = [brief.get("summary") or agent["scope"]]
+    if brief.get("desired_behavior"):
+        objective.append(brief["desired_behavior"])
+
+    exact_files = agent["write_set"] or [agent["scope"]]
+    output_shape: list[str] = []
+    for field in ("category", "current_behavior", "key_interfaces", "acceptance_criteria", "out_of_scope"):
+        value = brief.get(field)
+        if isinstance(value, list):
+            output_shape.extend(f"- {field}: {item}" for item in value)
+        elif value:
+            output_shape.append(f"- {field}: {value}")
+    if not output_shape:
+        output_shape.append(f"- structured_summary: {agent['scope']}")
+
+    policy = agent["context_policy"]
+    skills = ", ".join(policy["allowed_skills"]) or "（无）"
+    mcp = ", ".join(policy["allowed_mcp"]) or "（无）"
+    upstream = ", ".join(policy["upstream_inputs"]) or "（无）"
+    policy_lines = [
+        f"spawn 时传 fork_turns={policy['fork_turns']}",
+        f"使用 model_tier={policy['model_tier']}",
+        f"只允许 skill：{skills}",
+        f"只允许 MCP：{mcp}",
+        f"先读上游摘要：{upstream}，不要重新加载这些 skill",
+    ]
+    if policy.get("model"):
+        policy_lines.insert(2, f"custom model={policy['model']} reasoning={policy['model_reasoning_effort']}")
+
+    sections = [
+        "目标\n" + "\n".join(objective),
+        "精确文件\n" + "\n".join(bullet_lines(exact_files)),
+        "输出结构\n" + "\n".join(output_shape),
+        f"验证命令\n{agent['verification_command']}",
+        "Context policy\n" + "\n".join(policy_lines),
+    ]
+    return "\n\n".join(sections)
+
+
+def cmd_brief(args: argparse.Namespace) -> int:
+    repo_root = Path(args.repo_root).expanduser().resolve() if args.repo_root else git_root()
+    try:
+        plan = json.loads(Path(args.plan).read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError) as exc:
+        print(f"ERROR[plan_read]: {exc}", file=sys.stderr)
+        return 1
+    if not isinstance(plan, dict):
+        print("ERROR[plan_object]: plan must be a JSON object", file=sys.stderr)
+        return 1
+
+    errors, summary = validate_plan(plan, repo_root)
+    if errors:
+        print("\n".join(errors), file=sys.stderr)
+        return 1
+
+    agent = next((item for item in summary if item["id"] == args.agent), None)
+    if agent is None:
+        print(f"ERROR[agent_not_found]: agent={args.agent}", file=sys.stderr)
+        return 1
+    print(render_brief(agent))
+    return 0
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description="Validate Harness Runtime agent team plans.")
     subparsers = parser.add_subparsers(dest="cmd", required=True)
@@ -506,6 +575,12 @@ def main() -> int:
     validate_parser.add_argument("--repo-root", help="Repository root for write_set normalization")
     validate_parser.add_argument("--emit-evidence", action="store_true", help="Append a decision receipt on success")
     validate_parser.set_defaults(func=cmd_validate)
+
+    brief_parser = subparsers.add_parser("brief", help="Render one validated agent spawn brief")
+    brief_parser.add_argument("plan")
+    brief_parser.add_argument("--agent", required=True, help="Agent id to render")
+    brief_parser.add_argument("--repo-root", help="Repository root for write_set normalization")
+    brief_parser.set_defaults(func=cmd_brief)
 
     args = parser.parse_args()
     return args.func(args)
