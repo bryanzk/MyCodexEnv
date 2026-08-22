@@ -27,3 +27,32 @@ Prepare and execute a governed two-worker agent-team task in an isolated clean w
 Quality gate: agent-team validation passes; worker write sets are disjoint; the focused test and diff check pass; no runtime or remote mutation occurs.
 
 Run policy: the light and standard tasks require at least three before runs. Under owner decision D4, the governed task gets one before run first; the owner decides whether to add runs two and three after inspecting that reporter output.
+
+Governed accounting scope: parent rollout visible. The governed run 1 time-window probe found no independent child rollout that could be linked to the parent, so worker usage cannot be separated from the parent rollout.
+
+## aborted_runs
+
+### standard 2 · 2026-08-22T12:33:34.939Z
+
+- Reason: sandbox denial interrupted the run after the following command was rejected with `zsh:1: operation not permitted: ps`:
+
+  ```text
+  ps -axo pid,ppid,etime,args | rg '(^| )81814|test_runner.py|check_codex_skill_loader|app-server'
+  ```
+
+- Before interruption: `requests_total=38`; `input=2683366`.
+
+Every aborted run must be recorded in this section. This section is the data source for the failure/retry metric.
+
+## identity_drift
+
+### Governed runs 2–3 · 2026-08-22
+
+- Decision: option (b). Governed runs 2 and 3 are not comparable with governed run 1 and are retained with `-DRIFT.json` filenames.
+- Governed run 1: rollout started at `2026-08-22T12:41:39Z` and its last token event was `2026-08-22T12:51:54.707Z`; recorded config SHA-256 was `30dac4fc328443011fa7bdf5dc067a9b2380b263870649500e5cddfc61ec59a7`.
+- Current config: mtime `2026-08-22T09:07:17-0400` (`2026-08-22T13:07:17Z`), before governed run 2 started at `2026-08-22T13:15:22Z`; SHA-256 is `da39d3671936efa89ee4c9a9953dbbb6bbd17393273b6f59758abcda41b4acae`.
+- Backup-chain break: no `~/.codex/config.toml.backup.*` file has the governed run 1 hash. The newest matching-pattern backup is dated `2026-08-06T15:21:47-0400`, so the exact governed run 1 content is unavailable.
+- `diff -u`: unavailable because the old content is absent. No substitute backup is presented as the governed run 1 file.
+- Protected-field verdict: unverified. Without the old content, the diff cannot prove that `model`, reasoning/context settings, features, MCP servers, or hooks were unchanged.
+- Source: unknown. `sync_codex_home.sh` would create a timestamped `config.toml.backup.*` before overwriting the config, but no backup or sync log matches `2026-08-22T09:07:17-0400`. The active rollout contains no `exec` that writes `~/.codex/config.toml`; the automation active near that time used read-only inspection commands.
+- Current model line: `model = "gpt-5.6-sol"`.

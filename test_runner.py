@@ -6505,6 +6505,29 @@ def test_harness_cost_report_rollout_fixture():
     require(result["tool_calls"] == {}, "single token-count fixture should have no tool calls")
     require(result["subagent_attribution"] == "not_available",
             "fixture without parent metadata must not guess subagent attribution")
+    require(result["subagent_attribution_reason"] ==
+            "No independent child rollout can be linked from the parent rollout metadata.",
+            "unavailable subagent attribution must explain the observable limit")
+
+    with tempfile.TemporaryDirectory() as tmp:
+        baseline_dir = Path(tmp)
+        (baseline_dir / "before-old.json").write_text(json.dumps({
+            "git_head": "36d51c2",
+            "codex_config_sha256": "30dac4fc328443011fa7bdf5dc067a9b2380b263870649500e5cddfc61ec59a7",
+        }), encoding="utf-8")
+        code, out, err = run([
+            sys.executable, str(HARNESS_COST_REPORT),
+            "--rollout", str(HARNESS_COST_ROLLOUT_FIXTURE), "--json",
+            "--baseline-dir", str(baseline_dir),
+            "--git-head", "36d51c2",
+            "--codex-config-sha256", "da39d3671936efa89ee4c9a9953dbbb6bbd17393273b6f59758abcda41b4acae",
+        ])
+        require(code == 0, f"identity drift report should succeed: {err or out}")
+        drift_result = json.loads(out)
+        require(drift_result.get("identity_drift") is True,
+                "changed config identity under one git head must be marked as drift")
+        require("WARN identity drift: 30dac4fc -> da39d367" in err,
+                "identity drift must emit the old and new hash prefixes")
 
     with tempfile.TemporaryDirectory() as tmp:
         duplicate_turn_fixture = Path(tmp) / "duplicate-turn.jsonl"

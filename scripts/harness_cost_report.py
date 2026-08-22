@@ -23,6 +23,9 @@ def parse_args() -> argparse.Namespace:
     source.add_argument("--session", help="Session id or unique rollout filename suffix")
     source.add_argument("--rollout", type=Path, help="Exact rollout JSONL path (primarily for fixtures)")
     parser.add_argument("--sessions-root", type=Path, default=Path.home() / ".codex" / "sessions")
+    parser.add_argument("--baseline-dir", type=Path)
+    parser.add_argument("--git-head")
+    parser.add_argument("--codex-config-sha256")
     parser.add_argument("--json", action="store_true")
     return parser.parse_args()
 
@@ -150,6 +153,7 @@ def report(path: Path) -> dict[str, Any]:
         "session_id": session_id or path.stem.removeprefix("rollout-"),
         "rollout": path.name,
         "subagent_attribution": ({"parent_session_id": parent_id} if parent_id else "not_available"),
+        "subagent_attribution_reason": "No independent child rollout can be linked from the parent rollout metadata.",
         "totals": totals,
         "turns": turns,
         "tool_calls": dict(sorted(tools.items())),
@@ -162,6 +166,25 @@ def main() -> int:
     args = parse_args()
     try:
         result = report(resolve_rollout(args))
+        identity_args = (args.baseline_dir, args.git_head, args.codex_config_sha256)
+        if any(identity_args):
+            if not all(identity_args):
+                raise ValueError("--baseline-dir, --git-head, and --codex-config-sha256 must be used together")
+            baseline_dir = args.baseline_dir.expanduser().resolve()
+            if not baseline_dir.is_dir():
+                raise ValueError(f"baseline directory not found: {baseline_dir}")
+            old_hashes = sorted({
+                existing.get("codex_config_sha256")
+                for path in baseline_dir.glob("*.json")
+                if (existing := json.loads(path.read_text(encoding="utf-8"))).get("git_head") == args.git_head
+                and existing.get("codex_config_sha256") != args.codex_config_sha256
+            })
+            result.update({"git_head": args.git_head,
+                           "codex_config_sha256": args.codex_config_sha256,
+                           "identity_drift": bool(old_hashes)})
+            if old_hashes:
+                print(f"WARN identity drift: {old_hashes[0][:8]} -> {args.codex_config_sha256[:8]}",
+                      file=sys.stderr)
     except (OSError, ValueError) as exc:
         print(f"ERROR: {exc}", file=sys.stderr)
         return 2
