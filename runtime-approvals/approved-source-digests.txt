@@ -10,3 +10,4 @@ sha256:4f174cbd7d3db9c6b78654cffb152ccbb57eda81e83bf25572e77a61c20778a5  Approve
 sha256:fe0cebf41a9daa66369922fcc604869a096bd2515fc676684166dbfd64a8fa2c  Approve 563bc2e (52912ce deny-only guard): live runtime promotion authorized 2026-08-18
 sha256:3d878f19c7e9e2322235669b60cf20c71f7175bb2f2bf75c9f1b272007d6900b  Approve top-level-command apply_patch deny fix: live promotion authorized 2026-08-18
 sha256:d7e11f0b274591a43330ee6c643c150939503fa98b788e5d808eec2294fa513e  Approve mirrored-source apply_patch deny fix: live promotion authorized 2026-08-18
+sha256:5fabb358142fb70aab400cd43ab9a271f1d182e5a694bab68d02f9cf15c75f00  Approve 03775f0: P0-2 config, hooks, telemetry, and custom-agent templates
