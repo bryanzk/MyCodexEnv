@@ -88,7 +88,7 @@ def resolved_phase(payload: dict[str, Any], cwd: str) -> str:
 
 def resolved_phase_and_trace(payload: dict[str, Any], cwd: str) -> tuple[str, dict[str, Any] | None]:
     """S5: phase plus the per-gate verdicts, degrading to the legacy
-    phase-only resolution when tracing is unavailable."""
+    phase-only resolution when tracing is absent."""
     if phase_with_trace is None or git_root is None or load_policy is None:
         return resolved_phase(payload, cwd), None
     try:

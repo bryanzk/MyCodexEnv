@@ -9,7 +9,7 @@ from pathlib import Path
 from typing import Any
 
 
-# Source-stage capability conclusion from the W2a 2026-08-02 Phase-0 probe.
+# 描述 hook payload，不描述 rollout；rollout 侧见 scripts/harness_cost_report.py。
 USAGE_FIELDS_PRESENT = False
 STATE_VERSION = 1
 
@@ -73,8 +73,7 @@ def ordinal_only_context(ordinal: int) -> dict[str, Any]:
         "token_usage": "unknown",
         "remaining_capacity": "unknown",
         "additional_context": (
-            f"compaction_ordinal={ordinal} (host-observed); "
-            "context_pressure_signal=ordinal-only; token_usage=unknown; remaining_capacity=unknown"
+            f"compaction_ordinal={ordinal} (host-observed); context_pressure_signal=ordinal-only"
         ),
     }
 

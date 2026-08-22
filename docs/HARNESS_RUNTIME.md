@@ -447,13 +447,11 @@ while retaining the strict three-condition heuristic for payloads without it.
 Because no usage/token field was observed, R4 must use only the host-observed
 compaction ordinal as its pressure signal and must not synthesize capacity.
 
-R4 records that degradation as decision evidence before meter code exists:
-
-- command: `python3 scripts/harness_evidence.py append ... --metadata '{"usage_or_token_fields_present":false,"degradation":"ordinal-only"}'`
-- exit_code: 0
-- key_output: `evidence_kind=decision; degradation=ordinal-only; token_usage=unknown; remaining_capacity=unknown; validation=valid`
-- timestamp: `2026-08-02T22:58:31-04:00`
-- isolated evidence file: `/tmp/mce-r4-evidence.aUpBFW/harness/evidence/2026-08-02.jsonl`
+R4's `USAGE_FIELDS_PRESENT` conclusion describes the hook payload only; it does
+not describe rollout telemetry. Rollout token accounting is read separately by
+`scripts/harness_cost_report.py`. The ordinal-only branch therefore preserves
+unknown values in its returned data contract without injecting those values
+into model-visible context.
 
 W2b implements that source-stage probe in `codex/hooks/compaction_probe.py` and
 registers it in the source `UserPromptSubmit` chain. The 2026-08-10 tracked
@@ -469,10 +467,9 @@ The per-session cache is `~/.codex/harness/probe_state.json`, keyed by canonical
 session-file path. Missing/corrupt state, a missing entry, file replacement, or
 file shrink permits one full scan and rebuild. Stable rounds seek to the cached
 complete-line offset and read only appended bytes. Partial trailing lines remain
-unconsumed until completed. Every successful match injects
-`compaction_ordinal=N (host-observed)` plus an explicit ordinal-only pressure
-label and `token_usage=unknown; remaining_capacity=unknown`; exceptions and
-budget overruns are silent. `codex/hooks/context_meter.py` consumes the frozen
+unconsumed until completed. Every successful match injects only
+`compaction_ordinal=N (host-observed); context_pressure_signal=ordinal-only`;
+exceptions and budget overruns are silent. `codex/hooks/context_meter.py` consumes the frozen
 W2a capability conclusion. With the source conclusion set to false it never
 persists `~/.codex/harness/meter.json`. Its separately tested usage-capable path
 persists only observed integer fields and derives remaining capacity only when

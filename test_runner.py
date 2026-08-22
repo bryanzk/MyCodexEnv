@@ -7791,9 +7791,10 @@ def test_context_meter_persistence():
         probe_spec.loader.exec_module(probe_module)
         response = probe_module.inject_response(6, observed_payload, absent_home)
         context = response["hookSpecificOutput"]["additionalContext"]
-        require("context_pressure_signal=ordinal-only" in context, "compaction probe should inject ordinal pressure")
-        require("token_usage=unknown" in context and "remaining_capacity=unknown" in context,
-                "source integration must not invent usage or capacity")
+        require(
+            context == "compaction_ordinal=6 (host-observed); context_pressure_signal=ordinal-only",
+            "compaction probe should inject only the host-observed ordinal pressure signal",
+        )
         require(not (absent_home / "harness" / "meter.json").exists(),
                 "source integration must follow the usage-absent conclusion")
 
