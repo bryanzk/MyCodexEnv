@@ -54,5 +54,5 @@ Every aborted run must be recorded in this section. This section is the data sou
 - Backup-chain break: no `~/.codex/config.toml.backup.*` file has the governed run 1 hash. The newest matching-pattern backup is dated `2026-08-06T15:21:47-0400`, so the exact governed run 1 content is unavailable.
 - `diff -u`: unavailable because the old content is absent. No substitute backup is presented as the governed run 1 file.
 - Protected-field verdict: unverified. Without the old content, the diff cannot prove that `model`, reasoning/context settings, features, MCP servers, or hooks were unchanged.
-- Source: unknown. `sync_codex_home.sh` would create a timestamped `config.toml.backup.*` before overwriting the config, but no backup or sync log matches `2026-08-22T09:07:17-0400`. The active rollout contains no `exec` that writes `~/.codex/config.toml`; the automation active near that time used read-only inspection commands.
+- Source: owner. Owner confirmed the `2026-08-22T09:07:17-0400` local change was `model_reasoning_effort` from `medium` to `ultra`, changed manually by the owner; the absence of a matching `sync_codex_home.sh` backup, sync log, or rollout write remains consistent with that confirmation.
 - Current model line: `model = "gpt-5.6-sol"`.
