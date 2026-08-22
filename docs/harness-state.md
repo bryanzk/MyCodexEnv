@@ -14,7 +14,7 @@ Stable rules belong in `AGENTS.md`, `README.md`, `docs/repo-index.md`, or
   - `codex/skills/delivery-harness-framework/SKILL.md`
 - blocked_sources: none
 - unsafe_inputs: none
-- next_safe_task: P0-2 后基线：light/standard 各 3 次、governed 3 次，reporter 出 after-p0-2 JSON，config 身份须为新模板渲染后的哈希
+- next_safe_task: P0-3：context_policy + brief 子命令；fork_turns 已核实为 spawn_agent 工具参数（none|all|N），不需要 config 键
 - required_commands:
   - `python3 test_runner.py`
   - `git diff --check`
@@ -24,9 +24,9 @@ Stable rules belong in `AGENTS.md`, `README.md`, `docs/repo-index.md`, or
 - compaction_ordinal: 2
 - transition_key: p0-2-complete
 - gate_decision: continue-to-boundary
-- constraints: ["Do not run after-p0-2 baselines in this task","Do not start P0-3 in this task"]
-- ownership: {"boundary":"P0-2 checkpoint and next action only","files":{"docs/harness-state.md":"agent_owned_checkpoint"}}
-- next_action: {"command":"P0-2 后基线：light/standard 各 3 次、governed 3 次，reporter 出 after-p0-2 JSON，config 身份须为新模板渲染后的哈希","scope":"after-p0-2-baseline"}
+- constraints: ["Do not start P0-3 in this task","Do not push"]
+- ownership: {"boundary":"P0-2 verdict, clean light-b baseline, and next action only","files":{"docs/harness-state.md":"task_owned","docs/harness/cost-baseline/tasks.md":"task_owned","docs/harness/cost-baseline/after-p0-2-6ec1b25-light-b-{1,2,3}.json":"task_owned"}}
+- next_action: {"command":"P0-3：context_policy + brief 子命令；fork_turns 已核实为 spawn_agent 工具参数（none|all|N），不需要 config 键","scope":"P0-3"}
 
 ## State Log
 

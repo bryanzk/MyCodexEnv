@@ -10,6 +10,22 @@ Read CONTEXT.md and docs/repo-index.md. In no more than five bullets, explain th
 
 Quality gate: every definition agrees with `CONTEXT.md`; no repository changes.
 
+## Light-b · Clean read-only control
+
+Frozen source: `CONTEXT.md`.
+
+Selection evidence:
+
+- `git log --since=30.days --oneline -- CONTEXT.md` returned no commits.
+- The latest commit touching the file is `e009df5a3a3a6250c991a7f34493df40f2cefc99` (`2026-07-10`, `Add public docs entry definition`).
+- `CONTEXT.md` is outside the P0-1, P0-2, and P0-3 write sets in `tasks/p0-token-cost-plan-2026-08-22.md`; it is a 49-line terminology contract whose exact `_Avoid_` values are required to answer the prompt.
+
+```text
+Read only CONTEXT.md. In no more than four bullets, give the exact _Avoid_ aliases for phase, lane, checkpoint, and promotion, preserving their order. Do not read any other file, modify files, run tests, access the network, or use subagents. Cite CONTEXT.md for each bullet.
+```
+
+Quality gate: the four alias lists exactly match `CONTEXT.md`, preserve source order, cite only `CONTEXT.md`, and no repository changes occur.
+
 ## Standard · One script and one test
 
 ```text
@@ -56,3 +72,13 @@ Every aborted run must be recorded in this section. This section is the data sou
 - Protected-field verdict: unverified. Without the old content, the diff cannot prove that `model`, reasoning/context settings, features, MCP servers, or hooks were unchanged.
 - Source: owner. Owner confirmed the `2026-08-22T09:07:17-0400` local change was `model_reasoning_effort` from `medium` to `ultra`, changed manually by the owner; the absence of a matching `sync_codex_home.sh` backup, sync log, or rollout write remains consistent with that confirmation.
 - Current model line: `model = "gpt-5.6-sol"`.
+
+## p0-2-verdict
+
+- First-request input: `39,718` before → `37,401` after.
+- The custom-agent TOML content did not enter the serialized first-request context; exact reverse lookup returned `0` matches.
+- Request counts: before `{2,5,2}`; after `{6,3,3}`. The median difference is within noise.
+- The light task reads `docs/repo-index.md`, which was changed by `de249c2` and `93aa017`; the after input therefore does not use the same source as before. `contaminated_by_slice: true`.
+- `<permissions instructions>` changed from `9,533` to `586` characters. This is a host difference with unknown provenance. `open question`.
+
+结论：P0-2 保留，对固定上下文净减约 2.3K token/请求，对总成本无可辨效应。
