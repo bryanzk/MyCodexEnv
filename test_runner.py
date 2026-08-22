@@ -1474,6 +1474,15 @@ def test_sync_renders_template_and_copies_skills():
         require(code == 0, f"sync failed: {err or out}")
 
         rendered = (codex_home / "config.toml").read_text(encoding="utf-8")
+        for setting in [
+            'model = "gpt-5.6-sol"',
+            "model_context_window = 1000000",
+            "model_auto_compact_token_limit = 900000",
+            'model_reasoning_effort = "medium"',
+            'personality = "pragmatic"',
+        ]:
+            require(setting in active_toml_lines(rendered), f"rendered config missing owner D1 setting: {setting}")
+        require('model = "gpt-5.5"' not in active_toml_lines(rendered), "rendered config must not use gpt-5.5")
         require("${NPM_GLOBAL_BIN}" not in rendered, "npm global bin placeholder should be replaced")
         require('[mcp_servers."chrome-devtools"]' in rendered, "chrome-devtools MCP should be rendered")
         require("--no-usage-statistics" in rendered, "chrome-devtools MCP should disable usage statistics")
