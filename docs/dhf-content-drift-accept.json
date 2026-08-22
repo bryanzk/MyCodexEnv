@@ -3,16 +3,6 @@
   "purpose": "Differences that scripts/dhf_content_drift.py would otherwise report forever, recorded as deliberate with a reason. An entry here is a decision, not a snooze: it says the difference is correct and should survive. Entries whose finding no longer occurs are reported as stale and should be deleted, so an exemption cannot silently excuse a future regression.",
   "accepted": [
     {
-      "key": "bilingual:project-lifecycle-harness-flow-en.html:headings",
-      "reason": "The English lifecycle flow is deliberately the lightweight entry map and says so in its own lead text; the Chinese page is the full main flow. The fuller English counterpart is project-lifecycle-harness-flow-skills-en-status-style.html, which is in sync with its Chinese twin. Verified against the Lifecycle Stage Map in LIFECYCLE_SKILL_ROUTING.md on 2026-08-11.",
-      "accepted_on": "2026-08-11"
-    },
-    {
-      "key": "bilingual:project-lifecycle-harness-flow-en.html:branches",
-      "reason": "Same deliberate split as the headings entry. The Chinese page carries the security and browser-QA specialist branches that the routing spec defines; the English page stays a simple intake-to-handoff line on purpose. Adding branches here would destroy the lightweight positioning rather than fix drift.",
-      "accepted_on": "2026-08-11"
-    },
-    {
       "key": "bilingual:dhf-examples-three-lenses-en.html:sections",
       "reason": "Owner decision on 2026-08-19: the English casebook is deliberately the case index, not a translation of the 53KB Chinese ten-case narrative. The English deep-dive evidence is shipq-dhf-safe-controlled-recovery-en.html, and dhf-examples-three-lenses-safe-en.html carries the SAFE control lens. The page states this positioning in its own lead text. Revisit only if English readers start asking for per-case detail the index cannot answer; then expand the most-asked cases rather than all ten.",
       "accepted_on": "2026-08-19"

@@ -4,6 +4,21 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Delivery Harness Framework (DHF) 新手指南</title>
+  <meta name="description" content="它不是一个更聪明的 prompt，也不是单个 agent。它是一套工作框架，让 AI 工程任务先恢复事实，再用领域语言和 ADR 锁定范围，按阶段路由执行，最后用新鲜证据证明完成。">
+  <link rel="canonical" href="https://deliveryharness.com/delivery-harness-beginner-guide-cn.html">
+  <link rel="alternate" hreflang="en" href="https://deliveryharness.com/delivery-harness-beginner-guide-en.html">
+  <link rel="alternate" hreflang="zh-CN" href="https://deliveryharness.com/delivery-harness-beginner-guide-cn.html">
+  <link rel="alternate" hreflang="x-default" href="https://deliveryharness.com/delivery-harness-beginner-guide-en.html">
+  <meta property="og:title" content="Delivery Harness Framework (DHF) 新手指南">
+  <meta property="og:description" content="它不是一个更聪明的 prompt，也不是单个 agent。它是一套工作框架，让 AI 工程任务先恢复事实，再用领域语言和 ADR 锁定范围，按阶段路由执行，最后用新鲜证据证明完成。">
+  <meta property="og:url" content="https://deliveryharness.com/delivery-harness-beginner-guide-cn.html">
+  <meta property="og:image" content="https://deliveryharness.com/dhf-social-card.png">
+  <meta property="og:image:alt" content="Delivery Harness Framework — from ambiguous requests to verifiable delivery">
+  <meta property="og:locale" content="zh_CN">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Delivery Harness Framework (DHF) 新手指南">
+  <meta name="twitter:description" content="它不是一个更聪明的 prompt，也不是单个 agent。它是一套工作框架，让 AI 工程任务先恢复事实，再用领域语言和 ADR 锁定范围，按阶段路由执行，最后用新鲜证据证明完成。">
+  <meta name="twitter:image" content="https://deliveryharness.com/dhf-social-card.png">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,650;9..144,760&family=IBM+Plex+Mono:wght@400;500;600&family=Atkinson+Hyperlegible:wght@400;700&display=swap" rel="stylesheet">
@@ -562,8 +577,8 @@
     </nav>
 
     <main id="dhf-main" class="main">
-      <aside class="dhf-status-bar" data-dhf-status="2026-08-11" aria-label="DHF 当前状态">
-        <strong>架构状态 · 2026-08-11</strong>
+      <aside class="dhf-status-bar" data-dhf-status="2026-08-22" aria-label="DHF 当前状态">
+        <strong>架构状态 · 2026-08-22</strong>
         <span>仓库源码、当前运行态、公开站点与独立核心分别判定。</span>
         <a href="./dhf-architecture-status-cn.html">查看当前状态</a>
       </aside>
@@ -640,7 +655,7 @@
 
       <section class="section" id="flow" style="--i:3">
         <h2>五步流程</h2>
-        <div class="section-note">这是检查清单，不是每个任务的固定仪式：只有 <code>governed</code> 且命中 matching escalation signal 时才运行 <code>harness_recover.py</code>、<code>harness_env_probe.py</code> 或 <code>harness_checkpoint.py</code>；<code>light</code> 不要求这些 lifecycle helpers。</div>
+        <details><summary>实现细节</summary><div class="section-note">这是检查清单，不是每个任务的固定仪式：只有 <code>governed</code> 且命中 matching escalation signal 时才运行 <code>harness_recover.py</code>、<code>harness_env_probe.py</code> 或 <code>harness_checkpoint.py</code>；<code>light</code> 不要求这些 lifecycle helpers。</div></details>
         <div class="pipeline">
           <div class="pipe"><b>1. Recover（条件化）</b><span>只有当任务风险较高、系统明确要求加强检查时，才核对当前运行状态、代码改动和本地记录；普通任务只查看完成工作所必需的信息。</span></div>
           <div class="pipe"><b>2. Clarify</b><span>确认目标、范围、受众、约束、领域词汇和验收标准；不清楚就进入 requirements。</span></div>
@@ -679,7 +694,7 @@
             <div class="step"><div class="step-num">C</div><div><h3>交付结果</h3><p>输出包含阶段判断、已读来源、执行路径、验证命令、退出码、关键输出、时间戳和下一步安全任务。</p></div></div>
           </div>
         </div>
-        <div class="io-example" aria-label="把一次模糊请求变成 DHF 输出">
+        <details><summary>实现细节</summary><div class="io-example" aria-label="把一次模糊请求变成 DHF 输出">
           <div class="io-box">
             <div class="label">input request</div>
             <h3>把一次模糊请求变成 DHF 输出</h3>
@@ -695,12 +710,12 @@
               <li><code>timestamp</code>: <code>2026-05-14T00:00:00-04:00</code></li>
             </ul>
           </div>
-        </div>
+        </div></details>
       </section>
 
       <section class="section" id="glossary" style="--i:5">
         <h2>术语表</h2>
-        <div class="table-wrap">
+        <details><summary>实现细节</summary><div class="table-wrap">
           <table>
             <thead>
               <tr>
@@ -722,12 +737,13 @@
               <tr><td>Next safe task</td><td>下一位 agent 不需要猜就能继续做的安全动作。</td><td><code>scripts/harness_recover.py</code> 输出</td></tr>
             </tbody>
           </table>
-        </div>
+        </div></details>
       </section>
 
       <section class="section" id="next" style="--i:6">
         <h2>下一步怎么读</h2>
         <div class="links" data-dhf-path-links>
+          <a class="link-card" href="./dhf-memory-map.html"><b>记忆地图</b><span>先记住 DHF 全貌，再深入理解运行机制。</span></a>
           <a class="link-card" href="./dhf-context-engineering-cn.html"><b>Context Engineering</b><span>看可信事实如何约束行动并支持恢复。</span></a>
           <a class="link-card" href="./project-lifecycle-harness-flow-cn.html"><b>Lifecycle Flow</b><span>看任务从进入到交接的完整路径。</span></a>
           <a class="link-card" href="./index-zh.html"><b>中文公开入口</b><span>从这里进入中文 DHF 公开页面。</span></a>
@@ -735,9 +751,7 @@
           <a class="link-card" href="./" hreflang="en"><b>English Guide</b><span>给英文读者的独立入口。</span></a>
           <a class="dhf-xlang link-card" href="./lifecycle-skill-routing-en.html" hreflang="en" data-lang="EN"><b>Written Spec</b><span>查 workflow、stage map、helper 和 evidence standard。</span></a>
         </div>
-        <div class="footer">
-          Published by ShipAI.ca as a public DHF reference. 生成来源：<code>docs/LIFECYCLE_SKILL_ROUTING.md</code>、<code>docs/HARNESS_RUNTIME.md</code>、<code>docs/AGENT_HARNESS_STATUS.md</code>。页面目标：让 agentic engineering beginner 先理解 DHF 在做什么，再进入详细流程图。
-        </div>
+        <div class="footer">Published by ShipAI.ca as a public DHF reference. <a href="./dhf-architecture-status-cn.html">当前状态</a>。</div>
       </section>
     </main>
   </div>

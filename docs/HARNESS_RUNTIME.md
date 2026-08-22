@@ -7,6 +7,7 @@
 > `runtime_promoted`; 24/24 tracked managed runtime files match source, and the
 > Codex CLI 0.147.0 guard probe passed 18/18. These local receipts do not prove
 > publication, production enforcement, customer adoption, or commercial value.
+> A fresh read-only simplification evidence probe observed the profile-aware managed runtime as `runtime_promoted` at 2026-08-22T01:06:20Z; the historical full parity receipt date above remains 2026-08-10.
 
 ## Purpose
 MyCodexEnv treats the model as only one part of the agent system. The harness

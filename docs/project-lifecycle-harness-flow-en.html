@@ -4,6 +4,21 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Delivery Harness Framework (DHF) Lifecycle Flow</title>
+  <meta name="description" content="Use this Flow Map after the beginner guide. It shows how delivery-harness-framework selects a governance profile and routes requirements, implementation, verification evidence, review, release,…">
+  <link rel="canonical" href="https://deliveryharness.com/project-lifecycle-harness-flow-en.html">
+  <link rel="alternate" hreflang="en" href="https://deliveryharness.com/project-lifecycle-harness-flow-en.html">
+  <link rel="alternate" hreflang="zh-CN" href="https://deliveryharness.com/project-lifecycle-harness-flow-cn.html">
+  <link rel="alternate" hreflang="x-default" href="https://deliveryharness.com/project-lifecycle-harness-flow-en.html">
+  <meta property="og:title" content="Delivery Harness Framework (DHF) Lifecycle Flow">
+  <meta property="og:description" content="Use this Flow Map after the beginner guide. It shows how delivery-harness-framework selects a governance profile and routes requirements, implementation, verification evidence, review, release,…">
+  <meta property="og:url" content="https://deliveryharness.com/project-lifecycle-harness-flow-en.html">
+  <meta property="og:image" content="https://deliveryharness.com/dhf-social-card.png">
+  <meta property="og:image:alt" content="Delivery Harness Framework — from ambiguous requests to verifiable delivery">
+  <meta property="og:locale" content="en_CA">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Delivery Harness Framework (DHF) Lifecycle Flow">
+  <meta name="twitter:description" content="Use this Flow Map after the beginner guide. It shows how delivery-harness-framework selects a governance profile and routes requirements, implementation, verification evidence, review, release,…">
+  <meta name="twitter:image" content="https://deliveryharness.com/dhf-social-card.png">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,650;9..144,760&family=IBM+Plex+Mono:wght@400;500;600&family=Atkinson+Hyperlegible:wght@400;700&display=swap" rel="stylesheet">
@@ -243,23 +258,26 @@
   <main id="dhf-main" class="wrap dhf-has-toc">
   <nav class="dhf-toc" aria-label="On this page">
     <div class="dhf-toc-title">On this page</div>
+    <a href="#overview">Overview</a>
     <a href="#flow">Flow map</a>
-    <a href="#read">How to read it</a>
+    <a href="#routing">Stage and skill routing</a>
+    <a href="#helpers">Runtime helpers</a>
+    <a href="#handoff">Delivery gates</a>
     <a href="#next">Continue</a>
   </nav>
   <div class="dhf-col">
-    <aside class="dhf-status-bar" data-dhf-status="2026-08-11" aria-label="Current DHF status">
-      <strong>Architecture status · 2026-08-11</strong>
+    <aside class="dhf-status-bar" data-dhf-status="2026-08-22" aria-label="Current DHF status">
+      <strong>Architecture status · 2026-08-22</strong>
       <span>Source, runtime, publication, and independent-core status are separate.</span>
       <a href="./dhf-architecture-status-en.html">Open current status</a>
     </aside>
-    <section class="hero">
+    <section class="hero" id="overview">
       <div class="eyebrow">Delivery Harness Framework / DHF Lifecycle Flow</div>
       <h1>DHF Lifecycle Flow from intake to handoff.</h1>
       <p class="lead">Use this Flow Map after the beginner guide. It shows how <code>delivery-harness-framework</code> selects a governance profile and routes requirements, implementation, verification evidence, review, release, and conditional recovery or handoff.</p>
     </section>
 
-    <section class="section">
+    <section class="section" id="flow">
       <div class="label">Lifecycle Flow</div>
       <h2 id="flow">Flow Map</h2>
       <p>Recover / Env / Checkpoint are conditional nodes. Only <code>governed</code> work with a matching escalation signal runs <code>harness_recover.py</code>, <code>harness_env_probe.py</code>, or <code>harness_checkpoint.py</code>; <code>light</code> does not require those helpers.</p>
@@ -272,23 +290,49 @@ flowchart TD
   Env["Governed matching signal only<br/>harness_env_probe.py"]
   Clear{"Are goal, scope,<br/>and acceptance clear?"}
   Req["Requirements<br/>planner / req-to-dev<br/>CONTEXT / ADR"]
+  ReqValidate["Validate requirements artifact<br/>harness_requirements.py"]
+  Specialist{"Does this request need<br/>specialist judgment?"}
+  Product["Product judgment<br/>plan CEO review / office hours"]
   Plan["Planning<br/>vertical slice / AFK / HITL"]
+  Prototype["Prototype learning / deep module review"]
+  Security["Security or privacy boundary<br/>CSO / security reviewer"]
+  Multi{"Multiple agents?"}
+  Team["Validate agent team<br/>durable brief when needed"]
   Dev["Implementation<br/>TDD / ATDD / scoped workers"]
   Verify["Verification evidence<br/>command, exit_code,<br/>key_output, timestamp"]
+  EvidenceReport["Evidence report<br/>harness_report.py"]
+  Visible{"User-visible or<br/>browser-related?"}
+  Browser["Browser QA<br/>QA or QA-only"]
+  Ready{"Ready to deliver?"}
   Review["QA / security / review<br/>gstack-qa / gstack-cso / gstack-review"]
   Ship["Ship / deploy / canary<br/>gstack-ship / land-and-deploy"]
   Docs["Docs release<br/>document-release / doc-updater"]
   Handoff["Governed matching signal only<br/>harness_checkpoint.py append"]
   Done(["DHF output<br/>route, evidence, next safe task"])
+  Danger["Blocked<br/>credentials, authority, destructive risk, or leakage"]
 
   Start --> ProfileDecision
   ProfileDecision -- "governed matching signal" --> Recover --> Env --> Clear
   ProfileDecision -- "light/standard skip Recover / Env" --> Clear
-  Clear -- "No" --> Req --> Plan
-  Clear -- "Yes" --> Plan
-  Plan --> Dev --> Verify
-  Verify --> Review --> Ship --> Docs --> Handoff --> Done
-  Verify --> Handoff
+  Clear -- "No" --> Req --> ReqValidate --> Specialist
+  Clear -- "Yes" --> Specialist
+  Specialist -- "Product" --> Product --> Multi
+  Specialist -- "Engineering or design" --> Plan --> Prototype --> Multi
+  Specialist -- "Security" --> Security --> Multi
+  Specialist -- "No specialist" --> Multi
+  Multi -- "Yes" --> Team --> Dev
+  Multi -- "No" --> Dev
+  Dev --> Verify --> EvidenceReport --> Visible
+  Visible -- "Yes" --> Browser --> Ready
+  Visible -- "No" --> Ready
+  Ready -- "Review" --> Review --> Handoff
+  Ready -- "Ship or deploy" --> Ship --> Docs --> Handoff
+  Ready -- "Handoff only" --> Handoff
+  Handoff --> Done
+  Env -. "Unavailable or missing" .-> Danger
+  Security -. "High risk" .-> Danger
+  Ship -. "No authority" .-> Danger
+  Danger --> Handoff
 
   classDef runtime fill:#e9f7f5,stroke:#0f9b8e,color:#17241f;
   classDef decision fill:#f0eaff,stroke:#8a4fff,color:#17241f;
@@ -296,21 +340,44 @@ flowchart TD
   classDef verify fill:#eaf6f0,stroke:#12805c,color:#17241f;
   classDef ship fill:#faeaf1,stroke:#d13574,color:#17241f;
 
-  class Recover,Env,Handoff runtime;
-  class Clear decision;
-  class Req,Plan,Dev build;
-  class Verify,Review,Docs verify;
+  class Recover,Env,ReqValidate,Team,EvidenceReport,Handoff runtime;
+  class ProfileDecision,Clear,Specialist,Multi,Visible,Ready decision;
+  class Req,Plan,Prototype,Dev build;
+  class Verify,Review,Docs,Browser verify;
   class Ship ship;
         </pre>
       </div>
     </section>
 
-    <section class="section">
-      <div class="label">How to read it</div>
-      <h2 id="read">Use the map as a gate, not a poster.</h2>
+    <section class="section" id="routing">
+      <div class="label">Stage and skill routing</div>
+      <h2>Route each request to one lifecycle owner.</h2>
+      <p>This summary comes from the canonical Lifecycle Stage Map. The dedicated <a href="./project-lifecycle-harness-flow-skills-en-status-style.html">Skill Routing Diagram</a> remains the detailed visual view.</p>
       <div class="grid">
-        <div class="card"><b>1. Recover when escalated</b><span>Run full recovery only for a matching governed signal; otherwise read the narrowest task sources.</span></div>
-        <div class="card"><b>2. Lock scope</b><span>If acceptance is unclear, route to requirements before planning.</span></div>
+        <div class="card"><h3>Research and requirements</h3><span>Unknown state routes through durable-source recovery; unclear goals, scope, acceptance, or domain language route to requirements.</span></div>
+        <div class="card"><h3>Planning and development</h3><span>Architecture and multi-step work produce a plan and vertical slices before bounded implementation begins.</span></div>
+        <div class="card"><h3>Validation and review</h3><span>Implemented work produces fresh evidence, then receives QA, security, and diff review appropriate to its risks.</span></div>
+        <div class="card"><h3>Ship and handoff</h3><span>Only requested release actions enter ship; resumable state is appended when a governed handoff signal requires it.</span></div>
+      </div>
+    </section>
+
+    <section class="section" id="helpers">
+      <div class="label">Runtime helper summary</div>
+      <h2>Helpers execute bounded lifecycle duties.</h2>
+      <div class="grid">
+        <div class="card"><h3>Recover and inspect</h3><span><code>harness_recover.py</code> restores position; <code>harness_env_probe.py</code> reports observable runtime state.</span></div>
+        <div class="card"><h3>Validate and report</h3><span>Requirements, evidence, team plans, and final environment checks use deterministic validators and fresh receipts.</span></div>
+        <div class="card"><h3>Checkpoint conditionally</h3><span><code>harness_checkpoint.py</code> appends durable state only for a matching handoff or governed escalation signal.</span></div>
+        <div class="card"><h3>Keep authority separate</h3><span>A helper can recover facts or record evidence; helper availability never grants permission to mutate or deploy.</span></div>
+      </div>
+    </section>
+
+    <section class="section" id="handoff">
+      <div class="label">How to read it</div>
+      <h2>Use the map as a delivery gate, not a poster.</h2>
+      <div class="grid">
+        <div class="card"><h3>1. Recover when escalated</h3><span>Run full recovery only for a matching governed signal; otherwise read the narrowest task sources.</span></div>
+        <div class="card"><h3>2. Lock scope</h3><span>If acceptance is unclear, route to requirements before planning.</span></div>
         <div class="card"><b>3. Build in slices</b><span>Development starts only after the lifecycle stage and owner are clear.</span></div>
         <div class="card"><b>4. Prove; hand off when escalated</b><span>Verification is required for artifact claims; checkpoint handoff remains signal-conditional.</span></div>
       </div>
@@ -318,7 +385,7 @@ flowchart TD
 
     <section class="section">
       <div class="label">Next</div>
-      <h2 id="next">Continue the English path</h2>
+      <h3 id="next">Continue the English path</h3>
       <div class="links" data-dhf-path-links>
         <a class="link-card" href="./dhf-context-engineering-en.html"><b>Context Engineering</b><span>See how lifecycle state becomes permission and evidence.</span></a>
         <a class="link-card" href="./dhf-governance-decision-flow-en.html"><b>Governance</b><span>See what must be true before a tool call can run.</span></a>

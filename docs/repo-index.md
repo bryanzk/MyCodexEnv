@@ -1,6 +1,6 @@
 # MyCodexEnv Repo Index
 
-> **DHF_PUBLIC_STATUS_V1 · 2026-08-03:** Canonical current architecture and
+> **DHF_PUBLIC_STATUS_V1 · 2026-08-22:** Canonical current architecture and
 > source/runtime/publication status:
 > [English](./dhf-architecture-status-en.html) ·
 > [中文](./dhf-architecture-status-cn.html). Source availability is not proof
@@ -69,6 +69,7 @@ behavior live in `codex/hooks/dhf_preprompt.py`.
 - `docs/delivery-harness-beginner-guide-en.html`: English beginner guide for agentic engineering readers.
 - `docs/dhf-memory-map.html`: Chinese airline-operations memory map for the complete DHF mnemonic system.
 - `docs/dhf-memory-map-en.html`: English airline-operations memory map for the complete DHF mnemonic system.
+- `docs/dhf-social-card.html`: reproducible source template for the public DHF social sharing card (`docs/dhf-social-card.png`).
 - `docs/dhf-governance-decision-flow-cn.html`: Chinese governance decision flow for a single tool call.
 - `docs/dhf-governance-decision-flow-en.html`: English governance decision flow for a single tool call.
 - `docs/project-lifecycle-harness-flow-cn.html`: Chinese vertical lifecycle flow visual guide.
@@ -188,6 +189,7 @@ behavior live in `codex/hooks/dhf_preprompt.py`.
 - `docs/delivery-harness-beginner-guide-en.html`: English beginner-oriented Delivery Harness Framework explanation.
 - `docs/dhf-memory-map.html`: Chinese airline-operations memory map for the complete DHF mnemonic system.
 - `docs/dhf-memory-map-en.html`: English airline-operations memory map for the complete DHF mnemonic system.
+- `docs/dhf-social-card.html`: reproducible source template for the public DHF social sharing card (`docs/dhf-social-card.png`).
 - `docs/dhf-governance-decision-flow-cn.html`: governance decision flow for a single tool call.
 - `docs/dhf-governance-decision-flow-en.html`: English governance decision flow for a single tool call.
 - `docs/project-lifecycle-harness-flow-cn.html`: visual vertical lifecycle flow.

@@ -680,6 +680,11 @@
       "public_nav": ["docs/dhf-value-evidence-cn.html"]
     },
     {
+      "path": "docs/dhf-social-card.html",
+      "role": "reproducible source template for the public DHF social sharing card",
+      "audience": ["human"]
+    },
+    {
       "path": "codex/skills/codex-fluent/scripts/report_active_sessions.py",
       "role": "read-only active Codex session ranking and handoff audit",
       "audience": ["runtime", "codex", "human"]
