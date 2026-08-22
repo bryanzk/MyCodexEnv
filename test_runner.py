@@ -1630,6 +1630,38 @@ def test_sync_renders_template_and_copies_skills():
     print("[PASS] sync render + skills copy")
 
 
+def test_sync_rejects_retired_hook_nonregular_before_runtime_writes():
+    with tempfile.TemporaryDirectory() as tmp:
+        codex_home = Path(tmp) / ".codex"
+        config = codex_home / "config.toml"
+        hooks_config = codex_home / "hooks.json"
+        write(config, "sentinel config\n")
+        write(hooks_config, "sentinel hooks\n")
+        retired_hook = codex_home / "hooks" / ("model" + "_router.py")
+        retired_hook.parent.mkdir(parents=True, exist_ok=True)
+        retired_hook.symlink_to(retired_hook.parent / "missing-target.py")
+
+        code, out, err = run(
+            [
+                str(SYNC),
+                "--repo-root",
+                str(ROOT),
+                "--codex-home",
+                str(codex_home),
+                "--skip-superpowers-sync",
+            ]
+        )
+        require(code != 0 and "not a regular file" in (err or out),
+                "sync should reject a non-regular retired hook target")
+        require(config.read_text(encoding="utf-8") == "sentinel config\n",
+                "retired-hook preflight failure must not change config")
+        require(hooks_config.read_text(encoding="utf-8") == "sentinel hooks\n",
+                "retired-hook preflight failure must not change hooks config")
+        require(retired_hook.is_symlink(), "retired-hook preflight failure must preserve the rejected target")
+
+    print("[PASS] retired hook preflight is fail-closed")
+
+
 def test_sync_preserves_runtime_plugin_state():
     with tempfile.TemporaryDirectory() as tmp:
         tmp_path = Path(tmp)
@@ -11532,6 +11564,7 @@ TESTS = [
     test_skill_compatibility_checker_contract,
     test_codex_skill_loader_gate,
     test_sync_renders_template_and_copies_skills,
+    test_sync_rejects_retired_hook_nonregular_before_runtime_writes,
     test_sync_preserves_runtime_plugin_state,
     test_sync_registers_and_installs_superpowers_plugin,
     test_sync_transition_matrix_v0,

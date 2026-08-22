@@ -895,6 +895,19 @@ then
   exit 75
 fi
 RUNTIME_BACKUP_DIR="${CODEX_HOME}/runtime-backups/$(date -u +%Y%m%dT%H%M%SZ)/"
+RETIRED_HOOK_TARGET="${CODEX_HOME}/hooks/model_router.py"
+RETIRED_HOOK_BACKUP="${RUNTIME_BACKUP_DIR}/retired/hooks/model_router.py"
+
+if [[ -e "${RETIRED_HOOK_TARGET}" || -L "${RETIRED_HOOK_TARGET}" ]]; then
+  if [[ ! -f "${RETIRED_HOOK_TARGET}" || -L "${RETIRED_HOOK_TARGET}" ]]; then
+    echo "Retired hook target is not a regular file: ${RETIRED_HOOK_TARGET}" >&2
+    exit 1
+  fi
+  if [[ -e "${RETIRED_HOOK_BACKUP}" || -L "${RETIRED_HOOK_BACKUP}" ]]; then
+    echo "Retired hook backup already exists: ${RETIRED_HOOK_BACKUP}" >&2
+    exit 1
+  fi
+fi
 
 rsync_runtime_dir() {
   local source="$1"
@@ -1291,20 +1304,18 @@ if [[ -d "${REPO_ROOT}/codex/hooks" ]]; then
   rsync_runtime_dir "${REPO_ROOT}/codex/hooks" "${CODEX_HOME}/hooks"
 fi
 
-retired_hook="${CODEX_HOME}/hooks/model_router.py"
-if [[ -e "${retired_hook}" || -L "${retired_hook}" ]]; then
-  if [[ ! -f "${retired_hook}" || -L "${retired_hook}" ]]; then
-    echo "Retired hook target is not a regular file: ${retired_hook}" >&2
+if [[ -e "${RETIRED_HOOK_TARGET}" || -L "${RETIRED_HOOK_TARGET}" ]]; then
+  if [[ ! -f "${RETIRED_HOOK_TARGET}" || -L "${RETIRED_HOOK_TARGET}" ]]; then
+    echo "Retired hook target is not a regular file: ${RETIRED_HOOK_TARGET}" >&2
     exit 1
   fi
-  retired_backup="${RUNTIME_BACKUP_DIR}/retired/hooks/model_router.py"
-  if [[ -e "${retired_backup}" || -L "${retired_backup}" ]]; then
-    echo "Retired hook backup already exists: ${retired_backup}" >&2
+  if [[ -e "${RETIRED_HOOK_BACKUP}" || -L "${RETIRED_HOOK_BACKUP}" ]]; then
+    echo "Retired hook backup already exists: ${RETIRED_HOOK_BACKUP}" >&2
     exit 1
   fi
-  mkdir -p "$(dirname "${retired_backup}")"
-  mv "${retired_hook}" "${retired_backup}"
-  echo "Retired hook backed up to ${retired_backup}"
+  mkdir -p "$(dirname "${RETIRED_HOOK_BACKUP}")"
+  mv "${RETIRED_HOOK_TARGET}" "${RETIRED_HOOK_BACKUP}"
+  echo "Retired hook backed up to ${RETIRED_HOOK_BACKUP}"
 fi
 
 if [[ -d "${REPO_ROOT}/codex/runtime" ]]; then
