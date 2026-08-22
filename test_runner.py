@@ -90,7 +90,6 @@ HARNESS_OBSERVER = ROOT / "codex" / "hooks" / "harness_observer.py"
 CODEX_TASK = ROOT / "codex" / "bin" / "codex-task"
 HARNESS_SCOPE = ROOT / "codex" / "runtime" / "harness-scope.json"
 HARNESS_GUARD_TARGETS = ROOT / "codex" / "runtime" / "harness-guard-targets.json"
-MODEL_ROUTER = ROOT / "codex" / "hooks" / "model_router.py"
 GENERIC_DHF_PREPROMPT = ROOT / "codex" / "hooks" / "dhf_preprompt.py"
 SHIPQ_DHF_PREPROMPT = ROOT / "codex" / "hooks" / "shipq_dhf_preprompt.py"
 PLAN_GOVERNOR = ROOT / "scripts" / "plan_governor.py"
@@ -1505,7 +1504,6 @@ def test_sync_renders_template_and_copies_skills():
         )
         require((codex_home / "hooks" / "harness_guard.py").exists(), "harness guard hook should be copied")
         require((codex_home / "hooks" / "harness_observer.py").exists(), "harness observer hook should be copied")
-        require((codex_home / "hooks" / "model_router.py").exists(), "model router hook should be copied")
         require((codex_home / "hooks" / "dhf_preprompt.py").exists(), "generic DHF dispatcher hook should be copied")
         deployed_manifest = codex_home / "harness" / "deployed-manifest.json"
         require(deployed_manifest.is_file(), "ordinary full sync must atomically refresh the deployed manifest")
@@ -2674,15 +2672,15 @@ def test_shipq_dhf_prompt_hook_auto_invokes_skill():
     hooks = json.loads((ROOT / "codex" / "hooks.json").read_text(encoding="utf-8"))
     prompt_hooks = hooks["hooks"]["UserPromptSubmit"][0]["hooks"]
     commands = [hook.get("command", "") for hook in prompt_hooks]
-    model_router_command = "/usr/bin/python3 ~/.codex/hooks/model_router.py"
+    compaction_command = "/usr/bin/python3 ~/.codex/hooks/compaction_probe.py"
     dhf_command = "/usr/bin/python3 ~/.codex/hooks/dhf_preprompt.py"
     legacy_shipq_command = "/usr/bin/python3 ~/.codex/hooks/shipq_dhf_preprompt.py"
-    require(model_router_command in commands, "UserPromptSubmit should run model router")
+    require(compaction_command in commands, "UserPromptSubmit should run compaction probe")
     require(dhf_command in commands, "UserPromptSubmit should run the generic DHF dispatcher")
     require(legacy_shipq_command not in commands, "UserPromptSubmit must not directly register the ShipQ adapter")
     require(
-        commands.index(model_router_command) < commands.index(dhf_command),
-        "generic DHF dispatcher should run after model routing",
+        commands == [compaction_command, dhf_command],
+        "UserPromptSubmit should contain only compaction probe followed by the generic DHF dispatcher",
     )
 
     hook_text = SHIPQ_DHF_PREPROMPT.read_text(encoding="utf-8")
@@ -2770,19 +2768,19 @@ def test_dhf_dispatcher_global_registration_and_hook_order():
     hooks = json.loads((ROOT / "codex" / "hooks.json").read_text(encoding="utf-8"))
     prompt_hooks = hooks["hooks"]["UserPromptSubmit"][0]["hooks"]
     commands = [hook.get("command", "") for hook in prompt_hooks]
-    model_router_command = "/usr/bin/python3 ~/.codex/hooks/model_router.py"
+    compaction_command = "/usr/bin/python3 ~/.codex/hooks/compaction_probe.py"
     generic_command = "/usr/bin/python3 ~/.codex/hooks/dhf_preprompt.py"
     shipq_command = "/usr/bin/python3 ~/.codex/hooks/shipq_dhf_preprompt.py"
     require(GENERIC_DHF_PREPROMPT.exists(), "generic DHF dispatcher source must exist")
-    require(model_router_command in commands, "model router must remain globally registered")
+    require(compaction_command in commands, "compaction probe must remain globally registered")
     require(generic_command in commands, "generic DHF dispatcher must be globally registered")
     require(shipq_command not in commands, "ShipQ adapter must not be globally registered")
     dispatcher_text = GENERIC_DHF_PREPROMPT.read_text(encoding="utf-8")
     require(str(Path.home()) not in dispatcher_text, "generic dispatcher must not expose the current home path")
     require("Path.home()" in dispatcher_text, "generic dispatcher defaults must be home-relative")
     require(
-        commands.index(model_router_command) < commands.index(generic_command),
-        "generic DHF dispatcher must run after model router",
+        commands == [compaction_command, generic_command],
+        "global prompt hooks should contain only compaction probe followed by the generic dispatcher",
     )
     reproduction = (ROOT / "docs" / "CODEX_ENV_REPRODUCTION.md").read_text(encoding="utf-8")
     require("DHF_PREPROMPT_ALLOW_UNTRUSTED_TEST_PATHS=1" in reproduction
@@ -6006,96 +6004,6 @@ def test_plan_governor_temporary_home_hook_compatibility():
     print("[PASS] plan governor temporary-home hook compatibility")
 
 
-def test_model_router_prompt_complexity_decisions():
-    simple_payload = json.dumps({"prompt": "把这段话翻译成英文：你好"})
-    code, out, err = run_with_input([sys.executable, str(MODEL_ROUTER)], simple_payload)
-    require(code == 0, f"model router simple prompt failed: {err or out}")
-    simple = json.loads(out)
-    require(simple["routing"]["model"] == "gpt-5.4-mini", "simple prompt should use the cheapest quality-safe model")
-    require(simple["routing"]["reasoning_effort"] == "low", "simple prompt should use low reasoning")
-    require(simple["routing"]["complexity"] == "simple", "simple prompt should be classified as simple")
-    require("simple_signal" in simple["routing"]["reasons"], "simple routing should explain the simple signal")
-    require(simple["continue"] is True, "model router should not block prompt handling")
-
-    complex_payload = json.dumps(
-        {
-            "prompt": (
-                "设计并实现一个跨模块认证迁移，需要更新数据库 schema、API contract、"
-                "安全审查、回滚策略、测试计划，并支持后续部署。"
-            )
-        }
-    )
-    code, out, err = run_with_input([sys.executable, str(MODEL_ROUTER)], complex_payload)
-    require(code == 0, f"model router complex prompt failed: {err or out}")
-    complex_result = json.loads(out)
-    require(complex_result["routing"]["model"] == "gpt-5.5", "complex high-risk prompt should upgrade model")
-    require(complex_result["routing"]["reasoning_effort"] == "high", "complex high-risk prompt should use high reasoning")
-    require(complex_result["routing"]["complexity"] == "complex", "complex prompt should be classified as complex")
-    require("quality_floor" in complex_result["routing"]["reasons"], "complex routing should explain quality floor")
-
-    plan_payload = json.dumps(
-        {
-            "prompt": "实现登录功能，包含 README 更新、后端 API、鉴权安全、单元测试和 PR 描述。",
-            "phase": "development",
-            "subtask": "README 更新和命令说明同步",
-        }
-    )
-    code, out, err = run_with_input([sys.executable, str(MODEL_ROUTER)], plan_payload)
-    require(code == 0, f"model router subtask prompt failed: {err or out}")
-    subtask = json.loads(out)
-    require(subtask["routing"]["model"] == "gpt-5.4-mini", "simple subtask in complex task should downshift")
-    require(subtask["routing"]["switch_allowed"] is True, "router should allow repeated switches by subtask")
-
-    short_payload = json.dumps({"prompt": "谢谢"})
-    code, out, err = run_with_input([sys.executable, str(MODEL_ROUTER)], short_payload)
-    require(code == 0, f"model router short prompt failed: {err or out}")
-    short_result = json.loads(out)
-    require(short_result["routing"]["model"] == "gpt-5.4-mini", "short harmless prompt should use economy model")
-    require("short_prompt" in short_result["routing"]["reasons"], "short prompt routing should explain the downshift")
-
-    review_payload = json.dumps({"prompt": "review current diff for regressions", "phase": "review"})
-    code, out, err = run_with_input([sys.executable, str(MODEL_ROUTER)], review_payload)
-    require(code == 0, f"model router review phase failed: {err or out}")
-    review_result = json.loads(out)
-    require(review_result["routing"]["model"] == "gpt-5.5", "review phase should use frontier model for quality")
-
-    validation_payload = json.dumps({"prompt": "run validation and summarize test evidence", "phase": "validation"})
-    code, out, err = run_with_input([sys.executable, str(MODEL_ROUTER)], validation_payload)
-    require(code == 0, f"model router validation phase failed: {err or out}")
-    validation_result = json.loads(out)
-    require(validation_result["routing"]["model"] == "gpt-5.4-mini", "validation evidence summary should downshift")
-
-    usage_payload = json.dumps(
-        {
-            "prompt": "review current diff for regressions",
-            "phase": "review",
-            "model": "gpt-5.4",
-            "usage": {"input_tokens": 1200, "output_tokens": 300, "total_tokens": 1500},
-            "limits": {"five_hour_remaining": 42, "five_hour_reset_at": "2026-05-17T14:00:00-04:00"},
-        }
-    )
-    code, out, err = run_with_input([sys.executable, str(MODEL_ROUTER)], usage_payload)
-    require(code == 0, f"model router usage telemetry failed: {err or out}")
-    usage_result = json.loads(out)
-    telemetry = usage_result["telemetry"]
-    require(telemetry["models_used"] == ["gpt-5.4", "gpt-5.5"], "telemetry should include actual and routed models")
-    require(telemetry["token_usage"]["total_tokens"] == 1500, "telemetry should expose total tokens when provided")
-    require(telemetry["five_hour_limit"]["remaining"] == 42, "telemetry should expose five-hour remaining limit")
-    context = usage_result["hookSpecificOutput"]["additionalContext"]
-    require("每次最终回复必须包含" in context, "context should require final response telemetry")
-    require("5小时 limit 剩余" in context, "context should mention five-hour limit remaining")
-
-    malformed_code, malformed_out, malformed_err = run_with_input([sys.executable, str(MODEL_ROUTER)], "{bad json")
-    require(malformed_code == 0, f"model router malformed input should not block: {malformed_err or malformed_out}")
-    malformed = json.loads(malformed_out)
-    require(malformed["routing"]["model"] == "gpt-5.4", "missing prompt should use balanced fallback")
-    require(malformed["routing"]["confidence"] == "low", "missing prompt should report low confidence")
-    require(malformed["telemetry"]["token_usage"]["total_tokens"] == "unavailable", "missing usage should be explicit")
-    require(malformed["telemetry"]["five_hour_limit"]["remaining"] == "unavailable", "missing limit should be explicit")
-
-    print("[PASS] model router prompt complexity decisions")
-
-
 def test_harness_evidence_append_and_observer_failure_mode():
     with tempfile.TemporaryDirectory() as tmp:
         codex_home = Path(tmp) / ".codex"
@@ -9280,8 +9188,6 @@ def test_runner_preflight():
     require(SKILL_GOVERNANCE_DOC.exists(), f"missing skill governance doc: {SKILL_GOVERNANCE_DOC}")
     require(HARNESS_GUARD.exists(), f"missing harness guard hook: {HARNESS_GUARD}")
     require(HARNESS_OBSERVER.exists(), f"missing harness observer hook: {HARNESS_OBSERVER}")
-    require(MODEL_ROUTER.exists(), f"missing model router hook: {MODEL_ROUTER}")
-
     print("[PASS] test runner preflight")
 
 
@@ -11625,7 +11531,6 @@ TESTS = [
     test_plan_governor_decision_receipt_and_shipai_replay,
     test_plan_governor_skill_and_capability_branch_contract,
     test_plan_governor_temporary_home_hook_compatibility,
-    test_model_router_prompt_complexity_decisions,
     test_harness_evidence_append_and_observer_failure_mode,
     test_harness_feedback_conversion_health,
     test_harness_report_cli_summarizes_evidence,
