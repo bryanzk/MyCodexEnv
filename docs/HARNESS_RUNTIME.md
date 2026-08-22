@@ -236,7 +236,7 @@ For the current project workflow and skill routing map, read
 - `docs/repo-index.md`: low-token repo navigation and runtime surface index.
 - `docs/surfaces.json`: canonical machine-readable runtime surface inventory.
 - `docs/LIFECYCLE_SKILL_ROUTING.md`: lifecycle stage, workflow, skill, and helper routing.
-- `docs/MODEL_ROUTER_EVAL_MATRIX.md`: prompt/subtask model router eval matrix.
+- `docs/MODEL_ROUTER_EVAL_MATRIX.md`: retired historical model-router eval matrix; not a current runtime contract.
 - `docs/index.html`: Chinese public Delivery Harness Framework docs entry for GitHub Pages.
 - `docs/index-en.html`: English public Delivery Harness Framework docs entry for GitHub Pages.
 - `docs/delivery-harness-beginner-guide-cn.html`: beginner-oriented Chinese explanation of what Delivery Harness Framework does.

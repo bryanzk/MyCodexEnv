@@ -128,7 +128,7 @@ Key entry points:
 
 - [`docs/HARNESS_RUNTIME.md`](docs/HARNESS_RUNTIME.md) — workflow and infrastructure contract
 - [`docs/LIFECYCLE_SKILL_ROUTING.md`](docs/LIFECYCLE_SKILL_ROUTING.md) — lifecycle-to-skill routing
-- [`docs/MODEL_ROUTER_EVAL_MATRIX.md`](docs/MODEL_ROUTER_EVAL_MATRIX.md) — model-routing evaluation
+- [`docs/MODEL_ROUTER_EVAL_MATRIX.md`](docs/MODEL_ROUTER_EVAL_MATRIX.md) — retired historical model-router evaluation, not a current contract
 - [`docs/harness-state.md`](docs/harness-state.md) — append-only state and next safe task
 - [`docs/AGENT_HARNESS_STATUS.md`](docs/AGENT_HARNESS_STATUS.md) — current capability map
 - [`scripts/harness_status.py`](scripts/harness_status.py) — unified read-only entry point for recovery, runtime probes, and evidence reports

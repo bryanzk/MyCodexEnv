@@ -104,7 +104,7 @@ Harness Runtime 把 agent 工作从“prompt + 工具”扩展为一套可恢复
 
 - 生命周期与 skill 路由；
 - 分阶段工具权限与 destructive/secret/remote guardrails；
-- prompt/subtask 模型建议；
+- 主模型默认值与经过核实的分角色 custom agents；
 - decision 与 routine evidence schemas；
 - checkpoint、recovery、requirements 与 agent-team validation；
 - 全局 generic dispatcher 与按仓库延迟加载的 adapter。
@@ -114,7 +114,7 @@ Harness Runtime 把 agent 工作从“prompt + 工具”扩展为一套可恢复
 
 - [`docs/HARNESS_RUNTIME.md`](docs/HARNESS_RUNTIME.md) — workflow 与 infra 合同
 - [`docs/LIFECYCLE_SKILL_ROUTING.md`](docs/LIFECYCLE_SKILL_ROUTING.md) — 生命周期到 skill 的路由
-- [`docs/MODEL_ROUTER_EVAL_MATRIX.md`](docs/MODEL_ROUTER_EVAL_MATRIX.md) — 模型路由评估
+- [`docs/MODEL_ROUTER_EVAL_MATRIX.md`](docs/MODEL_ROUTER_EVAL_MATRIX.md) — 已退役 model router 的历史评估，不是当前合同
 - [`docs/harness-state.md`](docs/harness-state.md) — append-only 状态与 next safe task
 - [`docs/AGENT_HARNESS_STATUS.md`](docs/AGENT_HARNESS_STATUS.md) — 当前能力状态图
 

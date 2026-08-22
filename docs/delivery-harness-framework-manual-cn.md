@@ -408,7 +408,7 @@ DHF 由多个组件协作。产品上可以把它理解成四类能力：状态�
 | Harness state | `docs/harness-state.md` | append-only phase、latest verification、next safe task | 下次能不能接上 |
 | Runtime contract | `docs/HARNESS_RUNTIME.md` | 生命周期、权限、证据、checkpoint、agent team 合同 | 规则是否稳定且可审计 |
 | Tool policy | `codex/runtime/tool-policy.json` | 按阶段约束工具和权限 | 不同阶段是否有不同边界 |
-| Hooks | `codex/hooks/*` | guard、observer、model routing、项目 preprompt | 工具调用是否被观察和限制 |
+| Hooks | `codex/hooks/*` | guard、observer、compaction pressure、项目 preprompt | 工具调用是否被观察和限制 |
 | Evidence schemas | `codex/runtime/evidence.schema.json`、`codex/runtime/evidence/*` | compatibility schema、decision schema、routine receipt schema | 证据能否被机器校验 |
 | Evidence helper | `scripts/harness_evidence.py` | 验证并追加结构化 evidence | 证据是否先校验再写入 |
 | Feedback helper | `scripts/harness_feedback.py` | 计算 conversion health | 是否能发现低效反馈循环 |

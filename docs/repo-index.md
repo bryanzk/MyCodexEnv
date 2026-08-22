@@ -47,7 +47,7 @@ behavior live in `codex/hooks/dhf_preprompt.py`.
 - `docs/HARNESS_RUNTIME.md`: design contract for workflow, infra, state, policy, evidence, hooks, checkpoints, and agent teams.
 - `docs/LIFECYCLE_SKILL_ROUTING.md`: Chinese lifecycle-to-skill routing map for current project workflows.
 - `docs/lifecycle-skill-routing-en.html`: English rendered lifecycle and skill routing specification.
-- `docs/MODEL_ROUTER_EVAL_MATRIX.md`: prompt/subtask model router eval matrix and routing assertions.
+- `docs/MODEL_ROUTER_EVAL_MATRIX.md`: retired historical model-router eval matrix; not a current routing contract.
 - `docs/index.html`: English canonical Delivery Harness Framework docs landing page for GitHub Pages.
 - `docs/index-en.html`: English compatibility copy kept for existing bookmarks and links.
 - `docs/index-zh.html`: Chinese Delivery Harness Framework docs landing page for GitHub Pages.
@@ -223,7 +223,7 @@ behavior live in `codex/hooks/dhf_preprompt.py`.
 - `docs/DHF_SIMPLIFICATION_PRODUCT_GUIDE.md`: business-facing guide to the simplified DHF profiles, activation, daily usage, verification, and rollback.
 - `codex/skills/grilling/`: vendored grilling skill, context format, ADR format, and upstream MIT license.
 - `docs/HARNESS_RUNTIME.md`: lifecycle, evidence, checkpoint, permission, and subagent contracts.
-- `docs/MODEL_ROUTER_EVAL_MATRIX.md`: model routing existence, positive/negative, progressive-switching, and end-to-end evals.
+- `docs/MODEL_ROUTER_EVAL_MATRIX.md`: retired historical positive/negative and progressive-switching evals preserved as evidence.
 - `docs/HEADROOM_WORKFLOW.md`: optional Headroom command-output compression workflow and ShipQ examples.
 - `docs/skill-governance-20260608.md`: first read-only skill governance baseline and cleanup policy notes.
 - `docs/AGENT_HARNESS_STATUS.md`: Agent Harness workflow/infra status map.

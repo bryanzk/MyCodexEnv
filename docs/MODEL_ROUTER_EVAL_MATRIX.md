@@ -1,11 +1,19 @@
 # Model Router Eval Matrix
 
-## Purpose
-Evaluate `codex/hooks/model_router.py` as a routing behavior, not as prose. The
-router should recommend the cheapest model that still preserves quality for the
-current prompt, phase, or subtask.
+## Status
 
-## Existence Verdict
+Retired historical artifact as of 2026-08-22. The router source, hook
+registration, tests, and runtime target were retired by P0-2. This file preserves
+the superseded evaluation contract as evidence; it is not a current runtime or
+configuration contract.
+
+## Historical Purpose
+
+Before retirement, this matrix evaluated `codex/hooks/model_router.py` as routing
+behavior rather than prose. The remaining sections record the former expected
+behavior and are non-normative.
+
+## Historical Existence Verdict (superseded)
 - Keep as hook logic, not a skill: the output must be deterministic JSON that a
   runtime or wrapper can consume.
 - Keep non-blocking: malformed or missing prompt payloads must exit 0 and
