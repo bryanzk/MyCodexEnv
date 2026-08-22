@@ -65,6 +65,8 @@ DHF_INCUBATION_PLAN = ROOT / "docs" / "plans" / "2026-06-15-dhf-incubation-plan.
 DHF_PACKET_SCHEMA = ROOT / "codex" / "runtime" / "dhf-packet.schema.json"
 SURFACES_MANIFEST = ROOT / "docs" / "surfaces.json"
 CHECK_SURFACES = ROOT / "scripts" / "check_surfaces.py"
+HARNESS_COST_REPORT = ROOT / "scripts" / "harness_cost_report.py"
+HARNESS_COST_ROLLOUT_FIXTURE = ROOT / "tests" / "fixtures" / "rollout" / "token-count-event.jsonl"
 SKILL_GOVERNANCE_DOC = ROOT / "docs" / "skill-governance-20260608.md"
 LIFECYCLE_SKILL_ROUTING_DOC = ROOT / "docs" / "LIFECYCLE_SKILL_ROUTING.md"
 LIFECYCLE_SKILL_ROUTING_HTML = ROOT / "docs" / "lifecycle-skill-routing-en.html"
@@ -6465,6 +6467,76 @@ def test_harness_report_cli_summarizes_evidence():
     print("[PASS] harness report CLI summarizes evidence")
 
 
+def test_harness_cost_report_rollout_fixture():
+    require(HARNESS_COST_REPORT.is_file(), "missing harness cost reporter")
+    require(HARNESS_COST_ROLLOUT_FIXTURE.is_file(), "missing sanitized rollout token-count fixture")
+    fixture_event = json.loads(HARNESS_COST_ROLLOUT_FIXTURE.read_text(encoding="utf-8").strip())
+    expected_total = fixture_event["payload"]["info"]["total_token_usage"]
+    expected_last = fixture_event["payload"]["info"]["last_token_usage"]
+
+    code, out, err = run([
+        sys.executable, str(HARNESS_COST_REPORT),
+        "--rollout", str(HARNESS_COST_ROLLOUT_FIXTURE), "--json",
+    ])
+    require(code == 0, f"fixture cost report should succeed: {err or out}")
+    result = json.loads(out)
+    for source_key, report_key in [
+        ("input_tokens", "input"),
+        ("cached_input_tokens", "cached_input"),
+        ("output_tokens", "output"),
+    ]:
+        require(result["totals"][report_key] == expected_total[source_key],
+                f"cost total mismatch: {report_key}")
+        require(result["turns"][-1][report_key] == expected_last[source_key],
+                f"turn cost mismatch: {report_key}")
+    require(result["totals"]["uncached_input"] ==
+            expected_total["input_tokens"] - expected_total["cached_input_tokens"],
+            "uncached input must be derived from the upstream totals")
+    require(result["turns"][-1]["compaction_ordinal"] == 0,
+            "single-event fixture should start at compaction ordinal zero")
+    require(result["totals"].get("requests_total") == 1,
+            "one cumulative token change must count as one API request")
+    require(result["turns"][-1].get("requests") == 1,
+            "fixture turn must report its API request count")
+    require(result["turns"][-1].get("input_sum") == expected_total["input_tokens"],
+            "fixture turn input_sum must reconcile to the cumulative total")
+    require(sum(turn.get("input_sum", 0) for turn in result["turns"]) == result["totals"]["input"],
+            "fixture turn input sums must equal the final rollout input total")
+    require(result["tool_calls"] == {}, "single token-count fixture should have no tool calls")
+    require(result["subagent_attribution"] == "not_available",
+            "fixture without parent metadata must not guess subagent attribution")
+
+    with tempfile.TemporaryDirectory() as tmp:
+        duplicate_turn_fixture = Path(tmp) / "duplicate-turn.jsonl"
+        turn = {"timestamp": "2026-08-22T02:59:50Z", "type": "turn_context",
+                "payload": {"turn_id": "turn-a"}}
+        empty_turn = {"timestamp": "2026-08-22T03:00:00Z", "type": "turn_context",
+                      "payload": {"turn_id": "turn-b"}}
+        duplicate_turn_fixture.write_text(
+            "\n".join([json.dumps(turn), json.dumps(turn), json.dumps(fixture_event), json.dumps(empty_turn)]) + "\n",
+            encoding="utf-8",
+        )
+        code, out, err = run([
+            sys.executable, str(HARNESS_COST_REPORT),
+            "--rollout", str(duplicate_turn_fixture), "--json",
+        ])
+        require(code == 0, f"duplicate turn fixture should succeed: {err or out}")
+        duplicate_result = json.loads(out)
+        require(len(duplicate_result["turns"]) == 2,
+                "repeated turn_context records must not duplicate one logical turn")
+        require(duplicate_result["turns"][1] == {
+            "index": 2, "turn_id": "turn-b", "status": "no_usage_event"
+        }, "turn without token_count must be explicit instead of reporting zero usage")
+
+    code, out, err = run([
+        sys.executable, str(HARNESS_COST_REPORT),
+        "--rollout", str(HARNESS_COST_ROLLOUT_FIXTURE.with_name("missing.jsonl")), "--json",
+    ])
+    require(code != 0 and "rollout not found" in err,
+            "missing rollout must fail clearly without producing a report")
+    print("[PASS] harness cost report rollout fixture")
+
+
 def test_harness_agent_team_validator():
     with tempfile.TemporaryDirectory() as tmp:
         tmp_path = Path(tmp)
@@ -11525,6 +11597,7 @@ TESTS = [
     test_harness_evidence_append_and_observer_failure_mode,
     test_harness_feedback_conversion_health,
     test_harness_report_cli_summarizes_evidence,
+    test_harness_cost_report_rollout_fixture,
     test_harness_agent_team_validator,
     test_agent_dispatch_gate,
     test_harness_checkpoint_helper,
