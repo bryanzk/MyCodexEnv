@@ -14,19 +14,19 @@ Stable rules belong in `AGENTS.md`, `README.md`, `docs/repo-index.md`, or
   - `codex/skills/delivery-harness-framework/SKILL.md`
 - blocked_sources: none
 - unsafe_inputs: none
-- next_safe_task: P0-2：修 config 模板 → 拆 model_router → 删 telemetry 废话注入 → custom-agent 模板；见 tasks/p0-token-cost-plan-2026-08-22.md §5
+- next_safe_task: P0-2 后基线：light/standard 各 3 次、governed 3 次，reporter 出 after-p0-2 JSON，config 身份须为新模板渲染后的哈希
 - required_commands:
   - `python3 test_runner.py`
   - `git diff --check`
   - `./scripts/verify_codex_env.sh --repo-root "$(pwd)" --codex-home "$HOME/.codex" --claude-home "$HOME/.claude"`
-- latest_checkpoint: 2026-08-22T10:10:08-04:00 P0-1 rollout cost baseline, parent-only attribution, identity drift guard, and governed 2-3 DRIFT records complete
-- latest_verification: 2026-08-22T10:10:08-04:00 command=python3 test_runner.py @ 2026-08-22T03:31:29Z; python3 test_runner.py @ 2026-08-22T13:50:59Z; exit_code=0; key_output=receipt_1: ran=140 passed=138 skipped=2 failed=0; receipt_2: ran=140 passed=140 skipped=0 failed=0
+- latest_checkpoint: 2026-08-22T14:34:20-04:00 P0-2 config, router retirement, context telemetry, custom agents, runtime sync, and verification complete
+- latest_verification: 2026-08-22T14:34:20-04:00 command=python3 test_runner.py; bash scripts/verify_codex_env.sh --repo-root $(pwd) --codex-home ~/.codex --claude-home ~/.claude; exit_code=0; key_output=test_runner: ran=140 passed=140 skipped=0 failed=0; verify_codex_env: Verification passed.
 - compaction_ordinal: 2
-- transition_key: p0-1-complete
+- transition_key: p0-2-complete
 - gate_decision: continue-to-boundary
-- constraints: ["Do not start P0-2 in this task"]
-- ownership: {"boundary":"P0-1 cost reporter, frozen baseline evidence, tests, and append-only checkpoint","files":{"docs/harness-state.md":"agent_owned_checkpoint"}}
-- next_action: {"command":"P0-2：修 config 模板 → 拆 model_router → 删 telemetry 废话注入 → custom-agent 模板；见 tasks/p0-token-cost-plan-2026-08-22.md §5","scope":"P0-2"}
+- constraints: ["Do not run after-p0-2 baselines in this task","Do not start P0-3 in this task"]
+- ownership: {"boundary":"P0-2 checkpoint and next action only","files":{"docs/harness-state.md":"agent_owned_checkpoint"}}
+- next_action: {"command":"P0-2 后基线：light/standard 各 3 次、governed 3 次，reporter 出 after-p0-2 JSON，config 身份须为新模板渲染后的哈希","scope":"after-p0-2-baseline"}
 
 ## State Log
 
@@ -3528,3 +3528,31 @@ Stable rules belong in `AGENTS.md`, `README.md`, `docs/repo-index.md`, or
   - none
 - next_safe_task: P0-2：修 config 模板 → 拆 model_router → 删 telemetry 废话注入 → custom-agent 模板；见 tasks/p0-token-cost-plan-2026-08-22.md §5
 - checkpoint_data: {"constraints":["Do not start P0-2 in this task"],"next_action":{"command":"P0-2：修 config 模板 → 拆 model_router → 删 telemetry 废话注入 → custom-agent 模板；见 tasks/p0-token-cost-plan-2026-08-22.md §5","scope":"P0-2"},"ownership":{"boundary":"P0-1 cost reporter, frozen baseline evidence, tests, and append-only checkpoint","files":{"docs/harness-state.md":"agent_owned_checkpoint"}},"phase":"validation","schema":"dhf_checkpoint_v1","verification_evidence":{"command":"python3 test_runner.py @ 2026-08-22T03:31:29Z; python3 test_runner.py @ 2026-08-22T13:50:59Z","exit_code":0,"freshness":"fresh","key_output":"receipt_1: ran=140 passed=138 skipped=2 failed=0; receipt_2: ran=140 passed=140 skipped=0 failed=0","timestamp":"2026-08-22T13:50:59Z"}}
+
+### 2026-08-22T14:34:20-04:00
+- phase: validation
+- event: checkpoint
+- summary: P0-2 config, router retirement, context telemetry, custom agents, runtime sync, and verification complete
+- git:
+  - branch: main
+  - latest_commit: bf7978d
+  - dirty_status: dirty
+  - dirty_count: 1
+- transition_key: p0-2-complete
+- gate_decision: continue-to-boundary
+- changed_surfaces:
+  - `codex/config.template.toml`
+  - `codex/hooks.json and retired model router sources`
+  - `codex/hooks/context_meter.py and Claude mirror`
+  - `codex/agents/*.toml`
+  - `scripts/sync_codex_home.sh and scripts/verify_codex_env.sh`
+  - `runtime-approvals/approved-source-digests.txt`
+  - `P0-2 runtime and documentation contracts`
+- verification:
+  - command: `python3 test_runner.py; bash scripts/verify_codex_env.sh --repo-root $(pwd) --codex-home ~/.codex --claude-home ~/.claude`
+  - exit_code: 0
+  - key_output: test_runner: ran=140 passed=140 skipped=0 failed=0; verify_codex_env: Verification passed.
+- blockers:
+  - none
+- next_safe_task: P0-2 后基线：light/standard 各 3 次、governed 3 次，reporter 出 after-p0-2 JSON，config 身份须为新模板渲染后的哈希
+- checkpoint_data: {"constraints":["Do not run after-p0-2 baselines in this task","Do not start P0-3 in this task"],"next_action":{"command":"P0-2 后基线：light/standard 各 3 次、governed 3 次，reporter 出 after-p0-2 JSON，config 身份须为新模板渲染后的哈希","scope":"after-p0-2-baseline"},"ownership":{"boundary":"P0-2 checkpoint and next action only","files":{"docs/harness-state.md":"agent_owned_checkpoint"}},"phase":"validation","schema":"dhf_checkpoint_v1","verification_evidence":{"command":"python3 test_runner.py; bash scripts/verify_codex_env.sh --repo-root $(pwd) --codex-home ~/.codex --claude-home ~/.claude","exit_code":0,"freshness":"fresh","key_output":"test_runner: ran=140 passed=140 skipped=0 failed=0; verify_codex_env: Verification passed.","timestamp":"2026-08-22T18:28:29Z"}}
