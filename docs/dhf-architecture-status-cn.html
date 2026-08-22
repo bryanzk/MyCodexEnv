@@ -111,7 +111,7 @@
     <section class="section">
       <h2 id="architecture">当前架构</h2>
       <div class="stack" role="list" aria-label="DHF 架构分层">
-        <div class="layer" role="listitem"><strong>1 · Host 与 runtime hooks</strong><span><code>SessionStart</code>：命名 → <code>session_bearing.py</code>；<code>UserPromptSubmit</code>：<code>compaction_probe.py</code> → <code>model_router.py</code> → <code>dhf_preprompt.py</code>；<code>PreToolUse</code>：<code>harness_guard.py</code>；<code>PostToolUse</code>：<code>harness_observer.py</code>。</span></div>
+        <div class="layer" role="listitem"><strong>1 · Host 与 runtime hooks</strong><span><code>SessionStart</code>：命名 → <code>session_bearing.py</code>；<code>UserPromptSubmit</code>：<code>compaction_probe.py</code> → <code>dhf_preprompt.py</code>；<code>PreToolUse</code>：<code>harness_guard.py</code>；<code>PostToolUse</code>：<code>harness_observer.py</code>。</span></div>
         <div class="layer" role="listitem"><strong>2 · 通用 router 与 repo adapter</strong><span>通用 dispatcher 先处理 opt-out，再 lazy delegate 已知仓库，最后按生命周期阶段路由显式 DHF 工作。项目路径、fixture、命令与业务边界留在 repo-specific adapter。</span></div>
         <div class="layer" role="listitem"><strong>3 · 生命周期与专门工作流</strong><span>research、requirements、planning、development、validation、review、ship、handoff 八个标准阶段选择规划、TDD、QA、安全、发布、文档或确定性 helper。</span></div>
         <div class="layer" role="listitem"><strong>4 · 耐久治理与证据</strong><span><code>harness_recover.py</code>、<code>harness_checkpoint.py</code>、<code>harness_ledger.py</code>、<code>harness_transition.py</code>、<code>harness_eval.py</code>、schemas、状态日志和四字段验证收据让任务可恢复、可审计。</span></div>

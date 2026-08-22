@@ -2822,6 +2822,15 @@ def test_dhf_dispatcher_global_registration_and_hook_order():
         commands == [compaction_command, generic_command],
         "global prompt hooks should contain only compaction probe followed by the generic dispatcher",
     )
+    claude_hooks = json.loads((ROOT / "claude" / "codex-hooks" / "hooks.json").read_text(encoding="utf-8"))
+    claude_commands = [
+        hook.get("command", "")
+        for hook in claude_hooks["hooks"]["UserPromptSubmit"][0]["hooks"]
+    ]
+    require(
+        claude_commands == [compaction_command, generic_command],
+        "Claude mirror prompt hooks should contain only compaction probe followed by the generic dispatcher",
+    )
     reproduction = (ROOT / "docs" / "CODEX_ENV_REPRODUCTION.md").read_text(encoding="utf-8")
     require("DHF_PREPROMPT_ALLOW_UNTRUSTED_TEST_PATHS=1" in reproduction
             and "test seams only" in reproduction,

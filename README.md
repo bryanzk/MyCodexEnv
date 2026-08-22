@@ -118,7 +118,7 @@ Harness Runtime extends agent work from “prompt plus tools” into a recoverab
 
 - lifecycle and skill routing;
 - phase-aware tool permissions and destructive, sensitive-data, and remote guardrails;
-- prompt and subtask model recommendations;
+- primary model defaults and verified role-specific custom agents;
 - decision and routine evidence schemas;
 - checkpoint, recovery, requirements, and agent-team validation;
 - a global generic dispatcher with lazily loaded repository adapters;
