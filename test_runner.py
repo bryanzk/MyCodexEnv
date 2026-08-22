@@ -67,6 +67,7 @@ SURFACES_MANIFEST = ROOT / "docs" / "surfaces.json"
 CHECK_SURFACES = ROOT / "scripts" / "check_surfaces.py"
 HARNESS_COST_REPORT = ROOT / "scripts" / "harness_cost_report.py"
 HARNESS_COST_ROLLOUT_FIXTURE = ROOT / "tests" / "fixtures" / "rollout" / "token-count-event.jsonl"
+HARNESS_AGENT_TEAM_FIXTURES = ROOT / "tests" / "fixtures" / "agent-team"
 SKILL_GOVERNANCE_DOC = ROOT / "docs" / "skill-governance-20260608.md"
 LIFECYCLE_SKILL_ROUTING_DOC = ROOT / "docs" / "LIFECYCLE_SKILL_ROUTING.md"
 LIFECYCLE_SKILL_ROUTING_HTML = ROOT / "docs" / "lifecycle-skill-routing-en.html"
@@ -3146,6 +3147,11 @@ def test_harness_agent_brief_template():
         "Key Interfaces",
         "Acceptance Criteria",
         "Out Of Scope",
+        "Context Policy",
+        "spawn 时传 fork_turns",
+        "只允许 skill",
+        "只允许 MCP",
+        "先读上游摘要",
         "Do not use line numbers",
         "file-path-only",
     ]
@@ -7017,6 +7023,39 @@ def test_harness_agent_team_validator():
         write(plan_path, json.dumps(slice_local_handoff_plan))
         code, out, err = run([sys.executable, str(HARNESS_AGENT_TEAM), "validate", str(plan_path), "--repo-root", str(ROOT)])
         require(code == 0, f"slice-local handoff write set should remain valid: {err or out}")
+
+        fixture_expectations = {
+            "valid-two-agent.json": (0, "Agent team valid"),
+            "valid-upstream.json": (0, "Agent team valid"),
+            "invalid-missing-policy.json": (1, "ERROR[context_policy_missing]"),
+            "invalid-reviewer-fork.json": (1, "ERROR[context_policy_fork]"),
+            "invalid-reload.json": (1, "ERROR[context_policy_reload]"),
+        }
+        for name, (expected_code, expected_text) in fixture_expectations.items():
+            fixture = HARNESS_AGENT_TEAM_FIXTURES / name
+            require(fixture.is_file(), f"missing agent-team fixture: {name}")
+            code, out, err = run([
+                sys.executable,
+                str(HARNESS_AGENT_TEAM),
+                "validate",
+                str(fixture),
+                "--repo-root",
+                str(ROOT),
+            ])
+            require(code == expected_code and expected_text in (out + err), f"unexpected fixture result: {name}")
+
+        code, out, err = run([
+            sys.executable,
+            str(HARNESS_AGENT_TEAM),
+            "brief",
+            str(HARNESS_AGENT_TEAM_FIXTURES / "valid-upstream.json"),
+            "--agent",
+            "consumer",
+            "--repo-root",
+            str(ROOT),
+        ])
+        require(code == 0 and "只允许 skill：tdd" in out, f"valid upstream brief should render: {err or out}")
+        require("research" not in out and "analysis" not in out, "brief must not leak upstream skill names")
 
     print("[PASS] harness agent team validator")
 

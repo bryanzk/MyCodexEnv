@@ -404,6 +404,10 @@ the main agent are not worker plans and may still use
 If the requested agent team is a review committee plus a revision worker with a
 numeric rating target, route to `committee-review-loop` after validating the
 team shape and write-set boundaries.
+Every agent must include `context_policy`; the three allowlists default to `[]`.
+Read-only roles use `fork_turns=none`; workers may use `none` or a reasoned integer up to `3`, never `all`.
+Render dispatch text with `python3 scripts/harness_agent_team.py brief PLAN.json --agent ID`.
+See [the context-policy reference](references/agent-team-context-policy.md) for fields and complete examples.
 When a worker needs a durable task contract, use
 `docs/templates/harness-agent-brief.md`. The optional `brief` object in an agent
 team plan should capture category, summary, current behavior, desired behavior,

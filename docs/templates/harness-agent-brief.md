@@ -43,6 +43,15 @@ error states.
 ## Out Of Scope
 - Adjacent behavior the worker must not change.
 
+## Context Policy
+- spawn 时传 fork_turns=<none|all|N>
+- model_tier: explorer / reviewer / worker / custom
+- custom model / model_reasoning_effort:
+- 只允许 skill：<allowed_skills 或（无）>
+- 只允许 MCP：<allowed_mcp 或（无）>
+- 先读上游摘要：<upstream_inputs 或（无）>，不要重新加载这些 skill
+- reason: fork_turns != none 时必填
+
 ## Writing Rules
 - Do not use line numbers as the task contract.
 - Avoid file-path-only instructions; paths may help orientation, but behavior,

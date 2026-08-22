@@ -1,0 +1,56 @@
+{
+  "agents": [
+    {
+      "id": "producer",
+      "role": "worker",
+      "scope": "Produce a structured summary",
+      "write_set": ["artifacts/research-summary.json"],
+      "verification_command": "python3 test_runner.py",
+      "task_demand": {
+        "level": "low",
+        "L": "Produce one summary",
+        "H_tool": "Known local files",
+        "S_state": "One summary artifact",
+        "N_obs": "Deterministic JSON"
+      },
+      "green_gate": {
+        "gate_scope": "worker",
+        "command": "python3 test_runner.py",
+        "rationale": "The repository runner covers the producer"
+      },
+      "context_policy": {
+        "fork_turns": "none",
+        "model_tier": "worker",
+        "allowed_skills": ["research"],
+        "allowed_mcp": [],
+        "upstream_inputs": []
+      }
+    },
+    {
+      "id": "consumer",
+      "role": "worker",
+      "scope": "Consume the structured summary",
+      "write_set": ["scripts/harness_report.py"],
+      "verification_command": "python3 test_runner.py",
+      "task_demand": {
+        "level": "low",
+        "L": "Consume one summary",
+        "H_tool": "Known local files",
+        "S_state": "One source file and one summary",
+        "N_obs": "Deterministic JSON"
+      },
+      "green_gate": {
+        "gate_scope": "worker",
+        "command": "python3 test_runner.py",
+        "rationale": "The repository runner covers the consumer"
+      },
+      "context_policy": {
+        "fork_turns": "none",
+        "model_tier": "worker",
+        "allowed_skills": ["research"],
+        "allowed_mcp": [],
+        "upstream_inputs": ["artifacts/research-summary.json"]
+      }
+    }
+  ]
+}

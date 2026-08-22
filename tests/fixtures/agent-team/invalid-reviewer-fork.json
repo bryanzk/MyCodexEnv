@@ -1,0 +1,19 @@
+{
+  "agents": [
+    {
+      "id": "reviewer",
+      "role": "reviewer",
+      "scope": "Review the agent-team contract",
+      "write_set": [],
+      "verification_command": "python3 test_runner.py",
+      "context_policy": {
+        "fork_turns": "last:2",
+        "model_tier": "reviewer",
+        "allowed_skills": [],
+        "allowed_mcp": [],
+        "upstream_inputs": [],
+        "reason": "Review recent turns"
+      }
+    }
+  ]
+}

@@ -1,0 +1,23 @@
+{
+  "agents": [
+    {
+      "id": "worker",
+      "role": "worker",
+      "scope": "Validate missing context policy",
+      "write_set": ["scripts/harness_agent_team.py"],
+      "verification_command": "python3 test_runner.py",
+      "task_demand": {
+        "level": "low",
+        "L": "One validation rule",
+        "H_tool": "Known Python CLI",
+        "S_state": "One source file",
+        "N_obs": "Deterministic JSON"
+      },
+      "green_gate": {
+        "gate_scope": "worker",
+        "command": "python3 test_runner.py",
+        "rationale": "The repository runner covers the validator"
+      }
+    }
+  ]
+}

@@ -1,0 +1,79 @@
+{
+  "agents": [
+    {
+      "id": "explorer",
+      "role": "planner",
+      "scope": "Inspect the current contract",
+      "write_set": [],
+      "verification_command": "python3 test_runner.py",
+      "context_policy": {
+        "fork_turns": "none",
+        "model_tier": "explorer",
+        "allowed_skills": ["research"],
+        "allowed_mcp": [],
+        "upstream_inputs": []
+      }
+    },
+    {
+      "id": "producer",
+      "role": "worker",
+      "scope": "Produce the structured upstream summary",
+      "write_set": ["artifacts/structured-summary.json"],
+      "verification_command": "python3 test_runner.py",
+      "task_demand": {
+        "level": "low",
+        "L": "Summarize inspected findings",
+        "H_tool": "Known local files",
+        "S_state": "One summary artifact",
+        "N_obs": "Deterministic input"
+      },
+      "green_gate": {
+        "gate_scope": "worker",
+        "command": "python3 test_runner.py",
+        "rationale": "The repository runner covers the summary contract"
+      },
+      "context_policy": {
+        "fork_turns": "none",
+        "model_tier": "worker",
+        "allowed_skills": ["analysis"],
+        "allowed_mcp": ["filesystem"],
+        "upstream_inputs": []
+      }
+    },
+    {
+      "id": "consumer",
+      "role": "worker",
+      "scope": "Consume the structured summary without reloading upstream skills",
+      "write_set": ["scripts/harness_report.py"],
+      "verification_command": "python3 test_runner.py",
+      "task_demand": {
+        "level": "low",
+        "L": "One bounded consumer change",
+        "H_tool": "Known Python CLI",
+        "S_state": "One source file and one upstream summary",
+        "N_obs": "Deterministic JSON"
+      },
+      "green_gate": {
+        "gate_scope": "worker",
+        "command": "python3 test_runner.py",
+        "rationale": "The repository runner covers the consumer contract"
+      },
+      "context_policy": {
+        "fork_turns": "none",
+        "model_tier": "worker",
+        "allowed_skills": ["tdd"],
+        "allowed_mcp": [],
+        "upstream_inputs": ["artifacts/structured-summary.json"]
+      },
+      "brief": {
+        "category": "enhancement",
+        "summary": "Consume a structured upstream summary.",
+        "current_behavior": "The consumer does not use the structured summary.",
+        "desired_behavior": "The consumer reads the summary without reloading upstream context.",
+        "key_interfaces": ["scripts/harness_report.py CLI"],
+        "acceptance_criteria": ["python3 test_runner.py passes"],
+        "out_of_scope": ["Changing evidence schemas"]
+      }
+    }
+  ]
+}

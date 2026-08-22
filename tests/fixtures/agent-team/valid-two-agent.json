@@ -1,0 +1,45 @@
+{
+  "agents": [
+    {
+      "id": "explorer",
+      "role": "planner",
+      "scope": "Inspect the existing agent-team contract",
+      "write_set": [],
+      "verification_command": "python3 test_runner.py",
+      "context_policy": {
+        "fork_turns": "none",
+        "model_tier": "explorer",
+        "allowed_skills": ["research"],
+        "allowed_mcp": [],
+        "upstream_inputs": []
+      }
+    },
+    {
+      "id": "worker",
+      "role": "worker",
+      "scope": "Implement the validated agent-team change",
+      "write_set": ["scripts/harness_agent_team.py"],
+      "verification_command": "python3 test_runner.py",
+      "task_demand": {
+        "level": "low",
+        "L": "One bounded CLI change",
+        "H_tool": "Known Python CLI",
+        "S_state": "One source file",
+        "N_obs": "Deterministic JSON"
+      },
+      "green_gate": {
+        "gate_scope": "worker",
+        "command": "python3 test_runner.py",
+        "rationale": "The repository runner covers the CLI contract"
+      },
+      "context_policy": {
+        "fork_turns": 2,
+        "model_tier": "worker",
+        "allowed_skills": ["tdd"],
+        "allowed_mcp": [],
+        "upstream_inputs": [],
+        "reason": "Two recent turns contain the accepted CLI seam"
+      }
+    }
+  ]
+}
