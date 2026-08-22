@@ -8549,6 +8549,24 @@ def test_verify_after_full_sync():
         require(code == 0, f"verify failed:\n{out}\n{err}")
         require("Verification passed." in out, "verify success message missing")
 
+        retired_link = codex_home / "hooks" / ("model" + "_router.py")
+        retired_link.symlink_to(codex_home / "hooks" / "missing-retired-target.py")
+        code, out, err = run(
+            [
+                str(VERIFY),
+                "--repo-root",
+                str(ROOT),
+                "--codex-home",
+                str(codex_home),
+                "--claude-home",
+                str(claude_home),
+                "--skip-check",
+                "chrome_devtools_mcp_bin_exists",
+            ]
+        )
+        require(code != 0 and "FAIL:codex_retired_router_runtime_absent" in out,
+                "verifier must reject a dangling symlink at the retired runtime hook path")
+
     print("[PASS] full sync + verify")
 
 

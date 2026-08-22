@@ -128,7 +128,6 @@ behavior live in `codex/hooks/dhf_preprompt.py`.
 - `codex/hooks/context_meter.py`: W2a-capability-gated context pressure helper with ordinal-only no-persistence degradation.
 - `codex/hooks/session_bearing.py`: bounded silent-failure SessionStart recovery and boundary-context injector.
 - `codex/hooks/harness_observer.py`: PostToolUse evidence observer hook.
-- `codex/hooks/model_router.py`: prompt/subtask complexity router for cheapest quality-safe model recommendations.
 - `codex/hooks/dhf_preprompt.py`: generic `UserPromptSubmit` DHF dispatcher; malformed or missing-cwd payloads continue, opt-out wins first, non-ShipQ prompts need explicit generic activation, and ShipQ cwd delegates lazily to the adapter.
 - `codex/hooks/shipq_dhf_preprompt.py`: ShipQ-only DHF preprompt adapter, never registered globally and loaded only by the generic dispatcher for ShipQ cwd.
 - `scripts/harness_evidence.py`: evidence validation, kind inference, append helper, and decision-only compaction transition field validation.
@@ -298,6 +297,6 @@ behavior live in `codex/hooks/dhf_preprompt.py`.
 - DHF Prompt Dispatch: global `UserPromptSubmit` registers `dhf_preprompt.py`; `shipq_dhf_preprompt.py` remains a lazy project adapter and ordinary non-ShipQ prompts do not receive `additionalContext`.
 - Observability: `scripts/harness_evidence.py`, `scripts/harness_feedback.py`, `scripts/harness_report.py`, split evidence schemas, and local evidence files. Decision evidence is promoted into state and handoff summaries; routine gate receipts remain available for audit without burying recovery signals.
 - Tool Router: lifecycle stage policy in `tool-policy.json`.
-- Model Router: `model_router.py` recommends `gpt-5.4-mini`, `gpt-5.4`, or `gpt-5.5` per prompt/subtask and can be re-run at complex task phase boundaries.
+- Model Selection: `codex/config.template.toml` owns the primary default; `codex/agents/*.toml` owns verified role-specific reasoning settings. Sync backs up and removes a stale retired router from runtime.
 - Checkpoints: `docs/HARNESS_RUNTIME.md` contract, `scripts/harness_checkpoint.py`, and `docs/harness-state.md` log.
 - Guardrails: hooks, global AGENTS rules, remote-access policy, and verification gate.

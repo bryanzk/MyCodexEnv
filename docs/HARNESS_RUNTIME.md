@@ -260,11 +260,11 @@ For the current project workflow and skill routing map, read
 - `Transition Store`: `scripts/harness_transition.py` provides append-only first-record-wins CAS semantics for successor task ids.
 - `Behavior Evaluator`: `scripts/harness_eval.py tier1` executes fixture-driven recovery and handoff-lint end-state assertions from `docs/evals/`.
 - `Permissions`: `codex/runtime/tool-policy.json` remains unchanged and declares category risk tiers. `codex/runtime/harness-scope.json` separately owns governed roots, screening, env-gate scope, and integrity-watch limits; unknown phases remain read-only.
-- `Hooks`: `codex/hooks/*` implements thin objective guardrails, prompt model routing recommendations, and evidence plumbing.
+- `Hooks`: `codex/hooks/*` implements thin objective guardrails, compaction pressure signals, DHF dispatch, and evidence plumbing.
 - `Observability`: local JSONL evidence records lifecycle and verification events.
 - `Surface Inventory`: `docs/surfaces.json` is the canonical runtime surface inventory; `scripts/check_surfaces.py` keeps it consistent with files on disk, the `docs/repo-index.md` `## Runtime Surfaces` mirror, and opt-in public landing nav links declared with `public_nav`.
 - `Tool Router`: lifecycle stage determines allowed read/write/network/remote behavior. Top-level payload/env phase is adopted only for a cwd inside a governed Git repository; trace records whether it was present and adopted. Resolution then uses transcript marker, TTL self-declaration, one unambiguous repo snapshot, and `unknown`. `tool_input.phase`, cwd, transcript, and session fields never authorize.
-- `Model Router`: `codex/hooks/model_router.py` classifies each prompt or subtask as `simple`, `medium`, or `complex` and recommends the cheapest quality-safe model tier. It intentionally stays non-blocking; runtimes or wrapper scripts that can switch models may consume the JSON `routing` object, while plain Codex hooks inject the recommendation and response telemetry requirement as additional context.
+- `Model Selection`: `codex/config.template.toml` owns the primary model default and `codex/agents/*.toml` owns verified role-specific reasoning settings. The former prompt router is retired.
 - `Checkpoints`: use git commits, state log entries, and handoff docs as recovery points.
 - `Guardrails`: recognized repo-write phase violations, destructive commands, sensitive paths, credential-shaped command literals, remote operations, and dynamic-execution actions are blocked. The guard emits the Codex-supported legacy block shape; a 2026-07-28 isolated probe proved that the former top-level `permissionDecision` shape and every `ask` variant fail open, so there is no approval channel.
 
@@ -658,44 +658,19 @@ Probe behavior:
 - global Desktop sandbox is outside repo control; the probe reports observable
   config only.
 
-## Model Routing Contract
-`codex/hooks/model_router.py` is the pre-task prompt router. It reads hook JSON
-from stdin and exits 0 in all normal cases so routing cannot block task intake.
+## Model Router Retirement Contract
 
-Routing behavior:
-- missing or malformed prompt: recommend balanced fallback `gpt-5.4` with low
-  confidence;
-- very short harmless prompts: recommend `gpt-5.4-mini` with low reasoning;
-- simple formatting, translation, README, and documentation subtasks: recommend
-  `gpt-5.4-mini` with low reasoning;
-- ordinary implementation, tests, scripts, and refactors: recommend `gpt-5.4`
-  with medium reasoning;
-- architecture, auth, security, migrations, deploys, destructive operations, or
-  long cross-module tasks: recommend `gpt-5.5` with high reasoning;
-- review phase: recommend `gpt-5.5` with high reasoning;
-- validation phase without high-risk signals: recommend `gpt-5.4-mini` with low
-  reasoning for evidence collection and summarization;
-- when `subtask` is present, classify the subtask instead of anchoring on the
-  parent prompt, allowing complex tasks to downshift for cheap subtasks and
-  upgrade again for planning, security, review, or release steps.
+`codex/hooks/model_router.py` is no longer a source or registered prompt hook.
+The global `UserPromptSubmit` chain contains only `compaction_probe.py` followed
+by `dhf_preprompt.py`. Model defaults now come from
+`codex/config.template.toml` and verified role-specific settings from
+`codex/agents/*.toml`.
 
-The hook output includes `routing.switch_points` for complex prompts so an
-orchestrator can re-run or apply routing at research, planning, development,
-validation, and review boundaries. The hook does not claim to force a model
-change in Codex versions that only accept additional prompt context.
-
-Response telemetry behavior:
-- output includes `telemetry.models_used`, `telemetry.token_usage`, and
-  `telemetry.five_hour_limit`;
-- actual model names are read from payload fields such as `model`,
-  `current_model`, `selected_model`, or `active_model`, then combined with the
-  routed recommendation;
-- token usage is read from payload `usage` / `token_usage` fields such as
-  `input_tokens`, `output_tokens`, and `total_tokens`;
-- five-hour limit data is read from payload `limits` / `quota` / `rate_limit`
-  fields or from `CODEX_5H_LIMIT_REMAINING` and `CODEX_5H_LIMIT_RESET_AT`;
-- unavailable telemetry must be reported as `unavailable`; the hook and final
-  response instructions must not estimate or invent token usage or limits.
+During sync, a stale regular runtime copy is moved to the operation's
+`runtime-backups/.../retired/hooks/` directory before the original path is
+removed. A symlink or other non-regular target fails closed. Environment
+verification requires both source and runtime paths to be absent, including
+dangling symlinks.
 
 ## Checkpoint Contract
 Create a checkpoint only when a matching `governed` escalation signal requires
