@@ -1474,6 +1474,8 @@ def test_sync_renders_template_and_copies_skills():
                 require(setting in text, f"{name} custom-agent missing setting: {setting}")
         existing_agent = codex_home / "agents" / "explorer.toml"
         write(existing_agent, "pre-sync explorer\n")
+        retired_hook = codex_home / "hooks" / ("model" + "_router.py")
+        write(retired_hook, "retired advisory hook\n")
         runtime_only_skill = codex_home / "skills" / "runtime-only-fixture" / "SKILL.md"
         write(
             runtime_only_skill,
@@ -1533,6 +1535,16 @@ def test_sync_renders_template_and_copies_skills():
         require(len(explorer_backups) == 1, "existing custom-agent should receive one timestamped backup")
         require(explorer_backups[0].read_text(encoding="utf-8") == "pre-sync explorer\n",
                 "custom-agent backup should preserve the prior file")
+        require(not retired_hook.exists(), "retired advisory hook should be removed from the runtime hook path")
+        retired_backups = list((codex_home / "runtime-backups").rglob(retired_hook.name))
+        require(len(retired_backups) == 1, "retired advisory hook should receive one runtime backup")
+        require(retired_backups[0].read_text(encoding="utf-8") == "retired advisory hook\n",
+                "retired advisory hook backup should preserve the prior file")
+        verifier = VERIFY.read_text(encoding="utf-8")
+        require("codex_retired_router_source_absent" in verifier,
+                "environment verifier should require the retired source to stay absent")
+        require("codex_retired_router_runtime_absent" in verifier,
+                "environment verifier should require the retired runtime target to stay absent")
         deployed_manifest = codex_home / "harness" / "deployed-manifest.json"
         require(deployed_manifest.is_file(), "ordinary full sync must atomically refresh the deployed manifest")
         deployed = json.loads(deployed_manifest.read_text(encoding="utf-8"))

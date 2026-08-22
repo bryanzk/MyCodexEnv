@@ -1291,6 +1291,22 @@ if [[ -d "${REPO_ROOT}/codex/hooks" ]]; then
   rsync_runtime_dir "${REPO_ROOT}/codex/hooks" "${CODEX_HOME}/hooks"
 fi
 
+retired_hook="${CODEX_HOME}/hooks/model_router.py"
+if [[ -e "${retired_hook}" || -L "${retired_hook}" ]]; then
+  if [[ ! -f "${retired_hook}" || -L "${retired_hook}" ]]; then
+    echo "Retired hook target is not a regular file: ${retired_hook}" >&2
+    exit 1
+  fi
+  retired_backup="${RUNTIME_BACKUP_DIR}/retired/hooks/model_router.py"
+  if [[ -e "${retired_backup}" || -L "${retired_backup}" ]]; then
+    echo "Retired hook backup already exists: ${retired_backup}" >&2
+    exit 1
+  fi
+  mkdir -p "$(dirname "${retired_backup}")"
+  mv "${retired_hook}" "${retired_backup}"
+  echo "Retired hook backed up to ${retired_backup}"
+fi
+
 if [[ -d "${REPO_ROOT}/codex/runtime" ]]; then
   mkdir -p "${CODEX_HOME}/runtime"
   rsync_runtime_dir "${REPO_ROOT}/codex/runtime" "${CODEX_HOME}/runtime"
