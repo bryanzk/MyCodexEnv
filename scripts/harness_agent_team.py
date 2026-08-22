@@ -29,6 +29,8 @@ BRIEF_LIST_FIELDS = [
     "acceptance_criteria",
     "out_of_scope",
 ]
+MODEL_TIERS = {"explorer", "reviewer", "worker", "custom"}
+CONTEXT_LIST_FIELDS = ["allowed_skills", "allowed_mcp", "upstream_inputs"]
 
 
 def git_root() -> Path:
@@ -110,6 +112,95 @@ def validate_brief(agent: dict[str, Any], agent_id: str, errors: list[str]) -> d
 
 def non_empty_string(value: Any) -> str:
     return value.strip() if isinstance(value, str) else ""
+
+
+def context_string_list(
+    policy: dict[str, Any], field: str, agent_id: str, errors: list[str]
+) -> list[str]:
+    value = policy.get(field, [])
+    if not isinstance(value, list):
+        errors.append(f"ERROR[context_policy_{field}] agent={agent_id}: context_policy.{field} must be a list")
+        return []
+    cleaned: list[str] = []
+    for index, item in enumerate(value):
+        if not isinstance(item, str) or not item.strip():
+            errors.append(
+                f"ERROR[context_policy_{field}] agent={agent_id}: "
+                f"context_policy.{field}[{index}] must be a non-empty string"
+            )
+        else:
+            cleaned.append(item.strip())
+    return cleaned
+
+
+def validate_context_policy(
+    agent: dict[str, Any],
+    agent_id: str,
+    role: str,
+    upstream_skills: set[str],
+    errors: list[str],
+) -> dict[str, Any] | None:
+    policy = agent.get("context_policy")
+    if not isinstance(policy, dict):
+        errors.append(f"ERROR[context_policy_missing] agent={agent_id}: context_policy must be an object")
+        return None
+
+    normalized: dict[str, Any] = {}
+    fork_turns = policy.get("fork_turns")
+    valid_fork = (isinstance(fork_turns, str) and fork_turns in {"none", "all"}) or (
+        isinstance(fork_turns, int) and not isinstance(fork_turns, bool) and fork_turns > 0
+    )
+    if not valid_fork:
+        errors.append(
+            f"ERROR[context_policy_fork] agent={agent_id}: "
+            "context_policy.fork_turns must be none, all, or a positive integer"
+        )
+    else:
+        normalized["fork_turns"] = fork_turns
+
+    reason = non_empty_string(policy.get("reason"))
+    if role in READ_ONLY_ROLES and valid_fork and fork_turns != "none":
+        errors.append(f"ERROR[context_policy_fork] agent={agent_id}: {role} must use fork_turns=none")
+    if role == "worker":
+        if fork_turns == "all" or (isinstance(fork_turns, int) and fork_turns > 3):
+            errors.append(
+                f"ERROR[context_policy_fork] agent={agent_id}: worker fork_turns must be none or an integer <= 3"
+            )
+        if valid_fork and fork_turns != "none" and not reason:
+            errors.append(
+                f"ERROR[context_policy_fork] agent={agent_id}: context_policy.reason is required when fork_turns != none"
+            )
+    if reason:
+        normalized["reason"] = reason
+
+    tier = non_empty_string(policy.get("model_tier"))
+    if tier not in MODEL_TIERS:
+        errors.append(
+            f"ERROR[context_policy_tier] agent={agent_id}: context_policy.model_tier must be one of "
+            f"{', '.join(sorted(MODEL_TIERS))}"
+        )
+    else:
+        normalized["model_tier"] = tier
+    if tier == "custom":
+        model = non_empty_string(policy.get("model"))
+        effort = non_empty_string(policy.get("model_reasoning_effort"))
+        if not model or not effort:
+            errors.append(
+                f"ERROR[context_policy_tier] agent={agent_id}: custom model_tier requires model and model_reasoning_effort"
+            )
+        else:
+            normalized["model"] = model
+            normalized["model_reasoning_effort"] = effort
+
+    for field in CONTEXT_LIST_FIELDS:
+        normalized[field] = context_string_list(policy, field, agent_id, errors)
+    overlap = upstream_skills.intersection(normalized["allowed_skills"])
+    if normalized["upstream_inputs"] and overlap:
+        errors.append(
+            f"ERROR[context_policy_reload] agent={agent_id}: allowed_skills reload upstream skills: "
+            f"{', '.join(sorted(overlap))}"
+        )
+    return normalized
 
 
 def validate_task_demand(agent: dict[str, Any], agent_id: str, errors: list[str]) -> dict[str, str] | None:
@@ -227,6 +318,7 @@ def validate_plan(plan: dict[str, Any], repo_root: Path) -> tuple[list[str], lis
 
     worker_paths: list[tuple[str, str]] = []
     seen_ids: set[str] = set()
+    upstream_skills: set[str] = set()
     for index, agent in enumerate(agents):
         if not isinstance(agent, dict):
             errors.append(f"ERROR[agent_object] agent_index={index}: agent must be an object")
@@ -282,6 +374,9 @@ def validate_plan(plan: dict[str, Any], repo_root: Path) -> tuple[list[str], lis
                             "protected integrator state must be updated by the main agent after integration"
                         )
                 worker_paths.append((agent_id, path))
+        context_policy = validate_context_policy(agent, agent_id, role, upstream_skills, errors)
+        if context_policy:
+            upstream_skills.update(context_policy["allowed_skills"])
         brief = validate_brief(agent, agent_id, errors)
 
         summary.append(
@@ -294,6 +389,7 @@ def validate_plan(plan: dict[str, Any], repo_root: Path) -> tuple[list[str], lis
                 "brief": brief,
                 "task_demand": demand,
                 "green_gate": green_gate,
+                "context_policy": context_policy,
             }
         )
 

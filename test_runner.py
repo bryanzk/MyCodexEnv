@@ -6587,6 +6587,26 @@ def test_harness_agent_team_validator():
                 value["integrator_gate_command"] = "python3 test_runner.py"
             return value
 
+        def context_policy(
+            tier: str,
+            *,
+            fork_turns: str | int = "none",
+            allowed_skills: list[str] | None = None,
+            allowed_mcp: list[str] | None = None,
+            upstream_inputs: list[str] | None = None,
+            reason: str | None = None,
+        ) -> dict[str, Any]:
+            value: dict[str, Any] = {
+                "fork_turns": fork_turns,
+                "model_tier": tier,
+                "allowed_skills": allowed_skills or [],
+                "allowed_mcp": allowed_mcp or [],
+                "upstream_inputs": upstream_inputs or [],
+            }
+            if reason is not None:
+                value["reason"] = reason
+            return value
+
         def worker_agent(
             agent_id: str = "worker",
             *,
@@ -6604,6 +6624,7 @@ def test_harness_agent_team_validator():
                 "verification_command": verification_command,
                 "task_demand": demand(level),
                 "green_gate": gate(level, gate_scope, gate_command),
+                "context_policy": context_policy("worker"),
             }
 
         valid_plan = {
@@ -6616,6 +6637,7 @@ def test_harness_agent_team_validator():
                     "verification_command": "python3 test_runner.py",
                     "task_demand": demand("medium"),
                     "green_gate": gate("medium"),
+                    "context_policy": context_policy("worker"),
                     "brief": {
                         "category": "enhancement",
                         "summary": "Add runtime report behavior.",
@@ -6634,6 +6656,7 @@ def test_harness_agent_team_validator():
                     "verification_command": "python3 test_runner.py",
                     "task_demand": demand("low"),
                     "green_gate": gate("low"),
+                    "context_policy": context_policy("worker"),
                 },
                 {
                     "id": "qa",
@@ -6641,6 +6664,7 @@ def test_harness_agent_team_validator():
                     "scope": "read-only verification",
                     "write_set": [],
                     "verification_command": "python3 test_runner.py",
+                    "context_policy": context_policy("reviewer"),
                 },
             ]
         }
@@ -6649,6 +6673,102 @@ def test_harness_agent_team_validator():
         require(code == 0, f"valid agent team should pass: {err or out}")
         require("Agent team valid" in out and "worker-runtime" in out, "valid summary should be handoff-ready")
         require("demand=medium" in out and "green_gate=python3 test_runner.py" in out, "valid summary should include demand gate")
+
+        valid_custom_plan = {"agents": [worker_agent("worker")]}
+        valid_custom_plan["agents"][0]["context_policy"] = {
+            **context_policy("custom", fork_turns=3, reason="Need the last three turns"),
+            "model": "gpt-5.6-sol",
+            "model_reasoning_effort": "high",
+        }
+        write(plan_path, json.dumps(valid_custom_plan))
+        code, out, err = run([sys.executable, str(HARNESS_AGENT_TEAM), "validate", str(plan_path), "--repo-root", str(ROOT)])
+        require(code == 0, f"valid custom context policy should pass: {err or out}")
+
+        default_lists_plan = {
+            "agents": [{
+                "id": "qa",
+                "role": "qa",
+                "scope": "read-only verification",
+                "write_set": [],
+                "verification_command": "python3 test_runner.py",
+                "context_policy": {"fork_turns": "none", "model_tier": "reviewer"},
+            }]
+        }
+        write(plan_path, json.dumps(default_lists_plan))
+        code, out, err = run([sys.executable, str(HARNESS_AGENT_TEAM), "validate", str(plan_path), "--repo-root", str(ROOT)])
+        require(code == 0, f"omitted context lists should default empty: {err or out}")
+
+        missing_policy_plan = {"agents": [worker_agent("worker")]}
+        missing_policy_plan["agents"][0].pop("context_policy")
+        write(plan_path, json.dumps(missing_policy_plan))
+        code, out, err = run([sys.executable, str(HARNESS_AGENT_TEAM), "validate", str(plan_path), "--repo-root", str(ROOT)])
+        require(code != 0 and "ERROR[context_policy_missing]" in err, "missing context policy should fail")
+
+        invalid_reviewer_fork_plan = {
+            "agents": [{
+                "id": "reviewer",
+                "role": "reviewer",
+                "scope": "review docs",
+                "write_set": [],
+                "verification_command": "python3 test_runner.py",
+                "context_policy": context_policy("reviewer", fork_turns="last:2", reason="Review recent turns"),
+            }]
+        }
+        write(plan_path, json.dumps(invalid_reviewer_fork_plan))
+        code, out, err = run([sys.executable, str(HARNESS_AGENT_TEAM), "validate", str(plan_path), "--repo-root", str(ROOT)])
+        require(code != 0 and "ERROR[context_policy_fork]" in err, "reviewer fork should fail")
+
+        worker_all_plan = {"agents": [worker_agent("worker")]}
+        worker_all_plan["agents"][0]["context_policy"] = context_policy("worker", fork_turns="all", reason="Need history")
+        write(plan_path, json.dumps(worker_all_plan))
+        code, out, err = run([sys.executable, str(HARNESS_AGENT_TEAM), "validate", str(plan_path), "--repo-root", str(ROOT)])
+        require(code != 0 and "ERROR[context_policy_fork]" in err, "worker all fork should fail")
+
+        worker_deep_fork_plan = {"agents": [worker_agent("worker")]}
+        worker_deep_fork_plan["agents"][0]["context_policy"] = context_policy("worker", fork_turns=4, reason="Need four turns")
+        write(plan_path, json.dumps(worker_deep_fork_plan))
+        code, out, err = run([sys.executable, str(HARNESS_AGENT_TEAM), "validate", str(plan_path), "--repo-root", str(ROOT)])
+        require(code != 0 and "ERROR[context_policy_fork]" in err, "worker fork above three should fail")
+
+        worker_missing_reason_plan = {"agents": [worker_agent("worker")]}
+        worker_missing_reason_plan["agents"][0]["context_policy"] = context_policy("worker", fork_turns=2)
+        write(plan_path, json.dumps(worker_missing_reason_plan))
+        code, out, err = run([sys.executable, str(HARNESS_AGENT_TEAM), "validate", str(plan_path), "--repo-root", str(ROOT)])
+        require(code != 0 and "ERROR[context_policy_fork]" in err, "non-none fork should require a reason")
+
+        invalid_tier_plan = {"agents": [worker_agent("worker")]}
+        invalid_tier_plan["agents"][0]["context_policy"] = context_policy("manager")
+        write(plan_path, json.dumps(invalid_tier_plan))
+        code, out, err = run([sys.executable, str(HARNESS_AGENT_TEAM), "validate", str(plan_path), "--repo-root", str(ROOT)])
+        require(code != 0 and "ERROR[context_policy_tier]" in err, "invalid model tier should fail")
+
+        custom_tier_plan = {"agents": [worker_agent("worker")]}
+        custom_tier_plan["agents"][0]["context_policy"] = context_policy("custom")
+        write(plan_path, json.dumps(custom_tier_plan))
+        code, out, err = run([sys.executable, str(HARNESS_AGENT_TEAM), "validate", str(plan_path), "--repo-root", str(ROOT)])
+        require(code != 0 and "ERROR[context_policy_tier]" in err, "custom tier should require model settings")
+
+        reload_plan = {
+            "agents": [
+                {
+                    "id": "explorer",
+                    "role": "planner",
+                    "scope": "inspect source",
+                    "write_set": [],
+                    "verification_command": "python3 test_runner.py",
+                    "context_policy": context_policy("explorer", allowed_skills=["research"]),
+                },
+                worker_agent("worker"),
+            ]
+        }
+        reload_plan["agents"][1]["context_policy"] = context_policy(
+            "worker",
+            allowed_skills=["research"],
+            upstream_inputs=["artifacts/explorer-summary.json"],
+        )
+        write(plan_path, json.dumps(reload_plan))
+        code, out, err = run([sys.executable, str(HARNESS_AGENT_TEAM), "validate", str(plan_path), "--repo-root", str(ROOT)])
+        require(code != 0 and "ERROR[context_policy_reload]" in err, "upstream skill reload should fail")
 
         overlap_plan = {
             "agents": [
@@ -6723,6 +6843,7 @@ def test_harness_agent_team_validator():
                     "scope": "review docs",
                     "write_set": ["docs/HARNESS_RUNTIME.md"],
                     "verification_command": "python3 test_runner.py",
+                    "context_policy": context_policy("reviewer"),
                 }
             ]
         }
@@ -6739,6 +6860,7 @@ def test_harness_agent_team_validator():
                     "write_set": [],
                     "verification_command": "python3 test_runner.py",
                     "task_demand": demand("low"),
+                    "context_policy": context_policy("reviewer"),
                 }
             ]
         }
@@ -6755,6 +6877,7 @@ def test_harness_agent_team_validator():
                     "write_set": [],
                     "verification_command": "python3 test_runner.py",
                     "green_gate": gate("low"),
+                    "context_policy": context_policy("reviewer"),
                 }
             ]
         }
@@ -6772,6 +6895,7 @@ def test_harness_agent_team_validator():
                     "verification_command": "python3 test_runner.py",
                     "task_demand": demand("medium"),
                     "green_gate": gate("medium"),
+                    "context_policy": context_policy("worker"),
                     "brief": {
                         "category": "enhancement",
                         "summary": "Validate durable briefs.",
@@ -6797,6 +6921,7 @@ def test_harness_agent_team_validator():
                     "verification_command": "python3 test_runner.py",
                     "task_demand": demand("medium"),
                     "green_gate": gate("medium"),
+                    "context_policy": context_policy("worker"),
                     "brief": {
                         "category": "enhancement",
                         "summary": "Validate durable briefs.",
@@ -6898,6 +7023,13 @@ def test_agent_dispatch_gate():
                                 "gate_scope": "worker",
                                 "command": "pytest -k a",
                                 "rationale": "touched a",
+                            },
+                            "context_policy": {
+                                "fork_turns": "none",
+                                "model_tier": "worker",
+                                "allowed_skills": [],
+                                "allowed_mcp": [],
+                                "upstream_inputs": [],
                             },
                         }
                     ]
