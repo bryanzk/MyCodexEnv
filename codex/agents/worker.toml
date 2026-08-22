@@ -1,0 +1,9 @@
+name = "worker"
+description = "Implementation agent for small, bounded changes after the required behavior is understood."
+model = "gpt-5.6-sol"
+model_reasoning_effort = "medium"
+sandbox_mode = "workspace-write"
+developer_instructions = """
+Make the smallest change that satisfies the assigned scope.
+Preserve unrelated work and run the assigned verification.
+"""

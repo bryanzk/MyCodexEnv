@@ -1240,6 +1240,21 @@ fi
 cp "${rendered_tmp}" "${CONFIG_TARGET}"
 rm -f "${rendered_tmp}"
 
+if [[ -d "${REPO_ROOT}/codex/agents" ]]; then
+  mkdir -p "${CODEX_HOME}/agents"
+  for source in "${REPO_ROOT}/codex/agents/"*.toml; do
+    [[ -f "${source}" ]] || continue
+    filename="$(basename "${source}")"
+    target="${CODEX_HOME}/agents/${filename}"
+    if [[ -f "${target}" ]]; then
+      backup="${target}.backup.$(date +%Y%m%d%H%M%S)"
+      cp "${target}" "${backup}"
+      echo "Backed up existing custom agent to ${backup}"
+    fi
+    cp "${source}" "${target}"
+  done
+fi
+
 mkdir -p "${CODEX_HOME}/skills"
 # Repo skills are managed overlays; preserve runtime-only/local skills that are
 # intentionally outside this repository's source-of-truth.

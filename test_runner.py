@@ -1454,6 +1454,26 @@ def test_sync_renders_template_and_copies_skills():
     with tempfile.TemporaryDirectory() as tmp:
         tmp_path = Path(tmp)
         codex_home = tmp_path / ".codex"
+        agent_specs = {
+            "explorer": ("low", "read-only"),
+            "reviewer": ("high", "read-only"),
+            "worker": ("medium", "workspace-write"),
+        }
+        for name, (effort, sandbox) in agent_specs.items():
+            source = ROOT / "codex" / "agents" / f"{name}.toml"
+            require(source.is_file(), f"missing custom-agent source: {source}")
+            text = source.read_text(encoding="utf-8")
+            for setting in [
+                f'name = "{name}"',
+                'model = "gpt-5.6-sol"',
+                f'model_reasoning_effort = "{effort}"',
+                f'sandbox_mode = "{sandbox}"',
+                "description = ",
+                "developer_instructions = ",
+            ]:
+                require(setting in text, f"{name} custom-agent missing setting: {setting}")
+        existing_agent = codex_home / "agents" / "explorer.toml"
+        write(existing_agent, "pre-sync explorer\n")
         runtime_only_skill = codex_home / "skills" / "runtime-only-fixture" / "SKILL.md"
         write(
             runtime_only_skill,
@@ -1505,6 +1525,14 @@ def test_sync_renders_template_and_copies_skills():
         require((codex_home / "hooks" / "harness_guard.py").exists(), "harness guard hook should be copied")
         require((codex_home / "hooks" / "harness_observer.py").exists(), "harness observer hook should be copied")
         require((codex_home / "hooks" / "dhf_preprompt.py").exists(), "generic DHF dispatcher hook should be copied")
+        for name in agent_specs:
+            source = ROOT / "codex" / "agents" / f"{name}.toml"
+            target = codex_home / "agents" / f"{name}.toml"
+            require(target.read_bytes() == source.read_bytes(), f"runtime custom-agent should match source: {name}")
+        explorer_backups = list((codex_home / "agents").glob("explorer.toml.backup.*"))
+        require(len(explorer_backups) == 1, "existing custom-agent should receive one timestamped backup")
+        require(explorer_backups[0].read_text(encoding="utf-8") == "pre-sync explorer\n",
+                "custom-agent backup should preserve the prior file")
         deployed_manifest = codex_home / "harness" / "deployed-manifest.json"
         require(deployed_manifest.is_file(), "ordinary full sync must atomically refresh the deployed manifest")
         deployed = json.loads(deployed_manifest.read_text(encoding="utf-8"))
