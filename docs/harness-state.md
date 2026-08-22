@@ -14,19 +14,19 @@ Stable rules belong in `AGENTS.md`, `README.md`, `docs/repo-index.md`, or
   - `codex/skills/delivery-harness-framework/SKILL.md`
 - blocked_sources: none
 - unsafe_inputs: none
-- next_safe_task: Rerun final gates after checkpoint, then rebase after 22:00 sync before commit and push PR A
+- next_safe_task: P0-2：修 config 模板 → 拆 model_router → 删 telemetry 废话注入 → custom-agent 模板；见 tasks/p0-token-cost-plan-2026-08-22.md §5
 - required_commands:
   - `python3 test_runner.py`
   - `git diff --check`
   - `./scripts/verify_codex_env.sh --repo-root "$(pwd)" --codex-home "$HOME/.codex" --claude-home "$HOME/.claude"`
-- latest_checkpoint: 2026-08-21T21:57:52-04:00 DHF public-site Browser QA complete
-- latest_verification: 2026-08-21T21:57:52-04:00 command=node /tmp/dhf_public_site_qa.js; exit_code=0; key_output=16 pages; 96 viewport/theme checks; 16 reduced-motion; 16 print; 2 interactions; 51 internal links; 130 total checks; failures=[]
-- compaction_ordinal: 1
-- transition_key: public-site-fix-validation
+- latest_checkpoint: 2026-08-22T10:10:08-04:00 P0-1 rollout cost baseline, parent-only attribution, identity drift guard, and governed 2-3 DRIFT records complete
+- latest_verification: 2026-08-22T10:10:08-04:00 command=python3 test_runner.py @ 2026-08-22T03:31:29Z; python3 test_runner.py @ 2026-08-22T13:50:59Z; exit_code=0; key_output=receipt_1: ran=140 passed=138 skipped=2 failed=0; receipt_2: ran=140 passed=140 skipped=0 failed=0
+- compaction_ordinal: 2
+- transition_key: p0-1-complete
 - gate_decision: continue-to-boundary
-- constraints: []
-- ownership: {}
-- next_action: {"command":"Rerun final gates after checkpoint, then rebase after 22:00 sync before commit and push PR A"}
+- constraints: ["Do not start P0-2 in this task"]
+- ownership: {"boundary":"P0-1 cost reporter, frozen baseline evidence, tests, and append-only checkpoint","files":{"docs/harness-state.md":"agent_owned_checkpoint"}}
+- next_action: {"command":"P0-2：修 config 模板 → 拆 model_router → 删 telemetry 废话注入 → custom-agent 模板；见 tasks/p0-token-cost-plan-2026-08-22.md §5","scope":"P0-2"}
 
 ## State Log
 
@@ -3500,3 +3500,31 @@ Stable rules belong in `AGENTS.md`, `README.md`, `docs/repo-index.md`, or
   - none
 - next_safe_task: Rerun final gates after checkpoint, then rebase after 22:00 sync before commit and push PR A
 - checkpoint_data: {"constraints":[],"next_action":{"command":"Rerun final gates after checkpoint, then rebase after 22:00 sync before commit and push PR A"},"ownership":{},"phase":"validation","schema":"dhf_checkpoint_v1","verification_evidence":{"command":"node /tmp/dhf_public_site_qa.js","exit_code":0,"freshness":"fresh","key_output":"16 pages; 96 viewport/theme checks; 16 reduced-motion; 16 print; 2 interactions; 51 internal links; 130 total checks; failures=[]","timestamp":"2026-08-21T21:57:52-04:00"}}
+
+### 2026-08-22T10:10:08-04:00
+- phase: validation
+- event: checkpoint
+- summary: P0-1 rollout cost baseline, parent-only attribution, identity drift guard, and governed 2-3 DRIFT records complete
+- git:
+  - branch: main
+  - latest_commit: 2bfa31f
+  - dirty_status: dirty
+  - dirty_count: 1
+- compaction_ordinal: 2
+- transition_key: p0-1-complete
+- gate_decision: continue-to-boundary
+- changed_surfaces:
+  - `docs/harness/cost-baseline/tasks.md`
+  - `scripts/harness_cost_report.py`
+  - `test_runner.py`
+  - `docs/harness/cost-baseline/before-36d51c2-governed-2-DRIFT.json`
+  - `docs/harness/cost-baseline/before-36d51c2-governed-3-DRIFT.json`
+  - `docs/harness-state.md`
+- verification:
+  - command: `python3 test_runner.py @ 2026-08-22T03:31:29Z; python3 test_runner.py @ 2026-08-22T13:50:59Z`
+  - exit_code: 0
+  - key_output: receipt_1: ran=140 passed=138 skipped=2 failed=0; receipt_2: ran=140 passed=140 skipped=0 failed=0
+- blockers:
+  - none
+- next_safe_task: P0-2：修 config 模板 → 拆 model_router → 删 telemetry 废话注入 → custom-agent 模板；见 tasks/p0-token-cost-plan-2026-08-22.md §5
+- checkpoint_data: {"constraints":["Do not start P0-2 in this task"],"next_action":{"command":"P0-2：修 config 模板 → 拆 model_router → 删 telemetry 废话注入 → custom-agent 模板；见 tasks/p0-token-cost-plan-2026-08-22.md §5","scope":"P0-2"},"ownership":{"boundary":"P0-1 cost reporter, frozen baseline evidence, tests, and append-only checkpoint","files":{"docs/harness-state.md":"agent_owned_checkpoint"}},"phase":"validation","schema":"dhf_checkpoint_v1","verification_evidence":{"command":"python3 test_runner.py @ 2026-08-22T03:31:29Z; python3 test_runner.py @ 2026-08-22T13:50:59Z","exit_code":0,"freshness":"fresh","key_output":"receipt_1: ran=140 passed=138 skipped=2 failed=0; receipt_2: ran=140 passed=140 skipped=0 failed=0","timestamp":"2026-08-22T13:50:59Z"}}
