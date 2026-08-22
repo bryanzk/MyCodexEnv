@@ -1,0 +1,39 @@
+{
+  "baseline": "before",
+  "codex_config_sha256": "30dac4fc328443011fa7bdf5dc067a9b2380b263870649500e5cddfc61ec59a7",
+  "git_head": "36d51c2c54721a06cb49f88c8abad78edbb35c76",
+  "malformed_lines": 0,
+  "rollout": "rollout-2026-08-22T08-20-32-01a0296a-5e7c-76e3-a677-89baed9561c2.jsonl",
+  "run": 2,
+  "session_id": "01a0296a-5e7c-76e3-a677-89baed9561c2",
+  "skills_lock_sha256": "0018fd4adb95bc011310ff8368f576d4ba7fc90e2b8737b66d61b14d65d4bcad",
+  "subagent_attribution": "not_available",
+  "task": "light",
+  "task_exit_code": 0,
+  "tool_calls": {
+    "exec": 4
+  },
+  "totals": {
+    "cache_hit_rate": 0.7792349969302236,
+    "cached_input": 210688,
+    "input": 270378,
+    "output": 1670,
+    "requests_total": 5,
+    "uncached_input": 59690
+  },
+  "turns": [
+    {
+      "cached_input": 61184,
+      "compaction_ordinal": 0,
+      "index": 1,
+      "input": 67613,
+      "input_sum": 270378,
+      "output": 422,
+      "requests": 5,
+      "timestamp": "2026-08-22T12:21:20.330Z",
+      "turn_id": "01a0296a-639a-7473-b813-5fce9230580e",
+      "uncached_input": 6429
+    }
+  ],
+  "wall_seconds": 47.004
+}
