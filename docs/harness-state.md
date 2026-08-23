@@ -5,7 +5,7 @@ Stable rules belong in `AGENTS.md`, `README.md`, `docs/repo-index.md`, or
 `docs/HARNESS_RUNTIME.md`; session facts and phase transitions are appended here.
 
 ## Current Snapshot
-- phase: validation
+- phase: handoff
 - source_of_truth:
   - `AGENTS.md`
   - `docs/repo-index.md`
@@ -14,19 +14,19 @@ Stable rules belong in `AGENTS.md`, `README.md`, `docs/repo-index.md`, or
   - `codex/skills/delivery-harness-framework/SKILL.md`
 - blocked_sources: none
 - unsafe_inputs: none
-- next_safe_task: P0-3：context_policy + brief 子命令；fork_turns 已核实为 spawn_agent 工具参数（none|all|N），不需要 config 键
+- next_safe_task: P0-3 后基线：governed 3 次（用 harness_agent_team.py brief 派工），与 after-p0-2 governed 比较；light-b 3 次作对照
 - required_commands:
   - `python3 test_runner.py`
   - `git diff --check`
   - `./scripts/verify_codex_env.sh --repo-root "$(pwd)" --codex-home "$HOME/.codex" --claude-home "$HOME/.claude"`
-- latest_checkpoint: 2026-08-22T14:34:20-04:00 P0-2 config, router retirement, context telemetry, custom agents, runtime sync, and verification complete
-- latest_verification: 2026-08-22T14:34:20-04:00 command=python3 test_runner.py; bash scripts/verify_codex_env.sh --repo-root $(pwd) --codex-home ~/.codex --claude-home ~/.claude; exit_code=0; key_output=test_runner: ran=140 passed=140 skipped=0 failed=0; verify_codex_env: Verification passed.
-- compaction_ordinal: 2
-- transition_key: p0-2-complete
+- latest_checkpoint: 2026-08-22T21:04:48-04:00 P0-3 context policy, brief dispatch, runtime promotion, managed-source identity refresh, and verification complete
+- latest_verification: 2026-08-22T21:04:48-04:00 command=python3 scripts/dhf_simplification_evidence.py --repo-root "$(pwd)"; bash scripts/verify_codex_env.sh --repo-root "$(pwd)" --codex-home ~/.codex --claude-home ~/.claude; python3 scripts/run_dhf_simplification_pair.py compare tests/fixtures/dhf_simplification_scenarios.json --observations tests/fixtures/dhf_simplification_observations.json; python3 test_runner.py; exit_code=0; key_output=runtime_state=runtime_promoted promotion_difference_paths=[]; host verify: Verification passed.; paired compare: pass=true routing_parity=85/85 actual_outcome_parity=85/85; test_runner: ran=140 passed=140 skipped=0 failed=0
+- compaction_ordinal: 0
+- transition_key: p0-3-complete
 - gate_decision: continue-to-boundary
-- constraints: ["Do not start P0-3 in this task","Do not push"]
-- ownership: {"boundary":"P0-2 verdict, clean light-b baseline, and next action only","files":{"docs/harness-state.md":"task_owned","docs/harness/cost-baseline/tasks.md":"task_owned","docs/harness/cost-baseline/after-p0-2-6ec1b25-light-b-{1,2,3}.json":"task_owned"}}
-- next_action: {"command":"P0-3：context_policy + brief 子命令；fork_turns 已核实为 spawn_agent 工具参数（none|all|N），不需要 config 键","scope":"P0-3"}
+- constraints: ["Do not run P0-3 baselines in this task","Do not push the checkpoint commit; owner owns push"]
+- ownership: {"boundary":"P0-3 source, generated identity fixtures, runtime promotion receipts, follow-ups, and append-only checkpoint","files":{"docs/harness-state.md":"agent_owned_checkpoint","docs/harness/model-tiers.md":"task_owned","tasks/p0-token-cost-plan-2026-08-22.md":"user_owned_untracked"}}
+- next_action: {"command":"P0-3 后基线：governed 3 次（用 harness_agent_team.py brief 派工），与 after-p0-2 governed 比较；light-b 3 次作对照","scope":"after-p0-3-baseline"}
 
 ## State Log
 
@@ -3557,3 +3557,36 @@ Stable rules belong in `AGENTS.md`, `README.md`, `docs/repo-index.md`, or
   - none
 - next_safe_task: P0-2 后基线：light/standard 各 3 次、governed 3 次，reporter 出 after-p0-2 JSON，config 身份须为新模板渲染后的哈希
 - checkpoint_data: {"constraints":["Do not run after-p0-2 baselines in this task","Do not start P0-3 in this task"],"next_action":{"command":"P0-2 后基线：light/standard 各 3 次、governed 3 次，reporter 出 after-p0-2 JSON，config 身份须为新模板渲染后的哈希","scope":"after-p0-2-baseline"},"ownership":{"boundary":"P0-2 checkpoint and next action only","files":{"docs/harness-state.md":"agent_owned_checkpoint"}},"phase":"validation","schema":"dhf_checkpoint_v1","verification_evidence":{"command":"python3 test_runner.py; bash scripts/verify_codex_env.sh --repo-root $(pwd) --codex-home ~/.codex --claude-home ~/.claude","exit_code":0,"freshness":"fresh","key_output":"test_runner: ran=140 passed=140 skipped=0 failed=0; verify_codex_env: Verification passed.","timestamp":"2026-08-22T18:28:29Z"}}
+
+### 2026-08-22T21:04:48-04:00
+- phase: handoff
+- event: checkpoint
+- summary: P0-3 context policy, brief dispatch, runtime promotion, managed-source identity refresh, and verification complete
+- git:
+  - branch: main
+  - latest_commit: 25490b8
+  - dirty_status: dirty
+  - dirty_count: 2
+- compaction_ordinal: 0
+- transition_key: p0-3-complete
+- gate_decision: continue-to-boundary
+- changed_surfaces:
+  - `scripts/harness_agent_team.py`
+  - `codex/skills/delivery-harness-framework/SKILL.md`
+  - `codex/skills/delivery-harness-framework/references/agent-team-context-policy.md`
+  - `docs/templates/harness-agent-brief.md`
+  - `tests/fixtures/agent-team`
+  - `tests/fixtures/dhf_simplification_transition_identity.json`
+  - `tests/fixtures/dhf_simplification_observations.json`
+  - `runtime-approvals/approved-source-digests.txt`
+  - `test_runner.py`
+  - `docs/harness/model-tiers.md`
+  - `docs/harness-state.md`
+- verification:
+  - command: `python3 scripts/dhf_simplification_evidence.py --repo-root "$(pwd)"; bash scripts/verify_codex_env.sh --repo-root "$(pwd)" --codex-home ~/.codex --claude-home ~/.claude; python3 scripts/run_dhf_simplification_pair.py compare tests/fixtures/dhf_simplification_scenarios.json --observations tests/fixtures/dhf_simplification_observations.json; python3 test_runner.py`
+  - exit_code: 0
+  - key_output: runtime_state=runtime_promoted promotion_difference_paths=[]; host verify: Verification passed.; paired compare: pass=true routing_parity=85/85 actual_outcome_parity=85/85; test_runner: ran=140 passed=140 skipped=0 failed=0
+- blockers:
+  - none
+- next_safe_task: P0-3 后基线：governed 3 次（用 harness_agent_team.py brief 派工），与 after-p0-2 governed 比较；light-b 3 次作对照
+- checkpoint_data: {"constraints":["Do not run P0-3 baselines in this task","Do not push the checkpoint commit; owner owns push"],"next_action":{"command":"P0-3 后基线：governed 3 次（用 harness_agent_team.py brief 派工），与 after-p0-2 governed 比较；light-b 3 次作对照","scope":"after-p0-3-baseline"},"ownership":{"boundary":"P0-3 source, generated identity fixtures, runtime promotion receipts, follow-ups, and append-only checkpoint","files":{"docs/harness-state.md":"agent_owned_checkpoint","docs/harness/model-tiers.md":"task_owned","tasks/p0-token-cost-plan-2026-08-22.md":"user_owned_untracked"}},"phase":"handoff","schema":"dhf_checkpoint_v1","verification_evidence":{"command":"python3 scripts/dhf_simplification_evidence.py --repo-root \"$(pwd)\"; bash scripts/verify_codex_env.sh --repo-root \"$(pwd)\" --codex-home ~/.codex --claude-home ~/.claude; python3 scripts/run_dhf_simplification_pair.py compare tests/fixtures/dhf_simplification_scenarios.json --observations tests/fixtures/dhf_simplification_observations.json; python3 test_runner.py","exit_code":0,"freshness":"fresh","key_output":"runtime_state=runtime_promoted promotion_difference_paths=[]; host verify: Verification passed.; paired compare: pass=true routing_parity=85/85 actual_outcome_parity=85/85; test_runner: ran=140 passed=140 skipped=0 failed=0","timestamp":"2026-08-23T00:57:45Z"}}

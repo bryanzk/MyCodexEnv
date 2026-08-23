@@ -69,3 +69,10 @@ key_output=(empty)
 P0-1 governed run 1 观测到：压缩约在 67.5 万 token 触发，之后 9 轮重新增长到约 58.8 万；每次 `exec` 都重发整个上下文；每个会话固定起步约 36.5K uncached input。它们说明压缩阈值本身值得实验，但不构成本切片的节省结论。
 
 `model_auto_compact_token_limit` 因此列为 A/B 的第三臂，候选值为 `300000` 与 `500000`。P0-2 仍按 owner D1 把模板基准设为 `900000`；本切片不运行第三臂、不生成 after 基线，也不把候选值写进 runtime。
+
+## follow-ups
+
+- `dhf_simplification_evidence.py` 的 `BASE_COMMIT` 固定为 `00818ae`，首次提升后 `source_stage_unsynced` 不可达；任何 skill 源改动必须同交付提升；P1 处理。
+- sync guard 要求 `HEAD == origin/main`，因此 skill/hook 源改动的交付顺序固定为 commit → push → sync → 门禁；P0-2 的两次 push 即由此触发。
+- sync 会把 `model_reasoning_effort` 重置为模板值，owner 手动值每次 sync 后需重设或改模板。
+- skill 源改动需同时刷新 paired gate 的 transition/candidate manifest；生成命令：`python3 scripts/run_dhf_simplification_pair.py capture tests/fixtures/dhf_simplification_scenarios.json --observations tests/fixtures/dhf_simplification_observations.json --output <OUTPUT>`；P0-2、P0-3 各撞一次，应并入 `sync_codex_home.sh` 预检或单独脚本，P1 处理。
