@@ -99,3 +99,13 @@ Every aborted run must be recorded in this section. This section is the data sou
 - `<permissions instructions>` changed from `9,533` to `586` characters. This is a host difference with unknown provenance. `open question`.
 
 结论：P0-2 保留，对固定上下文净减约 2.3K token/请求，对总成本无可辨效应。
+
+## p0-3-verdict
+
+- Governed 中位数：requests `45 → 19`；input `4,503,792 → 1,372,432`；cached `0.29×`；uncached `0.73×`；wall `0.52×`。
+- Light-b 对照三项均为 `1.00×`。
+- 三次 run 的 requests 为 `18 / 41 / 19`；三次里两次降、一次未降。
+- 六次尝试排除三次；原因见 `aborted_runs`。
+- 口径为 parent-visible；worker 自身请求在 before/after 均不可见。
+
+结论：P0-3 保留，P0 唯一可辨效应切片。
