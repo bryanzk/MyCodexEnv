@@ -66,6 +66,7 @@ DHF_PACKET_SCHEMA = ROOT / "codex" / "runtime" / "dhf-packet.schema.json"
 SURFACES_MANIFEST = ROOT / "docs" / "surfaces.json"
 CHECK_SURFACES = ROOT / "scripts" / "check_surfaces.py"
 HARNESS_COST_REPORT = ROOT / "scripts" / "harness_cost_report.py"
+HARNESS_REFRESH_IDENTITY = ROOT / "scripts" / "harness_refresh_identity.py"
 HARNESS_COST_ROLLOUT_FIXTURE = ROOT / "tests" / "fixtures" / "rollout" / "token-count-event.jsonl"
 HARNESS_AGENT_TEAM_FIXTURES = ROOT / "tests" / "fixtures" / "agent-team"
 SKILL_GOVERNANCE_DOC = ROOT / "docs" / "skill-governance-20260608.md"
@@ -6564,6 +6565,18 @@ def test_harness_cost_report_rollout_fixture():
     print("[PASS] harness cost report rollout fixture")
 
 
+def test_harness_refresh_identity_status_current_head():
+    code, out, err = run([sys.executable, str(HARNESS_REFRESH_IDENTITY), "status"])
+    require(code == 0, f"current identity status should be fresh: {err or out}")
+    lines = out.splitlines()
+    require([line.split()[0] for line in lines] == ["A", "B", "C", "D"],
+            f"status should report A, B, C, D in order: {lines}")
+    require(all("current=" in line and "expected=" in line and line.endswith("state=fresh") for line in lines),
+            f"all current identity layers should be fresh: {lines}")
+
+    print("[PASS] harness refresh identity status current HEAD")
+
+
 def test_harness_agent_team_validator():
     with tempfile.TemporaryDirectory() as tmp:
         tmp_path = Path(tmp)
@@ -11845,6 +11858,7 @@ TESTS = [
     test_harness_feedback_conversion_health,
     test_harness_report_cli_summarizes_evidence,
     test_harness_cost_report_rollout_fixture,
+    test_harness_refresh_identity_status_current_head,
     test_harness_agent_team_validator,
     test_agent_dispatch_gate,
     test_harness_checkpoint_helper,
