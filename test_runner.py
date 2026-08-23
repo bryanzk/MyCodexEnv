@@ -6674,6 +6674,22 @@ def test_harness_refresh_identity_refresh_order_and_approval():
     print("[PASS] harness refresh identity order, approval, and AC-16 preservation")
 
 
+def test_sync_unapproved_digest_points_to_identity_status():
+    with tempfile.TemporaryDirectory() as tmp:
+        repo, _ = seed_runtime_sync_repo(Path(tmp) / "repo")
+        proc = run_process(
+            [str(SYNC), "--repo-root", str(repo), "--codex-home", str(Path(tmp) / ".codex"),
+             "--sync-agents-only"],
+            approve_source=False,
+        )
+        require(proc.returncode == 78, f"unapproved source should block: {proc.stderr or proc.stdout}")
+        payload = json.loads(proc.stderr.strip().splitlines()[-1])
+        require(payload.get("hint") == "run: python3 scripts/harness_refresh_identity.py status",
+                "unapproved source should point to identity status")
+
+    print("[PASS] sync unapproved digest points to identity status")
+
+
 def test_harness_agent_team_validator():
     with tempfile.TemporaryDirectory() as tmp:
         tmp_path = Path(tmp)
@@ -11958,6 +11974,7 @@ TESTS = [
     test_harness_refresh_identity_status_current_head,
     test_harness_refresh_identity_source_digest_is_shared_with_sync,
     test_harness_refresh_identity_refresh_order_and_approval,
+    test_sync_unapproved_digest_points_to_identity_status,
     test_harness_agent_team_validator,
     test_agent_dispatch_gate,
     test_harness_checkpoint_helper,

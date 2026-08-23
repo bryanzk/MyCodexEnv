@@ -76,4 +76,4 @@ P0-1 governed run 1 观测到：压缩约在 67.5 万 token 触发，之后 9 �
 - `dhf_simplification_evidence.py` 的 `BASE_COMMIT` 固定为 `00818ae`，首次提升后 `source_stage_unsynced` 不可达；任何 skill 源改动必须同交付提升；P1 处理。
 - sync guard 要求 `HEAD == origin/main`，因此 skill/hook 源改动的交付顺序固定为 commit → push → sync → 门禁；P0-2 的两次 push 即由此触发。
 - sync 会把 `model_reasoning_effort` 重置为模板值，owner 手动值每次 sync 后需重设或改模板。
-- skill 源改动需同时刷新 paired gate 的 transition/candidate manifest；生成命令：`python3 scripts/run_dhf_simplification_pair.py capture tests/fixtures/dhf_simplification_scenarios.json --observations tests/fixtures/dhf_simplification_observations.json --output <OUTPUT>`；P0-2、P0-3 各撞一次，应并入 `sync_codex_home.sh` 预检或单独脚本，P1 处理。
+- skill 源改动需同时刷新 paired gate 的 transition/candidate manifest；先跑 `python3 scripts/harness_refresh_identity.py status`，改动后用 `python3 scripts/harness_refresh_identity.py refresh --message "<备注>" [--approve]`。

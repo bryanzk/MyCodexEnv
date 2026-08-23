@@ -204,7 +204,11 @@ try:
 except UnicodeDecodeError:
     approved = set()
 if source_digest not in approved:
-    blocked("source_digest_unapproved", source_digest=f"sha256:{source_digest}")
+    blocked(
+        "source_digest_unapproved",
+        source_digest=f"sha256:{source_digest}",
+        hint="run: python3 scripts/harness_refresh_identity.py status",
+    )
 
 manifest_path = codex_home / "harness" / "sync-manifest.json"
 if manifest_path.is_file():
