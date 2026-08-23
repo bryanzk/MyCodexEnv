@@ -1,0 +1,102 @@
+{
+  "agents": [
+    {
+      "id": "worker-a-doc",
+      "role": "worker",
+      "scope": "Document the existing read-only rollout cost reporter with one local fixture command and its no-network/no-runtime-mutation boundary.",
+      "write_set": [
+        "docs/harness/cost-baseline/tasks.md"
+      ],
+      "verification_command": "python3 -c \"from pathlib import Path; p=Path('docs/harness/cost-baseline/tasks.md').read_text(); assert 'harness_cost_report.py' in p and '--rollout' in p and 'read-only' in p\"",
+      "report_expectations": "Report changes, command/exit_code/key_output/timestamp evidence, blockers, risks, and confirm no files outside the write set changed.",
+      "task_demand": {
+        "level": "low",
+        "L": "3",
+        "H_tool": "low",
+        "S_state": "low",
+        "N_obs": "low"
+      },
+      "green_gate": {
+        "gate_scope": "worker",
+        "command": "python3 -c \"from pathlib import Path; p=Path('docs/harness/cost-baseline/tasks.md').read_text(); assert 'harness_cost_report.py' in p and '--rollout' in p and 'read-only' in p\"",
+        "rationale": "The documentation-only slice needs only an exact content contract check."
+      },
+      "context_policy": {
+        "fork_turns": "none",
+        "model_tier": "worker",
+        "allowed_skills": [],
+        "allowed_mcp": [],
+        "upstream_inputs": []
+      },
+      "brief": {
+        "category": "documentation",
+        "summary": "Add a compact usage note for the existing rollout cost reporter.",
+        "current_behavior": "The frozen task page records benchmark prompts but does not show how to run the local reporter against its sanitized fixture.",
+        "desired_behavior": "The page gives one copyable local command and explicitly says the reporter is read-only and requires no network or runtime mutation.",
+        "key_interfaces": [
+          "scripts/harness_cost_report.py CLI",
+          "tests/fixtures/rollout/token-count-event.jsonl fixture"
+        ],
+        "acceptance_criteria": [
+          "Only docs/harness/cost-baseline/tasks.md changes.",
+          "The command uses the checked-in sanitized fixture and --json.",
+          "The note states the read-only, no-network, no-runtime-mutation boundary."
+        ],
+        "out_of_scope": [
+          "Reporter implementation changes",
+          "Runtime access",
+          "Commit, push, or deployment"
+        ]
+      }
+    },
+    {
+      "id": "worker-b-test",
+      "role": "worker",
+      "scope": "Extend the existing focused rollout cost reporter test with regression assertions for the supported plain-text summary output.",
+      "write_set": [
+        "test_runner.py"
+      ],
+      "verification_command": "PYTHONDONTWRITEBYTECODE=1 python3 -c \"import test_runner as t; t.test_harness_cost_report_rollout_fixture()\"",
+      "report_expectations": "Report changes, command/exit_code/key_output/timestamp evidence, blockers, risks, and confirm no files outside the write set changed.",
+      "task_demand": {
+        "level": "low",
+        "L": "4",
+        "H_tool": "low",
+        "S_state": "low",
+        "N_obs": "low"
+      },
+      "green_gate": {
+        "gate_scope": "worker",
+        "command": "PYTHONDONTWRITEBYTECODE=1 python3 -c \"import test_runner as t; t.test_harness_cost_report_rollout_fixture()\"",
+        "rationale": "The existing focused test directly exercises the one touched test contract."
+      },
+      "context_policy": {
+        "fork_turns": "none",
+        "model_tier": "worker",
+        "allowed_skills": [],
+        "allowed_mcp": [],
+        "upstream_inputs": []
+      },
+      "brief": {
+        "category": "test",
+        "summary": "Cover the existing reporter plain-text output without changing production code.",
+        "current_behavior": "The focused test covers JSON output and failure paths but not the CLI plain-text summary.",
+        "desired_behavior": "The focused test invokes the existing reporter without --json and checks its stable summary fields.",
+        "key_interfaces": [
+          "test_harness_cost_report_rollout_fixture",
+          "scripts/harness_cost_report.py plain-text output"
+        ],
+        "acceptance_criteria": [
+          "Only test_runner.py changes.",
+          "Assertions cover the session summary, token totals, and tool_calls line.",
+          "The focused test passes without production changes."
+        ],
+        "out_of_scope": [
+          "Production reporter changes",
+          "New fixtures or dependencies",
+          "Commit, push, deployment, runtime access, or private data"
+        ]
+      }
+    }
+  ]
+}

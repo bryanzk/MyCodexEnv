@@ -48,6 +48,21 @@ Governed accounting scope: parent rollout visible. The governed run 1 time-windo
 
 ## aborted_runs
 
+### after-p0-3 governed 3 attempt 2 · 2026-08-23T01:55:28Z
+
+- Reason: both workers were spawned after plan validation but without executing the required per-agent `brief` command; the run was interrupted and excluded.
+- Before interruption: `requests_total=11`; `input=690085`.
+
+### after-p0-3 governed 3 attempt 1 · 2026-08-23T01:48:11Z
+
+- Reason: the rollout spawned both workers without first executing `harness_agent_team.py brief ... --agent ...`; equivalent-looking manually assembled text is not accepted as brief-output dispatch evidence.
+- Completed reporter totals, excluded from the comparable series: `requests_total=15`; `input=886251`.
+
+### after-p0-3 governed 2 attempt 1 · 2026-08-23T01:34:16Z
+
+- Reason: integrator announced it would append a checkpoint, which would exceed the frozen two-file write set and violate `Do not ... modify runtime state`; the run was interrupted before that write.
+- Before interruption: `requests_total=15`; `input=1264785`.
+
 ### standard 2 · 2026-08-22T12:33:34.939Z
 
 - Reason: sandbox denial interrupted the run after the following command was rejected with `zsh:1: operation not permitted: ps`:
@@ -61,6 +76,8 @@ Governed accounting scope: parent rollout visible. The governed run 1 time-windo
 Every aborted run must be recorded in this section. This section is the data source for the failure/retry metric.
 
 ## identity_drift
+
+- 2026-08-23T01:12Z：当前 `~/.codex/config.toml` 相对 after-p0-2 仅新增 `service_tier = "default"`；owner 确认可比，成本相关键一致；来源：宿主写入，非 owner 非本会话。
 
 ### Governed runs 2–3 · 2026-08-22
 

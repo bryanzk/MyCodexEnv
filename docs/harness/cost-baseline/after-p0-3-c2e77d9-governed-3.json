@@ -1,0 +1,45 @@
+{
+  "baseline": "after-p0-3",
+  "codex_config_sha256": "344f434a2bf02a1a7a3f82a27787f13ee95c3d6c6da88865585ee5440975e54b",
+  "codex_config_sha256_note": "differs from after-p0-2 (0247f4e) only by host-added service_tier=default; cost-relevant keys identical",
+  "git_head": "c2e77d918726837a9efa378bc38fe72c72443859",
+  "identity_drift": false,
+  "malformed_lines": 0,
+  "rollout": "rollout-2026-08-22T21-56-11-01a02c55-2169-74e0-9ad3-a2ff5977da98.jsonl",
+  "run": 3,
+  "session_id": "01a02c55-2169-74e0-9ad3-a2ff5977da98",
+  "skills_lock_sha256": "0018fd4adb95bc011310ff8368f576d4ba7fc90e2b8737b66d61b14d65d4bcad",
+  "subagent_attribution": "not_available",
+  "subagent_attribution_reason": "No independent child rollout can be linked from the parent rollout metadata.",
+  "task": "governed",
+  "task_exit_code": 0,
+  "tool_calls": {
+    "exec": 12,
+    "spawn_agent": 2,
+    "wait": 2,
+    "wait_agent": 2
+  },
+  "totals": {
+    "cache_hit_rate": 0.9291068701400143,
+    "cached_input": 1275136,
+    "input": 1372432,
+    "output": 7635,
+    "requests_total": 19,
+    "uncached_input": 97296
+  },
+  "turns": [
+    {
+      "cached_input": 93952,
+      "compaction_ordinal": 0,
+      "index": 1,
+      "input": 95465,
+      "input_sum": 1372432,
+      "output": 1403,
+      "requests": 19,
+      "timestamp": "2026-08-23T02:01:11.868Z",
+      "turn_id": "01a02c55-25ed-7f50-8984-3e125736e638",
+      "uncached_input": 1513
+    }
+  ],
+  "wall_seconds": 298.935
+}
