@@ -1,0 +1,319 @@
+model = "gpt-5.6-sol"
+model_context_window = 1000000
+model_auto_compact_token_limit = 900000
+model_reasoning_effort = "medium"
+personality = "friendly"
+
+notify = ["/Users/kezheng/.codex/computer-use/Codex Computer Use.app/Contents/SharedSupport/SkyComputerUseClient.app/Contents/MacOS/SkyComputerUseClient", "turn-ended"]
+
+[mcp_servers.sequential-thinking]
+command = "npx"
+args = ["-y", "@modelcontextprotocol/server-sequential-thinking"]
+
+[mcp_servers."chrome-devtools"]
+command = "/Users/kezheng/.npm-global/bin/chrome-devtools-mcp"
+args = ["--no-usage-statistics", "--no-performance-crux"]
+
+[features]
+collaboration_modes = true
+hooks = true
+memories = true
+chronicle = true
+js_repl = false
+
+[plugins."goalbuddy@goalbuddy"]
+enabled = true
+
+[plugins."browser-use@openai-bundled"]
+enabled = true
+
+[mcp_servers.node_repl]
+args = []
+command = "/Applications/ChatGPT.app/Contents/Resources/cua_node/bin/node_repl"
+startup_timeout_sec = 120
+
+[mcp_servers.node_repl.env]
+NODE_REPL_NATIVE_PIPE_CONNECT_TIMEOUT_MS = "1000"
+NODE_REPL_NODE_MODULE_DIRS = "/Applications/ChatGPT.app/Contents/Resources/cua_node/lib/node_modules"
+NODE_REPL_NODE_PATH = "/Applications/ChatGPT.app/Contents/Resources/cua_node/bin/node"
+NODE_REPL_TRUSTED_CODE_PATHS = "/Users/kezheng/.codex:/Applications/ChatGPT.app/Contents/Resources/cua_node/lib/node_modules"
+CODEX_HOME = "/Users/kezheng/.codex"
+BROWSER_USE_AVAILABLE_BACKENDS = "chrome,iab"
+BROWSER_USE_TINYSKY_ENABLED = "0"
+NODE_REPL_INSTRUCTIONS_USE_CASE_BROWSER = "Control the in-app browser in conjunction with the Browser Plugin."
+NODE_REPL_INSTRUCTIONS_USE_CASE_CHROME = "Control the Chrome browser in conjunction with the Chrome Plugin. Prefer this method of controlling Chrome over alternatives (such as Computer Use) unless the user explicitly mentions an alternative."
+NODE_REPL_INSTRUCTIONS_USE_CASE_COMPUTER_USE = "Control desktop apps on macOS through Computer Use."
+BROWSER_USE_CODEX_APP_BUILD_FLAVOR = "prod"
+BROWSER_USE_CODEX_APP_VERSION = "26.818.41509"
+NODE_REPL_TRUSTED_SERVICES = '{"browser":"/Users/kezheng/.codex/plugins/cache/openai-bundled/browser/26.818.41509/scripts/browser-service.mjs","sky":"@oai/sky/service"}'
+SKY_CUA_SERVICE_PATH = "/Users/kezheng/.codex/computer-use/Codex Computer Use.app"
+CODEX_CLI_PATH = "/Applications/ChatGPT.app/Contents/Resources/codex"
+
+[plugins."documents@openai-primary-runtime"]
+enabled = true
+
+[plugins."spreadsheets@openai-primary-runtime"]
+enabled = true
+
+[plugins."presentations@openai-primary-runtime"]
+enabled = true
+
+[plugins."github@openai-curated"]
+enabled = true
+
+[plugins."openai-developers@openai-curated"]
+enabled = true
+
+[plugins."gmail@openai-curated"]
+enabled = true
+
+[plugins."google-drive@openai-curated"]
+enabled = true
+
+[plugins."cloudflare@openai-curated"]
+enabled = true
+
+[plugins."build-web-apps@openai-curated"]
+enabled = true
+
+[plugins."codex-security@openai-curated"]
+enabled = true
+
+[plugins."linear@openai-curated"]
+enabled = true
+
+[plugins."google-calendar@openai-curated"]
+enabled = true
+
+[plugins."computer-use@openai-bundled"]
+enabled = true
+
+[plugins."pdf@openai-primary-runtime"]
+enabled = true
+
+[plugins."ponytail@ponytail"]
+enabled = true
+
+[plugins."understand-anything@understand-anything"]
+enabled = true
+
+[plugins."chrome@openai-bundled"]
+enabled = true
+
+[plugins."template-creator@openai-primary-runtime"]
+enabled = true
+
+[plugins."superpowers@superpowers-dev"]
+enabled = true
+
+[plugins."sites@openai-bundled"]
+enabled = true
+
+[plugins."visualize@openai-bundled"]
+enabled = true
+
+[plugins."browser@openai-bundled"]
+enabled = true
+
+[plugins."computer-history@openai-bundled"]
+enabled = true
+
+[plugins."codex-app-tools@openai-bundled"]
+enabled = true
+
+[projects."/Users/kezheng/Codes/CursorDeveloper/ShipQ"]
+trust_level = "trusted"
+
+[projects."/Users/kezheng/Codes/CursorDeveloper/RimeConfigurator"]
+trust_level = "trusted"
+
+[projects."/Users/kezheng/Codes/CursorDeveloper/MyCodexEnv"]
+trust_level = "trusted"
+
+[projects."/Users/kezheng/.codex/automation-workspaces/gstack-dhf-daily-refresh"]
+trust_level = "trusted"
+
+[projects."/Users/kezheng/Codes/CursorDeveloper/shipAI website"]
+trust_level = "trusted"
+
+[projects."/Users/kezheng/Codes/CursorDeveloper/oneartwebsite"]
+trust_level = "trusted"
+
+[projects."/Users/kezheng/Codes/CursorDeveloper/Top100Jobs"]
+trust_level = "trusted"
+
+[projects."/Users/kezheng/Codes/CursorDeveloper/Transreader"]
+trust_level = "trusted"
+
+[projects."/Users/kezheng/Codes/CursorDeveloper/startup4chinese-website"]
+trust_level = "trusted"
+
+[projects."/Users/kezheng/Downloads/Job Application"]
+trust_level = "trusted"
+
+[projects."/Users/kezheng/Codes/CursorDeveloper/SimonSays"]
+trust_level = "trusted"
+
+[projects."/Users/kezheng/.codex/.chatgpt-projects/g-p-698f92bb578881919b20221dc93662d4"]
+trust_level = "trusted"
+
+[projects."/Users/kezheng/.codex/.chatgpt-projects/g-p-6a622e5817c08191a08c0f0f7df1e87a"]
+trust_level = "trusted"
+
+[projects."/Users/kezheng/Codes/CursorDeveloper/WebSOC"]
+trust_level = "trusted"
+
+[projects."/Users/kezheng/Downloads/Startup4Chinese"]
+trust_level = "trusted"
+
+[projects."/Users/kezheng/Codes/CursorDeveloper/Startup4Chinese-artifacts"]
+trust_level = "trusted"
+
+[projects."/Users/kezheng/Codes/CursorDeveloper/ShipAIOperation"]
+trust_level = "trusted"
+
+[projects."/Users/kezheng/Codes/CursorDeveloper/reading"]
+trust_level = "trusted"
+
+[projects."/Users/kezheng/.codex/.chatgpt-projects/g-p-6941bbe701dc81918c9bd110bcbb2955"]
+trust_level = "trusted"
+
+[projects."/Users/kezheng/Codes/guard-probe"]
+trust_level = "trusted"
+
+[projects."/Users/kezheng/Codes/CursorDeveloper/symphony"]
+trust_level = "trusted"
+
+[projects."/Users/kezheng"]
+trust_level = "trusted"
+
+[projects."/Users/kezheng/Codes/CursorDeveloper"]
+trust_level = "trusted"
+
+[projects."/Users/kezheng/Documents/Codex/2026-08-12/realtime-voice-chat"]
+trust_level = "trusted"
+
+[projects."/Users/kezheng/Documents/Codex/2026-08-12/new-chat"]
+trust_level = "trusted"
+
+[projects."/Users/kezheng/Documents/Codex/2026-08-13/referenced-chatgpt-conversation-this-is-an"]
+trust_level = "trusted"
+
+[projects."/Users/kezheng/Documents/Codex/2026-08-14/referenced-chatgpt-conversation-this-is-an"]
+trust_level = "trusted"
+
+[projects."/Users/kezheng/Documents/Codex/2026-08-16/realtime-voice-chat"]
+trust_level = "trusted"
+
+[projects."/Users/kezheng/Documents/Codex/2026-08-18/realtime-voice-chat"]
+trust_level = "trusted"
+
+[projects."/Users/kezheng/Documents/Codex/2026-08-18/mce-20260818-shi77-performance-gate"]
+trust_level = "trusted"
+
+[projects."/Users/kezheng/Documents/Codex/2026-08-19/referenced-chatgpt-conversation-this-is-an"]
+trust_level = "trusted"
+
+[projects."/Users/kezheng/Documents/Codex/2026-08-19/referenced-chatgpt-conversation-this-is-an-2"]
+trust_level = "trusted"
+
+[projects."/Users/kezheng/Documents/Codex/2026-08-21/sites-plugin-sites-openai-bundled-create"]
+trust_level = "trusted"
+
+[projects."/Users/kezheng/Documents/Codex/2026-08-21/sites-plugin-sites-openai-bundled-create-2"]
+trust_level = "trusted"
+
+[projects."/Users/kezheng/Documents/Codex/2026-08-21/realtime-voice-chat"]
+trust_level = "trusted"
+
+[hooks.state]
+
+[hooks.state."/Users/kezheng/.codex/hooks.json:post_tool_use:0:0"]
+trusted_hash = "sha256:21cd1da553088c4dc5aba705c8191ba202eb5a676a58a0a300c093ee327a0fad"
+
+[hooks.state."/Users/kezheng/.codex/hooks.json:pre_tool_use:0:0"]
+trusted_hash = "sha256:40a8ee98677884ada8b08a9b578b0e284c65085879a62841a3dcffd83efc58c5"
+enabled = true
+
+[hooks.state."/Users/kezheng/.codex/hooks.json:session_start:0:0"]
+trusted_hash = "sha256:42c7afc3664d2586391d4eee29dbf142eb9b3e5690b30b67b8bd1b13f877d16f"
+
+[hooks.state."/Users/kezheng/.codex/hooks.json:user_prompt_submit:0:0"]
+trusted_hash = "sha256:2c783eded799b754952ac77941c2f2c28446ca12dc8fa4aa33b6108fd6681075"
+
+[hooks.state."/Users/kezheng/.codex/hooks.json:user_prompt_submit:0:1"]
+trusted_hash = "sha256:728a3debd1b994cd2e88b0ea8596a93e7ad7f374847e5c19212aa044999cc097"
+
+[hooks.state."understand-anything@understand-anything:hooks/hooks.json:post_tool_use:0:0"]
+trusted_hash = "sha256:f783ff821d9a4ec9db2bfbbb5eb7a2a56513c03941a6aed4182a1574f83f9c3e"
+
+[hooks.state."ponytail@ponytail:hooks/hooks.json:session_start:0:0"]
+trusted_hash = "sha256:195e73e498a4cdb40bbe765719d39371ac72c0ebb084fee1beee9d28d21fb7a0"
+
+[hooks.state."ponytail@ponytail:hooks/hooks.json:user_prompt_submit:0:0"]
+trusted_hash = "sha256:f79c8de133c1109b841f9835a9d032231900a0d96ecf5f6d1866132df5ca4aa4"
+
+[hooks.state."understand-anything@understand-anything:hooks/hooks.json:session_start:0:0"]
+trusted_hash = "sha256:1d7c0292c21894794bf1a4820b8154456f08fd4791cc50a43a96a242d6f42b06"
+
+[hooks.state."ponytail@ponytail:hooks/claude-codex-hooks.json:session_start:0:0"]
+trusted_hash = "sha256:5f81d38f47448a1581c08ec877e044d9e04dd6f814dce3f2671f7a8edadd719b"
+
+[hooks.state."ponytail@ponytail:hooks/claude-codex-hooks.json:user_prompt_submit:0:0"]
+trusted_hash = "sha256:6a6f42bc3b58d6262db38bfd74d7f340fcca2b09cdb134aad365063f0bfefca4"
+
+[hooks.state."ponytail@ponytail:hooks/claude-codex-hooks.json:subagent_start:0:0"]
+trusted_hash = "sha256:1423b56c1322f96c8f74c51c1e7ae9a047b904c1fa43ee9165d462fd7a6e70ef"
+
+[hooks.state."/Users/kezheng/.codex/hooks.json:user_prompt_submit:0:2"]
+trusted_hash = "sha256:68cd05e8efbf986aef7a742373e4a63920d260a88979ce738c2163b5a7939890"
+
+[hooks.state."/Users/kezheng/.codex/hooks.json:stop:0:0"]
+trusted_hash = "sha256:05891a761285e8e98af62ef6154b1d818a42b45d24c48b6423d87cb9bad899df"
+
+[hooks.state."/Users/kezheng/.codex/hooks.json:session_start:0:1"]
+trusted_hash = "sha256:eedb13ef814a96b411f43f3ca233a10801db9a84878ca95a7fb3eeaef42a2212"
+
+[marketplaces.openai-bundled]
+source_type = "local"
+source = "/Users/kezheng/.codex/.tmp/bundled-marketplaces/openai-bundled"
+
+[marketplaces.openai-primary-runtime]
+last_updated = "2026-08-19T22:48:42Z"
+source_type = "local"
+source = "/Users/kezheng/.cache/codex-runtimes/codex-primary-runtime/plugins/openai-primary-runtime"
+
+[marketplaces.ponytail]
+last_updated = "2026-08-09T22:54:24Z"
+last_revision = "2ed6c52c9d7e5e56942508591085fd45dea277d3"
+source_type = "git"
+source = "https://github.com/DietrichGebert/ponytail.git"
+
+[marketplaces.understand-anything]
+last_updated = "2026-08-11T18:25:04Z"
+last_revision = "32944829e7a63a9fa9c55d811d7f98a9530c6a6a"
+source_type = "git"
+source = "https://github.com/Egonex-AI/Understand-Anything.git"
+
+[marketplaces.superpowers-dev]
+last_updated = "2026-07-05T00:44:25Z"
+source_type = "local"
+source = "/Users/kezheng/.codex/superpowers"
+
+[desktop]
+git-create-pull-request-as-draft = true
+keepRemoteControlAwakeWhilePluggedIn = true
+preventSleepWhileRunning = true
+show-context-window-usage = true
+dictationDictionary = []
+git-show-sidebar-pr-icons = true
+selected-avatar-id = "custom:proofbit"
+followUpQueueMode = "queue"
+avatar-overlay-mascot-width-px = 224
+dock-icon-preference = "codex-system"
+conversationDetailMode = "STEPS_COMMANDS"
+realtimeVoiceScreenContextEnabled = true
+enabled-reasoning-efforts = ["low", "medium", "high", "xhigh", "ultra", "max"]
+
+[desktop.open-in-target-preferences]
+global = "sublimeText"

@@ -2,8 +2,10 @@
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import sys
+import tomllib
 from collections import Counter
 from datetime import datetime
 from pathlib import Path
@@ -26,6 +28,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--baseline-dir", type=Path)
     parser.add_argument("--git-head")
     parser.add_argument("--codex-config-sha256")
+    parser.add_argument("--codex-config", type=Path)
     parser.add_argument("--json", action="store_true")
     return parser.parse_args()
 
@@ -56,6 +59,24 @@ def usage_view(raw: dict[str, Any]) -> dict[str, int]:
     values = {output: int(raw.get(source, 0) or 0) for output, source in TOKEN_FIELDS.items()}
     values["uncached_input"] = max(0, values["input"] - values["cached_input"])
     return values
+
+
+def config_hashes(path: Path) -> dict[str, str]:
+    raw = path.read_bytes()
+    config = tomllib.loads(raw.decode("utf-8"))
+    relevant = {
+        key: value
+        for key, value in config.items()
+        if key == "model" or key.startswith("model_") or key == "personality"
+    }
+    for section in ("features", "mcp_servers"):
+        if section in config:
+            relevant[section] = config[section]
+    canonical = json.dumps(relevant, sort_keys=True, separators=(",", ":")).encode("utf-8")
+    return {
+        "codex_config_sha256": hashlib.sha256(raw).hexdigest(),
+        "codex_config_keys_sha256": hashlib.sha256(canonical).hexdigest(),
+    }
 
 
 def report(path: Path) -> dict[str, Any]:
@@ -166,24 +187,36 @@ def main() -> int:
     args = parse_args()
     try:
         result = report(resolve_rollout(args))
-        identity_args = (args.baseline_dir, args.git_head, args.codex_config_sha256)
+        config_identity = config_hashes(args.codex_config.expanduser().resolve()) if args.codex_config else {}
+        config_sha256 = config_identity.get("codex_config_sha256", args.codex_config_sha256)
+        if args.codex_config_sha256 and config_sha256 != args.codex_config_sha256:
+            raise ValueError("--codex-config-sha256 does not match --codex-config")
+        identity_args = (args.baseline_dir, args.git_head, config_sha256)
         if any(identity_args):
             if not all(identity_args):
                 raise ValueError("--baseline-dir, --git-head, and --codex-config-sha256 must be used together")
             baseline_dir = args.baseline_dir.expanduser().resolve()
             if not baseline_dir.is_dir():
                 raise ValueError(f"baseline directory not found: {baseline_dir}")
-            old_hashes = sorted({
-                existing.get("codex_config_sha256")
+            previous = [
+                existing
                 for path in baseline_dir.glob("*.json")
                 if (existing := json.loads(path.read_text(encoding="utf-8"))).get("git_head") == args.git_head
-                and existing.get("codex_config_sha256") != args.codex_config_sha256
-            })
+            ]
+            new_keys = config_identity.get("codex_config_keys_sha256")
+            drifted = [existing for existing in previous if (
+                existing.get("codex_config_keys_sha256") != new_keys
+                if new_keys and existing.get("codex_config_keys_sha256")
+                else existing.get("codex_config_sha256") != config_sha256
+            )]
             result.update({"git_head": args.git_head,
-                           "codex_config_sha256": args.codex_config_sha256,
-                           "identity_drift": bool(old_hashes)})
-            if old_hashes:
-                print(f"WARN identity drift: {old_hashes[0][:8]} -> {args.codex_config_sha256[:8]}",
+                           "codex_config_sha256": config_sha256,
+                           **config_identity,
+                           "identity_drift": bool(drifted)})
+            if drifted:
+                old_hash = drifted[0].get("codex_config_keys_sha256") or drifted[0].get("codex_config_sha256", "")
+                new_hash = new_keys or config_sha256
+                print(f"WARN identity drift: {old_hash[:8]} -> {new_hash[:8]}",
                       file=sys.stderr)
     except (OSError, ValueError) as exc:
         print(f"ERROR: {exc}", file=sys.stderr)

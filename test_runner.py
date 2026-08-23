@@ -69,6 +69,7 @@ CHECK_SURFACES = ROOT / "scripts" / "check_surfaces.py"
 HARNESS_COST_REPORT = ROOT / "scripts" / "harness_cost_report.py"
 HARNESS_REFRESH_IDENTITY = ROOT / "scripts" / "harness_refresh_identity.py"
 HARNESS_COST_ROLLOUT_FIXTURE = ROOT / "tests" / "fixtures" / "rollout" / "token-count-event.jsonl"
+CONFIG_IDENTITY_FIXTURES = ROOT / "tests" / "fixtures" / "config-identity"
 HARNESS_AGENT_TEAM_FIXTURES = ROOT / "tests" / "fixtures" / "agent-team"
 SKILL_GOVERNANCE_DOC = ROOT / "docs" / "skill-governance-20260608.md"
 LIFECYCLE_SKILL_ROUTING_DOC = ROOT / "docs" / "LIFECYCLE_SKILL_ROUTING.md"
@@ -6566,6 +6567,50 @@ def test_harness_cost_report_rollout_fixture():
     print("[PASS] harness cost report rollout fixture")
 
 
+def test_harness_cost_report_uses_cost_relevant_config_keys():
+    fixture_paths = {
+        "after-p0-2": CONFIG_IDENTITY_FIXTURES / "after-p0-2.toml",
+        "service-tier": CONFIG_IDENTITY_FIXTURES / "service-tier-default.toml",
+        "personality": CONFIG_IDENTITY_FIXTURES / "personality-changed.toml",
+    }
+    require(all(path.is_file() for path in fixture_paths.values()), "missing config identity fixtures")
+    spec = importlib.util.spec_from_file_location("harness_cost_report_identity_test", HARNESS_COST_REPORT)
+    module = importlib.util.module_from_spec(spec)
+    assert spec.loader is not None
+    spec.loader.exec_module(module)
+    hashes = {name: module.config_hashes(path) for name, path in fixture_paths.items()}
+    require(hashes["after-p0-2"]["codex_config_sha256"] ==
+            "0247f4ebc0bd25b9b5f68afc130709a2ab41b77a891de081b8412f24a54a9f07",
+            "after-p0-2 full config hash mismatch")
+    require(hashes["service-tier"]["codex_config_sha256"] ==
+            "344f434a2bf02a1a7a3f82a27787f13ee95c3d6c6da88865585ee5440975e54b",
+            "service-tier full config hash mismatch")
+    require(hashes["after-p0-2"]["codex_config_keys_sha256"] ==
+            hashes["service-tier"]["codex_config_keys_sha256"],
+            "service_tier must not change cost-relevant identity")
+    require(hashes["after-p0-2"]["codex_config_keys_sha256"] !=
+            hashes["personality"]["codex_config_keys_sha256"],
+            "personality must change cost-relevant identity")
+
+    with tempfile.TemporaryDirectory() as tmp:
+        baseline = Path(tmp)
+        (baseline / "before.json").write_text(json.dumps({"git_head": "fixture",
+            **hashes["after-p0-2"]}), encoding="utf-8")
+        code, out, err = run([sys.executable, str(HARNESS_COST_REPORT), "--rollout",
+            str(HARNESS_COST_ROLLOUT_FIXTURE), "--json", "--baseline-dir", str(baseline),
+            "--git-head", "fixture", "--codex-config", str(fixture_paths["service-tier"])])
+        require(code == 0, f"service-tier identity report failed: {err or out}")
+        require(json.loads(out)["identity_drift"] is False,
+                "equal cost-relevant identity must not report drift")
+        code, out, err = run([sys.executable, str(HARNESS_COST_REPORT), "--rollout",
+            str(HARNESS_COST_ROLLOUT_FIXTURE), "--json", "--baseline-dir", str(baseline),
+            "--git-head", "fixture", "--codex-config", str(fixture_paths["personality"])])
+        require(code == 0 and json.loads(out)["identity_drift"] is True,
+                f"personality identity drift should be reported: {err or out}")
+
+    print("[PASS] harness cost report uses cost-relevant config keys")
+
+
 def test_harness_refresh_identity_status_current_head():
     code, out, err = run([sys.executable, str(HARNESS_REFRESH_IDENTITY), "status"])
     require(code == 0, f"current identity status should be fresh: {err or out}")
@@ -11971,6 +12016,7 @@ TESTS = [
     test_harness_feedback_conversion_health,
     test_harness_report_cli_summarizes_evidence,
     test_harness_cost_report_rollout_fixture,
+    test_harness_cost_report_uses_cost_relevant_config_keys,
     test_harness_refresh_identity_status_current_head,
     test_harness_refresh_identity_source_digest_is_shared_with_sync,
     test_harness_refresh_identity_refresh_order_and_approval,
