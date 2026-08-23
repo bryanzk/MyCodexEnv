@@ -14,6 +14,7 @@ import subprocess
 import sys
 import tempfile
 import unittest
+from datetime import datetime, timezone
 from pathlib import Path
 from unittest import mock
 
@@ -530,6 +531,33 @@ class DhfSimplificationCorpusTests(unittest.TestCase):
         self.assertFalse(gates["gate_pass"])
         self.assertFalse(gates["acceptance_gates"]["AC-01"])
         self.assertFalse(gates["acceptance_gates"]["AC-10"])
+
+    def test_historical_runtime_evidence_accepts_matching_capture_commit(self):
+        artifact = json.loads((ROOT / "tests" / "fixtures" / "dhf_simplification_observations.json").read_text())
+        record = artifact["producer_evidence"]["PRODUCER-AC-16-S4-1"]
+        record["evidence"]["current_runtime_snapshot"]["captured_in_commit"] = (
+            "8cfb8cfc971860c87d712c87e9f10aead0928366"
+        )
+        record["evidence_sha256"] = hashlib.sha256(
+            json.dumps(record["evidence"], sort_keys=True, separators=(",", ":"), ensure_ascii=True).encode()
+        ).hexdigest()
+        entry = self.corpus["producer_catalog"]["PRODUCER-AC-16-S4-1"]
+        valid, reasons = self.validator._producer_evidence_valid("PRODUCER-AC-16-S4-1", entry, artifact, ROOT)
+        self.assertTrue(valid, reasons)
+
+    def test_historical_runtime_evidence_rejects_unknown_capture_commit(self):
+        artifact = json.loads((ROOT / "tests" / "fixtures" / "dhf_simplification_observations.json").read_text())
+        record = artifact["producer_evidence"]["PRODUCER-AC-16-S4-1"]
+        snapshot = record["evidence"]["current_runtime_snapshot"]
+        snapshot["captured_at"] = datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
+        snapshot["captured_in_commit"] = "0" * 40
+        record["evidence_sha256"] = hashlib.sha256(
+            json.dumps(record["evidence"], sort_keys=True, separators=(",", ":"), ensure_ascii=True).encode()
+        ).hexdigest()
+        entry = self.corpus["producer_catalog"]["PRODUCER-AC-16-S4-1"]
+        valid, reasons = self.validator._producer_evidence_valid("PRODUCER-AC-16-S4-1", entry, artifact, ROOT)
+        self.assertFalse(valid)
+        self.assertIn("ac16_live_runtime_evidence_invalid", reasons)
 
     def test_source_stage_slice_0_runtime_inventory_check_is_read_only(self):
         manifest = json.loads(SURFACES.read_text(encoding="utf-8"))

@@ -3371,7 +3371,8 @@
             "*.pyc",
             "directory metadata"
           ],
-          "aggregate_sha256": "5634c9a57803154907477d1f13451a9102d95b07528646ddb06fc8f0800b8cdc"
+          "aggregate_sha256": "5634c9a57803154907477d1f13451a9102d95b07528646ddb06fc8f0800b8cdc",
+          "captured_in_commit": "8cfb8cfc971860c87d712c87e9f10aead0928366"
         },
         "changed_paths": [],
         "promotion_difference_paths": [
@@ -3381,7 +3382,7 @@
           "codex/skills/delivery-harness-framework/evals/validate_completion_output.py"
         ]
       },
-      "evidence_sha256": "f1f9f18f95e64ba6a820d1c9f1f6464cdd6fa891d3b7d21da254da8e0edfdc1f"
+      "evidence_sha256": "34c84cf3bc33f61ab9d74e57ac6376ff068e2db708571b3bd32e4b464665f848"
     },
     "PRODUCER-AC-17-S0-1": {
       "binding": {

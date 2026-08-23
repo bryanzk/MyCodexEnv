@@ -482,9 +482,13 @@ def _producer_evidence_valid(
                 timestamp_bound = now - timedelta(minutes=15) <= captured_time <= now + timedelta(minutes=2)
                 root = repo_root or Path(__file__).resolve().parents[1]
                 artifact_path = catalog_entry.get("artifact")
-                if not timestamp_bound and _non_empty_string(artifact_path):
+                captured_in_commit = snapshot.get("captured_in_commit")
+                if _non_empty_string(captured_in_commit) or (
+                    not timestamp_bound and _non_empty_string(artifact_path)
+                ):
+                    target = [captured_in_commit] if _non_empty_string(captured_in_commit) else ["--", str(artifact_path)]
                     proc = subprocess.run(
-                        ["git", "log", "-1", "--format=%aI", "--", str(artifact_path)],
+                        ["git", "log", "-1", "--format=%aI", *target],
                         cwd=root,
                         capture_output=True,
                         text=True,
@@ -494,8 +498,9 @@ def _producer_evidence_valid(
                         committed_at = datetime.fromisoformat(proc.stdout.strip())
                     except ValueError:
                         committed_at = None
-                    if committed_at is not None:
-                        timestamp_bound = abs(committed_at - captured_time) <= timedelta(minutes=15)
+                    timestamp_bound = proc.returncode == 0 and committed_at is not None and (
+                        abs(committed_at - captured_time) <= timedelta(minutes=15)
+                    )
             records = snapshot.get("records") if isinstance(snapshot, dict) else None
             aggregate = (
                 hashlib.sha256(

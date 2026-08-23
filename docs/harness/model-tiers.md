@@ -72,6 +72,7 @@ P0-1 governed run 1 观测到：压缩约在 67.5 万 token 触发，之后 9 �
 
 ## follow-ups
 
+- AC-16 是 `source_stage_unsynced` 状态下的一次性快照，首次提升后不可重新捕获；validator 自本 commit 起按 `captured_in_commit` 的 author date 绑定，不再绑 artifact 最近 commit。动 `tests/fixtures/dhf_simplification_*` 的 commit 之后必须再跑一次门禁。
 - `dhf_simplification_evidence.py` 的 `BASE_COMMIT` 固定为 `00818ae`，首次提升后 `source_stage_unsynced` 不可达；任何 skill 源改动必须同交付提升；P1 处理。
 - sync guard 要求 `HEAD == origin/main`，因此 skill/hook 源改动的交付顺序固定为 commit → push → sync → 门禁；P0-2 的两次 push 即由此触发。
 - sync 会把 `model_reasoning_effort` 重置为模板值，owner 手动值每次 sync 后需重设或改模板。
