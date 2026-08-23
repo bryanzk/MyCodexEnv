@@ -2,12 +2,15 @@
 from __future__ import annotations
 
 import argparse
+import copy
 import hashlib
 import json
 import os
 import re
+import shutil
 import subprocess
 import sys
+import tempfile
 from datetime import datetime
 from pathlib import Path
 from typing import Any
@@ -35,11 +38,38 @@ def source_digest(root: Path) -> str:
     return digest.hexdigest()
 
 
-def _generator():
-    sys.path.insert(0, str(ROOT / "scripts"))
+def _generator(root: Path = ROOT):
+    sys.path.insert(0, str(root / "scripts"))
     import run_dhf_simplification_pair as generator
 
     return generator
+
+
+def _write_json(path: Path, value: object) -> None:
+    path.write_text(json.dumps(value, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+
+
+def _capture(root: Path, corpus_path: Path, observations_path: Path) -> dict[str, Any]:
+    with tempfile.TemporaryDirectory() as tmp:
+        home = Path(tmp)
+        (home / ".codex" / "hooks").mkdir(parents=True)
+        (home / ".codex" / "skills").mkdir(parents=True)
+        shutil.copy2(root / "codex" / "hooks" / "dhf_preprompt.py", home / ".codex" / "hooks")
+        shutil.copytree(
+            root / "codex" / "skills" / "delivery-harness-framework",
+            home / ".codex" / "skills" / "delivery-harness-framework",
+        )
+        output = home / "observations.json"
+        env = os.environ.copy()
+        env["HOME"] = str(home)
+        proc = subprocess.run(
+            [sys.executable, str(root / "scripts" / "run_dhf_simplification_pair.py"), "capture",
+             str(corpus_path), "--observations", str(observations_path), "--output", str(output)],
+            cwd=root, env=env, capture_output=True, text=True, check=False,
+        )
+        if proc.returncode != 0:
+            raise RuntimeError(proc.stderr.strip() or proc.stdout.strip())
+        return json.loads(output.read_text(encoding="utf-8"))
 
 
 def _transition(identities: dict[str, Any], generator: Any) -> dict[str, Any]:
@@ -75,7 +105,7 @@ def _observation_identity(observations: dict[str, Any], generator: Any) -> dict[
 
 
 def status(root: Path = ROOT) -> tuple[list[str], bool]:
-    generator = _generator()
+    generator = _generator(root)
     corpus = json.loads((root / CORPUS).read_text(encoding="utf-8"))
     identities = generator.identity_bundle(corpus, root)
 
@@ -129,9 +159,52 @@ def status(root: Path = ROOT) -> tuple[list[str], bool]:
     return rows, fresh_a and fresh_b and fresh_c and fresh_d
 
 
+def refresh(root: Path, message: str, *, approve: bool) -> None:
+    generator = _generator(root)
+    corpus_path = root / CORPUS
+    observations_path = root / OBSERVATIONS
+    corpus = json.loads(corpus_path.read_text(encoding="utf-8"))
+    observations = json.loads(observations_path.read_text(encoding="utf-8"))
+
+    _write_json(root / generator.TRANSITION_IDENTITY, _transition(generator.identity_bundle(corpus, root), generator))
+    print("B refreshed")
+
+    captured = _capture(root, corpus_path, observations_path)
+    producer_id = "PRODUCER-AC-16-S4-1"
+    historical = observations["producer_evidence"][producer_id]["evidence"]
+    refreshed = captured["producer_evidence"][producer_id]
+    for field in ("current_runtime_snapshot", "changed_paths", "promotion_difference_paths"):
+        refreshed["evidence"][field] = copy.deepcopy(historical[field])
+    refreshed["evidence_sha256"] = generator._canonical_sha256(refreshed["evidence"])
+    _write_json(observations_path, captured)
+    print("C refreshed")
+    provenance = historical["current_runtime_snapshot"]["captured_in_commit"]
+    print(f"AC-16 preserved (historical, provenance {provenance[:8]})")
+
+    rows, _ = status(root)
+    if not all(any(row.startswith(layer + " ") and row.endswith("state=fresh") for row in rows) for layer in ("B", "C", "D")):
+        raise RuntimeError("identity refresh layer verification failed")
+
+    digest = source_digest(root)
+    approval = f"sha256:{digest}  {message}"
+    print(approval)
+    if approve:
+        path = root / APPROVALS
+        lines = path.read_text(encoding="utf-8").splitlines()
+        if not any(line.startswith(f"sha256:{digest}  ") for line in lines):
+            path.write_text("\n".join([*lines, approval]) + "\n", encoding="utf-8")
+        rows, _ = status(root)
+        if not any(row.startswith("A ") and row.endswith("state=fresh") for row in rows):
+            raise RuntimeError("approval layer verification failed")
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description="Inspect managed-source identity freshness.")
-    parser.add_subparsers(dest="command", required=True).add_parser("status")
+    subparsers = parser.add_subparsers(dest="command", required=True)
+    subparsers.add_parser("status")
+    refresh_parser = subparsers.add_parser("refresh")
+    refresh_parser.add_argument("--message", required=True)
+    refresh_parser.add_argument("--approve", action="store_true")
     args = parser.parse_args()
     if args.command == "status":
         try:
@@ -141,6 +214,13 @@ def main() -> int:
             return 2
         print("\n".join(rows))
         return 0 if fresh else 1
+    if args.command == "refresh":
+        try:
+            refresh(ROOT, args.message, approve=args.approve)
+        except (OSError, RuntimeError, ValueError, KeyError, json.JSONDecodeError) as exc:
+            print(f"ERROR: {exc}", file=sys.stderr)
+            return 2
+        return 0
     return 2
 
 

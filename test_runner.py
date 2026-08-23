@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import argparse
+import copy
 import datetime as dt
 import fcntl
 import hashlib
@@ -6591,6 +6592,88 @@ def test_harness_refresh_identity_source_digest_is_shared_with_sync():
     print("[PASS] harness refresh identity source digest is shared with sync")
 
 
+def test_harness_refresh_identity_refresh_order_and_approval():
+    spec = importlib.util.spec_from_file_location("harness_refresh_identity_refresh_test", HARNESS_REFRESH_IDENTITY)
+    module = importlib.util.module_from_spec(spec)
+    assert spec.loader is not None
+    spec.loader.exec_module(module)
+
+    class Generator:
+        TRANSITION_IDENTITY = "tests/fixtures/dhf_simplification_transition_identity.json"
+
+        @staticmethod
+        def _canonical_sha256(value):
+            return hashlib.sha256(json.dumps(value, sort_keys=True, separators=(",", ":")).encode()).hexdigest()
+
+        @staticmethod
+        def identity_bundle(_corpus, _root):
+            return {"runner_identity": {"name": "runner", "version": "v1", "sha256": "r" * 64},
+                    "promotion_candidate_manifest": {"source_hashes": {"skill": "s" * 64}}}
+
+    with tempfile.TemporaryDirectory() as tmp:
+        root = Path(tmp)
+        transition = root / Generator.TRANSITION_IDENTITY
+        observations_path = root / module.OBSERVATIONS
+        corpus_path = root / module.CORPUS
+        approvals = root / module.APPROVALS
+        for path in (transition, observations_path, corpus_path, approvals):
+            path.parent.mkdir(parents=True, exist_ok=True)
+        corpus_path.write_text("{}\n", encoding="utf-8")
+        approvals.write_text("# approvals\n", encoding="utf-8")
+        historical = {"captured_at": "2026-07-14T01:44:34.838861Z", "captured_in_commit": "8cfb8cf"}
+        observations = {"producer_evidence": {"PRODUCER-AC-16-S4-1": {
+            "evidence": {"current_runtime_snapshot": historical, "changed_paths": [],
+                         "promotion_difference_paths": ["skill"]}, "evidence_sha256": "old"}}}
+        observations_path.write_text(json.dumps(observations), encoding="utf-8")
+        captured = copy.deepcopy(observations)
+        captured["producer_evidence"]["PRODUCER-AC-16-S4-1"]["evidence"]["current_runtime_snapshot"] = {
+            "captured_at": "new"
+        }
+        captured["producer_evidence"]["PRODUCER-AC-16-S4-1"]["evidence"]["changed_paths"] = ["new"]
+        captured["producer_evidence"]["PRODUCER-AC-16-S4-1"]["evidence"]["promotion_difference_paths"] = []
+
+        with mock.patch.object(module, "_generator", return_value=Generator), \
+             mock.patch.object(module, "_capture", return_value=captured), \
+             mock.patch.object(module, "source_digest", return_value="a" * 64), \
+             mock.patch.object(module, "status", return_value=(["A state=fresh", "B state=fresh", "C state=fresh", "D state=fresh"], True)):
+            stdout = io.StringIO()
+            with redirect_stdout(stdout):
+                module.refresh(root, "test", approve=False)
+            output = stdout.getvalue()
+            require(output.index("B refreshed") < output.index("C refreshed") < output.index("sha256:"),
+                    "refresh should run B, C, A in order")
+            require("AC-16 preserved (historical, provenance 8cfb8cf)" in output,
+                    "refresh should report preserved AC-16 provenance")
+            require(approvals.read_text(encoding="utf-8") == "# approvals\n",
+                    "refresh without approve must not write A")
+            refreshed = json.loads(observations_path.read_text(encoding="utf-8"))
+            evidence = refreshed["producer_evidence"]["PRODUCER-AC-16-S4-1"]["evidence"]
+            require(evidence["current_runtime_snapshot"] == historical and evidence["changed_paths"] == []
+                    and evidence["promotion_difference_paths"] == ["skill"],
+                    "refresh should preserve historical AC-16 evidence")
+
+            module.refresh(root, "test", approve=True)
+            require("sha256:" + "a" * 64 + "  test" in approvals.read_text(encoding="utf-8"),
+                    "refresh with approve should append A")
+
+        capture_called = False
+        def capture_should_not_run(*_args):
+            nonlocal capture_called
+            capture_called = True
+            return captured
+        with mock.patch.object(module, "_generator", return_value=Generator), \
+             mock.patch.object(module, "_write_json", side_effect=OSError("B failed")), \
+             mock.patch.object(module, "_capture", side_effect=capture_should_not_run):
+            with mock.patch.object(module, "source_digest", return_value="a" * 64):
+                try:
+                    module.refresh(root, "test", approve=False)
+                except OSError:
+                    pass
+        require(not capture_called, "C must not execute after B failure")
+
+    print("[PASS] harness refresh identity order, approval, and AC-16 preservation")
+
+
 def test_harness_agent_team_validator():
     with tempfile.TemporaryDirectory() as tmp:
         tmp_path = Path(tmp)
@@ -11874,6 +11957,7 @@ TESTS = [
     test_harness_cost_report_rollout_fixture,
     test_harness_refresh_identity_status_current_head,
     test_harness_refresh_identity_source_digest_is_shared_with_sync,
+    test_harness_refresh_identity_refresh_order_and_approval,
     test_harness_agent_team_validator,
     test_agent_dispatch_gate,
     test_harness_checkpoint_helper,
