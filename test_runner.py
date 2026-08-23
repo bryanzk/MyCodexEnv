@@ -6577,6 +6577,20 @@ def test_harness_refresh_identity_status_current_head():
     print("[PASS] harness refresh identity status current HEAD")
 
 
+def test_harness_refresh_identity_source_digest_is_shared_with_sync():
+    spec = importlib.util.spec_from_file_location("harness_refresh_identity_test", HARNESS_REFRESH_IDENTITY)
+    module = importlib.util.module_from_spec(spec)
+    assert spec.loader is not None
+    spec.loader.exec_module(module)
+    require(module.source_digest(ROOT) == phase0_source_digest(ROOT),
+            "refresh and sync source digests should be identical")
+    sync_text = SYNC.read_text(encoding="utf-8")
+    require("harness_refresh_identity.py" in sync_text and "source_digest(repo_root)" in sync_text,
+            "sync preflight should call the shared source digest helper")
+
+    print("[PASS] harness refresh identity source digest is shared with sync")
+
+
 def test_harness_agent_team_validator():
     with tempfile.TemporaryDirectory() as tmp:
         tmp_path = Path(tmp)
@@ -11859,6 +11873,7 @@ TESTS = [
     test_harness_report_cli_summarizes_evidence,
     test_harness_cost_report_rollout_fixture,
     test_harness_refresh_identity_status_current_head,
+    test_harness_refresh_identity_source_digest_is_shared_with_sync,
     test_harness_agent_team_validator,
     test_agent_dispatch_gate,
     test_harness_checkpoint_helper,

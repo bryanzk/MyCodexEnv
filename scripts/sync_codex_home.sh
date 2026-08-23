@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
 set -euo pipefail
+SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
 
 # 同步仓库配置到目标 Codex home，并固定 superpowers 版本。
 REPO_ROOT=""
@@ -86,8 +87,10 @@ preflight_source_attestation() {
     "${REPO_ROOT}" \
     "${CODEX_HOME}" \
     "${PHASE0_SOURCE_ROLE:-caller_worktree}" \
-    "${PHASE0_PRODUCER_MANIFEST:-}" <<'PY'
+    "${PHASE0_PRODUCER_MANIFEST:-}" \
+    "${SCRIPT_DIR}/harness_refresh_identity.py" <<'PY'
 import hashlib
+import importlib.util
 import json
 import os
 from pathlib import Path
@@ -99,6 +102,7 @@ repo_root = Path(sys.argv[1]).resolve()
 codex_home = Path(sys.argv[2])
 source_role = sys.argv[3]
 producer_path = Path(sys.argv[4]) if sys.argv[4] else None
+digest_helper_path = Path(sys.argv[5])
 approved_path = (repo_root / "runtime-approvals" / "approved-source-digests.txt").resolve()
 approved_present = approved_path.exists() or approved_path.is_symlink()
 approved_source = "repo_manifest" if approved_present else "absent"
@@ -181,22 +185,15 @@ dirty_paths = [line[3:] for line in status.stdout.splitlines() if len(line) > 3]
 if dirty_paths:
     blocked("source_dirty", dirty_paths=dirty_paths)
 
-digest = hashlib.sha256()
 try:
-    tracked = subprocess.run(
-        ["git", "-C", str(repo_root), "ls-files", "-z", "--", "codex/"],
-        capture_output=True,
-        check=False,
-    )
-    if tracked.returncode != 0:
-        blocked("source_enumeration_failed")
-    for relative in sorted(part for part in tracked.stdout.split(b"\0") if part):
-        path = repo_root / os.fsdecode(relative)
-        content = os.fsencode(os.readlink(path)) if path.is_symlink() else path.read_bytes()
-        digest.update(relative + b"\0" + str(len(content)).encode("ascii") + b"\0" + content)
-except OSError:
+    spec = importlib.util.spec_from_file_location("harness_refresh_identity_sync", digest_helper_path)
+    if spec is None or spec.loader is None:
+        raise OSError("source digest helper unavailable")
+    digest_helper = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(digest_helper)
+    source_digest = digest_helper.source_digest(repo_root)
+except (OSError, RuntimeError):
     blocked("source_enumeration_failed")
-source_digest = digest.hexdigest()
 try:
     approved = {
         match.group(1)
