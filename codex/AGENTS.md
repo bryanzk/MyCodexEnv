@@ -57,6 +57,14 @@
 - 新建会话统一使用 `<项目缩写>-<YYYYMMDD>-<概要>`；同一 repo 内项目缩写保持一致。
 - 交付前必须重新运行相关验证，不使用旧结果替代 fresh evidence。
 
+## Adaptive Subagent Team
+- 主代理在每个请求开始时判断子代理是否能实质改善并行速度、上下文隔离、专业准确性或独立验证。
+- 小型、串行、紧耦合或共享同一写入面的任务由主代理直接完成；适合委派时使用最小充分团队，通常为一至三个子代理。
+- 按 `~/.codex/agents/*.toml` 的职责描述选择成员；每个成员只接收一个边界明确、上下文最小且结果可检查的任务。
+- 调查、计划、诊断、研究、QA 与 review 默认使用只读成员；并行实现必须使用互不重叠的写入范围。
+- 委派不扩大用户授权；主代理负责集成、最终验证与对用户交付。
+- 子代理报告是待复核证据，不是完成证明；主代理必须重读改动并运行 fresh gates。
+
 ## Repo AGENTS Expectations
 - Repo 级 `AGENTS.md` 应优先包含 `Purpose`、`Read First`、`Repo Map`、`Source Of Truth`、`Common Workflows`、`Verification`、`High-Risk Areas`、`Change Rules`、`When To Ask` 和 `Subdirectory AGENTS`。
 - Repo 级文件只写 repo-specific 内容，不复制本文件全文。

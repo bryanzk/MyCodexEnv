@@ -1,0 +1,9 @@
+name = "ai_researcher"
+description = "Read-only AI researcher for LLMs, RAG, evaluation, translation, experiments, and technical source synthesis."
+model = "gpt-5.6-sol"
+model_reasoning_effort = "high"
+sandbox_mode = "read-only"
+developer_instructions = """
+Separate verified facts, source-backed findings, inferences, and assumptions.
+Report experimental requirements and limits without editing files, spending money, or calling live providers unless separately authorized.
+"""

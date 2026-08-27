@@ -513,7 +513,13 @@ def phase0_root_snapshot() -> Path:
             target = repo / relative
             target.parent.mkdir(parents=True, exist_ok=True)
             shutil.copy2(source, target, follow_symlinks=False)
-        for source in (CODEX_TASK, HARNESS_SCOPE, HARNESS_GUARD_TARGETS):
+        extra_sources = [
+            *sorted((ROOT / "codex" / "agents").glob("*.toml")),
+            CODEX_TASK,
+            HARNESS_SCOPE,
+            HARNESS_GUARD_TARGETS,
+        ]
+        for source in extra_sources:
             if source.is_file():
                 target = repo / source.relative_to(ROOT)
                 target.parent.mkdir(parents=True, exist_ok=True)
@@ -1459,17 +1465,30 @@ def test_sync_renders_template_and_copies_skills():
         tmp_path = Path(tmp)
         codex_home = tmp_path / ".codex"
         agent_specs = {
-            "explorer": ("low", "read-only"),
-            "reviewer": ("high", "read-only"),
-            "worker": ("medium", "workspace-write"),
+            "ai_researcher": ("gpt-5.6-sol", "high", "read-only"),
+            "apple_platform": ("gpt-5.6-terra", "high", "workspace-write"),
+            "architect": ("gpt-5.6-sol", "high", "read-only"),
+            "browser_qa": ("gpt-5.6-luna", "medium", "read-only"),
+            "elixir_orchestrator": ("gpt-5.6-sol", "high", "workspace-write"),
+            "explorer": ("gpt-5.6-sol", "low", "read-only"),
+            "operations_release": ("gpt-5.6-sol", "high", "read-only"),
+            "product_content": ("gpt-5.6-terra", "medium", "workspace-write"),
+            "python_data": ("gpt-5.6-terra", "high", "workspace-write"),
+            "reviewer": ("gpt-5.6-sol", "high", "read-only"),
+            "security_privacy": ("gpt-5.6-sol", "high", "read-only"),
+            "web_cloudflare": ("gpt-5.6-terra", "high", "workspace-write"),
+            "worker": ("gpt-5.6-sol", "medium", "workspace-write"),
         }
-        for name, (effort, sandbox) in agent_specs.items():
+        actual_agent_names = {path.stem for path in (ROOT / "codex" / "agents").glob("*.toml")}
+        require(actual_agent_names == set(agent_specs),
+                f"custom-agent roster drifted: {sorted(actual_agent_names)}")
+        for name, (model, effort, sandbox) in agent_specs.items():
             source = ROOT / "codex" / "agents" / f"{name}.toml"
             require(source.is_file(), f"missing custom-agent source: {source}")
             text = source.read_text(encoding="utf-8")
             for setting in [
                 f'name = "{name}"',
-                'model = "gpt-5.6-sol"',
+                f'model = "{model}"',
                 f'model_reasoning_effort = "{effort}"',
                 f'sandbox_mode = "{sandbox}"',
                 "description = ",
@@ -10495,6 +10514,10 @@ def test_global_agents_layering_workflow_and_size_contract():
         "不可覆盖的安全要求必须由 developer 或 managed policy、sandbox、rules 或 hooks 强制执行",
         "Skill 只在用户明确点名或任务与其描述匹配时使用",
         "并行 agent 只用于可独立执行、边界清晰且确实可以并行推进的子任务",
+        "主代理在每个请求开始时判断子代理是否能实质改善并行速度、上下文隔离、专业准确性或独立验证",
+        "适合委派时使用最小充分团队，通常为一至三个子代理",
+        "委派不扩大用户授权；主代理负责集成、最终验证与对用户交付",
+        "子代理报告是待复核证据，不是完成证明",
         "<项目缩写>-<YYYYMMDD>-<概要>",
         "交付前必须重新运行相关验证，不使用旧结果替代 fresh evidence",
         "## Remote Operations",

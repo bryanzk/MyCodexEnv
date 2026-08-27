@@ -17,6 +17,7 @@
 ## What This Repository Syncs
 - `codex/config.template.toml` -> `~/.codex/config.toml`
 - `codex/AGENTS.md` -> `~/.codex/AGENTS.md`
+- `codex/agents/*.toml` -> `~/.codex/agents/*.toml`
 - `codex/remote-access.md` -> `~/.codex/remote-access.md`
 - `codex/remote-hosts.md` -> `~/.codex/remote-hosts.md`
 - `codex/skills/*` -> `~/.codex/skills/*`
