@@ -14,3 +14,4 @@ sha256:5fabb358142fb70aab400cd43ab9a271f1d182e5a694bab68d02f9cf15c75f00  Approve
 sha256:c583ced0861bbf3be67a22bfbb056ae7e317f92e53206c23dda2da13537d9c74  Approve 08f9cfb: P0-3 context policy, brief, docs, fixtures, and runtime promotion
 sha256:89cc4741b8e8e717d23cd28131d138df8dd7ffc2125350c2bfd006d0602f34ee  MCE-20260826 adaptive persistent subagent team Tasks 1-5
 sha256:7b709dbd93d8067304827b0d24aab93af4654c36ad8cc29d731f104832fcdb94  Repair 9c76cf0 adaptive subagent managed-source identity
+sha256:1dbeec8b26b24cfc869d7de4556177cddf8db7ae4052f94d3ac2e14a68bdfba2  Record global AGENTS design-simplicity rules
