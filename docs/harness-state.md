@@ -3622,3 +3622,23 @@ Stable rules belong in `AGENTS.md`, `README.md`, `docs/repo-index.md`, or
   - none
 - next_safe_task: P1-1：拆 DHF SKILL.md 为 L2/L3；改动前 harness_refresh_identity.py status，改完 refresh
 - checkpoint_data: {"constraints":["Do not push; owner owns push"],"next_action":{"command":"P1-1：拆 DHF SKILL.md 为 L2/L3；改动前 harness_refresh_identity.py status，改完 refresh","scope":"P1-1"},"ownership":{"boundary":"P1-2 source, generated identity fixtures, tests, documentation, and append-only checkpoint","files":{"docs/harness-state.md":"agent_owned_checkpoint","tasks/p0-token-cost-plan-2026-08-22.md":"user_owned_untracked","tasks/p1-2-refresh-identity-plan-2026-08-23.md":"user_owned_untracked"}},"phase":"handoff","schema":"dhf_checkpoint_v1","verification_evidence":{"command":"bash scripts/verify_codex_env.sh --repo-root \"$(pwd)\" --codex-home ~/.codex --claude-home ~/.claude; python3 test_runner.py","exit_code":0,"freshness":"fresh","key_output":"AC-16 pre/post commit: 141/141; P1-2 step1: 141/141; step2: 142/142; worktree: failed=0; step3: 143/143; step4: 144/144; step5/final: 145/145; host verifier: Verification passed.; equivalence: B exact, C differences limited to digest, manifest path, receipt timestamp, and observations[5] temp-path key_output","timestamp":"2026-08-23T04:20:43Z"}}
+
+### 2026-08-31T12:38:42Z
+- phase: handoff
+- event: checkpoint
+- summary: synchronized adaptive subagent support, managed-source identity repair, and Design Simplicity rules with current main
+- git:
+  - branch: main
+  - latest_commit: 1b6bf99
+  - dirty_status: clean
+  - dirty_count: 0
+- changed_surfaces:
+  - `docs/harness-state.md`
+- verification:
+  - command: `python3 test_runner.py`
+  - exit_code: 0
+  - key_output: ran=145 passed=145 skipped=0 failed=0; all tests passed
+  - timestamp: 2026-08-31T12:32:41Z
+- blockers:
+  - none
+- next_safe_task: continue from current main under the refreshed adaptive-team and Design Simplicity contracts
