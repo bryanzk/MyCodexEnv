@@ -11,6 +11,7 @@ import re
 import subprocess
 import sys
 import tempfile
+import types
 from collections import Counter
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
@@ -322,6 +323,41 @@ def _validate_scenario(scenario: object, index: int) -> list[str]:
     return errors
 
 
+# Callable-existence checks parse the same modules for every reference (and the
+# repository test runner alone is ~12k lines), so parses are memoised per file
+# content. Keying on the content digest keeps the check exact: any edit to the
+# module produces a fresh parse. The cache lives in a synthetic sys.modules
+# entry because callers load this validator by file path, which re-executes the
+# module (and would reset a plain module-level dict) on every load.
+_PARSE_CACHE_MODULE = "_dhf_simplification_parse_cache"
+
+
+def _parsed_module_cache() -> dict[tuple[str, str], ast.Module]:
+    holder = sys.modules.get(_PARSE_CACHE_MODULE)
+    if holder is None:
+        holder = types.ModuleType(_PARSE_CACHE_MODULE)
+        holder.cache = {}
+        sys.modules[_PARSE_CACHE_MODULE] = holder
+    return holder.cache
+
+
+def _parse_module_cached(candidate: Path) -> ast.Module | None:
+    try:
+        raw = candidate.read_bytes()
+    except OSError:
+        return None
+    cache = _parsed_module_cache()
+    key = (str(candidate), hashlib.sha256(raw).hexdigest())
+    tree = cache.get(key)
+    if tree is None:
+        try:
+            tree = ast.parse(raw.decode("utf-8"))
+        except (SyntaxError, UnicodeDecodeError, ValueError):
+            return None
+        cache[key] = tree
+    return tree
+
+
 def _test_callable_exists(root: Path, reference: object) -> bool:
     if not _non_empty_string(reference) or reference.count("::") != 1:
         return False
@@ -333,9 +369,8 @@ def _test_callable_exists(root: Path, reference: object) -> bool:
         return False
     if candidate.suffix != ".py" or not candidate.is_file():
         return False
-    try:
-        tree = ast.parse(candidate.read_text(encoding="utf-8"))
-    except (OSError, SyntaxError):
+    tree = _parse_module_cached(candidate)
+    if tree is None:
         return False
     parts = qualified_name.split(".")
     if not parts[-1].startswith("test_"):
@@ -364,9 +399,8 @@ def _callable_exists(root: Path, reference: object) -> bool:
         return False
     if candidate.suffix != ".py" or not candidate.is_file():
         return False
-    try:
-        tree = ast.parse(candidate.read_text(encoding="utf-8"))
-    except (OSError, SyntaxError):
+    tree = _parse_module_cached(candidate)
+    if tree is None:
         return False
     parts = qualified_name.split(".")
     nodes: list[ast.AST] = list(tree.body)
