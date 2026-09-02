@@ -3642,3 +3642,26 @@ Stable rules belong in `AGENTS.md`, `README.md`, `docs/repo-index.md`, or
 - blockers:
   - none
 - next_safe_task: continue from current main under the refreshed adaptive-team and Design Simplicity contracts
+
+### 2026-09-02T09:16:35-04:00
+- phase: handoff
+- event: checkpoint
+- summary: synchronized completed external gstack runtime authority, adaptive subagent routing, runtime promotion, and final audit with current main
+- git:
+  - branch: main
+  - latest_commit: 726b5a4
+  - dirty_status: clean
+  - dirty_count: 0
+- compaction_ordinal: 1
+- transition_key: mce-external-gstack-subagent-routing-complete
+- gate_decision: continue-to-boundary
+- changed_surfaces:
+  - `docs/harness-state.md`
+- verification:
+  - command: `python3 test_runner.py`
+  - exit_code: 0
+  - key_output: ran=150 passed=150 skipped=0 failed=0; all tests passed; final audit found no P0/P1 blocker or requirement-to-receipt gap
+- blockers:
+  - none
+- next_safe_task: continue from current main; treat the five T999 residual hardening ideas as future work only when separately authorized
+- checkpoint_data: {"constraints":["Do not perform runtime sync, deployment, external-root writes, or unrelated cleanup in this WAL synchronization task"],"next_action":{"command":"continue from current main; authorize any residual hardening separately","scope":"post-goal maintenance"},"ownership":{"boundary":"WAL-only synchronization of completed commit 726b5a4","files":{"docs/harness-state.md":"agent_owned_checkpoint"}},"phase":"handoff","schema":"dhf_checkpoint_v1","verification_evidence":{"command":"python3 test_runner.py","exit_code":0,"freshness":"fresh","key_output":"ran=150 passed=150 skipped=0 failed=0; all tests passed; final audit found no P0/P1 blocker or requirement-to-receipt gap","timestamp":"2026-09-02T12:07:26Z"}}
