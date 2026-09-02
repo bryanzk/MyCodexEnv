@@ -159,7 +159,8 @@ behavior live in `codex/hooks/dhf_preprompt.py`.
 - `docs/plans/2026-06-15-dhf-independent-core-requirements.md`: reviewed copy/adapt/exclude, installer, doctor, packet, pin-bump, CI, privacy, and rollback contract for independent extraction.
 - `scripts/headroom_filter.py`: optional stdin filter for compressing large command outputs with Headroom before sending them into agent context.
 - `scripts/audit_skills.py`: report-only skill governance audit for repo/global/.agents skill sources and local usage traces.
-- `scripts/check_skill_compatibility.py`: offline compatibility gate for all local skill manifests, helper syntax, and relative links, plus complete repo/runtime parity for persistent managed skills; ephemeral `.system` projections are loader-gated separately.
+- `scripts/external_gstack_runtime.py`: single `status` / `apply` / `recover` authority for active gstack at `~/.gstack/repos/gstack`; the repo vendor is the legacy/bootstrap fallback and ordinary sync never performs cutover.
+- `scripts/check_skill_compatibility.py`: offline compatibility gate for local skill manifests, helper syntax, relative links, ordinary managed parity, and active external gstack status; ephemeral `.system` projections are loader-gated separately.
 - `scripts/check_codex_skill_loader.py`: network-denied `app-server skills/list` gate that verifies every expected repo/runtime skill path is loaded and enabled with no loader errors.
 - `docs/skill-governance-20260608.md`: skill governance baseline and cleanup policy notes.
 - `scripts/prepare_gstack_dhf_daily_refresh.py`: preflight the daily refresh automation, retry DNS probes for about two minutes, require a standalone clone, check out the dedicated `automation/gstack-dhf-daily-refresh` branch rebased on `origin/main`, and return dry-run evidence before repo mutation.
@@ -289,7 +290,7 @@ behavior live in `codex/hooks/dhf_preprompt.py`.
 ## Harness Infra Map
 - Sandbox: Codex sandbox and approval rules, repo high-risk path guidance, and env probe output.
 - Memory: `docs/harness-state.md`, recovery smoke output, local subconscious briefs as hints, and decision-preserving routine/derived reflection.
-- Skills: `codex/skills/*` copied into `~/.codex/skills/*`.
+- Skills: ordinary `codex/skills/*` are copied into `~/.codex/skills/*`; active external gstack uses `~/.gstack/repos/gstack` plus the exact links managed by `scripts/external_gstack_runtime.py`, with repo vendor as legacy/bootstrap fallback.
 - Session State: `docs/harness-state.md` plus local evidence JSONL.
 - Permissions: `codex/runtime/tool-policy.json` and guard hooks.
 - Hooks: `codex/hooks.json` and `codex/hooks/*`.

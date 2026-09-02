@@ -120,7 +120,7 @@ Evidence 记忆合同：Hub 使用 `CAP → BRIDGE × SAFE → TRUST` 作为主�
 | --- | --- | --- |
 | Environment reproduction | Clone, bootstrap, sync Codex/Claude homes, install pinned prerequisites, verify local setup. | `README.md`, `bootstrap.sh`, `scripts/verify_codex_env.sh` |
 | Global rules and repo routing | Keep cross-repo Codex rules in one source and route repo-local constraints through `AGENTS.md`. | `codex/AGENTS.md`, root `AGENTS.md`, `scripts/manage_agents.py` |
-| Skill synchronization | Keep `codex/skills/*` as source of truth and copy managed skills into `~/.codex/skills/*`. | `scripts/sync_codex_home.sh` |
+| Skill synchronization | Copy ordinary repo-managed skills. Active external gstack at `~/.gstack/repos/gstack` uses `scripts/external_gstack_runtime.py status|apply|recover`; ordinary sync never performs cutover or runs `setup`, and the repo vendor remains the legacy/bootstrap fallback. | `scripts/sync_codex_home.sh`, `scripts/external_gstack_runtime.py` |
 | Harness lifecycle routing | Recover state, classify phase, choose generic/repo-specific/gstack workflow, define gates. | `delivery-harness-framework` |
 | Requirements and planning | Capture success criteria, scope, constraints, domain docs, ADR conflicts, vertical slices, risks, and validation gates before implementation. | `planner`, `req-to-dev`, `task-flow-orchestrator`, `scripts/harness_requirements.py` |
 | Backlog-ready issue/spec authoring | Turn vague implementation intent into a bounded issue or executable spec before coding starts. | vendored gstack `spec`, `delivery-harness-framework` |

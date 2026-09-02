@@ -8,7 +8,7 @@
 
 ## Skills
 
-- `codex/skills/*` is the repository source for persistently managed skills; synchronize runtime copies only through an existing script or an explicit targeted copy.
+- `codex/skills/*` is the repository source for persistently managed skills except active external gstack. A valid `~/.gstack/repos/gstack` is managed by `scripts/external_gstack_runtime.py status|apply|recover`; ordinary sync preserves its exact targets and never performs cutover. The repo vendor remains the legacy/bootstrap fallback, and active mode does not run `setup`.
 - After adding or installing a skill, validate its `SKILL.md` frontmatter and run the repository gate.
 - Use `skill-evaluator` and `committee-review-loop` when a complex skill requires formal evaluation.
 

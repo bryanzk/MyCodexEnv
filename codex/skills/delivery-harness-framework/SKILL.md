@@ -381,6 +381,15 @@ explicit approval or blocker. Missing readiness keeps the task in planning or
 local validation; never convert a local demo into a live deployment by
 implication.
 
+## Subagent Role Routing
+
+Main 先决定是否委派；关键词本身不触发 spawn，显式 skill role 优先，Product/Handoff 标签本身不路由。小型、串行、紧耦合任务由 main 完成。
+
+- Read-only：Browser QA → `browser_qa`；Security/privacy → `security_privacy`；Release/runtime readback → `operations_release`；Architecture → `architect`；Exploration → `explorer`；Review/review-swarm → `reviewer`；Non-browser QA 无匹配 specialist → main。
+- 授权 implementation：Python/data/API → `python_data`；Web/Cloudflare → `web_cloudflare`；Apple → `apple_platform`；Elixir/OTP → `elixir_orchestrator`；Product/content → `product_content`；无匹配 specialist 的授权 implementation → `worker`。
+- 原始用户请求已授权 implementation，且 main 分配互不重叠的 exact repo-relative write_set 后，workspace-write agent 才可编辑该范围并运行 assigned focused gate。read-only agent 永不写入；writer 不得 commit、push、deploy、操作 remote/shared runtime 或写未分配路径。
+- Debug explorer 只读定位后返回 main；main 保留授权判断、任务拆分、集成、remote/shared runtime mutation 与 fresh final verification。
+
 ## Agent Team Gate
 
 Before dispatching multiple agents or parallel workers, create a small plan with

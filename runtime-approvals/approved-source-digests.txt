@@ -15,3 +15,4 @@ sha256:c583ced0861bbf3be67a22bfbb056ae7e317f92e53206c23dda2da13537d9c74  Approve
 sha256:89cc4741b8e8e717d23cd28131d138df8dd7ffc2125350c2bfd006d0602f34ee  MCE-20260826 adaptive persistent subagent team Tasks 1-5
 sha256:7b709dbd93d8067304827b0d24aab93af4654c36ad8cc29d731f104832fcdb94  Repair 9c76cf0 adaptive subagent managed-source identity
 sha256:1dbeec8b26b24cfc869d7de4556177cddf8db7ae4052f94d3ac2e14a68bdfba2  Record global AGENTS design-simplicity rules
+sha256:fbd01c7243ab58cbefbea4413ba9c597c67a90ec9f8de0c5e04af19a4f15147b  Approve MCE subagent role routing contract

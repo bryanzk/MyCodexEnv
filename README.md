@@ -102,7 +102,7 @@ MyCodexEnv turns those questions into a repeatable loop:
 
 ### Skills
 
-`codex/skills/*` is the repository source of truth for persistently managed skills. After synchronization, the loader gate confirms that every expected path is loaded, enabled, and free of loader errors.
+`codex/skills/*` is the repository source of truth for persistently managed skills except active external gstack. When `~/.gstack/repos/gstack` is valid, `scripts/external_gstack_runtime.py` owns its 53 flat skill links and minimal sidecar; ordinary sync consumes `status` and never runs `apply` or `recover`. The vendored gstack snapshot remains the legacy/bootstrap fallback.
 
 The repository maintains:
 
@@ -110,7 +110,7 @@ The repository maintains:
 - the vendored `garrytan/gstack` skill collection and its shared support files;
 - controlled copies of third-party skills, licenses, and runtime synchronization metadata.
 
-After the first gstack synchronization, run the `setup` entry point inside the synchronized gstack skill directory to build its local support components.
+Active external gstack does not run `setup`; its runtime cutover is an explicitly approved `apply` transaction with `recover` rollback.
 
 ### Harness Runtime
 

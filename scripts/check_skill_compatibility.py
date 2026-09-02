@@ -14,6 +14,8 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
+import external_gstack_runtime
+
 
 SKIP_PARTS = {".git", "node_modules", "__pycache__"}
 GENERATED_GSTACK_DIRS = {
@@ -62,6 +64,7 @@ def parse_args() -> argparse.Namespace:
         help="Accepted for source-stage verification command compatibility; Claude skill checks are not part of this gate.",
     )
     parser.add_argument("--plugin-root", action="append", default=[], help="Additional plugin/cache root to scan recursively.")
+    parser.add_argument("--gstack-root", help="Explicit external gstack git root; missing or invalid explicit roots fail closed.")
     parser.add_argument(
         "--strict-runtime-parity",
         action="store_true",
@@ -266,20 +269,25 @@ def managed_files(root: Path) -> dict[str, Path]:
     return files
 
 
-def managed_runtime_status(repo_skills: Path, runtime_skills: Path) -> dict[str, Any]:
+def managed_runtime_status(
+    repo_skills: Path,
+    runtime_skills: Path,
+    excluded_top_level: set[str] | None = None,
+) -> dict[str, Any]:
     # Codex 0.144+ materializes `.system` skills while app-server is active and
     # may remove that projection when the server exits. Their compatibility is
     # therefore covered by the app-server skills/list gate, not persistent hash
     # parity against CODEX_HOME/skills.
+    excluded_top_level = excluded_top_level or set()
     repo_files = {
         relative: path
         for relative, path in managed_files(repo_skills).items()
-        if not relative.startswith(".system/")
+        if not relative.startswith(".system/") and Path(relative).parts[0] not in excluded_top_level
     }
     runtime_files = {
         relative: path
         for relative, path in managed_files(runtime_skills).items()
-        if not relative.startswith(".system/")
+        if not relative.startswith(".system/") and Path(relative).parts[0] not in excluded_top_level
     }
     repo_manifests = sorted(path for path in repo_files if path.endswith("/SKILL.md"))
     runtime_manifests = sorted(path for path in runtime_files if path.endswith("/SKILL.md"))
@@ -337,6 +345,13 @@ def main() -> int:
     args = parse_args()
     repo_root = Path(args.repo_root).expanduser().resolve()
     codex_home = Path(args.codex_home).expanduser().resolve()
+    external = external_gstack_runtime.inspect_status(repo_root, codex_home, args.gstack_root)
+    external_status = external["external_gstack"]["status"]
+    excluded_top_level = {
+        value.strip("/")
+        for value in external.get("exact_excludes", [])
+        if value.startswith("/") and value.endswith("/") and value.strip("/")
+    } if external_status == "active" else set()
     roots: list[tuple[str, Path]] = [
         ("repo", repo_root / "codex" / "skills"),
         ("agents", repo_root / ".agents" / "skills"),
@@ -345,7 +360,10 @@ def main() -> int:
     roots.extend(("plugin", Path(raw).expanduser().resolve()) for raw in args.plugin_root)
 
     seen_skill_files: set[Path] = set()
-    findings: list[Finding] = []
+    findings: list[Finding] = [
+        Finding(item["severity"], item["code"], item["path"], item["detail"])
+        for item in external.get("findings", [])
+    ]
     helper_count = 0
     root_counts: dict[str, int] = {}
     for label, root in roots:
@@ -367,7 +385,11 @@ def main() -> int:
                 if finding is not None:
                     findings.append(finding)
 
-    managed = managed_runtime_status(repo_root / "codex" / "skills", codex_home / "skills")
+    managed = managed_runtime_status(
+        repo_root / "codex" / "skills",
+        codex_home / "skills",
+        excluded_top_level,
+    )
     for name in managed["missing"]:
         findings.append(Finding("error", "managed_skill_missing", str(codex_home / "skills" / name), name))
     for name in managed["missing_files"]:
@@ -400,6 +422,7 @@ def main() -> int:
             "warnings": warnings,
         },
         "managed_runtime": managed,
+        "external_gstack": external["external_gstack"],
         "findings": [item.as_json() for item in findings],
     }
     if args.json_output:

@@ -317,6 +317,11 @@
       "audience": ["codex", "human"]
     },
     {
+      "path": "scripts/external_gstack_runtime.py",
+      "role": "single external gstack status, apply, recover, journal, and rollback authority",
+      "audience": ["codex", "human"]
+    },
+    {
       "path": "scripts/check_codex_skill_loader.py",
       "role": "network-denied Codex app-server skills/list loader gate",
       "audience": ["codex", "human"]

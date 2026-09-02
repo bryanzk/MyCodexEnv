@@ -1,0 +1,886 @@
+version: 2
+
+goal:
+  title: "MCE External gstack and Subagent Routing"
+  slug: "mce-external-gstack-subagent-routing"
+  kind: existing_plan
+  tranche: "Validate and execute WP1 external gstack authority, freeze its baseline, execute WP2 role routing and targeted promotion, then prove behavior and complete a final audit."
+  status: done
+  intake:
+    original_request: "Enable Goal mode and execute the approved MCE External gstack authority plus Subagent routing plan."
+    interpreted_outcome: "The current Codex runtime uses a verified external gstack authority and deterministic role-routing contracts, with recoverable runtime transactions and fresh source/parity/activity/behavior evidence."
+    input_shape: existing_plan
+    audience: "MyCodexEnv owner and future maintainers"
+    authority: approved
+    proof_type: test
+    completion_proof: "WP1/WP2 gates pass, runtime transactions are independently approved and verified, behavior observations are complete, and final Judge records full_outcome_complete: true."
+    likely_misfire: "Stopping after board creation, planning, source changes, or parity; broad-syncing gstack; treating loader evidence as behavior; or expanding scope to unrelated cleanup."
+    blind_spots_considered:
+      - "External gstack and runtime topology are time-sensitive and must be re-read before mutation."
+      - "Shared runtime writes require one lock, quiescence, journaled recovery, and exact manifests."
+      - "The plan was revised after the ninth committee blind review and was not rescored afterward."
+      - "GoalBuddy Scout/Worker/Judge configs are bundled but not installed; PM fallback is allowed."
+      - "Behavior observation requires user-created tasks and cannot be inferred from source or parity."
+    existing_plan_facts:
+      - "WP1 precedes WP2 and freezes the baseline used to measure WP2 delta."
+      - "WP1 has 11 functional/doc files plus the 3 shared Identity files required by the fresh C-layer evidence; the owner-approved cumulative unique allowlist is 17 files."
+      - "WP1 runtime is 53 flat gstack targets plus one 13-link sidecar, journal/staging/backup, and the existing .phase0-sync.lock."
+      - "WP2 runtime promotion has exactly three regular-file targets and separate backup/staging paths."
+      - "No commit, push, issue, task, thread, broad sync, setup, reset, or vendor sync is authorized."
+
+rules:
+  pm_owns_state: true
+  one_active_task: true
+  max_write_workers: 1
+  no_implementation_without_worker_or_pm_task: true
+  no_completion_without_judge_or_pm_audit: true
+  planning_is_not_completion: true
+  queued_required_worker_blocks_completion: true
+  continuous_until_full_outcome: true
+  missing_input_or_credentials_do_not_stop_goal: true
+  preserve_and_validate_existing_plan: true
+  intake_misfire_must_be_audited: true
+
+agents:
+  scout: bundled_not_installed
+  worker: bundled_not_installed
+  judge: bundled_not_installed
+
+visual_board:
+  selected: local
+  local:
+    status: blocked
+    url: null
+    command: "npx goalbuddy@0.3.6 board docs/goals/mce-external-gstack-subagent-routing"
+  github_projects:
+    status: not_requested
+    url: null
+    command: "npx goalbuddy extend github-projects"
+    missing: []
+
+active_task: null
+
+tasks:
+  - id: T001
+    type: judge
+    assignee: Judge
+    status: done
+    reasoning_hint: high
+    objective: "Validate the final two-package plan against current repo/runtime evidence and emit exact executable Worker/PM contracts without changing files."
+    inputs:
+      - "docs/goals/mce-external-gstack-subagent-routing/goal.md"
+      - "Current MyCodexEnv source and tests"
+      - "Current /Users/kezheng/.gstack/repos/gstack and /Users/kezheng/.codex runtime metadata"
+    constraints:
+      - "Read-only."
+      - "Preserve WP1 then WP2 ordering."
+      - "Reject any write path outside the 16-file cumulative repo allowlist or approved runtime surfaces."
+      - "Resolve discoverable facts from current state; do not redesign the plan."
+    expected_output:
+      - "Current source/runtime baseline"
+      - "WP1 Worker contract: exact allowed_files, focused tests, full gate, stop_if"
+      - "WP1 PM runtime approval requirements"
+      - "WP2 Worker contract and runtime promotion requirements"
+      - "Any blocker or scope contradiction"
+    receipt:
+      result: done
+      note: "notes/T001-plan-validation.md"
+      decision: "The two-package plan is executable with a separate PM control-file surface. WP1 source may begin; runtime apply remains approval-gated."
+      next_allowed_task: T002
+      summary: "Validated current repo/runtime anchors, exact WP1/WP2 implementation allowlists, shared lock reuse, external gstack topology, Identity freshness, source gates, and runtime stop conditions."
+
+  - id: T002
+    type: worker
+    assignee: Worker
+    status: blocked
+    reasoning_hint: high
+    objective: "Implement WP1 external gstack single-transaction authority, checker/sync integration, tests, and six exact documentation corrections."
+    allowed_files:
+      - "scripts/external_gstack_runtime.py"
+      - "scripts/check_skill_compatibility.py"
+      - "scripts/sync_codex_home.sh"
+      - "test_runner.py"
+      - "README.md"
+      - "docs/agents/runtime-and-skills.md"
+      - "docs/CODEX_ENV_REPRODUCTION.md"
+      - "docs/repo-index.md"
+      - "docs/HARNESS_RUNTIME.md"
+      - "docs/LIFECYCLE_SKILL_ROUTING.md"
+    verify:
+      - "Run the WP1 focused RED/GREEN tests selected by T001."
+      - "Run syntax and documentation consistency checks."
+      - "Run git diff --check."
+      - "Require WP1 diff to contain exactly the 10 allowed files."
+      - "Require python3 scripts/harness_refresh_identity.py status to report A/B/C/D fresh."
+      - "Run python3 test_runner.py once after the last material WP1 change."
+    stop_if:
+      - "Need a file outside allowed_files."
+      - "Existing user changes overlap an allowed file and ownership is ambiguous."
+      - "A required public interface or runtime path differs from the validated T001 contract."
+      - "Focused verification fails twice for the same unresolved reason."
+    receipt:
+      result: blocked
+      summary: "Implemented and focused-tested the first WP1 source slice, but fresh Identity status reports C stale. The current 10-file task cannot meet its A-D-fresh gate without the three already-approved shared Identity files."
+      changed_files:
+        - "scripts/external_gstack_runtime.py"
+        - "scripts/check_skill_compatibility.py"
+        - "scripts/sync_codex_home.sh"
+        - "test_runner.py"
+        - "README.md"
+        - "docs/agents/runtime-and-skills.md"
+        - "docs/CODEX_ENV_REPRODUCTION.md"
+        - "docs/repo-index.md"
+        - "docs/HARNESS_RUNTIME.md"
+        - "docs/LIFECYCLE_SKILL_ROUTING.md"
+      commands:
+        - cmd: "Focused external-gstack status/checker/lock/apply-recover/docs/sync tests"
+          status: pass
+          key_output: "Six focused contracts passed."
+        - cmd: "python3 scripts/harness_refresh_identity.py status"
+          status: blocked
+          key_output: "A/B/D fresh; C stale."
+      replaced_by: T010
+
+  - id: T003
+    type: judge
+    assignee: Judge
+    status: done
+    reasoning_hint: high
+    objective: "Adjudicate the WP1 Identity-C blocker without widening the cumulative goal scope."
+    inputs:
+      - "T001 receipt"
+      - "T002 receipt"
+      - "T002 partial diff and verification output"
+    constraints:
+      - "Read-only."
+      - "Do not implement."
+      - "Do not add paths outside the existing cumulative 16-file allowlist."
+    expected_output:
+      - "Decision on shared Identity sequencing"
+      - "Replacement Worker allowed_files"
+      - "Updated WP1 gates"
+    receipt:
+      result: done
+      decision: "Treat the three Identity files already present in the cumulative goal scope as shared WP1/WP2 managed surfaces. Refresh them after each package's final material source change."
+      rationale: "Fresh C-layer evidence proves the original WP1 10-file/A-D-fresh combination is impossible; sharing existing Identity paths adds no new unique file."
+      next_allowed_task: T010
+
+  - id: T004
+    type: pm
+    assignee: PM
+    status: blocked
+    reasoning_hint: high
+    objective: "After fresh exact approval, execute WP1 runtime apply/recover, verify loader activity, and freeze the WP1 baseline."
+    inputs:
+      - "T011 approval packet"
+    constraints:
+      - "Do not mutate runtime before the exact packet is approved."
+      - "Use only external_gstack_runtime.py apply/recover."
+      - "Hold the shared .phase0-sync.lock for the whole transaction."
+      - "Do not touch external root, gstack-checkpoint, or non-target skills."
+    expected_output:
+      - "Runtime approval receipt"
+      - "Apply or recovery receipt"
+      - "53-flat plus sidecar parity"
+      - "Fresh loader receipt"
+      - "Frozen WP1 repo/runtime/warning baseline"
+    receipt:
+      result: blocked
+      summary: "Fresh pre-apply loader readback changed the ephemeral runtime .system projection. The approved context incorrectly included that loader-owned directory, so manifest generation stopped before file or runtime writes."
+      evidence:
+        command: "Fresh loader readback followed by approval-context assertion"
+        exit_code: 1
+        key_output: "All persistent fields matched; runtime_skills/non_target changed only with ~/.codex/skills/.system presence."
+        timestamp: "2026-09-02T02:01:24Z"
+      replaced_by: T020
+
+  - id: T005
+    type: judge
+    assignee: Judge
+    status: done
+    reasoning_hint: high
+    objective: "Audit WP1 completion and authorize or block transition to WP2."
+    inputs:
+      - "T002-T004 receipts"
+    constraints:
+      - "Read-only."
+      - "Reject transition if runtime parity/activity, rollback readiness, or non-target preservation is unproven."
+    expected_output:
+      - "WP1 complete | not_complete"
+      - "Frozen baseline digest"
+      - "Exact WP2 Worker contract"
+    receipt:
+      result: done
+      decision: "WP1 complete"
+      summary: "Independent Judge verified 54/54, exact sidecar, preserved external/non-target/warnings, recoverable complete journal, Identity A-D fresh, and post-runtime 149/149."
+      frozen_baseline:
+        runtime: "a848c792388d785d8f050474e7cab010bc1cda6033229ba1f9ae5b3e7c42c0c3"
+        non_target: "ccaf37014b2c49846e7f04db68486b0f73e6f9f05583f8fe05e73d910760b9d1"
+        warning_tuples: "ee133997bfd7ec99782ab74de28387d09e7a46dd6fa71e7ce866b0ef38e1a74b"
+        journal: "bdfed152afc0636ef6b247d78a972dfa4217892bf5a76375b547ea51ae2bba94"
+      next_allowed_task: T006
+
+  - id: T010
+    type: worker
+    assignee: Worker
+    status: blocked
+    reasoning_hint: high
+    objective: "Complete WP1 source implementation and refresh the three shared Identity files after the final material WP1 change."
+    allowed_files:
+      - "scripts/external_gstack_runtime.py"
+      - "scripts/check_skill_compatibility.py"
+      - "scripts/sync_codex_home.sh"
+      - "test_runner.py"
+      - "README.md"
+      - "docs/agents/runtime-and-skills.md"
+      - "docs/CODEX_ENV_REPRODUCTION.md"
+      - "docs/repo-index.md"
+      - "docs/HARNESS_RUNTIME.md"
+      - "docs/LIFECYCLE_SKILL_ROUTING.md"
+      - "runtime-approvals/approved-source-digests.txt"
+      - "tests/fixtures/dhf_simplification_transition_identity.json"
+      - "tests/fixtures/dhf_simplification_observations.json"
+    verify:
+      - "Complete the remaining transaction/crash/concurrency and fixture-isolation RED/GREEN coverage."
+      - "Run syntax, docs, diff and focused WP1 gates."
+      - "Before Identity refresh require only the expected stale layers; back up the exact three Identity files."
+      - "Run the approved Identity refresh and require A/B/C/D fresh."
+      - "Require WP1 implementation delta exactly 13 files plus separately reported GoalBuddy control files."
+      - "Run python3 test_runner.py once after the last material WP1/Identity change."
+    stop_if:
+      - "Need a path outside allowed_files."
+      - "Identity refresh writes an unexpected path."
+      - "Crash recovery or lock tests cannot prove prestate restoration."
+      - "Verification fails twice for the same unresolved reason."
+    receipt:
+      result: blocked
+      note: "notes/T010-surfaces-manifest-blocker.md"
+      summary: "WP1 source and Identity work reached the full repository gate: 147/149 passed. Both failures have one cause: the new public script is indexed but absent from docs/surfaces.json, which is outside the current allowlist."
+      commands:
+        - cmd: "python3 test_runner.py"
+          status: blocked
+          exit_code: 1
+          key_output: "ran=149 passed=147 skipped=0 failed=2; both failures ERROR[in_index_not_manifest] scripts/external_gstack_runtime.py"
+          timestamp: "2026-09-02T00:27:04Z"
+      scope_decision_required: "Authorize docs/surfaces.json as the seventeenth cumulative repo path."
+      replaced_by: T013
+
+  - id: T011
+    type: judge
+    assignee: Judge
+    status: done
+    reasoning_hint: high
+    objective: "Audit completed WP1 source and prepare the exact runtime apply approval packet."
+    inputs:
+      - "T001, T002, T003 and T010 receipts"
+      - "WP1 diff and fresh verification output"
+    constraints:
+      - "Read-only."
+      - "Reject broad globs, setup, network, or missing rollback evidence."
+    expected_output:
+      - "WP1 source pass/fail"
+      - "Exact external_gstack apply manifest fields and hashes"
+      - "Quiescence and shared-lock requirements"
+      - "Rollback and recovery command"
+      - "Decision: ready_for_runtime_approval | not_ready"
+    receipt:
+      result: done
+      note: "notes/T011-runtime-approval-audit.md"
+      decision: not_ready
+      summary: "The runtime authority does not yet bind an approved prestate before apply, and recover can accept noncanonical or unexpected state and still claim rolled_back."
+      next_allowed_task: T016
+
+  - id: T012
+    type: judge
+    assignee: Judge
+    status: done
+    reasoning_hint: high
+    objective: "Adjudicate the surfaces-manifest full-gate blocker."
+    inputs:
+      - "T010 receipt"
+      - "docs/surfaces.json"
+      - "test_surfaces_manifest_no_orphans"
+    constraints:
+      - "Read-only."
+      - "Do not remove the public script from repo-index to evade the manifest contract."
+    expected_output:
+      - "Minimal scope decision"
+      - "Exact manifest entry"
+      - "Replacement Worker gate"
+    receipt:
+      result: done
+      decision: "The minimum correct fix is one docs/surfaces.json entry for scripts/external_gstack_runtime.py; removing the repo-index entry would leave source-of-truth documentation incomplete."
+      exact_entry:
+        path: "scripts/external_gstack_runtime.py"
+        role: "single external gstack status, apply, recover, journal, and rollback authority"
+        audience:
+          - codex
+          - human
+      authority: needs_approval
+      next_allowed_task: T013
+
+  - id: T013
+    type: worker
+    assignee: Worker
+    status: done
+    reasoning_hint: low
+    objective: "After owner approval, add the single external-gstack script entry to docs/surfaces.json and rerun the failed/full gates."
+    allowed_files:
+      - "docs/surfaces.json"
+    verify:
+      - "Run test_surfaces_manifest_no_orphans and test_check_surfaces_validates_public_nav."
+      - "Run git diff --check."
+      - "Run python3 scripts/harness_refresh_identity.py status and require A/B/C/D fresh."
+      - "Run python3 test_runner.py and require all tests pass."
+    stop_if:
+      - "Owner has not explicitly approved the seventeenth cumulative repo path."
+      - "The manifest schema requires another path."
+      - "Full verification fails for a second independent reason."
+    receipt:
+      result: done
+      summary: "Added exactly one owner-approved docs/surfaces.json entry, refreshed shared Identity C after the final material source change, and closed WP1 source verification with 149/149 tests passing."
+      changed_files:
+        - "docs/surfaces.json"
+      commands:
+        - cmd: "python3 -c 'import test_runner; test_runner.test_surfaces_manifest_no_orphans(); test_runner.test_check_surfaces_validates_public_nav()'"
+          status: pass
+          exit_code: 0
+          key_output: "Both previously failing surface tests passed."
+          timestamp: "2026-09-02T00:37:43Z"
+        - cmd: "python3 scripts/harness_refresh_identity.py refresh --message 'Approve MCE external gstack authority WP1 surface manifest' --approve"
+          status: pass
+          exit_code: 0
+          key_output: "B/C refreshed; post-status A/B/C/D fresh."
+          timestamp: "2026-09-02T00:43:51Z"
+        - cmd: "python3 test_runner.py"
+          status: pass
+          exit_code: 0
+          key_output: "ran=149 passed=149 skipped=0 failed=0; all tests passed."
+          timestamp: "2026-09-02T00:44:05Z"
+        - cmd: "git diff --check"
+          status: pass
+          exit_code: 0
+          key_output: "No whitespace errors."
+          timestamp: "2026-09-02T00:49:59Z"
+      next_allowed_task: T011
+
+  - id: T014
+    type: pm
+    assignee: PM
+    status: blocked
+    reasoning_hint: low
+    objective: "Obtain the owner's explicit decision on adding docs/surfaces.json as the seventeenth cumulative repo path."
+    inputs:
+      - "T010 blocker receipt"
+      - "T012 Judge decision"
+    constraints:
+      - "Do not modify docs/surfaces.json before approval."
+      - "Ask one concise scope question."
+    expected_output:
+      - "approved | denied"
+      - "Next active task"
+    receipt:
+      result: blocked
+      decision: "Owner approval for docs/surfaces.json has not been received after three consecutive Goal turns."
+      blocker: "The canonical surface inventory must include scripts/external_gstack_runtime.py before WP1 can pass its full gate."
+      evidence:
+        command: "git status --short -- docs/surfaces.json; rg scripts/external_gstack_runtime.py docs/surfaces.json"
+        exit_code: 0
+        key_output: "docs/surfaces.json unchanged; no matching manifest entry"
+        timestamp: "2026-09-02T00:35:53Z"
+      unblock_condition: "Owner explicitly approves docs/surfaces.json as the seventeenth cumulative repo path."
+
+  - id: T015
+    type: pm
+    assignee: PM
+    status: done
+    reasoning_hint: low
+    objective: "Hold board truth while waiting for the owner decision on the surfaces manifest scope."
+    inputs:
+      - "T014 blocked receipt"
+    constraints:
+      - "Do not modify implementation or runtime files."
+      - "Do not repeat verification without new authority or state change."
+    expected_output:
+      - "Owner decision"
+      - "Activate T013 if approved, or record denial and recut the goal if denied"
+    receipt:
+      result: done
+      decision: approved
+      summary: "Owner approved docs/surfaces.json as the seventeenth cumulative repo path."
+      next_allowed_task: T013
+
+  - id: T016
+    type: worker
+    assignee: Worker
+    status: done
+    reasoning_hint: high
+    objective: "Close the two T011 transaction-boundary findings before preparing the WP1 runtime approval packet."
+    allowed_files:
+      - "scripts/external_gstack_runtime.py"
+      - "test_runner.py"
+    verify:
+      - "Add focused failing cases for prestate/activity drift and recovery fail-closed behavior."
+      - "Run the external-gstack focused contracts."
+      - "Run git diff --check and Identity A-D status."
+      - "Run python3 test_runner.py after the final material source change."
+    stop_if:
+      - "Closure needs another implementation path."
+      - "The existing CLI or runtime topology must change."
+      - "Focused verification fails twice for the same unresolved reason."
+    receipt:
+      result: done
+      summary: "Closed T011 recovery and approval-binding findings in the existing two-file scope; independent Judge returned ready_for_runtime_approval."
+      changed_files:
+        - "scripts/external_gstack_runtime.py"
+        - "test_runner.py"
+      commands:
+        - cmd: "External-gstack focused status/lock/apply-recover/docs contracts"
+          status: pass
+          exit_code: 0
+          key_output: "All four focused contracts passed, including apply and recover crash continuation."
+          timestamp: "2026-09-02T01:09:35Z"
+        - cmd: "python3 test_runner.py"
+          status: pass
+          exit_code: 0
+          key_output: "ran=149 passed=149 skipped=0 failed=0; all tests passed."
+          timestamp: "2026-09-02T01:10:15Z"
+      next_allowed_task: T017
+
+  - id: T017
+    type: judge
+    assignee: Judge
+    status: done
+    reasoning_hint: high
+    objective: "Re-audit the closed WP1 transaction boundary and emit the exact runtime approval packet."
+    constraints:
+      - "Read-only."
+      - "Do not authorize or perform runtime mutation."
+    expected_output:
+      - "ready_for_runtime_approval | not_ready"
+      - "Exact operation, topology, prestate and rollback packet"
+    receipt:
+      result: done
+      note: "notes/T017-runtime-approval-packet.md"
+      decision: ready_for_runtime_approval
+      summary: "Independent Judge found no remaining P0/P1 blocking the current minimal WP1 runtime approval."
+      next_allowed_task: T018
+
+  - id: T018
+    type: pm
+    assignee: PM
+    status: done
+    reasoning_hint: low
+    objective: "Obtain the owner's explicit approval or denial of the exact T017 WP1 runtime packet."
+    inputs:
+      - "notes/T017-runtime-approval-packet.md"
+    constraints:
+      - "Do not create the approved manifest or mutate runtime before owner approval."
+      - "Any pre-apply hash or topology drift invalidates the packet."
+    expected_output:
+      - "approved | denied"
+      - "Activate T004 only if approved"
+    receipt:
+      result: done
+      decision: approved
+      summary: "Owner explicitly approved the exact T017 WP1 runtime packet."
+      next_allowed_task: T004
+
+  - id: T019
+    type: pm
+    assignee: PM
+    status: done
+    reasoning_hint: low
+    objective: "Keep continuous GoalBuddy board truth while native Goal waits for the owner decision on T017."
+    inputs:
+      - "T018 blocked receipt"
+    constraints:
+      - "Do not modify implementation or runtime."
+      - "Do not repeat verification without owner input or external state change."
+    expected_output:
+      - "Owner approval resumes T004, or denial recuts the remaining goal."
+    receipt:
+      result: done
+      decision: resumed
+      summary: "Owner approval ended the native Goal block and activated T004."
+      next_allowed_task: T004
+
+  - id: T020
+    type: worker
+    assignee: Worker
+    status: done
+    reasoning_hint: low
+    objective: "Exclude loader-owned ephemeral .system from WP1 approval and non-target digests, then re-run the source gates."
+    allowed_files:
+      - "scripts/external_gstack_runtime.py"
+      - "test_runner.py"
+    verify:
+      - "Add a focused RED/GREEN case proving .system appearance does not invalidate persistent runtime prestate."
+      - "Run external-gstack focused contracts, git diff --check, Identity A-D status, and python3 test_runner.py."
+    stop_if:
+      - "Any other runtime path must be excluded."
+      - "The approved topology or runtime write set changes."
+    receipt:
+      result: done
+      summary: "Excluded only loader-owned top-level .system from persistent runtime/non-target digests; RED/GREEN, focused gates and full 149/149 passed."
+      changed_files:
+        - "scripts/external_gstack_runtime.py"
+        - "test_runner.py"
+      commands:
+        - cmd: "External-gstack focused contracts"
+          status: pass
+          exit_code: 0
+          key_output: "All four focused contracts passed with an ephemeral .system projection."
+          timestamp: "2026-09-02T02:02:55Z"
+        - cmd: "python3 test_runner.py"
+          status: pass
+          exit_code: 0
+          key_output: "ran=149 passed=149 skipped=0 failed=0; all tests passed."
+          timestamp: "2026-09-02T02:03:41Z"
+      next_allowed_task: T021
+
+  - id: T021
+    type: judge
+    assignee: Judge
+    status: done
+    reasoning_hint: high
+    objective: "Audit the exact .system exclusion and emit a replacement runtime approval packet."
+    constraints:
+      - "Read-only."
+      - "Reject any broader non-target exclusion or topology change."
+    expected_output:
+      - "ready_for_reapproval | not_ready"
+      - "Replacement packet with fresh hashes"
+    receipt:
+      result: done
+      note: "notes/T021-runtime-reapproval-packet.md"
+      decision: ready_for_reapproval
+      summary: "Independent Judge confirmed exact .system exclusion is safe and no other non-target protection was weakened."
+      next_allowed_task: T022
+
+  - id: T022
+    type: pm
+    assignee: PM
+    status: done
+    reasoning_hint: low
+    objective: "Obtain owner approval or denial for the T021 replacement WP1 runtime packet."
+    inputs:
+      - "notes/T021-runtime-reapproval-packet.md"
+    constraints:
+      - "Do not create a manifest or mutate runtime before explicit approval."
+      - "Any packet-field drift requires another replacement packet."
+    expected_output:
+      - "approved | denied"
+    receipt:
+      result: done
+      decision: approved
+      summary: "Owner explicitly approved the T021 replacement WP1 runtime packet."
+      next_allowed_task: T024
+
+  - id: T023
+    type: pm
+    assignee: PM
+    status: done
+    reasoning_hint: low
+    objective: "Keep continuous GoalBuddy board truth while native Goal waits for T021 owner reapproval."
+    inputs:
+      - "T022 blocked receipt"
+    constraints:
+      - "Do not create the manifest or modify implementation/runtime."
+      - "Do not repeat verification without owner input or external state change."
+    expected_output:
+      - "Owner approval resumes runtime execution with a fresh quiescence receipt."
+    receipt:
+      result: done
+      decision: resumed
+      summary: "Owner reapproval ended the native Goal block."
+      next_allowed_task: T024
+
+  - id: T024
+    type: pm
+    assignee: PM
+    status: done
+    reasoning_hint: high
+    objective: "Execute the exact T021 WP1 runtime transaction, verify parity/activity/non-target preservation, and freeze the WP1 baseline."
+    inputs:
+      - "notes/T021-runtime-reapproval-packet.md"
+    constraints:
+      - "Use only external_gstack_runtime.py apply/recover."
+      - "Stop before write on any packet drift."
+      - "Do not touch external root, gstack-checkpoint, or non-target skills."
+    expected_output:
+      - "Fresh quiescence and manifest receipt"
+      - "Apply or recovery receipt"
+      - "54/54 parity, warning tuple and non-target evidence"
+      - "Fresh loader and full test receipts"
+    receipt:
+      result: done
+      note: "notes/T024-wp1-runtime-receipt.md"
+      summary: "Executed the owner-approved T021 transaction: 54/54 parity, preserved non-target/external/warnings, retained complete journal and backup, and passed post-runtime 149/149."
+      commands:
+        - cmd: "python3 scripts/external_gstack_runtime.py apply --manifest /private/tmp/mce-20260902t021100z-approved.json"
+          status: pass
+          exit_code: 0
+          key_output: "status=complete; operation_root=/Users/kezheng/.codex/runtime-backups/mce-20260902t021100z-external-gstack"
+          timestamp: "2026-09-02T03:01:17Z"
+        - cmd: "external status + compatibility + non-target + journal readback"
+          status: pass
+          exit_code: 0
+          key_output: "54/54; errors=0 warnings=35; non-target unchanged; journal complete with 34 verified backups plus sidecar."
+          timestamp: "2026-09-02T03:08:38Z"
+        - cmd: "python3 test_runner.py"
+          status: pass
+          exit_code: 0
+          key_output: "ran=149 passed=149 skipped=0 failed=0; all tests passed."
+          timestamp: "2026-09-02T03:02:19Z"
+      next_allowed_task: T005
+
+  - id: T006
+    type: worker
+    assignee: Worker
+    status: blocked
+    reasoning_hint: high
+    objective: "Implement WP2 AGENTS and ShipQ/DHF role routing contracts, routing tests, and three-file Identity refresh."
+    allowed_files:
+      - "codex/AGENTS.md"
+      - "codex/skills/shipq-lifecycle-harness/SKILL.md"
+      - "codex/skills/delivery-harness-framework/SKILL.md"
+      - "test_runner.py"
+      - "runtime-approvals/approved-source-digests.txt"
+      - "tests/fixtures/dhf_simplification_transition_identity.json"
+      - "tests/fixtures/dhf_simplification_observations.json"
+    verify:
+      - "Run routing contract RED/GREEN tests."
+      - "Require AGENTS <=90 lines and <=8192 bytes."
+      - "Require Identity pre-status A/B/C stale and D fresh before refresh."
+      - "Run the exact approved Identity refresh and require post-status A/B/C/D fresh."
+      - "Run git diff --check and require WP2 delta exactly 7 files and cumulative unique allowlist exactly 16 files."
+      - "Run the live checker with the WP1 baseline and only two exact temporary source-drift warnings."
+      - "Run python3 test_runner.py once after the final material WP2 source change."
+    stop_if:
+      - "Need a file outside allowed_files."
+      - "Identity refresh writes an unexpected path."
+      - "AGENTS cannot satisfy its size contract without changing another section."
+      - "Verification fails twice for the same unresolved reason."
+    receipt:
+      result: blocked
+      note: "notes/T006-source-stage-runtime-boundary-blocker.md"
+      summary: "WP2 source focused gates and Identity passed; full runner has exactly two failures because the fixed-base DHF runtime boundary cannot represent a second source-stage delta after WP1 runtime promotion."
+      commands:
+        - cmd: "WP2 routing contract + skill validators + AGENTS size + live checker"
+          status: pass
+          exit_code: 0
+          key_output: "Routing green; skills valid; AGENTS 86 lines/8186 bytes; checker errors=0 with exactly two source-stage warnings."
+          timestamp: "2026-09-02T03:23:32Z"
+        - cmd: "python3 test_runner.py"
+          status: blocked
+          exit_code: 1
+          key_output: "ran=150 passed=148 failed=2; both failures report DHF runtime_state=drifted for delivery-harness-framework/SKILL.md."
+          timestamp: "2026-09-02T03:23:51Z"
+      replaced_by: T025
+
+  - id: T025
+    type: judge
+    assignee: Judge
+    status: done
+    reasoning_hint: high
+    objective: "Adjudicate the T006 fixed-base runtime-boundary sequencing conflict without widening the source allowlist."
+    inputs:
+      - "notes/T006-source-stage-runtime-boundary-blocker.md"
+      - "WP1 frozen baseline and T006 focused receipts"
+    constraints:
+      - "Read-only."
+      - "Do not modify DHF evidence helpers or tests."
+      - "Do not authorize runtime promotion; only decide the correct gate order."
+    expected_output:
+      - "Source ready_for_runtime_packet | not_ready"
+      - "Exact next task and retained post-promotion full gate"
+    receipt:
+      result: done
+      decision: ready_for_runtime_packet
+      summary: "The two full-runner failures are the fixed-base DHF intermediate-state limitation, not a WP2 source defect. Full 150/150 remains mandatory immediately after T008 promotion; any other failure blocks or rolls back."
+      next_allowed_task: T007
+
+  - id: T007
+    type: judge
+    assignee: Judge
+    status: done
+    reasoning_hint: high
+    objective: "Audit WP2 source and prepare the exact three-target runtime promotion packet."
+    inputs:
+      - "T005 baseline"
+      - "T006 receipt"
+    constraints:
+      - "Read-only."
+      - "Do not authorize broad sync or non-regular targets."
+    expected_output:
+      - "WP2 source pass/fail"
+      - "Three exact source-target rows with hashes/types/modes"
+      - "Temporary verifier baseline"
+      - "Rollback conditions"
+      - "Decision: ready_for_runtime_approval | not_ready"
+    receipt:
+      result: done
+      note: "notes/T007-wp2-runtime-promotion-packet.md"
+      decision: ready_for_runtime_approval
+      summary: "Independent Judge verified all three existing regular 0644 rows and exact hashes; no drift. The two intermediate full-test failures and two verifier failures are accepted only until promotion and must disappear post-cutover."
+      next_allowed_task: T026
+
+  - id: T026
+    type: pm
+    assignee: PM
+    status: done
+    reasoning_hint: low
+    objective: "Obtain owner approval or denial for the exact T007 WP2 three-target runtime promotion packet."
+    inputs:
+      - "notes/T007-wp2-runtime-promotion-packet.md"
+    constraints:
+      - "Do not create backup/staging or modify runtime before explicit approval."
+      - "Any anchor, source, target, or non-target drift invalidates the packet."
+    expected_output:
+      - "approved | denied"
+    receipt:
+      result: done
+      decision: approved
+      summary: "Owner explicitly approved the exact T007 WP2 three-target runtime promotion packet."
+      next_allowed_task: T008
+
+  - id: T008
+    type: pm
+    assignee: PM
+    status: done
+    reasoning_hint: high
+    objective: "After fresh exact approval, perform the three-target runtime promotion and fixed post-cutover verification chain."
+    inputs:
+      - "T007 approval packet"
+    constraints:
+      - "Do not write before exact approval and quiescence."
+      - "Use same-directory staging plus os.replace and verified rollback."
+      - "Do not modify WP1 runtime or non-target files."
+    expected_output:
+      - "Three-target parity"
+      - "Strict checker result"
+      - "Post-runtime full test receipt"
+      - "Temporary verify_codex_env receipt"
+      - "Non-target manifest result"
+      - "Fresh loader receipt"
+    receipt:
+      result: done
+      note: "notes/T008-wp2-runtime-promotion-receipt.md"
+      summary: "Promoted the exact three regular targets with retained backups; parity, strict checker, 150/150, no-skip verifier, non-target, loader, Identity and diff gates passed."
+      commands:
+        - cmd: "Three-target same-directory staging and os.replace promotion"
+          status: pass
+          exit_code: 0
+          key_output: "First pre-cutover attempt rolled back staging only; retry completed exact three targets with non-target unchanged."
+          timestamp: "2026-09-02T03:53:29Z"
+        - cmd: "python3 test_runner.py"
+          status: pass
+          exit_code: 0
+          key_output: "ran=150 passed=150 skipped=0 failed=0; all tests passed."
+          timestamp: "2026-09-02T03:53:37Z"
+        - cmd: "temporary verify_codex_env.sh --repo-root /private/tmp/mce-wp2-verifier-post"
+          status: pass
+          exit_code: 0
+          key_output: "Verification passed; all checks PASS; temp root removed."
+          timestamp: "2026-09-02T04:00:06Z"
+      next_allowed_task: T009
+
+  - id: T009
+    type: pm
+    assignee: PM
+    status: done
+    reasoning_hint: medium
+    objective: "Coordinate user-created behavior observations and record role, no-spawn, precedence, writer-scope, and main-owned mutation evidence."
+    inputs:
+      - "T008 receipt"
+    constraints:
+      - "Do not auto-create tasks or threads."
+      - "Do not infer behavior from source, parity, or loader output."
+      - "Mark unavailable observations not_proven."
+    expected_output:
+      - "browser_qa observation"
+      - "security_privacy observation"
+      - "operations_release observation"
+      - "tiny-task no-spawn observation"
+      - "review-swarm precedence observation"
+      - "product_content and writer exact-scope observations"
+      - "main-owned remote/shared-runtime mutation observation"
+    receipt:
+      result: done
+      note: "notes/T009-behavior-observation-receipt.md"
+      summary: "Five user-created tasks proved the required read-only roles, tiny no-spawn, explicit review precedence, exact disjoint writers, debug return-to-main, and main-owned remote/shared-runtime mutation."
+      commands:
+        - cmd: "Codex app list_threads + read_thread for five T009 tasks and relevant child tasks"
+          status: pass
+          exit_code: 0
+          key_output: "All five tasks completed; required role/no-spawn/write-set/authority observations were present."
+          timestamp: "2026-09-02T12:05:46Z"
+        - cmd: "Read back and delete the two exact T009 writer probe files"
+          status: pass
+          exit_code: 0
+          key_output: "product_content probe; worker probe; both disposable files removed."
+          timestamp: "2026-09-02T12:05:46Z"
+      next_allowed_task: T999
+
+  - id: T999
+    type: judge
+    assignee: Judge
+    status: done
+    reasoning_hint: high
+    objective: "Audit the full original goal against every current receipt and verification lane."
+    inputs:
+      - "All task receipts"
+      - "WP1/WP2 source and runtime evidence"
+      - "Behavior observations"
+      - "Current git/runtime state"
+    constraints:
+      - "Read-only."
+      - "Reject completion if any required Worker or PM task remains queued, active, or unverified."
+      - "Reject completion if source, parity, activity, and behavior are conflated."
+    expected_output:
+      - "complete | not_complete"
+      - "full_outcome_complete: true | false"
+      - "Requirement-to-receipt mapping"
+      - "Missing evidence"
+      - "Next task if not complete"
+    receipt:
+      result: done
+      note: "notes/T999-final-audit.md"
+      decision: complete
+      full_outcome_complete: true
+      summary: "All WP1/WP2 source, runtime parity, runtime activity and user-created behavior observations are proven; final fresh runner is 150/150 and no P0/P1 or receipt gap remains."
+      commands:
+        - cmd: "python3 test_runner.py"
+          status: pass
+          exit_code: 0
+          key_output: "ran=150 passed=150 skipped=0 failed=0; all tests passed."
+          timestamp: "2026-09-02T12:07:26Z"
+        - cmd: "T999 independent requirement-to-receipt audit"
+          status: pass
+          exit_code: 0
+          key_output: "complete; full_outcome_complete=true; no P0/P1 blocker; requirement gap zero."
+          timestamp: "2026-09-02T12:10:48Z"
+
+checks:
+  dirty_fingerprint: "WP1 source complete: 11 functional/doc paths + 1 changed shared Identity path; GoalBuddy controls reported separately"
+  last_verification:
+    result: pass
+    task: T013
+    commands:
+      - cmd: "python3 -c 'import test_runner; test_runner.test_surfaces_manifest_no_orphans(); test_runner.test_check_surfaces_validates_public_nav()'"
+        exit_code: 0
+        key_output: "Both previously failing surface tests passed."
+        timestamp: "2026-09-02T00:37:43Z"
+      - cmd: "python3 scripts/harness_refresh_identity.py status"
+        exit_code: 0
+        key_output: "A/B/C/D fresh."
+        timestamp: "2026-09-02T00:49:59Z"
+      - cmd: "python3 test_runner.py"
+        exit_code: 0
+        key_output: "ran=149 passed=149 skipped=0 failed=0; all tests passed."
+        timestamp: "2026-09-02T00:44:05Z"
+      - cmd: "git diff --check"
+        exit_code: 0
+        key_output: "No whitespace errors."
+        timestamp: "2026-09-02T00:49:59Z"

@@ -895,6 +895,37 @@ PY
 then
   exit 75
 fi
+
+# External gstack ownership is classified under the shared sync lock and
+# before any managed runtime write. Equivalent CLI: external_gstack_runtime.py status ... --json
+GSTACK_STATUS_COMMAND=(
+  python3 "${SCRIPT_DIR}/external_gstack_runtime.py" status
+  --repo-root "${REPO_ROOT}"
+  --codex-home "${CODEX_HOME}"
+  --json
+)
+if [[ -n "${GSTACK_ROOT:-}" ]]; then
+  GSTACK_STATUS_COMMAND+=(--gstack-root "${GSTACK_ROOT}")
+fi
+if ! EXTERNAL_GSTACK_STATUS_JSON="$("${GSTACK_STATUS_COMMAND[@]}")"; then
+  echo "${EXTERNAL_GSTACK_STATUS_JSON}" >&2
+  exit 79
+fi
+EXTERNAL_GSTACK_EXCLUDES_TEXT="$(
+  printf '%s' "${EXTERNAL_GSTACK_STATUS_JSON}" | python3 -c '
+import json, sys
+payload = json.load(sys.stdin)
+for value in payload.get("exact_excludes", []):
+    if not isinstance(value, str) or not value.startswith("/") or not value.endswith("/"):
+        raise SystemExit("invalid external gstack exclusion")
+    print(value)
+'
+)"
+EXTERNAL_GSTACK_RSYNC_ARGS=(-a)
+while IFS= read -r exclusion; do
+  [[ -n "${exclusion}" ]] || continue
+  EXTERNAL_GSTACK_RSYNC_ARGS+=(--exclude "${exclusion}")
+done <<<"${EXTERNAL_GSTACK_EXCLUDES_TEXT}"
 RUNTIME_BACKUP_DIR="${CODEX_HOME}/runtime-backups/$(date -u +%Y%m%dT%H%M%SZ)/"
 RETIRED_HOOK_TARGET="${CODEX_HOME}/hooks/model_router.py"
 RETIRED_HOOK_BACKUP="${RUNTIME_BACKUP_DIR}/retired/hooks/model_router.py"
@@ -1272,7 +1303,7 @@ fi
 mkdir -p "${CODEX_HOME}/skills"
 # Repo skills are managed overlays; preserve runtime-only/local skills that are
 # intentionally outside this repository's source-of-truth.
-rsync -a "${REPO_ROOT}/codex/skills/" "${CODEX_HOME}/skills/"
+rsync "${EXTERNAL_GSTACK_RSYNC_ARGS[@]}" "${REPO_ROOT}/codex/skills/" "${CODEX_HOME}/skills/"
 
 if [[ -d "${REPO_ROOT}/codex/workflow" ]]; then
   mkdir -p "${CODEX_HOME}/workflow"

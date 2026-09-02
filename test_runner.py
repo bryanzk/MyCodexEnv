@@ -35,6 +35,10 @@ VERIFY = ROOT / "scripts" / "verify_codex_env.sh"
 CODEX_CLI_RESOLVER = ROOT / "codex" / "runtime" / "resolve_codex_cli.sh"
 CHECK_SKILL_COMPATIBILITY = ROOT / "scripts" / "check_skill_compatibility.py"
 CHECK_CODEX_SKILL_LOADER = ROOT / "scripts" / "check_codex_skill_loader.py"
+EXTERNAL_GSTACK_RUNTIME = ROOT / "scripts" / "external_gstack_runtime.py"
+GLOBAL_CODEX_AGENTS = ROOT / "codex" / "AGENTS.md"
+SHIPQ_LIFECYCLE_SKILL = ROOT / "codex" / "skills" / "shipq-lifecycle-harness" / "SKILL.md"
+DELIVERY_HARNESS_SKILL = ROOT / "codex" / "skills" / "delivery-harness-framework" / "SKILL.md"
 MANAGE_AGENTS = ROOT / "scripts" / "manage_agents.py"
 HARNESS_EVIDENCE = ROOT / "scripts" / "harness_evidence.py"
 HARNESS_REPORT = ROOT / "scripts" / "harness_report.py"
@@ -1409,6 +1413,626 @@ def test_skill_compatibility_checker_contract():
         require("python_syntax_error" in error_codes, "checker should report Python helper syntax errors")
 
     print("[PASS] skill compatibility checker contract")
+
+
+def test_external_gstack_runtime_status_contract():
+    require(EXTERNAL_GSTACK_RUNTIME.exists(), f"missing external gstack authority: {EXTERNAL_GSTACK_RUNTIME}")
+
+    sidecar_pairs = {
+        ".agents/skills/gstack/SKILL.md": "SKILL.md",
+        "bin": "bin",
+        "lib": "lib",
+        "browse/dist": "browse/dist",
+        "browse/bin": "browse/bin",
+        ".agents/skills/gstack-upgrade/SKILL.md": "gstack-upgrade/SKILL.md",
+        ".agents/skills/gstack-office-hours/SKILL.md": "office-hours/SKILL.md",
+        "review/checklist.md": "review/checklist.md",
+        "review/design-checklist.md": "review/design-checklist.md",
+        "review/greptile-triage.md": "review/greptile-triage.md",
+        "review/TODOS-format.md": "review/TODOS-format.md",
+        "ETHOS.md": "ETHOS.md",
+        "supabase/config.sh": "supabase/config.sh",
+    }
+
+    with tempfile.TemporaryDirectory() as tmp:
+        root = Path(tmp)
+        repo = root / "repo"
+        codex_home = root / "home" / ".codex"
+        external = root / "external-gstack"
+        repo.mkdir()
+        codex_home.mkdir(parents=True)
+        external.mkdir()
+        code, out, err = run(["git", "init", "-q", str(external)])
+        require(code == 0, f"external fixture git init failed: {err or out}")
+        write(external / "VERSION", "9.9.9\n")
+        write_executable(external / "setup", "#!/usr/bin/env bash\nexit 0\n")
+        generated_names = ["gstack", "gstack-office-hours", "gstack-upgrade", "gstack-qa"]
+        for name in generated_names:
+            write(
+                external / ".agents" / "skills" / name / "SKILL.md",
+                f"---\nname: {name}\ndescription: fixture\n---\n<!-- AUTO-GENERATED from fixture -->\n",
+            )
+        for relative in ["bin/tool", "lib/shared.py", "browse/dist/browse", "browse/bin/find-browse",
+                         "review/checklist.md", "review/design-checklist.md", "review/greptile-triage.md",
+                         "review/TODOS-format.md", "ETHOS.md", "supabase/config.sh"]:
+            write(external / relative, f"fixture {relative}\n")
+        code, out, err = run(["git", "-C", str(external), "add", "."])
+        require(code == 0, f"external fixture add failed: {err or out}")
+        code, out, err = run(
+            ["git", "-C", str(external), "-c", "user.name=Fixture", "-c", "user.email=fixture@example.test",
+             "commit", "-qm", "fixture"]
+        )
+        require(code == 0, f"external fixture commit failed: {err or out}")
+        run(["git", "-C", str(external), "branch", "-M", "main"])
+
+        write(repo / "codex" / "skills" / "gstack" / "qa" / "SKILL.md",
+              "---\nname: qa\ndescription: generated fixture\n---\n")
+        write(repo / "codex" / "skills" / "gstack-checkpoint" / "SKILL.md",
+              "---\nname: gstack-checkpoint\ndescription: local fixture\n---\n")
+        skills = codex_home / "skills"
+        skills.mkdir(parents=True)
+        os.symlink(external / ".agents" / "skills" / "gstack-upgrade", skills / "gstack-upgrade")
+        os.symlink(external / ".agents" / "skills" / "gstack-office-hours", skills / "gstack-office-hours")
+        os.symlink(external / ".agents" / "skills" / "gstack-qa", skills / "gstack-qa")
+        write(skills / "gstack-checkpoint" / "SKILL.md",
+              "---\nname: gstack-checkpoint\ndescription: local fixture\n---\n")
+        sidecar = skills / "gstack"
+        for source_relative, target_relative in sidecar_pairs.items():
+            target = sidecar / target_relative
+            target.parent.mkdir(parents=True, exist_ok=True)
+            os.symlink(external / source_relative, target)
+
+        env = os.environ.copy()
+        env["HOME"] = str(root / "home")
+        env.pop("GSTACK_ROOT", None)
+        command = [
+            sys.executable, str(EXTERNAL_GSTACK_RUNTIME), "status", "--repo-root", str(repo),
+            "--codex-home", str(codex_home), "--gstack-root", str(external), "--json",
+        ]
+        code, out, err = run(command, env=env)
+        require(code == 0, f"valid external status should pass: {err or out}")
+        payload = json.loads(out)
+        require(payload["schema_version"] == "mce.external_gstack.status.v1", "external status schema mismatch")
+        require(payload["external_gstack"]["status"] == "active", "valid explicit root should be active")
+        require(payload["external_gstack"]["expected_skill_count"] == 4, "fixture inventory count mismatch")
+        require(payload["external_gstack"]["visible_skill_count"] == 4, "fixture visible count mismatch")
+        require(payload["external_gstack"]["missing"] == [] and payload["external_gstack"]["drifted"] == [],
+                "valid topology should have no missing or drift")
+        require(payload["external_gstack"]["sidecar"] == "ok", "valid sidecar should pass")
+        require(payload["exact_excludes"] == ["/gstack-office-hours/", "/gstack-qa/", "/gstack-upgrade/", "/gstack/"],
+                "exact excludes should be sorted and never use a prefix glob")
+
+        checker = [
+            sys.executable, str(CHECK_SKILL_COMPATIBILITY), "--repo-root", str(repo),
+            "--codex-home", str(codex_home), "--gstack-root", str(external), "--json",
+        ]
+        code, out, err = run(checker, env=env)
+        require(code == 0, f"checker should accept external gstack authority: {err or out}")
+        checker_payload = json.loads(out)
+        require(checker_payload["external_gstack"]["status"] == "active",
+                "checker should expose active external gstack status")
+        require(checker_payload["external_gstack"]["visible_skill_count"] == 4,
+                "checker external visible count mismatch")
+        require(checker_payload["managed_runtime"]["missing"] == [],
+                "external-owned skill paths must be excluded from legacy missing checks")
+
+        missing = root / "missing-explicit"
+        command[command.index(str(external))] = str(missing)
+        code, out, err = run(command, env=env)
+        require(code != 0, "explicit missing root must fail")
+        invalid = json.loads(out)
+        require(invalid["external_gstack"]["status"] == "invalid", "explicit missing root must be invalid")
+        require(all(isinstance(invalid["external_gstack"][key], expected) for key, expected in {
+            "root": str, "version": str, "expected_skill_count": int, "visible_skill_count": int,
+            "missing": list, "drifted": list, "sidecar": str, "status": str,
+        }.items()), "external status field types must remain stable")
+
+        shutil.rmtree(external)
+        for item in list(skills.iterdir()):
+            if item.is_symlink():
+                item.unlink()
+            else:
+                shutil.rmtree(item)
+        os.symlink(root / "other" / ".agents" / "skills" / "foo", skills / "foo")
+        os.symlink(root / "local" / "gstack-checkpoint", skills / "gstack-checkpoint")
+        legacy_command = [
+            sys.executable, str(EXTERNAL_GSTACK_RUNTIME), "status", "--repo-root", str(repo),
+            "--codex-home", str(codex_home), "--json",
+        ]
+        code, out, err = run(legacy_command, env=env)
+        require(code == 0, f"unrelated and repo-owned symlinks should preserve legacy mode: {err or out}")
+        require(json.loads(out)["external_gstack"]["status"] == "legacy", "clean absent default should be legacy")
+
+        (skills / "gstack-checkpoint").unlink()
+        os.symlink(root / "old" / ".agents" / "skills" / "gstack-upgrade", skills / "gstack-upgrade")
+        code, out, err = run(legacy_command, env=env)
+        require(code != 0, "reserved dangling gstack symlink must fail closed")
+        footprint = json.loads(out)
+        require(footprint["external_gstack"]["status"] == "invalid", "reserved footprint should be invalid")
+        require(any(item["code"] == "external_gstack_default_missing_with_runtime_footprint"
+                    for item in footprint["findings"]), "reserved footprint finding missing")
+
+        sync_text = SYNC.read_text(encoding="utf-8")
+        require("external_gstack_runtime.py" in sync_text and " status " in sync_text,
+                "ordinary sync must consume the single external-gstack status authority")
+        require("exact_excludes" in sync_text, "ordinary sync must consume exact exclusions from authority JSON")
+        require("--exclude '/gstack-*'" not in sync_text and '--exclude "/gstack-*"' not in sync_text,
+                "ordinary sync must not use a broad gstack prefix exclusion")
+
+    print("[PASS] external gstack runtime status contract")
+
+
+def test_external_gstack_runtime_transaction_lock_contract():
+    require(EXTERNAL_GSTACK_RUNTIME.exists(), "external gstack authority missing")
+    with tempfile.TemporaryDirectory() as tmp:
+        root = Path(tmp)
+        codex_home = root / "home" / ".codex"
+        codex_home.mkdir(parents=True)
+        (codex_home / "skills").mkdir()
+        operation_root = codex_home / "runtime-backups" / "fixture-apply-external-gstack"
+        recover_root = codex_home / "runtime-backups" / "fixture-recover-external-gstack"
+        manifest = root / "approved.json"
+        manifest_payload = {
+            "schema_version": "mce.external_gstack.v1",
+            "operation_id": "fixture-apply",
+            "repo_root": str(root / "repo"),
+            "codex_home": str(codex_home),
+            "gstack_root": str(root / "external"),
+            "operation_root": str(operation_root),
+            "staging_root": str(operation_root / "staging"),
+            "backup_root": str(operation_root / "backup"),
+            "external_head": "f" * 40,
+            "external_version": "fixture",
+            "inventory": ["gstack"],
+            "flat_generated": [],
+            "replace_real": [],
+            "existing_links": [],
+            "sidecar_pairs": [],
+            "sidecar_dirs": [],
+            "approval_context": {
+                "authority_sha256": "0" * 64,
+                "external_root_sha256": "0" * 64,
+                "runtime_skills_sha256": "0" * 64,
+                "non_target_sha256": "0" * 64,
+                "replace_real_prestates": {},
+                "sidecar_prestate_sha256": "0" * 64,
+                "warning_tuples": [],
+            },
+            "quiescence_receipt": {
+                "status": "approved",
+                "approved_by": "owner",
+                "operation_id": "fixture-apply",
+                "timestamp": dt.datetime.now(dt.timezone.utc).isoformat(),
+            },
+        }
+        write(
+            manifest,
+            json.dumps(manifest_payload) + "\n",
+        )
+        recover_payload = copy.deepcopy(manifest_payload)
+        recover_payload.update(
+            {
+                "operation_id": "fixture-recover",
+                "operation_root": str(recover_root),
+                "staging_root": str(recover_root / "staging"),
+                "backup_root": str(recover_root / "backup"),
+            }
+        )
+        recover_payload["quiescence_receipt"]["operation_id"] = "fixture-recover"
+        recover_root.mkdir(parents=True)
+        write(
+            recover_root / "operation.json",
+            json.dumps(
+                {
+                    "codex_home": str(codex_home),
+                    "state": "planned",
+                    "manifest": recover_payload,
+                    "manifest_sha256": hashlib.sha256(
+                        json.dumps(
+                            recover_payload, ensure_ascii=False, sort_keys=True, separators=(",", ":")
+                        ).encode("utf-8")
+                    ).hexdigest(),
+                },
+                sort_keys=True,
+            ) + "\n",
+        )
+        lock_path = codex_home / ".phase0-sync.lock"
+        with lock_path.open("w") as lock_handle:
+            fcntl.flock(lock_handle.fileno(), fcntl.LOCK_EX | fcntl.LOCK_NB)
+            before = snapshot_tree(codex_home)
+            apply = run_process(
+                [sys.executable, str(EXTERNAL_GSTACK_RUNTIME), "apply", "--manifest", str(manifest)],
+                approve_source=False,
+                prepare_loaded_readback=False,
+            )
+            recover = run_process(
+                [sys.executable, str(EXTERNAL_GSTACK_RUNTIME), "recover", "--operation-root", str(recover_root), "--rollback"],
+                approve_source=False,
+                prepare_loaded_readback=False,
+            )
+        for label, proc in [("apply", apply), ("recover", recover)]:
+            require(proc.returncode == 75, f"{label} lock contention should exit 75: {proc.stderr or proc.stdout}")
+            payload = json.loads(proc.stderr.strip().splitlines()[-1])
+            require(payload["reason_code"] == "lock_contended", f"{label} contention reason mismatch")
+        require(snapshot_tree(codex_home) == before, "lock loser must not mutate runtime")
+
+    print("[PASS] external gstack transaction lock contract")
+
+
+def test_external_gstack_runtime_apply_recover_contract():
+    sidecar_pairs = {
+        ".agents/skills/gstack/SKILL.md": "SKILL.md",
+        "bin": "bin",
+        "lib": "lib",
+        "browse/dist": "browse/dist",
+        "browse/bin": "browse/bin",
+        ".agents/skills/gstack-upgrade/SKILL.md": "gstack-upgrade/SKILL.md",
+        ".agents/skills/gstack-office-hours/SKILL.md": "office-hours/SKILL.md",
+        "review/checklist.md": "review/checklist.md",
+        "review/design-checklist.md": "review/design-checklist.md",
+        "review/greptile-triage.md": "review/greptile-triage.md",
+        "review/TODOS-format.md": "review/TODOS-format.md",
+        "ETHOS.md": "ETHOS.md",
+        "supabase/config.sh": "supabase/config.sh",
+    }
+    with tempfile.TemporaryDirectory() as tmp:
+        root = Path(tmp)
+        repo = root / "repo"
+        codex_home = root / "home" / ".codex"
+        external = root / "external"
+        repo.mkdir()
+        codex_home.mkdir(parents=True)
+        external.mkdir()
+        run(["git", "init", "-q", str(external)])
+        write(external / "VERSION", "9.9.9\n")
+        write_executable(external / "setup", "#!/usr/bin/env bash\nexit 0\n")
+        names = ["gstack", "gstack-office-hours", "gstack-qa", "gstack-upgrade"]
+        for name in names:
+            write(external / ".agents" / "skills" / name / "SKILL.md",
+                  f"---\nname: {name}\ndescription: fixture\n---\n<!-- AUTO-GENERATED from fixture -->\n")
+        for relative in ["bin/tool", "lib/shared.py", "browse/dist/browse", "browse/bin/find-browse",
+                         "review/checklist.md", "review/design-checklist.md", "review/greptile-triage.md",
+                         "review/TODOS-format.md", "ETHOS.md", "supabase/config.sh"]:
+            write(external / relative, f"fixture {relative}\n")
+        run(["git", "-C", str(external), "add", "."])
+        code, out, err = run(["git", "-C", str(external), "-c", "user.name=Fixture",
+                              "-c", "user.email=fixture@example.test", "commit", "-qm", "fixture"])
+        require(code == 0, f"transaction external commit failed: {err or out}")
+        run(["git", "-C", str(external), "branch", "-M", "main"])
+        _, external_head, _ = run(["git", "-C", str(external), "rev-parse", "HEAD"])
+
+        skills = codex_home / "skills"
+        skills.mkdir(parents=True)
+        os.symlink(external / ".agents" / "skills" / "gstack-office-hours", skills / "gstack-office-hours")
+        os.symlink(external / ".agents" / "skills" / "gstack-upgrade", skills / "gstack-upgrade")
+        shutil.copytree(external / ".agents" / "skills" / "gstack-qa", skills / "gstack-qa")
+        old_sidecar = skills / "gstack"
+        for source_relative, target_relative in sidecar_pairs.items():
+            target = old_sidecar / target_relative
+            target.parent.mkdir(parents=True, exist_ok=True)
+            os.symlink(external / source_relative, target)
+        write(skills / "local-skill" / "SKILL.md", "---\nname: local-skill\ndescription: fixture\n---\n")
+        before_flat = snapshot_tree(skills / "gstack-qa")
+        before_sidecar = snapshot_tree(old_sidecar)
+
+        spec = importlib.util.spec_from_file_location("external_gstack_runtime_test", EXTERNAL_GSTACK_RUNTIME)
+        require(spec is not None and spec.loader is not None, "external gstack module should load")
+        runtime_module = importlib.util.module_from_spec(spec)
+        sys.modules[spec.name] = runtime_module
+        spec.loader.exec_module(runtime_module)
+
+        operation_root = codex_home / "runtime-backups" / "fixture-external-gstack"
+        manifest = root / "approved.json"
+        approval_context = runtime_module.capture_approval_context(
+            repo, codex_home, external, sorted(set(names) - {"gstack"})
+        )
+        write(
+            skills / ".system" / "loader-projection" / "SKILL.md",
+            "---\nname: loader-projection\ndescription: ephemeral fixture\n---\n",
+        )
+        write(
+            manifest,
+            json.dumps(
+                {
+                    "schema_version": "mce.external_gstack.v1",
+                    "operation_id": "fixture",
+                    "repo_root": str(repo),
+                    "codex_home": str(codex_home),
+                    "gstack_root": str(external),
+                    "operation_root": str(operation_root),
+                    "staging_root": str(operation_root / "staging"),
+                    "backup_root": str(operation_root / "backup"),
+                    "external_head": external_head,
+                    "external_version": "9.9.9",
+                    "inventory": names,
+                    "flat_generated": ["gstack-office-hours", "gstack-qa", "gstack-upgrade"],
+                    "replace_real": ["gstack-qa"],
+                    "existing_links": ["gstack-office-hours", "gstack-upgrade"],
+                    "sidecar_pairs": [[source, target] for source, target in sidecar_pairs.items()],
+                    "sidecar_dirs": [".", "browse", "gstack-upgrade", "office-hours", "review", "supabase"],
+                    "approval_context": approval_context,
+                    "quiescence_receipt": {
+                        "status": "approved",
+                        "approved_by": "owner",
+                        "operation_id": "fixture",
+                        "timestamp": dt.datetime.now(dt.timezone.utc).isoformat(),
+                    },
+                },
+                sort_keys=True,
+            )
+            + "\n",
+        )
+        apply = run_process(
+            [sys.executable, str(EXTERNAL_GSTACK_RUNTIME), "apply", "--manifest", str(manifest)],
+            approve_source=False,
+            prepare_loaded_readback=False,
+        )
+        require(apply.returncode == 0, f"transaction apply should pass: {apply.stderr or apply.stdout}")
+        require((skills / "gstack-qa").is_symlink(), "real generated skill should become a symlink")
+        require((skills / "gstack-qa").resolve() == (external / ".agents" / "skills" / "gstack-qa").resolve(),
+                "replacement symlink target mismatch")
+        require(all((old_sidecar / target).is_symlink() for target in sidecar_pairs.values()),
+                "new sidecar must contain every exact link")
+        journal = json.loads((operation_root / "operation.json").read_text(encoding="utf-8"))
+        require(journal["state"] == "complete", "successful apply must leave a complete journal")
+
+        flat_backup = operation_root / "backup" / "flat" / "gstack-qa"
+        sidecar_backup = operation_root / "backup" / "gstack"
+        for label, backup in [("flat", flat_backup), ("sidecar", sidecar_backup)]:
+            write(backup / "corrupt.txt", "corrupt backup\n")
+            before_corrupt = snapshot_tree(codex_home)
+            corrupt = run_process(
+                [sys.executable, str(EXTERNAL_GSTACK_RUNTIME), "recover", "--operation-root", str(operation_root), "--rollback"],
+                approve_source=False,
+                prepare_loaded_readback=False,
+            )
+            require(corrupt.returncode != 0, f"corrupt {label} backup must block recovery")
+            require(snapshot_tree(codex_home) == before_corrupt,
+                    f"corrupt {label} backup must cause zero mutation")
+            (backup / "corrupt.txt").unlink()
+
+        for label, backup in [("flat", flat_backup), ("sidecar", sidecar_backup)]:
+            held = root / f"held-{label}-backup"
+            os.rename(backup, held)
+            before_missing = snapshot_tree(codex_home)
+            missing_backup = run_process(
+                [sys.executable, str(EXTERNAL_GSTACK_RUNTIME), "recover", "--operation-root", str(operation_root), "--rollback"],
+                approve_source=False,
+                prepare_loaded_readback=False,
+            )
+            require(missing_backup.returncode != 0, f"missing {label} backup must block recovery")
+            require(snapshot_tree(codex_home) == before_missing,
+                    f"missing {label} backup must cause zero mutation")
+            os.rename(held, backup)
+
+        write(old_sidecar / "unexpected.txt", "do not remove\n")
+        before_blocked_recover = snapshot_tree(codex_home)
+        blocked_recover = run_process(
+            [sys.executable, str(EXTERNAL_GSTACK_RUNTIME), "recover", "--operation-root", str(operation_root), "--rollback"],
+            approve_source=False,
+            prepare_loaded_readback=False,
+        )
+        require(blocked_recover.returncode != 0, "unexpected live sidecar content must block recovery")
+        require(snapshot_tree(codex_home) == before_blocked_recover,
+                "blocked recovery must not mutate live or backup state")
+        require(json.loads((operation_root / "operation.json").read_text(encoding="utf-8"))["state"] == "complete",
+                "blocked recovery must not claim rolled_back")
+        (old_sidecar / "unexpected.txt").unlink()
+
+        journal_path = operation_root / "operation.json"
+        journal = json.loads(journal_path.read_text(encoding="utf-8"))
+        journal["state"] = "unknown"
+        write(journal_path, json.dumps(journal, sort_keys=True) + "\n")
+        before_unknown = snapshot_tree(codex_home)
+        unknown_recover = run_process(
+            [sys.executable, str(EXTERNAL_GSTACK_RUNTIME), "recover", "--operation-root", str(operation_root), "--rollback"],
+            approve_source=False,
+            prepare_loaded_readback=False,
+        )
+        require(unknown_recover.returncode != 0, "unknown journal state must fail closed")
+        require(snapshot_tree(codex_home) == before_unknown, "unknown journal state must cause zero mutation")
+        journal["state"] = "complete"
+        journal["codex_home"] = str(root / "other-home")
+        write(journal_path, json.dumps(journal, sort_keys=True) + "\n")
+        before_mismatch = snapshot_tree(codex_home)
+        mismatch_recover = run_process(
+            [sys.executable, str(EXTERNAL_GSTACK_RUNTIME), "recover", "--operation-root", str(operation_root), "--rollback"],
+            approve_source=False,
+            prepare_loaded_readback=False,
+        )
+        require(mismatch_recover.returncode != 0, "journal and manifest codex_home mismatch must fail closed")
+        require(snapshot_tree(codex_home) == before_mismatch, "mismatched journal must cause zero mutation")
+        journal["codex_home"] = str(codex_home)
+        write(journal_path, json.dumps(journal, sort_keys=True) + "\n")
+
+        recover = run_process(
+            [sys.executable, str(EXTERNAL_GSTACK_RUNTIME), "recover", "--operation-root", str(operation_root), "--rollback"],
+            approve_source=False,
+            prepare_loaded_readback=False,
+        )
+        require(recover.returncode == 0, f"transaction recover should pass: {recover.stderr or recover.stdout}")
+        require(not (skills / "gstack-qa").is_symlink(), "rollback must restore original real directory")
+        require(snapshot_tree(skills / "gstack-qa") == before_flat, "rollback flat prestate mismatch")
+        require(snapshot_tree(old_sidecar) == before_sidecar, "rollback sidecar prestate mismatch")
+        recover_again = run_process(
+            [sys.executable, str(EXTERNAL_GSTACK_RUNTIME), "recover", "--operation-root", str(operation_root), "--rollback"],
+            approve_source=False,
+            prepare_loaded_readback=False,
+        )
+        require(recover_again.returncode == 0, "recover must be idempotent")
+        require(json.loads((operation_root / "operation.json").read_text(encoding="utf-8"))["state"] == "rolled_back",
+                "recover journal should end rolled_back")
+
+        for suffix, fault in [
+            ("recover-sidecar-crash", "after_sidecar_restored"),
+            ("recover-flat-crash", "after_flat_restored:gstack-qa"),
+        ]:
+            recovery_crash_root = codex_home / "runtime-backups" / f"fixture-{suffix}-external-gstack"
+            recovery_crash_payload = json.loads(manifest.read_text(encoding="utf-8"))
+            recovery_crash_payload.update(
+                {
+                    "operation_id": f"fixture-{suffix}",
+                    "operation_root": str(recovery_crash_root),
+                    "staging_root": str(recovery_crash_root / "staging"),
+                    "backup_root": str(recovery_crash_root / "backup"),
+                    "approval_context": runtime_module.capture_approval_context(
+                        repo, codex_home, external, sorted(set(names) - {"gstack"})
+                    ),
+                    "quiescence_receipt": {
+                        "status": "approved",
+                        "approved_by": "owner",
+                        "operation_id": f"fixture-{suffix}",
+                        "timestamp": dt.datetime.now(dt.timezone.utc).isoformat(),
+                    },
+                }
+            )
+            recovery_crash_manifest = root / f"approved-{suffix}.json"
+            write(recovery_crash_manifest, json.dumps(recovery_crash_payload, sort_keys=True) + "\n")
+            applied = run_process(
+                [sys.executable, str(EXTERNAL_GSTACK_RUNTIME), "apply", "--manifest", str(recovery_crash_manifest)],
+                approve_source=False,
+                prepare_loaded_readback=False,
+            )
+            require(applied.returncode == 0, f"{suffix} setup apply should pass: {applied.stderr}")
+            recovery_env = os.environ.copy()
+            recovery_env["MCE_EXTERNAL_GSTACK_TEST_FAULT"] = fault
+            interrupted = run_process(
+                [sys.executable, str(EXTERNAL_GSTACK_RUNTIME), "recover", "--operation-root",
+                 str(recovery_crash_root), "--rollback"],
+                env=recovery_env,
+                approve_source=False,
+                prepare_loaded_readback=False,
+            )
+            require(interrupted.returncode == 98, f"{suffix} should interrupt recovery")
+            resumed = run_process(
+                [sys.executable, str(EXTERNAL_GSTACK_RUNTIME), "recover", "--operation-root",
+                 str(recovery_crash_root), "--rollback"],
+                approve_source=False,
+                prepare_loaded_readback=False,
+            )
+            require(resumed.returncode == 0, f"{suffix} should resume in a new process: {resumed.stderr}")
+            require(snapshot_tree(skills / "gstack-qa") == before_flat,
+                    f"{suffix} flat prestate mismatch after resumed recovery")
+            require(snapshot_tree(old_sidecar) == before_sidecar,
+                    f"{suffix} sidecar prestate mismatch after resumed recovery")
+
+        crash_root = codex_home / "runtime-backups" / "fixture-crash-external-gstack"
+        crash_manifest = root / "approved-crash.json"
+        crash_payload = json.loads(manifest.read_text(encoding="utf-8"))
+        crash_payload.update(
+            {
+                "operation_id": "fixture-crash",
+                "operation_root": str(crash_root),
+                "staging_root": str(crash_root / "staging"),
+                "backup_root": str(crash_root / "backup"),
+            }
+        )
+        crash_payload["quiescence_receipt"].update(
+            {"operation_id": "fixture-crash", "timestamp": dt.datetime.now(dt.timezone.utc).isoformat()}
+        )
+        write(crash_manifest, json.dumps(crash_payload, sort_keys=True) + "\n")
+        crash_env = os.environ.copy()
+        crash_env["MCE_EXTERNAL_GSTACK_TEST_FAULT"] = "after_old_moved:gstack-qa"
+        crashed = run_process(
+            [sys.executable, str(EXTERNAL_GSTACK_RUNTIME), "apply", "--manifest", str(crash_manifest)],
+            env=crash_env,
+            approve_source=False,
+            prepare_loaded_readback=False,
+        )
+        require(crashed.returncode == 97, f"fault injection should terminate the apply process: {crashed.stderr}")
+        require(not (skills / "gstack-qa").exists(), "crash fixture should stop after moving the old target")
+        recovered = run_process(
+            [sys.executable, str(EXTERNAL_GSTACK_RUNTIME), "recover", "--operation-root", str(crash_root), "--rollback"],
+            approve_source=False,
+            prepare_loaded_readback=False,
+        )
+        require(recovered.returncode == 0, f"new process should recover crashed transaction: {recovered.stderr}")
+        require(snapshot_tree(skills / "gstack-qa") == before_flat, "crash recovery flat prestate mismatch")
+        require(snapshot_tree(old_sidecar) == before_sidecar, "crash recovery sidecar prestate mismatch")
+
+        stale_root = codex_home / "runtime-backups" / "fixture-stale-external-gstack"
+        stale_payload = json.loads(manifest.read_text(encoding="utf-8"))
+        stale_payload.update(
+            {
+                "operation_id": "fixture-stale",
+                "operation_root": str(stale_root),
+                "staging_root": str(stale_root / "staging"),
+                "backup_root": str(stale_root / "backup"),
+                "approval_context": runtime_module.capture_approval_context(
+                    repo, codex_home, external, sorted(set(names) - {"gstack"})
+                ),
+                "quiescence_receipt": {
+                    "status": "approved",
+                    "approved_by": "owner",
+                    "operation_id": "fixture-stale",
+                    "timestamp": "2000-01-01T00:00:00+00:00",
+                },
+            }
+        )
+        stale_manifest = root / "approved-stale.json"
+        write(stale_manifest, json.dumps(stale_payload, sort_keys=True) + "\n")
+        before_stale = snapshot_tree(codex_home)
+        stale = run_process(
+            [sys.executable, str(EXTERNAL_GSTACK_RUNTIME), "apply", "--manifest", str(stale_manifest)],
+            approve_source=False,
+            prepare_loaded_readback=False,
+        )
+        require(stale.returncode != 0, "stale quiescence receipt must fail before write")
+        require(snapshot_tree(codex_home) == before_stale, "stale approval must cause zero mutation")
+
+        drift_root = codex_home / "runtime-backups" / "fixture-drift-external-gstack"
+        drift_payload = copy.deepcopy(stale_payload)
+        drift_payload.update(
+            {
+                "operation_id": "fixture-drift",
+                "operation_root": str(drift_root),
+                "staging_root": str(drift_root / "staging"),
+                "backup_root": str(drift_root / "backup"),
+                "quiescence_receipt": {
+                    "status": "approved",
+                    "approved_by": "owner",
+                    "operation_id": "fixture-drift",
+                    "timestamp": dt.datetime.now(dt.timezone.utc).isoformat(),
+                },
+            }
+        )
+        write(skills / "local-skill" / "new.txt", "approval drift\n")
+        drift_manifest = root / "approved-drift.json"
+        write(drift_manifest, json.dumps(drift_payload, sort_keys=True) + "\n")
+        before_drift = snapshot_tree(codex_home)
+        drift = run_process(
+            [sys.executable, str(EXTERNAL_GSTACK_RUNTIME), "apply", "--manifest", str(drift_manifest)],
+            approve_source=False,
+            prepare_loaded_readback=False,
+        )
+        require(drift.returncode != 0, "runtime prestate drift must fail before write")
+        require(snapshot_tree(codex_home) == before_drift, "prestate drift must cause zero mutation")
+
+    print("[PASS] external gstack apply/recover contract")
+
+
+def test_external_gstack_documentation_contract():
+    docs = {
+        "README.md": ROOT / "README.md",
+        "runtime-and-skills": ROOT / "docs" / "agents" / "runtime-and-skills.md",
+        "reproduction": ROOT / "docs" / "CODEX_ENV_REPRODUCTION.md",
+        "repo-index": ROOT / "docs" / "repo-index.md",
+        "harness-runtime": ROOT / "docs" / "HARNESS_RUNTIME.md",
+        "lifecycle-routing": ROOT / "docs" / "LIFECYCLE_SKILL_ROUTING.md",
+    }
+    texts = {name: path.read_text(encoding="utf-8") for name, path in docs.items()}
+    for name, text in texts.items():
+        require("external_gstack_runtime.py" in text, f"{name} missing single external gstack authority")
+        require("~/.gstack/repos/gstack" in text, f"{name} missing active external root")
+    combined = "\n".join(texts.values())
+    for term in ["legacy", "bootstrap", "status", "apply", "recover"]:
+        require(term in combined, f"external gstack docs missing contract term: {term}")
+    require("ordinary sync" in combined or "普通同步" in combined,
+            "docs must distinguish ordinary sync from runtime cutover")
+    require("不运行 `setup`" in combined or "does not run `setup`" in combined,
+            "docs must remove the repo-local setup requirement for active external gstack")
+
+    print("[PASS] external gstack documentation contract")
 
 
 def test_codex_skill_loader_gate():
@@ -10505,6 +11129,55 @@ def test_global_agents_authorization_and_mode_contract():
     print("[PASS] global AGENTS authorization and mode contract")
 
 
+def test_subagent_role_routing_contract():
+    paths = [GLOBAL_CODEX_AGENTS, SHIPQ_LIFECYCLE_SKILL, DELIVERY_HARNESS_SKILL]
+    texts = {path.name + ":" + path.parent.name: " ".join(path.read_text(encoding="utf-8").split()) for path in paths}
+    shared_terms = [
+        "exact repo-relative write_set",
+        "assigned focused gate",
+        "read-only",
+        "remote/shared runtime",
+        "fresh final verification",
+        "关键词本身不触发 spawn",
+        "显式 skill role 优先",
+        "Product/Handoff",
+        "Debug explorer",
+    ]
+    role_mappings = [
+        "Python/data/API → `python_data`",
+        "Web/Cloudflare → `web_cloudflare`",
+        "Apple → `apple_platform`",
+        "Elixir/OTP → `elixir_orchestrator`",
+        "Product/content → `product_content`",
+        "Browser QA → `browser_qa`",
+        "Security/privacy → `security_privacy`",
+        "Release/runtime readback → `operations_release`",
+        "Architecture → `architect`",
+        "Exploration → `explorer`",
+        "Review/review-swarm → `reviewer`",
+    ]
+    for label, text in texts.items():
+        for term in shared_terms:
+            require(term in text, f"{label} missing subagent routing contract: {term}")
+        require("Non-browser QA 无匹配 specialist → main" in text,
+                f"{label} missing main-owned QA fallback")
+        require("小型、串行、紧耦合" in text, f"{label} missing no-spawn small-task boundary")
+        require("commit、push、deploy" in text, f"{label} missing writer release boundary")
+    for label, text in texts.items():
+        if "AGENTS.md" in label:
+            for role in [
+                "browser_qa", "security_privacy", "operations_release", "architect", "explorer", "reviewer",
+                "python_data", "web_cloudflare", "apple_platform", "elixir_orchestrator", "product_content", "worker",
+            ]:
+                require(role in text, f"{label} missing available role: {role}")
+            continue
+        for term in role_mappings:
+            require(term in text, f"{label} missing role mapping: {term}")
+        require("无匹配 specialist 的授权 implementation → `worker`" in text,
+                f"{label} missing bounded worker fallback")
+    print("[PASS] subagent role routing contract")
+
+
 def test_global_agents_layering_workflow_and_size_contract():
     path = ROOT / "codex" / "AGENTS.md"
     text = path.read_text(encoding="utf-8")
@@ -11965,6 +12638,10 @@ TESTS = [
     test_codex_version_policy_accepts_current_cli,
     test_codex_cli_resolver_skips_broken_candidates,
     test_skill_compatibility_checker_contract,
+    test_external_gstack_runtime_status_contract,
+    test_external_gstack_runtime_transaction_lock_contract,
+    test_external_gstack_runtime_apply_recover_contract,
+    test_external_gstack_documentation_contract,
     test_codex_skill_loader_gate,
     test_sync_renders_template_and_copies_skills,
     test_sync_rejects_retired_hook_nonregular_before_runtime_writes,
@@ -12068,6 +12745,7 @@ TESTS = [
     test_headroom_filter_detects_modes_and_reports_stats,
     test_manage_agents_scan_backup_generate_restore,
     test_global_agents_authorization_and_mode_contract,
+    test_subagent_role_routing_contract,
     test_global_agents_layering_workflow_and_size_contract,
     test_codex_fluent_active_session_report,
     test_codex_fluent_active_session_boundaries,
