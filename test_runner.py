@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import argparse
+import ast
 import copy
 import datetime as dt
 import fcntl
@@ -17,7 +18,7 @@ import socket
 import statistics
 import sys
 import tempfile
-from contextlib import contextmanager, redirect_stdout
+from contextlib import contextmanager, redirect_stderr, redirect_stdout
 from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
@@ -260,13 +261,139 @@ def run_registered_tests(tests: list, *, output=None, error_output=None, require
     return 0
 
 
-def select_registered_tests(tests: list, *, host_only: bool) -> list:
-    if not host_only:
+# Docs lane: when a change set only touches documentation, run the registered
+# tests that can observe those documents instead of the whole suite. Selection is
+# a static reverse-reference lookup over this file: a test is selected when a
+# string literal reachable from its body (directly, through module-level
+# constants, or through helper functions it calls) names a changed path, one of
+# its ancestor directories, its basename, or its top-level segment; and, second
+# order, when the test names a script or hook module that itself mentions the
+# changed path. Over-inclusion is accepted; exclusion must be provable.
+DOCS_LANE_PATH_PREFIXES = ("docs/", "tasks/")
+DOCS_LANE_TOP_LEVEL_FILES = ("README.md", "README.zh-CN.md", "AGENTS.md", "CONTEXT.md")
+DOCS_LANE_MODULE_ROOTS = ("scripts", "codex/hooks", "codex/runtime", "claude/codex-hooks/hooks")
+DOCS_LANE_ALWAYS = ("test_runner_registry_complete", "test_runner_docs_lane_selection_contract")
+
+
+def is_docs_lane_path(path: str) -> bool:
+    return path in DOCS_LANE_TOP_LEVEL_FILES or path.startswith(DOCS_LANE_PATH_PREFIXES)
+
+
+def _docs_lane_patterns(changed: list[str]) -> set[str]:
+    patterns: set[str] = set()
+    for path in changed:
+        parts = path.split("/")
+        patterns.add(path)
+        patterns.add(parts[-1])
+        for depth in range(2, len(parts)):
+            patterns.add("/".join(parts[:depth]) + "/")
+        if len(parts) > 1:
+            patterns.add(parts[0])  # Path-join style: ROOT / "docs" / "x.md"
+    return patterns
+
+
+_TEST_STRING_REFERENCE_CACHE: dict[tuple[str, str], dict[str, set[str]]] = {}
+
+
+def _test_string_references(source_path: Path) -> dict[str, set[str]]:
+    source = source_path.read_text(encoding="utf-8")
+    cache_key = (str(source_path), hashlib.sha256(source.encode("utf-8")).hexdigest())
+    cached = _TEST_STRING_REFERENCE_CACHE.get(cache_key)
+    if cached is not None:
+        return cached
+    tree = ast.parse(source)
+    constants: dict[str, tuple[list[str], list[str]]] = {}
+    functions: dict[str, ast.AST] = {}
+    for node in tree.body:
+        if isinstance(node, (ast.Assign, ast.AnnAssign)) and node.value is not None:
+            targets = node.targets if isinstance(node, ast.Assign) else [node.target]
+            strings = [c.value for c in ast.walk(node.value) if isinstance(c, ast.Constant) and isinstance(c.value, str)]
+            names = [c.id for c in ast.walk(node.value) if isinstance(c, ast.Name)]
+            for target in targets:
+                if isinstance(target, ast.Name):
+                    constants[target.id] = (strings, names)
+        elif isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
+            functions[node.name] = node
+
+    def constant_strings(name: str, seen: set[str]) -> list[str]:
+        if name in seen or name not in constants:
+            return []
+        seen.add(name)
+        strings, names = constants[name]
+        out = list(strings)
+        for inner in names:
+            out.extend(constant_strings(inner, seen))
+        return out
+
+    def function_strings(name: str, seen: set[str]) -> list[str]:
+        if name in seen or name not in functions:
+            return []
+        seen.add(name)
+        out: list[str] = []
+        for child in ast.walk(functions[name]):
+            if isinstance(child, ast.Constant) and isinstance(child.value, str):
+                out.append(child.value)
+            elif isinstance(child, ast.Name):
+                out.extend(constant_strings(child.id, set()))
+                if child.id in functions:
+                    out.extend(function_strings(child.id, seen))
+        return out
+
+    references = {name: set(function_strings(name, set())) for name in functions if name.startswith("test_")}
+    _TEST_STRING_REFERENCE_CACHE[cache_key] = references
+    return references
+
+
+def _modules_mentioning(patterns: set[str], root: Path) -> set[str]:
+    literal_patterns = {p for p in patterns if p not in {"docs", "tasks"}}
+    names: set[str] = set()
+    for module_root in DOCS_LANE_MODULE_ROOTS:
+        base = root / module_root
+        if not base.is_dir():
+            continue
+        for module in sorted(base.rglob("*.py")):
+            if "__pycache__" in module.parts or ".backup." in module.name:
+                continue
+            try:
+                text = module.read_text(encoding="utf-8")
+            except (OSError, UnicodeDecodeError):
+                continue
+            if any(p in text for p in literal_patterns):
+                relative = module.relative_to(root).as_posix()
+                names.update({relative, module.name, module.stem})
+    return names
+
+
+def docs_lane_test_names(changed: list[str], *, root: Path = ROOT, source_path: Path | None = None) -> list[str]:
+    if not changed:
+        raise ValueError("docs lane requires at least one changed path")
+    rejected = [path for path in changed if not is_docs_lane_path(path)]
+    if rejected:
+        raise ValueError(f"docs lane only accepts documentation paths; not eligible: {rejected}")
+    references = _test_string_references(source_path or Path(__file__))
+    patterns = _docs_lane_patterns(changed)
+    selected = {name for name, strings in references.items() if any(s in patterns for s in strings)}
+    module_names = _modules_mentioning(patterns, root)
+    if module_names:
+        selected.update(name for name, strings in references.items() if any(s in module_names for s in strings))
+    selected.update(DOCS_LANE_ALWAYS)
+    return sorted(selected)
+
+
+def select_registered_tests(tests: list, *, host_only: bool, lane: str = "full", changed: list[str] | None = None) -> list:
+    if host_only and lane != "full":
+        raise ValueError("--host-only cannot be combined with --lane")
+    if host_only:
+        missing = [fn.__name__ for fn in HOST_INTEGRATION_TESTS if fn not in tests]
+        if missing:
+            raise ValueError(f"host integration tests missing from registry: {missing}")
+        return list(HOST_INTEGRATION_TESTS)
+    if lane == "full":
         return tests
-    missing = [fn.__name__ for fn in HOST_INTEGRATION_TESTS if fn not in tests]
-    if missing:
-        raise ValueError(f"host integration tests missing from registry: {missing}")
-    return list(HOST_INTEGRATION_TESTS)
+    if lane == "docs":
+        names = set(docs_lane_test_names(list(changed or [])))
+        return [fn for fn in tests if fn.__name__ in names]
+    raise ValueError(f"unknown lane: {lane}")
 
 
 def parse_runner_args(argv=None):
@@ -276,7 +403,25 @@ def parse_runner_args(argv=None):
         action="store_true",
         help="run only required host integration gates and fail if either gate skips",
     )
-    return parser.parse_args(argv)
+    parser.add_argument(
+        "--lane",
+        choices=("full", "docs"),
+        default="full",
+        help="full: whole registered suite (default); docs: only tests that can observe the --changed documentation paths",
+    )
+    parser.add_argument(
+        "--changed",
+        nargs="*",
+        default=[],
+        metavar="PATH",
+        help="repo-relative paths changed by the change set; required with --lane docs",
+    )
+    args = parser.parse_args(argv)
+    if args.host_only and args.lane != "full":
+        parser.error("--host-only cannot be combined with --lane")
+    if args.lane == "docs" and not args.changed:
+        parser.error("--lane docs requires --changed PATH [PATH ...]")
+    return args
 
 
 def count_top_dirs(path: Path) -> int:
@@ -10459,6 +10604,62 @@ def test_runner_cli_parses_host_only_profile():
     print("[PASS] test runner CLI parses host-only profile")
 
 
+def test_runner_cli_parses_lane_profile():
+    args = parse_runner_args(["--lane", "docs", "--changed", "docs/index.html", "tasks/todo.md"])
+    require(args.lane == "docs" and args.changed == ["docs/index.html", "tasks/todo.md"], "--lane docs should carry changed paths")
+    require(parse_runner_args([]).lane == "full", "default lane should be the complete suite")
+    for argv in (["--lane", "docs"], ["--host-only", "--lane", "docs", "--changed", "docs/index.html"], ["--lane", "nope"]):
+        try:
+            with redirect_stdout(io.StringIO()), redirect_stderr(io.StringIO()):
+                parse_runner_args(argv)
+        except SystemExit:
+            continue
+        require(False, f"runner CLI should reject {argv}")
+
+    print("[PASS] test runner CLI parses lane profile")
+
+
+def test_runner_docs_lane_selection_contract():
+    for path, expected in (
+        ("docs/index.html", True),
+        ("docs/agents/repository.md", True),
+        ("tasks/todo.md", True),
+        ("README.md", True),
+        ("AGENTS.md", True),
+        ("codex/AGENTS.md", False),
+        ("scripts/check_surfaces.py", False),
+        ("test_runner.py", False),
+        (".github/workflows/ci.yml", False),
+    ):
+        require(is_docs_lane_path(path) is expected, f"docs lane eligibility wrong for {path}")
+
+    registered = {fn.__name__ for fn in TESTS}
+    for changed in (["docs/index.html"], ["docs/harness-state.md"], ["tasks/todo.md"]):
+        names = docs_lane_test_names(changed)
+        require(set(names) <= registered, f"docs lane selected unregistered tests for {changed}")
+        require("test_runner_registry_complete" in names, "docs lane must keep the registry gate")
+        require(len(names) < len(TESTS), f"docs lane should be a strict subset for {changed}")
+    public = docs_lane_test_names(["docs/index.html"])
+    require("test_public_dhf_information_architecture" in public, "public page change must run the IA contract")
+    require("test_check_surfaces_validates_public_nav" in public, "public page change must run the surface check")
+    require("test_dhf_simplification_paired_gate" not in public, "public page change must not run the simplification gate")
+    require("test_sync_renders_template_and_copies_skills" not in public, "public page change must not run runtime sync tests")
+    state = docs_lane_test_names(["docs/harness-state.md"])
+    require("test_harness_checkpoint_helper" in state, "harness-state change must run the checkpoint helper via its script")
+
+    for bad in ([], ["scripts/check_surfaces.py"], ["docs/index.html", "codex/AGENTS.md"]):
+        try:
+            docs_lane_test_names(bad)
+        except ValueError:
+            continue
+        require(False, f"docs lane must reject {bad}")
+
+    selected = select_registered_tests(TESTS, host_only=False, lane="docs", changed=["docs/index.html"])
+    require([fn.__name__ for fn in selected] == [fn.__name__ for fn in TESTS if fn.__name__ in set(public)], "lane selection must preserve registry order")
+
+    print("[PASS] test runner docs lane selection contract")
+
+
 def test_host_gates_skip_only_when_required_capability_is_unavailable():
     def loader_run(cmd, *args, **kwargs):
         if cmd == [str(CODEX_CLI_RESOLVER)]:
@@ -12632,6 +12833,8 @@ TESTS = [
     test_runner_host_only_profile_contract,
     test_runner_required_profile_rejects_skips,
     test_runner_cli_parses_host_only_profile,
+    test_runner_cli_parses_lane_profile,
+    test_runner_docs_lane_selection_contract,
     test_host_gates_skip_only_when_required_capability_is_unavailable,
     test_verify_supports_skip_check_argument,
     test_verify_skips_managed_skill_presence_behavior,
@@ -12779,7 +12982,9 @@ TESTS = [
 
 def main(argv=None):
     args = parse_runner_args(argv)
-    selected_tests = select_registered_tests(TESTS, host_only=args.host_only)
+    selected_tests = select_registered_tests(TESTS, host_only=args.host_only, lane=args.lane, changed=args.changed)
+    if args.lane != "full":
+        print(f"lane={args.lane} changed={len(args.changed)} selected={len(selected_tests)}/{len(TESTS)}")
     exit_code = run_registered_tests(selected_tests, require_no_skips=args.host_only)
     if exit_code:
         sys.exit(exit_code)

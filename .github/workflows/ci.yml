@@ -10,11 +10,19 @@ name: CI
 # Environment prerequisites the suite relies on (both satisfied on
 # ubuntu-latest): `rsync` on PATH and `CI=true` (set by Actions), which the
 # isolated DHF runtime reset requires before it will touch $HOME.
+#
+# Lanes: a change set that only touches documentation (docs/**, tasks/**, or a
+# top-level README/AGENTS/CONTEXT markdown file) runs `test_runner.py --lane
+# docs`, which selects the registered tests that can observe those files by
+# reverse-reference lookup; everything else runs the whole suite. A scheduled
+# serial full run on main is the safety net for the docs lane.
 
 on:
   push:
     branches: [main]
   pull_request:
+  schedule:
+    - cron: "0 6 * * *"   # daily 06:00 UTC: full suite on main regardless of lane
   workflow_dispatch:
 
 permissions:
@@ -52,6 +60,31 @@ jobs:
       - name: Validate runtime surfaces manifest and public nav
         run: python3 scripts/check_surfaces.py --repo-root "$(pwd)" --check-public-nav
 
+      - name: Decide test lane
+        id: lane
+        env:
+          # PR: compare with the target branch; push to main: with the previous
+          # main head; force-push / first push (all-zero before) falls back to
+          # HEAD~1. Scheduled and manual runs always take the full lane.
+          BASE: ${{ github.event_name == 'pull_request' && github.event.pull_request.base.sha || (github.event.before != '0000000000000000000000000000000000000000' && github.event.before || 'HEAD~1') }}
+        run: |
+          lane=full
+          changed=""
+          if [ "${{ github.event_name }}" = "push" ] || [ "${{ github.event_name }}" = "pull_request" ]; then
+            changed=$(git diff --name-only --diff-filter=ACDMRT "$BASE...HEAD" | sort -u)
+            if [ -n "$changed" ] && ! printf '%s\n' "$changed" | grep -qvE '^(docs/|tasks/|README\.md$|README\.zh-CN\.md$|AGENTS\.md$|CONTEXT\.md$)'; then
+              lane=docs
+            fi
+          fi
+          printf 'changed files:\n%s\n' "$changed"
+          echo "lane=$lane"
+          echo "lane=$lane" >> "$GITHUB_OUTPUT"
+          {
+            echo "changed<<EOF"
+            printf '%s\n' "$changed"
+            echo "EOF"
+          } >> "$GITHUB_OUTPUT"
+
       - name: Seed exact DHF runtime promotion
         env:
           CI_DHF_HOME: /tmp/ci-dhf-home
@@ -65,7 +98,16 @@ jobs:
             "$CI_DHF_HOME/.codex/skills/delivery-harness-framework/"
 
       - name: Run test suite (per-test isolation; codex/git-dependent checks SKIP)
+        if: steps.lane.outputs.lane == 'full'
         env:
           HOME: /tmp/ci-dhf-home
           CI_DHF_RUNTIME_RESET: "1"
         run: python3 test_runner.py
+
+      - name: Run docs lane (tests that observe the changed documentation)
+        if: steps.lane.outputs.lane == 'docs'
+        env:
+          HOME: /tmp/ci-dhf-home
+          CI_DHF_RUNTIME_RESET: "1"
+          CHANGED: ${{ steps.lane.outputs.changed }}
+        run: printf '%s\n' "$CHANGED" | xargs -d '\n' python3 test_runner.py --lane docs --changed

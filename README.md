@@ -259,6 +259,15 @@ python3 scripts/check_surfaces.py \
   --check-public-nav
 ```
 
+CI picks a lane per change set. When every changed file is documentation
+(`docs/**`, `tasks/**`, or a top-level `README*.md`/`AGENTS.md`/`CONTEXT.md`),
+the gate runs `python3 test_runner.py --lane docs --changed <paths>`, which
+selects the registered tests that can observe those files (direct references,
+module-level constants, helper functions, and scripts that read the files);
+any other change runs the whole suite. A scheduled full run on `main` is the
+safety net for the docs lane, and `workflow_dispatch` runs the full suite on
+demand. Pages publish only after the gate passes.
+
 Every completion claim should include the current run's:
 
 ```text

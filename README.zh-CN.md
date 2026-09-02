@@ -238,6 +238,13 @@ python3 scripts/check_surfaces.py \
   --check-public-nav
 ```
 
+CI 按变更集选择 lane：当所有改动文件都是文档（`docs/**`、`tasks/**`，或顶层
+`README*.md`/`AGENTS.md`/`CONTEXT.md`）时，只跑
+`python3 test_runner.py --lane docs --changed <paths>`，即通过反向引用（直接引用、
+模块级常量、辅助函数、读取这些文件的脚本）选出能观察到这些文件的已注册测试；其他任何
+改动都跑完整套件。`main` 上每日一次定时全量作为 docs lane 的安全网，`workflow_dispatch`
+可随时手动跑全量。Pages 只在 gate 通过后发布。
+
 任何“完成”结论都应附带本次运行的：
 
 ```text
