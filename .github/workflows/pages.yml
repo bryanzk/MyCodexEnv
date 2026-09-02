@@ -1,11 +1,14 @@
 name: Publish Docs Pages
 
+# Publishes docs/ only after the CI gate has passed on main, so a commit whose
+# public-nav surface check or information-architecture contracts are red never
+# reaches GitHub Pages. Every green main run republishes (idempotent, ~30s).
+
 on:
-  push:
+  workflow_run:
+    workflows: [CI]
+    types: [completed]
     branches: [main]
-    paths:
-      - "docs/**"
-      - ".github/workflows/pages.yml"
   workflow_dispatch:
 
 permissions:
@@ -19,6 +22,7 @@ concurrency:
 
 jobs:
   deploy:
+    if: github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success'
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
@@ -26,6 +30,10 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          # Publish exactly the commit the gate passed on, not whatever main
+          # points at by the time this job starts.
+          ref: ${{ github.event.workflow_run.head_sha || github.sha }}
       - name: Configure Pages
         uses: actions/configure-pages@v5
       - name: Upload artifact
