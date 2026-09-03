@@ -1,0 +1,127 @@
+{
+  "name": "writing_skill_routing_v1",
+  "evaluation_mode": "post-promotion-fresh-session-behavior",
+  "evidence_boundary": {
+    "availability_proves": "installed-and-loadable",
+    "behavior_proves": "visible-output-contract",
+    "invocation_observation": "not_available",
+    "wp2_execution": "deferred"
+  },
+  "cases": [
+    {
+      "name": "new-linkedin-technical-case-study",
+      "invocation": "explicit",
+      "prompt": "$sepia-write Write a LinkedIn post for backend engineers explaining how a conventional web API reduced latency from 800 ms to 220 ms by reusing database connections. Do not discuss AI agents.",
+      "fixture_files": {},
+      "verification_method": "manual_transcript_review",
+      "pass_conditions": [
+        {"condition_id": "pass-1", "text": "The post preserves 800 ms, 220 ms, and database connection reuse as the supplied facts."},
+        {"condition_id": "pass-2", "text": "The response is a LinkedIn post addressed to backend engineers."},
+        {"condition_id": "pass-3", "text": "Any added arithmetic is transparently calculable from the supplied 800 ms and 220 ms and is not presented as another measurement."}
+      ],
+      "fail_conditions": [
+        {"condition_id": "fail-1", "text": "The response states an unsupported mechanism, causal detail, or derived value as a supplied fact."},
+        {"condition_id": "fail-2", "text": "The response discusses AI-agent reliability or only discusses how to write the post."}
+      ]
+    },
+    {
+      "name": "review-draft-without-edits",
+      "invocation": "automatic",
+      "prompt": "Review this draft for AI-writing patterns without editing it: Our robust solution seamlessly unlocks a transformative developer experience, underscoring our commitment to innovation.",
+      "fixture_files": {},
+      "verification_method": "manual_transcript_review",
+      "pass_conditions": [{"condition_id": "pass-1", "text": "The response identifies concrete AI-writing patterns in the supplied sentence and remains report-only."}],
+      "fail_conditions": [{"condition_id": "fail-1", "text": "The response supplies a rewritten replacement sentence."}]
+    },
+    {
+      "name": "humanize-existing-paragraph",
+      "invocation": "automatic",
+      "prompt": "Humanize this paragraph while preserving its facts and structure: The release introduces three commands, enabling teams to streamline setup and fostering improved collaboration.",
+      "fixture_files": {},
+      "verification_method": "manual_transcript_review",
+      "pass_conditions": [{"condition_id": "pass-1", "text": "The response minimally revises the paragraph while preserving the three-command fact and original intent."}],
+      "fail_conditions": [{"condition_id": "fail-1", "text": "The response invents facts, materially changes structure or intent, or provides diagnosis without a revision."}]
+    },
+    {
+      "name": "explicit-humanizer",
+      "invocation": "explicit",
+      "prompt": "$humanizer Revise only the AI-sounding surface language in this paragraph: The tool serves as a pivotal bridge, unlocking seamless collaboration.",
+      "fixture_files": {},
+      "verification_method": "manual_transcript_review",
+      "pass_conditions": [{"condition_id": "pass-1", "text": "The response changes only surface language and preserves the supplied meaning."}],
+      "fail_conditions": [{"condition_id": "fail-1", "text": "The response adds facts, changes structure, or introduces a two-stage defect-list workflow."}]
+    },
+    {
+      "name": "explore-fragments",
+      "invocation": "explicit",
+      "prompt": "$writing-fragments Help me explore raw notes about debugging a slow API without choosing an outline yet.",
+      "fixture_files": {},
+      "verification_method": "manual_transcript_review",
+      "pass_conditions": [{"condition_id": "pass-1", "text": "Because no output path is supplied, the response asks once where to save fragments and keeps the work in exploration."}],
+      "fail_conditions": [{"condition_id": "fail-1", "text": "The response creates an outline, drafts the article, or claims to write a file."}]
+    },
+    {
+      "name": "organize-fixed-fragments",
+      "invocation": "explicit",
+      "prompt": "$writing-shape Read raw.md as the fixed pile and shape it into an article; ask me for the article output path before writing.",
+      "fixture_files": {"raw.md": "Connection setup was repeated.\nTraces showed queueing.\nPooling reduced median latency.\n"},
+      "verification_method": "manual_transcript_review",
+      "pass_conditions": [{"condition_id": "pass-1", "text": "The response treats raw.md as the fixed input and asks for the article output path before writing."}],
+      "fail_conditions": [{"condition_id": "fail-1", "text": "The response edits raw.md, reopens exploration, or produces the complete article before receiving the output path."}]
+    },
+    {
+      "name": "write-beat-by-beat",
+      "invocation": "explicit",
+      "prompt": "$writing-beats Read raw.md as the fixed pile and build the article one beat at a time; ask for the article output path and audience prerequisites before writing.",
+      "fixture_files": {"raw.md": "First symptom: slow requests.\nTrace evidence: connection queueing.\nFailed attempt: retries.\nFix: connection pooling.\n"},
+      "verification_method": "manual_transcript_review",
+      "pass_conditions": [{"condition_id": "pass-1", "text": "The response asks for the output path and audience prerequisites and preserves the grounding-first, one-beat-at-a-time sequence."}],
+      "fail_conditions": [{"condition_id": "fail-1", "text": "The response produces a complete article or skips grounding and user choice."}]
+    },
+    {
+      "name": "explicit-guanshiyin",
+      "invocation": "explicit",
+      "prompt": "$guanshiyin-writing 请按观、世、音、菩萨四项写一篇关于工程复盘的短文。",
+      "fixture_files": {},
+      "verification_method": "manual_transcript_review",
+      "pass_conditions": [{"condition_id": "pass-1", "text": "输出按观、世、音、菩萨四维完成短文。"}],
+      "fail_conditions": [{"condition_id": "fail-1", "text": "输出加入未请求的 Sepia 流程说明，或偏离四维方法。"}]
+    },
+    {
+      "name": "job-application-package",
+      "invocation": "explicit",
+      "prompt": "$job-application-packager Prepare a tailored application package and PDF resume, but do not submit anything.",
+      "fixture_files": {},
+      "verification_method": "manual_transcript_review",
+      "pass_conditions": [{"condition_id": "pass-1", "text": "The response requests the missing job posting before producing artifacts and defers resume selection until after job-page intake."}],
+      "fail_conditions": [{"condition_id": "fail-1", "text": "The response invents experience, claims the package is complete, or submits an application."}]
+    },
+    {
+      "name": "customer-reliability-case",
+      "invocation": "explicit",
+      "prompt": "$customer-facing-agent-reliability-writing $sepia-write Turn verified AI-agent incident evidence into a customer-facing reliability case study.",
+      "fixture_files": {},
+      "verification_method": "manual_transcript_review",
+      "pass_conditions": [{"condition_id": "pass-1", "text": "The response requests the missing verified incident evidence before drafting and preserves the claim boundary."}],
+      "fail_conditions": [{"condition_id": "fail-1", "text": "The response invents incident evidence, enlarges a claim, or drafts the case before receiving evidence."}]
+    },
+    {
+      "name": "write-python-function",
+      "invocation": "automatic",
+      "prompt": "Write a Python function that parses an ISO 8601 date and raises ValueError for invalid input.",
+      "fixture_files": {},
+      "verification_method": "manual_transcript_review",
+      "pass_conditions": [{"condition_id": "pass-1", "text": "The response remains a development task and may ask one clarifying question about date-only versus datetime scope before implementation."}],
+      "fail_conditions": [{"condition_id": "fail-1", "text": "The response enters a writing-editing workflow or applies a prose skill to the code request."}]
+    },
+    {
+      "name": "write-database-migration",
+      "invocation": "automatic",
+      "prompt": "Write a PostgreSQL migration that adds a concurrent unique index on users(email).",
+      "fixture_files": {},
+      "verification_method": "manual_transcript_review",
+      "pass_conditions": [{"condition_id": "pass-1", "text": "The response uses CREATE UNIQUE INDEX CONCURRENTLY outside a transaction block and disables the migration framework transaction when applicable."}],
+      "fail_conditions": [{"condition_id": "fail-1", "text": "The response wraps CREATE UNIQUE INDEX CONCURRENTLY in BEGIN/COMMIT or substitutes prose editing for the SQL migration."}]
+    }
+  ]
+}

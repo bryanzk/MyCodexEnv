@@ -1,8 +1,7 @@
 ---
 name: humanizer
-description: |
-  去除 AI 写作痕迹（AI writing patterns），让文本更自然、更像人写的，同时保留原意与原有语气。
-  主要参考 Wikipedia "Signs of AI writing"（WikiProject AI Cleanup）。
+description: Explicit user-invoked fallback for minimal de-AI surface editing that preserves meaning and voice.
+disable-model-invocation: true
 ---
 
 # Humanizer: Remove AI Writing Patterns

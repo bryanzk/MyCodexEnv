@@ -78,6 +78,8 @@ CONFIG_IDENTITY_FIXTURES = ROOT / "tests" / "fixtures" / "config-identity"
 HARNESS_AGENT_TEAM_FIXTURES = ROOT / "tests" / "fixtures" / "agent-team"
 SKILL_GOVERNANCE_DOC = ROOT / "docs" / "skill-governance-20260608.md"
 LIFECYCLE_SKILL_ROUTING_DOC = ROOT / "docs" / "LIFECYCLE_SKILL_ROUTING.md"
+WRITING_SKILL_ROUTING_EVAL = ROOT / "docs" / "evals" / "writing-skill-routing-v1.json"
+WRITING_SKILL_BEHAVIOR_RUNNER = ROOT / "scripts" / "run_writing_skill_behavior_eval.py"
 LIFECYCLE_SKILL_ROUTING_HTML = ROOT / "docs" / "lifecycle-skill-routing-en.html"
 BRANCH_CLEANUP = ROOT / "codex" / "skills" / "repo-branch-governance" / "scripts" / "cleanup_merged_branches.sh"
 CI_WORKFLOW = ROOT / ".github" / "workflows" / "ci.yml"
@@ -1534,6 +1536,28 @@ def test_skill_compatibility_checker_contract():
             payload["managed_runtime"]["checked"] == 1,
             "ephemeral .system skills should be loader-gated instead of requiring persistent runtime files",
         )
+
+        write(
+            repo / "codex" / "skills" / "source-only-skill" / "SKILL.md",
+            "---\nname: source-only-skill\ndescription: Source-only smoke fixture.\n---\n",
+        )
+        code, out, err = run(
+            [
+                sys.executable,
+                str(CHECK_SKILL_COMPATIBILITY),
+                "--repo-root",
+                str(repo),
+                "--codex-home",
+                str(codex_home),
+                "--source-only",
+                "--json",
+            ]
+        )
+        require(code == 0, f"source-only mode should not require runtime parity: {err or out}")
+        payload = json.loads(out)
+        require(payload["source_only"] is True, "source-only result should identify its verification mode")
+        require(payload["managed_runtime"]["checked"] == 0, "source-only mode should not inspect managed runtime parity")
+        require(payload["managed_runtime"]["missing"] == [], "source-only mode should not report runtime missing skills")
 
         write(
             valid_skill / "SKILL.md",
@@ -4372,6 +4396,219 @@ def test_lifecycle_skill_routing_doc_is_discoverable():
             require(link in text, f"{filename} missing related doc link: {link}")
 
     print("[PASS] lifecycle skill routing doc discoverable")
+
+
+def test_sepia_writing_skill_routing_contract():
+    errors = []
+    skill_root = ROOT / "codex" / "skills"
+    expected_files = {
+        "sepia/LICENSE", "sepia/SKILL.md", "sepia/agents/openai.yaml",
+        "sepia/references/discourse-pass.md", "sepia/references/model-fingerprints.md",
+        "sepia/references/narrative-pass.md", "sepia/references/professional-pass.md",
+        "sepia/references/rubric.md", "sepia/references/style-pass.md",
+        "sepia/references/voice-skills.md", "sepia/references/domains/dev-replies.md",
+        "sepia/references/domains/postmortems.md", "sepia/references/domains/release-notes.md",
+        "sepia/references/domains/tech-articles.md", "sepia/references/domains/tickets.md",
+        "sepia-write/SKILL.md", "sepia-review/SKILL.md", "sepia-refactor/SKILL.md",
+        "sepia-recreate/SKILL.md",
+    }
+    skill_dirs = ("sepia", "sepia-write", "sepia-review", "sepia-refactor", "sepia-recreate")
+    actual_files = {
+        path.relative_to(skill_root).as_posix()
+        for dirname in skill_dirs
+        for path in (skill_root / dirname).rglob("*")
+        if path.is_file() or path.is_symlink()
+    }
+    if actual_files != expected_files:
+        errors.append(f"allowlist mismatch: missing={sorted(expected_files - actual_files)} extra={sorted(actual_files - expected_files)}")
+    for relative in sorted(actual_files):
+        path = skill_root / relative
+        if path.is_symlink() or not path.is_file() or path.stat().st_mode & 0o111 or b"\0" in path.read_bytes():
+            errors.append(f"vendored path must be non-executable text: {relative}")
+
+    names = []
+    canonical = skill_root / "sepia" / "SKILL.md"
+    for dirname in skill_dirs:
+        entrypoint = skill_root / dirname / "SKILL.md"
+        if not entrypoint.is_file():
+            errors.append(f"missing entrypoint: codex/skills/{dirname}/SKILL.md")
+            continue
+        text = entrypoint.read_text(encoding="utf-8")
+        match = re.search(r"(?m)^name:\s*([^\n]+)$", text)
+        names.append(match.group(1).strip() if match else "")
+        if dirname != "sepia" and ("../sepia/SKILL.md" not in text or not canonical.is_file()):
+            errors.append(f"wrapper sibling contract unavailable: {dirname}")
+    if "" in names or len(names) != len(set(names)):
+        errors.append(f"skill names must be present and unique: {names}")
+    if canonical.is_file():
+        canonical_text = canonical.read_text(encoding="utf-8")
+        for term in (
+            "closed fact set",
+            "transparently calculable",
+            "Do not infer a mechanism or causal chain",
+            "Trace every factual clause",
+        ):
+            if term not in canonical_text:
+                errors.append(f"Sepia write fact boundary missing: {term}")
+    license_path = skill_root / "sepia" / "LICENSE"
+    if not license_path.is_file() or not license_path.read_text(encoding="utf-8").startswith("MIT License"):
+        errors.append("MIT license missing")
+
+    lock_path = ROOT / "locks" / "sepia.lock"
+    lock = dict(line.split("=", 1) for line in lock_path.read_text(encoding="utf-8").splitlines() if "=" in line) if lock_path.is_file() else {}
+    for key, value in {
+        "repo": "https://github.com/Nanako0129/sepia.git",
+        "commit": "2f054e2b0f3d09db8866ce27f57164f88dcfc10a",
+        "version": "0.4.1", "license": "MIT",
+        "local_patch": "sepia-write-closed-fact-set-v1",
+    }.items():
+        if lock.get(key) != value:
+            errors.append(f"lock {key} must be {value}")
+    if actual_files == expected_files:
+        digest_input = b"".join(
+            f"{relative}\0".encode() + hashlib.sha256((skill_root / relative).read_bytes()).hexdigest().encode() + b"\n"
+            for relative in sorted(actual_files)
+        )
+        digest = hashlib.sha256(digest_input).hexdigest()
+        if lock.get("tree_digest") != f"sha256:{digest}":
+            errors.append(f"lock tree_digest must be sha256:{digest}")
+
+    frontmatter = (skill_root / "humanizer" / "SKILL.md").read_text(encoding="utf-8").split("---", 2)[1]
+    description = re.search(r"(?m)^description:\s*(.+)$", frontmatter)
+    if "disable-model-invocation: true" not in frontmatter:
+        errors.append("humanizer must disable model invocation")
+    if not description or len(description.group(1).strip()) > 160 or "fallback" not in description.group(1).lower():
+        errors.append("humanizer needs a short human-facing fallback description")
+
+    routing_text = LIFECYCLE_SKILL_ROUTING_DOC.read_text(encoding="utf-8")
+    for term in ("**Writing Skill Routing**", "`sepia-review`", "`sepia-refactor`", "`sepia-recreate`", "`humanizer`", "`writing-fragments`", "`writing-shape`", "`writing-beats`", "`guanshiyin-writing`", "`job-application-packager`"):
+        if term not in routing_text:
+            errors.append(f"routing matrix missing: {term}")
+
+    expected_cases = {
+        "new-linkedin-technical-case-study", "review-draft-without-edits",
+        "humanize-existing-paragraph", "explicit-humanizer", "explore-fragments",
+        "organize-fixed-fragments", "write-beat-by-beat", "explicit-guanshiyin",
+        "job-application-package", "customer-reliability-case",
+        "write-python-function", "write-database-migration",
+    }
+    if not WRITING_SKILL_ROUTING_EVAL.is_file():
+        errors.append("writing routing eval missing")
+    else:
+        payload = json.loads(WRITING_SKILL_ROUTING_EVAL.read_text(encoding="utf-8"))
+        if payload.get("evaluation_mode") != "post-promotion-fresh-session-behavior":
+            errors.append("eval must defer fresh-session behavior checks until post-promotion")
+        if payload.get("evidence_boundary") != {
+            "availability_proves": "installed-and-loadable",
+            "behavior_proves": "visible-output-contract",
+            "invocation_observation": "not_available",
+            "wp2_execution": "deferred",
+        }:
+            errors.append("eval must separate availability, behavior, and unavailable invocation evidence")
+        serialized = json.dumps(payload, ensure_ascii=False)
+        for field in ("route_assertion", "expected_primary_routes", "expected_routes", "forbidden_routes", "selected_skills", "ROUTES="):
+            if field in serialized:
+                errors.append(f"eval must not contain route self-report field: {field}")
+        cases = payload.get("cases", [])
+        case_names = [case.get("name") for case in cases]
+        if set(case_names) != expected_cases or len(case_names) != len(expected_cases):
+            errors.append(f"eval must contain exactly 12 unique cases: {case_names}")
+        if any(not isinstance(case.get("prompt"), str) or not case["prompt"].strip() for case in cases):
+            errors.append("every eval case needs a sanitized prompt")
+        for case in cases:
+            if case.get("invocation") == "explicit":
+                if not re.search(r"\$[a-z0-9-]+", case.get("prompt", "")):
+                    errors.append(f"explicit eval must use $skill-name: {case.get('name')}")
+            if case.get("verification_method") not in {"deterministic", "manual_transcript_review"}:
+                errors.append(f"invalid verification method: {case.get('name')}")
+            for group in ("pass_conditions", "fail_conditions"):
+                conditions = case.get(group)
+                if not isinstance(conditions, list) or not conditions:
+                    errors.append(f"{case.get('name')} needs non-empty {group}")
+                    continue
+                ids = [item.get("condition_id") for item in conditions if isinstance(item, dict)]
+                texts = [item.get("text") for item in conditions if isinstance(item, dict)]
+                if len(ids) != len(conditions) or len(ids) != len(set(ids)) or any(not value for value in ids + texts):
+                    errors.append(f"{case.get('name')} needs unique condition IDs and text in {group}")
+            fixtures = case.get("fixture_files")
+            if not isinstance(fixtures, dict):
+                errors.append(f"{case.get('name')} fixture_files must be an object")
+            else:
+                for relative, content in fixtures.items():
+                    path = Path(relative)
+                    if path.is_absolute() or ".." in path.parts or not isinstance(content, str):
+                        errors.append(f"{case.get('name')} has unsafe fixture path: {relative}")
+        by_name = {case.get("name"): case for case in cases}
+        for name in ("job-application-package", "customer-reliability-case"):
+            text = " ".join(item.get("text", "") for item in by_name.get(name, {}).get("pass_conditions", []))
+            if "request" not in text.lower() or "missing" not in text.lower():
+                errors.append(f"{name} must verify missing-input intake")
+        migration = " ".join(
+            item.get("text", "")
+            for group in ("pass_conditions", "fail_conditions")
+            for item in by_name.get("write-database-migration", {}).get(group, [])
+        )
+        if "outside a transaction block" not in migration or "BEGIN/COMMIT" not in migration:
+            errors.append("database migration case must reject CONCURRENTLY inside a transaction block")
+        linkedin = by_name.get("new-linkedin-technical-case-study", {})
+        if linkedin.get("invocation") != "explicit" or not linkedin.get("prompt", "").startswith("$sepia-write "):
+            errors.append("LinkedIn case must explicitly invoke $sepia-write")
+        linkedin_contract = " ".join(
+            item.get("text", "")
+            for group in ("pass_conditions", "fail_conditions")
+            for item in linkedin.get(group, [])
+        )
+        if "transparently calculable" not in linkedin_contract or "unsupported mechanism" not in linkedin_contract:
+            errors.append("LinkedIn case must distinguish transparent arithmetic from unsupported mechanisms")
+        python_case = " ".join(
+            item.get("text", "")
+            for group in ("pass_conditions", "fail_conditions")
+            for item in by_name.get("write-python-function", {}).get(group, [])
+        )
+        if "clarifying question" not in python_case or "writing-editing workflow" not in python_case:
+            errors.append("Python case must allow development clarification and reject only writing workflow drift")
+        job_case = " ".join(item.get("text", "") for item in by_name.get("job-application-package", {}).get("pass_conditions", []))
+        if "job posting" not in job_case.lower() or "resume evidence" in job_case.lower():
+            errors.append("job package intake must request the job posting before evaluating resume evidence")
+
+    if not WRITING_SKILL_BEHAVIOR_RUNNER.is_file():
+        errors.append("missing writing behavior eval runner")
+    else:
+        spec = importlib.util.spec_from_file_location("writing_skill_behavior_runner", WRITING_SKILL_BEHAVIOR_RUNNER)
+        module = importlib.util.module_from_spec(spec)
+        assert spec.loader is not None
+        spec.loader.exec_module(module)
+        identity = module.parse_execution_identity(
+            "codex-cli 0.147.0\nmodel: gpt-5.6-sol\nreasoning effort: high\n"
+        )
+        if identity != {"codex_version": "codex-cli 0.147.0", "model": "gpt-5.6-sol", "reasoning_effort": "high"}:
+            errors.append(f"runner must parse actual execution identity: {identity}")
+        command = module.build_codex_command(
+            "codex", Path("/tmp/case"), Path("/tmp/final.txt"), "PROMPT", "gpt-5.6-sol", "low"
+        )
+        if command[-1] != "PROMPT" or 'model_reasoning_effort="low"' not in command:
+            errors.append(f"runner must pass the prompt by argv and pin reasoning: {command}")
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = Path(tmp)
+            write(tmp_path / "eval.json", '{"cases": []}\n')
+            write(tmp_path / "config.toml", 'model = "fixture"\n')
+            code, out, err = run(
+                [
+                    sys.executable,
+                    str(WRITING_SKILL_BEHAVIOR_RUNNER),
+                    "--eval", str(tmp_path / "eval.json"),
+                    "--output-dir", str(tmp_path / "output"),
+                    "--model", "gpt-5.6-sol",
+                    "--reasoning-effort", "low",
+                    "--config", str(tmp_path / "config.toml"),
+                    "--config-sha256", "0" * 64,
+                ]
+            )
+            if code == 0 or "config SHA-256 mismatch" not in (out + err):
+                errors.append("runner must reject config identity drift before starting sessions")
+
+    require(not errors, "Sepia writing routing contract:\n- " + "\n- ".join(errors))
+    print("[PASS] Sepia writing skill routing contract")
 
 
 def test_sync_gstack_vendor_replaces_snapshot_from_git_source():
@@ -12893,6 +13130,7 @@ TESTS = [
     test_shipq_dhf_prompt_hook_auto_invokes_skill,
     test_harness_agent_brief_template,
     test_lifecycle_skill_routing_doc_is_discoverable,
+    test_sepia_writing_skill_routing_contract,
     test_sync_gstack_vendor_replaces_snapshot_from_git_source,
     test_sync_gstack_vendor_dry_run_leaves_vendor_unchanged,
     test_sync_gstack_vendor_dry_run_reports_no_update_when_snapshot_matches,

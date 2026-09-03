@@ -66,6 +66,11 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--plugin-root", action="append", default=[], help="Additional plugin/cache root to scan recursively.")
     parser.add_argument("--gstack-root", help="Explicit external gstack git root; missing or invalid explicit roots fail closed.")
     parser.add_argument(
+        "--source-only",
+        action="store_true",
+        help="Validate repository skill sources without managed runtime parity checks.",
+    )
+    parser.add_argument(
         "--strict-runtime-parity",
         action="store_true",
         default=os.environ.get("STRICT_RUNTIME_PARITY") == "1",
@@ -355,8 +360,9 @@ def main() -> int:
     roots: list[tuple[str, Path]] = [
         ("repo", repo_root / "codex" / "skills"),
         ("agents", repo_root / ".agents" / "skills"),
-        ("runtime", codex_home / "skills"),
     ]
+    if not args.source_only:
+        roots.append(("runtime", codex_home / "skills"))
     roots.extend(("plugin", Path(raw).expanduser().resolve()) for raw in args.plugin_root)
 
     seen_skill_files: set[Path] = set()
@@ -385,10 +391,10 @@ def main() -> int:
                 if finding is not None:
                     findings.append(finding)
 
-    managed = managed_runtime_status(
-        repo_root / "codex" / "skills",
-        codex_home / "skills",
-        excluded_top_level,
+    managed = (
+        {"checked": 0, "missing": [], "missing_files": [], "drifted": [], "runtime_only": []}
+        if args.source_only
+        else managed_runtime_status(repo_root / "codex" / "skills", codex_home / "skills", excluded_top_level)
     )
     for name in managed["missing"]:
         findings.append(Finding("error", "managed_skill_missing", str(codex_home / "skills" / name), name))
@@ -414,6 +420,7 @@ def main() -> int:
     warnings = sum(1 for item in findings if item.severity == "warning")
     payload: dict[str, Any] = {
         "timestamp": datetime.now(timezone.utc).isoformat(),
+        "source_only": args.source_only,
         "roots": root_counts,
         "summary": {
             "skill_files": len(seen_skill_files),

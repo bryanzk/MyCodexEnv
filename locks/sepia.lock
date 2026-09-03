@@ -1,0 +1,6 @@
+repo=https://github.com/Nanako0129/sepia.git
+commit=2f054e2b0f3d09db8866ce27f57164f88dcfc10a
+version=0.4.1
+license=MIT
+local_patch=sepia-write-closed-fact-set-v1
+tree_digest=sha256:940bdbed31cd5c8045c46108eedf17c58978af5b12c75377c4de05b66aaf3e59

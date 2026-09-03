@@ -169,6 +169,7 @@ behavior live in `codex/hooks/dhf_preprompt.py`.
 - `scripts/sync_gstack_vendor.py`: bulk-sync `codex/skills/gstack` from an upstream `garrytan/gstack` git snapshot.
 - `locks/superpowers.lock` + `scripts/sync_codex_home.sh`: pin `~/.codex/superpowers`, register local marketplace `superpowers-dev`, and install `superpowers@superpowers-dev` for new-session `superpowers:*` skills.
 - `codex/skills/delivery-harness-framework/evals/evals.json`: routing and boundary evals for the generic lifecycle skill, including gstack brain-aware planning and question-tuning boundaries.
+- The Sepia writing skill family, its lock, and its focused routing eval define pinned writing operations and route boundaries; repository source does not prove runtime promotion.
 - `scripts/verify_codex_env.sh`: runtime sync and environment verification.
 - `docs/LIFECYCLE_SKILL_ROUTING.md`: stage, workflow, skill, and helper usage guide.
 - `docs/lifecycle-skill-routing-en.html`: English browser-ready rendering of the routing specification.

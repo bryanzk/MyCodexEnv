@@ -203,6 +203,25 @@ Evidence 记忆合同：Hub 使用 `CAP → BRIDGE × SAFE → TRUST` 作为主�
 | Expert committee rating loop | `review`, `development` | Route only explicit committee/subagent rating loops to `committee-review-loop`; capture expert domains, target rating, revision worker scope, verification gate, and stopping condition. |
 | Deep module review | `planning`, `review` | Prefer a deep module shape with small public interfaces and meaningful behavior behind them; use the interface as the test surface and preserve locality/leverage. |
 
+**Writing Skill Routing**
+
+User-invoked writing routes use the explicit `$skill-name` form. Automatic routes are evaluated as direct task prompts in fresh sessions; never wrap them in a meta-prompt that asks the model to predict its route.
+
+| User intent | Primary route | Composition or boundary |
+| --- | --- | --- |
+| New technical article, blog post, professional announcement, ticket, postmortem, or ordinary professional prose | `sepia` with `write`, or explicit `sepia-write` | Sepia selects venue rules before drafting. |
+| Diagnose AI-writing patterns without editing | `sepia-review` | Report only; no edits. |
+| Minimally revise an existing draft | `sepia` with `refactor`, or explicit `sepia-refactor` | Preserve facts, structure, voice, and intent. |
+| Rebuild a short draft from supplied facts and intent | `sepia` with `recreate`, or explicit `sepia-recreate` | Extract facts first; do not invent specifics. |
+| Explicit `humanizer` request | `humanizer` | User-invoked legacy fallback for minimal surface editing; never an automatic prose route. |
+| Explore raw material | `writing-fragments` | User-invoked workshop stage; Sepia does not interrupt it. |
+| Shape a fixed fragment pile into an argument | `writing-shape` | User-invoked workshop stage; use Sepia only after a complete draft and when requested. |
+| Build an article beat by beat | `writing-beats` | Preserve its interactive sequence. |
+| Explicit Guanshiyin four-dimension Chinese writing | `guanshiyin-writing` | This explicit method wins; stack Sepia only when explicitly requested. |
+| Job posting plus application package | `job-application-packager` | It owns intake, evidence, artifacts, and PDF workflow. |
+| Customer-facing agent reliability case study | Evidence/domain skill first, then Sepia final prose pass when available | Evidence boundaries stay authoritative; Sepia cannot enlarge claims. |
+| Code, debugging, review, data analysis, or another non-writing task using “write” | Existing non-writing skill | Do not load Sepia merely because the prompt says “write”. |
+
 ## Runtime Helper Map
 
 | Helper | Lifecycle Slot | Purpose |
