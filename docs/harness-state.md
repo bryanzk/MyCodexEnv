@@ -3665,3 +3665,23 @@ Stable rules belong in `AGENTS.md`, `README.md`, `docs/repo-index.md`, or
   - none
 - next_safe_task: continue from current main; treat the five T999 residual hardening ideas as future work only when separately authorized
 - checkpoint_data: {"constraints":["Do not perform runtime sync, deployment, external-root writes, or unrelated cleanup in this WAL synchronization task"],"next_action":{"command":"continue from current main; authorize any residual hardening separately","scope":"post-goal maintenance"},"ownership":{"boundary":"WAL-only synchronization of completed commit 726b5a4","files":{"docs/harness-state.md":"agent_owned_checkpoint"}},"phase":"handoff","schema":"dhf_checkpoint_v1","verification_evidence":{"command":"python3 test_runner.py","exit_code":0,"freshness":"fresh","key_output":"ran=150 passed=150 skipped=0 failed=0; all tests passed; final audit found no P0/P1 blocker or requirement-to-receipt gap","timestamp":"2026-09-02T12:07:26Z"}}
+
+### 2026-09-04T12:38:43Z
+- phase: handoff
+- event: checkpoint
+- summary: synchronized current main CI workflow hardening and Sepia writing-skill routing with the append-only WAL
+- git:
+  - branch: main
+  - latest_commit: bf5c650
+  - dirty_status: clean
+  - dirty_count: 0
+- changed_surfaces:
+  - `docs/harness-state.md`
+- verification:
+  - command: `python3 test_runner.py`
+  - exit_code: 0
+  - key_output: ran=153 passed=153 skipped=0 failed=0; all tests passed
+  - timestamp: 2026-09-04T12:38:43Z
+- blockers:
+  - none
+- next_safe_task: continue from current main; keep future workflow, runtime, and writing-skill changes separately scoped and verified
