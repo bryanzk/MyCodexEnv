@@ -40,6 +40,16 @@ A LONG, numbered list of user stories. Each user story should be in the format o
 
 This list of user stories should be extremely extensive and cover all aspects of the feature.
 
+## Acceptance Scenarios
+
+Describe confirmed key behaviors as Given / When / Then scenarios in this Markdown spec.
+
+- Give each scenario a behavior-focused title and a single behavior that can be verified independently.
+- Keep steps in Given → When → Then order: necessary starting context, one action, then observable and checkable outcomes.
+- Use concrete, realistic examples. Before finalizing, trace every Then/And outcome and related implementation/testing decision to confirmed requirements; remove unsupported return values, messages, state changes, or business decisions. Record any decision still needed under Further Notes as an open question, and keep illustrative details from becoming additional requirements. A confirmed visible state change alone does not imply a success-response contract.
+- Use domain language at the agreed test seam, keeping implementation and automation mechanics in Testing Decisions.
+- Keep scenarios in Markdown; create `.feature` files or add a BDD framework only when the project or user requires them.
+
 ## Implementation Decisions
 
 A list of implementation decisions that were made. This can include:
