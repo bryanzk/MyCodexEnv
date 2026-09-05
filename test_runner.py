@@ -2312,7 +2312,7 @@ def test_sync_renders_template_and_copies_skills():
 
         rendered = (codex_home / "config.toml").read_text(encoding="utf-8")
         for setting in [
-            'model = "gpt-5.6-sol"',
+            'model = "gpt-6-astra"',
             "model_context_window = 1000000",
             "model_auto_compact_token_limit = 900000",
             'model_reasoning_effort = "medium"',
@@ -11630,14 +11630,14 @@ def test_global_agents_layering_workflow_and_size_contract():
     required = [
         "更靠近目标目录的 AGENTS.md 可以覆盖其作用域内冲突的上层指导",
         "不可覆盖的安全要求必须由 developer 或 managed policy、sandbox、rules 或 hooks 强制执行",
-        "Skill 只在用户明确点名或任务与其描述匹配时使用",
+        "Skill 按用户点名或实际工作流需要选择",
         "并行 agent 只用于可独立执行、边界清晰且确实可以并行推进的子任务",
         "主代理在每个请求开始时判断子代理是否能实质改善并行速度、上下文隔离、专业准确性或独立验证",
         "适合委派时使用最小充分团队，通常为一至三个子代理",
         "委派不扩大用户授权；主代理负责集成、最终验证与对用户交付",
         "子代理报告是待复核证据，不是完成证明",
         "<项目缩写>-<YYYYMMDD>-<概要>",
-        "交付前必须重新运行相关验证，不使用旧结果替代 fresh evidence",
+        "交付使用覆盖最终相关改动的有效验证证据",
         "## Remote Operations",
         "## Repo AGENTS Expectations",
     ]

@@ -1,8 +1,8 @@
 # Repository navigation and sources of truth
 
-## Read first
+## Navigation when needed
 
-- Start with `README.md` for workflows and `docs/repo-index.md` for the compact repository map.
+- For unfamiliar workflows, consult `README.md`; use `docs/repo-index.md` when the relevant module is unclear. A bounded edit can start with the target and its callers or tests without reading the whole repository map.
 - Read a nearer `AGENTS.md` when the target directory contains one.
 
 ## Map

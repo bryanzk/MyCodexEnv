@@ -10,8 +10,8 @@
 
 只读取与当前任务相关的指南：
 
-- [Repository navigation and sources of truth](docs/agents/repository.md)
-- [Runtime and skill changes](docs/agents/runtime-and-skills.md)
-- [Verification and change safety](docs/agents/verification-and-change-safety.md)
+- 不熟悉仓库或需要查找权威入口时：[Repository navigation and sources of truth](docs/agents/repository.md)
+- 修改 runtime、配置或 skills 时：[Runtime and skill changes](docs/agents/runtime-and-skills.md)
+- 选择验证入口或判断证据是否仍有效时：[Verification and change safety](docs/agents/verification-and-change-safety.md)
 - Changes under `codex/`: [Codex global rules source](codex/AGENTS.md)
 - Changes under vendored gstack: [gstack local rules](codex/skills/gstack/AGENTS.md)

@@ -1,7 +1,7 @@
 ---
 name: ccwf-planning-with-files
 version: "1.0.0"
-description: File-based planning for complex tasks. Creates task_plan.md, findings.md, and progress.md. Use for multi-step tasks requiring >5 tool calls.
+description: Maintain durable task plans and findings for work that needs cross-session recovery or an explicit file-based plan.
 user-invocable: true
 allowed-tools:
   - Read
@@ -16,95 +16,12 @@ allowed-tools:
 
 # Planning with Files
 
-Work like Manus: Use persistent markdown files as your "working memory on disk."
+Keep enough durable context for another session to resume the task without repeating discovery.
 
-## The Core Pattern
+Use the repository's existing plan or state file first. If file-based planning is authorized and no suitable artifact exists, create one task-scoped plan containing the goal, completion criteria, decisions, relevant evidence, and next action. Separate findings or progress files only when their volume or consumers justify it.
 
-```
-Context Window = RAM (volatile, limited)
-Filesystem = Disk (persistent, unlimited)
+Update the record when a decision, result, blocker, or handoff changes what the next session needs. Re-read it when resuming or resolving uncertainty, rather than after a fixed number of tool calls.
 
-→ Anything important gets written to disk.
-```
+Preserve the task's write boundary. For read-only work or when a handoff file lacks required authorization, report the context in chat. Ordinary bounded edits do not need persistent planning files.
 
-## Quick Start
-
-Before ANY complex task:
-
-1. **Create `task_plan.md`** — Phase tracking with acceptance criteria
-2. **Create `findings.md`** — Research storage
-3. **Create `progress.md`** — Session logging
-4. **Fill Acceptance Criteria** — Define done *before* writing code
-5. **Re-read plan before decisions** — Refreshes goals in attention window
-6. **Update after each phase** — Mark complete, log errors
-
-## File Purposes
-
-| File | Purpose | When to Update |
-|------|---------|----------------|
-| `task_plan.md` | Phases, progress, decisions | After each phase |
-| `findings.md` | Research, discoveries | After ANY discovery |
-| `progress.md` | Session log, test results | Throughout session |
-
-## Critical Rules
-
-### 1. Create Plan First
-Never start a complex task without `task_plan.md`. Non-negotiable.
-
-### 2. The 2-Action Rule
-> "After every 2 view/browser/search operations, IMMEDIATELY save key findings to text files."
-
-### 3. Read Before Decide
-Before major decisions, read the plan file.
-
-### 4. Update After Act
-After completing any phase: mark status, log errors, note files changed.
-
-### 5. Log ALL Errors
-Every error goes in the plan file. Builds knowledge, prevents repetition.
-
-### 6. Never Repeat Failures
-```
-if action_failed:
-    next_action != same_action
-```
-
-## The 3-Strike Error Protocol
-
-```
-ATTEMPT 1: Diagnose & Fix
-  → Read error carefully, identify root cause, apply targeted fix
-
-ATTEMPT 2: Alternative Approach
-  → Same error? Different method, different tool
-
-ATTEMPT 3: Broader Rethink
-  → Question assumptions, search for solutions, consider updating plan
-
-AFTER 3 FAILURES: Escalate to User
-  → Explain what you tried, share specific error, ask for guidance
-```
-
-## The 5-Question Reboot Test
-
-| Question | Answer Source |
-|----------|---------------|
-| Where am I? | Current phase in task_plan.md |
-| Where am I going? | Remaining phases |
-| What's the goal? | Goal statement in plan |
-| What have I learned? | findings.md |
-| What have I done? | progress.md |
-
-## When to Use This Pattern
-
-**Use for**: Multi-step tasks (3+ steps), research, building projects, many tool calls
-**Skip for**: Simple questions, single-file edits, quick lookups
-
-## Anti-Patterns
-
-| Don't | Do Instead |
-|-------|------------|
-| State goals once and forget | Re-read plan before decisions |
-| Hide errors and retry silently | Log errors to plan file |
-| Start executing immediately | Create plan file FIRST |
-| Repeat failed actions | Track attempts, mutate approach |
+Continue authorized implementation and verification until the completion criteria are met. Escalate when progress depends on a missing decision, permission, credential, or external dependency; a fixed retry count alone is not a reason to stop.

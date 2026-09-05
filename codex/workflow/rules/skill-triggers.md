@@ -37,7 +37,7 @@
 |----------|--------|------------|
 | Stuck >15min | experience-evolution | Known issue in patterns.md; fix is obvious just time-consuming |
 | 3 consecutive failures | Pause, revert to debugging Phase 1 | Each failure is a different problem (not same root cause) |
-| Complex task >5 files | Suggest planning-with-files | User gave step-by-step instructions; many files but each <10 lines |
+| Cross-session recovery or explicit file-based planning | Use planning-with-files; reuse an authorized plan | Ordinary bounded edits; file count alone does not trigger planning |
 | Change >100 lines non-sensitive | Suggest outsourcing to Codex | Involves critical logic/secrets; tightly coupled needing deep context |
 
 <!--

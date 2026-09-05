@@ -22,7 +22,7 @@
 
 | 上游技能 | Codex 技能目录 | 触发事件 | 必要证据 |
 |---|---|---|---|
-| `planning-with-files` | `~/.codex/skills/ccwf-planning-with-files` | 复杂任务 | 计划文件 + 阶段验收 |
+| `planning-with-files` | `~/.codex/skills/ccwf-planning-with-files` | 跨会话恢复或显式文件计划 | 验收标准；复用现有计划，或在文件规划已授权且无合适文件时新建任务计划；无文件授权时用 chat |
 | `systematic-debugging` | `~/.codex/skills/ccwf-systematic-debugging` | Bug/CI 失败 | 根因证据链 |
 | `verification-before-completion` | `~/.codex/skills/ccwf-verification-before-completion` | 完成声明前 | fresh verification output |
 | `session-end` | `~/.codex/skills/ccwf-session-end` | 退出信号 | 4 类写回同步 |

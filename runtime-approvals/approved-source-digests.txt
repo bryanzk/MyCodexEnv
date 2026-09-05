@@ -21,3 +21,4 @@ sha256:2f693b0429150c130a41d74a2def4541113d4697655921d895abe6f378154fc0  Sepia w
 sha256:34bcb159aa76f5da2f514599259f14a70dc3bdf6b8ecc417edae08cf3bd3240a  Sepia closed fact set local patch
 sha256:089da846774a07a627d5a06d98c3b528f6680e2311e4d34294f7a825a3d6d022  Sepia transparent arithmetic boundary
 sha256:e968d81c218c8412270f01d810727c17206cd8b5930bac5ac81d42ccd43f2c63  Approve acceptance scenario skill source
+sha256:4073f916a4ca8b79a32bdd71ca0f0128f1a79ab45a5c5ba173d0af4d940c2827  Reviewed GPT-6 Astra primary default and scoped instruction migration

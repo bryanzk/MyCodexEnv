@@ -9,6 +9,7 @@
   - If that final gate explicitly skips `test_codex_skill_loader_gate` or `test_verify_after_full_sync` because the sandbox lacks a required host capability, do not rerun the full suite. When the changed layer requires those integrations, run `python3 test_runner.py --host-only` outside the sandbox; both tests must pass with zero skips.
   - For source-only changes under `codex/`, do not run live runtime parity.
 - Capture `command`, `exit_code`, `key_output`, and `timestamp` on the first invocation. Do not rerun an unchanged gate only to complete its receipt.
+- Within authorized implementation, run disposable local checks, fix change-related failures, and rerun affected tests without asking at each step. Check a test's actual side effects before treating it as disposable; runtime, provider, and production access retain their own authorization boundaries.
 - A later change to relevant source, test, fixture, manifest, or runtime-target content invalidates the prior gate. A commit or push with unchanged tree content does not.
 - After an authorized Codex runtime or configuration promotion, keep the final source gate, then rerun the repository gate, exact parity/readback, and:
 
@@ -26,4 +27,4 @@
 - Treat scripts that synchronize, batch-update, or write runtime state as high risk.
 - Codex state and maintenance tasks are report-only unless the user explicitly authorizes mutation; do not delete, archive, move, or clean worktrees, sessions, or local state by default.
 - When changing an entry command, directory structure, or public interface, update the corresponding README, documentation, and tests.
-- Ask before changing a public interface, deployment method, configuration default, or data format, and before deleting or renaming a key path or bypassing an existing verification entry point.
+- Existing user authorization covers necessary changes to the requested interface, configuration, or workflow. Ask only when an unresolved choice would materially change scope, consumers, persistent data, or permissions; preserve existing verification entry points.
