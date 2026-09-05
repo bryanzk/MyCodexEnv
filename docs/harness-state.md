@@ -3685,3 +3685,23 @@ Stable rules belong in `AGENTS.md`, `README.md`, `docs/repo-index.md`, or
 - blockers:
   - none
 - next_safe_task: continue from current main; keep future workflow, runtime, and writing-skill changes separately scoped and verified
+
+### 2026-09-05T12:36:45Z
+- phase: handoff
+- event: checkpoint
+- summary: synchronized acceptance-scenario skill source and simplified workflow guidance with current main
+- git:
+  - branch: main
+  - latest_commit: ca5d9c6
+  - dirty_status: clean
+  - dirty_count: 0
+- changed_surfaces:
+  - `docs/harness-state.md`
+- verification:
+  - command: `python3 test_runner.py`
+  - exit_code: 0
+  - key_output: ran=153 passed=153 skipped=0 failed=0; all tests passed
+  - timestamp: 2026-09-05T12:36:45Z
+- blockers:
+  - none
+- next_safe_task: continue from current main; keep acceptance scenarios, skill routing, and verification scope evidence-driven
