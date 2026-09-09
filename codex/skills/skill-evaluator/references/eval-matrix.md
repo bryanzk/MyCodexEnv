@@ -9,6 +9,8 @@ Use this matrix to evaluate a skill as a behavior change, not as prose quality. 
 3. It does not load when it should not.
 4. It improves task completion after loading.
 
+Use the full matrix only when the user requests formal evaluation, the task measures skill lift, or the change affects a material authorization, privacy, data-integrity, or recovery/rollback boundary. For an ordinary small description, routing, or body edit, run one targeted workflow-choice check and stop when it finds no material defect.
+
 ## 1. Existence Check
 
 Reject or narrow the skill if any of these are true:
@@ -97,7 +99,7 @@ Weak assertions:
 
 ## 5. Cross-Model and Regression Checks
 
-If the runtime supports multiple orchestration models, rerun routing and domain evals across them. Skills often regress differently across model families.
+Run cross-model checks only when the user requests them, the task is measuring lift across models, or a material boundary depends on behavior across supported models.
 
 At minimum, check:
 
@@ -105,11 +107,11 @@ At minimum, check:
 - One cheaper or smaller model
 - The model family used most often in production
 
-If `description` changes, rerun routing evals first. Description edits are high-risk because they can break neighboring skills without touching their files.
+If `description` changes, run a targeted routing check for the affected intent and its nearest competing intent. Expand beyond that only when the result exposes a material defect.
 
 ## 6. Evidence to Capture
 
-For every claim that a skill is good, capture:
+For a formal skill-lift claim, capture:
 
 - Prompt
 - Whether the skill loaded

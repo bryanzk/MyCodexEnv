@@ -1,73 +1,42 @@
 ---
 name: ccwf-verification-before-completion
-description: Verification before completion - must run verification commands before claiming done. Evidence before claims.
+description: Use when preparing a completion claim and checking whether verification evidence covers the final inputs and environment.
 ---
 
 # Verification Before Completion
 
-## Overview
+## Evidence before claims
 
-Claiming work is complete without verification is dishonesty, not efficiency.
+A completion claim needs valid evidence covering the final relevant inputs and
+environment. Use the repository's verification rules to select the required
+checks; this skill does not add another gate.
 
-**Core principle:** Evidence before claims, always.
+1. Identify the claim and its required evidence.
+2. Reuse an existing receipt when its relevant source, tests, fixtures, manifest,
+   runtime target, environment, and applicable validity period still match.
+   A new reply or commit with unchanged content does not invalidate it.
+3. Run the affected checks when evidence is missing or invalidated by a relevant
+   change, failure, or concrete unresolved concern. If validity is uncertain,
+   resolve that uncertainty or report the gap before claiming completion.
+4. Read the result, including failures and skips. State only what it proves and
+   retain the original `command`, `exit_code`, `key_output`, and `timestamp`.
 
-## The Iron Law
-
-```
-NO COMPLETION CLAIMS WITHOUT FRESH VERIFICATION EVIDENCE
-```
-
-If you haven't run the verification command in this message, you cannot claim it passes.
-
-## The Gate Function
-
-```
-BEFORE claiming any status or expressing satisfaction:
-
-1. IDENTIFY: What command proves this claim?
-2. RUN: Execute the FULL command (fresh, complete)
-3. READ: Full output, check exit code, count failures
-4. VERIFY: Does output confirm the claim?
-   - If NO: State actual status with evidence
-   - If YES: State claim WITH evidence
-5. ONLY THEN: Make the claim
-
-Skip any step = lying, not verifying
-```
+Required CI, promotion checks, and independent cross-environment readback retain
+their own evidence and authorization boundaries. Source validation cannot replace
+runtime acceptance. Once the required checks pass, stop unless new evidence
+justifies more work. Do not rerun a check merely to restate its receipt or give it
+a newer timestamp.
 
 ## Common Failures
 
 | Claim | Requires | Not Sufficient |
 |-------|----------|----------------|
-| Tests pass | Test command output: 0 failures | Previous run, "should pass" |
+| Tests pass | Valid test output covering the final inputs; disclose required skips | Stale output, "should pass" |
 | Linter clean | Linter output: 0 errors | Partial check, extrapolation |
 | Build succeeds | Build command: exit 0 | Linter passing, logs look good |
 | Bug fixed | Test original symptom: passes | Code changed, assumed fixed |
-| Agent completed | VCS diff shows changes | Agent reports "success" |
+| Agent completed | Inspect the actual diff and applicable validation evidence | Agent reports "success" |
 
-## Red Flags - STOP
-
-- Using "should", "probably", "seems to"
-- Expressing satisfaction before verification
-- About to commit/push/PR without verification
-- Trusting agent success reports
-- Relying on partial verification
-- **ANY wording implying success without having run verification**
-
-## Rationalization Prevention
-
-| Excuse | Reality |
-|--------|---------|
-| "Should work now" | RUN the verification |
-| "I'm confident" | Confidence is not evidence |
-| "Just this once" | No exceptions |
-| "Linter passed" | Linter is not compiler |
-| "Agent said success" | Verify independently |
-
-## The Bottom Line
-
-**No shortcuts for verification.**
-
-Run the command. Read the output. THEN claim the result.
-
-This is non-negotiable.
+Missing or partial evidence supports a bounded status report, not a broader
+success claim. Preserve the gap; do not invent output or infer runtime behavior
+from source parity.

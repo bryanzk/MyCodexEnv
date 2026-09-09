@@ -24,3 +24,4 @@ sha256:e968d81c218c8412270f01d810727c17206cd8b5930bac5ac81d42ccd43f2c63  Approve
 sha256:4073f916a4ca8b79a32bdd71ca0f0128f1a79ab45a5c5ba173d0af4d940c2827  Reviewed GPT-6 Astra primary default and scoped instruction migration
 sha256:9c581a393794ff7c8d9cbc00aac8a456ea8f4ef1f44e396a58e73f914c55f624  Isolate automated test browsers from daily Chrome
 sha256:798bd3ee63904491783e9757880d752c224559feb7f7b8524eec021b822bc44f  Reject ambiguous Playwright browser arguments
+sha256:30fc4f2af8660cc040ab00f1d0f0c89f93283cc31cdd3027004beb703d7ab473  SHI-228 SHI-229 SHI-230 source-only instruction efficiency
