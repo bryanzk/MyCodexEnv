@@ -12,10 +12,6 @@ from typing import Any
 SHIPQ_ROOT = Path(
     os.environ.get("DHF_PREPROMPT_SHIPQ_ROOT", str(Path.home() / "Codes" / "CursorDeveloper" / "ShipQ"))
 )
-DHF_SKILL = os.environ.get(
-    "DHF_PREPROMPT_SKILL",
-    str(Path.home() / ".codex" / "skills" / "delivery-harness-framework" / "SKILL.md"),
-)
 
 SKIP_PATTERNS = [
     r"\bno\s+dhf\b",
@@ -86,24 +82,23 @@ def skip_requested(text: str) -> bool:
     return any(re.search(pattern, text, flags=re.IGNORECASE) for pattern in SKIP_PATTERNS)
 
 
-def load_dhf_context() -> str:
-    return Path(DHF_SKILL).read_text(encoding="utf-8")
-
-
 def build_response(payload: dict[str, Any]) -> dict[str, Any]:
     text = prompt_text(payload)
     if not under_shipq(cwd_text(payload)) or skip_requested(text):
         return {"continue": True}
 
     context = (
-        "ShipQ pre-prompt hook: DHF has been automatically invoked for this "
-        "ShipQ prompt. Treat the following loaded skill output as active "
-        "routing context before non-trivial work. The user can opt out only "
-        "with `no dhf`, `skip dhf`, `不用 dhf`, or an equivalent opt-out in "
-        "the current prompt.\n\n"
-        "=== BEGIN AUTO-INVOKED delivery-harness-framework ===\n"
-        f"{load_dhf_context()}\n"
-        "=== END AUTO-INVOKED delivery-harness-framework ==="
+        "ShipQ: use AGENTS.md already in context; reread only if missing or changed. "
+        "Choose context by the requested action, not keywords. Ordinary questions, "
+        "wording edits and read-only instruction audits need only their targets and "
+        "direct references, not full DHF or fixed State Log reads. "
+        "For all other work, follow AGENTS.md Read First: when it requires "
+        "lifecycle routing (including quote changes, browser QA and code review), "
+        "load shipq-lifecycle-harness and the applicable delivery-harness-framework "
+        "gates, state and policy before acting. "
+        "Preserve AGENTS.md Authorization Levels, ownership, recovery and "
+        "verification requirements. This routing grants no authority. "
+        "Use AGENTS.md Test Commands as the sole verification entry point."
     )
     return {
         "continue": True,

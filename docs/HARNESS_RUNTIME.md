@@ -24,7 +24,12 @@ behavior live in `codex/hooks/dhf_preprompt.py`.
 - Governance profiles are `light`, `standard`, and `governed`.
 - Generic injection requires explicit generic activation; an ordinary
   non-project prompt stays continue-only. opt-out is evaluated before every
-  route, and a ShipQ cwd uses ShipQ adapter lazy delegation.
+  route, and a ShipQ cwd uses ShipQ adapter lazy delegation. The adapter emits
+  a short conditional pointer instead of loading the full DHF skill: ordinary
+  questions, wording edits, and read-only instruction audits stay task-scoped;
+  all other work follows ShipQ `AGENTS.md` → `Read First` for the applicable
+  lifecycle, policy, state, and DHF gates before action. ShipQ `AGENTS.md` owns
+  verification selection; its final Harness already includes full pytest.
 - Every completion preserves exactly `result`, `scope_and_constraints`,
   `verification_receipt`, and `remaining_risk_or_next_action`; profile-specific
   ceremony is conditional rather than repeated by default.

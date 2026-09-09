@@ -1,41 +1,32 @@
 ---
 name: shipq-lifecycle-harness
-description: Use when working in the ShipQ repo on a complex task, ambiguous request, quote/workbook/runtime/demo change, browser/API verification, security boundary, review, ship, or handoff, and Codex needs to classify the current software lifecycle stage before choosing gstack skills.
+description: Route ShipQ quote, runtime, workbook/demo, browser QA, security, review, ship, or handoff work when AGENTS.md requires lifecycle context. Excludes ordinary questions, wording edits, and read-only instruction audits.
 ---
 
 # ShipQ Lifecycle Harness
 
 ## Overview
 
-Use this as the first router for non-trivial ShipQ work. It reads the repo state,
-classifies the lifecycle stage, and then invokes the right gstack skill before
-implementation or handoff.
+Route actual ShipQ work that needs lifecycle or governed-state decisions.
+Ordinary questions, wording edits, and read-only instruction audits use only
+their targets and direct references; mentions of runtime/demo are not actions.
 
 ## Required Startup
 
-Run these probes before choosing the next skill:
-
-```bash
-pwd
-git status --short --branch
-git log --max-count=8 --pretty=format:'%h %ad %s' --date=short
-test -f docs/designs/harness-state.md && sed -n '1,220p' docs/designs/harness-state.md
-test -f docs/designs/harness-state.md && tail -n 220 docs/designs/harness-state.md
-test -f AGENTS.md && sed -n '1,220p' AGENTS.md
-```
-
-If the task touches workbook import, quote runtime, internal/public demo, or
-handoff, also read:
-
-```bash
-sed -n '1,220p' docs/designs/mgf-workbook-handoff.md
-sed -n '1,220p' docs/designs/mgf-workbook-to-quote-engine-canonical-schema.md
-```
-
-If `docs/designs/harness-state.md` is missing, stop and create or restore it
-before doing lifecycle routing. Do not rely on chat history as the durable state.
-`docs/designs/harness-state.md` uses append-only ongoing state updates, so read
-both the header and latest bottom `State Log` entries before routing.
+- Reuse `AGENTS.md` already in context unless missing or changed. Its `Read First`
+  table owns the task-specific reading requirements.
+- Before edits, check `git status --short --branch` and preserve user-owned work;
+  reuse the current check until another actor or operation may have changed it.
+- For work routed here by `AGENTS.md` → `Read First`, read the relevant top
+  rules and latest `State Log` entries in
+  `docs/designs/harness-state.md`. Follow applicable `delivery-harness-framework`
+  gates and the project's `Authorization Levels` before acting.
+- Read `docs/designs/mgf-workbook-handoff.md` and
+  `docs/designs/mgf-workbook-to-quote-engine-canonical-schema.md` when the actual
+  operation depends on workbook/runtime contracts. Do not use fixed head/tail
+  batches or read unrelated business state for a wording change.
+- If required state is missing, report the missing evidence and stop the
+  dependent operation. Creating or restoring state needs its own write scope.
 
 ## Stage Classifier
 
@@ -79,24 +70,22 @@ For workbook/runtime/demo work, preserve these boundaries from
 
 ## Verification Routing
 
-Before claiming completion, run the narrowest relevant gate and include
-`command`, `exit_code`, `key_output`, and `timestamp`. The demand-scaled gate
-refines the work-type gate; it does not replace ShipQ hard gates. Record the
-selected `task_demand` in the handoff or final output.
+Use the project's `AGENTS.md` → `Test Commands` as the single verification
+entry point, including its instruction-only exception and CI lane selector.
+Do not maintain a separate work-type test table in this skill.
 
-| Work type | Minimum gate | Demand-scaled gate |
-| --- | --- | --- |
-| Any repo change | `git diff --check` | Apply the row below that matches the actual task demand. |
-| `low`: docs/config only | Check referenced paths and run `git diff --check`; run tests if docs affect commands, scripts, or behavior. | `git diff --check` plus path/link/command consistency checks. Add a focused test only when the doc/config change affects commands, scripts, behavior, contracts, or public output. |
-| `medium`: single-module code/runtime/import/API | `PATH=.venv/bin:$PATH pytest -q` | `git diff --check` plus `PATH=.venv/bin:$PATH pytest -q <focused test file>` or the focused existing harness command for the touched behavior. |
-| `high`: core or cross-module runtime/demo/security boundary | Focused gate plus full `PATH=.venv/bin:$PATH pytest -q`. | Use this for `quote_engine.py`, `pricing_branch.py`, workbook-to-runtime changes, internal/public demo boundary changes, extension/API auth or security boundary changes, public/private data boundary changes, and cross-module importer/facade changes. Run focused gate plus full `PATH=.venv/bin:$PATH pytest -q` plus at least one new probe targeting the slice's active subgoal. |
-| Workbook/runtime harness | `PATH=.venv/bin:$PATH python scripts/verify_harness.py` | If the task is medium or high, pair this with the matching focused/full pytest demand gate. |
-| Internal quote API | `PATH=.venv/bin:$PATH pytest -q tests/test_internal_quote_api.py` | Treat as medium by default; upgrade to high when auth, public/private output, or cross-module runtime behavior changes. |
-| Browser demo | Start `scripts/run_internal_quote_server.py` with `SHIPQ_INTERNAL_DEMO_TOKEN`, then use gstack browser/QA to check public, internal FCL, internal LCL, `prototype.html`, and `prototype-en.html`. | Treat as high when public/private output, auth, extension/API, or owner-demo boundaries change. |
+- During implementation, use the relevant focused checks.
+- When required by the repo, `scripts/verify_harness.py` already includes serial
+  full pytest. Run it once for the final state; do not add a separate full pytest
+  or repeat the internal quote API tests it already collects.
+- Reuse evidence for unchanged inputs. New behavior changes, failed checks, or
+  concrete unresolved concerns require the relevant verification again.
+- Report `command`, `exit_code`, `key_output`, and `timestamp`; a green source
+  gate does not prove live Gmail, provider, or runtime acceptance.
 
 ## Output Contract
 
-After routing, state:
+For work requiring lifecycle routing, report only the applicable items:
 
 1. Lifecycle stage selected.
 2. gstack skill(s) invoked or reason no extra skill is needed.

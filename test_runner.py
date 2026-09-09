@@ -3556,53 +3556,54 @@ def test_skill_governance_freeze_review_policy_doc():
     print("[PASS] skill governance freeze-review policy doc")
 
 
-def test_shipq_dhf_prompt_hook_auto_invokes_skill():
-    hooks = json.loads((ROOT / "codex" / "hooks.json").read_text(encoding="utf-8"))
-    prompt_hooks = hooks["hooks"]["UserPromptSubmit"][0]["hooks"]
-    commands = [hook.get("command", "") for hook in prompt_hooks]
-    compaction_command = "/usr/bin/python3 ~/.codex/hooks/compaction_probe.py"
-    dhf_command = "/usr/bin/python3 ~/.codex/hooks/dhf_preprompt.py"
-    legacy_shipq_command = "/usr/bin/python3 ~/.codex/hooks/shipq_dhf_preprompt.py"
-    require(compaction_command in commands, "UserPromptSubmit should run compaction probe")
-    require(dhf_command in commands, "UserPromptSubmit should run the generic DHF dispatcher")
-    require(legacy_shipq_command not in commands, "UserPromptSubmit must not directly register the ShipQ adapter")
-    require(
-        commands == [compaction_command, dhf_command],
-        "UserPromptSubmit should contain only compaction probe followed by the generic DHF dispatcher",
-    )
+def test_shipq_lifecycle_verification_uses_repo_gate():
+    text = SHIPQ_LIFECYCLE_SKILL.read_text(encoding="utf-8")
+    section = text.split("## Verification Routing", 1)[1].split("\n## ", 1)[0]
+    for pointer in ["AGENTS.md", "Test Commands", "scripts/verify_harness.py"]:
+        require(pointer in section, f"verification must point to the repo gate: {pointer}")
+    require("| Work type |" not in section, "lifecycle must not maintain a second verification table")
+    require("pair this with" not in section, "Harness must not request duplicate full pytest")
+    print("[PASS] ShipQ lifecycle verification uses the repo gate")
 
-    hook_text = SHIPQ_DHF_PREPROMPT.read_text(encoding="utf-8")
-    require(str(Path.home()) not in hook_text,
-            "ShipQ adapter source must not expose the current home path")
-    for term in [
-        "load_dhf_context()",
-        "BEGIN AUTO-INVOKED delivery-harness-framework",
-    ]:
-        require(term in hook_text, f"ShipQ DHF hook should include auto invocation term: {term}")
 
-    for legacy_term in [
-        "DHF_LOADER",
-        "superpowers-codex",
-        "DHF auto-invocation fallback",
-    ]:
-        require(legacy_term not in hook_text, f"ShipQ DHF hook should not retain legacy loader term: {legacy_term}")
-
-    spec = importlib.util.spec_from_file_location("shipq_dhf_preprompt_test", SHIPQ_DHF_PREPROMPT)
-    require(spec is not None and spec.loader is not None, "ShipQ DHF hook should be importable")
-    module = importlib.util.module_from_spec(spec)
-    spec.loader.exec_module(module)
+def test_shipq_dhf_prompt_hook_routes_on_demand():
     with tempfile.TemporaryDirectory() as tmp:
-        tmp_path = Path(tmp)
-        skill_path = tmp_path / "delivery-harness-framework.md"
-        skill_path.write_text("DHF direct context\n", encoding="utf-8")
-        module.SHIPQ_ROOT = tmp_path.resolve()
-        module.DHF_SKILL = str(skill_path)
-        response = module.build_response({"cwd": str(tmp_path), "prompt": "continue ShipQ work"})
-        context = response["hookSpecificOutput"]["additionalContext"]
-        require("DHF direct context" in context, "ShipQ DHF hook should inject the synchronized skill content")
-        require("DHF auto-invocation fallback" not in context, "ShipQ DHF hook should not inject fallback errors")
-
-    print("[PASS] ShipQ DHF prompt hook auto invocation")
+        shipq_root = Path(tmp) / "ShipQ"
+        shipq_root.mkdir()
+        env = {
+            "DHF_PREPROMPT_SHIPQ_ROOT": str(shipq_root),
+            "DHF_PREPROMPT_SKILL": str(Path(tmp) / "not-loaded.md"),
+            "DHF_PREPROMPT_ALLOW_UNTRUSTED_TEST_PATHS": "1",
+        }
+        for adapter in [SHIPQ_DHF_PREPROMPT, ROOT / "claude/codex-hooks/hooks/shipq_dhf_preprompt.py"]:
+            env["DHF_PREPROMPT_SHIPQ_ADAPTER"] = str(adapter)
+            for prompt in [
+                "这个项目的入口在哪里？",
+                "只修改 README 的措辞",
+                "阅读官方文档并审计项目 AGENTS 和 skills",
+                "修改报价计算规则",
+                "检查浏览器中的报价页面",
+                "review 当前代码改动",
+                "切换受保护 runtime 数据库",
+                "部署并验证线上环境",
+                "恢复交接状态并核对授权变化",
+            ]:
+                code, response, _, stderr = _run_generic_dhf_hook(
+                    {"cwd": str(shipq_root), "prompt": prompt}, extra_env=env,
+                )
+                require(code == 0 and "shipq-delegated" in stderr, f"real adapter route failed: {stderr}")
+                context = response["hookSpecificOutput"]["additionalContext"]
+                for pointer in ["AGENTS.md", "Read First", "shipq-lifecycle-harness", "delivery-harness-framework", "Authorization Levels"]:
+                    require(pointer in context, f"on-demand route missing required pointer: {pointer}")
+                require("BEGIN AUTO-INVOKED" not in context, "adapter must not inject the full skill")
+            for payload in [
+                {"cwd": str(shipq_root), "prompt": "部署；不用 dhf"},
+                {"cwd": str(Path(tmp) / "other"), "prompt": "ordinary question"},
+            ]:
+                code, response, _, stderr = _run_generic_dhf_hook(payload, extra_env=env)
+                require(code == 0, f"control route failed: {stderr}")
+                _assert_continue_only(response, "opt-out and ordinary non-ShipQ inputs stay continue-only")
+    print("[PASS] ShipQ real adapters route on demand without reading the full skill")
 
 
 def _load_generic_dhf_module():
@@ -13196,7 +13197,8 @@ TESTS = [
     test_dhf_simplification_golden_corpus,
     test_dhf_simplification_paired_gate,
     test_harness_status_compatibility,
-    test_shipq_dhf_prompt_hook_auto_invokes_skill,
+    test_shipq_lifecycle_verification_uses_repo_gate,
+    test_shipq_dhf_prompt_hook_routes_on_demand,
     test_harness_agent_brief_template,
     test_lifecycle_skill_routing_doc_is_discoverable,
     test_sepia_writing_skill_routing_contract,
