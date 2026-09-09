@@ -10672,6 +10672,74 @@ def defined_test_names() -> list[str]:
     ]
 
 
+def test_playwright_wrapper_keeps_daily_chrome_out_of_test_launches():
+    wrapper = ROOT / "codex/skills/playwright/scripts/playwright_cli.sh"
+    with tempfile.TemporaryDirectory(prefix="mce-browser-wrapper-") as directory:
+        root = Path(directory)
+        home = root / "home"
+        home.mkdir()
+        bin_dir = root / "bin"
+        bin_dir.mkdir()
+        fake_npx = bin_dir / "npx"
+        fake_npx.write_text("#!/usr/bin/env python3\nimport json,sys\nprint(json.dumps(sys.argv[1:]))\n")
+        fake_npx.chmod(0o755)
+        base_env = {k: v for k, v in os.environ.items() if not k.startswith(("PLAYWRIGHT_", "PWTEST_CLI_"))}
+        base_env.update(HOME=str(home), PATH=str(bin_dir) + os.pathsep + os.environ["PATH"])
+
+        def invoke(arguments, extra=None):
+            return subprocess.run(["bash", str(wrapper), *arguments], cwd=root,
+                                  env={**base_env, **(extra or {})}, text=True, capture_output=True)
+
+        result = invoke(["-s=owned-test", "open", "about:blank"])
+        require(result.returncode == 0, result.stderr)
+        args = json.loads(result.stdout)
+        require("--browser" in args and args[args.index("--browser") + 1] == "chromium",
+                "test launch must explicitly select managed Chromium")
+        result = invoke(["-s=owned-test", "close"], {"PLAYWRIGHT_CLI_SESSION": "other"})
+        require(result.returncode == 0 and "other" not in result.stdout,
+                "explicit short session flag must win; close must not acquire a browser flag")
+        require("--browser" not in result.stdout, "close is session-only")
+        for arguments, env in [
+            (["open", "about:blank", "--browser", "chrome"], {}),
+            (["open", "about:blank", "--browser=chrome"], {}),
+            (["open", "about:blank", "--browser=chrome-for-testing"], {}),
+            (["open", "about:blank", "--browser=chromium", "--browser=chromium"], {}),
+            (["open", "about:blank", "--browser="], {}),
+            (["open", "about:blank"], {"PLAYWRIGHT_MCP_BROWSER": "chrome"}),
+            (["open", "about:blank", "--profile", str(home / "Library/Application Support/Google/Chrome/Default")], {}),
+            (["open", "about:blank"], {"PLAYWRIGHT_MCP_USER_DATA_DIR": str(home / "Library/Application Support/Google/Chrome")}),
+            (["open", "about:blank", "--extension"], {}),
+            (["open", "about:blank", "--cdp", "http://localhost:9222"], {}),
+            (["open", "about:blank"], {"PLAYWRIGHT_MCP_EXECUTABLE_PATH": "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"}),
+        ]:
+            result = invoke(arguments, env)
+            require(result.returncode != 0 and not result.stdout,
+                    "unsafe launch must be rejected before npx")
+        config = root / "unsafe.json"
+        config.write_text(json.dumps({"browser": {"launchOptions": {"executablePath": "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"}}}))
+        for arguments, env in [
+            (["open", "about:blank", "--config", str(config)], {}),
+            (["open", "about:blank"], {"PLAYWRIGHT_MCP_CONFIG": str(config)}),
+        ]:
+            result = invoke(arguments, env)
+            require(result.returncode != 0 and not result.stdout, "config executable override must be refused")
+        for config_path in [root / ".playwright/cli.config.json", home / ".playwright/cli.config.json"]:
+            config_path.parent.mkdir(exist_ok=True)
+            config_path.write_text(json.dumps({"browser": {"launchOptions": {"channel": "chrome"}}}))
+            result = invoke(["open", "about:blank"])
+            require(result.returncode != 0 and not result.stdout, "implicit config must not select daily Chrome")
+            config_path.unlink()
+        result = invoke(["open", "about:blank"], {"PLAYWRIGHT_MCP_BROWSER": "chrome-for-testing"})
+        require(result.returncode == 0 and "chromium" in result.stdout, "environment channel must map to a valid CLI browser")
+        config.write_text(json.dumps({"browser": {"launchOptions": {"channel": "chrome-for-testing"}}}))
+        result = invoke(["open", "about:blank", "--config", str(config)])
+        require(result.returncode == 0 and "chromium" in result.stdout, "JSON channel must map to a valid CLI browser")
+        config.write_text(json.dumps({"browser": {"contextOptions": {"viewport": {"width": 800, "height": 600}}}}))
+        result = invoke(["open", "about:blank", "--config", str(config)])
+        require(result.returncode == 0 and "chromium" in result.stdout, "non-launch configuration must be preserved")
+    print("[PASS] Playwright wrapper isolates managed browser launches and named-session close")
+
+
 def test_runner_preflight():
     require(BOOTSTRAP.exists(), f"missing bootstrap: {BOOTSTRAP}")
     require(SYNC.exists(), f"missing sync script: {SYNC}")
@@ -13069,6 +13137,7 @@ HOST_INTEGRATION_TESTS = (
 
 
 TESTS = [
+    test_playwright_wrapper_keeps_daily_chrome_out_of_test_launches,
     test_runner_preflight,
     test_runner_harness_isolation,
     test_runner_harness_catches_system_exit,

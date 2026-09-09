@@ -6,7 +6,7 @@ description: "Use when the task requires automating a real browser from the term
 
 # Playwright CLI Skill
 
-Drive a real browser from the terminal using `playwright-cli`. Prefer the bundled wrapper script so the CLI works even when it is not globally installed.
+Drive a real browser from the terminal using `playwright-cli`. Use the bundled wrapper for new test browsers; it selects Playwright-managed Chromium and rejects installed-browser overrides before starting a daemon.
 Treat this skill as CLI-first automation. Do not pivot to `@playwright/test` unless the user explicitly asks for test files.
 
 ## Prerequisite check (required)
@@ -42,6 +42,12 @@ User-scoped skills install under `$CODEX_HOME/skills` (default: `~/.codex/skills
 
 ## Quick start
 
+Use a task-specific session name and keep it for the whole flow:
+
+```bash
+export PLAYWRIGHT_CLI_SESSION="your-task-name"
+```
+
 Use the wrapper script:
 
 ```bash
@@ -67,6 +73,7 @@ playwright-cli --help
 3. Interact using refs from the latest snapshot.
 4. Re-snapshot after navigation or significant DOM changes.
 5. Capture artifacts (screenshot, pdf, traces) when useful.
+6. On completion, abandonment, or failure, close only this task's session with `"$PWCLI" close`. CLI daemons outlive individual commands; closing the terminal does not close the browser.
 
 Minimal loop:
 
@@ -127,7 +134,22 @@ The wrapper script uses `npx --package @playwright/cli playwright-cli` so the CL
 "$PWCLI" --help
 ```
 
-Prefer the wrapper unless the repository already standardizes on a global install.
+The wrapper requires Python 3 and supports JSON configuration files. It checks
+explicit, environment-selected, workspace, and global launch settings. Missing
+managed browser binaries must be installed explicitly with `"$PWCLI" install-browser chromium`;
+never fall back to the daily Chrome executable. The wrapper is a local entrypoint
+check, not an OS-wide restriction on arbitrary Node or browser launches.
+
+For a finite shell task, install cleanup after choosing its unique session:
+
+```bash
+trap '"$PWCLI" close' EXIT
+```
+
+Reuse an existing daily-browser connection only when that access is authorized.
+Do not launch a separate system Chrome with another profile: profile isolation
+does not separate the macOS application identity. Do not close a browser owned
+by the user or another task, or run global cleanup commands to finish one task.
 
 ## References
 
