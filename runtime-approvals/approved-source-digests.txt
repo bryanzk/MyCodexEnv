@@ -26,3 +26,4 @@ sha256:9c581a393794ff7c8d9cbc00aac8a456ea8f4ef1f44e396a58e73f914c55f624  Isolate
 sha256:798bd3ee63904491783e9757880d752c224559feb7f7b8524eec021b822bc44f  Reject ambiguous Playwright browser arguments
 sha256:30fc4f2af8660cc040ab00f1d0f0c89f93283cc31cdd3027004beb703d7ab473  SHI-228 SHI-229 SHI-230 source-only instruction efficiency
 sha256:7f9dd05fa2258bbdd6c8794d10a27a022c9a980d7cfe7f470084f66c1368dfdb  Reviewed ShipQ on-demand routing and verification deduplication (SHI-232, SHI-233); source only
+sha256:e6826c8c1de2227c47899359b16c47451fefc6fc58e5f8f68ee79cb3eb0ad58f  SHI-241 bounded handoff and retry rules
