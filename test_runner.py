@@ -654,7 +654,11 @@ def phase0_root_snapshot() -> Path:
         )
         if tracked.returncode != 0:
             raise RuntimeError(f"git ls-files failed in {ROOT}: {tracked.stderr.decode(errors='replace')}")
-        for raw_relative in tracked.stdout.split(b"\0"):
+        untracked_skills = subprocess.run(
+            ["git", "-C", str(ROOT), "ls-files", "-z", "--others", "--exclude-standard", "--", "codex/skills/"],
+            stdout=subprocess.PIPE, stderr=subprocess.PIPE, check=True,
+        )
+        for raw_relative in (tracked.stdout + untracked_skills.stdout).split(b"\0"):
             if not raw_relative:
                 continue
             relative = Path(raw_relative.decode("utf-8"))
@@ -10772,6 +10776,39 @@ def test_runner_preflight():
     print("[PASS] test runner preflight")
 
 
+def test_root_snapshot_includes_untracked_skill_sources():
+    with tempfile.TemporaryDirectory() as tmp:
+        source = make_real_git_repo(Path(tmp) / "source")
+        phase0_git(source, "remote", "add", "origin", "https://example.invalid/fixture.git")
+        skill = Path("codex/skills/new-fixture/SKILL.md")
+        asset = Path("codex/skills/new-fixture/references/example.txt")
+        write(source / skill, "---\nname: new-fixture\ndescription: Snapshot fixture.\n---\n")
+        write(source / asset, "untracked supporting file\n")
+        write(source / ".gitignore", "private.txt\n")
+        phase0_git(source, "add", ".gitignore")
+        write(source / skill.parent / "private.txt", "ignored fixture\n")
+        write(source / "unrelated.txt", "outside skill scope\n")
+        with mock.patch.dict(globals(), {
+            "ROOT": source, "_PHASE0_ROOT_SNAPSHOT": None,
+            "CODEX_TASK": source / "codex/bin/codex-task",
+            "HARNESS_SCOPE": source / "codex/runtime/harness-scope.json",
+            "HARNESS_GUARD_TARGETS": source / "codex/runtime/harness-guard-targets.json",
+        }), mock.patch(__name__ + ".phase0_commit_approval"):
+            try:
+                snapshot = phase0_root_snapshot()
+                for relative in (skill, asset):
+                    require((snapshot / relative).is_file(), f"snapshot missing untracked skill source: {relative}")
+                    require((snapshot / relative).read_bytes() == (source / relative).read_bytes(),
+                            f"snapshot must preserve skill source bytes: {relative}")
+                require(not (snapshot / skill.parent / "private.txt").exists(), "ignored skill files stay excluded")
+                require(not (snapshot / "unrelated.txt").exists(), "unrelated untracked files stay excluded")
+                require(not phase0_git(source, "ls-files", "--", str(skill)), "snapshot must not stage source files")
+            finally:
+                if _PHASE0_ROOT_SNAPSHOT is not None:
+                    _PHASE0_ROOT_SNAPSHOT.cleanup()
+    print("[PASS] root snapshot includes untracked skill sources only")
+
+
 def test_runner_harness_isolation():
     calls: list[str] = []
 
@@ -13140,6 +13177,7 @@ HOST_INTEGRATION_TESTS = (
 TESTS = [
     test_playwright_wrapper_keeps_daily_chrome_out_of_test_launches,
     test_runner_preflight,
+    test_root_snapshot_includes_untracked_skill_sources,
     test_runner_harness_isolation,
     test_runner_harness_catches_system_exit,
     test_runner_main_failure_contract,

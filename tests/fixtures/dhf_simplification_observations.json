@@ -158,7 +158,7 @@
             "command": "/opt/homebrew/opt/python@3.14/bin/python3.14 -c 'from pathlib import Path; import sys; sys.exit(0 if Path(sys.argv[1]).is_file() else 1)' docs/example.md",
             "exit_code": 0,
             "key_output": "completed",
-            "timestamp": "2026-09-09T14:30:25Z"
+            "timestamp": "2026-09-11T20:14:23Z"
           },
           "remaining_risk_or_next_action": "none",
           "permission_outcome": "scoped_repo_write_allowed",
@@ -216,7 +216,7 @@
             "command": "/opt/homebrew/opt/python@3.14/bin/python3.14 -c 'from pathlib import Path; import sys; sys.exit(0 if Path(sys.argv[1]).is_file() else 1)' docs/example.md",
             "exit_code": 0,
             "key_output": "completed",
-            "timestamp": "2026-09-09T14:30:25Z"
+            "timestamp": "2026-09-11T20:14:23Z"
           },
           "remaining_risk_or_next_action": "none",
           "permission_outcome": "scoped_repo_write_allowed",
@@ -279,7 +279,7 @@
             "command": "/opt/homebrew/opt/python@3.14/bin/python3.14 -c 'from pathlib import Path; import sys; sys.exit(0 if Path(sys.argv[1]).is_file() else 1)' src/example.py",
             "exit_code": 0,
             "key_output": "completed",
-            "timestamp": "2026-09-09T14:30:25Z"
+            "timestamp": "2026-09-11T20:14:24Z"
           },
           "remaining_risk_or_next_action": "none",
           "permission_outcome": "scoped_repo_write_allowed",
@@ -337,7 +337,7 @@
             "command": "/opt/homebrew/opt/python@3.14/bin/python3.14 -c 'from pathlib import Path; import sys; sys.exit(0 if Path(sys.argv[1]).is_file() else 1)' src/example.py",
             "exit_code": 0,
             "key_output": "completed",
-            "timestamp": "2026-09-09T14:30:25Z"
+            "timestamp": "2026-09-11T20:14:24Z"
           },
           "remaining_risk_or_next_action": "none",
           "permission_outcome": "scoped_repo_write_allowed",
@@ -509,7 +509,7 @@
             "command": "/opt/homebrew/opt/python@3.14/bin/python3.14 -c 'from pathlib import Path; import sys; sys.exit(0 if Path(sys.argv[1]).is_file() else 1)' src/parser_option.py",
             "exit_code": 0,
             "key_output": "completed",
-            "timestamp": "2026-09-09T14:30:26Z"
+            "timestamp": "2026-09-11T20:14:24Z"
           },
           "remaining_risk_or_next_action": "none",
           "permission_outcome": "local_repo_write_allowed",
@@ -567,7 +567,7 @@
             "command": "/opt/homebrew/opt/python@3.14/bin/python3.14 -c 'from pathlib import Path; import sys; sys.exit(0 if Path(sys.argv[1]).is_file() else 1)' src/parser_option.py",
             "exit_code": 0,
             "key_output": "completed",
-            "timestamp": "2026-09-09T14:30:26Z"
+            "timestamp": "2026-09-11T20:14:24Z"
           },
           "remaining_risk_or_next_action": "none",
           "permission_outcome": "local_repo_write_allowed",
@@ -629,8 +629,8 @@
           "verification_receipt": {
             "command": "/opt/homebrew/opt/python@3.14/bin/python3.14 test_failure.py",
             "exit_code": 1,
-            "key_output": "Traceback (most recent call last):   File \"/private/var/folders/mf/lxpn1ltx7t97r1v1k92vly1w0000gn/T/tmpwgy0rjb8/test_failure.py\", line 1, in <module>     assert",
-            "timestamp": "2026-09-09T14:30:26Z"
+            "key_output": "Traceback (most recent call last):   File \"/private/var/folders/mf/lxpn1ltx7t97r1v1k92vly1w0000gn/T/tmp2oj6pi58/test_failure.py\", line 1, in <module>     assert",
+            "timestamp": "2026-09-11T20:14:25Z"
           },
           "remaining_risk_or_next_action": "none",
           "permission_outcome": "read_only_diagnosis_allowed",
@@ -684,8 +684,8 @@
           "verification_receipt": {
             "command": "/opt/homebrew/opt/python@3.14/bin/python3.14 test_failure.py",
             "exit_code": 1,
-            "key_output": "Traceback (most recent call last):   File \"/private/var/folders/mf/lxpn1ltx7t97r1v1k92vly1w0000gn/T/tmptxnswy79/test_failure.py\", line 1, in <module>     assert",
-            "timestamp": "2026-09-09T14:30:26Z"
+            "key_output": "Traceback (most recent call last):   File \"/private/var/folders/mf/lxpn1ltx7t97r1v1k92vly1w0000gn/T/tmpodwymfm6/test_failure.py\", line 1, in <module>     assert",
+            "timestamp": "2026-09-11T20:14:25Z"
           },
           "remaining_risk_or_next_action": "none",
           "permission_outcome": "read_only_diagnosis_allowed",
@@ -745,7 +745,7 @@
             "command": "/opt/homebrew/opt/python@3.14/bin/python3.14 -c 'from pathlib import Path; import sys; sys.exit(0 if Path(sys.argv[1]).is_file() else 1)' src/module_seam.py",
             "exit_code": 0,
             "key_output": "completed",
-            "timestamp": "2026-09-09T14:30:27Z"
+            "timestamp": "2026-09-11T20:14:25Z"
           },
           "remaining_risk_or_next_action": "none",
           "permission_outcome": "scoped_refactor_allowed",
@@ -803,7 +803,7 @@
             "command": "/opt/homebrew/opt/python@3.14/bin/python3.14 -c 'from pathlib import Path; import sys; sys.exit(0 if Path(sys.argv[1]).is_file() else 1)' src/module_seam.py",
             "exit_code": 0,
             "key_output": "completed",
-            "timestamp": "2026-09-09T14:30:27Z"
+            "timestamp": "2026-09-11T20:14:25Z"
           },
           "remaining_risk_or_next_action": "none",
           "permission_outcome": "scoped_refactor_allowed",
@@ -866,7 +866,7 @@
             "command": "/opt/homebrew/opt/python@3.14/bin/python3.14 -c 'from pathlib import Path; import sys; sys.exit(0 if Path(sys.argv[1]).is_file() else 1)' src/cli_flag.py",
             "exit_code": 0,
             "key_output": "completed",
-            "timestamp": "2026-09-09T14:30:27Z"
+            "timestamp": "2026-09-11T20:14:25Z"
           },
           "remaining_risk_or_next_action": "none",
           "permission_outcome": "local_cli_change_allowed",
@@ -924,7 +924,7 @@
             "command": "/opt/homebrew/opt/python@3.14/bin/python3.14 -c 'from pathlib import Path; import sys; sys.exit(0 if Path(sys.argv[1]).is_file() else 1)' src/cli_flag.py",
             "exit_code": 0,
             "key_output": "completed",
-            "timestamp": "2026-09-09T14:30:27Z"
+            "timestamp": "2026-09-11T20:14:26Z"
           },
           "remaining_risk_or_next_action": "none",
           "permission_outcome": "local_cli_change_allowed",
@@ -987,7 +987,7 @@
             "command": "/opt/homebrew/opt/python@3.14/bin/python3.14 -c 'from pathlib import Path; import sys; sys.exit(0 if Path(sys.argv[1]).is_file() else 1)' src/empty_state.py",
             "exit_code": 0,
             "key_output": "completed",
-            "timestamp": "2026-09-09T14:30:28Z"
+            "timestamp": "2026-09-11T20:14:26Z"
           },
           "remaining_risk_or_next_action": "none",
           "permission_outcome": "local_ui_change_allowed",
@@ -1045,7 +1045,7 @@
             "command": "/opt/homebrew/opt/python@3.14/bin/python3.14 -c 'from pathlib import Path; import sys; sys.exit(0 if Path(sys.argv[1]).is_file() else 1)' src/empty_state.py",
             "exit_code": 0,
             "key_output": "completed",
-            "timestamp": "2026-09-09T14:30:28Z"
+            "timestamp": "2026-09-11T20:14:26Z"
           },
           "remaining_risk_or_next_action": "none",
           "permission_outcome": "local_ui_change_allowed",
@@ -1108,7 +1108,7 @@
             "command": "git status --short",
             "exit_code": 0,
             "key_output": "M user-owned.txt",
-            "timestamp": "2026-09-09T14:30:28Z"
+            "timestamp": "2026-09-11T20:14:26Z"
           },
           "remaining_risk_or_next_action": "authorization required",
           "permission_outcome": "recover_before_write",
@@ -1190,7 +1190,7 @@
             "command": "git status --short",
             "exit_code": 0,
             "key_output": "M user-owned.txt",
-            "timestamp": "2026-09-09T14:30:28Z"
+            "timestamp": "2026-09-11T20:14:26Z"
           },
           "remaining_risk_or_next_action": "authorization required",
           "permission_outcome": "recover_before_write",
@@ -1263,7 +1263,7 @@
             "command": "git status --short",
             "exit_code": 0,
             "key_output": "M user-owned.txt",
-            "timestamp": "2026-09-09T14:30:28Z"
+            "timestamp": "2026-09-11T20:14:27Z"
           },
           "remaining_risk_or_next_action": "authorization required",
           "permission_outcome": "block_overlapping_write",
@@ -1336,7 +1336,7 @@
             "command": "git status --short",
             "exit_code": 0,
             "key_output": "M user-owned.txt",
-            "timestamp": "2026-09-09T14:30:28Z"
+            "timestamp": "2026-09-11T20:14:27Z"
           },
           "remaining_risk_or_next_action": "authorization required",
           "permission_outcome": "block_overlapping_write",
@@ -1404,7 +1404,7 @@
             "command": "git status --short",
             "exit_code": 0,
             "key_output": "M user-owned.txt",
-            "timestamp": "2026-09-09T14:30:29Z"
+            "timestamp": "2026-09-11T20:14:27Z"
           },
           "remaining_risk_or_next_action": "authorization required",
           "permission_outcome": "sanitized_capture_only",
@@ -1479,7 +1479,7 @@
             "command": "git status --short",
             "exit_code": 0,
             "key_output": "M user-owned.txt",
-            "timestamp": "2026-09-09T14:30:29Z"
+            "timestamp": "2026-09-11T20:14:27Z"
           },
           "remaining_risk_or_next_action": "authorization required",
           "permission_outcome": "sanitized_capture_only",
@@ -1550,7 +1550,7 @@
             "command": "git status --short",
             "exit_code": 0,
             "key_output": "M user-owned.txt",
-            "timestamp": "2026-09-09T14:30:29Z"
+            "timestamp": "2026-09-11T20:14:27Z"
           },
           "remaining_risk_or_next_action": "authorization required",
           "permission_outcome": "plan_only_until_authorized",
@@ -1634,7 +1634,7 @@
             "command": "git status --short",
             "exit_code": 0,
             "key_output": "M user-owned.txt",
-            "timestamp": "2026-09-09T14:30:29Z"
+            "timestamp": "2026-09-11T20:14:27Z"
           },
           "remaining_risk_or_next_action": "authorization required",
           "permission_outcome": "plan_only_until_authorized",
@@ -1709,7 +1709,7 @@
             "command": "git status --short",
             "exit_code": 0,
             "key_output": "M user-owned.txt",
-            "timestamp": "2026-09-09T14:30:29Z"
+            "timestamp": "2026-09-11T20:14:28Z"
           },
           "remaining_risk_or_next_action": "authorization required",
           "permission_outcome": "validate_team_before_dispatch",
@@ -1780,7 +1780,7 @@
             "command": "git status --short",
             "exit_code": 0,
             "key_output": "M user-owned.txt",
-            "timestamp": "2026-09-09T14:30:29Z"
+            "timestamp": "2026-09-11T20:14:28Z"
           },
           "remaining_risk_or_next_action": "authorization required",
           "permission_outcome": "validate_team_before_dispatch",
@@ -1848,7 +1848,7 @@
             "command": "git status --short",
             "exit_code": 0,
             "key_output": "M user-owned.txt",
-            "timestamp": "2026-09-09T14:30:30Z"
+            "timestamp": "2026-09-11T20:14:28Z"
           },
           "remaining_risk_or_next_action": "authorization required",
           "permission_outcome": "block_implementation_until_aligned",
@@ -1927,7 +1927,7 @@
             "command": "git status --short",
             "exit_code": 0,
             "key_output": "M user-owned.txt",
-            "timestamp": "2026-09-09T14:30:30Z"
+            "timestamp": "2026-09-11T20:14:28Z"
           },
           "remaining_risk_or_next_action": "authorization required",
           "permission_outcome": "block_implementation_until_aligned",
@@ -2381,8 +2381,8 @@
     "kind": "base_expected_runtime_manifest",
     "base_commit": "00818ae174f039899a2757ee4c67fcf9db1effa0",
     "managed_roots": [
-      "/var/folders/mf/lxpn1ltx7t97r1v1k92vly1w0000gn/T/tmpvzx8v18t/.codex/hooks",
-      "/var/folders/mf/lxpn1ltx7t97r1v1k92vly1w0000gn/T/tmpvzx8v18t/.codex/skills/delivery-harness-framework"
+      "/var/folders/mf/lxpn1ltx7t97r1v1k92vly1w0000gn/T/tmpyg1itndh/.codex/hooks",
+      "/var/folders/mf/lxpn1ltx7t97r1v1k92vly1w0000gn/T/tmpyg1itndh/.codex/skills/delivery-harness-framework"
     ],
     "managed_relative_paths": [
       "codex/hooks/dhf_preprompt.py",
@@ -2394,37 +2394,37 @@
     ],
     "records": [
       {
-        "path": "/var/folders/mf/lxpn1ltx7t97r1v1k92vly1w0000gn/T/tmpvzx8v18t/.codex/hooks/dhf_preprompt.py",
+        "path": "/var/folders/mf/lxpn1ltx7t97r1v1k92vly1w0000gn/T/tmpyg1itndh/.codex/hooks/dhf_preprompt.py",
         "type": "regular",
         "sha256": "be0f0f9372cdacd5f03beb60df8269629ecdd07991814ca8dd912b97b4effbb9",
         "source_path": "codex/hooks/dhf_preprompt.py"
       },
       {
-        "path": "/var/folders/mf/lxpn1ltx7t97r1v1k92vly1w0000gn/T/tmpvzx8v18t/.codex/skills/delivery-harness-framework/SKILL.md",
+        "path": "/var/folders/mf/lxpn1ltx7t97r1v1k92vly1w0000gn/T/tmpyg1itndh/.codex/skills/delivery-harness-framework/SKILL.md",
         "type": "regular",
         "sha256": "18148ab8885fd0920df72a248cef23ff3fa1b73a60b3370098542efb4cfdcd00",
         "source_path": "codex/skills/delivery-harness-framework/SKILL.md"
       },
       {
-        "path": "/var/folders/mf/lxpn1ltx7t97r1v1k92vly1w0000gn/T/tmpvzx8v18t/.codex/skills/delivery-harness-framework/agents/openai.yaml",
+        "path": "/var/folders/mf/lxpn1ltx7t97r1v1k92vly1w0000gn/T/tmpyg1itndh/.codex/skills/delivery-harness-framework/agents/openai.yaml",
         "type": "regular",
         "sha256": "e060c7936ecfe93b81d64b3b41c7403c3f15f935c394381ad5af3266567d6930",
         "source_path": "codex/skills/delivery-harness-framework/agents/openai.yaml"
       },
       {
-        "path": "/var/folders/mf/lxpn1ltx7t97r1v1k92vly1w0000gn/T/tmpvzx8v18t/.codex/skills/delivery-harness-framework/evals/evals.json",
+        "path": "/var/folders/mf/lxpn1ltx7t97r1v1k92vly1w0000gn/T/tmpyg1itndh/.codex/skills/delivery-harness-framework/evals/evals.json",
         "type": "regular",
         "sha256": "651cfe21377981dad9eadc7c6d264935512a9fcce50638ea0545fe4235348f02",
         "source_path": "codex/skills/delivery-harness-framework/evals/evals.json"
       },
       {
-        "path": "/var/folders/mf/lxpn1ltx7t97r1v1k92vly1w0000gn/T/tmpvzx8v18t/.codex/skills/delivery-harness-framework/evals/validate_completion_output.py",
+        "path": "/var/folders/mf/lxpn1ltx7t97r1v1k92vly1w0000gn/T/tmpyg1itndh/.codex/skills/delivery-harness-framework/evals/validate_completion_output.py",
         "type": "absent",
         "sha256": "absent",
         "source_path": "codex/skills/delivery-harness-framework/evals/validate_completion_output.py"
       },
       {
-        "path": "/var/folders/mf/lxpn1ltx7t97r1v1k92vly1w0000gn/T/tmpvzx8v18t/.codex/skills/delivery-harness-framework/references/agent-team-context-policy.md",
+        "path": "/var/folders/mf/lxpn1ltx7t97r1v1k92vly1w0000gn/T/tmpyg1itndh/.codex/skills/delivery-harness-framework/references/agent-team-context-policy.md",
         "type": "absent",
         "sha256": "absent",
         "source_path": "codex/skills/delivery-harness-framework/references/agent-team-context-policy.md"
@@ -2439,7 +2439,7 @@
       "*.pyc",
       "directory metadata"
     ],
-    "aggregate_sha256": "bb8ac7cc25d4d9cc9e31a781a460c35706e000afcd083ccc140a1226cb5273db"
+    "aggregate_sha256": "4bee2e750273f4f78c9b6940662b4f0fbf5a3ba5abbfd95b000446561b1935f2"
   },
   "producer_evidence": {
     "PRODUCER-AC-01-S2-1": {
@@ -2459,7 +2459,7 @@
         "corpus_sha256": "526620d20e6949b815348a5143d56a437a3a2860c50306166266ba2c10e002c6",
         "runner_sha256": "d930128121381ce78d26aaec36ca56087e8577cd817763ca4bf28ee02f5d18a2",
         "promotion_manifest_sha256": "8a79f31e88e85e5ecbeb4dbbde9291460e115d19e7481f741e7bef41328f8b98",
-        "source_artifact_sha256": "6867c61cb2fd32ca512aafb6bc9f5cac99d58efa8681695446efcbd6aea370ad",
+        "source_artifact_sha256": "53d56b7b46b722b5d4c594c6e601841a1f9efa8c71d338b6c2a6e7cc38c173ea",
         "acceptance_id": "AC-01",
         "registered_assertion_ids": [
           "scenario:GOVERNED-RESUMED-TASK",
@@ -2470,7 +2470,7 @@
           "test:TEST-STRUCTURED-COMPLETION-ORACLE"
         ]
       },
-      "evidence_sha256": "deeab96730d9638bd851b69a0b8eeeebbb931831b7f43281d450a38a2370efb0"
+      "evidence_sha256": "3cba2dc8def986b858491ecce7d214e8601882fdcd64b53664da11bc99131437"
     },
     "PRODUCER-AC-02-S1-1": {
       "binding": {
@@ -2489,7 +2489,7 @@
         "corpus_sha256": "526620d20e6949b815348a5143d56a437a3a2860c50306166266ba2c10e002c6",
         "runner_sha256": "d930128121381ce78d26aaec36ca56087e8577cd817763ca4bf28ee02f5d18a2",
         "promotion_manifest_sha256": "8a79f31e88e85e5ecbeb4dbbde9291460e115d19e7481f741e7bef41328f8b98",
-        "source_artifact_sha256": "6867c61cb2fd32ca512aafb6bc9f5cac99d58efa8681695446efcbd6aea370ad",
+        "source_artifact_sha256": "53d56b7b46b722b5d4c594c6e601841a1f9efa8c71d338b6c2a6e7cc38c173ea",
         "acceptance_id": "AC-02",
         "registered_assertion_ids": [
           "scenario:GOVERNED-DIRTY-CONFLICT",
@@ -2498,7 +2498,7 @@
           "test:TEST-ADVERSARIAL-ROUTING"
         ]
       },
-      "evidence_sha256": "d762df2802be2803a274d91bfaac50c4b013a4763f7a395c6de75efcb13c2231"
+      "evidence_sha256": "5f95e2063d0986c378caf2359def8b63f70c74ff46040fd3d565598f520b09c3"
     },
     "PRODUCER-AC-03-S0-1": {
       "binding": {
@@ -2517,7 +2517,7 @@
         "corpus_sha256": "526620d20e6949b815348a5143d56a437a3a2860c50306166266ba2c10e002c6",
         "runner_sha256": "d930128121381ce78d26aaec36ca56087e8577cd817763ca4bf28ee02f5d18a2",
         "promotion_manifest_sha256": "8a79f31e88e85e5ecbeb4dbbde9291460e115d19e7481f741e7bef41328f8b98",
-        "source_artifact_sha256": "6867c61cb2fd32ca512aafb6bc9f5cac99d58efa8681695446efcbd6aea370ad",
+        "source_artifact_sha256": "53d56b7b46b722b5d4c594c6e601841a1f9efa8c71d338b6c2a6e7cc38c173ea",
         "acceptance_id": "AC-03",
         "registered_assertion_ids": [
           "scenario:CONTROL-ORDINARY-CONTINUE",
@@ -2525,7 +2525,7 @@
           "test:TEST-CURRENT-ROUTING-CONTROLS"
         ]
       },
-      "evidence_sha256": "b1c5984193f4593ddc4e5a2a3528f23c81bb54609355fef39f340d776fe4cba7"
+      "evidence_sha256": "744f9e8ff8590f09138dd8a599fc500224e25b3166522e59a45df58c046933a3"
     },
     "PRODUCER-AC-03-S1-1": {
       "binding": {
@@ -2544,7 +2544,7 @@
         "corpus_sha256": "526620d20e6949b815348a5143d56a437a3a2860c50306166266ba2c10e002c6",
         "runner_sha256": "d930128121381ce78d26aaec36ca56087e8577cd817763ca4bf28ee02f5d18a2",
         "promotion_manifest_sha256": "8a79f31e88e85e5ecbeb4dbbde9291460e115d19e7481f741e7bef41328f8b98",
-        "source_artifact_sha256": "6867c61cb2fd32ca512aafb6bc9f5cac99d58efa8681695446efcbd6aea370ad",
+        "source_artifact_sha256": "53d56b7b46b722b5d4c594c6e601841a1f9efa8c71d338b6c2a6e7cc38c173ea",
         "acceptance_id": "AC-03",
         "registered_assertion_ids": [
           "scenario:CONTROL-ORDINARY-CONTINUE",
@@ -2552,7 +2552,7 @@
           "test:TEST-CURRENT-ROUTING-CONTROLS"
         ]
       },
-      "evidence_sha256": "904fb5aaef88ebff659f782c60c2aea3d4e9169b933e50a8f99230771aed122b"
+      "evidence_sha256": "78805b77be77c28f01b536678a18ff46ccd9559d672dcb8e3695258a37183803"
     },
     "PRODUCER-AC-04-S0-1": {
       "binding": {
@@ -2571,7 +2571,7 @@
         "corpus_sha256": "526620d20e6949b815348a5143d56a437a3a2860c50306166266ba2c10e002c6",
         "runner_sha256": "d930128121381ce78d26aaec36ca56087e8577cd817763ca4bf28ee02f5d18a2",
         "promotion_manifest_sha256": "8a79f31e88e85e5ecbeb4dbbde9291460e115d19e7481f741e7bef41328f8b98",
-        "source_artifact_sha256": "6867c61cb2fd32ca512aafb6bc9f5cac99d58efa8681695446efcbd6aea370ad",
+        "source_artifact_sha256": "53d56b7b46b722b5d4c594c6e601841a1f9efa8c71d338b6c2a6e7cc38c173ea",
         "acceptance_id": "AC-04",
         "registered_assertion_ids": [
           "scenario:CONTROL-ORDINARY-CONTINUE",
@@ -2579,7 +2579,7 @@
           "test:TEST-OPT-OUT-PRECEDENCE"
         ]
       },
-      "evidence_sha256": "6168794b7739a56d231e9a02065445dc754407e37da7ff423fcebf174a3eacb6"
+      "evidence_sha256": "5693e6c2995cd10886ddd6197615a21769290acead5987e8b63fd943d973bef7"
     },
     "PRODUCER-AC-04-S1-1": {
       "binding": {
@@ -2598,7 +2598,7 @@
         "corpus_sha256": "526620d20e6949b815348a5143d56a437a3a2860c50306166266ba2c10e002c6",
         "runner_sha256": "d930128121381ce78d26aaec36ca56087e8577cd817763ca4bf28ee02f5d18a2",
         "promotion_manifest_sha256": "8a79f31e88e85e5ecbeb4dbbde9291460e115d19e7481f741e7bef41328f8b98",
-        "source_artifact_sha256": "6867c61cb2fd32ca512aafb6bc9f5cac99d58efa8681695446efcbd6aea370ad",
+        "source_artifact_sha256": "53d56b7b46b722b5d4c594c6e601841a1f9efa8c71d338b6c2a6e7cc38c173ea",
         "acceptance_id": "AC-04",
         "registered_assertion_ids": [
           "scenario:CONTROL-ORDINARY-CONTINUE",
@@ -2606,7 +2606,7 @@
           "test:TEST-OPT-OUT-PRECEDENCE"
         ]
       },
-      "evidence_sha256": "afcff60deba2cfe86b5bc672661eb2a9b8e3893597f4503cca767264e6921fdd"
+      "evidence_sha256": "560202c9548561df5ce2ca9bc8f46fc4c9b697faf289c24410204d6872fca6b3"
     },
     "PRODUCER-AC-05-S0-1": {
       "binding": {
@@ -2625,7 +2625,7 @@
         "corpus_sha256": "526620d20e6949b815348a5143d56a437a3a2860c50306166266ba2c10e002c6",
         "runner_sha256": "d930128121381ce78d26aaec36ca56087e8577cd817763ca4bf28ee02f5d18a2",
         "promotion_manifest_sha256": "8a79f31e88e85e5ecbeb4dbbde9291460e115d19e7481f741e7bef41328f8b98",
-        "source_artifact_sha256": "6867c61cb2fd32ca512aafb6bc9f5cac99d58efa8681695446efcbd6aea370ad",
+        "source_artifact_sha256": "53d56b7b46b722b5d4c594c6e601841a1f9efa8c71d338b6c2a6e7cc38c173ea",
         "acceptance_id": "AC-05",
         "registered_assertion_ids": [
           "scenario:CONTROL-SHIPQ-DELEGATION",
@@ -2633,7 +2633,7 @@
           "test:TEST-CURRENT-ROUTING-CONTROLS"
         ]
       },
-      "evidence_sha256": "f37c50ccedb31c0d3b3b02095c5403e2feaefb218d6ce4a5b8b75a458aa485aa"
+      "evidence_sha256": "20d3b2ad479979370326c3cd1a37e3653376d6db28a4e24d45d9e084252b3b53"
     },
     "PRODUCER-AC-05-S1-1": {
       "binding": {
@@ -2652,7 +2652,7 @@
         "corpus_sha256": "526620d20e6949b815348a5143d56a437a3a2860c50306166266ba2c10e002c6",
         "runner_sha256": "d930128121381ce78d26aaec36ca56087e8577cd817763ca4bf28ee02f5d18a2",
         "promotion_manifest_sha256": "8a79f31e88e85e5ecbeb4dbbde9291460e115d19e7481f741e7bef41328f8b98",
-        "source_artifact_sha256": "6867c61cb2fd32ca512aafb6bc9f5cac99d58efa8681695446efcbd6aea370ad",
+        "source_artifact_sha256": "53d56b7b46b722b5d4c594c6e601841a1f9efa8c71d338b6c2a6e7cc38c173ea",
         "acceptance_id": "AC-05",
         "registered_assertion_ids": [
           "scenario:CONTROL-SHIPQ-DELEGATION",
@@ -2660,7 +2660,7 @@
           "test:TEST-CURRENT-ROUTING-CONTROLS"
         ]
       },
-      "evidence_sha256": "7df76d282d1db1b2b86fb73fcb0fce87b86bbe04626da84562c50907142b9e6e"
+      "evidence_sha256": "fc52f5d43d71bd0f7bb7f5567a42f6b3d260bd25e2123a12e77db5895723b3c9"
     },
     "PRODUCER-AC-06-S0-1": {
       "binding": {
@@ -2679,14 +2679,14 @@
         "corpus_sha256": "526620d20e6949b815348a5143d56a437a3a2860c50306166266ba2c10e002c6",
         "runner_sha256": "d930128121381ce78d26aaec36ca56087e8577cd817763ca4bf28ee02f5d18a2",
         "promotion_manifest_sha256": "8a79f31e88e85e5ecbeb4dbbde9291460e115d19e7481f741e7bef41328f8b98",
-        "source_artifact_sha256": "6867c61cb2fd32ca512aafb6bc9f5cac99d58efa8681695446efcbd6aea370ad",
+        "source_artifact_sha256": "53d56b7b46b722b5d4c594c6e601841a1f9efa8c71d338b6c2a6e7cc38c173ea",
         "acceptance_id": "AC-06",
         "registered_assertion_ids": [
           "scenario:CONTROL-ORDINARY-CONTINUE",
           "test:TEST-MALFORMED-PAYLOAD-SAFETY"
         ]
       },
-      "evidence_sha256": "aaf90bbbb731002b49de2acae715f65aaf852c04e358e0b328858f8f85e65717"
+      "evidence_sha256": "04ad66cbe630f6af79b5dbd04cdac49efa15938338ad2790b081341f58c5d5ba"
     },
     "PRODUCER-AC-06-S1-1": {
       "binding": {
@@ -2705,14 +2705,14 @@
         "corpus_sha256": "526620d20e6949b815348a5143d56a437a3a2860c50306166266ba2c10e002c6",
         "runner_sha256": "d930128121381ce78d26aaec36ca56087e8577cd817763ca4bf28ee02f5d18a2",
         "promotion_manifest_sha256": "8a79f31e88e85e5ecbeb4dbbde9291460e115d19e7481f741e7bef41328f8b98",
-        "source_artifact_sha256": "6867c61cb2fd32ca512aafb6bc9f5cac99d58efa8681695446efcbd6aea370ad",
+        "source_artifact_sha256": "53d56b7b46b722b5d4c594c6e601841a1f9efa8c71d338b6c2a6e7cc38c173ea",
         "acceptance_id": "AC-06",
         "registered_assertion_ids": [
           "scenario:CONTROL-ORDINARY-CONTINUE",
           "test:TEST-MALFORMED-PAYLOAD-SAFETY"
         ]
       },
-      "evidence_sha256": "2aa5b1c441cf61374cda502809fa0b9e104e661ea85b8b149af3852f77ffca35"
+      "evidence_sha256": "72c6eeebbf010c49d493b8f603f6daaeb2b49ed33a402271a6a09d19dcb256ec"
     },
     "PRODUCER-AC-07-S1-1": {
       "binding": {
@@ -2731,7 +2731,7 @@
         "corpus_sha256": "526620d20e6949b815348a5143d56a437a3a2860c50306166266ba2c10e002c6",
         "runner_sha256": "d930128121381ce78d26aaec36ca56087e8577cd817763ca4bf28ee02f5d18a2",
         "promotion_manifest_sha256": "8a79f31e88e85e5ecbeb4dbbde9291460e115d19e7481f741e7bef41328f8b98",
-        "source_artifact_sha256": "6867c61cb2fd32ca512aafb6bc9f5cac99d58efa8681695446efcbd6aea370ad",
+        "source_artifact_sha256": "53d56b7b46b722b5d4c594c6e601841a1f9efa8c71d338b6c2a6e7cc38c173ea",
         "acceptance_id": "AC-07",
         "registered_assertion_ids": [
           "scenario:LIGHT-BOUNDED-DOCS",
@@ -2742,7 +2742,7 @@
           "test:TEST-PROFILE-OUTPUT-CONTRACT"
         ]
       },
-      "evidence_sha256": "62c87f6529ae951f4b29af4d6037108378beb53615911f19a069fb62b90cf667"
+      "evidence_sha256": "48651d1582eb8f7e105603cd6af5ebe8588afb8a26ec1dccfde6020aeedf8866"
     },
     "PRODUCER-AC-07-S2-1": {
       "binding": {
@@ -2761,7 +2761,7 @@
         "corpus_sha256": "526620d20e6949b815348a5143d56a437a3a2860c50306166266ba2c10e002c6",
         "runner_sha256": "d930128121381ce78d26aaec36ca56087e8577cd817763ca4bf28ee02f5d18a2",
         "promotion_manifest_sha256": "8a79f31e88e85e5ecbeb4dbbde9291460e115d19e7481f741e7bef41328f8b98",
-        "source_artifact_sha256": "6867c61cb2fd32ca512aafb6bc9f5cac99d58efa8681695446efcbd6aea370ad",
+        "source_artifact_sha256": "53d56b7b46b722b5d4c594c6e601841a1f9efa8c71d338b6c2a6e7cc38c173ea",
         "acceptance_id": "AC-07",
         "registered_assertion_ids": [
           "scenario:LIGHT-BOUNDED-DOCS",
@@ -2772,7 +2772,7 @@
           "test:TEST-PROFILE-OUTPUT-CONTRACT"
         ]
       },
-      "evidence_sha256": "7c0639b18d69bd83057a5d55caade79720409199000e0ae3524f232e9bfe21fb"
+      "evidence_sha256": "c84d5fd1c37c52275b3ab0c6357376cd229218f8bf806bc4e36c22db6b6256a9"
     },
     "PRODUCER-AC-08-S1-1": {
       "binding": {
@@ -2791,7 +2791,7 @@
         "corpus_sha256": "526620d20e6949b815348a5143d56a437a3a2860c50306166266ba2c10e002c6",
         "runner_sha256": "d930128121381ce78d26aaec36ca56087e8577cd817763ca4bf28ee02f5d18a2",
         "promotion_manifest_sha256": "8a79f31e88e85e5ecbeb4dbbde9291460e115d19e7481f741e7bef41328f8b98",
-        "source_artifact_sha256": "6867c61cb2fd32ca512aafb6bc9f5cac99d58efa8681695446efcbd6aea370ad",
+        "source_artifact_sha256": "53d56b7b46b722b5d4c594c6e601841a1f9efa8c71d338b6c2a6e7cc38c173ea",
         "acceptance_id": "AC-08",
         "registered_assertion_ids": [
           "scenario:GOVERNED-ARCH-SOURCE-CONFLICT",
@@ -2804,7 +2804,7 @@
           "test:TEST-MULTI-SIGNAL-UNION"
         ]
       },
-      "evidence_sha256": "62214c1a008b8c7b710464565ee288d8b573a61bf34fb9319f6a5fb2cd45d0f3"
+      "evidence_sha256": "1ae4de00d528684500d7f4dcbfb136e544aac1ab11335d0f4f9bf39510a57796"
     },
     "PRODUCER-AC-08-S2-1": {
       "binding": {
@@ -2823,7 +2823,7 @@
         "corpus_sha256": "526620d20e6949b815348a5143d56a437a3a2860c50306166266ba2c10e002c6",
         "runner_sha256": "d930128121381ce78d26aaec36ca56087e8577cd817763ca4bf28ee02f5d18a2",
         "promotion_manifest_sha256": "8a79f31e88e85e5ecbeb4dbbde9291460e115d19e7481f741e7bef41328f8b98",
-        "source_artifact_sha256": "6867c61cb2fd32ca512aafb6bc9f5cac99d58efa8681695446efcbd6aea370ad",
+        "source_artifact_sha256": "53d56b7b46b722b5d4c594c6e601841a1f9efa8c71d338b6c2a6e7cc38c173ea",
         "acceptance_id": "AC-08",
         "registered_assertion_ids": [
           "scenario:GOVERNED-ARCH-SOURCE-CONFLICT",
@@ -2836,7 +2836,7 @@
           "test:TEST-MULTI-SIGNAL-UNION"
         ]
       },
-      "evidence_sha256": "c8941647a05e51652311aa10e165c83ae8f87f05d54c5a7486685f468c99862b"
+      "evidence_sha256": "74359e3e215e209ef268c7c5174030dcada3874614fa7688098f0a9202bd3bcf"
     },
     "PRODUCER-AC-09-S1-1": {
       "binding": {
@@ -2855,7 +2855,7 @@
         "corpus_sha256": "526620d20e6949b815348a5143d56a437a3a2860c50306166266ba2c10e002c6",
         "runner_sha256": "d930128121381ce78d26aaec36ca56087e8577cd817763ca4bf28ee02f5d18a2",
         "promotion_manifest_sha256": "8a79f31e88e85e5ecbeb4dbbde9291460e115d19e7481f741e7bef41328f8b98",
-        "source_artifact_sha256": "6867c61cb2fd32ca512aafb6bc9f5cac99d58efa8681695446efcbd6aea370ad",
+        "source_artifact_sha256": "53d56b7b46b722b5d4c594c6e601841a1f9efa8c71d338b6c2a6e7cc38c173ea",
         "acceptance_id": "AC-09",
         "registered_assertion_ids": [
           "scenario:GOVERNED-MULTI-AGENT",
@@ -2863,7 +2863,7 @@
           "test:TEST-HELPER-CLI-CALLABILITY"
         ]
       },
-      "evidence_sha256": "1d9284f38d2d96620a2df2dca42f6ce21f5d32ba1ec7674a49edfe430316e9e8"
+      "evidence_sha256": "416d4b202cf37cc98aeacfa440b5714b9e90b08049c842442c2e99d5bfb1c6b0"
     },
     "PRODUCER-AC-10-S0-1": {
       "binding": {
@@ -2882,7 +2882,7 @@
         "corpus_sha256": "526620d20e6949b815348a5143d56a437a3a2860c50306166266ba2c10e002c6",
         "runner_sha256": "d930128121381ce78d26aaec36ca56087e8577cd817763ca4bf28ee02f5d18a2",
         "promotion_manifest_sha256": "8a79f31e88e85e5ecbeb4dbbde9291460e115d19e7481f741e7bef41328f8b98",
-        "source_artifact_sha256": "6867c61cb2fd32ca512aafb6bc9f5cac99d58efa8681695446efcbd6aea370ad",
+        "source_artifact_sha256": "53d56b7b46b722b5d4c594c6e601841a1f9efa8c71d338b6c2a6e7cc38c173ea",
         "acceptance_id": "AC-10",
         "registered_assertion_ids": [
           "scenario:GOVERNED-DIRTY-CONFLICT",
@@ -2894,7 +2894,7 @@
           "test:TEST-PAIRED-ACTUAL-OUTCOMES"
         ]
       },
-      "evidence_sha256": "161b8abae3d4e5b0ec4d5cc1dbe544f980caa3540c56ec2b82ffba8d7aa19131"
+      "evidence_sha256": "259b0613de66002dce3ddfccff3424b9897ae9d8e41f4607bf024f117ca1405f"
     },
     "PRODUCER-AC-10-S4-1": {
       "binding": {
@@ -2913,7 +2913,7 @@
         "corpus_sha256": "526620d20e6949b815348a5143d56a437a3a2860c50306166266ba2c10e002c6",
         "runner_sha256": "d930128121381ce78d26aaec36ca56087e8577cd817763ca4bf28ee02f5d18a2",
         "promotion_manifest_sha256": "8a79f31e88e85e5ecbeb4dbbde9291460e115d19e7481f741e7bef41328f8b98",
-        "source_artifact_sha256": "6867c61cb2fd32ca512aafb6bc9f5cac99d58efa8681695446efcbd6aea370ad",
+        "source_artifact_sha256": "53d56b7b46b722b5d4c594c6e601841a1f9efa8c71d338b6c2a6e7cc38c173ea",
         "acceptance_id": "AC-10",
         "registered_assertion_ids": [
           "scenario:GOVERNED-DIRTY-CONFLICT",
@@ -2925,7 +2925,7 @@
           "test:TEST-PAIRED-ACTUAL-OUTCOMES"
         ]
       },
-      "evidence_sha256": "ffb0e876baae91729af56cb48cc2cd4c790450bfe828fe26f8f6245964c97a8f"
+      "evidence_sha256": "7a84b6a7e72351ad0f12bf049ec0d1cfa57ddd5952e5f4679a46549411867525"
     },
     "PRODUCER-AC-11-S0-1": {
       "binding": {
@@ -2944,7 +2944,7 @@
         "corpus_sha256": "526620d20e6949b815348a5143d56a437a3a2860c50306166266ba2c10e002c6",
         "runner_sha256": "d930128121381ce78d26aaec36ca56087e8577cd817763ca4bf28ee02f5d18a2",
         "promotion_manifest_sha256": "8a79f31e88e85e5ecbeb4dbbde9291460e115d19e7481f741e7bef41328f8b98",
-        "source_artifact_sha256": "6867c61cb2fd32ca512aafb6bc9f5cac99d58efa8681695446efcbd6aea370ad",
+        "source_artifact_sha256": "53d56b7b46b722b5d4c594c6e601841a1f9efa8c71d338b6c2a6e7cc38c173ea",
         "acceptance_id": "AC-11",
         "registered_assertion_ids": [
           "scenario:GOVERNED-EXTERNAL-CAPTURE",
@@ -2953,7 +2953,7 @@
           "test:TEST-PAIR-ADVERSARIAL-MUTATIONS"
         ]
       },
-      "evidence_sha256": "005e7ebd7d8a931ee159e8a195b23c2bfa865dd047911011089dbfe98ac62650"
+      "evidence_sha256": "acae2851dcd6fdb524dc1166fd97b824de990b8026caada40f91be79197c5e1c"
     },
     "PRODUCER-AC-11-S4-1": {
       "binding": {
@@ -2972,7 +2972,7 @@
         "corpus_sha256": "526620d20e6949b815348a5143d56a437a3a2860c50306166266ba2c10e002c6",
         "runner_sha256": "d930128121381ce78d26aaec36ca56087e8577cd817763ca4bf28ee02f5d18a2",
         "promotion_manifest_sha256": "8a79f31e88e85e5ecbeb4dbbde9291460e115d19e7481f741e7bef41328f8b98",
-        "source_artifact_sha256": "6867c61cb2fd32ca512aafb6bc9f5cac99d58efa8681695446efcbd6aea370ad",
+        "source_artifact_sha256": "53d56b7b46b722b5d4c594c6e601841a1f9efa8c71d338b6c2a6e7cc38c173ea",
         "acceptance_id": "AC-11",
         "registered_assertion_ids": [
           "scenario:GOVERNED-EXTERNAL-CAPTURE",
@@ -2981,7 +2981,7 @@
           "test:TEST-PAIR-ADVERSARIAL-MUTATIONS"
         ]
       },
-      "evidence_sha256": "48af26ecb49f9642de63167b42f41a8a4062eecc88151ac3ff86676e1d3803dc"
+      "evidence_sha256": "08210cab0d0bf4b704211ece9222a75ae86516072d4f0b910b92b26b37bf430d"
     },
     "PRODUCER-AC-12-S0-1": {
       "binding": {
@@ -3000,7 +3000,7 @@
         "corpus_sha256": "526620d20e6949b815348a5143d56a437a3a2860c50306166266ba2c10e002c6",
         "runner_sha256": "d930128121381ce78d26aaec36ca56087e8577cd817763ca4bf28ee02f5d18a2",
         "promotion_manifest_sha256": "8a79f31e88e85e5ecbeb4dbbde9291460e115d19e7481f741e7bef41328f8b98",
-        "source_artifact_sha256": "6867c61cb2fd32ca512aafb6bc9f5cac99d58efa8681695446efcbd6aea370ad",
+        "source_artifact_sha256": "53d56b7b46b722b5d4c594c6e601841a1f9efa8c71d338b6c2a6e7cc38c173ea",
         "acceptance_id": "AC-12",
         "registered_assertion_ids": [
           "scenario:LIGHT-BOUNDED-DOCS",
@@ -3016,7 +3016,7 @@
           "test:TEST-PAIRED-ACTUAL-OUTCOMES"
         ]
       },
-      "evidence_sha256": "9416d517093a63538c2373e9c7bfd6c0e2bcd47e38dca5024f6d62ac4330b758"
+      "evidence_sha256": "82b63e4becb2ae7beb7040aaa1572d1fd8c8dc76552543b250a315ee9526b1f8"
     },
     "PRODUCER-AC-12-S4-1": {
       "binding": {
@@ -3035,7 +3035,7 @@
         "corpus_sha256": "526620d20e6949b815348a5143d56a437a3a2860c50306166266ba2c10e002c6",
         "runner_sha256": "d930128121381ce78d26aaec36ca56087e8577cd817763ca4bf28ee02f5d18a2",
         "promotion_manifest_sha256": "8a79f31e88e85e5ecbeb4dbbde9291460e115d19e7481f741e7bef41328f8b98",
-        "source_artifact_sha256": "6867c61cb2fd32ca512aafb6bc9f5cac99d58efa8681695446efcbd6aea370ad",
+        "source_artifact_sha256": "53d56b7b46b722b5d4c594c6e601841a1f9efa8c71d338b6c2a6e7cc38c173ea",
         "acceptance_id": "AC-12",
         "registered_assertion_ids": [
           "scenario:LIGHT-BOUNDED-DOCS",
@@ -3051,7 +3051,7 @@
           "test:TEST-PAIRED-ACTUAL-OUTCOMES"
         ]
       },
-      "evidence_sha256": "99afdba25960986b49d6a673a5ceb62dbb2b349910f26977821571d649c66abe"
+      "evidence_sha256": "cba563367694e553f04492458ad6c510b19c1dd020b1e299e9fa06fcb9edd69c"
     },
     "PRODUCER-AC-13-S0-1": {
       "binding": {
@@ -3070,7 +3070,7 @@
         "corpus_sha256": "526620d20e6949b815348a5143d56a437a3a2860c50306166266ba2c10e002c6",
         "runner_sha256": "d930128121381ce78d26aaec36ca56087e8577cd817763ca4bf28ee02f5d18a2",
         "promotion_manifest_sha256": "8a79f31e88e85e5ecbeb4dbbde9291460e115d19e7481f741e7bef41328f8b98",
-        "source_artifact_sha256": "6867c61cb2fd32ca512aafb6bc9f5cac99d58efa8681695446efcbd6aea370ad",
+        "source_artifact_sha256": "53d56b7b46b722b5d4c594c6e601841a1f9efa8c71d338b6c2a6e7cc38c173ea",
         "acceptance_id": "AC-13",
         "registered_assertion_ids": [
           "scenario:CONTROL-ORDINARY-CONTINUE",
@@ -3078,7 +3078,7 @@
           "test:TEST-PAIRED-ACTUAL-OUTCOMES"
         ]
       },
-      "evidence_sha256": "8eac9c6dc128e2fc436f9ed644d1e7b359b1335f6acd3aa34d75539b128bfa9e"
+      "evidence_sha256": "1c4ee099180dd2a5f7d2347fcd03c59e438f41f3144eed1f649708e1d04be290"
     },
     "PRODUCER-AC-13-S4-1": {
       "binding": {
@@ -3097,7 +3097,7 @@
         "corpus_sha256": "526620d20e6949b815348a5143d56a437a3a2860c50306166266ba2c10e002c6",
         "runner_sha256": "d930128121381ce78d26aaec36ca56087e8577cd817763ca4bf28ee02f5d18a2",
         "promotion_manifest_sha256": "8a79f31e88e85e5ecbeb4dbbde9291460e115d19e7481f741e7bef41328f8b98",
-        "source_artifact_sha256": "6867c61cb2fd32ca512aafb6bc9f5cac99d58efa8681695446efcbd6aea370ad",
+        "source_artifact_sha256": "53d56b7b46b722b5d4c594c6e601841a1f9efa8c71d338b6c2a6e7cc38c173ea",
         "acceptance_id": "AC-13",
         "registered_assertion_ids": [
           "scenario:CONTROL-ORDINARY-CONTINUE",
@@ -3105,7 +3105,7 @@
           "test:TEST-PAIRED-ACTUAL-OUTCOMES"
         ]
       },
-      "evidence_sha256": "c609aa2a7a098f3c9904be78def7b34affac369d0c529dcb8b7b4948a93b3e45"
+      "evidence_sha256": "f2803ace188db1a6e8049bf5451db245ddb3078c0a61a834a284bc84b7928df1"
     },
     "PRODUCER-AC-14-S0-1": {
       "binding": {
@@ -3124,7 +3124,7 @@
         "corpus_sha256": "526620d20e6949b815348a5143d56a437a3a2860c50306166266ba2c10e002c6",
         "runner_sha256": "d930128121381ce78d26aaec36ca56087e8577cd817763ca4bf28ee02f5d18a2",
         "promotion_manifest_sha256": "8a79f31e88e85e5ecbeb4dbbde9291460e115d19e7481f741e7bef41328f8b98",
-        "source_artifact_sha256": "6867c61cb2fd32ca512aafb6bc9f5cac99d58efa8681695446efcbd6aea370ad",
+        "source_artifact_sha256": "53d56b7b46b722b5d4c594c6e601841a1f9efa8c71d338b6c2a6e7cc38c173ea",
         "acceptance_id": "AC-14",
         "registered_assertion_ids": [
           "scenario:CONTROL-ORDINARY-CONTINUE",
@@ -3136,7 +3136,7 @@
           "test:TEST-SCHEMA-COUNTS"
         ]
       },
-      "evidence_sha256": "5ee4082b48ee24378bc1bec4cdc0dc0aad8b440ca4b47d7a74d2d90dbf49bb40"
+      "evidence_sha256": "360bd5d3ef16aea7a222058b0feb406e64c886fb5d3e7433827c76ced28d977b"
     },
     "PRODUCER-AC-14-S4-1": {
       "binding": {
@@ -3155,7 +3155,7 @@
         "corpus_sha256": "526620d20e6949b815348a5143d56a437a3a2860c50306166266ba2c10e002c6",
         "runner_sha256": "d930128121381ce78d26aaec36ca56087e8577cd817763ca4bf28ee02f5d18a2",
         "promotion_manifest_sha256": "8a79f31e88e85e5ecbeb4dbbde9291460e115d19e7481f741e7bef41328f8b98",
-        "source_artifact_sha256": "6867c61cb2fd32ca512aafb6bc9f5cac99d58efa8681695446efcbd6aea370ad",
+        "source_artifact_sha256": "53d56b7b46b722b5d4c594c6e601841a1f9efa8c71d338b6c2a6e7cc38c173ea",
         "acceptance_id": "AC-14",
         "registered_assertion_ids": [
           "scenario:CONTROL-ORDINARY-CONTINUE",
@@ -3167,7 +3167,7 @@
           "test:TEST-SCHEMA-COUNTS"
         ]
       },
-      "evidence_sha256": "96a12f60ee81a9d43db6dc6b58af442da5724a011d48f97d32393eef1803b625"
+      "evidence_sha256": "d8d705c365933c51d02817f2afbd9185fc67755e82fde7975782708252f453e8"
     },
     "PRODUCER-AC-15-S3-1": {
       "binding": {
@@ -3186,7 +3186,7 @@
         "corpus_sha256": "526620d20e6949b815348a5143d56a437a3a2860c50306166266ba2c10e002c6",
         "runner_sha256": "d930128121381ce78d26aaec36ca56087e8577cd817763ca4bf28ee02f5d18a2",
         "promotion_manifest_sha256": "8a79f31e88e85e5ecbeb4dbbde9291460e115d19e7481f741e7bef41328f8b98",
-        "source_artifact_sha256": "6867c61cb2fd32ca512aafb6bc9f5cac99d58efa8681695446efcbd6aea370ad",
+        "source_artifact_sha256": "53d56b7b46b722b5d4c594c6e601841a1f9efa8c71d338b6c2a6e7cc38c173ea",
         "acceptance_id": "AC-15",
         "registered_assertion_ids": [
           "scenario:GOVERNED-RESUMED-TASK",
@@ -3195,7 +3195,7 @@
           "test:TEST-NORMATIVE-MIRRORS"
         ]
       },
-      "evidence_sha256": "bd413a0084792c76f56d3b4fcca88b91eaffec8510ae7697d0c97353fae96ca8"
+      "evidence_sha256": "886fbb1f6bbb3014574bbc590a72d9d9e203aabc50aad4542404cef45a857e2f"
     },
     "PRODUCER-AC-16-S0-1": {
       "binding": {
@@ -3214,7 +3214,7 @@
         "corpus_sha256": "526620d20e6949b815348a5143d56a437a3a2860c50306166266ba2c10e002c6",
         "runner_sha256": "d930128121381ce78d26aaec36ca56087e8577cd817763ca4bf28ee02f5d18a2",
         "promotion_manifest_sha256": "8a79f31e88e85e5ecbeb4dbbde9291460e115d19e7481f741e7bef41328f8b98",
-        "source_artifact_sha256": "6867c61cb2fd32ca512aafb6bc9f5cac99d58efa8681695446efcbd6aea370ad",
+        "source_artifact_sha256": "53d56b7b46b722b5d4c594c6e601841a1f9efa8c71d338b6c2a6e7cc38c173ea",
         "acceptance_id": "AC-16",
         "registered_assertion_ids": [
           "scenario:GOVERNED-REMOTE-DEPLOY",
@@ -3227,8 +3227,8 @@
           "kind": "base_expected_runtime_manifest",
           "base_commit": "00818ae174f039899a2757ee4c67fcf9db1effa0",
           "managed_roots": [
-            "/var/folders/mf/lxpn1ltx7t97r1v1k92vly1w0000gn/T/tmpvzx8v18t/.codex/hooks",
-            "/var/folders/mf/lxpn1ltx7t97r1v1k92vly1w0000gn/T/tmpvzx8v18t/.codex/skills/delivery-harness-framework"
+            "/var/folders/mf/lxpn1ltx7t97r1v1k92vly1w0000gn/T/tmpyg1itndh/.codex/hooks",
+            "/var/folders/mf/lxpn1ltx7t97r1v1k92vly1w0000gn/T/tmpyg1itndh/.codex/skills/delivery-harness-framework"
           ],
           "managed_relative_paths": [
             "codex/hooks/dhf_preprompt.py",
@@ -3240,37 +3240,37 @@
           ],
           "records": [
             {
-              "path": "/var/folders/mf/lxpn1ltx7t97r1v1k92vly1w0000gn/T/tmpvzx8v18t/.codex/hooks/dhf_preprompt.py",
+              "path": "/var/folders/mf/lxpn1ltx7t97r1v1k92vly1w0000gn/T/tmpyg1itndh/.codex/hooks/dhf_preprompt.py",
               "type": "regular",
               "sha256": "be0f0f9372cdacd5f03beb60df8269629ecdd07991814ca8dd912b97b4effbb9",
               "source_path": "codex/hooks/dhf_preprompt.py"
             },
             {
-              "path": "/var/folders/mf/lxpn1ltx7t97r1v1k92vly1w0000gn/T/tmpvzx8v18t/.codex/skills/delivery-harness-framework/SKILL.md",
+              "path": "/var/folders/mf/lxpn1ltx7t97r1v1k92vly1w0000gn/T/tmpyg1itndh/.codex/skills/delivery-harness-framework/SKILL.md",
               "type": "regular",
               "sha256": "18148ab8885fd0920df72a248cef23ff3fa1b73a60b3370098542efb4cfdcd00",
               "source_path": "codex/skills/delivery-harness-framework/SKILL.md"
             },
             {
-              "path": "/var/folders/mf/lxpn1ltx7t97r1v1k92vly1w0000gn/T/tmpvzx8v18t/.codex/skills/delivery-harness-framework/agents/openai.yaml",
+              "path": "/var/folders/mf/lxpn1ltx7t97r1v1k92vly1w0000gn/T/tmpyg1itndh/.codex/skills/delivery-harness-framework/agents/openai.yaml",
               "type": "regular",
               "sha256": "e060c7936ecfe93b81d64b3b41c7403c3f15f935c394381ad5af3266567d6930",
               "source_path": "codex/skills/delivery-harness-framework/agents/openai.yaml"
             },
             {
-              "path": "/var/folders/mf/lxpn1ltx7t97r1v1k92vly1w0000gn/T/tmpvzx8v18t/.codex/skills/delivery-harness-framework/evals/evals.json",
+              "path": "/var/folders/mf/lxpn1ltx7t97r1v1k92vly1w0000gn/T/tmpyg1itndh/.codex/skills/delivery-harness-framework/evals/evals.json",
               "type": "regular",
               "sha256": "651cfe21377981dad9eadc7c6d264935512a9fcce50638ea0545fe4235348f02",
               "source_path": "codex/skills/delivery-harness-framework/evals/evals.json"
             },
             {
-              "path": "/var/folders/mf/lxpn1ltx7t97r1v1k92vly1w0000gn/T/tmpvzx8v18t/.codex/skills/delivery-harness-framework/evals/validate_completion_output.py",
+              "path": "/var/folders/mf/lxpn1ltx7t97r1v1k92vly1w0000gn/T/tmpyg1itndh/.codex/skills/delivery-harness-framework/evals/validate_completion_output.py",
               "type": "absent",
               "sha256": "absent",
               "source_path": "codex/skills/delivery-harness-framework/evals/validate_completion_output.py"
             },
             {
-              "path": "/var/folders/mf/lxpn1ltx7t97r1v1k92vly1w0000gn/T/tmpvzx8v18t/.codex/skills/delivery-harness-framework/references/agent-team-context-policy.md",
+              "path": "/var/folders/mf/lxpn1ltx7t97r1v1k92vly1w0000gn/T/tmpyg1itndh/.codex/skills/delivery-harness-framework/references/agent-team-context-policy.md",
               "type": "absent",
               "sha256": "absent",
               "source_path": "codex/skills/delivery-harness-framework/references/agent-team-context-policy.md"
@@ -3285,10 +3285,10 @@
             "*.pyc",
             "directory metadata"
           ],
-          "aggregate_sha256": "bb8ac7cc25d4d9cc9e31a781a460c35706e000afcd083ccc140a1226cb5273db"
+          "aggregate_sha256": "4bee2e750273f4f78c9b6940662b4f0fbf5a3ba5abbfd95b000446561b1935f2"
         }
       },
-      "evidence_sha256": "c2b86049338672854f134f7f9d82b0626a5698380648570aa1145f8efe6e358e"
+      "evidence_sha256": "91443eb13d48b331f7160bf1e6168127b2ae887f474c5defe0e8413be259704e"
     },
     "PRODUCER-AC-16-S4-1": {
       "binding": {
@@ -3307,7 +3307,7 @@
         "corpus_sha256": "526620d20e6949b815348a5143d56a437a3a2860c50306166266ba2c10e002c6",
         "runner_sha256": "d930128121381ce78d26aaec36ca56087e8577cd817763ca4bf28ee02f5d18a2",
         "promotion_manifest_sha256": "8a79f31e88e85e5ecbeb4dbbde9291460e115d19e7481f741e7bef41328f8b98",
-        "source_artifact_sha256": "6867c61cb2fd32ca512aafb6bc9f5cac99d58efa8681695446efcbd6aea370ad",
+        "source_artifact_sha256": "53d56b7b46b722b5d4c594c6e601841a1f9efa8c71d338b6c2a6e7cc38c173ea",
         "acceptance_id": "AC-16",
         "registered_assertion_ids": [
           "scenario:GOVERNED-REMOTE-DEPLOY",
@@ -3382,7 +3382,7 @@
           "codex/skills/delivery-harness-framework/evals/validate_completion_output.py"
         ]
       },
-      "evidence_sha256": "120dcb0f436d0d65a3e3bd5b211de126bfbb0524626ce23248621beef9349b33"
+      "evidence_sha256": "8a94ee5dda185696636506f479641dcd196f2edb9b5e81bc82df3fbf301a2534"
     },
     "PRODUCER-AC-17-S0-1": {
       "binding": {
@@ -3401,14 +3401,14 @@
         "corpus_sha256": "526620d20e6949b815348a5143d56a437a3a2860c50306166266ba2c10e002c6",
         "runner_sha256": "d930128121381ce78d26aaec36ca56087e8577cd817763ca4bf28ee02f5d18a2",
         "promotion_manifest_sha256": "8a79f31e88e85e5ecbeb4dbbde9291460e115d19e7481f741e7bef41328f8b98",
-        "source_artifact_sha256": "6867c61cb2fd32ca512aafb6bc9f5cac99d58efa8681695446efcbd6aea370ad",
+        "source_artifact_sha256": "53d56b7b46b722b5d4c594c6e601841a1f9efa8c71d338b6c2a6e7cc38c173ea",
         "acceptance_id": "AC-17",
         "registered_assertion_ids": [
           "scenario:GOVERNED-RESUMED-TASK",
           "test:TEST-CHECKPOINT-ARTIFACT-ROUNDTRIP"
         ]
       },
-      "evidence_sha256": "30b8890896e2dd77b00c0e036f0a396053249ee2d3dfaa662c50a3d6ab9b3961"
+      "evidence_sha256": "68daf572de3cb1d88a52e8816ac93fc5a5b4464e4dda6c9c4e1924320d9570d8"
     },
     "PRODUCER-AC-17-S4-1": {
       "binding": {
@@ -3427,14 +3427,14 @@
         "corpus_sha256": "526620d20e6949b815348a5143d56a437a3a2860c50306166266ba2c10e002c6",
         "runner_sha256": "d930128121381ce78d26aaec36ca56087e8577cd817763ca4bf28ee02f5d18a2",
         "promotion_manifest_sha256": "8a79f31e88e85e5ecbeb4dbbde9291460e115d19e7481f741e7bef41328f8b98",
-        "source_artifact_sha256": "6867c61cb2fd32ca512aafb6bc9f5cac99d58efa8681695446efcbd6aea370ad",
+        "source_artifact_sha256": "53d56b7b46b722b5d4c594c6e601841a1f9efa8c71d338b6c2a6e7cc38c173ea",
         "acceptance_id": "AC-17",
         "registered_assertion_ids": [
           "scenario:GOVERNED-RESUMED-TASK",
           "test:TEST-CHECKPOINT-ARTIFACT-ROUNDTRIP"
         ]
       },
-      "evidence_sha256": "42aefb5ddfb4c5a3af9287a31c768bf9efcdbae0b22ef5fc8519ceb749b2ee4e"
+      "evidence_sha256": "3132a7a4dabe962a5412af450bcca4e55378186aef22886cae59996a6bd83411"
     },
     "PRODUCER-AC-18-S1-1": {
       "binding": {
@@ -3453,7 +3453,7 @@
         "corpus_sha256": "526620d20e6949b815348a5143d56a437a3a2860c50306166266ba2c10e002c6",
         "runner_sha256": "d930128121381ce78d26aaec36ca56087e8577cd817763ca4bf28ee02f5d18a2",
         "promotion_manifest_sha256": "8a79f31e88e85e5ecbeb4dbbde9291460e115d19e7481f741e7bef41328f8b98",
-        "source_artifact_sha256": "6867c61cb2fd32ca512aafb6bc9f5cac99d58efa8681695446efcbd6aea370ad",
+        "source_artifact_sha256": "53d56b7b46b722b5d4c594c6e601841a1f9efa8c71d338b6c2a6e7cc38c173ea",
         "acceptance_id": "AC-18",
         "registered_assertion_ids": [
           "scenario:CONTROL-ORDINARY-CONTINUE",
@@ -3462,7 +3462,7 @@
           "test:TEST-PAIRED-ACTUAL-OUTCOMES"
         ]
       },
-      "evidence_sha256": "0343b6f54c57dacbf2a2825edb2870dbadc3557ed2d7a0a792e675550d902d3f"
+      "evidence_sha256": "85d773febe732689ec6cbc9c7f65f8e73c87df320159aa03dcc511dd38890277"
     },
     "PRODUCER-AC-18-S4-1": {
       "binding": {
@@ -3481,7 +3481,7 @@
         "corpus_sha256": "526620d20e6949b815348a5143d56a437a3a2860c50306166266ba2c10e002c6",
         "runner_sha256": "d930128121381ce78d26aaec36ca56087e8577cd817763ca4bf28ee02f5d18a2",
         "promotion_manifest_sha256": "8a79f31e88e85e5ecbeb4dbbde9291460e115d19e7481f741e7bef41328f8b98",
-        "source_artifact_sha256": "6867c61cb2fd32ca512aafb6bc9f5cac99d58efa8681695446efcbd6aea370ad",
+        "source_artifact_sha256": "53d56b7b46b722b5d4c594c6e601841a1f9efa8c71d338b6c2a6e7cc38c173ea",
         "acceptance_id": "AC-18",
         "registered_assertion_ids": [
           "scenario:CONTROL-ORDINARY-CONTINUE",
@@ -3490,7 +3490,7 @@
           "test:TEST-PAIRED-ACTUAL-OUTCOMES"
         ]
       },
-      "evidence_sha256": "d321b4365069624bc23cf6ebd2543ef809a7e63e0bb9525ddd80c5f3674a0a8a"
+      "evidence_sha256": "a282c9015719d513163a823c208b4aa5f848be58213be66cc12c2d522a12deb9"
     }
   }
 }
