@@ -1175,11 +1175,18 @@ if [[ -z "${npm_global_prefix}" ]]; then
 fi
 
 npm_global_bin="${npm_global_prefix}/bin"
-escaped_npm_global_bin="$(printf '%s' "${npm_global_bin}" | sed 's/[\/&]/\\&/g')"
 rendered_tmp="$(mktemp)"
-sed \
-  -e "s|\${NPM_GLOBAL_BIN}|${escaped_npm_global_bin}|g" \
-  "${TEMPLATE_PATH}" > "${rendered_tmp}"
+python3 - "${TEMPLATE_PATH}" "${rendered_tmp}" "${npm_global_bin}" "${CODEX_HOME}" <<'PY'
+import json
+import os
+from pathlib import Path
+import sys
+
+text = Path(sys.argv[1]).read_text(encoding="utf-8")
+for name, value in (("NPM_GLOBAL_BIN", sys.argv[3]), ("CODEX_HOME", os.path.abspath(sys.argv[4]))):
+    text = text.replace("${" + name + "}", json.dumps(value, ensure_ascii=False)[1:-1])
+Path(sys.argv[2]).write_text(text, encoding="utf-8")
+PY
 
 if rg -n '\$\{[A-Z0-9_]+\}' "${rendered_tmp}" >/dev/null 2>&1; then
   echo "Template rendering failed: unresolved placeholder remains in ${rendered_tmp}" >&2
@@ -1192,6 +1199,7 @@ if [[ -f "${CONFIG_TARGET}" ]]; then
 from pathlib import Path
 import re
 import sys
+import tomllib
 
 rendered_path = Path(sys.argv[1])
 existing_path = Path(sys.argv[2])
@@ -1200,11 +1208,12 @@ existing = existing_path.read_text(encoding="utf-8")
 
 
 def table_blocks(text):
-    headers = list(re.finditer(r"(?m)^\[([^\]\n]+)\]\s*$", text))
+    headers = list(re.finditer(r"(?m)^(\[\[[^\]\n]+\]\]|\[[^\]\n]+\])[ \t]*$", text))
     blocks = []
     for index, match in enumerate(headers):
         end = headers[index + 1].start() if index + 1 < len(headers) else len(text)
-        blocks.append((match.group(1), text[match.start():end].strip()))
+        header = match.group(1)
+        blocks.append((header.strip("[]"), header.startswith("[["), text[match.start():end].strip()))
     return blocks
 
 
@@ -1236,7 +1245,7 @@ def merge_table_keys(text, table_name, source_block):
     target_match = re.search(rf"(?m)^\[{re.escape(table_name)}\]\s*$", text)
     if not target_match:
         return text
-    next_match = re.search(r"(?m)^\[[^\]\n]+\]\s*$", text[target_match.end():])
+    next_match = re.search(r"(?m)^\[\[?[^\]\n]+\]\]?[ \t]*$", text[target_match.end():])
     end = target_match.end() + next_match.start() if next_match else len(text)
     target_block = text[target_match.start():end]
     target_keys = table_key_lines(target_block)
@@ -1254,7 +1263,12 @@ def merge_table_keys(text, table_name, source_block):
 
 
 existing_blocks = table_blocks(existing)
-rendered_names = {name for name, _ in table_blocks(rendered)}
+rendered_blocks = table_blocks(rendered)
+rendered_names = {name for name, is_array, _ in rendered_blocks if not is_array}
+skill_paths = {
+    tomllib.loads(block)["skills"]["config"][0]["path"]
+    for name, is_array, block in rendered_blocks if is_array and name == "skills.config"
+}
 
 notify_match = re.search(r"(?m)^notify\s*=.*$", existing)
 if notify_match and not re.search(r"(?m)^notify\s*=", rendered):
@@ -1268,8 +1282,15 @@ if notify_match and not re.search(r"(?m)^notify\s*=", rendered):
         + rendered[insert_at:].lstrip("\n")
     )
 
-for name, block in existing_blocks:
-    if name == "features":
+for name, is_array, block in existing_blocks:
+    if is_array and name == "skills.config":
+        path = tomllib.loads(block)["skills"]["config"][0]["path"]
+        if path not in skill_paths:
+            rendered = rendered.rstrip() + "\n\n" + block + "\n"
+            skill_paths.add(path)
+    elif is_array and preserve_table(name):
+        rendered = rendered.rstrip() + "\n\n" + block + "\n"
+    elif name == "features":
         rendered = merge_table_keys(rendered, "features", block)
     elif preserve_table(name):
         if name in rendered_names:

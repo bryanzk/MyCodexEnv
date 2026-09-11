@@ -21,3 +21,11 @@ enabled = true
 
 [plugins."browser-use@openai-bundled"]
 enabled = true
+
+[[skills.config]]
+path = "${CODEX_HOME}/plugins/cache/superpowers-dev/superpowers/6.2.0/skills/using-superpowers/SKILL.md"
+enabled = false
+
+[[skills.config]]
+path = "${CODEX_HOME}/plugins/cache/superpowers-dev/superpowers/6.2.0/skills/brainstorming/SKILL.md"
+enabled = false

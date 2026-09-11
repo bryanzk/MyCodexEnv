@@ -28,3 +28,4 @@ sha256:30fc4f2af8660cc040ab00f1d0f0c89f93283cc31cdd3027004beb703d7ab473  SHI-228
 sha256:7f9dd05fa2258bbdd6c8794d10a27a022c9a980d7cfe7f470084f66c1368dfdb  Reviewed ShipQ on-demand routing and verification deduplication (SHI-232, SHI-233); source only
 sha256:e6826c8c1de2227c47899359b16c47451fefc6fc58e5f8f68ee79cb3eb0ad58f  SHI-241 bounded handoff and retry rules
 sha256:0ee78131c12eb716d715e29879ceab6e6d3374a644fe0cf528f9f8975ca300c9  User-approved refresh after codex efficiency skill addition; 2026-09-11
+sha256:39daef89feb74871e2492b8cf8c8e91affbe438a1964c8ac5158f2d61cbe3624  SHI-258 SHI-259 skill routing source

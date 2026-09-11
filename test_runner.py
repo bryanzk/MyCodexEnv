@@ -2483,9 +2483,18 @@ def test_sync_rejects_retired_hook_nonregular_before_runtime_writes():
 
 
 def test_sync_preserves_runtime_plugin_state():
+    import tomllib
+
     with tempfile.TemporaryDirectory() as tmp:
         tmp_path = Path(tmp)
-        codex_home = tmp_path / ".codex"
+        codex_home = tmp_path / "codex home"
+        plugin_cache = codex_home / "plugins/cache/superpowers-dev/superpowers/6.2.0"
+        disabled_paths = [str(plugin_cache / "skills" / name / "SKILL.md")
+                          for name in ("using-superpowers", "brainstorming")]
+        other_skill = str(plugin_cache / "skills/test-driven-development/SKILL.md")
+        local_skill = str(codex_home / "skills/runtime-only/SKILL.md")
+        write(plugin_cache / "sentinel.txt", "preserve cached plugin\n")
+        cache_before = snapshot_tree(plugin_cache)
         write(
             codex_home / "config.toml",
             'model = "gpt-5.5"\n'
@@ -2520,7 +2529,10 @@ def test_sync_preserves_runtime_plugin_state():
             "[desktop]\n"
             "preventSleepWhileRunning = true\n\n"
             "[memories]\n"
-            "generate_memories = true\n",
+            "generate_memories = true\n\n"
+            f'[[skills.config]]\npath = {json.dumps(disabled_paths[0])}\nenabled = true\n\n'
+            f'[[skills.config]]\npath = {json.dumps(local_skill)}\nenabled = false\n\n'
+            f'[[skills.config]]\npath = {json.dumps(other_skill)}\nenabled = true\n',
         )
 
         code, out, err = run(
@@ -2559,6 +2571,27 @@ def test_sync_preserves_runtime_plugin_state():
         )
         require("hooks = true" in active_toml_lines(rendered), "sync should migrate to the current hooks feature flag")
         require("codex_hooks" not in active_toml_lines(rendered), "sync should drop the deprecated codex_hooks alias")
+        config = tomllib.loads(rendered)
+        entries = config["skills"]["config"]
+        overrides = {entry["path"]: entry["enabled"] for entry in entries}
+        require(all(overrides.get(path) is False for path in disabled_paths),
+                "sync must disable both old Superpowers entries under the target home")
+        require(overrides.get(local_skill) is False and overrides.get(other_skill) is True,
+                "sync must preserve non-target skill overrides")
+        require(len(entries) == len(overrides) == 4, "skill overrides must not be duplicated")
+        require(config["memories"] == {"generate_memories": True},
+                "skill arrays must not leak into the preceding config table")
+        require(snapshot_tree(plugin_cache) == cache_before, "sync must preserve plugin cache")
+        source = phase0_root_snapshot()
+        origin = make_bare_origin_from(source, tmp_path / "origin.git")
+        env = os.environ.copy()
+        env.update(GIT_CONFIG_COUNT="1", GIT_CONFIG_KEY_0=f"url.{origin}.insteadOf",
+                   GIT_CONFIG_VALUE_0=phase0_git(source, "config", "--get", "remote.origin.url"))
+        code, out, err = run([str(SYNC), "--repo-root", str(ROOT), "--codex-home", str(codex_home),
+                              "--skip-superpowers-sync"], env=env)
+        require(code == 0, f"repeat sync failed: {err or out}")
+        require(tomllib.loads((codex_home / "config.toml").read_text()) == config,
+                "repeat sync must preserve the same configuration")
 
     print("[PASS] sync preserves runtime plugin state")
 
@@ -3561,13 +3594,13 @@ def test_skill_governance_freeze_review_policy_doc():
 
 
 def test_shipq_lifecycle_verification_uses_repo_gate():
-    text = SHIPQ_LIFECYCLE_SKILL.read_text(encoding="utf-8")
-    section = text.split("## Verification Routing", 1)[1].split("\n## ", 1)[0]
-    for pointer in ["AGENTS.md", "Test Commands", "scripts/verify_harness.py"]:
-        require(pointer in section, f"verification must point to the repo gate: {pointer}")
-    require("| Work type |" not in section, "lifecycle must not maintain a second verification table")
-    require("pair this with" not in section, "Harness must not request duplicate full pytest")
-    print("[PASS] ShipQ lifecycle verification uses the repo gate")
+    for path in [SHIPQ_LIFECYCLE_SKILL, ROOT / "codex/skills/shipq-gmail-quote-workflow/SKILL.md"]:
+        text = path.read_text(encoding="utf-8")
+        section = text.split("## Verification", 1)[1].split("\n## ", 1)[0]
+        require("AGENTS.md" in section, f"verification must point to the repo gate: {path}")
+        require("| Work type |" not in section, "skills must not maintain a second verification table")
+        require("```" not in section, "verification commands belong to the repo gate")
+    print("[PASS] ShipQ skill verification uses the repo gate")
 
 
 def test_shipq_dhf_prompt_hook_routes_on_demand():
@@ -11681,7 +11714,9 @@ def test_global_agents_authorization_and_mode_contract():
 
 
 def test_subagent_role_routing_contract():
-    paths = [GLOBAL_CODEX_AGENTS, SHIPQ_LIFECYCLE_SKILL, DELIVERY_HARNESS_SKILL]
+    require("AGENTS.md" in SHIPQ_LIFECYCLE_SKILL.read_text(encoding="utf-8"),
+            "ShipQ lifecycle must delegate shared routing to AGENTS.md")
+    paths = [GLOBAL_CODEX_AGENTS, DELIVERY_HARNESS_SKILL]
     texts = {path.name + ":" + path.parent.name: " ".join(path.read_text(encoding="utf-8").split()) for path in paths}
     shared_terms = [
         "exact repo-relative write_set",

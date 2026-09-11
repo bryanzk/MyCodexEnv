@@ -1,0 +1,7 @@
+interface:
+  display_name: "PUA Debugging"
+  short_description: "Bounded debugging push with corporate PUA tone"
+  default_prompt: "Use $pua-debugging to push through this bounded debugging problem."
+
+policy:
+  allow_implicit_invocation: false
