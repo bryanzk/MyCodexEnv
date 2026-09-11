@@ -3705,3 +3705,23 @@ Stable rules belong in `AGENTS.md`, `README.md`, `docs/repo-index.md`, or
 - blockers:
   - none
 - next_safe_task: continue from current main; keep acceptance scenarios, skill routing, and verification scope evidence-driven
+
+### 2026-09-11T12:59:19Z
+- phase: handoff
+- event: checkpoint
+- summary: synchronized browser isolation, lower-overhead lifecycle routing, bounded handoff rules, and the reviewed SHI-240 efficiency plan with current main
+- git:
+  - branch: main
+  - latest_commit: 1dfb659
+  - dirty_status: clean
+  - dirty_count: 0
+- changed_surfaces:
+  - `docs/harness-state.md`
+- verification:
+  - command: `python3 test_runner.py`
+  - exit_code: 0
+  - key_output: ran=155 passed=155 skipped=0 failed=0; all tests passed
+  - timestamp: 2026-09-11T12:59:19Z
+- blockers:
+  - none
+- next_safe_task: continue from current main; keep handoff and lifecycle overhead controls scoped to demonstrated needs
