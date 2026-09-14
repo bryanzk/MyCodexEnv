@@ -3725,3 +3725,23 @@ Stable rules belong in `AGENTS.md`, `README.md`, `docs/repo-index.md`, or
 - blockers:
   - none
 - next_safe_task: continue from current main; keep handoff and lifecycle overhead controls scoped to demonstrated needs
+
+### 2026-09-14T12:55:03Z
+- phase: handoff
+- event: checkpoint
+- summary: synchronized the Codex efficiency retrospective, untracked skill-source snapshot coverage, and reduced skill-routing overhead with current main
+- git:
+  - branch: main
+  - latest_commit: 9d30870
+  - dirty_status: clean
+  - dirty_count: 0
+- changed_surfaces:
+  - `docs/harness-state.md`
+- verification:
+  - command: `python3 test_runner.py`
+  - exit_code: 0
+  - key_output: ran=156 passed=156 skipped=0 failed=0; all tests passed
+  - timestamp: 2026-09-14T12:55:03Z
+- blockers:
+  - none
+- next_safe_task: continue from current main; keep skill loading and snapshot scope limited to demonstrated needs
