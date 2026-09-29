@@ -9990,6 +9990,59 @@ def test_sync_claude_injects_integration_block():
     print("[PASS] sync claude workflow + integration block")
 
 
+def _tree_bytes(root: Path) -> dict[str, bytes]:
+    return {str(p.relative_to(root)): p.read_bytes() for p in sorted(root.rglob("*")) if p.is_file()}
+
+
+def test_sync_claude_installs_shared_skills():
+    manifest = ROOT / "claude" / "shared-skills.txt"
+    shared = [s for s in (line.split("#", 1)[0].strip() for line in manifest.read_text(encoding="utf-8").splitlines()) if s]
+    require({"to-spec", "to-tickets"} <= set(shared), f"shared skills manifest should list to-spec and to-tickets: {shared}")
+
+    with tempfile.TemporaryDirectory() as tmp:
+        tmp_path = Path(tmp)
+        claude_home = tmp_path / ".claude"
+        skills_home = claude_home / "skills"
+        skills_home.mkdir(parents=True)
+        # 模拟外部安装器留下的软链接：同步应替换链接本身，不写穿到链接目标。
+        external = tmp_path / "external" / "to-spec"
+        external.mkdir(parents=True)
+        (external / "SKILL.md").write_text("external copy\n", encoding="utf-8")
+        (skills_home / "to-spec").symlink_to(external, target_is_directory=True)
+        (skills_home / "to-tickets").mkdir()
+        (skills_home / "to-tickets" / "stale.md").write_text("stale\n", encoding="utf-8")
+        (skills_home / "unrelated").mkdir()
+        (skills_home / "unrelated" / "SKILL.md").write_text("keep\n", encoding="utf-8")
+
+        code, out, err = run([str(SYNC_CLAUDE), "--repo-root", str(ROOT), "--claude-home", str(claude_home)])
+        require(code == 0, f"sync_claude failed: {err or out}")
+
+        for skill in shared:
+            target = skills_home / skill
+            require(target.is_dir() and not target.is_symlink(), f"{skill} should be a managed directory")
+            require(
+                _tree_bytes(target) == _tree_bytes(ROOT / "codex" / "skills" / skill),
+                f"{skill} should match codex/skills/{skill} exactly",
+            )
+        require((external / "SKILL.md").read_text(encoding="utf-8") == "external copy\n", "symlink target should be untouched")
+        require(not (skills_home / "to-tickets" / "stale.md").exists(), "stale files inside a shared skill should be removed")
+        require((skills_home / "unrelated" / "SKILL.md").exists(), "skills outside the manifest should be preserved")
+
+        # 清单中的缺失或非法 skill 应在写入 Claude home 之前失败。
+        fake_root = tmp_path / "repo"
+        (fake_root / "claude" / "workflow").mkdir(parents=True)
+        (fake_root / "claude" / "CLAUDE_INTEGRATION_BLOCK.md").write_text("block\n", encoding="utf-8")
+        (fake_root / "codex" / "skills").mkdir(parents=True)
+        for entry, message in [("missing-skill", "Missing shared skill source"), ("../escape", "Invalid shared skill name")]:
+            (fake_root / "claude" / "shared-skills.txt").write_text(f"{entry}\n", encoding="utf-8")
+            fresh_home = tmp_path / f"home-{len(message)}"
+            code, out, err = run([str(SYNC_CLAUDE), "--repo-root", str(fake_root), "--claude-home", str(fresh_home)])
+            require(code != 0 and message in err, f"sync_claude should reject {entry!r}: code={code} {err or out}")
+            require(not fresh_home.exists(), f"sync_claude should not write Claude home when {entry!r} is rejected")
+
+    print("[PASS] sync claude shared skills")
+
+
 def test_verify_after_full_sync():
     if run(["bash", "-lc", "command -v codex"])[0] != 0:
         raise SkipTest("codex CLI not installed")
@@ -13329,6 +13382,7 @@ TESTS = [
     test_harness_recovery_smoke,
     test_harness_env_probe,
     test_sync_claude_injects_integration_block,
+    test_sync_claude_installs_shared_skills,
     test_verify_after_full_sync,
     test_verify_missing_codex_reports_failures_without_early_exit,
     test_verify_requires_superpowers_plugin_install_not_only_marketplace,

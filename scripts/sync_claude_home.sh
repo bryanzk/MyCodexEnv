@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# 同步仓库内 Claude workflow 到目标 Claude home，并注入集成指令块。
+# 同步仓库内 Claude workflow 与共享 skills 到目标 Claude home，并注入集成指令块。
 REPO_ROOT=""
 CLAUDE_HOME="${HOME}/.claude"
 
@@ -46,6 +46,7 @@ fi
 
 WORKFLOW_SOURCE="${REPO_ROOT}/claude/workflow"
 BLOCK_SOURCE="${REPO_ROOT}/claude/CLAUDE_INTEGRATION_BLOCK.md"
+SHARED_SKILLS_MANIFEST="${REPO_ROOT}/claude/shared-skills.txt"
 if [[ ! -d "${WORKFLOW_SOURCE}" ]]; then
   echo "Missing workflow source directory: ${WORKFLOW_SOURCE}" >&2
   exit 1
@@ -54,11 +55,45 @@ if [[ ! -f "${BLOCK_SOURCE}" ]]; then
   echo "Missing integration block: ${BLOCK_SOURCE}" >&2
   exit 1
 fi
+if [[ ! -f "${SHARED_SKILLS_MANIFEST}" ]]; then
+  echo "Missing shared skills manifest: ${SHARED_SKILLS_MANIFEST}" >&2
+  exit 1
+fi
+
+# 先校验全部共享 skill 源，避免半途失败留下部分同步的 Claude home。
+shared_skills=()
+while IFS= read -r line || [[ -n "${line}" ]]; do
+  skill="${line%%#*}"
+  skill="${skill//[[:space:]]/}"
+  [[ -z "${skill}" ]] && continue
+  if [[ ! "${skill}" =~ ^[A-Za-z0-9][A-Za-z0-9._-]*$ ]]; then
+    echo "Invalid shared skill name: ${skill}" >&2
+    exit 1
+  fi
+  if [[ ! -f "${REPO_ROOT}/codex/skills/${skill}/SKILL.md" ]]; then
+    echo "Missing shared skill source: ${REPO_ROOT}/codex/skills/${skill}/SKILL.md" >&2
+    exit 1
+  fi
+  shared_skills+=("${skill}")
+done < "${SHARED_SKILLS_MANIFEST}"
 
 mkdir -p "${CLAUDE_HOME}"
 mkdir -p "${CLAUDE_HOME}/workflow"
 # workflow/memory 属于运行态热数据，不从仓库模板回灌。
 rsync -a --delete --exclude 'memory/' "${WORKFLOW_SOURCE}/" "${CLAUDE_HOME}/workflow/"
+
+# 共享 skills 只逐个镜像清单内目录，保留 Claude home 中其他本地/插件 skills。
+mkdir -p "${CLAUDE_HOME}/skills"
+for skill in ${shared_skills[@]+"${shared_skills[@]}"}; do
+  target="${CLAUDE_HOME}/skills/${skill}"
+  if [[ -L "${target}" ]]; then
+    # 只移除链接本身，不改动链接指向的外部安装目录。
+    rm "${target}"
+    echo "Replaced symlinked Claude skill with managed copy: ${target}"
+  fi
+  mkdir -p "${target}"
+  rsync -a --delete "${REPO_ROOT}/codex/skills/${skill}/" "${target}/"
+done
 
 CLAUDE_MAIN="${CLAUDE_HOME}/CLAUDE.md"
 if [[ -f "${CLAUDE_MAIN}" ]]; then
