@@ -26,6 +26,7 @@
 - `codex/workflow/*` -> `~/.codex/workflow/*`（排除 `workflow/memory/`）
 - `claude/workflow/*` -> `~/.claude/workflow/*`（排除 `workflow/memory/`）
 - `claude/CLAUDE_INTEGRATION_BLOCK.md` -> 注入 `~/.claude/CLAUDE.md`（不覆盖既有内容）
+- `codex/skills/<name>/` listed in `claude/shared-skills.txt` -> `~/.claude/skills/<name>/`（逐个镜像；清单外的 Claude skills 保留，软链接只替换链接本身）
 - `~/.codex/superpowers` pinned by `locks/superpowers.lock`, then registered as marketplace `superpowers-dev` and installed as `superpowers@superpowers-dev`
 - `scripts/install_prereqs.sh` installs pinned `chrome-devtools-mcp@0.20.0` globally via npm
 - `chrome-devtools-mcp` is rendered into `~/.codex/config.toml` with `--no-usage-statistics` and `--no-performance-crux`
@@ -54,7 +55,7 @@
 - Repository source of truth is `codex/skills/*` for ordinary skills. When `~/.gstack/repos/gstack` is valid, external gstack is the active authority and `scripts/external_gstack_runtime.py status|apply|recover` owns its exact runtime links.
 - Ordinary bootstrap/sync copies repo-managed skills, consumes external gstack `status`, and never invokes `apply` or `recover`. The vendored gstack snapshot remains the legacy/bootstrap fallback.
 - Superpowers uses the plugin-first startup path on current pins: `scripts/sync_codex_home.sh` checks out the locked `~/.codex/superpowers`, registers the local `superpowers-dev` marketplace, installs `superpowers@superpowers-dev`, and new Codex sessions should use exposed `superpowers:*` skills. The legacy `~/.codex/superpowers/.codex/superpowers-codex` binary is only a conditional fallback when an older checkout still contains it.
-- Claude workflow source of truth is `claude/workflow/*`.
+- Claude workflow source of truth is `claude/workflow/*`. Skills shared with Claude keep `codex/skills/<name>/` as their single source; `claude/shared-skills.txt` selects them and `verify_codex_env.sh` checks each `~/.claude/skills/<name>/` for exact parity.
 - `delivery-harness-framework` is a generic lifecycle router; repo-specific lifecycle skills should stay as adapters that add project paths, commands, safety boundaries, and smoke matrices.
 - The repository includes Codex-adapted short-name imports of selected `gstack` skills: `plan-ceo-review`, `plan-eng-review`, `review`, `ship`, `retro`, `browse`, `qa`, and `setup-browser-cookies`.
 - The repository vendors a gstack fallback under `codex/skills/gstack` and `codex/skills/gstack-*`; vendor refresh updates that fallback snapshot but does not promote an active external runtime.

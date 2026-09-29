@@ -9,6 +9,7 @@
 ## Skills
 
 - `codex/skills/*` is the repository source for persistently managed skills except active external gstack. A valid `~/.gstack/repos/gstack` is managed by `scripts/external_gstack_runtime.py status|apply|recover`; ordinary sync preserves its exact targets and never performs cutover. The repo vendor remains the legacy/bootstrap fallback, and active mode does not run `setup`.
+- Skills that Claude also uses stay in `codex/skills/<name>/`; list them in `claude/shared-skills.txt` so `scripts/sync_claude_home.sh` mirrors them into `~/.claude/skills/<name>/`.
 - After adding or installing a skill, validate its `SKILL.md` frontmatter and run the repository gate.
 - When revising a skill, keep its description short and specific to the actual workflow. Put substantial conditional guidance behind relevant reference links; a short single-workflow skill needs no extra files. Preserve safety invariants and support the Sol/Terra/Luna consumers as well as Astra.
 - The config template disables the legacy Superpowers `using-superpowers` and `brainstorming` entries while preserving the plugin's other skills. Use existing planning skills when needed; `pua-debugging` is explicit-only through its native invocation policy.
