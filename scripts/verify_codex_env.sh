@@ -303,6 +303,21 @@ if [[ -f "${claude_shared_skills_manifest}" ]]; then
   done < "${claude_shared_skills_manifest}"
 fi
 
+claude_managed_settings_ok() {
+  python3 - "${REPO_ROOT}/claude/settings.managed.json" "${CLAUDE_HOME}/settings.json" <<'PY'
+import json
+import sys
+
+with open(sys.argv[1], encoding="utf-8") as handle:
+    managed = json.load(handle)["permissions"]
+with open(sys.argv[2], encoding="utf-8") as handle:
+    permissions = json.load(handle).get("permissions", {})
+missing = [entry for key, entries in managed.items() for entry in entries if entry not in permissions.get(key, [])]
+sys.exit(1 if missing else 0)
+PY
+}
+results+=("$(run_check claude_settings_managed_permissions claude_managed_settings_ok)")
+
 repo_skills_dir="${REPO_ROOT}/codex/skills"
 codex_skills_dir="${CODEX_HOME}/skills"
 if [[ -d "${repo_skills_dir}" ]]; then

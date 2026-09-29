@@ -47,6 +47,7 @@ fi
 WORKFLOW_SOURCE="${REPO_ROOT}/claude/workflow"
 BLOCK_SOURCE="${REPO_ROOT}/claude/CLAUDE_INTEGRATION_BLOCK.md"
 SHARED_SKILLS_MANIFEST="${REPO_ROOT}/claude/shared-skills.txt"
+SETTINGS_SOURCE="${REPO_ROOT}/claude/settings.managed.json"
 if [[ ! -d "${WORKFLOW_SOURCE}" ]]; then
   echo "Missing workflow source directory: ${WORKFLOW_SOURCE}" >&2
   exit 1
@@ -59,6 +60,97 @@ if [[ ! -f "${SHARED_SKILLS_MANIFEST}" ]]; then
   echo "Missing shared skills manifest: ${SHARED_SKILLS_MANIFEST}" >&2
   exit 1
 fi
+if [[ ! -f "${SETTINGS_SOURCE}" ]]; then
+  echo "Missing managed Claude settings: ${SETTINGS_SOURCE}" >&2
+  exit 1
+fi
+
+# 托管的全局 permissions 只追加缺失条目；settings.json 中其他键和用户已有条目保持不变。
+# check 只做校验；apply 在内容变化时先备份再原子写入（软链接写入其真实目标）。
+merge_managed_settings() {
+  python3 - "$1" "${SETTINGS_SOURCE}" "${CLAUDE_HOME}/settings.json" <<'PY'
+import json
+import os
+import shutil
+import sys
+import tempfile
+import time
+
+mode, source_path, target_path = sys.argv[1:4]
+LISTS = ("allow", "ask", "deny")
+
+
+def fail(message):
+    print(message, file=sys.stderr)
+    sys.exit(1)
+
+
+try:
+    with open(source_path, encoding="utf-8") as handle:
+        managed = json.load(handle)
+except (OSError, ValueError) as exc:
+    fail(f"Invalid managed Claude settings {source_path}: {exc}")
+if not isinstance(managed, dict) or set(managed) != {"permissions"} or not isinstance(managed["permissions"], dict):
+    fail(f"Managed Claude settings must contain only a permissions object: {source_path}")
+for key, entries in managed["permissions"].items():
+    if key not in LISTS:
+        fail(f"Unsupported managed permissions key {key!r} in {source_path}")
+    if not isinstance(entries, list) or not all(isinstance(e, str) and e.strip() for e in entries):
+        fail(f"Managed permissions.{key} must be a list of non-empty strings: {source_path}")
+
+real_target = os.path.realpath(target_path)
+if os.path.exists(real_target):
+    try:
+        with open(real_target, encoding="utf-8") as handle:
+            settings = json.load(handle)
+    except (OSError, ValueError) as exc:
+        fail(f"Existing Claude settings is not valid JSON, refusing to modify {target_path}: {exc}")
+    existed = True
+else:
+    settings = {}
+    existed = False
+if not isinstance(settings, dict):
+    fail(f"Existing Claude settings must be a JSON object: {target_path}")
+permissions = settings.setdefault("permissions", {})
+if not isinstance(permissions, dict):
+    fail(f"Existing Claude settings permissions must be an object: {target_path}")
+
+added = 0
+for key in LISTS:
+    entries = managed["permissions"].get(key, [])
+    if not entries:
+        continue
+    current = permissions.setdefault(key, [])
+    if not isinstance(current, list):
+        fail(f"Existing Claude settings permissions.{key} must be a list: {target_path}")
+    for entry in entries:
+        if entry not in current:
+            current.append(entry)
+            added += 1
+
+if mode == "check":
+    sys.exit(0)
+if added == 0:
+    print(f"Claude settings permissions already current: {target_path}")
+    sys.exit(0)
+
+directory = os.path.dirname(real_target)
+os.makedirs(directory, exist_ok=True)
+if existed:
+    backup = f"{real_target}.backup.{time.strftime('%Y%m%d%H%M%S')}"
+    shutil.copy2(real_target, backup)
+    print(f"Backed up existing Claude settings to {backup}")
+fd, tmp = tempfile.mkstemp(dir=directory, prefix=".settings.json.")
+with os.fdopen(fd, "w", encoding="utf-8") as handle:
+    json.dump(settings, handle, ensure_ascii=False, indent=2)
+    handle.write("\n")
+if existed:
+    shutil.copymode(real_target, tmp)
+os.replace(tmp, real_target)
+print(f"Added {added} managed permission entries to {target_path}")
+PY
+}
+merge_managed_settings check
 
 # 先校验全部共享 skill 源，避免半途失败留下部分同步的 Claude home。
 shared_skills=()
@@ -155,5 +247,7 @@ fi
 
 cp "${tmp_file}" "${CLAUDE_MAIN}"
 rm -f "${tmp_file}"
+
+merge_managed_settings apply
 
 echo "Claude home synchronized: ${CLAUDE_HOME}"

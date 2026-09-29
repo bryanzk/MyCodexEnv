@@ -10033,6 +10033,7 @@ def test_sync_claude_installs_shared_skills():
         (fake_root / "claude" / "workflow").mkdir(parents=True)
         (fake_root / "claude" / "CLAUDE_INTEGRATION_BLOCK.md").write_text("block\n", encoding="utf-8")
         (fake_root / "codex" / "skills").mkdir(parents=True)
+        shutil.copy2(ROOT / "claude" / "settings.managed.json", fake_root / "claude" / "settings.managed.json")
         for entry, message in [("missing-skill", "Missing shared skill source"), ("../escape", "Invalid shared skill name")]:
             (fake_root / "claude" / "shared-skills.txt").write_text(f"{entry}\n", encoding="utf-8")
             fresh_home = tmp_path / f"home-{len(message)}"
@@ -10041,6 +10042,70 @@ def test_sync_claude_installs_shared_skills():
             require(not fresh_home.exists(), f"sync_claude should not write Claude home when {entry!r} is rejected")
 
     print("[PASS] sync claude shared skills")
+
+
+def test_sync_claude_merges_managed_settings():
+    managed = json.loads((ROOT / "claude" / "settings.managed.json").read_text(encoding="utf-8"))["permissions"]
+    require("mcp__claude_ai_Linear" in managed.get("allow", []), "managed settings should allow the local Linear connector")
+    require("mcp__claude_ai_Linear__delete_*" in managed.get("ask", []), "Linear deletes should still ask")
+
+    def sync(claude_home: Path):
+        return run([str(SYNC_CLAUDE), "--repo-root", str(ROOT), "--claude-home", str(claude_home)])
+
+    def backups(claude_home: Path):
+        return sorted(p.name for p in claude_home.glob("settings.json.backup.*"))
+
+    with tempfile.TemporaryDirectory() as tmp:
+        tmp_path = Path(tmp)
+
+        # 已有设置：保留其他键与用户条目，只追加缺失的托管条目，且不重复。
+        claude_home = tmp_path / "existing" / ".claude"
+        claude_home.mkdir(parents=True)
+        existing = {
+            "model": "opus",
+            "hooks": {"Stop": []},
+            "permissions": {"allow": ["Bash(ls:*)", "mcp__Linear"], "deny": ["Read(./.env)"]},
+        }
+        settings_path = claude_home / "settings.json"
+        settings_path.write_text(json.dumps(existing, indent=2) + "\n", encoding="utf-8")
+        code, out, err = sync(claude_home)
+        require(code == 0, f"sync_claude failed: {err or out}")
+        merged = json.loads(settings_path.read_text(encoding="utf-8"))
+        require(merged["model"] == "opus" and merged["hooks"] == {"Stop": []}, "non-permission settings should be preserved")
+        require(merged["permissions"]["deny"] == ["Read(./.env)"], "user deny rules should be preserved")
+        require(merged["permissions"]["allow"][:2] == ["Bash(ls:*)", "mcp__Linear"], "user allow rules should stay first")
+        for key, entries in managed.items():
+            current = merged["permissions"][key]
+            require(all(entry in current for entry in entries), f"managed {key} entries should be present")
+            require(len(current) == len(set(current)), f"{key} should not contain duplicates")
+        first_backups = backups(claude_home)
+        require(len(first_backups) == 1, f"a changed settings file should be backed up once: {first_backups}")
+        require(json.loads((claude_home / first_backups[0]).read_text(encoding="utf-8")) == existing, "backup should hold the original")
+
+        before = settings_path.read_bytes()
+        code, out, err = sync(claude_home)
+        require(code == 0, f"second sync_claude failed: {err or out}")
+        require(settings_path.read_bytes() == before, "a second sync should not change settings")
+        require(backups(claude_home) == first_backups, "an unchanged sync should not create another backup")
+
+        # 无设置文件：创建只含托管 permissions 的设置。
+        fresh_home = tmp_path / "fresh" / ".claude"
+        code, out, err = sync(fresh_home)
+        require(code == 0, f"sync_claude into a fresh home failed: {err or out}")
+        created = json.loads((fresh_home / "settings.json").read_text(encoding="utf-8"))
+        require(created == {"permissions": managed}, f"fresh settings should contain only managed permissions: {created}")
+        require(not backups(fresh_home), "a new settings file needs no backup")
+
+        # 无效 JSON：在写入 Claude home 任何内容之前失败，且原文件不变。
+        broken_home = tmp_path / "broken" / ".claude"
+        broken_home.mkdir(parents=True)
+        (broken_home / "settings.json").write_text("{not json", encoding="utf-8")
+        code, out, err = sync(broken_home)
+        require(code != 0 and "not valid JSON" in err, f"invalid settings should be rejected: code={code} {err or out}")
+        require((broken_home / "settings.json").read_text(encoding="utf-8") == "{not json", "invalid settings should be untouched")
+        require(not (broken_home / "CLAUDE.md").exists(), "rejected sync should not write CLAUDE.md")
+
+    print("[PASS] sync claude managed settings")
 
 
 def test_verify_after_full_sync():
@@ -13383,6 +13448,7 @@ TESTS = [
     test_harness_env_probe,
     test_sync_claude_injects_integration_block,
     test_sync_claude_installs_shared_skills,
+    test_sync_claude_merges_managed_settings,
     test_verify_after_full_sync,
     test_verify_missing_codex_reports_failures_without_early_exit,
     test_verify_requires_superpowers_plugin_install_not_only_marketplace,

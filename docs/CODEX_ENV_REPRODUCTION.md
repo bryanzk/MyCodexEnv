@@ -27,6 +27,7 @@
 - `claude/workflow/*` -> `~/.claude/workflow/*`（排除 `workflow/memory/`）
 - `claude/CLAUDE_INTEGRATION_BLOCK.md` -> 注入 `~/.claude/CLAUDE.md`（不覆盖既有内容）
 - `codex/skills/<name>/` listed in `claude/shared-skills.txt` -> `~/.claude/skills/<name>/`（逐个镜像；清单外的 Claude skills 保留，软链接只替换链接本身）
+- `claude/settings.managed.json` -> 合并进 `~/.claude/settings.json` 的 `permissions.allow/ask/deny`（只追加缺失条目；其他键和用户已有条目保留；有变更时先备份；无效 JSON 直接失败不写入）。当前内容：Linear 连接器（本地 `mcp__claude_ai_Linear`、自建 `mcp__Linear`）免确认，删除、合并、分享、retire 类操作仍需确认。只影响本机 Claude；云端会话读不到本机全局设置
 - `~/.codex/superpowers` pinned by `locks/superpowers.lock`, then registered as marketplace `superpowers-dev` and installed as `superpowers@superpowers-dev`
 - `scripts/install_prereqs.sh` installs pinned `chrome-devtools-mcp@0.20.0` globally via npm
 - `chrome-devtools-mcp` is rendered into `~/.codex/config.toml` with `--no-usage-statistics` and `--no-performance-crux`

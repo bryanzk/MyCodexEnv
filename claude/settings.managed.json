@@ -1,0 +1,22 @@
+{
+  "permissions": {
+    "allow": [
+      "mcp__claude_ai_Linear",
+      "mcp__Linear"
+    ],
+    "ask": [
+      "mcp__claude_ai_Linear__delete_*",
+      "mcp__claude_ai_Linear__merge_diff",
+      "mcp__claude_ai_Linear__submit_diff_review",
+      "mcp__claude_ai_Linear__share_issue",
+      "mcp__claude_ai_Linear__unshare_issue",
+      "mcp__claude_ai_Linear__retire_*",
+      "mcp__Linear__delete_*",
+      "mcp__Linear__merge_diff",
+      "mcp__Linear__submit_diff_review",
+      "mcp__Linear__share_issue",
+      "mcp__Linear__unshare_issue",
+      "mcp__Linear__retire_*"
+    ]
+  }
+}

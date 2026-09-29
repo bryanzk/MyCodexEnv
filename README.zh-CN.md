@@ -81,6 +81,7 @@ MyCodexEnv 把这三个问题变成一条可重复的闭环：
 | Claude workflow | `claude/workflow/` | `~/.claude/workflow/` |
 | Claude integration | `claude/CLAUDE_INTEGRATION_BLOCK.md` | 注入 `~/.claude/CLAUDE.md` |
 | Claude shared skills | `claude/shared-skills.txt` 列出的 `codex/skills/<name>/` | `~/.claude/skills/<name>/` |
+| Claude 全局权限 | `claude/settings.managed.json` | 合并进 `~/.claude/settings.json` 的 `permissions` |
 | Version pins | `locks/` | 可复现的第三方组件版本 |
 
 ### Skills
