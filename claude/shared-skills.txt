@@ -1,0 +1,5 @@
+# Skills that Claude shares with Codex from codex/skills/<name>/.
+# sync_claude_home.sh mirrors each listed directory into <claude-home>/skills/<name>/.
+# One skill directory name per line; blank lines and # comments are ignored.
+to-spec
+to-tickets

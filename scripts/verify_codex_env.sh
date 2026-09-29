@@ -288,6 +288,21 @@ results+=("$(check claude_workflow_rules '[[ -f "'"${CLAUDE_HOME}"'"/workflow/ru
 results+=("$(check claude_integration_block 'rg -n "ccwf:integration:start|ccwf:integration:end" "'"${CLAUDE_HOME}"'"/CLAUDE.md')")
 results+=("$(check claude_security_scan_script '[[ -x "'"${CLAUDE_HOME}"'"/workflow/scripts/scan_skill_security.sh ]]')")
 
+claude_shared_skills_manifest="${REPO_ROOT}/claude/shared-skills.txt"
+results+=("$(check claude_shared_skills_manifest '[[ -f "'"${claude_shared_skills_manifest}"'" ]]')")
+if [[ -f "${claude_shared_skills_manifest}" ]]; then
+  while IFS= read -r line || [[ -n "${line}" ]]; do
+    skill="${line%%#*}"
+    skill="${skill//[[:space:]]/}"
+    [[ -z "${skill}" ]] && continue
+    if [[ ! "${skill}" =~ ^[A-Za-z0-9][A-Za-z0-9._-]*$ ]]; then
+      results+=("FAIL:claude_shared_skill_name_valid")
+      continue
+    fi
+    results+=("$(check "claude_shared_skill_${skill}_matches_source" 'diff -rq "'"${REPO_ROOT}"'"/codex/skills/'"${skill}"' "'"${CLAUDE_HOME}"'"/skills/'"${skill}"'')")
+  done < "${claude_shared_skills_manifest}"
+fi
+
 repo_skills_dir="${REPO_ROOT}/codex/skills"
 codex_skills_dir="${CODEX_HOME}/skills"
 if [[ -d "${repo_skills_dir}" ]]; then
