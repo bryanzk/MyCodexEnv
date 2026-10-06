@@ -3,11 +3,21 @@ name: tdd
 description: Test-driven development. Use when the user wants to build features or fix bugs test-first, mentions "red-green-refactor", or wants integration tests.
 ---
 
+
+
+## Codex skill invocation
+
+When this harness has no Skill tool, load each named skill with the available skill-reading tool, or read its installed `SKILL.md` and relevant references, before following it. Naming a skill alone does not load it. User-invoked skills still require the user's invocation; this note grants no new permissions, external actions, session creation, or agent delegation. Keep the harness's existing disabled states and authorization boundaries.
+
+## Local document compatibility
+
+Resolve the project's domain documents before following the filename references below or in bundled templates. Prefer an existing `GLOSSARY-MAP.md` (follow its links to the relevant context), then an existing root `GLOSSARY.md`. If neither exists, follow an existing `CONTEXT-MAP.md`, otherwise use the existing root `CONTEXT.md`. References below to `GLOSSARY.md` and `GLOSSARY-MAP.md` mean those selected project documents. Write terminology updates to the selected file; do not rename, overwrite, duplicate, or automatically merge existing documents. When neither convention exists, create `GLOSSARY.md` lazily as upstream describes. If both conventions exist, prefer GLOSSARY and leave CONTEXT intact. Creating new project files still requires the task's existing write authorization.
+
 # Test-Driven Development
 
 TDD is the red → green loop. This skill is the reference that makes that loop produce tests worth keeping: what a good test is, where tests go, the anti-patterns, and the rules of the loop. Every section applies on every cycle: consult them before and during the loop, not after.
 
-When exploring the codebase, read `CONTEXT.md` (if it exists) so test names and interface vocabulary match the project's domain language, and respect ADRs in the area you're touching.
+When exploring the codebase, read `GLOSSARY.md` (if it exists) so test names and interface vocabulary match the project's domain language, and respect ADRs in the area you're touching.
 
 ## What a good test is
 

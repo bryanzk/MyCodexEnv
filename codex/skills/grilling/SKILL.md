@@ -1,8 +1,13 @@
 ---
 name: grilling
 description: Grill the user relentlessly about a plan, decision, or idea. Use when the user wants to stress-test their thinking, or uses any 'grill' trigger phrases.
-source: Adapted from mattpocock/skills (MIT), commit c55ee46
+source: Adapted from mattpocock/skills v1.3.1 (MIT), commit 24fe0ef7737efae15c87225755e9f6f5965e4888
 ---
+
+
+## Local document compatibility
+
+Resolve the project's domain documents before following the filename references below or in bundled templates. Prefer an existing `GLOSSARY-MAP.md` (follow its links to the relevant context), then an existing root `GLOSSARY.md`. If neither exists, follow an existing `CONTEXT-MAP.md`, otherwise use the existing root `CONTEXT.md`. References below to `GLOSSARY.md` and `GLOSSARY-MAP.md` mean those selected project documents. Write terminology updates to the selected file; do not rename, overwrite, duplicate, or automatically merge existing documents. When neither convention exists, create `GLOSSARY.md` lazily as upstream describes. If both conventions exist, prefer GLOSSARY and leave CONTEXT intact. Creating new project files still requires the task's existing write authorization.
 
 Interview the user relentlessly until you reach a shared understanding. Map this as a **design tree**: every decision branches into the decisions that hang off it.
 
@@ -34,4 +39,4 @@ Use this skill when `delivery-harness-framework` classifies a task as `requireme
 
 Stop grilling only when the remaining facts can produce a requirements artifact that passes `scripts/harness_requirements.py validate PATH` and every acceptance criterion traces to a confirmed user answer or repo source.
 
-When a term is settled during grilling, update `CONTEXT.md` immediately using the local context format. Record resolved questions and answers in the requirements artifact's `open_questions_resolved` field.
+When a term is settled during grilling, update the selected domain document immediately: use [GLOSSARY-FORMAT.md](./GLOSSARY-FORMAT.md) for GLOSSARY, or [CONTEXT-FORMAT.md](./CONTEXT-FORMAT.md) for a retained CONTEXT document. Record resolved questions and answers in the requirements artifact's `open_questions_resolved` field.

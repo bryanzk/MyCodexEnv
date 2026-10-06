@@ -2257,6 +2257,12 @@ def test_codex_skill_loader_gate():
     print("[PASS] Codex app-server skill loader gate")
 
 
+def test_selected_skill_sync_contract():
+    code, out, err = run([sys.executable, str(ROOT / "tests" / "test_selected_skill_sync.py")])
+    require(code == 0, f"selected skill sync contract failed: {err or out}")
+    print("[PASS] selected skill sync preserves source attestation and runtime boundaries")
+
+
 def test_sync_renders_template_and_copies_skills():
     with tempfile.TemporaryDirectory() as tmp:
         tmp_path = Path(tmp)
@@ -13351,6 +13357,7 @@ TESTS = [
     test_external_gstack_runtime_apply_recover_contract,
     test_external_gstack_documentation_contract,
     test_codex_skill_loader_gate,
+    test_selected_skill_sync_contract,
     test_sync_renders_template_and_copies_skills,
     test_sync_rejects_retired_hook_nonregular_before_runtime_writes,
     test_sync_preserves_runtime_plugin_state,
