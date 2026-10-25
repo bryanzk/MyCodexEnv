@@ -1449,6 +1449,7 @@ def test_codex_version_policy_accepts_current_cli():
         )
         require('"0.144."' in script_text, f"{script_name} should accept Codex 0.144.x")
         require('"0.147.0"' in script_text, f"{script_name} should accept the probe-verified Codex 0.147.0")
+        require('"0.155.1"' in script_text, f"{script_name} should accept the host-verified Codex 0.155.1")
         require("codex_version_ok" in script_text, f"{script_name} should evaluate version prefixes explicitly")
 
     require("skills_managed_present" in verify_text, "verify should require managed repo skills to exist")

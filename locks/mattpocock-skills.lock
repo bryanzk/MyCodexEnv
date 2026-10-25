@@ -1,11 +1,14 @@
 repo=https://github.com/mattpocock/skills.git
-commit=24fe0ef7737efae15c87225755e9f6f5965e4888
+commit=5beb35b040e3de97e54fa9e386d7e42d15c295c2
 release=v1.3.1
 installed_from=skills
 upstream_fix_commit=6fd947921b935b7e1e69293a200400f0fdd5c15f
 upstream_fixes=implement-skill-tool,github-external-pr-list-and-subissues,to-tickets-parent,handoff-temp-dir,claude-handoff-shell-quoting
 preserved_existing=grill-me-implicit-routing,grilling-dhf-adaptation,resolving-merge-conflicts
 local_patch=setup-ts-deep-modules-relative-example,to-spec-acceptance-scenarios,to-tickets-scenario-propagation,glossary-context-compatibility,codex-skill-loading
-version_kind=local-customized-release
+version_kind=local-customized-upstream-main
 upstream_name_map=retro:matt-retro
 excluded_experimental=chief-of-staff
+upstream_reviewed_date=2026-10-25
+previous_upstream_commit=24fe0ef7737efae15c87225755e9f6f5965e4888
+merge_base=6fd947921b935b7e1e69293a200400f0fdd5c15f
