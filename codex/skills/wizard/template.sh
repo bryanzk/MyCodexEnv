@@ -95,7 +95,18 @@ _existing() {
   [[ -f "$ENV_FILE" ]] || return 1
   local line value sq="'\\''"; line=$(grep -E "^${1}=" "$ENV_FILE" | tail -n1) || return 1
   value="${line#*=}"
-  if [[ "$value" == \'*\' ]]; then value="${value:1:${#value}-2}"; value="${value//"$sq"/\'}"
+  if [[ "$value" == \'*\' ]]; then
+    value="${value:1:${#value}-2}"
+    # Decode literal quote escapes without Bash 3.2 pattern replacement semantics.
+    local decoded=""
+    while [[ -n "$value" ]]; do
+      if [[ "${value:0:${#sq}}" == "$sq" ]]; then
+        decoded+="'"; value="${value:${#sq}}"
+      else
+        decoded+="${value:0:1}"; value="${value:1}"
+      fi
+    done
+    value="$decoded"
   elif [[ "$value" == \"*\" ]]; then
     value="${value:1:${#value}-2}"
     [[ "$value" == *[\\\$\"]* ]] && return 1   # escapes, $ or ": can't decode safely; ask again
@@ -135,9 +146,13 @@ ask_secret() {
 }
 
 # write_env KEY VALUE upserts KEY='VALUE' into ENV_FILE (replaces any existing
-# line) and sets $KEY. Idempotent. Creates ENV_FILE at mode 0600; writes through
-# a symlink and keeps an existing file's mode.
+# line) and sets $KEY. Idempotent. Creates ENV_FILE at mode 0600; rejects
+# symlinks and keeps an existing regular file's mode.
 write_env() {
+  if [[ -L "$ENV_FILE" ]]; then
+    printf 'Refusing to write symlink ENV_FILE: %s\n' "$ENV_FILE" >&2
+    return 1
+  fi
   local key="$1" value="$2" tmp sq="'\\''"
   [[ -e "$ENV_FILE" ]] || (umask 077 && : > "$ENV_FILE")
   tmp=$(mktemp)

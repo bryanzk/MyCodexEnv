@@ -106,7 +106,7 @@ The block:
 
 Include the `### Triage labels` sub-block, and write `docs/agents/triage-labels.md`, only when `triage` is installed and Section B ran. When it isn't, both are omitted.
 
-When Section B ran on GitHub or GitLab, create each configured label the tracker lacks (`gh label create` / `glab label create`).
+When Section B ran on GitHub or GitLab, create missing configured labels (`gh label create` / `glab label create`) only if the user has explicitly authorized creating those labels in the selected repository. Confirmation to keep the default label vocabulary alone does not authorize remote writes. Without that authorization, record the missing labels and leave label creation pending.
 
 Then write the docs files using the seed templates in this skill folder as a starting point:
 
