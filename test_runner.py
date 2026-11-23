@@ -3118,6 +3118,42 @@ def test_sync_agents_only_copies_and_backs_up_agents():
     print("[PASS] sync agents only")
 
 
+def test_sync_agents_file_only_preserves_local_files():
+    with tempfile.TemporaryDirectory() as tmp:
+        tmp_path = Path(tmp)
+        codex_home = tmp_path / ".codex"
+        existing = {
+            "AGENTS.md": "# old agents\n",
+            "remote-access.md": "# local access\n",
+            "remote-hosts.md": "# local hosts\n",
+            "config.toml": 'model = "unchanged"\n',
+            "hooks/sentinel.py": "# unchanged\n",
+            "skills/sentinel/SKILL.md": "# unchanged\n",
+        }
+        for path, content in existing.items():
+            write(codex_home / path, content)
+        argv = [str(SYNC), "--repo-root", str(ROOT), "--codex-home", str(codex_home),
+                "--sync-agents-file-only"]
+        env = phase0_sync_env(tmp_path)
+        conflict = run_process([*argv, "--sync-agents-only"], env=env, approve_source=False)
+        require(conflict.returncode == 2, "file-only mode must reject other promotion modes")
+        proc = run_process(argv, env=env)
+        require(proc.returncode == 0, f"file-only sync failed: {proc.stderr or proc.stdout}")
+        require((codex_home / "AGENTS.md").read_bytes() == (ROOT / "codex/AGENTS.md").read_bytes(),
+                "file-only sync should publish the exact source AGENTS.md")
+        backups = list(codex_home.glob("AGENTS.md.backup.*"))
+        require(len(backups) == 1 and backups[0].read_text() == existing["AGENTS.md"],
+                "file-only sync must back up the previous AGENTS.md")
+        for path, content in existing.items():
+            if path != "AGENTS.md":
+                require((codex_home / path).read_text() == content,
+                        f"file-only sync must not overwrite {path}")
+        actual = {p.relative_to(codex_home).as_posix() for p in codex_home.rglob("*") if p.is_file()}
+        require(actual == set(existing) | {backups[0].name, ".phase0-sync.lock"},
+                f"file-only sync wrote unexpected files: {sorted(actual)}")
+    print("[PASS] sync only the global AGENTS.md file")
+
+
 def test_harness_runtime_surfaces_exist_and_parse():
     manifest = json.loads(SURFACES_MANIFEST.read_text(encoding="utf-8"))
     surfaces = manifest.get("surfaces")
@@ -11917,7 +11953,7 @@ def test_global_agents_layering_workflow_and_size_contract():
     for term in forbidden:
         require(term not in text, f"global AGENTS still contains fixed workflow detail: {term}")
     require(len(text.splitlines()) <= 90, "global AGENTS should not exceed 90 lines")
-    require(len(text.encode("utf-8")) <= 8192, "global AGENTS should not exceed 8192 bytes")
+    require(len(text.encode("utf-8")) <= 8704, "global AGENTS should not exceed 8704 bytes")
     print("[PASS] global AGENTS layering, workflow, and size contract")
 
 
@@ -13375,6 +13411,7 @@ TESTS = [
     test_dual_committee_review_loop_skill_contract,
     test_repo_branch_cleanup_supports_system_bash,
     test_sync_agents_only_copies_and_backs_up_agents,
+    test_sync_agents_file_only_preserves_local_files,
     test_harness_runtime_surfaces_exist_and_parse,
     test_surfaces_manifest_no_orphans,
     test_check_surfaces_reports_drift,

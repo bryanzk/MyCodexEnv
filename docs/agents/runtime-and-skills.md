@@ -5,6 +5,7 @@
 - Before changing Codex runtime, skills, or global configuration, check `git status` and identify the exact repository source and runtime target.
 - Treat repository source, tests, runtime synchronization, and live runtime parity as separate states.
 - Prefer targeted synchronization. Do not use a broad mirror or `--delete` for a narrow change.
+- To publish only global rules, use `scripts/sync_codex_home.sh --repo-root <repo> --codex-home <home> --sync-agents-file-only`. It keeps the existing source and runtime checks, backs up `AGENTS.md`, and leaves local remote documents untouched.
 - For named skill updates, use `scripts/sync_codex_home.sh --repo-root <repo> --codex-home <home> --sync-skills-only <name,name,...>`. This mode runs the original source attestation, including clean source, clean tracked approvals, approved digest, and runtime source checks, then copies only those skill files. It preserves local-only files and existing file modes; it does not synchronize config, hooks, policy, workflow, or plugins.
 - Add `--shared-claude-skills-home <home>` only when the selected skills include entries in `claude/shared-skills.txt`; only that intersection is copied, without editing Claude settings or permissions. Back up and review source/runtime diffs before promotion, then verify exact file parity and loaded state. A source-identity refresh is not an independent approval: approve the concrete source change before recording its digest and committing it.
 

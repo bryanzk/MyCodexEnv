@@ -7,6 +7,7 @@ REPO_ROOT=""
 CODEX_HOME="${HOME}/.codex"
 SKIP_SUPERPOWERS_SYNC="false"
 SYNC_AGENTS_ONLY="false"
+SYNC_AGENTS_FILE_ONLY="false"
 FORCE_DOWNGRADE="false"
 BOOTSTRAP_LOADED_READBACK="false"
 OPERATOR_CHECKPOINT=""
@@ -16,9 +17,10 @@ SHARED_CLAUDE_SKILLS_HOME=""
 
 usage() {
   cat <<USAGE
-Usage: sync_codex_home.sh --repo-root <path> [--codex-home <path>] [--skip-superpowers-sync] [--sync-agents-only] [--promote-harness-guard] [--force-downgrade --operator-checkpoint <path>] [--bootstrap-loaded-readback --operator-checkpoint <path>]
+Usage: sync_codex_home.sh --repo-root <path> [--codex-home <path>] [--skip-superpowers-sync] [--sync-agents-only | --sync-agents-file-only] [--promote-harness-guard] [--force-downgrade --operator-checkpoint <path>] [--bootstrap-loaded-readback --operator-checkpoint <path>]
 
 Options:
+  --sync-agents-file-only   Sync only AGENTS.md, after the existing source and runtime checks.
   --sync-skills-only NAMES   Sync only comma-separated named skills, after the original source attestation.
   --shared-claude-skills-home PATH
                             In skills-only mode, also copy selected Claude shared skills (no settings).
@@ -53,6 +55,10 @@ while [[ $# -gt 0 ]]; do
       SHARED_CLAUDE_SKILLS_HOME="${2:-}"
       [[ -n "${SHARED_CLAUDE_SKILLS_HOME}" ]] || { echo "--shared-claude-skills-home requires a path" >&2; exit 2; }
       shift 2
+      ;;
+    --sync-agents-file-only)
+      SYNC_AGENTS_FILE_ONLY="true"
+      shift
       ;;
     --sync-agents-only)
       SYNC_AGENTS_ONLY="true"
@@ -271,6 +277,12 @@ if producer_path is not None:
         blocked("attestation_producer_dirty_or_unapproved")
 PY
 }
+
+if [[ "${SYNC_AGENTS_FILE_ONLY}" == "true" ]] &&
+   [[ "${SYNC_AGENTS_ONLY}" == "true" || -n "${SELECTED_SKILLS}" || "${PROMOTE_HARNESS_GUARD}" == "true" ]]; then
+  echo "--sync-agents-file-only cannot be combined with other promotion modes" >&2
+  exit 2
+fi
 
 preflight_source_attestation
 
@@ -1236,7 +1248,7 @@ sync_codex_remote_docs() {
   done
 }
 
-if [[ "${SYNC_AGENTS_ONLY}" == "true" ]]; then
+if [[ "${SYNC_AGENTS_ONLY}" == "true" || "${SYNC_AGENTS_FILE_ONLY}" == "true" ]]; then
   AGENTS_SOURCE="${REPO_ROOT}/codex/AGENTS.md"
   AGENTS_TARGET="${CODEX_HOME}/AGENTS.md"
   if [[ ! -f "${AGENTS_SOURCE}" ]]; then
@@ -1250,7 +1262,9 @@ if [[ "${SYNC_AGENTS_ONLY}" == "true" ]]; then
   fi
   cp "${AGENTS_SOURCE}" "${AGENTS_TARGET}"
   echo "Codex AGENTS synchronized: ${AGENTS_TARGET}"
-  sync_codex_remote_docs
+  if [[ "${SYNC_AGENTS_ONLY}" == "true" ]]; then
+    sync_codex_remote_docs
+  fi
   exit 0
 fi
 
