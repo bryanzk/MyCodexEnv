@@ -184,6 +184,10 @@ or full-sync gate, do not rerun the full suite outside the sandbox. Run only the
 required host integrations with `python3 test_runner.py --host-only`; that
 command fails if either test skips.
 
+### Update selected skills
+
+For a reviewed skill update, `scripts/sync_codex_home.sh --repo-root <repo> --codex-home <home> --sync-skills-only <name,name,...>` uses the existing source attestation and updates only those skill files. Add `--shared-claude-skills-home <home>` to copy the selected Claude shared skills without changing settings. See [Runtime and skill changes](docs/agents/runtime-and-skills.md) for approval, backup, and readback requirements.
+
 ### Check skills
 
 ```bash

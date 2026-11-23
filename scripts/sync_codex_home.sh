@@ -7,16 +7,23 @@ REPO_ROOT=""
 CODEX_HOME="${HOME}/.codex"
 SKIP_SUPERPOWERS_SYNC="false"
 SYNC_AGENTS_ONLY="false"
+SYNC_AGENTS_FILE_ONLY="false"
 FORCE_DOWNGRADE="false"
 BOOTSTRAP_LOADED_READBACK="false"
 OPERATOR_CHECKPOINT=""
 PROMOTE_HARNESS_GUARD="false"
+SELECTED_SKILLS=""
+SHARED_CLAUDE_SKILLS_HOME=""
 
 usage() {
   cat <<USAGE
-Usage: sync_codex_home.sh --repo-root <path> [--codex-home <path>] [--skip-superpowers-sync] [--sync-agents-only] [--promote-harness-guard] [--force-downgrade --operator-checkpoint <path>] [--bootstrap-loaded-readback --operator-checkpoint <path>]
+Usage: sync_codex_home.sh --repo-root <path> [--codex-home <path>] [--skip-superpowers-sync] [--sync-agents-only | --sync-agents-file-only] [--promote-harness-guard] [--force-downgrade --operator-checkpoint <path>] [--bootstrap-loaded-readback --operator-checkpoint <path>]
 
 Options:
+  --sync-agents-file-only   Sync only AGENTS.md, after the existing source and runtime checks.
+  --sync-skills-only NAMES   Sync only comma-separated named skills, after the original source attestation.
+  --shared-claude-skills-home PATH
+                            In skills-only mode, also copy selected Claude shared skills (no settings).
   --force-downgrade         Allow an ancestor source only with a same-operation operator checkpoint.
   --bootstrap-loaded-readback
                             Allow the one-time loaded-readback bootstrap with an operator checkpoint.
@@ -37,6 +44,20 @@ while [[ $# -gt 0 ]]; do
       ;;
     --skip-superpowers-sync)
       SKIP_SUPERPOWERS_SYNC="true"
+      shift
+      ;;
+    --sync-skills-only)
+      SELECTED_SKILLS="${2:-}"
+      [[ -n "${SELECTED_SKILLS}" ]] || { echo "--sync-skills-only requires names" >&2; exit 2; }
+      shift 2
+      ;;
+    --shared-claude-skills-home)
+      SHARED_CLAUDE_SKILLS_HOME="${2:-}"
+      [[ -n "${SHARED_CLAUDE_SKILLS_HOME}" ]] || { echo "--shared-claude-skills-home requires a path" >&2; exit 2; }
+      shift 2
+      ;;
+    --sync-agents-file-only)
+      SYNC_AGENTS_FILE_ONLY="true"
       shift
       ;;
     --sync-agents-only)
@@ -257,7 +278,102 @@ if producer_path is not None:
 PY
 }
 
+if [[ "${SYNC_AGENTS_FILE_ONLY}" == "true" ]] &&
+   [[ "${SYNC_AGENTS_ONLY}" == "true" || -n "${SELECTED_SKILLS}" || "${PROMOTE_HARNESS_GUARD}" == "true" ]]; then
+  echo "--sync-agents-file-only cannot be combined with other promotion modes" >&2
+  exit 2
+fi
+
 preflight_source_attestation
+
+if [[ -n "${SELECTED_SKILLS}" ]]; then
+  if [[ "${SYNC_AGENTS_ONLY}" == "true" || "${PROMOTE_HARNESS_GUARD}" == "true" || "${FORCE_DOWNGRADE}" == "true" || "${BOOTSTRAP_LOADED_READBACK}" == "true" ]]; then
+    echo "--sync-skills-only cannot be combined with other promotion modes" >&2
+    exit 2
+  fi
+  python3 - "${REPO_ROOT}" "${CODEX_HOME}" "${SELECTED_SKILLS}" "${SHARED_CLAUDE_SKILLS_HOME}" <<'PY'
+import hashlib
+import json
+import os
+from pathlib import Path
+import re
+import stat
+import sys
+import tempfile
+
+repo = Path(sys.argv[1]).resolve()
+codex_home = Path(sys.argv[2]).resolve()
+names = sys.argv[3].split(',')
+claude_home = Path(sys.argv[4]).resolve() if sys.argv[4] else None
+if len(names) != len(set(names)) or any(not re.fullmatch(r'[a-z][a-z0-9-]{0,63}', name) for name in names):
+    raise SystemExit('invalid or duplicate selected skill name')
+shared = set()
+if claude_home is not None:
+    shared = {line.strip() for line in (repo / 'claude/shared-skills.txt').read_text().splitlines()
+              if line.strip() and not line.lstrip().startswith('#')}
+operations = []
+# Validate the complete target set before creating anything.
+for name in names:
+    source = repo / 'codex/skills' / name
+    if any(parent.is_symlink() for parent in source.parents if parent != repo and repo in parent.parents):
+        raise SystemExit('symlink selected skill source ancestor: ' + name)
+    if repo not in source.resolve().parents:
+        raise SystemExit('selected skill source escapes repository: ' + name)
+    if source.is_symlink() or not source.is_dir() or not (source / 'SKILL.md').is_file():
+        raise SystemExit('invalid selected skill source: ' + name)
+    homes = [codex_home] + ([claude_home] if claude_home is not None and name in shared else [])
+    for home in homes:
+        target = home / 'skills' / name
+        if target == source or source in target.parents or target in source.parents:
+            raise SystemExit('selected skill source/destination overlap: ' + name)
+        if (home / 'skills').is_symlink() or target.is_symlink() or (target.exists() and not target.is_dir()):
+            raise SystemExit('invalid selected skill destination: ' + str(target))
+        for item in source.rglob('*'):
+            if item.is_symlink() or not (item.is_file() or item.is_dir()):
+                raise SystemExit('nonregular selected skill source: ' + str(item))
+            if item.is_dir():
+                continue
+            dest = target / item.relative_to(source)
+            if any(parent.is_symlink() for parent in [dest, *dest.parents] if parent != home and home in parent.parents):
+                raise SystemExit('symlink selected skill destination: ' + str(dest))
+            if dest.exists() and not dest.is_file():
+                raise SystemExit('nonregular selected skill destination: ' + str(dest))
+            for parent in dest.parents:
+                if parent.exists() and not parent.is_dir():
+                    raise SystemExit('nondirectory selected skill destination ancestor: ' + str(parent))
+            mode = stat.S_IMODE(dest.stat().st_mode) if dest.exists() else stat.S_IMODE(item.stat().st_mode) & 0o777
+            operations.append((item, dest, mode))
+changed = []
+for source, dest, mode in operations:
+    data = source.read_bytes()
+    if dest.is_file() and dest.read_bytes() == data:
+        continue
+    dest.parent.mkdir(parents=True, exist_ok=True)
+    descriptor, temporary = tempfile.mkstemp(prefix='.skill-sync-', dir=dest.parent)
+    try:
+        with os.fdopen(descriptor, 'wb') as handle:
+            handle.write(data)
+            handle.flush()
+            os.fsync(handle.fileno())
+        os.chmod(temporary, mode)
+        os.replace(temporary, dest)
+    finally:
+        if os.path.exists(temporary):
+            os.unlink(temporary)
+    changed.append(str(dest))
+for source, dest, _ in operations:
+    if hashlib.sha256(source.read_bytes()).digest() != hashlib.sha256(dest.read_bytes()).digest():
+        raise SystemExit('selected skill readback failed: ' + str(dest))
+print(json.dumps({'status': 'ok', 'source_attestation': 'existing_preflight', 'selected_skills': names,
+                  'files_checked': len(operations), 'changed_paths': changed}, sort_keys=True))
+PY
+  exit $?
+fi
+
+if [[ -n "${SHARED_CLAUDE_SKILLS_HOME}" ]]; then
+  echo "--shared-claude-skills-home requires --sync-skills-only" >&2
+  exit 2
+fi
 
 sync_harness_targets() {
   mkdir -p "${CODEX_HOME}/harness"
@@ -1132,7 +1248,7 @@ sync_codex_remote_docs() {
   done
 }
 
-if [[ "${SYNC_AGENTS_ONLY}" == "true" ]]; then
+if [[ "${SYNC_AGENTS_ONLY}" == "true" || "${SYNC_AGENTS_FILE_ONLY}" == "true" ]]; then
   AGENTS_SOURCE="${REPO_ROOT}/codex/AGENTS.md"
   AGENTS_TARGET="${CODEX_HOME}/AGENTS.md"
   if [[ ! -f "${AGENTS_SOURCE}" ]]; then
@@ -1146,7 +1262,9 @@ if [[ "${SYNC_AGENTS_ONLY}" == "true" ]]; then
   fi
   cp "${AGENTS_SOURCE}" "${AGENTS_TARGET}"
   echo "Codex AGENTS synchronized: ${AGENTS_TARGET}"
-  sync_codex_remote_docs
+  if [[ "${SYNC_AGENTS_ONLY}" == "true" ]]; then
+    sync_codex_remote_docs
+  fi
   exit 0
 fi
 
