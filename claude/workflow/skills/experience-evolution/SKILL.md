@@ -72,7 +72,7 @@ Save these learnings?
 
 ## Upgrade Path
 
-**Phase 1 (Current): Observe Only** — No file writes, session-end summaries
+**Phase 1 (Current): Observe Only** — No file writes, summaries at the end of a session
 **Phase 2: Write Logs** — Record to `learned/` directory, manual confirmation
 **Phase 3: Semi-auto** — Low-risk auto-save, high-risk needs confirmation
 **Phase 4: Cross-project** — Experience from project A auto-suggests in project B

@@ -29,4 +29,4 @@
 | `experience-evolution` | `~/.claude/workflow/skills/experience-evolution` | 卡顿/复盘 | 可复用经验摘要 |
 
 ## 弃用/替代说明
-- Claude 侧弃用 `rules/memory-flush.md`、`planning-with-files`、`session-end`：全局 `~/.claude/CLAUDE.md` 已覆盖计划与交接方式，热数据写回不再使用。
+- Claude 侧弃用原有的写回规则、文件规划技能和会话收尾技能：全局 `~/.claude/CLAUDE.md` 已覆盖计划与交接方式，热数据写回不再使用。

@@ -14,22 +14,13 @@
 
 | 上游文件 | Codex 落点 | 状态 | 说明 |
 |---|---|---|---|
-| `rules/behaviors.md` | `~/.codex/workflow/rules/behaviors.md` | 采用 | 统一行为与路由原则 |
+| `rules/behaviors.md` | `~/.codex/workflow/rules/behaviors.md` | 采用 | 来源标注、幻觉隔离、攻击面审查与原子提交 |
 | `rules/skill-triggers.md` | `~/.codex/workflow/rules/skill-triggers.md` | 采用+扩展 | 连接本地安全扫描脚本 |
-| `rules/memory-flush.md` | `~/.codex/workflow/rules/memory-flush.md` | 采用 | 强制会话热数据写回 |
 
 ## 技能映射（命名空间化避免冲突）
 
 | 上游技能 | Codex 技能目录 | 触发事件 | 必要证据 |
 |---|---|---|---|
-| `planning-with-files` | `~/.codex/skills/ccwf-planning-with-files` | 跨会话恢复或显式文件计划 | 验收标准；复用现有计划，或在文件规划已授权且无合适文件时新建任务计划；无文件授权时用 chat |
-| `systematic-debugging` | `~/.codex/skills/ccwf-systematic-debugging` | Bug/CI 失败 | 根因证据链 |
+| `systematic-debugging` | `~/.codex/skills/ccwf-systematic-debugging` | 原因不明的错误 | 根因证据链 |
 | `verification-before-completion` | `~/.codex/skills/ccwf-verification-before-completion` | 完成声明前 | fresh verification output |
-| `session-end` | `~/.codex/skills/ccwf-session-end` | 退出信号 | 4 类写回同步 |
-| `experience-evolution` | `~/.codex/skills/ccwf-experience-evolution` | 复盘触发 | 跨任务可复用经验 |
-
-## 写回接口
-- `~/.codex/workflow/memory/today.md`
-- `~/.codex/workflow/memory/projects.md`
-- `~/.codex/workflow/memory/goals.md`
-- `~/.codex/workflow/memory/active-tasks.json`
+| `experience-evolution` | `~/.codex/skills/ccwf-experience-evolution` | 按需调用 | 跨任务可复用经验 |

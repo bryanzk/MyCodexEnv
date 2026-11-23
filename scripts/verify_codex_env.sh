@@ -277,7 +277,7 @@ results+=("$(check codex_runtime_routine_gate_receipt_schema_matches_source 'cmp
 results+=("$(check codex_zsh_title_runtime_matches_source 'cmp -s "'"${REPO_ROOT}"'"/codex/zsh/codex-session-title.zsh "'"${CODEX_HOME}"'"/zsh/codex-session-title.zsh' )")
 results+=("$(check codex_security_scan_script '[[ -x "'"${CODEX_HOME}"'"/workflow/scripts/scan_skill_security.sh ]]')")
 
-for skill in ccwf-session-end ccwf-verification-before-completion ccwf-systematic-debugging ccwf-planning-with-files ccwf-experience-evolution; do
+for skill in ccwf-verification-before-completion ccwf-systematic-debugging ccwf-experience-evolution; do
   results+=("$(check "codex_skill_${skill}" '[[ -f "'"${CODEX_HOME}"'"/skills/'"${skill}"'/SKILL.md ]]')")
 done
 

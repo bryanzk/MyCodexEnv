@@ -1370,10 +1370,8 @@ def test_verify_skips_managed_skill_presence_behavior():
         other_checks.update(
             f"codex_skill_{name}"
             for name in [
-                "ccwf-session-end",
                 "ccwf-verification-before-completion",
                 "ccwf-systematic-debugging",
-                "ccwf-planning-with-files",
                 "ccwf-experience-evolution",
             ]
         )
