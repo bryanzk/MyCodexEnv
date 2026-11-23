@@ -15,15 +15,14 @@ Random fixes waste time and create new bugs.
 
 ```
 NO FIXES WITHOUT ROOT CAUSE INVESTIGATION FIRST
-NO INVESTIGATION WITHOUT MEMORY RECALL FIRST
 ```
 
 ## The Five Phases
 
-### Phase 0: Memory Recall (MANDATORY FIRST STEP)
+### Phase 0: Recall (First Step)
 
 1. **Extract keywords from error** (error type, component, project)
-2. **Query memory database** for related past experiences
+2. **Search Claude memory and git log** for related past fixes — `~/.claude/projects/<project>/memory/`, `git log --grep <keyword>`, `git log -S <identifier>`
 3. **Review results**:
    - Found relevant experience? → Apply directly, skip to Phase 4
    - Partial match? → Use as starting point
@@ -52,7 +51,7 @@ NO INVESTIGATION WITHOUT MEMORY RECALL FIRST
 
 ### Phase 4: Implementation
 
-1. **Create failing test case** — simplest reproduction, automated if possible
+1. **Logic code: create failing test case first** — simplest reproduction, automated if possible. Copy, style, and config fixes do not require one.
 2. **Implement single fix** — ONE change, no "while I'm here" improvements
 3. **Verify fix** — test passes, no other tests broken
 4. **If 3+ fixes failed** → STOP, question architecture, discuss before more attempts
@@ -70,8 +69,8 @@ NO INVESTIGATION WITHOUT MEMORY RECALL FIRST
 
 | Phase | Key Activities | Success Criteria |
 |-------|---------------|------------------|
-| **0. Memory Recall** | Extract keywords, query memory | Output recall summary |
+| **0. Recall** | Extract keywords, search Claude memory + git log | Related past fixes noted |
 | **1. Root Cause** | Read errors, reproduce, gather evidence | Understand WHAT and WHY |
 | **2. Pattern** | Find working examples, compare | Identify differences |
 | **3. Hypothesis** | Form theory, test minimally | Confirmed or new hypothesis |
-| **4. Implementation** | Create test, fix, verify | Bug resolved, tests pass |
+| **4. Implementation** | Failing test (logic code), fix, verify | Bug resolved, tests pass |

@@ -6,11 +6,10 @@
 
 | Event | Skill | Required Evidence | Writeback Target |
 |---|---|---|---|
-| `complex_task`（Claude） | `planning-with-files` | `task_plan.md` + acceptance criteria | `today.md` |
 | 跨会话恢复或显式文件计划（Codex） | `ccwf-planning-with-files` | 目标、验收标准、决策与下一步 | 复用现有计划，或在文件规划已授权且无合适文件时新建任务计划；无文件写入授权时用 chat |
 | `bug_or_ci_failure` | `systematic-debugging` / `ccwf-systematic-debugging` | `root_cause -> hypothesis -> verification` | `today.md` |
 | `before_completion_claim` | `verification-before-completion` / `ccwf-verification-before-completion` | `command, exit_code, key_output, timestamp` | `active-tasks.json` |
-| `exit_signal` | `session-end` / `ccwf-session-end` | 4-layer writeback result | `today/projects/goals/active-tasks` |
+| `exit_signal`（Codex） | `ccwf-session-end` | 4-layer writeback result | `today/projects/goals/active-tasks` |
 
 ## 2. Evidence Interface
 

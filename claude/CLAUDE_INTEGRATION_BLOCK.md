@@ -13,13 +13,10 @@
 ### 自动加载规则
 - `Read ~/.claude/workflow/rules/behaviors.md`
 - `Read ~/.claude/workflow/rules/skill-triggers.md`
-- `Read ~/.claude/workflow/rules/memory-flush.md`
 
-### 四条主回路
-- 计划回路：`~/.claude/workflow/skills/planning-with-files/SKILL.md`
+### 两条主回路
 - 调试回路：`~/.claude/workflow/skills/systematic-debugging/SKILL.md`
 - 交付回路：`~/.claude/workflow/skills/verification-before-completion/SKILL.md`
-- 记忆回路：`~/.claude/workflow/skills/session-end/SKILL.md`
 
 ### Skill 安全扫描（引入第三方 skill/MCP 前）
 - `~/.claude/workflow/scripts/scan_skill_security.sh <path>`

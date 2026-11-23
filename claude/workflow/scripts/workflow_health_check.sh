@@ -48,11 +48,8 @@ check_file() {
 
 check_file "$REPO_ROOT/rules/behaviors.md"
 check_file "$REPO_ROOT/rules/skill-triggers.md"
-check_file "$REPO_ROOT/rules/memory-flush.md"
-check_file "$REPO_ROOT/memory/today.md"
-check_file "$REPO_ROOT/memory/active-tasks.json"
 
-if rg -n "verification-before-completion|systematic-debugging|session-end" "$REPO_ROOT/rules/skill-triggers.md" >/dev/null 2>&1; then
+if rg -n "verification-before-completion|systematic-debugging" "$REPO_ROOT/rules/skill-triggers.md" >/dev/null 2>&1; then
   echo "PASS:trigger_core_skills_present"
 else
   echo "FAIL:trigger_core_skills_present"
