@@ -5453,6 +5453,88 @@ def _run_harness_guard(payload, env):
     return json.loads(out)
 
 
+def test_harness_guard_invocation_receipt():
+    with tempfile.TemporaryDirectory() as tmp:
+        tmp_path = Path(tmp)
+        env = _harness_guard_test_env(tmp_path)
+        codex_home = Path(env["CODEX_HOME"])
+        repo = tmp_path / "workspace"
+        repo.mkdir()
+        receipt_path = codex_home / "harness" / "guard-receipt.json"
+        evidence_dir = codex_home / "harness" / "evidence"
+        sentinel = "RECEIPT-MUST-NOT-STORE-THIS-VALUE"
+
+        def run(payload, guard_env=env):
+            payload.setdefault("cwd", str(repo))
+            return _run_harness_guard(payload, guard_env)
+
+        def receipt():
+            return json.loads(receipt_path.read_text(encoding="utf-8"))
+
+        allowed = run({"tool_name": "write", "tool_input": {"path": str(repo / "note.txt"), "content": sentinel}})
+        require(allowed == {}, f"workspace write must stay allowed: {allowed}")
+        first = receipt()
+        require(first["invocations"] == 1 and first["blocks"] == 0 and first["unrecognized_mutations"] == 0,
+                f"allow must count one invocation only: {first}")
+        require(first["last_decision"] == "allow" and first["last_reason_code"] == "",
+                f"allow receipt must not carry a reason: {first}")
+        require(first["guard_sha256"] == hashlib.sha256(HARNESS_GUARD.read_bytes()).hexdigest(),
+                "receipt must carry the digest of the Guard file that actually ran")
+        require(receipt_path.stat().st_mode & 0o777 == 0o600, "guard receipt must be owner-only")
+        require(not evidence_dir.exists() or not list(evidence_dir.glob("*.jsonl")),
+                "an allow decision must not append decision evidence")
+
+        patch = "\n".join(["*** Begin Patch", f"*** Add File: {codex_home / 'hooks' / 'probe.txt'}", "+" + sentinel, "*** End Patch"])
+        blocked = run({"tool_name": "apply_patch", "session_id": "session-1", "tool_input": {"patch": patch}})
+        require(blocked == {"decision": "block", "reason": "[harness] active_control_plane_mutation"},
+                f"control-plane patch must stay blocked with the legacy wire: {blocked}")
+        second = receipt()
+        require(second["invocations"] == 2 and second["blocks"] == 1,
+                f"block must increment invocations and blocks: {second}")
+        require(second["last_decision"] == "block" and second["last_reason_code"] == "active_control_plane_mutation",
+                f"block receipt must name the reason code: {second}")
+        records = [json.loads(line) for path in sorted(evidence_dir.glob("*.jsonl"))
+                   for line in path.read_text(encoding="utf-8").splitlines()]
+        require(len(records) == 1, f"one block must append exactly one decision record: {records}")
+        schema = json.loads((ROOT / "codex" / "runtime" / "evidence" / "decision-evidence.schema.json").read_text(encoding="utf-8"))
+        record = records[0]
+        require(set(schema["required"]) <= set(record), f"decision record missing required fields: {record}")
+        require(set(record) <= set(schema["properties"]), f"decision record carries fields outside the schema: {record}")
+        for key in ("event_type", "phase", "approval_state", "failure_class"):
+            require(record[key] in schema["properties"][key]["enum"], f"decision record {key} outside schema enum: {record}")
+        require(record["event_type"] == "guardrail_decision" and record["message"] == "active_control_plane_mutation"
+                and record["session_id"] == "session-1", f"decision record must describe the block: {record}")
+
+        unknown = run({"tool_name": "apply_patch", "tool_input": {"patch": 123, "novel_key": sentinel}})
+        require(unknown == {}, f"unrecognized mutation shape must keep deferring to native policy: {unknown}")
+        third = receipt()
+        require(third["invocations"] == 3 and third["blocks"] == 1 and third["unrecognized_mutations"] == 1,
+                f"unrecognized mutation shape must be counted: {third}")
+        require(third["last_unrecognized"]["tool_input_keys"] == ["novel_key", "patch"]
+                and third["last_unrecognized"]["payload_keys"] == ["cwd", "tool_input", "tool_name"],
+                f"unrecognized shape must record key names: {third}")
+
+        run({"tool_name": "bash", "tool_input": {"command": "echo " + sentinel}})
+        fourth = receipt()
+        require(fourth["invocations"] == 4 and fourth["unrecognized_mutations"] == 1,
+                f"non-mutation tools must not count as unrecognized mutations: {fourth}")
+        stored = receipt_path.read_text(encoding="utf-8") + "".join(
+            path.read_text(encoding="utf-8") for path in evidence_dir.glob("*.jsonl"))
+        require(sentinel not in stored, "guard receipt and decision evidence must never store command, patch, or content values")
+
+        broken_home = tmp_path / "broken" / ".codex"
+        broken_home.mkdir(parents=True)
+        (broken_home / "harness").write_text("not a directory", encoding="utf-8")
+        broken_env = dict(env, CODEX_HOME=str(broken_home))
+        broken_patch = patch.replace(str(codex_home), str(broken_home))
+        require(run({"tool_name": "apply_patch", "tool_input": {"patch": broken_patch}}, broken_env)
+                == {"decision": "block", "reason": "[harness] active_control_plane_mutation"},
+                "an unwritable receipt location must not change a block decision")
+        require(run({"tool_name": "write", "tool_input": {"path": str(repo / "again.txt"), "content": "x"}}, broken_env) == {},
+                "an unwritable receipt location must not change an allow decision")
+    print("[PASS] harness guard invocation receipt")
+
+
 def test_harness_guard_policy_decisions():
     with tempfile.TemporaryDirectory() as tmp:
         tmp_path = Path(tmp)
@@ -13480,6 +13562,7 @@ TESTS = [
     test_sync_local_main_fast_forwards_when_clean_and_behind_only,
     test_sync_local_main_skips_dirty_worktree,
     test_harness_guard_policy_decisions,
+    test_harness_guard_invocation_receipt,
     test_live_runtime_harness_guard_smoke,
     test_harness_observer_and_bearing_do_not_import_guard,
     test_task_state_non_git_workspace_and_host_wrappers,

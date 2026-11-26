@@ -3,6 +3,7 @@
 import json
 import os
 import sys
+import time
 
 
 READ_TOOLS = {"read", "read_file", "list_dir", "list_directory"}
@@ -13,6 +14,11 @@ SHELL_STARTUP_FILES = {
     ".zshrc", ".zshenv", ".zprofile", ".zlogin", ".bashrc", ".bash_profile", ".bash_login", ".profile"
 }
 SYSTEM_SHELL_STARTUP_FILES = {"zshrc", "zshenv", "zprofile", "zlogin", "bashrc", "bash.bashrc", "profile"}
+RECEIPT_SCHEMA_VERSION = 1
+RECEIPT_TEXT_LIMIT = 200
+RECEIPT_KEY_LIMIT = 16
+RECEIPT_DIRECTORY_MODE = 0o700
+RECEIPT_FILE_MODE = 0o600
 _HOME_INPUT = os.path.expanduser("~")
 _HOME = os.path.realpath(_HOME_INPUT)
 _CODEX_HOME_INPUT = os.path.expanduser(os.environ.get("CODEX_HOME", os.path.join(_HOME_INPUT, ".codex")))
@@ -346,9 +352,162 @@ def decision(payload: dict[str, object]) -> dict[str, str]:
     return {}
 
 
+def _receipt_text(value):
+    return value[:RECEIPT_TEXT_LIMIT] if isinstance(value, str) else ""
+
+
+def _receipt_keys(value):
+    if not isinstance(value, dict):
+        return []
+    return sorted(_receipt_text(key) for key in value if isinstance(key, str))[:RECEIPT_KEY_LIMIT]
+
+
+def _reason_code(result):
+    reason = result.get("reason", "")
+    prefix = "[harness] "
+    return reason[len(prefix):] if isinstance(reason, str) and reason.startswith(prefix) else ""
+
+
+def _now_iso():
+    local = time.localtime()
+    offset = time.strftime("%z", local) or "+0000"
+    return time.strftime("%Y-%m-%dT%H:%M:%S", local) + offset[:3] + ":" + offset[3:]
+
+
+def _atomic_write_json(target_dir, name, data):
+    temp_name = os.path.join(target_dir, ".%s.%d" % (name, os.getpid()))
+    try:
+        descriptor = os.open(temp_name, os.O_WRONLY | os.O_CREAT | os.O_TRUNC, RECEIPT_FILE_MODE)
+        os.fchmod(descriptor, RECEIPT_FILE_MODE)
+        with os.fdopen(descriptor, "w", encoding="utf-8") as handle:
+            json.dump(data, handle, ensure_ascii=False, sort_keys=True)
+            handle.write("\n")
+        os.replace(temp_name, os.path.join(target_dir, name))
+    finally:
+        try:
+            os.unlink(temp_name)
+        except FileNotFoundError:
+            pass
+
+
+def _guard_identity(previous):
+    """Return (path, [mtime_ns, size], sha256) for the Guard file that is running.
+
+    The digest is recomputed only when path, mtime, or size differ from the
+    previous receipt, so the hash module stays off the per-call path.
+    """
+    path = os.path.abspath(__file__)
+    info = os.stat(path)
+    stamp = [info.st_mtime_ns, info.st_size]
+    cached = previous.get("guard_sha256")
+    if (
+        previous.get("guard_path") == path
+        and previous.get("guard_stat") == stamp
+        and isinstance(cached, str)
+        and len(cached) == 64
+    ):
+        return path, stamp, cached
+    import hashlib
+
+    with open(path, "rb") as handle:
+        return path, stamp, hashlib.sha256(handle.read()).hexdigest()
+
+
+def _append_block_evidence(payload, timestamp, reason_code):
+    target_dir = os.path.expanduser(
+        os.environ.get("CODEX_HARNESS_EVIDENCE_DIR", os.path.join(_CODEX_HOME_INPUT, "harness", "evidence"))
+    )
+    os.makedirs(target_dir, mode=RECEIPT_DIRECTORY_MODE, exist_ok=True)
+    event = {
+        "schema_version": 1,
+        "timestamp": timestamp,
+        "event_type": "guardrail_decision",
+        "evidence_kind": "decision",
+        "cwd": _receipt_text(_payload_cwd(payload) or os.getcwd()),
+        "phase": "unknown",
+        "tool_name": _receipt_text(tool_name(payload)) or "unknown",
+        "approval_state": "blocked",
+        "failure_class": "boundary_breach",
+        "message": reason_code,
+    }
+    session_id = payload.get("session_id") or os.environ.get("CODEX_SESSION_ID")
+    if isinstance(session_id, str) and session_id:
+        event["session_id"] = _receipt_text(session_id)
+    target = os.path.join(target_dir, timestamp[:10] + ".jsonl")
+    descriptor = os.open(target, os.O_WRONLY | os.O_CREAT | os.O_APPEND, RECEIPT_FILE_MODE)
+    with os.fdopen(descriptor, "a", encoding="utf-8") as handle:
+        handle.write(json.dumps(event, ensure_ascii=False, sort_keys=True) + "\n")
+
+
+def record_invocation(payload, result):
+    """Leave a host-independent trace that the Guard ran.
+
+    Records names and counters only: never command, patch, or file content.
+    Counters are best-effort under concurrent hooks; last_invoked_at and
+    guard_sha256 are the authoritative liveness fields.
+    """
+    timestamp = _now_iso()
+    target_dir = os.path.join(_CODEX_HOME_INPUT, "harness")
+    os.makedirs(target_dir, mode=RECEIPT_DIRECTORY_MODE, exist_ok=True)
+    name = "guard-receipt.json"
+    try:
+        with open(os.path.join(target_dir, name), encoding="utf-8") as handle:
+            previous = json.load(handle)
+    except (OSError, ValueError):
+        previous = {}
+    if not isinstance(previous, dict):
+        previous = {}
+
+    def counter(key):
+        value = previous.get(key)
+        return value if isinstance(value, int) and not isinstance(value, bool) and value >= 0 else 0
+
+    blocked = result.get("decision") == "block"
+    reason_code = _reason_code(result) if blocked else ""
+    tool = tool_name(payload)
+    unrecognized = (not blocked) and tool in MUTATION_TOOLS and structured_action(payload) is None
+    guard_path, guard_stat, guard_sha256 = _guard_identity(previous)
+    receipt = {
+        "schema_version": RECEIPT_SCHEMA_VERSION,
+        "guard_path": guard_path,
+        "guard_stat": guard_stat,
+        "guard_sha256": guard_sha256,
+        "codex_home": _CODEX_HOME_INPUT,
+        "last_invoked_at": timestamp,
+        "last_tool_name": _receipt_text(tool),
+        "last_decision": "block" if blocked else "allow",
+        "last_reason_code": reason_code,
+        "invocations": counter("invocations") + 1,
+        "blocks": counter("blocks") + (1 if blocked else 0),
+        "unrecognized_mutations": counter("unrecognized_mutations") + (1 if unrecognized else 0),
+        "last_unrecognized": previous.get("last_unrecognized") if isinstance(previous.get("last_unrecognized"), dict) else None,
+    }
+    if unrecognized:
+        raw_input = raw_tool_input(payload)
+        receipt["last_unrecognized"] = {
+            "at": timestamp,
+            "tool_name": _receipt_text(tool),
+            "payload_keys": _receipt_keys(payload),
+            "tool_input_type": type(raw_input).__name__,
+            "tool_input_keys": _receipt_keys(raw_input),
+        }
+    _atomic_write_json(target_dir, name, receipt)
+    if blocked:
+        _append_block_evidence(payload, timestamp, reason_code)
+
+
 def main() -> int:
-    json.dump(decision(load_payload()), sys.stdout, ensure_ascii=False)
+    payload = load_payload()
+    result = decision(payload)
+    json.dump(result, sys.stdout, ensure_ascii=False)
     sys.stdout.write("\n")
+    sys.stdout.flush()
+    try:
+        record_invocation(payload, result)
+    except Exception:
+        # The receipt is evidence only: a failed write must never change or
+        # delay the decision already delivered to the host.
+        pass
     return 0
 
 
