@@ -35,3 +35,4 @@ sha256:d58aebb3cbf68c430afdf733db2dcea5ccf5595a0e83c86af981397c069936ae  user-ap
 sha256:b30ba364621d6abc4870ce778bfc87faf2d6078ae085e1cca5efb7eb613e9cc6  Approved guarded Matt candidate b30ba364; preserve custom to-spec/to-tickets and unrelated runtime drift
 sha256:b7976031b64c495ca8cc687ded521d6da2c49fbace330926bd3e15a3578a9b57  Approve global ste reporting instruction
 sha256:cdf6446d4db5491b1eebd0870461288810d79a934fa807739a48960e7a25ee2f  Approve chrome-devtools-browser skill
+sha256:b4213ea49aafcd709d29be122df4b2446a6aaaae23a0f107f025c628b167f44f  Approve 377fcc1: Guard future-import fix and invocation receipt; also covers 1b637d8 ccwf trim; guard-only promotion authorized 2026-11-26
