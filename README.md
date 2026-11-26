@@ -91,7 +91,7 @@ MyCodexEnv turns those questions into a repeatable loop:
 | --- | --- | --- |
 | Codex rules | `codex/AGENTS.md` | Local Codex rules |
 | Codex config | `codex/config.template.toml` | Codex runtime configuration template |
-| Hooks | `codex/hooks.json`, `codex/hooks/` | Session, prompt, policy, and evidence hooks |
+| Hooks | `codex/config.template.toml` (`[[hooks.*]]`), `codex/hooks/` | Session, prompt, policy, and evidence hooks |
 | Runtime policy | `codex/runtime/` | Tool policy, schemas, and CLI resolver |
 | Skills | `codex/skills/` | Local Codex skills |
 | Codex workflow | `codex/workflow/` | Local Codex workflow |

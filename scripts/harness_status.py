@@ -28,8 +28,11 @@ def main(argv: Sequence[str] | None = None) -> int:
     modes.add_argument("--evidence", action="store_true", help="Summarize local harness evidence.")
     raw = list(sys.argv[1:] if argv is None else argv)
     if not raw or raw[0] != "status":
+        # Lets argparse print help or its own error. If the arguments still
+        # parse, "status" was given after a flag: refuse rather than exit 0
+        # having printed nothing.
         parser.parse_args(raw)
-        return 0
+        parser.error('"status" must be the first argument, e.g. harness_status.py status --runtime')
 
     forwarded = raw[1:]
     runtime_count = forwarded.count("--runtime")

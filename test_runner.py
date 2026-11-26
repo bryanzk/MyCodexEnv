@@ -183,6 +183,25 @@ class SkipTest(Exception):
     pass
 
 
+CONFIG_TEMPLATE = ROOT / "codex" / "config.template.toml"
+HOOK_REGISTRATION = ROOT / "scripts" / "hook_registration.py"
+MANAGED_HOOK_TABLES_FIXTURE = (
+    "\n[[hooks.SessionStart]]\nmatcher = \"startup\"\n[[hooks.SessionStart.hooks]]\ntype = \"command\"\n"
+    "command = \"/usr/bin/python3 ~/.codex/hooks/session_bearing.py\"\n"
+    "\n[[hooks.PreToolUse]]\nmatcher = \"*\"\n[[hooks.PreToolUse.hooks]]\ntype = \"command\"\n"
+    "command = \"/usr/bin/python3 ~/.codex/hooks/harness_guard.py\"\n"
+    "\n[[hooks.PostToolUse]]\nmatcher = \"*\"\n[[hooks.PostToolUse.hooks]]\ntype = \"command\"\n"
+    "command = \"/usr/bin/python3 ~/.codex/hooks/harness_observer.py\"\n"
+)
+
+
+def load_source_hooks():
+    """DHF hook registration from its single source, in the legacy hooks.json shape."""
+    import tomllib
+
+    return {"hooks": tomllib.loads(CONFIG_TEMPLATE.read_text(encoding="utf-8")).get("hooks", {})}
+
+
 def require_tool_or_skip(tool: str) -> str:
     code, out, err = run(["bash", "-lc", f"command -v {tool}"])
     if code != 0:
@@ -2539,6 +2558,9 @@ def test_sync_preserves_runtime_plugin_state():
             f'[[skills.config]]\npath = {json.dumps(local_skill)}\nenabled = false\n\n'
             f'[[skills.config]]\npath = {json.dumps(other_skill)}\nenabled = true\n',
         )
+        foreign_hooks = json.dumps({"hooks": {"PreToolUse": [{"_foreign": True, "hooks": [
+            {"type": "command", "command": "/Applications/Foreign.app/hook.sh processing"}]}]}})
+        write(codex_home / "hooks.json", foreign_hooks)
 
         code, out, err = run(
             [
@@ -2551,6 +2573,14 @@ def test_sync_preserves_runtime_plugin_state():
             ]
         )
         require(code == 0, f"sync failed: {err or out}")
+        require((codex_home / "hooks.json").read_text(encoding="utf-8") == foreign_hooks,
+                "sync must leave another tool's hooks.json byte-identical")
+        require(not list(codex_home.glob("hooks.json.backup.*")),
+                "sync must not back up or rewrite hooks.json")
+        synced_hooks = tomllib.loads((codex_home / "config.toml").read_text(encoding="utf-8"))["hooks"]
+        require(synced_hooks["PreToolUse"][0]["hooks"][0]["command"] == "/usr/bin/python3 ~/.codex/hooks/harness_guard.py"
+                and synced_hooks == load_source_hooks()["hooks"] | {"state": synced_hooks.get("state", {})},
+                "sync must render the template's hook registration into config.toml")
 
         rendered = (codex_home / "config.toml").read_text(encoding="utf-8")
         for expected in [
@@ -3172,7 +3202,7 @@ def test_harness_runtime_surfaces_exist_and_parse():
     json.loads((ROOT / "codex" / "runtime" / "evidence" / "decision-evidence.schema.json").read_text(encoding="utf-8"))
     json.loads((ROOT / "codex" / "runtime" / "evidence" / "routine-gate-receipt.schema.json").read_text(encoding="utf-8"))
 
-    hooks = json.loads((ROOT / "codex" / "hooks.json").read_text(encoding="utf-8"))
+    hooks = load_source_hooks()
     require("UserPromptSubmit" in hooks["hooks"], "hooks config should include UserPromptSubmit")
     require("PreToolUse" in hooks["hooks"], "hooks config should include PreToolUse")
     require("PostToolUse" in hooks["hooks"], "hooks config should include PostToolUse")
@@ -3731,8 +3761,101 @@ def _fixture_tree_fingerprint(root):
     }
 
 
+def test_hook_registration_single_source():
+    """DHF hooks are registered in config.toml only; hooks.json belongs to other tools."""
+    guard = "/usr/bin/python3 ~/.codex/hooks/harness_guard.py"
+    require(not (ROOT / "codex" / "hooks.json").exists(),
+            "codex/hooks.json was retired; register hooks in codex/config.template.toml")
+    source = load_source_hooks()["hooks"]
+    flat = {event: [hook["command"] for group in groups for hook in group["hooks"]] for event, groups in source.items()}
+    require(flat == {
+        "SessionStart": ["/usr/bin/python3 ~/.codex/hooks/session_start_require_naming.py",
+                         "/usr/bin/python3 ~/.codex/hooks/session_bearing.py"],
+        "UserPromptSubmit": ["/usr/bin/python3 ~/.codex/hooks/compaction_probe.py",
+                             "/usr/bin/python3 ~/.codex/hooks/dhf_preprompt.py"],
+        "PreToolUse": [guard],
+        "PostToolUse": ["/usr/bin/python3 ~/.codex/hooks/harness_observer.py"],
+    }, f"template hook registration changed: {flat}")
+    sync_text = SYNC.read_text(encoding="utf-8")
+    verify_text = (ROOT / "scripts" / "verify_codex_env.sh").read_text(encoding="utf-8")
+    require("codex/hooks.json" not in sync_text and "codex/hooks.json" not in verify_text,
+            "sync and verify must not reference the retired codex/hooks.json")
+    code, out, err = run([sys.executable, str(HOOK_REGISTRATION), "source", "--template", str(CONFIG_TEMPLATE)])
+    require(code == 0, f"template must register every required event: {err or out}")
+
+    with tempfile.TemporaryDirectory() as tmp:
+        tmp_path = Path(tmp)
+        home = tmp_path / ".codex"
+        runtime_dir = home / "runtime"
+        runtime_dir.mkdir(parents=True)
+        write(runtime_dir / "tool-policy.json", (ROOT / "codex" / "runtime" / "tool-policy.json").read_text(encoding="utf-8"))
+        for name in ("evidence.schema.json", "evidence/decision-evidence.schema.json", "evidence/routine-gate-receipt.schema.json"):
+            write(runtime_dir / name, (ROOT / "codex" / "runtime" / name).read_text(encoding="utf-8"))
+        foreign = json.dumps({"hooks": {"PreToolUse": [{"hooks": [{"type": "command", "command": "/Applications/Foreign.app/hook.sh"}]}]}})
+        base = 'sandbox_mode = "workspace-write"\n[features]\nhooks = true\n'
+
+        def probe():
+            code, out, err = run([sys.executable, str(HARNESS_STATUS), "status", "--runtime", "--codex-home", str(home), "--json"])
+            require(code == 0, f"runtime status failed: {err or out}")
+            return json.loads(out)
+
+        write(home / "config.toml", base)
+        write(home / "hooks.json", foreign)
+        only_foreign = probe()
+        require(only_foreign["hooks"]["pre_tool_use"] is False and only_foreign["hooks"]["enabled"] is False,
+                f"another tool's PreToolUse hook in hooks.json must not be reported as the DHF Guard: {only_foreign['hooks']}")
+        require(only_foreign["guard_receipt"]["present"] is False, "missing guard receipt must be reported as absent")
+
+        template_hooks = CONFIG_TEMPLATE.read_text(encoding="utf-8")
+        template_hooks = template_hooks[template_hooks.index("[[hooks.SessionStart]]"):]
+        state = '\n[hooks.state."' + str(home / "config.toml") + ':user_prompt_submit:0:1"]\nenabled = false\n'
+        write(home / "config.toml", base + "\n" + template_hooks + state)
+        registered = probe()
+        require(registered["hooks"]["pre_tool_use"] is True and registered["hooks"]["post_tool_use"] is True
+                and registered["hooks"]["session_start"] is True and registered["hooks"]["enabled"] is True,
+                f"config.toml registration must be reported: {registered['hooks']}")
+        require(registered["hooks"]["registered"] == flat, "runtime status must list the managed commands by event")
+        require(registered["hooks"]["disabled"] == ["/usr/bin/python3 ~/.codex/hooks/dhf_preprompt.py"],
+                f"a hook disabled in hooks.state must be reported: {registered['hooks']['disabled']}")
+        require(registered["hooks"]["hooks_json_managed_commands"] == [],
+                "a foreign hooks.json carries no managed commands")
+        code, out, err = run([sys.executable, str(HOOK_REGISTRATION), "compare",
+                              "--template", str(CONFIG_TEMPLATE), "--config", str(home / "config.toml")])
+        require(code == 0, f"runtime registration equal to the template must compare clean: {err or out}")
+        code, out, err = run([sys.executable, str(HOOK_REGISTRATION), "no-managed", "--hooks-json", str(home / "hooks.json")])
+        require(code == 0, f"a foreign hooks.json must pass the no-managed check: {err or out}")
+
+        write(home / "config.toml", base + "\n" + template_hooks.replace("harness_guard.py", "harness_guard_missing.py"))
+        code, out, err = run([sys.executable, str(HOOK_REGISTRATION), "compare",
+                              "--template", str(CONFIG_TEMPLATE), "--config", str(home / "config.toml")])
+        require(code == 1, "a runtime registration that differs from the template must fail the comparison")
+        write(home / "hooks.json", json.dumps({"hooks": {"PreToolUse": [{"hooks": [{"type": "command", "command": guard}]}]}}))
+        code, out, err = run([sys.executable, str(HOOK_REGISTRATION), "no-managed", "--hooks-json", str(home / "hooks.json")])
+        require(code == 1 and "harness_guard.py" in err,
+                "a managed hook left in hooks.json would run twice and must fail the check")
+        require(probe()["hooks"]["hooks_json_managed_commands"] == [guard],
+                "runtime status must surface managed commands left in hooks.json")
+
+        write(home / "hooks" / "harness_guard.py", "guard\n")
+        digest = hashlib.sha256(b"guard\n").hexdigest()
+        write(home / "harness" / "guard-receipt.json", json.dumps({
+            "guard_sha256": digest, "last_invoked_at": "2026-11-26T12:12:11-05:00", "last_decision": "block",
+            "invocations": 12, "blocks": 1, "unrecognized_mutations": 0}))
+        receipt = probe()["guard_receipt"]
+        require(receipt["present"] is True and receipt["invocations"] == 12 and receipt["blocks"] == 1
+                and receipt["matches_installed_guard"] is True, f"guard receipt must be summarized: {receipt}")
+        write(home / "hooks" / "harness_guard.py", "changed\n")
+        require(probe()["guard_receipt"]["matches_installed_guard"] is False,
+                "a receipt written by a different Guard file must be reported as not matching")
+
+    code, out, err = run([sys.executable, str(HARNESS_STATUS), "--runtime", "status"])
+    require(code == 2 and "must be the first argument" in err and out == "",
+            f"misordered status arguments must fail loudly, not exit 0 silently: code={code} err={err!r}")
+    print("[PASS] hook registration single source")
+
+
 def test_dhf_dispatcher_global_registration_and_hook_order():
-    hooks = json.loads((ROOT / "codex" / "hooks.json").read_text(encoding="utf-8"))
+    hooks = load_source_hooks()
     prompt_hooks = hooks["hooks"]["UserPromptSubmit"][0]["hooks"]
     commands = [hook.get("command", "") for hook in prompt_hooks]
     compaction_command = "/usr/bin/python3 ~/.codex/hooks/compaction_probe.py"
@@ -5461,7 +5584,7 @@ def test_codex_hooks_run_on_registered_interpreter():
     non-zero on every call, and the host treats that as allow.
     """
     floor = (3, 9)
-    hooks_config = json.loads((ROOT / "codex" / "hooks.json").read_text(encoding="utf-8"))
+    hooks_config = load_source_hooks()
     commands = [hook["command"] for groups in hooks_config["hooks"].values()
                 for group in groups for hook in group["hooks"]]
     interpreters = sorted({command.split()[0] for command in commands})
@@ -9366,7 +9489,7 @@ def test_compaction_probe_session_resolution():
         )
         require("probe_inconclusive" in evidence_text, "inconclusive resolution should leave routine evidence")
 
-        hooks = json.loads((ROOT / "codex" / "hooks.json").read_text(encoding="utf-8"))
+        hooks = load_source_hooks()
         commands = [entry["command"] for entry in hooks["hooks"]["UserPromptSubmit"][0]["hooks"]]
         require("/usr/bin/python3 ~/.codex/hooks/compaction_probe.py" in commands,
                 "UserPromptSubmit source chain should register the compaction probe")
@@ -9511,7 +9634,7 @@ def test_context_meter_persistence():
 
 
 def test_session_bearing_hook():
-    hooks = json.loads((ROOT / "codex" / "hooks.json").read_text(encoding="utf-8"))
+    hooks = load_source_hooks()
     session_commands = [
         hook["command"]
         for group in hooks["hooks"]["SessionStart"]
@@ -10026,8 +10149,7 @@ def test_harness_status_compatibility():
             "- next_safe_task: verify unified status\n"
             "- latest_verification: pending\n",
         )
-        write(codex_home / "config.toml", 'sandbox_mode = "workspace-write"\napproval_policy = "never"\n[features]\nhooks = true\n')
-        write(codex_home / "hooks.json", json.dumps({"hooks": {"SessionStart": [], "PreToolUse": [], "PostToolUse": []}}))
+        write(codex_home / "config.toml", 'sandbox_mode = "workspace-write"\napproval_policy = "never"\n[features]\nhooks = true\n' + MANAGED_HOOK_TABLES_FIXTURE)
         write(runtime_dir / "tool-policy.json", (ROOT / "codex" / "runtime" / "tool-policy.json").read_text(encoding="utf-8"))
         write(runtime_dir / "evidence.schema.json", (ROOT / "codex" / "runtime" / "evidence.schema.json").read_text(encoding="utf-8"))
         write(runtime_dir / "evidence" / "decision-evidence.schema.json", (ROOT / "codex" / "runtime" / "evidence" / "decision-evidence.schema.json").read_text(encoding="utf-8"))
@@ -10097,11 +10219,7 @@ def test_harness_env_probe():
             'sandbox_mode = "workspace-write"\n'
             'approval_policy = "on-request"\n\n'
             "[features]\n"
-            "hooks = true\n",
-        )
-        write(
-            codex_home / "hooks.json",
-            json.dumps({"hooks": {"SessionStart": [], "PreToolUse": [], "PostToolUse": []}}),
+            "hooks = true\n" + MANAGED_HOOK_TABLES_FIXTURE,
         )
         write(runtime_dir / "tool-policy.json", (ROOT / "codex" / "runtime" / "tool-policy.json").read_text(encoding="utf-8"))
         write_runtime_schemas(runtime_dir)
@@ -10119,8 +10237,7 @@ def test_harness_env_probe():
         no_sandbox_home = tmp_path / ".codex-no-sandbox"
         no_sandbox_runtime = no_sandbox_home / "runtime"
         no_sandbox_runtime.mkdir(parents=True)
-        write(no_sandbox_home / "config.toml", 'model = "gpt-5.4"\n[features]\nhooks = true\n')
-        write(no_sandbox_home / "hooks.json", json.dumps({"hooks": {"PreToolUse": [], "PostToolUse": []}}))
+        write(no_sandbox_home / "config.toml", 'model = "gpt-5.4"\n[features]\nhooks = true\n' + MANAGED_HOOK_TABLES_FIXTURE)
         write(no_sandbox_runtime / "tool-policy.json", (ROOT / "codex" / "runtime" / "tool-policy.json").read_text(encoding="utf-8"))
         write_runtime_schemas(no_sandbox_runtime)
         code, out, err = run([sys.executable, str(HARNESS_ENV_PROBE), "--codex-home", str(no_sandbox_home), "--json"])
@@ -10131,7 +10248,6 @@ def test_harness_env_probe():
 
         missing_runtime_home = tmp_path / ".codex-missing-runtime"
         write(missing_runtime_home / "config.toml", 'sandbox_mode = "workspace-write"\napproval_policy = "on-request"\n')
-        write(missing_runtime_home / "hooks.json", json.dumps({"hooks": {}}))
         write(missing_runtime_home / "runtime" / "tool-policy.json", "{}")
         code, out, err = run([sys.executable, str(HARNESS_ENV_PROBE), "--codex-home", str(missing_runtime_home), "--json"])
         require(code != 0 and "evidence.schema.json" in err, "missing runtime file should fail")
@@ -13587,6 +13703,7 @@ TESTS = [
     test_ci_workflow_runs_green_gate,
     test_skill_governance_audit_cli,
     test_skill_governance_freeze_review_policy_doc,
+    test_hook_registration_single_source,
     test_dhf_dispatcher_global_registration_and_hook_order,
     test_dhf_dispatcher_malformed_payloads_continue_only,
     test_dhf_dispatcher_runtime_errors_fail_open,

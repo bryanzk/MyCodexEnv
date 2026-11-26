@@ -1461,14 +1461,8 @@ fi
 
 sync_codex_remote_docs
 
-if [[ -f "${REPO_ROOT}/codex/hooks.json" ]]; then
-  if [[ -f "${CODEX_HOME}/hooks.json" ]]; then
-    backup="${CODEX_HOME}/hooks.json.backup.$(date +%Y%m%d%H%M%S)"
-    cp "${CODEX_HOME}/hooks.json" "${backup}"
-    echo "Backed up existing hooks config to ${backup}"
-  fi
-  cp "${REPO_ROOT}/codex/hooks.json" "${CODEX_HOME}/hooks.json"
-fi
+# Hook registration is rendered into config.toml from codex/config.template.toml.
+# ${CODEX_HOME}/hooks.json belongs to other tools and is never written here.
 
 if [[ -d "${REPO_ROOT}/codex/hooks" ]]; then
   mkdir -p "${CODEX_HOME}/hooks"
