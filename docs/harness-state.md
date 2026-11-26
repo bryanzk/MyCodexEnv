@@ -5,7 +5,7 @@ Stable rules belong in `AGENTS.md`, `README.md`, `docs/repo-index.md`, or
 `docs/HARNESS_RUNTIME.md`; session facts and phase transitions are appended here.
 
 ## Current Snapshot
-- phase: handoff
+- phase: ship
 - source_of_truth:
   - `AGENTS.md`
   - `docs/repo-index.md`
@@ -14,19 +14,19 @@ Stable rules belong in `AGENTS.md`, `README.md`, `docs/repo-index.md`, or
   - `codex/skills/delivery-harness-framework/SKILL.md`
 - blocked_sources: none
 - unsafe_inputs: none
-- next_safe_task: P1-1：拆 DHF SKILL.md 为 L2/L3；改动前 harness_refresh_identity.py status，改完 refresh
+- next_safe_task: owner pushes codex/dhf-adjustment-20261126 and merges to main; then fix harness_status.py, verify_codex_env.sh and sync_codex_home.sh to read hook registration from config.toml
 - required_commands:
   - `python3 test_runner.py`
   - `git diff --check`
   - `./scripts/verify_codex_env.sh --repo-root "$(pwd)" --codex-home "$HOME/.codex" --claude-home "$HOME/.claude"`
-- latest_checkpoint: 2026-08-23T00:26:22-04:00 P1-2 identity status, shared digest, refresh, sync hint, cost-relevant config identity, AC-16 provenance, equivalence review, and verification complete
-- latest_verification: 2026-08-23T00:26:22-04:00 command=bash scripts/verify_codex_env.sh --repo-root "$(pwd)" --codex-home ~/.codex --claude-home ~/.claude; python3 test_runner.py; exit_code=0; key_output=AC-16 pre/post commit: 141/141; P1-2 step1: 141/141; step2: 142/142; worktree: failed=0; step3: 143/143; step4: 144/144; step5/final: 145/145; host verifier: Verification passed.; equivalence: B exact, C differences limited to digest, manifest path, receipt timestamp, and observations[5] temp-path key_output
+- latest_checkpoint: 2026-11-26T17:23:39+00:00 restored the Guard: it had crashed at import under /usr/bin/python3 (3.9.6) since the 2026-08-18 promotion because 52912ce dropped the future-annotations import; added an invocation receipt and a registered-interpreter test; owner approved digest b4213ea4 and promoted the seven targets (transaction 346283899e9f49869bf14ef23a223ad2); Codex CLI 0.155.1 then invoked the Guard and enforced one block
+- latest_verification: 2026-11-26T17:23:39+00:00 command=python3 test_runner.py; exit_code=0; key_output=ran=163 passed=162 skipped=1 failed=0 on Python 3.12 (owner host); host probe 2026-11-26T12:12:11-05:00: Command blocked by PreToolUse hook: [harness] active_control_plane_mutation; guard-receipt invocations=12 blocks=1 guard_sha256=93b378c4
 - compaction_ordinal: 0
 - transition_key: p1-2-complete
 - gate_decision: continue-to-boundary
-- constraints: ["Do not push; owner owns push"]
-- ownership: {"boundary":"P1-2 source, generated identity fixtures, tests, documentation, and append-only checkpoint","files":{"docs/harness-state.md":"agent_owned_checkpoint","tasks/p0-token-cost-plan-2026-08-22.md":"user_owned_untracked","tasks/p1-2-refresh-identity-plan-2026-08-23.md":"user_owned_untracked"}}
-- next_action: {"command":"P1-1：拆 DHF SKILL.md 为 L2/L3；改动前 harness_refresh_identity.py status，改完 refresh","scope":"P1-1"}
+- constraints: ["Do not run a full sync_codex_home.sh until it stops overwriting ~/.codex/hooks.json (owned by Otty); use --promote-harness-guard only","Public status pages still cite the 2026-08-10 18/18 probe on Codex 0.147.0; they are marked under re-verification, not corrected"]
+- ownership: {}
+- next_action: {"command":"owner pushes codex/dhf-adjustment-20261126 and merges to main; then fix harness_status.py, verify_codex_env.sh and sync_codex_home.sh to read hook registration from config.toml"}
 
 ## State Log
 
@@ -3745,3 +3745,27 @@ Stable rules belong in `AGENTS.md`, `README.md`, `docs/repo-index.md`, or
 - blockers:
   - none
 - next_safe_task: continue from current main; keep skill loading and snapshot scope limited to demonstrated needs
+
+### 2026-11-26T17:23:39+00:00
+- phase: ship
+- event: checkpoint
+- summary: restored the Guard: it had crashed at import under /usr/bin/python3 (3.9.6) since the 2026-08-18 promotion because 52912ce dropped the future-annotations import; added an invocation receipt and a registered-interpreter test; owner approved digest b4213ea4 and promoted the seven targets (transaction 346283899e9f49869bf14ef23a223ad2); Codex CLI 0.155.1 then invoked the Guard and enforced one block
+- git:
+  - branch: codex/dhf-adjustment-20261126
+  - latest_commit: bda4c50
+  - dirty_status: clean
+  - dirty_count: 0
+- changed_surfaces:
+  - `codex/hooks/harness_guard.py`
+  - `test_runner.py`
+  - `runtime-approvals/approved-source-digests.txt`
+  - `docs/*.html status bars (28 pages) and docs/dhf-site-status.css`
+  - `docs/harness-state.md`
+- verification:
+  - command: `python3 test_runner.py`
+  - exit_code: 0
+  - key_output: ran=163 passed=162 skipped=1 failed=0 on Python 3.12 (owner host); host probe 2026-11-26T12:12:11-05:00: Command blocked by PreToolUse hook: [harness] active_control_plane_mutation; guard-receipt invocations=12 blocks=1 guard_sha256=93b378c4
+- blockers:
+  - none
+- next_safe_task: owner pushes codex/dhf-adjustment-20261126 and merges to main; then fix harness_status.py, verify_codex_env.sh and sync_codex_home.sh to read hook registration from config.toml
+- checkpoint_data: {"constraints":["Do not run a full sync_codex_home.sh until it stops overwriting ~/.codex/hooks.json (owned by Otty); use --promote-harness-guard only","Public status pages still cite the 2026-08-10 18/18 probe on Codex 0.147.0; they are marked under re-verification, not corrected"],"next_action":{"command":"owner pushes codex/dhf-adjustment-20261126 and merges to main; then fix harness_status.py, verify_codex_env.sh and sync_codex_home.sh to read hook registration from config.toml"},"ownership":{},"phase":"ship","schema":"dhf_checkpoint_v1","verification_evidence":{"command":"python3 test_runner.py","exit_code":0,"freshness":"fresh","key_output":"ran=163 passed=162 skipped=1 failed=0 on Python 3.12 (owner host); host probe 2026-11-26T12:12:11-05:00: Command blocked by PreToolUse hook: [harness] active_control_plane_mutation; guard-receipt invocations=12 blocks=1 guard_sha256=93b378c4","timestamp":"2026-11-26T11:38:58-05:00"}}
