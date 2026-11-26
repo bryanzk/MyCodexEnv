@@ -5453,6 +5453,61 @@ def _run_harness_guard(payload, env):
     return json.loads(out)
 
 
+def test_codex_hooks_run_on_registered_interpreter():
+    """Hooks are registered with the host's system interpreter, not the test interpreter.
+
+    macOS ships /usr/bin/python3 as 3.9, which evaluates annotations at def
+    time and rejects ``X | None``. A hook that fails to import there exits
+    non-zero on every call, and the host treats that as allow.
+    """
+    floor = (3, 9)
+    hooks_config = json.loads((ROOT / "codex" / "hooks.json").read_text(encoding="utf-8"))
+    commands = [hook["command"] for groups in hooks_config["hooks"].values()
+                for group in groups for hook in group["hooks"]]
+    interpreters = sorted({command.split()[0] for command in commands})
+    require(interpreters == ["/usr/bin/python3"],
+            f"hooks must stay registered with the system interpreter this test covers: {interpreters}")
+    hook_files = sorted((ROOT / "codex" / "hooks").glob("*.py")) + [ROOT / "codex" / "bin" / "codex-task"]
+    registered = {Path(command.split()[1]).name for command in commands}
+    require(registered <= {path.name for path in hook_files},
+            f"registered hook commands must point at tracked hook files: {sorted(registered)}")
+    for path in hook_files:
+        source = path.read_text(encoding="utf-8")
+        tree = ast.parse(source, filename=str(path), feature_version=floor)
+        body = [node for node in tree.body
+                if not (isinstance(node, ast.Expr) and isinstance(getattr(node, "value", None), ast.Constant))]
+        first = body[0] if body else None
+        require(isinstance(first, ast.ImportFrom) and first.module == "__future__"
+                and any(alias.name == "annotations" for alias in first.names),
+                f"{path.relative_to(ROOT)} must start with `from __future__ import annotations` "
+                f"so it imports on Python {floor[0]}.{floor[1]}")
+    interpreter = Path(interpreters[0])
+    if not interpreter.exists():
+        raise SkipTest(f"registered hook interpreter {interpreter} is unavailable on this host")
+    loader = (
+        "import sys\n"
+        "path = sys.argv[1]\n"
+        "source = open(path, encoding='utf-8').read()\n"
+        "exec(compile(source, path, 'exec'), {'__name__': 'hook_import_check', '__file__': path})\n"
+    )
+    with tempfile.TemporaryDirectory() as tmp:
+        env = _harness_guard_test_env(Path(tmp))
+        for path in hook_files:
+            code, out, err = run_with_input([str(interpreter), "-c", loader, str(path)], "", env=env)
+            require(code == 0, f"{path.relative_to(ROOT)} must import under {interpreter}: {err or out}")
+        codex_home = Path(env["CODEX_HOME"])
+        patch = "\n".join(["*** Begin Patch", f"*** Add File: {codex_home / 'hooks' / 'probe.txt'}", "+probe", "*** End Patch"])
+        code, out, err = run_with_input(
+            [str(interpreter), str(HARNESS_GUARD)],
+            json.dumps({"tool_name": "apply_patch", "cwd": tmp, "tool_input": {"patch": patch}}),
+            env=env,
+        )
+        require(code == 0, f"Guard must exit 0 under {interpreter}: {err or out}")
+        require(json.loads(out) == {"decision": "block", "reason": "[harness] active_control_plane_mutation"},
+                f"Guard must block a control-plane patch under {interpreter}: {out}")
+    print("[PASS] codex hooks run on the registered interpreter")
+
+
 def test_harness_guard_invocation_receipt():
     with tempfile.TemporaryDirectory() as tmp:
         tmp_path = Path(tmp)
@@ -13563,6 +13618,7 @@ TESTS = [
     test_sync_local_main_skips_dirty_worktree,
     test_harness_guard_policy_decisions,
     test_harness_guard_invocation_receipt,
+    test_codex_hooks_run_on_registered_interpreter,
     test_live_runtime_harness_guard_smoke,
     test_harness_observer_and_bearing_do_not_import_guard,
     test_task_state_non_git_workspace_and_host_wrappers,
