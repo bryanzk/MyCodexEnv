@@ -8,6 +8,7 @@
 ## Map
 
 - `codex/`: Codex rules, configuration, hooks, runtime, skills, and workflow.
+- `dhf/`: host-neutral DHF core. Host adapters under `codex/` carry an inlined copy; edit the core, then run `python3 scripts/build_guard_bundle.py --write`.
 - `claude/`: Claude workflow and integration source.
 - `scripts/`: synchronization, verification, recovery, reporting, and maintenance entry points.
 - `docs/`: architecture, guides, status, plans, and public documentation.

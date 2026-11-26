@@ -57,6 +57,16 @@
       "audience": ["codex", "human"]
     },
     {
+      "path": "dhf/core/guard_core.py",
+      "role": "host-neutral Guard core: path identity, protected-target decision, and invocation receipt",
+      "audience": ["codex", "human"]
+    },
+    {
+      "path": "scripts/build_guard_bundle.py",
+      "role": "inlines the Guard core into each host adapter and checks the copies are current",
+      "audience": ["codex", "human"]
+    },
+    {
       "path": "docs/HARNESS_RUNTIME.md",
       "role": "runtime workflow, evidence, permission, checkpoint, and agent-team contract",
       "audience": ["codex", "human"]
