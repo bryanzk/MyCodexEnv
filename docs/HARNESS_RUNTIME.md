@@ -427,6 +427,11 @@ only reader of the registration; `harness_status.py status --runtime` reports
 the managed commands per event, any hook that `hooks.state` marks disabled, and
 the Guard receipt.
 
+Because the registration lives there, the Guard treats `~/.codex/config.toml`
+as an active control-plane file: structured writes, edits, patches, and deletes
+are blocked with `active_control_plane_mutation`; reads stay allowed. Change
+that file from a terminal or the Codex settings UI, not through an agent tool.
+
 Hooks run under the registered interpreter, `/usr/bin/python3`, which is Python
 3.9 on macOS. Every hook must start with `from __future__ import annotations`;
 `test_codex_hooks_run_on_registered_interpreter` imports each hook and runs the

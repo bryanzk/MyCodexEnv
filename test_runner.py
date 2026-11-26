@@ -5631,6 +5631,48 @@ def test_codex_hooks_run_on_registered_interpreter():
     print("[PASS] codex hooks run on the registered interpreter")
 
 
+def test_harness_guard_protects_hook_registration_file():
+    """Hooks are registered in config.toml, so editing it could unregister the Guard."""
+    with tempfile.TemporaryDirectory() as tmp:
+        tmp_path = Path(tmp)
+        env = _harness_guard_test_env(tmp_path)
+        codex_home = Path(env["CODEX_HOME"])
+        repo = tmp_path / "workspace"
+        repo.mkdir()
+        config = codex_home / "config.toml"
+        write(config, "[features]\nhooks = true\n")
+
+        def run(payload):
+            payload.setdefault("cwd", str(repo))
+            return _run_harness_guard(payload, env)
+
+        def patch(verb, path):
+            body = ["*** Begin Patch", f"*** {verb} File: {path}"]
+            body += {"Add": ["+x"], "Update": ["@@", "+x"], "Delete": []}[verb]
+            return {"tool_name": "apply_patch", "tool_input": {"patch": "\n".join(body + ["*** End Patch"])}}
+
+        blocked = {"decision": "block", "reason": "[harness] active_control_plane_mutation"}
+        for payload in (
+            {"tool_name": "write", "tool_input": {"path": str(config), "content": "x"}},
+            {"tool_name": "edit", "tool_input": {"path": str(config), "old_string": "true", "new_string": "false"}},
+            {"tool_name": "delete_file", "tool_input": {"path": str(config)}},
+            patch("Add", config), patch("Update", config), patch("Delete", config),
+            {"tool_name": "write", "tool_input": {"path": "$" + "CODEX_HOME/config.toml", "content": "x"}},
+        ):
+            require(run(payload) == blocked, f"mutating the runtime config.toml must be blocked: {payload}")
+        alias = repo / "alias-config.toml"
+        os.link(config, alias)
+        require(run({"tool_name": "write", "tool_input": {"path": str(alias), "content": "x"}}) == blocked,
+                "a hard link to the runtime config.toml must be blocked")
+        require(run({"tool_name": "read_file", "tool_input": {"path": str(config)}}) == {},
+                "reading config.toml must stay allowed")
+        require(run({"tool_name": "write", "tool_input": {"path": str(repo / "config.toml"), "content": "x"}}) == {},
+                "a workspace file named config.toml must stay allowed")
+        require(run({"tool_name": "write", "tool_input": {"path": str(ROOT / "codex" / "config.template.toml"), "content": "x"}}) == {},
+                "the source template is not the runtime control plane")
+    print("[PASS] harness guard protects the hook registration file")
+
+
 def test_harness_guard_invocation_receipt():
     with tempfile.TemporaryDirectory() as tmp:
         tmp_path = Path(tmp)
@@ -5973,8 +6015,9 @@ def test_harness_guard_policy_decisions():
         )
         require(run(write_payload(" ")) == {}, "whitespace-only relative paths are valid benign identities")
 
+        # config.toml left this list on 2026-11-26: it now holds the hook
+        # registration, see test_harness_guard_protects_hook_registration_file.
         excluded_targets = [
-            codex_home / "config.toml",
             codex_home / "skills" / "demo" / "SKILL.md",
             codex_home / "plugins" / "demo" / "plugin.json",
             codex_home / "memories" / "note.md",
@@ -6625,7 +6668,7 @@ def test_harness_seven_target_promotion_wal_and_deployed_manifest():
             runtime_decision(
                 {
                     "tool_name": "write",
-                    "tool_input": {"path": str(success_home / "config.toml"), "content": "fixture"},
+                    "tool_input": {"path": str(success_home / "skills" / "demo" / "SKILL.md"), "content": "fixture"},
                 }
             ),
         ]
@@ -13735,6 +13778,7 @@ TESTS = [
     test_sync_local_main_skips_dirty_worktree,
     test_harness_guard_policy_decisions,
     test_harness_guard_invocation_receipt,
+    test_harness_guard_protects_hook_registration_file,
     test_codex_hooks_run_on_registered_interpreter,
     test_live_runtime_harness_guard_smoke,
     test_harness_observer_and_bearing_do_not_import_guard,

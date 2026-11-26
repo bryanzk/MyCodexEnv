@@ -297,6 +297,8 @@ def _is_control_plane_target(path: str, *, check_inode: bool = False) -> bool:
     ):
         return True
     exact = (
+        # DHF hooks are registered in config.toml; editing it can unregister the Guard.
+        os.path.join(home, "config.toml"),
         os.path.join(home, "runtime", "tool-policy.json"),
         os.path.join(home, "runtime", "harness-scope.json"),
         os.path.join(home, "runtime", "harness-guard-targets.json"),
