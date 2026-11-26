@@ -101,6 +101,7 @@ behavior live in `codex/hooks/dhf_preprompt.py`.
 - `docs/repo-index.md`: low-token repo navigation and checked runtime surface mirror.
 - `CONTEXT.md`: repo terminology contract for DHF language and forbidden aliases.
 - `docs/harness-state.md`: append-only harness state, checkpoint, and next-safe-task log.
+- `docs/dhf-spec.md`: host-neutral DHF specification: eight invariants, normalized action, and the seven-function contract.
 - `docs/HARNESS_RUNTIME.md`: runtime workflow, evidence, permission, checkpoint, and agent-team contract.
 - `docs/AGENT_HARNESS_STATUS.md`: Agent Harness workflow and runtime governance status map.
 - `docs/dhf-site-status.css`: shared status banner and canonical architecture-page styling.

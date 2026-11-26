@@ -52,6 +52,11 @@
       "audience": ["codex", "human"]
     },
     {
+      "path": "docs/dhf-spec.md",
+      "role": "host-neutral DHF specification: eight invariants, normalized action, and the seven-function contract",
+      "audience": ["codex", "human"]
+    },
+    {
       "path": "docs/HARNESS_RUNTIME.md",
       "role": "runtime workflow, evidence, permission, checkpoint, and agent-team contract",
       "audience": ["codex", "human"]
