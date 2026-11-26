@@ -120,6 +120,12 @@ html[data-dhf-palette] {
   color: var(--dhf-status-muted);
 }
 
+.dhf-status-bar .dhf-status-review {
+  grid-column: 1 / -1;
+  color: var(--dhf-status-text);
+  font-weight: 600;
+}
+
 .dhf-status-bar a {
   color: var(--dhf-status-link);
   font-weight: 700;

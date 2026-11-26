@@ -12406,6 +12406,36 @@ def test_dhf_touch_target_contract():
     print("[PASS] DHF touch target contract")
 
 
+def test_public_status_bar_carries_reverification_notice():
+    docs = ROOT / "docs"
+    with_bar = []
+    without_bar = []
+    for path in sorted(docs.glob("*.html")):
+        text = path.read_text(encoding="utf-8")
+        if 'class="dhf-nav-links"' not in text:
+            continue
+        bars = re.findall(r'<aside class="dhf-status-bar"[^>]*>.*?</aside>', text, re.S)
+        if bars:
+            with_bar.append((path, text, bars))
+        else:
+            without_bar.append((path, text))
+    require(len(with_bar) == 28 and len(without_bar) == 20,
+            "re-verification notice requires the 28 status-bar pages and 20 body-marker pages baseline")
+    for path, text, bars in with_bar:
+        require(len(bars) == 1, f"{path.name} must carry exactly one status bar")
+        require(bars[0].count('data-dhf-review="2026-11-26"') == 1,
+                f"{path.name} status bar must carry the 2026-11-26 re-verification notice exactly once")
+        require(text.count('data-dhf-review=') == 1,
+                f"{path.name} must not carry a re-verification notice outside the status bar")
+    for path, text in without_bar:
+        require('data-dhf-review=' not in text,
+                f"{path.name} has no status bar and must not carry a hidden re-verification marker")
+    css = (docs / "dhf-site-status.css").read_text(encoding="utf-8")
+    require(".dhf-status-bar .dhf-status-review" in css,
+            "shared status styles must style the re-verification notice")
+    print("[PASS] public status bar re-verification notice")
+
+
 def test_public_dhf_architecture_status_alignment():
     english_pages = [
         "index.html",
@@ -13515,6 +13545,7 @@ TESTS = [
     test_dhf_public_metadata_contract,
     test_dhf_core_bilingual_parity_contract,
     test_dhf_touch_target_contract,
+    test_public_status_bar_carries_reverification_notice,
     test_public_dhf_architecture_status_alignment,
     test_dhf_models_and_patterns_information_architecture,
     test_dhf_memory_map_bilingual_information_architecture,
