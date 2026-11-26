@@ -29,3 +29,42 @@ enabled = false
 [[skills.config]]
 path = "${CODEX_HOME}/plugins/cache/superpowers-dev/superpowers/6.2.0/skills/brainstorming/SKILL.md"
 enabled = false
+
+# DHF lifecycle hooks. This template is the single source of the registration;
+# ~/.codex/hooks.json belongs to other tools and is not written by sync.
+
+[[hooks.SessionStart]]
+matcher = "startup"
+[[hooks.SessionStart.hooks]]
+type = "command"
+command = "/usr/bin/python3 ~/.codex/hooks/session_start_require_naming.py"
+statusMessage = "Loading session naming rule"
+[[hooks.SessionStart.hooks]]
+type = "command"
+command = "/usr/bin/python3 ~/.codex/hooks/session_bearing.py"
+statusMessage = "Recovering session bearing"
+
+[[hooks.UserPromptSubmit]]
+matcher = "*"
+[[hooks.UserPromptSubmit.hooks]]
+type = "command"
+command = "/usr/bin/python3 ~/.codex/hooks/compaction_probe.py"
+statusMessage = "Reading host-observed compaction ordinal"
+[[hooks.UserPromptSubmit.hooks]]
+type = "command"
+command = "/usr/bin/python3 ~/.codex/hooks/dhf_preprompt.py"
+statusMessage = "Applying DHF prompt policy"
+
+[[hooks.PreToolUse]]
+matcher = "*"
+[[hooks.PreToolUse.hooks]]
+type = "command"
+command = "/usr/bin/python3 ~/.codex/hooks/harness_guard.py"
+statusMessage = "Checking harness tool policy"
+
+[[hooks.PostToolUse]]
+matcher = "*"
+[[hooks.PostToolUse.hooks]]
+type = "command"
+command = "/usr/bin/python3 ~/.codex/hooks/harness_observer.py"
+statusMessage = "Recording harness evidence"

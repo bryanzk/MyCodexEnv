@@ -416,6 +416,40 @@ block/allow behavior. A fresh 2026-08-10 isolated host probe on Codex CLI
 round had `hook_delta=1`. This proves current host parsing for the probed shape,
 not production rollout.
 
+## Hook Registration And Guard Receipt
+
+DHF hooks are registered in one place: the `[[hooks.*]]` tables of
+`codex/config.template.toml`, rendered into `~/.codex/config.toml` by an
+approved sync. `~/.codex/hooks.json` belongs to other tools; sync never writes
+it, and `verify_codex_env.sh` fails if a managed hook command is still listed
+there, because that hook would run twice. `scripts/hook_registration.py` is the
+only reader of the registration; `harness_status.py status --runtime` reports
+the managed commands per event, any hook that `hooks.state` marks disabled, and
+the Guard receipt.
+
+Because the registration lives there, the Guard treats `~/.codex/config.toml`
+as an active control-plane file: structured writes, edits, patches, and deletes
+are blocked with `active_control_plane_mutation`; reads stay allowed. Change
+that file from a terminal or the Codex settings UI, not through an agent tool.
+
+Hooks run under the registered interpreter, `/usr/bin/python3`, which is Python
+3.9 on macOS. Every hook must start with `from __future__ import annotations`;
+`test_codex_hooks_run_on_registered_interpreter` imports each hook and runs the
+Guard under that interpreter. A hook that fails to import exits non-zero on
+every call and the host treats that as allow: this is how the Guard was inert
+from the 2026-08-18 promotion until 2026-11-26.
+
+The Guard writes `~/.codex/harness/guard-receipt.json` on every invocation
+(last invocation time, digest of the Guard file that ran, last tool and
+decision, best-effort counters) and appends one `guardrail_decision` record per
+block. Neither stores command, patch, or file content. A missing or stale
+receipt means the host is not calling the Guard. To check that the host
+enforces a block without side effects, ask Codex to `apply_patch` a
+`*** Delete File:` of a non-existent path under `~/.codex/hooks/`: a live Guard
+returns `[harness] active_control_plane_mutation`; an inert one makes
+`apply_patch` report a missing file. Repeat this probe after every Codex CLI
+version change.
+
 ## Session Bearing
 
 `codex/hooks/session_bearing.py` is registered in the source `SessionStart`

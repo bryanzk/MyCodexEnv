@@ -73,7 +73,7 @@ MyCodexEnv 把这三个问题变成一条可重复的闭环：
 | --- | --- | --- |
 | Codex rules | `codex/AGENTS.md` | `~/.codex/AGENTS.md` |
 | Codex config | `codex/config.template.toml` | Codex runtime 配置模板 |
-| Hooks | `codex/hooks.json`、`codex/hooks/` | session、prompt、policy 与 evidence hooks |
+| Hooks | `codex/config.template.toml`（`[[hooks.*]]`）、`codex/hooks/` | session、prompt、policy 与 evidence hooks |
 | Runtime policy | `codex/runtime/` | tool policy、schemas、CLI resolver |
 | Skills | `codex/skills/` | `~/.codex/skills/` |
 | Codex workflow | `codex/workflow/` | `~/.codex/workflow/` |

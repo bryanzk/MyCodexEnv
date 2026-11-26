@@ -21,7 +21,7 @@
 - `codex/remote-access.md` -> `~/.codex/remote-access.md`
 - `codex/remote-hosts.md` -> `~/.codex/remote-hosts.md`
 - `codex/skills/*` -> `~/.codex/skills/*`, except active external gstack from `~/.gstack/repos/gstack`, whose exact links are owned by `scripts/external_gstack_runtime.py`
-- `codex/hooks.json` and `codex/hooks/*` -> `~/.codex/hooks.json` and `~/.codex/hooks/*`
+- `codex/hooks/*` -> `~/.codex/hooks/*`; hook registration is rendered from `codex/config.template.toml` into `~/.codex/config.toml`. `~/.codex/hooks.json` belongs to other tools and sync never writes it
 - `codex/runtime/*` -> `~/.codex/runtime/*`
 - `codex/workflow/*` -> `~/.codex/workflow/*`（排除 `workflow/memory/`）
 - `claude/workflow/*` -> `~/.claude/workflow/*`（排除 `workflow/memory/`）
@@ -43,7 +43,7 @@
   `scripts/run_dhf_simplification_pair.py`. The evidence producer performs only
   read-only `lstat`/SHA-256 inspection; a green source-stage gate never performs
   or authorizes runtime synchronization.
-- `codex/hooks/shipq_dhf_preprompt.py` remains a synced adapter file for ShipQ cwd only; it is not registered directly in `codex/hooks.json`, and ordinary non-ShipQ prompts must not import, read, execute, or leak adapter-specific context. It emits a short action-dependent routing pointer without reading the full DHF skill. Lightweight questions, wording edits, and instruction audits avoid fixed state reads; actual governed work still loads the applicable gates before action. The matching Claude adapter carries the same source behavior; source changes alone do not prove either runtime has been updated.
+- `codex/hooks/shipq_dhf_preprompt.py` remains a synced adapter file for ShipQ cwd only; it is not registered directly in `codex/config.template.toml`, and ordinary non-ShipQ prompts must not import, read, execute, or leak adapter-specific context. It emits a short action-dependent routing pointer without reading the full DHF skill. Lightweight questions, wording edits, and instruction audits avoid fixed state reads; actual governed work still loads the applicable gates before action. The matching Claude adapter carries the same source behavior; source changes alone do not prove either runtime has been updated.
 
 ## Harness Guard Phase Resolution
 

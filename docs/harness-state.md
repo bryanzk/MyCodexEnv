@@ -14,19 +14,19 @@ Stable rules belong in `AGENTS.md`, `README.md`, `docs/repo-index.md`, or
   - `codex/skills/delivery-harness-framework/SKILL.md`
 - blocked_sources: none
 - unsafe_inputs: none
-- next_safe_task: owner pushes codex/dhf-adjustment-20261126 and merges to main; then fix harness_status.py, verify_codex_env.sh and sync_codex_home.sh to read hook registration from config.toml
+- next_safe_task: owner pushes codex/dhf-hook-single-source-20261126 and merges to main; then retire the compaction suite and other no-signal components (master plan E)
 - required_commands:
   - `python3 test_runner.py`
   - `git diff --check`
   - `./scripts/verify_codex_env.sh --repo-root "$(pwd)" --codex-home "$HOME/.codex" --claude-home "$HOME/.claude"`
-- latest_checkpoint: 2026-11-26T17:23:39+00:00 restored the Guard: it had crashed at import under /usr/bin/python3 (3.9.6) since the 2026-08-18 promotion because 52912ce dropped the future-annotations import; added an invocation receipt and a registered-interpreter test; owner approved digest b4213ea4 and promoted the seven targets (transaction 346283899e9f49869bf14ef23a223ad2); Codex CLI 0.155.1 then invoked the Guard and enforced one block
-- latest_verification: 2026-11-26T17:23:39+00:00 command=python3 test_runner.py; exit_code=0; key_output=ran=163 passed=162 skipped=1 failed=0 on Python 3.12 (owner host); host probe 2026-11-26T12:12:11-05:00: Command blocked by PreToolUse hook: [harness] active_control_plane_mutation; guard-receipt invocations=12 blocks=1 guard_sha256=93b378c4
+- latest_checkpoint: 2026-11-26T20:20:47+00:00 single-sourced DHF hook registration in codex/config.template.toml and retired codex/hooks.json so sync no longer overwrites another tool's ~/.codex/hooks.json; status and verify now read config.toml; Guard now treats ~/.codex/config.toml as a control-plane file; owner approved digests 9713a676 and 1bdc3024 and promoted the seven targets (transaction 2de7cee90a724f2c9805ca23f8579e49)
+- latest_verification: 2026-11-26T20:20:47+00:00 command=python3 test_runner.py; exit_code=0; key_output=ran=165 passed=164 skipped=1 failed=0 on Python 3.12 (owner host); compare=0 no_managed=0; host probe 2026-11-26T15:20:01-05:00: Command blocked by PreToolUse hook: [harness] active_control_plane_mutation on ~/.codex/config.toml; guard-receipt invocations=19 blocks=2 guard_sha256=09f2bfd9 matches installed Guard
 - compaction_ordinal: 0
 - transition_key: p1-2-complete
 - gate_decision: continue-to-boundary
-- constraints: ["Do not run a full sync_codex_home.sh until it stops overwriting ~/.codex/hooks.json (owned by Otty); use --promote-harness-guard only","Public status pages still cite the 2026-08-10 18/18 probe on Codex 0.147.0; they are marked under re-verification, not corrected"]
+- constraints: ["status --runtime reports dhf_preprompt.py disabled in hooks.state: light/standard/governed prompt shaping is not active in the Codex runtime; cause unconfirmed","Full sync_codex_home.sh has not been run against the live runtime since this change; only --promote-harness-guard has","Public status pages still cite the 2026-08-10 18/18 probe on Codex 0.147.0; they are marked under re-verification, not corrected"]
 - ownership: {}
-- next_action: {"command":"owner pushes codex/dhf-adjustment-20261126 and merges to main; then fix harness_status.py, verify_codex_env.sh and sync_codex_home.sh to read hook registration from config.toml"}
+- next_action: {"command":"owner pushes codex/dhf-hook-single-source-20261126 and merges to main; then retire the compaction suite and other no-signal components (master plan E)"}
 
 ## State Log
 
@@ -3769,3 +3769,32 @@ Stable rules belong in `AGENTS.md`, `README.md`, `docs/repo-index.md`, or
   - none
 - next_safe_task: owner pushes codex/dhf-adjustment-20261126 and merges to main; then fix harness_status.py, verify_codex_env.sh and sync_codex_home.sh to read hook registration from config.toml
 - checkpoint_data: {"constraints":["Do not run a full sync_codex_home.sh until it stops overwriting ~/.codex/hooks.json (owned by Otty); use --promote-harness-guard only","Public status pages still cite the 2026-08-10 18/18 probe on Codex 0.147.0; they are marked under re-verification, not corrected"],"next_action":{"command":"owner pushes codex/dhf-adjustment-20261126 and merges to main; then fix harness_status.py, verify_codex_env.sh and sync_codex_home.sh to read hook registration from config.toml"},"ownership":{},"phase":"ship","schema":"dhf_checkpoint_v1","verification_evidence":{"command":"python3 test_runner.py","exit_code":0,"freshness":"fresh","key_output":"ran=163 passed=162 skipped=1 failed=0 on Python 3.12 (owner host); host probe 2026-11-26T12:12:11-05:00: Command blocked by PreToolUse hook: [harness] active_control_plane_mutation; guard-receipt invocations=12 blocks=1 guard_sha256=93b378c4","timestamp":"2026-11-26T11:38:58-05:00"}}
+
+### 2026-11-26T20:20:47+00:00
+- phase: ship
+- event: checkpoint
+- summary: single-sourced DHF hook registration in codex/config.template.toml and retired codex/hooks.json so sync no longer overwrites another tool's ~/.codex/hooks.json; status and verify now read config.toml; Guard now treats ~/.codex/config.toml as a control-plane file; owner approved digests 9713a676 and 1bdc3024 and promoted the seven targets (transaction 2de7cee90a724f2c9805ca23f8579e49)
+- git:
+  - branch: codex/dhf-hook-single-source-20261126
+  - latest_commit: dff4ca7
+  - dirty_status: clean
+  - dirty_count: 0
+- changed_surfaces:
+  - `codex/config.template.toml`
+  - `codex/hooks.json (removed)`
+  - `codex/hooks/harness_guard.py`
+  - `scripts/hook_registration.py`
+  - `scripts/harness_status.py and scripts/harness_status_runtime.py`
+  - `scripts/sync_codex_home.sh and scripts/verify_codex_env.sh`
+  - `test_runner.py`
+  - `docs/HARNESS_RUNTIME.md, docs/repo-index.md, docs/surfaces.json, docs/CODEX_ENV_REPRODUCTION.md, README.md, README.zh-CN.md`
+  - `runtime-approvals/approved-source-digests.txt`
+  - `docs/harness-state.md`
+- verification:
+  - command: `python3 test_runner.py`
+  - exit_code: 0
+  - key_output: ran=165 passed=164 skipped=1 failed=0 on Python 3.12 (owner host); compare=0 no_managed=0; host probe 2026-11-26T15:20:01-05:00: Command blocked by PreToolUse hook: [harness] active_control_plane_mutation on ~/.codex/config.toml; guard-receipt invocations=19 blocks=2 guard_sha256=09f2bfd9 matches installed Guard
+- blockers:
+  - none
+- next_safe_task: owner pushes codex/dhf-hook-single-source-20261126 and merges to main; then retire the compaction suite and other no-signal components (master plan E)
+- checkpoint_data: {"constraints":["status --runtime reports dhf_preprompt.py disabled in hooks.state: light/standard/governed prompt shaping is not active in the Codex runtime; cause unconfirmed","Full sync_codex_home.sh has not been run against the live runtime since this change; only --promote-harness-guard has","Public status pages still cite the 2026-08-10 18/18 probe on Codex 0.147.0; they are marked under re-verification, not corrected"],"next_action":{"command":"owner pushes codex/dhf-hook-single-source-20261126 and merges to main; then retire the compaction suite and other no-signal components (master plan E)"},"ownership":{},"phase":"ship","schema":"dhf_checkpoint_v1","verification_evidence":{"command":"python3 test_runner.py","exit_code":0,"freshness":"fresh","key_output":"ran=165 passed=164 skipped=1 failed=0 on Python 3.12 (owner host); compare=0 no_managed=0; host probe 2026-11-26T15:20:01-05:00: Command blocked by PreToolUse hook: [harness] active_control_plane_mutation on ~/.codex/config.toml; guard-receipt invocations=19 blocks=2 guard_sha256=09f2bfd9 matches installed Guard","timestamp":"2026-11-26T15:15:34-05:00"}}

@@ -124,7 +124,7 @@ behavior live in `codex/hooks/dhf_preprompt.py`.
 - `codex/runtime/evidence/plan-finding-decision.schema.json`: plan governor structured finding decision schema.
 - `codex/runtime/evidence/plan-governor-receipt.schema.json`: plan governor bounded round receipt schema.
 - `codex/hooks/`: Codex lifecycle hooks copied to `~/.codex/hooks/`.
-- `codex/hooks.json`: source lifecycle-hook registration chain deployed only by approved sync.
+- `codex/config.template.toml`: Codex config template and the single source of the lifecycle-hook registration (`[[hooks.*]]`), deployed only by approved sync. `scripts/hook_registration.py` reads it.
 - `codex/hooks/harness_guard.py`: PreToolUse guard with legacy block wire shape, governed/out-of-scope decisions, per-tool structured targets, protected/persistence screening, and integrity-watch freeze. Env/payload phase is accepted only in governed Git workspaces; precedence then continues through transcript, TTL self-declaration, snapshot, and `unknown`.
 - `codex/hooks/task_state.py`: same-Git-root or same canonical non-Git workspace phase resolution, including transcript and TTL state reads.
 - `codex/bin/codex-task`: audited TTL-bound `declare`/`revoke`; declarations do not downgrade high-risk categories or unlock protected roots.
@@ -299,7 +299,7 @@ behavior live in `codex/hooks/dhf_preprompt.py`.
 - Skills: ordinary `codex/skills/*` are copied into `~/.codex/skills/*`; active external gstack uses `~/.gstack/repos/gstack` plus the exact links managed by `scripts/external_gstack_runtime.py`, with repo vendor as legacy/bootstrap fallback.
 - Session State: `docs/harness-state.md` plus local evidence JSONL.
 - Permissions: `codex/runtime/tool-policy.json` and guard hooks.
-- Hooks: `codex/hooks.json` and `codex/hooks/*`.
+- Hooks: `[[hooks.*]]` in `codex/config.template.toml` and `codex/hooks/*`.
 - Task-scoped phase: `codex/hooks/task_state.py` reads owner transcript markers and workspace-keyed TTL state without writing; `codex/bin/codex-task` is the only declare/revoke writer. Git workspaces require the same repo root; non-Git workspaces require the same canonical cwd. Host wrapper blocks are skipped only when well formed.
 - DHF Prompt Dispatch: global `UserPromptSubmit` registers `dhf_preprompt.py`; `shipq_dhf_preprompt.py` remains a lazy project adapter and ordinary non-ShipQ prompts do not receive `additionalContext`.
 - Observability: `scripts/harness_evidence.py`, `scripts/harness_feedback.py`, `scripts/harness_report.py`, split evidence schemas, and local evidence files. Decision evidence is promoted into state and handoff summaries; routine gate receipts remain available for audit without burying recovery signals.

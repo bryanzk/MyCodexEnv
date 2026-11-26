@@ -36,3 +36,5 @@ sha256:b30ba364621d6abc4870ce778bfc87faf2d6078ae085e1cca5efb7eb613e9cc6  Approve
 sha256:b7976031b64c495ca8cc687ded521d6da2c49fbace330926bd3e15a3578a9b57  Approve global ste reporting instruction
 sha256:cdf6446d4db5491b1eebd0870461288810d79a934fa807739a48960e7a25ee2f  Approve chrome-devtools-browser skill
 sha256:b4213ea49aafcd709d29be122df4b2446a6aaaae23a0f107f025c628b167f44f  Approve 377fcc1: Guard future-import fix and invocation receipt; also covers 1b637d8 ccwf trim; guard-only promotion authorized 2026-11-26
+sha256:9713a676881986105b289e581105cda0d910c6671869832ed29c2dfc40a80a3c  Approve d24df6c: hook registration single-sourced in config.template.toml; hooks.json retired; no runtime promotion required
+sha256:1bdc3024a897a1f9ce6d562220e6362693ec75ef10571271d68476fcc3ba9fe1  Approve 26323f9: Guard protects runtime config.toml as control plane; guard-only promotion authorized 2026-11-26

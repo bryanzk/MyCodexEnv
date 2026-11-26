@@ -137,8 +137,8 @@
       "audience": ["runtime", "codex"]
     },
     {
-      "path": "codex/hooks.json",
-      "role": "source lifecycle hook registration chain",
+      "path": "codex/config.template.toml",
+      "role": "Codex config template and single source of the lifecycle hook registration",
       "audience": ["runtime", "codex"]
     },
     {

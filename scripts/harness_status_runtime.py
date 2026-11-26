@@ -2,12 +2,21 @@
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import os
 import sys
 from pathlib import Path
 from collections.abc import Sequence
 from typing import Any
+
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from hook_registration import (  # noqa: E402
+    disabled_managed_commands,
+    hook_commands,
+    hooks_json_managed_commands,
+    managed_commands,
+)
 
 
 REQUIRED_PHASES = ["research", "requirements", "planning", "development", "validation", "review", "ship", "handoff"]
@@ -59,6 +68,35 @@ def load_json(path: Path) -> dict[str, Any]:
     return payload
 
 
+def guard_receipt(home: Path) -> dict[str, Any]:
+    """Summarize the Guard's own invocation receipt; absence means it has not run."""
+    receipt_path = home / "harness" / "guard-receipt.json"
+    guard_path = home / "hooks" / "harness_guard.py"
+    summary: dict[str, Any] = {"path": str(receipt_path), "present": False}
+    try:
+        receipt = json.loads(receipt_path.read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return summary
+    if not isinstance(receipt, dict):
+        return summary
+    try:
+        installed = hashlib.sha256(guard_path.read_bytes()).hexdigest()
+    except OSError:
+        installed = None
+    summary.update(
+        {
+            "present": True,
+            "last_invoked_at": receipt.get("last_invoked_at"),
+            "last_decision": receipt.get("last_decision"),
+            "invocations": receipt.get("invocations"),
+            "blocks": receipt.get("blocks"),
+            "unrecognized_mutations": receipt.get("unrecognized_mutations"),
+            "matches_installed_guard": installed is not None and receipt.get("guard_sha256") == installed,
+        }
+    )
+    return summary
+
+
 def build_probe(home: Path) -> tuple[int, dict[str, Any] | None, list[str]]:
     config_path = home / "config.toml"
     hooks_path = home / "hooks.json"
@@ -66,14 +104,15 @@ def build_probe(home: Path) -> tuple[int, dict[str, Any] | None, list[str]]:
     schema_path = home / "runtime" / "evidence.schema.json"
     decision_schema_path = home / "runtime" / "evidence" / "decision-evidence.schema.json"
     routine_schema_path = home / "runtime" / "evidence" / "routine-gate-receipt.schema.json"
-    required_files = [config_path, hooks_path, policy_path, schema_path, decision_schema_path, routine_schema_path]
+    required_files = [config_path, policy_path, schema_path, decision_schema_path, routine_schema_path]
     missing = [str(path) for path in required_files if not path.exists()]
     if missing:
         return 1, None, [f"missing required runtime file: {path}" for path in missing]
 
     try:
         config = parse_simple_toml(config_path)
-        hooks = load_json(hooks_path)
+        config_text = config_path.read_text(encoding="utf-8")
+        hooks_json_text = hooks_path.read_text(encoding="utf-8") if hooks_path.is_file() else ""
         policy = load_json(policy_path)
         schema = load_json(schema_path)
         load_json(decision_schema_path)
@@ -86,7 +125,9 @@ def build_probe(home: Path) -> tuple[int, dict[str, Any] | None, list[str]]:
     observable = bool(sandbox_mode or approval_policy)
     observable_reason = "config declares sandbox or approval fields" if observable else "sandbox_mode and approval_policy are not declared in config.toml"
     feature_config = config.get("features", {})
-    hooks_config = hooks.get("hooks", {}) if isinstance(hooks.get("hooks"), dict) else {}
+    # DHF hooks are registered in config.toml. hooks.json belongs to other tools,
+    # so an event listed there says nothing about DHF.
+    hooks_config = managed_commands(hook_commands(config_text))
     policy_phases = policy.get("phases", {}) if isinstance(policy.get("phases"), dict) else {}
     schema_event_types = (
         schema.get("properties", {}).get("event_type", {}).get("enum", [])
@@ -107,12 +148,17 @@ def build_probe(home: Path) -> tuple[int, dict[str, Any] | None, list[str]]:
             "legacy_codex_hooks_feature": bool(feature_config.get("codex_hooks")),
         },
         "hooks": {
-            "path": str(hooks_path),
+            "path": str(config_path),
             "enabled": hooks_feature and bool(hooks_config),
             "session_start": "SessionStart" in hooks_config,
             "pre_tool_use": "PreToolUse" in hooks_config,
             "post_tool_use": "PostToolUse" in hooks_config,
+            "registered": hooks_config,
+            "disabled": disabled_managed_commands(config_text),
+            "hooks_json_path": str(hooks_path),
+            "hooks_json_managed_commands": hooks_json_managed_commands(hooks_json_text),
         },
+        "guard_receipt": guard_receipt(home),
         "runtime": {
             "tool_policy": str(policy_path),
             "evidence_schema": str(schema_path),
@@ -141,6 +187,14 @@ def render_markdown(payload: dict[str, Any]) -> str:
             f"- hooks_enabled: `{payload['hooks']['enabled']}`",
             f"- pre_tool_use: `{payload['hooks']['pre_tool_use']}`",
             f"- post_tool_use: `{payload['hooks']['post_tool_use']}`",
+            f"- hooks_source: `{payload['hooks']['path']}`",
+            f"- hooks_disabled: `{payload['hooks']['disabled']}`",
+            f"- hooks_json_managed_commands: `{payload['hooks']['hooks_json_managed_commands']}`",
+            f"- guard_receipt_present: `{payload['guard_receipt']['present']}`",
+            f"- guard_last_invoked_at: `{payload['guard_receipt'].get('last_invoked_at')}`",
+            f"- guard_invocations: `{payload['guard_receipt'].get('invocations')}`",
+            f"- guard_blocks: `{payload['guard_receipt'].get('blocks')}`",
+            f"- guard_receipt_matches_installed_guard: `{payload['guard_receipt'].get('matches_installed_guard')}`",
             f"- policy_phases_present: `{payload['runtime']['policy_phases_present']}`",
             f"- evidence_verification_event_present: `{payload['runtime']['evidence_verification_event_present']}`",
             f"- split_evidence_schemas_present: `{payload['runtime']['split_evidence_schemas_present']}`",
