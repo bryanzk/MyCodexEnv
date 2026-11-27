@@ -15,7 +15,10 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 CORE = Path("dhf/core/guard_core.py")
-ADAPTERS = (Path("codex/hooks/harness_guard.py"),)
+ADAPTERS = (
+    Path("codex/hooks/harness_guard.py"),
+    Path("dhf/adapters/claude_code/dhf_guard.py"),
+)
 BODY_MARKER = "# --- core body:"
 BEGIN_MARKER = "# --- BEGIN DHF GUARD CORE "
 END_MARKER = "# --- END DHF GUARD CORE ---"

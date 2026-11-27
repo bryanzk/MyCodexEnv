@@ -5825,7 +5825,7 @@ def test_dhf_conformance_table_and_version_rule():
             "a cell without receipts must not show evidence")
 
     code, out, err = run([sys.executable, str(HARNESS_STATUS), "status", "--conformance", "--host-version", "0.155.1"], cwd=ROOT)
-    require(code == 0 and "## restrict: enforced_verified" in out and "## thread: registered_unverified" in out,
+    require(code == 0 and "## restrict: enforced_verified" in out and "## thread: enforced_verified" in out,
             f"harness_status --conformance must print every function: {err or out}")
 
     with tempfile.TemporaryDirectory() as tmp:
@@ -6065,6 +6065,217 @@ def test_guard_core_is_host_neutral_and_bundled():
         require(build_guard_bundle.stale_adapters(stale_root) == list(build_guard_bundle.ADAPTERS),
                 "a core change that is not re-inlined must be reported as stale")
     print("[PASS] guard core is host-neutral and bundled into the Codex adapter")
+
+
+def test_claude_code_guard_adapter():
+    """The Claude Code adapter: same core, this host's tool names, response format, and fault rule (SHI-627)."""
+    adapter = ROOT / "dhf" / "adapters" / "claude_code" / "dhf_guard.py"
+    fragment_path = ROOT / "dhf" / "adapters" / "claude_code" / "settings.fragment.json"
+    installer = ROOT / "scripts" / "install_claude_code_guard.py"
+    source = adapter.read_text(encoding="utf-8")
+    ast.parse(source, filename=str(adapter), feature_version=(3, 9))
+    sys.path.insert(0, str(ROOT / "scripts"))
+    try:
+        import build_guard_bundle
+    finally:
+        sys.path.pop(0)
+    require(Path("dhf/adapters/claude_code/dhf_guard.py") in build_guard_bundle.ADAPTERS,
+            "the Claude Code adapter must be a bundle target")
+    body = build_guard_bundle.core_body((ROOT / "dhf" / "core" / "guard_core.py").read_text(encoding="utf-8"))
+    require(body in source, "the Claude Code adapter must contain the core body verbatim")
+    adapter_only = source.replace(body, "")
+    for word in ("apply_patch", "CODEX_HOME", "codex"):
+        require(word not in adapter_only, f"the Claude Code adapter must not carry another host's vocabulary: {word!r}")
+
+    fragment = json.loads(fragment_path.read_text(encoding="utf-8"))
+    groups = fragment["hooks"]["PreToolUse"]
+    by_matcher = {group["matcher"]: group["hooks"][0] for group in groups}
+    require(set(by_matcher) == {"Write|Edit|MultiEdit|NotebookEdit", "Read|Glob|Grep"},
+            f"the registration must be one write group and one read group: {sorted(by_matcher)}")
+    require(by_matcher["Write|Edit|MultiEdit|NotebookEdit"].get("onFailure") == "block",
+            "a Guard that cannot start or times out must block write calls (owner decision 2026-11-26)")
+    require("onFailure" not in by_matcher["Read|Glob|Grep"],
+            "a Guard that cannot start must not block read calls")
+    require(all(".claude/hooks/dhf_guard.py" in hook["command"] and hook["type"] == "command" for hook in by_matcher.values()),
+            "both groups must run the installed adapter")
+
+    def denied(code):
+        return {"hookSpecificOutput": {"hookEventName": "PreToolUse", "permissionDecision": "deny",
+                                       "permissionDecisionReason": f"[harness] {code}"}}
+
+    interpreters = [sys.executable]
+    if Path("/usr/bin/python3").exists():
+        interpreters.append("/usr/bin/python3")
+    with tempfile.TemporaryDirectory() as tmp:
+        tmp_path = Path(tmp).resolve()
+        home = tmp_path / "home"
+        project = tmp_path / "project"
+        (home / ".claude").mkdir(parents=True)
+        (home / ".ssh").mkdir()
+        write(home / ".ssh" / "id_ed25519", "secret")
+        write(home / ".claude" / ".credentials.json", "{}")
+        (project / ".claude" / "hooks").mkdir(parents=True)
+        write(project / ".claude" / "settings.json", "{}")
+        write(project / "a.txt", "x")
+        env = {key: value for key, value in os.environ.items() if key not in {"CLAUDE_CONFIG_DIR", "CLAUDE_CODE_REMOTE"}}
+        env.update({"HOME": str(home), "CLAUDE_PROJECT_DIR": str(project)})
+
+        def call(tool, tool_input, script=adapter, interpreter=sys.executable, environment=env):
+            payload = {"hook_event_name": "PreToolUse", "tool_name": tool, "tool_input": tool_input,
+                       "cwd": str(project), "session_id": "probe"}
+            code, out, err = run_with_input([interpreter, str(script)], json.dumps(payload), env=environment)
+            require(code == 0, f"the adapter must exit 0 so the host reads its decision ({tool}): {err}")
+            return (json.loads(out) if out else {}), err
+
+        edit = {"old_string": "x", "new_string": "y"}
+        cases = [
+            ("ordinary edit", "Edit", {"file_path": str(project / "a.txt"), **edit}, {}),
+            ("project settings", "Edit", {"file_path": str(project / ".claude" / "settings.json"), **edit}, denied("active_control_plane_mutation")),
+            ("project local settings", "Write", {"file_path": str(project / ".claude" / "settings.local.json"), "content": "{}"}, denied("active_control_plane_mutation")),
+            ("project hook, relative path", "Write", {"file_path": ".claude/hooks/new.py", "content": "x"}, denied("active_control_plane_mutation")),
+            ("project hook, variable path", "Write", {"file_path": "$CLAUDE_PROJECT_DIR/.claude/hooks/new.py", "content": "x"}, denied("active_control_plane_mutation")),
+            ("user settings", "MultiEdit", {"file_path": "~/.claude/settings.json", "edits": [edit]}, denied("active_control_plane_mutation")),
+            ("receipt directory", "Write", {"file_path": str(home / ".claude" / "dhf" / "guard-receipt.json"), "content": "{}"}, denied("active_control_plane_mutation")),
+            ("notebook in hooks", "NotebookEdit", {"notebook_path": str(project / ".claude" / "hooks" / "n.ipynb"), "new_source": "x"}, denied("active_control_plane_mutation")),
+            ("shell startup file", "Write", {"file_path": str(home / ".zshrc"), "content": "x"}, denied("os_persistence_mutation")),
+            ("read settings", "Read", {"file_path": str(project / ".claude" / "settings.json")}, {}),
+            ("read private key", "Read", {"file_path": str(home / ".ssh" / "id_ed25519")}, denied("credential_target_access")),
+            ("read host credentials", "Read", {"file_path": str(home / ".claude" / ".credentials.json")}, denied("credential_target_access")),
+            ("content search in .ssh", "Grep", {"pattern": "x", "path": str(home / ".ssh")}, denied("credential_target_access")),
+            ("content search of home", "Grep", {"pattern": "x", "path": "~"}, denied("credential_target_access")),
+            ("content search of project", "Grep", {"pattern": "x"}, {}),
+            ("name search in .ssh", "Glob", {"pattern": "*", "path": str(home / ".ssh")}, {}),
+            ("instruction file", "Write", {"file_path": str(project / "CLAUDE.md"), "content": "x"}, {}),
+            ("skill file", "Write", {"file_path": str(project / ".claude" / "skills" / "s" / "SKILL.md"), "content": "x"}, {}),
+            ("shell call", "Bash", {"command": "rm -rf .claude"}, {}),
+            ("lowercase name is another tool", "write", {"file_path": str(project / ".claude" / "settings.json"), "content": "x"}, {}),
+            ("unparsable write", "Write", {"path": str(project / ".claude" / "settings.json")}, {}),
+        ]
+        for label, tool, tool_input, expected in cases:
+            result, err = call(tool, tool_input)
+            require(result == expected, f"Claude Code adapter, {label}: got {result}, expected {expected} ({err})")
+
+        receipt = json.loads((home / ".claude" / "dhf" / "guard-receipt.json").read_text(encoding="utf-8"))
+        blocks = sum(1 for _, _, _, expected in cases if expected)
+        require(receipt["invocations"] == len(cases) and receipt["blocks"] == blocks and receipt["host"] == "claude-code"
+                and receipt["unrecognized_mutations"] == 1 and receipt["last_unrecognized"]["tool_name"] == "Write"
+                and receipt["remote"] is False and receipt["project_dir"] == str(project),
+                f"the adapter receipt must count every call, block, and unrecognized write: {receipt}")
+        evidence_files = list((home / ".claude" / "dhf" / "evidence").glob("*.jsonl"))
+        require(len(evidence_files) == 1 and len(evidence_files[0].read_text(encoding="utf-8").splitlines()) == blocks,
+                "every block must append one evidence record")
+        require("secret" not in (home / ".claude" / "dhf" / "guard-receipt.json").read_text(encoding="utf-8"),
+                "the receipt must not carry file content")
+
+        linked = tmp_path / "linked-project"
+        shared = tmp_path / "shared"
+        (linked / ".claude").mkdir(parents=True)
+        (shared / "hooks").mkdir(parents=True)
+        write(shared / "settings.json", "{}")
+        os.symlink(shared / "settings.json", linked / ".claude" / "settings.json")
+        os.symlink(shared / "hooks", linked / ".claude" / "hooks")
+        linked_env = {**env, "CLAUDE_PROJECT_DIR": str(linked)}
+        for label, target in (
+            ("settings symlink", linked / ".claude" / "settings.json"),
+            ("settings symlink destination", shared / "settings.json"),
+            ("file under the hook directory symlink", linked / ".claude" / "hooks" / "new.py"),
+            ("file under the hook directory destination", shared / "hooks" / "new.py"),
+        ):
+            payload = {"hook_event_name": "PreToolUse", "tool_name": "Write", "cwd": str(linked),
+                       "tool_input": {"file_path": str(target), "content": "x"}}
+            code, out, err = run_with_input([sys.executable, str(adapter)], json.dumps(payload), env=linked_env)
+            require(code == 0 and out and json.loads(out) == denied("active_control_plane_mutation"),
+                    f"a symlinked control file must be protected under both names ({label}): {out!r} {err!r}")
+
+        linked_home = tmp_path / "linked-home"
+        shared_keys = tmp_path / "shared-keys"
+        (linked_home / ".claude").mkdir(parents=True)
+        shared_keys.mkdir()
+        write(shared_keys / "id_ed25519", "secret")
+        os.symlink(shared_keys, linked_home / ".ssh")
+        linked_home_env = {**env, "HOME": str(linked_home)}
+        for label, root in (("through the .ssh symlink", linked_home / ".ssh"), ("at the symlink destination", shared_keys),
+                            ("above the symlink destination", tmp_path)):
+            payload = {"hook_event_name": "PreToolUse", "tool_name": "Grep", "cwd": str(project),
+                       "tool_input": {"pattern": "x", "path": str(root)}}
+            code, out, err = run_with_input([sys.executable, str(adapter)], json.dumps(payload), env=linked_home_env)
+            require(code == 0 and out and json.loads(out) == denied("credential_target_access"),
+                    f"a content search that reaches a symlinked key directory must be denied ({label}): {out!r} {err!r}")
+
+        shared_aws = tmp_path / "shared-aws-credentials"
+        write(shared_aws, "secret")
+        (linked_home / ".aws").mkdir()
+        os.symlink(shared_aws, linked_home / ".aws" / "credentials")
+        write(shared_keys / "id_ed25519.pub", "public")
+        for label, tool, tool_input, expected in (
+            ("key through the .ssh symlink", "Read", {"file_path": str(linked_home / ".ssh" / "id_ed25519")}, denied("credential_target_access")),
+            ("key at the symlink destination", "Read", {"file_path": str(shared_keys / "id_ed25519")}, denied("credential_target_access")),
+            ("key written at the symlink destination", "Write", {"file_path": str(shared_keys / "id_ed25519"), "content": "x"}, denied("credential_target_access")),
+            ("public key at the symlink destination", "Read", {"file_path": str(shared_keys / "id_ed25519.pub")}, {}),
+            ("cloud credentials at the symlink destination", "Read", {"file_path": str(shared_aws)}, denied("credential_target_access")),
+        ):
+            payload = {"hook_event_name": "PreToolUse", "tool_name": tool, "cwd": str(project), "tool_input": tool_input}
+            code, out, err = run_with_input([sys.executable, str(adapter)], json.dumps(payload), env=linked_home_env)
+            require(code == 0 and (json.loads(out) if out else {}) == expected,
+                    f"a credential behind a symlink must be protected under both names ({label}): {out!r} {err!r}")
+
+        decision_def = "def decision(payload: dict[str, object]) -> dict[str, object]:\n"
+        end_marker = "# --- END DHF GUARD CORE ---\n"
+        require(source.count(decision_def) == 1 and source.count(end_marker) == 1,
+                "fault fixtures need the adapter decision seam and the core end marker")
+        faults = {
+            "decision_time": source.replace(decision_def, decision_def + "    raise RuntimeError('injected decision fault')\n"),
+            "import_time": source.replace(end_marker, end_marker + "raise RuntimeError('injected import fault')\n"),
+        }
+        for fault_name, fault_source in faults.items():
+            faulty = tmp_path / f"{fault_name}-dhf_guard.py"
+            faulty.write_text(fault_source, encoding="utf-8")
+            for interpreter in interpreters:
+                for tool, tool_input, expected in (
+                    ("Write", {"file_path": str(project / "a.txt"), "content": "x"}, denied("guard_fault")),
+                    ("Edit", {"file_path": str(project / "a.txt"), **edit}, denied("guard_fault")),
+                    ("NotebookEdit", {"notebook_path": str(project / "n.ipynb")}, denied("guard_fault")),
+                    ("Read", {"file_path": str(project / "a.txt")}, {}),
+                    ("Bash", {"command": "true"}, {}),
+                ):
+                    result, err = call(tool, tool_input, script=faulty, interpreter=interpreter)
+                    label = f"{fault_name}/{tool} under {interpreter}"
+                    require(result == expected, f"faulted Claude Code adapter returned {result}, expected {expected} ({label})")
+                    require("injected" in err, f"the fault must stay visible on stderr ({label}): {err!r}")
+        code, out, err = run_with_input([sys.executable, str(adapter)], "not json", env=env)
+        require(code == 0 and out == "", f"an unreadable payload must leave the call to the host: {out!r} {err!r}")
+
+        target = tmp_path / "target-repo"
+        (target / ".claude").mkdir(parents=True)
+        other = {"matcher": "Bash", "hooks": [{"type": "command", "command": "echo other"}]}
+        write(target / ".claude" / "settings.json",
+              json.dumps({"permissions": {"allow": ["mcp__linear"]}, "hooks": {"PreToolUse": [other], "Stop": []}}))
+        code, out, err = run([sys.executable, str(installer), "--repo", str(target)], cwd=ROOT)
+        require(code == 1 and "GUARD:missing" in out and "SETTINGS:stale" in out,
+                f"the installer must report and change nothing by default: {out} {err}")
+        require(not (target / ".claude" / "hooks").exists(), "the installer must not write without --write")
+        for _ in range(2):
+            code, out, err = run([sys.executable, str(installer), "--repo", str(target), "--write"], cwd=ROOT)
+            require(code == 0 and "claude code guard installed and current" in out, f"installer --write failed: {out} {err}")
+        installed = json.loads((target / ".claude" / "settings.json").read_text(encoding="utf-8"))
+        require(installed["permissions"] == {"allow": ["mcp__linear"]} and installed["hooks"]["Stop"] == []
+                and installed["hooks"]["PreToolUse"] == [other, *groups],
+                f"the installer must keep foreign settings and add its two groups exactly once: {installed}")
+        require((target / ".claude" / "hooks" / "dhf_guard.py").read_text(encoding="utf-8") == source,
+                "the installed adapter must equal the source adapter")
+        code, out, err = run([sys.executable, str(installer), "--repo", str(target), "--check"], cwd=ROOT)
+        require(code == 0, f"a fresh install must pass --check: {out} {err}")
+
+        audit = {"type": "command", "command": "echo audit"}
+        shared_group = {"matcher": "Write|Edit|MultiEdit|NotebookEdit", "hooks": [audit, groups[0]["hooks"][0]]}
+        write(target / ".claude" / "settings.json", json.dumps({"hooks": {"PreToolUse": [shared_group, groups[1]]}}))
+        code, out, err = run([sys.executable, str(installer), "--repo", str(target), "--write"], cwd=ROOT)
+        require(code == 0, f"installer --write failed on a shared matcher group: {out} {err}")
+        installed = json.loads((target / ".claude" / "settings.json").read_text(encoding="utf-8"))
+        require(installed["hooks"]["PreToolUse"] == [{"matcher": shared_group["matcher"], "hooks": [audit]}, *groups],
+                f"a foreign hook that shares a matcher group with the Guard must survive: {installed}")
+
+    print("[PASS] Claude Code guard adapter: decisions, receipt, fault rule, registration, installer")
 
 
 def test_harness_guard_fault_blocks_mutations():
@@ -10071,10 +10282,17 @@ def test_session_bearing_hook():
             "print(json.dumps({'phase': 'validation', 'next_safe_task': 'run gate', "
             "'boundary_verdict': 'safe', 'dirty_status': 'clean'}))\n",
         )
+        bearing_home = Path(tmp) / "codex-home"
+        (bearing_home / "harness").mkdir(parents=True)
+        bearing_env = {**os.environ, "CODEX_HOME": str(bearing_home)}
+        bearing_receipt = bearing_home / "harness" / "bearing-receipt.json"
         started = time.monotonic()
-        code, out, err = run_with_input([sys.executable, str(SESSION_BEARING)], json.dumps({"cwd": str(repo)}))
+        code, out, err = run_with_input([sys.executable, str(SESSION_BEARING)], json.dumps({"cwd": str(repo)}), env=bearing_env)
         elapsed = time.monotonic() - started
         require(code == 0, f"session bearing injection failed: {err or out}")
+        receipt = json.loads(bearing_receipt.read_text(encoding="utf-8"))
+        require(receipt["last_outcome"] == "delivered" and receipt["runs"] == 1 and receipt["misses"] == 0,
+                f"a delivered bearing must be recorded in the receipt: {receipt}")
         require(elapsed < 1.0, f"session bearing should stay bounded, elapsed={elapsed:.3f}s")
         response = json.loads(out)
         require(response["continue"] is True, "session bearing must not block SessionStart")
@@ -10093,7 +10311,7 @@ def test_session_bearing_hook():
             "print(json.dumps({'phase': 'development', 'next_safe_task': 'continue safely', "
             "'dirty_status': 'dirty'}))\n",
         )
-        code, out, err = run_with_input([sys.executable, str(SESSION_BEARING)], json.dumps({"cwd": str(repo)}))
+        code, out, err = run_with_input([sys.executable, str(SESSION_BEARING)], json.dumps({"cwd": str(repo)}), env=bearing_env)
         require(code == 0, f"degraded session bearing should succeed: {err or out}")
         degraded_context = json.loads(out)["hookSpecificOutput"]["additionalContext"]
         for expected in [
@@ -10104,12 +10322,194 @@ def test_session_bearing_hook():
         ]:
             require(expected in degraded_context, f"degraded session bearing context missing {expected}")
 
+        write(
+            recover,
+            "import json, sys\n"
+            "if '--bearing' not in sys.argv:\n"
+            "    raise SystemExit(3)\n"
+            "print(json.dumps({'phase': 'ship', 'next_safe_task': 'fast path', "
+            "'boundary_verdict': 'safe', 'dirty_status': 'clean'}))\n",
+        )
+        code, out, err = run_with_input([sys.executable, str(SESSION_BEARING)], json.dumps({"cwd": str(repo)}), env=bearing_env)
+        require(code == 0 and "next_safe_task=fast path" in out,
+                f"session bearing must ask the recovery helper for the bounded --bearing path first: {err or out}")
+
         write(recover, "import time\ntime.sleep(1)\n")
-        code, out, err = run_with_input([sys.executable, str(SESSION_BEARING)], json.dumps({"cwd": str(repo)}))
+        code, out, err = run_with_input([sys.executable, str(SESSION_BEARING)], json.dumps({"cwd": str(repo)}), env=bearing_env)
         require(code == 0, f"failed session bearing must leave SessionStart unaffected: {err or out}")
         require(out == "" and err == "", "session bearing failures must be silent")
+        receipt = json.loads(bearing_receipt.read_text(encoding="utf-8"))
+        require(receipt["last_outcome"] == "timeout" and receipt["misses"] == 1
+                and receipt["last_miss_outcome"] == "timeout" and receipt["delivered"] == 3,
+                f"a bearing that timed out must leave a miss in the receipt: {receipt}")
+
+        write(recover, "raise SystemExit(4)\n")
+        run_with_input([sys.executable, str(SESSION_BEARING)], json.dumps({"cwd": str(repo)}), env=bearing_env)
+        receipt = json.loads(bearing_receipt.read_text(encoding="utf-8"))
+        require(receipt["last_outcome"] == "recover_failed" and receipt["misses"] == 2,
+                f"a failing recovery helper must be recorded as a miss: {receipt}")
+
+        outside = Path(tmp) / "outside"
+        outside.mkdir()
+        runs_before = receipt["runs"]
+        run_with_input([sys.executable, str(SESSION_BEARING)], json.dumps({"cwd": str(outside)}), env=bearing_env)
+        require(json.loads(bearing_receipt.read_text(encoding="utf-8"))["runs"] == runs_before,
+                "a session outside any repository must not touch the bearing receipt")
+
+        no_harness_home = Path(tmp) / "bare-home"
+        no_harness_home.mkdir()
+        write(recover, "import time\ntime.sleep(1)\n")
+        code, out, err = run_with_input([sys.executable, str(SESSION_BEARING)], json.dumps({"cwd": str(repo)}),
+                                        env={**os.environ, "CODEX_HOME": str(no_harness_home)})
+        require(code == 0 and out == "" and err == "" and not (no_harness_home / "harness").exists(),
+                "session bearing must not create the harness directory to write its receipt")
 
     print("[PASS] session bearing hook")
+
+
+def test_session_bearing_large_evidence_store():
+    """The real recovery helper must deliver a bearing inside the hook budget when the
+    evidence store is large. The full recovery read every record of every day and took
+    seconds on the owner host, so the hook timed out and printed nothing (SHI-640)."""
+    sys.path.insert(0, str(ROOT / "scripts"))
+    import harness_status_recover as recover_module
+
+    with tempfile.TemporaryDirectory() as tmp:
+        tmp_path = Path(tmp)
+        repo = tmp_path / "repo"
+        (repo / "docs").mkdir(parents=True)
+        shutil.copytree(ROOT / "scripts", repo / "scripts", ignore=shutil.ignore_patterns("__pycache__"))
+        shutil.copy2(ROOT / "docs" / "harness-state.md", repo / "docs" / "harness-state.md")
+        shutil.copy2(ROOT / "docs" / "repo-index.md", repo / "docs" / "repo-index.md")
+        write(repo / ".gitignore", "__pycache__/\n")
+        git_env = {**os.environ, "GIT_AUTHOR_NAME": "t", "GIT_AUTHOR_EMAIL": "t@example.com",
+                   "GIT_COMMITTER_NAME": "t", "GIT_COMMITTER_EMAIL": "t@example.com"}
+        for command in (["git", "init", "-q", str(repo)], ["git", "-C", str(repo), "add", "-A"],
+                        ["git", "-C", str(repo), "commit", "-q", "-m", "fixture"]):
+            proc = subprocess.run(command, capture_output=True, text=True, check=False, env=git_env)
+            require(proc.returncode == 0, f"bearing fixture git step failed: {command}: {proc.stderr}")
+
+        home = tmp_path / "codex-home"
+        evidence = home / "harness" / "evidence"
+        evidence.mkdir(parents=True)
+        padding = "x" * 400
+        other_cwds = ["/tmp/elsewhere", str(tmp_path / "another-repo"), str(repo)]
+        today = dt.date.today()
+        for day in range(60):
+            date = (today - dt.timedelta(days=day)).isoformat()
+            lines = [
+                json.dumps({"event_type": "tool_call", "evidence_kind": "routine", "cwd": other_cwds[index % 3],
+                            "timestamp": f"{date}T10:{index % 60:02d}:00+00:00", "exit_code": 0, "pad": padding})
+                for index in range(700)
+            ]
+            write(evidence / f"{date}.jsonl", "\n".join(lines) + "\n")
+
+        bounded, complete = recover_module.latest_verification_bounded(home, repo, 5.0)
+        require(bounded is None and complete is True,
+                f"a store without a verification record must scan to the end when the budget allows: {bounded} {complete}")
+        started = time.perf_counter()
+        bounded, complete = recover_module.latest_verification_bounded(home, repo, 0.0)
+        require(bounded is None and complete is False and time.perf_counter() - started < 0.5,
+                "an exhausted scan budget must stop the scan and say that it is incomplete")
+
+        big_home = tmp_path / "one-big-day"
+        big_evidence = big_home / "harness" / "evidence"
+        big_evidence.mkdir(parents=True)
+        foreign = json.dumps({"event_type": "verification_result", "evidence_kind": "decision", "cwd": "/tmp/elsewhere",
+                              "timestamp": f"{today.isoformat()}T09:00:00+00:00", "exit_code": 0, "pad": padding})
+        write(big_evidence / f"{today.isoformat()}.jsonl", "\n".join([foreign] * 150000) + "\n")
+        started = time.perf_counter()
+        bounded, complete = recover_module.latest_verification_bounded(big_home, repo, 0.05)
+        spent = time.perf_counter() - started
+        require(bounded is None and complete is False and spent < 0.3,
+                f"one very large day must not overrun the scan budget: complete={complete} seconds={spent:.3f}")
+        bounded, complete = recover_module.latest_verification_bounded(big_home, repo, 30.0)
+        require(bounded is None and complete is True, "with enough budget the large day must be scanned to its end")
+
+        older = (today - dt.timedelta(days=5)).isoformat()
+        newer = (today - dt.timedelta(days=2)).isoformat()
+        for date, command in ((older, "old gate"), (newer, "new gate")):
+            with (evidence / f"{date}.jsonl").open("a", encoding="utf-8") as handle:
+                handle.write(json.dumps({"event_type": "verification_result", "evidence_kind": "decision", "cwd": str(repo),
+                                         "timestamp": f"{date}T12:00:00+00:00", "exit_code": 0, "command": command}) + "\n")
+                handle.write(json.dumps({"event_type": "verification_result", "evidence_kind": "decision", "cwd": "/tmp/elsewhere",
+                                         "timestamp": f"{date}T13:00:00+00:00", "exit_code": 1, "command": "foreign"}) + "\n")
+        bounded, complete = recover_module.latest_verification_bounded(home, repo)
+        _, full_latest, _, _ = recover_module.latest_evidence(home, repo)
+        require(complete is True and bounded == full_latest and bounded["command"] == "new gate",
+                f"the bounded scan must return the same newest verification as the full scan: {bounded} vs {full_latest}")
+
+        env = {**os.environ, "CODEX_HOME": str(home)}
+        code, out, err = run([sys.executable, str(repo / "scripts" / "harness_recover.py"), "--repo-root", str(repo),
+                              "--codex-home", str(home), "--bearing", "--json"], env=env)
+        require(code == 0, f"--bearing recovery failed: {err or out}")
+        bearing = json.loads(out)
+        code, out, err = run([sys.executable, str(repo / "scripts" / "harness_recover.py"), "--repo-root", str(repo),
+                              "--codex-home", str(home), "--boundary", "--json"], env=env)
+        require(code == 0, f"--boundary recovery failed: {err or out}")
+        full = json.loads(out)
+        for key in ("phase", "next_safe_task", "dirty_status", "boundary_verdict", "boundary_reason"):
+            require(bearing[key] == full[key], f"--bearing and --boundary disagree on {key}: {bearing[key]!r} vs {full[key]!r}")
+        require(bearing["bearing_only"] is True and "conversion_health" not in bearing,
+                "--bearing must not compute the full recovery payload")
+
+        delivered = False
+        attempts = []
+        for _ in range(3):
+            started = time.perf_counter()
+            code, out, err = run_with_input([sys.executable, str(SESSION_BEARING)], json.dumps({"cwd": str(repo)}), env=env)
+            attempts.append(round(time.perf_counter() - started, 3))
+            require(code == 0 and err == "", f"session bearing must stay silent on stderr: {err}")
+            if out:
+                context = json.loads(out)["hookSpecificOutput"]["additionalContext"]
+                require(f"next_safe_task={' '.join(str(full['next_safe_task']).split())}" in context,
+                        f"the delivered bearing must carry the State Log's next safe task: {context}")
+                delivered = True
+                break
+        require(delivered, f"session bearing must deliver inside its budget with a large evidence store: attempts={attempts}")
+        receipt = json.loads((home / "harness" / "bearing-receipt.json").read_text(encoding="utf-8"))
+        require(receipt["last_outcome"] == "delivered", f"the receipt must record the delivery: {receipt}")
+
+        runs_before = receipt["runs"]
+        parallel = [
+            subprocess.Popen([sys.executable, str(SESSION_BEARING)], stdin=subprocess.PIPE, stdout=subprocess.DEVNULL,
+                             stderr=subprocess.DEVNULL, text=True, env=env)
+            for _ in range(12)
+        ]
+        for process in parallel:
+            process.stdin.write(json.dumps({"cwd": str(repo)}))
+            process.stdin.close()
+        for process in parallel:
+            process.wait(timeout=30)
+        receipt = json.loads((home / "harness" / "bearing-receipt.json").read_text(encoding="utf-8"))
+        require(receipt["runs"] == runs_before + len(parallel)
+                and receipt["delivered"] + receipt["misses"] == receipt["runs"],
+                f"session starts that overlap must each be counted in the receipt: before={runs_before} {receipt}")
+
+        holder = subprocess.Popen(
+            [sys.executable, "-c",
+             "import fcntl, sys, time\n"
+             "handle = open(sys.argv[1], 'a')\n"
+             "fcntl.flock(handle, fcntl.LOCK_EX)\n"
+             "print('held', flush=True)\n"
+             "time.sleep(30)\n",
+             str(home / "harness" / ".bearing-receipt.json.lock")],
+            stdout=subprocess.PIPE, text=True)
+        try:
+            require(holder.stdout.readline().strip() == "held", "the lock holder fixture did not start")
+            runs_locked = receipt["runs"]
+            started = time.perf_counter()
+            code, out, err = run_with_input([sys.executable, str(SESSION_BEARING)], json.dumps({"cwd": str(repo)}), env=env)
+            waited = time.perf_counter() - started
+            require(code == 0 and err == "" and waited < 2.0,
+                    f"a receipt lock held by another session must not keep the hook waiting: {waited:.3f}s {err!r}")
+            require(json.loads((home / "harness" / "bearing-receipt.json").read_text(encoding="utf-8"))["runs"] == runs_locked,
+                    "a hook that could not take the receipt lock must skip the receipt update")
+        finally:
+            holder.kill()
+            holder.wait()
+
+    print(f"[PASS] session bearing with a large evidence store (attempts={attempts})")
 
 
 def test_harness_recovery_smoke():
@@ -14147,6 +14547,7 @@ TESTS = [
     test_status_reports_unrecognized_guard_calls,
     test_harness_guard_governed_profile,
     test_guard_core_is_host_neutral_and_bundled,
+    test_claude_code_guard_adapter,
     test_harness_guard_fault_blocks_mutations,
     test_harness_guard_policy_decisions,
     test_harness_guard_invocation_receipt,
@@ -14189,6 +14590,7 @@ TESTS = [
     test_compaction_probe_incremental_scan,
     test_context_meter_persistence,
     test_session_bearing_hook,
+    test_session_bearing_large_evidence_store,
     test_harness_recovery_smoke,
     test_harness_env_probe,
     test_sync_claude_injects_integration_block,

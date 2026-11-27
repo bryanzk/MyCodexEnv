@@ -68,6 +68,32 @@ def load_json(path: Path) -> dict[str, Any]:
     return payload
 
 
+def bearing_receipt(home: Path) -> dict[str, Any]:
+    """Summarize the session-bearing hook's receipt; absence means no run inside a governed repository yet."""
+    receipt_path = home / "harness" / "bearing-receipt.json"
+    summary: dict[str, Any] = {"path": str(receipt_path), "present": False}
+    try:
+        receipt = json.loads(receipt_path.read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return summary
+    if not isinstance(receipt, dict):
+        return summary
+    summary.update(
+        {
+            "present": True,
+            "last_run_at": receipt.get("last_run_at"),
+            "last_outcome": receipt.get("last_outcome"),
+            "last_elapsed_seconds": receipt.get("last_elapsed_seconds"),
+            "runs": receipt.get("runs"),
+            "delivered": receipt.get("delivered"),
+            "misses": receipt.get("misses"),
+            "last_miss_at": receipt.get("last_miss_at"),
+            "last_miss_outcome": receipt.get("last_miss_outcome"),
+        }
+    )
+    return summary
+
+
 def guard_receipt(home: Path) -> dict[str, Any]:
     """Summarize the Guard's own invocation receipt; absence means it has not run."""
     receipt_path = home / "harness" / "guard-receipt.json"
@@ -162,6 +188,7 @@ def build_probe(home: Path) -> tuple[int, dict[str, Any] | None, list[str]]:
             "hooks_json_managed_commands": hooks_json_managed_commands(hooks_json_text),
         },
         "guard_receipt": guard_receipt(home),
+        "bearing_receipt": bearing_receipt(home),
         "runtime": {
             "tool_policy": str(policy_path),
             "evidence_schema": str(schema_path),
@@ -201,6 +228,12 @@ def render_markdown(payload: dict[str, Any]) -> str:
             f"- guard_unrecognized_mutations: `{payload['guard_receipt'].get('unrecognized_mutations')}`",
             f"- guard_last_unrecognized: `{payload['guard_receipt'].get('last_unrecognized')}`",
             f"- guard_receipt_matches_installed_guard: `{payload['guard_receipt'].get('matches_installed_guard')}`",
+            # A session start inside a governed repository that delivered no bearing is a miss.
+            f"- bearing_receipt_present: `{payload['bearing_receipt']['present']}`",
+            f"- bearing_last_outcome: `{payload['bearing_receipt'].get('last_outcome')}`",
+            f"- bearing_runs: `{payload['bearing_receipt'].get('runs')}`",
+            f"- bearing_misses: `{payload['bearing_receipt'].get('misses')}`",
+            f"- bearing_last_miss: `{payload['bearing_receipt'].get('last_miss_outcome')} at {payload['bearing_receipt'].get('last_miss_at')}`",
             f"- policy_phases_present: `{payload['runtime']['policy_phases_present']}`",
             f"- evidence_verification_event_present: `{payload['runtime']['evidence_verification_event_present']}`",
             f"- split_evidence_schemas_present: `{payload['runtime']['split_evidence_schemas_present']}`",

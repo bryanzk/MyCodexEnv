@@ -67,6 +67,21 @@
       "audience": ["codex", "human"]
     },
     {
+      "path": "dhf/adapters/claude_code/dhf_guard.py",
+      "role": "Claude Code adapter of the Guard: PreToolUse hook installed into a repository's .claude/hooks",
+      "audience": ["codex", "human"]
+    },
+    {
+      "path": "scripts/install_claude_code_guard.py",
+      "role": "installs the Claude Code Guard adapter and its two hook registrations into one repository",
+      "audience": ["codex", "human"]
+    },
+    {
+      "path": "docs/dhf-claude-code-adapter.md",
+      "role": "Claude Code adapter reference: session kinds, tool mapping, protected locations, fault rule, install",
+      "audience": ["codex", "human"]
+    },
+    {
       "path": "docs/dhf-conformance.json",
       "role": "host conformance table: seven functions by host, probes, and probe receipts",
       "audience": ["codex", "human"]
