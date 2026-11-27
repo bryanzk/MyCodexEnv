@@ -89,7 +89,7 @@
       <h2 id="statuses">四种状态，不能用一个含糊的“完成”代替</h2>
       <div class="dhf-status-grid">
         <article class="dhf-status-card status-source"><h3>仓库源码：已实现</h3><p>经审计的本地 <code>main</code> 包含：不依赖宿主的守卫核心，以及 Codex 和 Claude Code 两个适配器；生命周期路由、hooks、证据 schema、恢复、checkpoint、ledger、transition store、压缩观察、session bearing、上下文计量、宿主一致性表，以及一级和二级行为评测。</p></article>
-        <article class="dhf-status-card status-runtime"><h3>本机运行时一致性：已于 2026-08-10 验证</h3><p>完整的比对（24/24 个受管文件与源码一致）上一次是 2026-08-10 做的，之后没有重做。更新的证据范围更窄：2026-11-27 在一台机器上做了一次可回滚的七目标推广，这七个文件与源码一致，Codex CLI 0.155.1 对七个功能各通过了一条不产生副作用的探测。这些是本机回执，不是生产上线。</p></article>
+        <article class="dhf-status-card status-runtime"><h3>本机运行时一致性：已于 2026-08-10 验证</h3><p>完整的比对（24/24 个受管文件与源码一致）上一次是 2026-08-10 做的，之后没有重做。更新的证据范围更窄：2026-11-27 在一台机器上做了一次可回滚的七目标推广，这七个文件与源码一致，Codex CLI 0.172.0 对七个功能各通过了一条不产生副作用的探测。这些是本机回执，不是生产上线。</p></article>
         <article class="dhf-status-card status-public"><h3>公开页面：已于 2026-11-27 按一致性表重写</h3><p>2026-08-18 到 2026-11-26 期间，这些页面描述的守卫在参考机器上每次调用都在出错。治理页、PROTECT 页和状态页现在写的是：每个宿主强制执行什么，哪些有通过的探测。这个日期是源码重写的日期；页面要等 GitHub Pages 构建完成才算当前。</p></article>
         <article class="dhf-status-card status-extract"><h3>独立 DHF 核心：尚未发布</h3><p>守卫的判断逻辑不依赖宿主，放在本仓库的 <code>dhf/core</code> 里，每个宿主一个适配器。它不是独立产品：没有独立仓库、不可变发布、tag 或上游 pin。MyCodexEnv 仍然是工作源码和使用边界。</p></article>
       </div>
@@ -101,7 +101,7 @@
         <thead><tr><th>状态</th><th>当前证据边界</th></tr></thead>
         <tbody>
           <tr><td>源码 · 2026-11-27</td><td>仓库把七个功能实现为一个不依赖宿主的核心，加上 Codex 和 Claude Code 两个适配器；规范在 <code>docs/dhf-spec.md</code>。</td></tr>
-          <tr><td>运行时 · 验证于 2026-11-27</td><td>七个目标已推广到一台运行 Codex CLI 0.155.1 的机器；七个功能各有一条通过的探测回执。这是本机运行时证据，不是生产强制。</td></tr>
+          <tr><td>运行时 · 验证于 2026-11-27</td><td>七个目标已推广到一台运行 Codex CLI 0.172.0 的机器；七个功能各有一条通过的探测回执。这是本机运行时证据，不是生产强制。</td></tr>
           <tr><td>公开发布 · 2026-11-27</td><td>公开页面已按一致性表重写。源码存在不等于已经发布。</td></tr>
           <tr><td>生产 · 未验证</td><td>不主张任何生产强制证据；宿主探测只是一台机器上的本地证据。</td></tr>
           <tr><td>客户结果 · 未验证</td><td>不主张任何已验证的客户采用、收入、定价、转化或结果。</td></tr>
@@ -114,14 +114,14 @@
       <p>只有当一条不产生副作用的探测在该宿主上通过，并且回执记在 <code>docs/dhf-conformance.json</code> 里，一格才写<strong>已验证</strong>。下表是 2026-11-27 的状态。宿主版本一变，回执就过期，要重新探测。</p>
       <p class="warning" data-dhf-conformance-stale hidden><strong>已过期：</strong> 这张表背后的探测已经超过 30 天。重新探测之前，每一格都应当看作未验证。</p>
       <table>
-        <thead><tr><th>功能</th><th>Codex CLI 0.155.1，本地</th><th>Claude Code 2.1.332，本地</th><th>Claude Code，单仓库云端会话</th><th>Claude Code，Project 里的云端线程</th></tr></thead>
+        <thead><tr><th>功能</th><th>Codex CLI 0.172.0，本地</th><th>Claude Code 2.1.332，本地</th><th>Claude Code，单仓库云端会话</th><th>Claude Code，Project 里的云端线程</th></tr></thead>
         <tbody>
-          <tr><td>Position</td><td>已验证 2026-11-26</td><td>没有适配器</td><td>没有适配器</td><td>只靠文字规则</td></tr>
-          <tr><td>Restrict</td><td>已验证 2026-11-26</td><td>已验证 2026-11-27（探测仓库）：控制面写入被拒，凭据读取被拒，写入 hook 崩溃时拦截</td><td>已验证 2026-11-27（探测仓库），同样三条探测</td><td>只靠文字规则</td></tr>
-          <tr><td>Observe</td><td>已验证 2026-11-26</td><td>没有适配器</td><td>没有适配器</td><td>只靠文字规则</td></tr>
+          <tr><td>Position</td><td>已验证 2026-11-27</td><td>没有适配器</td><td>没有适配器</td><td>只靠文字规则</td></tr>
+          <tr><td>Restrict</td><td>已验证 2026-11-27</td><td>已验证 2026-11-27（探测仓库）：控制面写入被拒，凭据读取被拒，写入 hook 崩溃时拦截</td><td>已验证 2026-11-27（探测仓库），同样三条探测</td><td>只靠文字规则</td></tr>
+          <tr><td>Observe</td><td>已验证 2026-11-27</td><td>没有适配器</td><td>没有适配器</td><td>只靠文字规则</td></tr>
           <tr><td>Thread</td><td>已验证 2026-11-27</td><td>没有适配器</td><td>没有适配器</td><td>只靠文字规则</td></tr>
-          <tr><td>Empower</td><td>已验证 2026-11-26；只留审计痕迹，不是硬边界</td><td>没有适配器</td><td>没有适配器</td><td>只靠文字规则</td></tr>
-          <tr><td>Contain</td><td>已验证 2026-11-26；仅 governed 档</td><td>没有适配器</td><td>没有适配器</td><td>只靠文字规则</td></tr>
+          <tr><td>Empower</td><td>已验证 2026-11-27；只留审计痕迹，不是硬边界</td><td>没有适配器</td><td>没有适配器</td><td>只靠文字规则</td></tr>
+          <tr><td>Contain</td><td>已验证 2026-11-27；仅 governed 档</td><td>没有适配器</td><td>没有适配器</td><td>只靠文字规则</td></tr>
           <tr><td>Transact</td><td>已验证 2026-11-27</td><td>没有适配器</td><td>没有适配器</td><td>只靠文字规则</td></tr>
         </tbody>
       </table>
@@ -148,7 +148,7 @@
           <tr><td>Guard 与 evidence</td><td>不依赖宿主的核心在任何档位都拒绝凭据、控制面和系统持久化这三类目标。governed 档另加阶段声明检查和工作区检查。守卫自己出错时拦住写入。观察器事件、拆分的 schema、报告和反思辅助脚本都已实现。</td><td>shell 命令不解析，所以命令里的写入不会被判断。2026-08-18 到 2026-11-26 期间，已推广的守卫每次调用都出错，什么都没拦住；工程笔记里有记录。</td></tr>
           <tr><td>压缩治理</td><td>共享计数器、增量探针、只按序数的压力信号、transition CAS、W3 checkpoint 字段、边界裁决和二级一致性评测都已实现。</td><td>在参考机器上，<code>compaction_probe.py</code> 到目前为止没有一次得出结论。<code>session_bearing.py</code> 在本仓库里一直没有送达方位，直到 2026-11-27 修复；现在未送达会计入状态输出。</td></tr>
           <tr><td>验收与行为验证</td><td>具备 requirements validator、tamper-evident ledger、tier-1/2 eval、focused tests、surfaces check 与完整 test runner。</td><td>完成声明必须同时具备本次变更的新鲜完整套件和环境 verifier 收据；只有源码或 parity 不足以验收。</td></tr>
-          <tr><td>简化 profiles</td><td>有两套机制都用 <code>light</code>、<code>standard</code>、<code>governed</code> 这三个名字。提示词分发器为模型选择措辞。守卫读取的是 owner 按工作区设定的档位。</td><td>提示词分发器在参考机器上是关闭的。在守卫里，<code>standard</code> 暂时等于 <code>light</code>，<code>governed</code> 已在 Codex CLI 0.155.1 上验证。这不证明生产强制。</td></tr>
+          <tr><td>简化 profiles</td><td>有两套机制都用 <code>light</code>、<code>standard</code>、<code>governed</code> 这三个名字。提示词分发器为模型选择措辞。守卫读取的是 owner 按工作区设定的档位。</td><td>提示词分发器在参考机器上是关闭的。在守卫里，<code>standard</code> 暂时等于 <code>light</code>，<code>governed</code> 已在 Codex CLI 0.172.0 上验证。这不证明生产强制。</td></tr>
           <tr><td>独立核心</td><td><code>dhf/core</code> 里的守卫核心不出现任何宿主的名字；Codex 和 Claude Code 的适配器各带一份原样拷贝。抽取评估和前置设计定义了 copy/adapt/exclude、packet、pin、doctor、隐私和回滚的边界。</td><td>它是本仓库里的一个目录。还没有独立发布，也没有上游 pin。</td></tr>
         </tbody>
       </table>

@@ -14,19 +14,19 @@ Stable rules belong in `AGENTS.md`, `README.md`, `docs/repo-index.md`, or
   - `codex/skills/delivery-harness-framework/SKILL.md`
 - blocked_sources: none
 - unsafe_inputs: none
-- next_safe_task: SHI-633 (signal-free implementations), then 631, 635, 636, 637, 641; SHI-632 last. Owner decides later whether to narrow cloud connector tool permissions (SHI-634) and whether to install the Claude Code adapter in a working repository
+- next_safe_task: SHI-633: count compactions from the PostCompact hook instead of scanning session files, reduce the observer to failed calls, Guard decisions and verification receipts, mark Plan Governor as shadow in the conformance table; one branch, one digest approval. Then 631, 635, 636, 637, 641; SHI-632 last
 - required_commands:
   - `python3 test_runner.py`
   - `git diff --check`
   - `./scripts/verify_codex_env.sh --repo-root "$(pwd)" --codex-home "$HOME/.codex" --claude-home "$HOME/.claude"`
-- latest_checkpoint: 2026-11-27T11:33:14-05:00 SHI-627: Restrict on Claude Code is verified in the probe repository bryanzk/dhf-host-probe, locally and in a cloud session that was not opened from a Project (Claude Code 2.1.332, adapter 46a376de, which carries the SHI-642 core). Six receipts recorded; the two cells moved from registered_unverified to enforced_verified; the public status, PROTECT and spec pages say so. The adapter is not installed in any working repository
-- latest_verification: 2026-11-27T11:33:14-05:00 command=PROBE.md of bryanzk/dhf-host-probe at cf34057, run by the owner in a local CLI session and in a cloud session; python3 scripts/dhf_conformance.py check; exit_code=0; key_output=local and cloud: Write into .claude/hooks denied with active_control_plane_mutation; private-key Read denied with credential_target_access; crashed write hook blocked where onFailure=block and let through without it; conformance table consistent
+- latest_checkpoint: 2026-11-27T14:15:59-05:00 The owner upgraded Codex CLI on the reference machine; codex --version reports 0.172.0. All host probes of the seven functions were run again on it and pass on Guard a1afdd52; eight receipts recorded. 0.172.0 is added to the version allowlists only after the probes passed. Public pages and the spec now name 0.172.0. SHI-633 finding on the same host: PostCompact fires after a completed /compact (trigger manual), SessionStart then reports source compact, and PreCompact also fires when the compaction fails
+- latest_verification: 2026-11-27T14:15:59-05:00 command=codex exec host probes for restrict, observe, thread, position, empower, contain on Codex CLI 0.172.0; python3 scripts/dhf_conformance.py probe-installed --codex-home ~/.codex; exit_code=0; key_output=active_control_plane_mutation twice, guard-receipt blocks 15 to 20 over the run; governed_write_without_phase before declare and after revoke, no block while declared; governed_write_outside_workspace; bearing delivered and restated by the model; newest evidence record within seconds of the tool call; healthy=block fault_write=guard_fault fault_read=allow
 - compaction_ordinal: 0
 - transition_key: p1-2-complete
 - gate_decision: continue-to-boundary
-- constraints: ["Claude Code Restrict is verified in a probe repository only; a Project cloud thread still runs no repository hooks","A change to the Guard core changes the Claude Code adapter too; its receipts must then be taken again","The full 24/24 runtime parity comparison has not been repeated since 2026-08-10"]
+- constraints: ["Receipts name Codex CLI 0.172.0; any further host upgrade makes them stale until the probes are run again","The transact receipt was taken while 0.155.1 was installed; the version rule treats a transaction probe as independent of the host version","The full 24/24 runtime parity comparison has not been repeated since 2026-08-10"]
 - ownership: {}
-- next_action: {"command":"SHI-633 (signal-free implementations), then 631, 635, 636, 637, 641; SHI-632 last. Owner decides later whether to narrow cloud connector tool permissions (SHI-634) and whether to install the Claude Code adapter in a working repository"}
+- next_action: {"command":"SHI-633: count compactions from the PostCompact hook instead of scanning session files, reduce the observer to failed calls, Guard decisions and verification receipts, mark Plan Governor as shadow in the conformance table; one branch, one digest approval. Then 631, 635, 636, 637, 641; SHI-632 last"}
 
 ## State Log
 
@@ -3992,3 +3992,24 @@ Stable rules belong in `AGENTS.md`, `README.md`, `docs/repo-index.md`, or
   - none
 - next_safe_task: SHI-633 (signal-free implementations), then 631, 635, 636, 637, 641; SHI-632 last. Owner decides later whether to narrow cloud connector tool permissions (SHI-634) and whether to install the Claude Code adapter in a working repository
 - checkpoint_data: {"constraints":["Claude Code Restrict is verified in a probe repository only; a Project cloud thread still runs no repository hooks","A change to the Guard core changes the Claude Code adapter too; its receipts must then be taken again","The full 24/24 runtime parity comparison has not been repeated since 2026-08-10"],"next_action":{"command":"SHI-633 (signal-free implementations), then 631, 635, 636, 637, 641; SHI-632 last. Owner decides later whether to narrow cloud connector tool permissions (SHI-634) and whether to install the Claude Code adapter in a working repository"},"ownership":{},"phase":"ship","schema":"dhf_checkpoint_v1","verification_evidence":{"command":"PROBE.md of bryanzk/dhf-host-probe at cf34057, run by the owner in a local CLI session and in a cloud session; python3 scripts/dhf_conformance.py check","exit_code":0,"freshness":"fresh","key_output":"local and cloud: Write into .claude/hooks denied with active_control_plane_mutation; private-key Read denied with credential_target_access; crashed write hook blocked where onFailure=block and let through without it; conformance table consistent","timestamp":"2026-11-27T11:33:14-05:00"}}
+
+### 2026-11-27T14:15:59-05:00
+- phase: ship
+- event: checkpoint
+- summary: The owner upgraded Codex CLI on the reference machine; codex --version reports 0.172.0. All host probes of the seven functions were run again on it and pass on Guard a1afdd52; eight receipts recorded. 0.172.0 is added to the version allowlists only after the probes passed. Public pages and the spec now name 0.172.0. SHI-633 finding on the same host: PostCompact fires after a completed /compact (trigger manual), SessionStart then reports source compact, and PreCompact also fires when the compaction fails
+- git:
+  - branch: codex/codex-0172-probes-20261127
+  - latest_commit: a28cfeb
+  - dirty_status: dirty
+  - dirty_count: 15
+- changed_surfaces:
+  - `docs`
+  - `scripts`
+- verification:
+  - command: `codex exec host probes for restrict, observe, thread, position, empower, contain on Codex CLI 0.172.0; python3 scripts/dhf_conformance.py probe-installed --codex-home ~/.codex`
+  - exit_code: 0
+  - key_output: active_control_plane_mutation twice, guard-receipt blocks 15 to 20 over the run; governed_write_without_phase before declare and after revoke, no block while declared; governed_write_outside_workspace; bearing delivered and restated by the model; newest evidence record within seconds of the tool call; healthy=block fault_write=guard_fault fault_read=allow
+- blockers:
+  - none
+- next_safe_task: SHI-633: count compactions from the PostCompact hook instead of scanning session files, reduce the observer to failed calls, Guard decisions and verification receipts, mark Plan Governor as shadow in the conformance table; one branch, one digest approval. Then 631, 635, 636, 637, 641; SHI-632 last
+- checkpoint_data: {"constraints":["Receipts name Codex CLI 0.172.0; any further host upgrade makes them stale until the probes are run again","The transact receipt was taken while 0.155.1 was installed; the version rule treats a transaction probe as independent of the host version","The full 24/24 runtime parity comparison has not been repeated since 2026-08-10"],"next_action":{"command":"SHI-633: count compactions from the PostCompact hook instead of scanning session files, reduce the observer to failed calls, Guard decisions and verification receipts, mark Plan Governor as shadow in the conformance table; one branch, one digest approval. Then 631, 635, 636, 637, 641; SHI-632 last"},"ownership":{},"phase":"ship","schema":"dhf_checkpoint_v1","verification_evidence":{"command":"codex exec host probes for restrict, observe, thread, position, empower, contain on Codex CLI 0.172.0; python3 scripts/dhf_conformance.py probe-installed --codex-home ~/.codex","exit_code":0,"freshness":"fresh","key_output":"active_control_plane_mutation twice, guard-receipt blocks 15 to 20 over the run; governed_write_without_phase before declare and after revoke, no block while declared; governed_write_outside_workspace; bearing delivered and restated by the model; newest evidence record within seconds of the tool call; healthy=block fault_write=guard_fault fault_read=allow","timestamp":"2026-11-27T14:15:59-05:00"}}

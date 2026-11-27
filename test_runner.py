@@ -1466,7 +1466,7 @@ def test_codex_version_policy_accepts_current_cli():
         )
         require('"0.144."' in script_text, f"{script_name} should accept Codex 0.144.x")
         require('"0.147.0"' in script_text, f"{script_name} should accept the probe-verified Codex 0.147.0")
-        require('"0.155.1"' in script_text, f"{script_name} should accept the host-verified Codex 0.155.1")
+        require('"0.172.0"' in script_text, f"{script_name} should accept the host-verified Codex 0.172.0")
         require("codex_version_ok" in script_text, f"{script_name} should evaluate version prefixes explicitly")
 
     require("skills_managed_present" in verify_text, "verify should require managed repo skills to exist")
@@ -5846,20 +5846,20 @@ def test_dhf_conformance_table_and_version_rule():
             "one host's probe receipt must not verify another host's cell")
 
     now = dt.datetime(2026, 11, 27, tzinfo=dt.timezone.utc)
-    current = dhf_conformance.cell_view(data, "codex-cli", "restrict", "0.155.1", now)
-    require(current["evidence"] == "current" and current["evidence_version"] == "0.155.1", f"fresh receipt must read as current: {current}")
+    current = dhf_conformance.cell_view(data, "codex-cli", "restrict", "0.172.0", now)
+    require(current["evidence"] == "current" and current["evidence_version"] == "0.172.0", f"fresh receipt must read as current: {current}")
     upgraded = dhf_conformance.cell_view(data, "codex-cli", "restrict", "9.9.9", now)
-    require(upgraded["evidence"].startswith("stale: ") and "probed on 0.155.1, host is 9.9.9" in upgraded["evidence"],
+    require(upgraded["evidence"].startswith("stale: ") and "probed on 0.172.0, host is 9.9.9" in upgraded["evidence"],
             f"a host upgrade must make the receipt stale: {upgraded}")
     require("restrict.installed-guard-fault" not in upgraded["evidence"],
             f"an installed-artifact probe does not go stale with the host version: {upgraded}")
-    aged = dhf_conformance.cell_view(data, "codex-cli", "restrict", "0.155.1", now + dt.timedelta(days=data["freshness_days"] + 1))
+    aged = dhf_conformance.cell_view(data, "codex-cli", "restrict", "0.172.0", now + dt.timedelta(days=data["freshness_days"] + 1))
     require(aged["evidence"].startswith("stale: ") and "older than" in aged["evidence"], f"an old receipt must read as stale: {aged}")
     partial = copy.deepcopy(data)
     partial["receipts"].append({"probe": "restrict.control-plane-delete", "host": "codex-cli", "host_version": "9.9.9", "machine": "fixture",
-                                "result": "pass", "key_output": "fixture", "timestamp": "2026-11-26T23:00:00-05:00"})
+                                "result": "pass", "key_output": "fixture", "timestamp": "2098-12-31T23:00:00-05:00"})
     one_rerun = dhf_conformance.cell_view(partial, "codex-cli", "restrict", "9.9.9", now)
-    require(one_rerun["evidence"].startswith("stale: ") and "restrict.control-plane-update probed on 0.155.1" in one_rerun["evidence"]
+    require(one_rerun["evidence"].startswith("stale: ") and "restrict.control-plane-update probed on 0.172.0" in one_rerun["evidence"]
             and "restrict.control-plane-delete" not in one_rerun["evidence"],
             f"rerunning one probe must not hide stale evidence for another: {one_rerun}")
     missing_after_upgrade = dhf_conformance.missing_host_receipts(partial, "codex-cli", "9.9.9")
@@ -5867,26 +5867,26 @@ def test_dhf_conformance_table_and_version_rule():
             "the version rule must require every host probe of an enforced cell on the installed version")
     require(any(item.startswith("position ") for item in missing_after_upgrade),
             "the version rule must cover every enforced cell of the host, not only Restrict")
-    require(dhf_conformance.missing_host_receipts(data, "codex-cli", "0.155.1") == [], "all host probes have receipts on 0.155.1")
+    require(dhf_conformance.missing_host_receipts(data, "codex-cli", "0.172.0") == [], "all host probes have receipts on 0.172.0")
     # Fixture receipts are dated far ahead so they stay the latest whatever the real table records.
     regressed = copy.deepcopy(data)
-    regressed["receipts"].append({"probe": "restrict.control-plane-update", "host": "codex-cli", "host_version": "0.155.1", "machine": "fixture",
+    regressed["receipts"].append({"probe": "restrict.control-plane-update", "host": "codex-cli", "host_version": "0.172.0", "machine": "fixture",
                                   "result": "fail", "key_output": "apply_patch reported a context mismatch", "timestamp": "2099-01-01T00:00:00-05:00"})
     require(any("latest receipt of probe restrict.control-plane-update failed" in error for error in dhf_conformance.validate(regressed)),
             "a later failed receipt must withdraw the enforced_verified claim")
-    failed_view = dhf_conformance.cell_view(regressed, "codex-cli", "restrict", "0.155.1", now)
+    failed_view = dhf_conformance.cell_view(regressed, "codex-cli", "restrict", "0.172.0", now)
     require(failed_view["evidence"].startswith("failed: restrict.control-plane-update failed at"),
             f"the doctor must show a failed latest receipt: {failed_view}")
-    require(dhf_conformance.missing_host_receipts(regressed, "codex-cli", "0.155.1") == ["restrict (run: restrict.control-plane-update)"],
+    require(dhf_conformance.missing_host_receipts(regressed, "codex-cli", "0.172.0") == ["restrict (run: restrict.control-plane-update)"],
             "the version rule must not pass on an earlier pass once the probe has failed since")
-    regressed["receipts"].append({"probe": "restrict.control-plane-update", "host": "codex-cli", "host_version": "0.155.1", "machine": "fixture",
+    regressed["receipts"].append({"probe": "restrict.control-plane-update", "host": "codex-cli", "host_version": "0.172.0", "machine": "fixture",
                                   "result": "pass", "key_output": "blocked", "timestamp": "2099-01-01T00:10:00-05:00"})
-    require(dhf_conformance.validate(regressed) == [] and dhf_conformance.missing_host_receipts(regressed, "codex-cli", "0.155.1") == [],
+    require(dhf_conformance.validate(regressed) == [] and dhf_conformance.missing_host_receipts(regressed, "codex-cli", "0.172.0") == [],
             "a passing rerun after the failure must restore the evidence")
-    require(dhf_conformance.cell_view(data, "claude-code-local", "position", "0.155.1", now)["evidence"] == "none",
+    require(dhf_conformance.cell_view(data, "claude-code-local", "position", "0.172.0", now)["evidence"] == "none",
             "a cell without receipts must not show evidence")
 
-    code, out, err = run([sys.executable, str(HARNESS_STATUS), "status", "--conformance", "--host-version", "0.155.1"], cwd=ROOT)
+    code, out, err = run([sys.executable, str(HARNESS_STATUS), "status", "--conformance", "--host-version", "0.172.0"], cwd=ROOT)
     require(code == 0 and "## restrict: enforced_verified" in out and "## thread: enforced_verified" in out,
             f"harness_status --conformance must print every function: {err or out}")
 
@@ -5917,7 +5917,7 @@ def test_dhf_conformance_table_and_version_rule():
         write_executable(fake_codex, "#!/usr/bin/env bash\n[[ \"$1\" == \"--version\" ]] || exit 64\necho \"codex-cli ${FAKE_CODEX_VERSION}\"\n")
         write_executable(repo / "codex" / "runtime" / "resolve_codex_cli.sh", f"#!/usr/bin/env bash\necho {shlex.quote(str(fake_codex))}\n")
         code, out, err = run([sys.executable, str(repo / "scripts" / "dhf_conformance.py"), "record", "--probe", "observe.post-tool-record",
-                              "--result", "pass", "--key-output", "fixture", "--host-version", "0.155.1", "--machine", "fixture"], cwd=repo)
+                              "--result", "pass", "--key-output", "fixture", "--host-version", "0.172.0", "--machine", "fixture"], cwd=repo)
         recorded = json.loads((repo / "docs" / "dhf-conformance.json").read_text(encoding="utf-8"))
         require(code == 0 and recorded["receipts"][-1]["probe"] == "observe.post-tool-record" and len(recorded["receipts"]) == len(data["receipts"]) + 1,
                 f"record must append one receipt: {err or out}")
@@ -5936,7 +5936,7 @@ def test_dhf_conformance_table_and_version_rule():
                 *[arg for name in sorted(skipped) for arg in ("--skip-check", name)]]
         (tmp_path / ".claude").mkdir()
         env = os.environ.copy()
-        env["FAKE_CODEX_VERSION"] = "0.155.1"
+        env["FAKE_CODEX_VERSION"] = "0.172.0"
         code, out, err = run(base, env=env)
         require("PASS:codex_host_probe_receipt" in out and "PASS:codex_version" in out,
                 f"verify must accept a Codex version that has host probe receipts: {err or out}")
@@ -5950,7 +5950,7 @@ def test_dhf_conformance_table_and_version_rule():
         require("SKIP:codex_host_probe_receipt" in out, f"the version rule must honor --skip-check: {err or out}")
 
         code, out, err = run([sys.executable, str(repo / "scripts" / "dhf_conformance.py"), "record", "--probe", "restrict.control-plane-delete",
-                              "--result", "fail", "--key-output", "apply_patch reported a missing file", "--host-version", "0.155.1",
+                              "--result", "fail", "--key-output", "apply_patch reported a missing file", "--host-version", "0.172.0",
                               "--machine", "fixture", "--timestamp", "2026-11-27T09:00:00-05:00"], cwd=repo)
         demoted = json.loads((repo / "docs" / "dhf-conformance.json").read_text(encoding="utf-8"))
         require(code == 1 and demoted["receipts"][-1]["result"] == "fail"
@@ -5972,7 +5972,7 @@ def test_status_reports_unrecognized_guard_calls():
             write(runtime_dir / name, (ROOT / "codex" / "runtime" / name).read_text(encoding="utf-8"))
         write(home / "config.toml", 'sandbox_mode = "workspace-write"\n[features]\nhooks = true\n')
         runtime_cmd = [sys.executable, str(HARNESS_STATUS), "status", "--runtime", "--codex-home", str(home)]
-        doctor_cmd = [sys.executable, str(HARNESS_STATUS), "status", "--conformance", "--host-version", "0.155.1", "--codex-home", str(home)]
+        doctor_cmd = [sys.executable, str(HARNESS_STATUS), "status", "--conformance", "--host-version", "0.172.0", "--codex-home", str(home)]
 
         code, out, err = run(runtime_cmd)
         require(code == 0 and "- guard_unrecognized_mutations: `None`" in out, f"runtime status must not fail without a receipt: {err or out}")
