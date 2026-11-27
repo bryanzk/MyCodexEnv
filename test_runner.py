@@ -5801,8 +5801,11 @@ def test_dhf_conformance_table_and_version_rule():
     require(one_rerun["evidence"].startswith("stale: ") and "restrict.control-plane-update probed on 0.155.1" in one_rerun["evidence"]
             and "restrict.control-plane-delete" not in one_rerun["evidence"],
             f"rerunning one probe must not hide stale evidence for another: {one_rerun}")
-    require(dhf_conformance.missing_host_receipts(partial, "codex-cli", "9.9.9") == ["restrict (run: restrict.control-plane-update)"],
+    missing_after_upgrade = dhf_conformance.missing_host_receipts(partial, "codex-cli", "9.9.9")
+    require([item for item in missing_after_upgrade if item.startswith("restrict ")] == ["restrict (run: restrict.control-plane-update)"],
             "the version rule must require every host probe of an enforced cell on the installed version")
+    require(any(item.startswith("position ") for item in missing_after_upgrade),
+            "the version rule must cover every enforced cell of the host, not only Restrict")
     require(dhf_conformance.missing_host_receipts(data, "codex-cli", "0.155.1") == [], "all host probes have receipts on 0.155.1")
     regressed = copy.deepcopy(data)
     regressed["receipts"].append({"probe": "restrict.control-plane-update", "host": "codex-cli", "host_version": "0.155.1", "machine": "fixture",
@@ -5818,11 +5821,11 @@ def test_dhf_conformance_table_and_version_rule():
                                   "result": "pass", "key_output": "blocked", "timestamp": "2026-11-26T23:40:00-05:00"})
     require(dhf_conformance.validate(regressed) == [] and dhf_conformance.missing_host_receipts(regressed, "codex-cli", "0.155.1") == [],
             "a passing rerun after the failure must restore the evidence")
-    require(dhf_conformance.cell_view(data, "codex-cli", "position", "0.155.1", now)["evidence"] == "none",
+    require(dhf_conformance.cell_view(data, "codex-cli", "observe", "0.155.1", now)["evidence"] == "none",
             "a cell without receipts must not show evidence")
 
     code, out, err = run([sys.executable, str(HARNESS_STATUS), "status", "--conformance", "--host-version", "0.155.1"], cwd=ROOT)
-    require(code == 0 and "## restrict: enforced_verified" in out and "## position: registered_unverified" in out,
+    require(code == 0 and "## restrict: enforced_verified" in out and "## observe: registered_unverified" in out,
             f"harness_status --conformance must print every function: {err or out}")
 
     with tempfile.TemporaryDirectory() as tmp:
