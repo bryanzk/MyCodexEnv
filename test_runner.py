@@ -5673,6 +5673,67 @@ def test_harness_guard_protects_hook_registration_file():
     print("[PASS] harness guard protects the hook registration file")
 
 
+def test_harness_guard_symlinked_protected_paths():
+    """A protected name that is a symlink protects the link and its destination (SHI-642)."""
+    with tempfile.TemporaryDirectory() as tmp:
+        tmp_path = Path(tmp).resolve()
+        env = _harness_guard_test_env(tmp_path)
+        codex_home = Path(env["CODEX_HOME"])
+        home = tmp_path / "home"
+        home.mkdir()
+        env["HOME"] = str(home)
+        repo = tmp_path / "workspace"
+        repo.mkdir()
+        shared = tmp_path / "shared"
+        (shared / "hooks").mkdir(parents=True)
+        write(shared / "config.toml", "[features]\nhooks = true\n")
+        write(shared / "auth.json", "{}")
+        write(shared / "zshrc", "# startup\n")
+        (codex_home / "config.toml").symlink_to(shared / "config.toml")
+        (codex_home / "hooks").symlink_to(shared / "hooks", target_is_directory=True)
+        (codex_home / "auth.json").symlink_to(shared / "auth.json")
+        (home / ".zshrc").symlink_to(shared / "zshrc")
+
+        def run(tool, path, **extra):
+            payload = {"tool_name": tool, "cwd": str(repo), "tool_input": {"path": str(path), **extra}}
+            return _run_harness_guard(payload, env)
+
+        def reason(result):
+            return result.get("reason", "")
+
+        control = "[harness] active_control_plane_mutation"
+        for label, path in (
+            ("the symlinked config.toml", codex_home / "config.toml"),
+            ("the destination of the symlinked config.toml", shared / "config.toml"),
+            ("a file under the symlinked hooks directory", codex_home / "hooks" / "new_hook.py"),
+            ("a file under the destination of the symlinked hooks directory", shared / "hooks" / "new_hook.py"),
+        ):
+            require(reason(run("write", path, content="x")) == control, f"writing {label} must be blocked")
+        require(reason(run("delete_file", codex_home / "config.toml")) == control,
+                "deleting the symlinked config.toml must be blocked")
+        require(reason(run("delete_file", shared / "config.toml")) == control,
+                "deleting the destination of the symlinked config.toml must be blocked")
+        require(run("read_file", shared / "config.toml") == {}, "reading the destination must stay allowed")
+
+        credential = "[harness] credential_target_access"
+        require(reason(run("read_file", codex_home / "auth.json")) == credential,
+                "reading the symlinked auth.json must be blocked")
+        require(reason(run("read_file", shared / "auth.json")) == credential,
+                "reading the destination of the symlinked auth.json must be blocked")
+
+        require(reason(run("write", home / ".zshrc", content="x")) == "[harness] os_persistence_mutation",
+                "writing a shell startup file through its symlink must be blocked")
+        # Known limit: the destination of a symlinked startup file is not
+        # recognized under its own name. Only the profile's own files are resolved.
+        require(run("write", shared / "zshrc", content="x") == {},
+                "the destination of a symlinked startup file is outside the fixed blocks")
+
+        require(run("write", repo / "notes.txt", content="x") == {}, "an ordinary workspace write must stay allowed")
+        require(run("write", shared / "other.toml", content="x") == {},
+                "a sibling of a protected destination must stay allowed")
+    print("[PASS] harness guard protects symlinked control-plane and credential paths")
+
+
 def test_harness_guard_invocation_receipt():
     with tempfile.TemporaryDirectory() as tmp:
         tmp_path = Path(tmp)
@@ -6485,7 +6546,9 @@ def test_harness_guard_policy_decisions():
         os.link(protected_control_target, hardlink_control)
 
         require(run(read_payload(protected_control_link)) == {}, "read must follow a protected symlink referent")
-        require(run(write_payload(protected_control_link)) == {}, "write must follow a protected symlink referent")
+        # SHI-642: a name inside the control plane is protected even when it is a
+        # symlink to somewhere else, because the host reads the content by that name.
+        require_block(write_payload(protected_control_link), "active_control_plane_mutation")
         require_block(delete_payload(protected_control_link), "active_control_plane_mutation")
         require_block(write_payload(outside_control_link), "active_control_plane_mutation")
         require(run(delete_payload(outside_control_link)) == {}, "delete must mutate the outside symlink entry")
@@ -6497,16 +6560,16 @@ def test_harness_guard_policy_decisions():
             "patch Move source must mutate the outside symlink entry",
         )
         require_block(add_patch(outside_control_link), "active_control_plane_mutation")
-        require(run(add_patch(protected_control_link)) == {}, "patch Add must write the protected symlink referent")
+        require_block(add_patch(protected_control_link), "active_control_plane_mutation")
         ordinary_move_source = repo / "ordinary-move-source"
         ordinary_move_source.write_text("ordinary\n", encoding="utf-8")
         require_block(
             entry_patch(ordinary_move_source, outside_control_link),
             "active_control_plane_mutation",
         )
-        require(
-            run(entry_patch(ordinary_move_source, protected_control_link)) == {},
-            "patch Move destination must write the protected symlink referent",
+        require_block(
+            entry_patch(ordinary_move_source, protected_control_link),
+            "active_control_plane_mutation",
         )
         require_block(write_payload(hardlink_control), "active_control_plane_mutation")
         require_block(update_patch(hardlink_control), "active_control_plane_mutation")
@@ -6531,7 +6594,8 @@ def test_harness_guard_policy_decisions():
         persistence_env = env.copy()
         persistence_env["HOME"] = str(isolated_home)
 
-        require(run(write_payload(protected_persistence_link), persistence_env) == {}, "write must follow persistence symlink referent")
+        # SHI-642: the same rule for a persistence location reached by name.
+        require_block(write_payload(protected_persistence_link), "os_persistence_mutation", persistence_env)
         require_block(delete_payload(protected_persistence_link), "os_persistence_mutation", persistence_env)
         require_block(write_payload(outside_persistence_link), "os_persistence_mutation", persistence_env)
         require(
@@ -14550,6 +14614,7 @@ TESTS = [
     test_harness_guard_policy_decisions,
     test_harness_guard_invocation_receipt,
     test_harness_guard_protects_hook_registration_file,
+    test_harness_guard_symlinked_protected_paths,
     test_codex_hooks_run_on_registered_interpreter,
     test_live_runtime_harness_guard_smoke,
     test_harness_observer_and_bearing_do_not_import_guard,
