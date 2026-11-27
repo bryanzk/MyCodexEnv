@@ -2563,13 +2563,15 @@ def test_sync_preserves_runtime_plugin_state():
             codex_home / "config.toml",
             'model = "gpt-5.5"\n'
             'notify = ["/tmp/Codex Computer Use.app/client", "turn-ended"]\n\n'
-            'approval_policy = "on-request"\n'
+            '  approval_policy = "on-request"\n'
             "owner_list = [\n  \"one\",\n  \"two\",\n]\n\n"
             'owner_text = """\nfirst line\nmodel = "inside a string"\nlast line\n"""\n\n'
             "[features]\n"
             "codex_hooks = true\n"
             "memories = true\n"
             "chronicle = true\n\n"
+            "[mcp_servers.chrome-devtools]\n"
+            'command = "/opt/owner/old-chrome-devtools"\n\n'
             "[tui]\n"
             'theme = "owner-choice"\n\n'
             "[tui.model_availability_nux]\n"
@@ -2673,6 +2675,8 @@ def test_sync_preserves_runtime_plugin_state():
                 and merged["mcp_servers"]["owner-added"] == {"command": "/opt/owner/server"}
                 and merged["owner_array"] == [{"name": "first"}],
                 "sync must keep tables the template does not define")
+        require(merged["mcp_servers"]["chrome-devtools"]["command"].endswith("/chrome-devtools-mcp"),
+                "a table the template defines under another spelling is not declared twice")
         require("/tmp/stale-hook.sh" not in rendered, "hook registration still comes only from the template")
         require("Kept runtime-only config entries" in out and "[tui]" in out and "approval_policy" in out,
                 f"sync must say which runtime-only entries it kept: {out}")

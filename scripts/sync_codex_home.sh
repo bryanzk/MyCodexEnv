@@ -1364,11 +1364,24 @@ def managed_table(name):
     )
 
 
+def table_path(name):
+    """A table header as its parsed key path, so `a."b-c"` and `a.b-c` compare equal."""
+    try:
+        node = tomllib.loads("[" + name + "]\n")
+    except tomllib.TOMLDecodeError:
+        return (name,)
+    path = []
+    while isinstance(node, dict) and len(node) == 1:
+        key, node = next(iter(node.items()))
+        path.append(key)
+    return tuple(path)
+
+
 def top_level_statements(text):
     """Key statements that come before the first table header, in order."""
-    first_table = re.search(r"(?m)^\[", text)
+    first_table = re.search(r"(?m)^(\[\[[^\]\n]+\]\]|\[[^\]\n]+\])[ \t]*$", text)
     region = text[:first_table.start()] if first_table else text
-    starts = list(re.finditer(r'(?m)^(?:[A-Za-z0-9_-]+|"[^"\n]+")(?:\.[A-Za-z0-9_"-]+)*[ \t]*=', region))
+    starts = list(re.finditer(r'(?m)^[ \t]*(?:[A-Za-z0-9_-]+|"[^"\n]+")(?:\.[A-Za-z0-9_"-]+)*[ \t]*=', region))
     statements = []
     bounds = [match.start() for match in starts] + [len(region)]
     index = 0
@@ -1440,7 +1453,8 @@ if notify_match and not re.search(r"(?m)^notify\s*=", rendered):
         + rendered[insert_at:].lstrip("\n")
     )
 
-rendered_array_names = {name for name, is_array, _ in rendered_blocks if is_array}
+rendered_array_paths = {table_path(name) for name, is_array, _ in rendered_blocks if is_array}
+rendered_paths = {table_path(name) for name, is_array, _ in rendered_blocks if not is_array}
 kept_runtime_only = []
 
 # Top-level keys the template does not set belong to the owner or to the host.
@@ -1450,7 +1464,7 @@ runtime_top = [
     if key not in rendered_top_keys
 ]
 if runtime_top:
-    first_table = re.search(r"(?m)^\[", rendered)
+    first_table = re.search(r"(?m)^(\[\[[^\]\n]+\]\]|\[[^\]\n]+\])[ \t]*$", rendered)
     insert_at = first_table.start() if first_table else len(rendered)
     rendered = (
         rendered[:insert_at].rstrip()
@@ -1474,21 +1488,26 @@ for name, is_array, block in existing_blocks:
     elif preserve_table(name):
         if name in rendered_names:
             rendered = merge_table_keys(rendered, name, block)
+        elif table_path(name) in rendered_paths:
+            # The template spells the same table differently; the template wins.
+            continue
         else:
             rendered = rendered.rstrip() + "\n\n" + block + "\n"
             rendered_names.add(name)
+            rendered_paths.add(table_path(name))
     elif managed_table(name):
         continue
     elif is_array:
         # A runtime-only array of tables. The template owns the arrays it defines.
-        if name not in rendered_array_names:
+        if table_path(name) not in rendered_array_paths:
             rendered = rendered.rstrip() + "\n\n" + block + "\n"
             kept_runtime_only.append("[[" + name + "]]")
-    elif name not in rendered_names:
+    elif table_path(name) not in rendered_paths:
         # A table the template does not define was put there by the owner or by
         # the host. Dropping it silently loses their settings.
         rendered = rendered.rstrip() + "\n\n" + block + "\n"
         rendered_names.add(name)
+        rendered_paths.add(table_path(name))
         kept_runtime_only.append("[" + name + "]")
 
 try:
