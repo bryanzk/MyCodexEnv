@@ -10071,10 +10071,17 @@ def test_session_bearing_hook():
             "print(json.dumps({'phase': 'validation', 'next_safe_task': 'run gate', "
             "'boundary_verdict': 'safe', 'dirty_status': 'clean'}))\n",
         )
+        bearing_home = Path(tmp) / "codex-home"
+        (bearing_home / "harness").mkdir(parents=True)
+        bearing_env = {**os.environ, "CODEX_HOME": str(bearing_home)}
+        bearing_receipt = bearing_home / "harness" / "bearing-receipt.json"
         started = time.monotonic()
-        code, out, err = run_with_input([sys.executable, str(SESSION_BEARING)], json.dumps({"cwd": str(repo)}))
+        code, out, err = run_with_input([sys.executable, str(SESSION_BEARING)], json.dumps({"cwd": str(repo)}), env=bearing_env)
         elapsed = time.monotonic() - started
         require(code == 0, f"session bearing injection failed: {err or out}")
+        receipt = json.loads(bearing_receipt.read_text(encoding="utf-8"))
+        require(receipt["last_outcome"] == "delivered" and receipt["runs"] == 1 and receipt["misses"] == 0,
+                f"a delivered bearing must be recorded in the receipt: {receipt}")
         require(elapsed < 1.0, f"session bearing should stay bounded, elapsed={elapsed:.3f}s")
         response = json.loads(out)
         require(response["continue"] is True, "session bearing must not block SessionStart")
@@ -10093,7 +10100,7 @@ def test_session_bearing_hook():
             "print(json.dumps({'phase': 'development', 'next_safe_task': 'continue safely', "
             "'dirty_status': 'dirty'}))\n",
         )
-        code, out, err = run_with_input([sys.executable, str(SESSION_BEARING)], json.dumps({"cwd": str(repo)}))
+        code, out, err = run_with_input([sys.executable, str(SESSION_BEARING)], json.dumps({"cwd": str(repo)}), env=bearing_env)
         require(code == 0, f"degraded session bearing should succeed: {err or out}")
         degraded_context = json.loads(out)["hookSpecificOutput"]["additionalContext"]
         for expected in [
@@ -10104,12 +10111,141 @@ def test_session_bearing_hook():
         ]:
             require(expected in degraded_context, f"degraded session bearing context missing {expected}")
 
+        write(
+            recover,
+            "import json, sys\n"
+            "if '--bearing' not in sys.argv:\n"
+            "    raise SystemExit(3)\n"
+            "print(json.dumps({'phase': 'ship', 'next_safe_task': 'fast path', "
+            "'boundary_verdict': 'safe', 'dirty_status': 'clean'}))\n",
+        )
+        code, out, err = run_with_input([sys.executable, str(SESSION_BEARING)], json.dumps({"cwd": str(repo)}), env=bearing_env)
+        require(code == 0 and "next_safe_task=fast path" in out,
+                f"session bearing must ask the recovery helper for the bounded --bearing path first: {err or out}")
+
         write(recover, "import time\ntime.sleep(1)\n")
-        code, out, err = run_with_input([sys.executable, str(SESSION_BEARING)], json.dumps({"cwd": str(repo)}))
+        code, out, err = run_with_input([sys.executable, str(SESSION_BEARING)], json.dumps({"cwd": str(repo)}), env=bearing_env)
         require(code == 0, f"failed session bearing must leave SessionStart unaffected: {err or out}")
         require(out == "" and err == "", "session bearing failures must be silent")
+        receipt = json.loads(bearing_receipt.read_text(encoding="utf-8"))
+        require(receipt["last_outcome"] == "timeout" and receipt["misses"] == 1
+                and receipt["last_miss_outcome"] == "timeout" and receipt["delivered"] == 3,
+                f"a bearing that timed out must leave a miss in the receipt: {receipt}")
+
+        write(recover, "raise SystemExit(4)\n")
+        run_with_input([sys.executable, str(SESSION_BEARING)], json.dumps({"cwd": str(repo)}), env=bearing_env)
+        receipt = json.loads(bearing_receipt.read_text(encoding="utf-8"))
+        require(receipt["last_outcome"] == "recover_failed" and receipt["misses"] == 2,
+                f"a failing recovery helper must be recorded as a miss: {receipt}")
+
+        outside = Path(tmp) / "outside"
+        outside.mkdir()
+        runs_before = receipt["runs"]
+        run_with_input([sys.executable, str(SESSION_BEARING)], json.dumps({"cwd": str(outside)}), env=bearing_env)
+        require(json.loads(bearing_receipt.read_text(encoding="utf-8"))["runs"] == runs_before,
+                "a session outside any repository must not touch the bearing receipt")
+
+        no_harness_home = Path(tmp) / "bare-home"
+        no_harness_home.mkdir()
+        write(recover, "import time\ntime.sleep(1)\n")
+        code, out, err = run_with_input([sys.executable, str(SESSION_BEARING)], json.dumps({"cwd": str(repo)}),
+                                        env={**os.environ, "CODEX_HOME": str(no_harness_home)})
+        require(code == 0 and out == "" and err == "" and not (no_harness_home / "harness").exists(),
+                "session bearing must not create the harness directory to write its receipt")
 
     print("[PASS] session bearing hook")
+
+
+def test_session_bearing_large_evidence_store():
+    """The real recovery helper must deliver a bearing inside the hook budget when the
+    evidence store is large. The full recovery read every record of every day and took
+    seconds on the owner host, so the hook timed out and printed nothing (SHI-640)."""
+    sys.path.insert(0, str(ROOT / "scripts"))
+    import harness_status_recover as recover_module
+
+    with tempfile.TemporaryDirectory() as tmp:
+        tmp_path = Path(tmp)
+        repo = tmp_path / "repo"
+        (repo / "docs").mkdir(parents=True)
+        shutil.copytree(ROOT / "scripts", repo / "scripts", ignore=shutil.ignore_patterns("__pycache__"))
+        shutil.copy2(ROOT / "docs" / "harness-state.md", repo / "docs" / "harness-state.md")
+        shutil.copy2(ROOT / "docs" / "repo-index.md", repo / "docs" / "repo-index.md")
+        write(repo / ".gitignore", "__pycache__/\n")
+        git_env = {**os.environ, "GIT_AUTHOR_NAME": "t", "GIT_AUTHOR_EMAIL": "t@example.com",
+                   "GIT_COMMITTER_NAME": "t", "GIT_COMMITTER_EMAIL": "t@example.com"}
+        for command in (["git", "init", "-q", str(repo)], ["git", "-C", str(repo), "add", "-A"],
+                        ["git", "-C", str(repo), "commit", "-q", "-m", "fixture"]):
+            proc = subprocess.run(command, capture_output=True, text=True, check=False, env=git_env)
+            require(proc.returncode == 0, f"bearing fixture git step failed: {command}: {proc.stderr}")
+
+        home = tmp_path / "codex-home"
+        evidence = home / "harness" / "evidence"
+        evidence.mkdir(parents=True)
+        padding = "x" * 400
+        other_cwds = ["/tmp/elsewhere", str(tmp_path / "another-repo"), str(repo)]
+        today = dt.date.today()
+        for day in range(60):
+            date = (today - dt.timedelta(days=day)).isoformat()
+            lines = [
+                json.dumps({"event_type": "tool_call", "evidence_kind": "routine", "cwd": other_cwds[index % 3],
+                            "timestamp": f"{date}T10:{index % 60:02d}:00+00:00", "exit_code": 0, "pad": padding})
+                for index in range(700)
+            ]
+            write(evidence / f"{date}.jsonl", "\n".join(lines) + "\n")
+
+        bounded, complete = recover_module.latest_verification_bounded(home, repo, 5.0)
+        require(bounded is None and complete is True,
+                f"a store without a verification record must scan to the end when the budget allows: {bounded} {complete}")
+        started = time.perf_counter()
+        bounded, complete = recover_module.latest_verification_bounded(home, repo, 0.0)
+        require(bounded is None and complete is False and time.perf_counter() - started < 0.5,
+                "an exhausted scan budget must stop the scan and say that it is incomplete")
+
+        older = (today - dt.timedelta(days=5)).isoformat()
+        newer = (today - dt.timedelta(days=2)).isoformat()
+        for date, command in ((older, "old gate"), (newer, "new gate")):
+            with (evidence / f"{date}.jsonl").open("a", encoding="utf-8") as handle:
+                handle.write(json.dumps({"event_type": "verification_result", "evidence_kind": "decision", "cwd": str(repo),
+                                         "timestamp": f"{date}T12:00:00+00:00", "exit_code": 0, "command": command}) + "\n")
+                handle.write(json.dumps({"event_type": "verification_result", "evidence_kind": "decision", "cwd": "/tmp/elsewhere",
+                                         "timestamp": f"{date}T13:00:00+00:00", "exit_code": 1, "command": "foreign"}) + "\n")
+        bounded, complete = recover_module.latest_verification_bounded(home, repo)
+        _, full_latest, _, _ = recover_module.latest_evidence(home, repo)
+        require(complete is True and bounded == full_latest and bounded["command"] == "new gate",
+                f"the bounded scan must return the same newest verification as the full scan: {bounded} vs {full_latest}")
+
+        env = {**os.environ, "CODEX_HOME": str(home)}
+        code, out, err = run([sys.executable, str(repo / "scripts" / "harness_recover.py"), "--repo-root", str(repo),
+                              "--codex-home", str(home), "--bearing", "--json"], env=env)
+        require(code == 0, f"--bearing recovery failed: {err or out}")
+        bearing = json.loads(out)
+        code, out, err = run([sys.executable, str(repo / "scripts" / "harness_recover.py"), "--repo-root", str(repo),
+                              "--codex-home", str(home), "--boundary", "--json"], env=env)
+        require(code == 0, f"--boundary recovery failed: {err or out}")
+        full = json.loads(out)
+        for key in ("phase", "next_safe_task", "dirty_status", "boundary_verdict", "boundary_reason"):
+            require(bearing[key] == full[key], f"--bearing and --boundary disagree on {key}: {bearing[key]!r} vs {full[key]!r}")
+        require(bearing["bearing_only"] is True and "conversion_health" not in bearing,
+                "--bearing must not compute the full recovery payload")
+
+        delivered = False
+        attempts = []
+        for _ in range(3):
+            started = time.perf_counter()
+            code, out, err = run_with_input([sys.executable, str(SESSION_BEARING)], json.dumps({"cwd": str(repo)}), env=env)
+            attempts.append(round(time.perf_counter() - started, 3))
+            require(code == 0 and err == "", f"session bearing must stay silent on stderr: {err}")
+            if out:
+                context = json.loads(out)["hookSpecificOutput"]["additionalContext"]
+                require(f"next_safe_task={' '.join(str(full['next_safe_task']).split())}" in context,
+                        f"the delivered bearing must carry the State Log's next safe task: {context}")
+                delivered = True
+                break
+        require(delivered, f"session bearing must deliver inside its budget with a large evidence store: attempts={attempts}")
+        receipt = json.loads((home / "harness" / "bearing-receipt.json").read_text(encoding="utf-8"))
+        require(receipt["last_outcome"] == "delivered", f"the receipt must record the delivery: {receipt}")
+
+    print(f"[PASS] session bearing with a large evidence store (attempts={attempts})")
 
 
 def test_harness_recovery_smoke():
@@ -14189,6 +14325,7 @@ TESTS = [
     test_compaction_probe_incremental_scan,
     test_context_meter_persistence,
     test_session_bearing_hook,
+    test_session_bearing_large_evidence_store,
     test_harness_recovery_smoke,
     test_harness_env_probe,
     test_sync_claude_injects_integration_block,

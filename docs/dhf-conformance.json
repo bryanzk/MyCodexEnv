@@ -87,9 +87,9 @@
       "function": "thread",
       "host": "codex-cli",
       "kind": "host",
-      "prompt": "Start a new Codex session in a governed repository and paste the session bearing it prints.",
+      "prompt": "Start a new Codex session in a governed repository and send: Do not call any tool. Paste verbatim the block that starts with 'Harness session bearing' that you received when this session started. If you received no such block, reply exactly: NO_BEARING",
       "expected": "A block that starts with \"Harness session bearing (recovered repo state):\" and carries phase, next_safe_task, boundary_verdict, and dirty_status",
-      "criterion": "next_safe_task matches the header of docs/harness-state.md and no chat history was needed.",
+      "criterion": "next_safe_task matches the header of docs/harness-state.md, no chat history was needed, and bearing_last_outcome in harness_status.py status --runtime is delivered.",
       "side_effects": "None."
     },
     {
@@ -299,7 +299,7 @@
         "probes": [
           "thread.session-start-bearing"
         ],
-        "note": "The probe failed on 2026-11-26: a new session in this repository received no bearing. Suspected cause, not confirmed on the host: scripts/harness_recover.py needs longer than the 0.18 s budget of the hook, and the hook then prints nothing."
+        "note": "The probe failed on 2026-11-26: a new session in this repository received no bearing, because full recovery took 4.7 to 5.1 s on the owner host against the 0.18 s budget of the hook. The hook now asks for the bounded --bearing path and records every miss in bearing-receipt.json (SHI-640). Not promoted or probed again yet."
       },
       "empower": {
         "status": "enforced_verified",

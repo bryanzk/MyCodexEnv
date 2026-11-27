@@ -6,6 +6,7 @@ import json
 import os
 import subprocess
 import sys
+import time
 from collections import Counter
 from collections.abc import Sequence
 from datetime import datetime, timedelta
@@ -182,6 +183,9 @@ def latest_evidence(codex: Path, repo_root: Path) -> tuple[str, dict[str, Any] |
     events: list[dict[str, Any]] = []
     malformed_count = 0
     repo_cwd = normalize_path(repo_root)
+    # Evidence holds one cwd string per record and few distinct values; resolving
+    # each record's path again dominated the run time on a large evidence store.
+    normalized_cwds: dict[str, str] = {}
     for path in sorted(evidence_dir.glob("*.jsonl")):
         try:
             lines = path.read_text(encoding="utf-8").splitlines()
@@ -201,7 +205,11 @@ def latest_evidence(codex: Path, repo_root: Path) -> tuple[str, dict[str, Any] |
                 continue
             if "evidence_kind" not in event:
                 event["evidence_kind"] = "unknown"
-            if normalize_path(str(event.get("cwd", ""))) == repo_cwd:
+            raw_cwd = str(event.get("cwd", ""))
+            normalized_cwd = normalized_cwds.get(raw_cwd)
+            if normalized_cwd is None:
+                normalized_cwd = normalized_cwds[raw_cwd] = normalize_path(raw_cwd)
+            if normalized_cwd == repo_cwd:
                 events.append(event)
 
     if not events:
@@ -209,6 +217,105 @@ def latest_evidence(codex: Path, repo_root: Path) -> tuple[str, dict[str, Any] |
     events.sort(key=lambda event: str(event.get("timestamp", "")), reverse=True)
     verifications = [event for event in events if event.get("event_type") == "verification_result"]
     return "present", (verifications[0] if verifications else None), malformed_count, events
+
+
+BEARING_SCAN_SECONDS = 0.05
+VERIFICATION_MARKER = '"verification_result"'
+
+
+def latest_verification_bounded(
+    codex: Path,
+    repo_root: Path,
+    budget_seconds: float = BEARING_SCAN_SECONDS,
+) -> tuple[dict[str, Any] | None, bool]:
+    """Find this repository's newest verification_result without reading the whole store.
+
+    Evidence files are named by local date, so the scan walks the dates from the
+    newest back and stops at the first date that holds a match. It gives up once
+    the time budget is spent. Returns the record (or None) and whether the scan
+    finished; an unfinished scan with no record is not proof that none exists.
+    """
+    evidence_dir = codex / "harness" / "evidence"
+    if not evidence_dir.exists():
+        return None, True
+    deadline = time.monotonic() + budget_seconds
+    repo_cwd = normalize_path(repo_root)
+    normalized_cwds: dict[str, str] = {}
+    by_date: dict[str, list[Path]] = {}
+    for path in evidence_dir.glob("*.jsonl"):
+        by_date.setdefault(path.name[:10], []).append(path)
+    for date in sorted(by_date, reverse=True):
+        if time.monotonic() > deadline:
+            return None, False
+        matches: list[dict[str, Any]] = []
+        for path in by_date[date]:
+            try:
+                text = path.read_text(encoding="utf-8")
+            except OSError:
+                continue
+            if VERIFICATION_MARKER not in text:
+                continue
+            for line in text.splitlines():
+                if VERIFICATION_MARKER not in line:
+                    continue
+                try:
+                    event = json.loads(line)
+                except json.JSONDecodeError:
+                    continue
+                if not isinstance(event, dict) or event.get("event_type") != "verification_result":
+                    continue
+                raw_cwd = str(event.get("cwd", ""))
+                normalized_cwd = normalized_cwds.get(raw_cwd)
+                if normalized_cwd is None:
+                    normalized_cwd = normalized_cwds[raw_cwd] = normalize_path(raw_cwd)
+                if normalized_cwd == repo_cwd:
+                    matches.append(event)
+        if matches:
+            return max(matches, key=lambda event: str(event.get("timestamp", ""))), True
+    return None, True
+
+
+def build_bearing(args: argparse.Namespace) -> tuple[int, dict[str, Any] | None, str | None]:
+    """The four facts a new session needs, within a session-start time budget.
+
+    It reads the State Log and Git like full recovery, but looks only for the
+    newest verification record instead of loading every evidence record."""
+    repo_root = Path(args.repo_root).expanduser().resolve() if args.repo_root else Path.cwd().resolve()
+    repo_index = repo_root / "docs" / "repo-index.md"
+    state_file = repo_root / "docs" / "harness-state.md"
+    if not repo_index.exists():
+        return 1, None, f"missing repo index: {repo_index}"
+    if not state_file.exists():
+        return 1, None, f"missing state file: {state_file}"
+    state_text = state_file.read_text(encoding="utf-8")
+    checkpoint_status, checkpoint = latest_checkpoint_data(state_text)
+    if checkpoint_status in {"malformed", "schema-invalid"}:
+        return 1, None, f"{checkpoint_status} checkpoint_data recovery blocker"
+    git_status = run_git(repo_root, ["status", "--short"], empty_value="")
+    dirty_lines = [line for line in git_status.splitlines() if line.strip()] if git_status != "unknown" else []
+    dirty_status = "unknown" if git_status == "unknown" else ("dirty" if dirty_lines else "clean")
+    latest, scan_complete = latest_verification_bounded(codex_home(args.codex_home), repo_root)
+    boundary_verdict, boundary_reason = evaluate_boundary(
+        repo_root,
+        dirty_status,
+        latest,
+        args.max_verification_age,
+    )
+    if latest is None and not scan_complete and boundary_reason == "verification_evidence_unavailable":
+        boundary_reason = "evidence_scan_incomplete"
+    payload = {
+        "bearing_only": True,
+        "repo_root": str(repo_root),
+        "checkpoint_status": checkpoint_status,
+        "phase": checkpoint.get("phase") if checkpoint else parse_state_value(state_text, "phase"),
+        "next_safe_task": parse_state_value(state_text, "next_safe_task"),
+        "dirty_status": dirty_status,
+        "dirty_count": len(dirty_lines),
+        "boundary_verdict": boundary_verdict,
+        "boundary_reason": boundary_reason,
+        "evidence_scan_complete": scan_complete,
+    }
+    return 0, payload, None
 
 
 def build_recovery(args: argparse.Namespace) -> tuple[int, dict[str, Any] | None, str | None]:
@@ -339,15 +446,20 @@ def main(argv: Sequence[str] | None = None) -> int:
     parser.add_argument("--repo-root")
     parser.add_argument("--codex-home")
     parser.add_argument("--boundary", action="store_true")
+    parser.add_argument(
+        "--bearing",
+        action="store_true",
+        help="print only phase, next_safe_task, dirty_status, and the boundary verdict; bounded in time",
+    )
     parser.add_argument("--max-verification-age", type=positive_hours, default=24.0, metavar="HOURS")
     parser.add_argument("--json", action="store_true", dest="json_output")
     args = parser.parse_args(argv)
 
-    code, payload, error = build_recovery(args)
+    code, payload, error = build_bearing(args) if args.bearing else build_recovery(args)
     if code != 0:
         print(f"ERROR: {error}", file=sys.stderr)
         return code
-    if args.json_output:
+    if args.json_output or args.bearing:
         print(json.dumps(payload, ensure_ascii=False, sort_keys=True))
     else:
         print(render_markdown(payload))

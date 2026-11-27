@@ -545,17 +545,40 @@ version change.
 ## Session Bearing
 
 `codex/hooks/session_bearing.py` is registered in the source `SessionStart`
-chain. The 2026-08-10 targeted promotion restored source/runtime byte parity for
-this file. That proves the installed copy, not a fresh `SessionStart` execution
-in this task. For a cwd inside this repo the hook runs
-`scripts/harness_recover.py --boundary --json` and injects `phase`,
-`next_safe_task`, `boundary_verdict`, and `dirty_status`. The hook shares one
-180ms deadline across the boundary call and its compatibility fallback; only an
-explicitly unsupported `--boundary` argument triggers plain recovery, which
-reports `boundary_verdict=unknown`. Missing repo helpers, malformed results,
-timeouts, and other failures exit zero without output so session start remains
-unaffected. Every later promotion still requires explicit authorization and
-fresh parity evidence.
+chain. For a cwd inside a governed repository it runs
+`scripts/harness_recover.py --bearing --json` and injects `phase`,
+`next_safe_task`, `boundary_verdict`, and `dirty_status`.
+
+`--bearing` is the bounded path. It reads the State Log and Git like full
+recovery, but it looks only for this repository's newest `verification_result`:
+it walks the evidence files from the newest date back, stops at the first date
+with a match, and gives up after 50 ms. A scan that gave up without a record
+reports `boundary_verdict=unknown` with `boundary_reason=evidence_scan_incomplete`.
+It does not compute conversion health, evidence counts, or task demand. Use
+`--boundary --json` or plain recovery for those.
+
+The hook shares one 180 ms deadline across the whole chain: `--bearing`, then
+`--boundary` for a repository whose helper does not know `--bearing`, then plain
+recovery, which reports `boundary_verdict=unknown`. Only an explicit
+"unrecognized arguments" answer moves to the next step. Missing repo helpers,
+malformed results, timeouts, and other failures exit zero without output so
+session start remains unaffected.
+
+Every run inside a repository that has the recovery helper updates
+`~/.codex/harness/bearing-receipt.json`: the outcome (`delivered`, `timeout`,
+`recover_failed`, `recover_output_invalid`, `error`), the elapsed time, and the
+counts of runs, deliveries, and misses. `harness_status.py status --runtime`
+prints them as `bearing_last_outcome`, `bearing_runs`, `bearing_misses`, and
+`bearing_last_miss`. A session outside any repository leaves no trace. The hook
+writes the receipt only into an existing `harness` directory.
+
+Before 2026-11-27 the hook ran `--boundary --json`, which loaded every evidence
+record. On the owner host that took 4.7 to 5.1 s against the 180 ms budget, so
+the hook printed nothing in this repository and nothing recorded the miss
+(SHI-640). The host probe `thread.session-start-bearing` found it.
+
+Every promotion still requires explicit authorization and fresh parity
+evidence.
 
 ## Compaction Observation
 
