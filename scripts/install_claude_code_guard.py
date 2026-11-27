@@ -27,13 +27,26 @@ SETTINGS_RELATIVE = Path(".claude") / "settings.json"
 MANAGED_MARK = ".claude/hooks/dhf_guard.py"
 
 
-def is_managed(group: object) -> bool:
-    if not isinstance(group, dict):
-        return False
-    hooks = group.get("hooks")
-    return isinstance(hooks, list) and any(
-        isinstance(hook, dict) and MANAGED_MARK in str(hook.get("command", "")) for hook in hooks
-    )
+def is_managed_hook(hook: object) -> bool:
+    return isinstance(hook, dict) and MANAGED_MARK in str(hook.get("command", ""))
+
+
+def without_managed_hooks(groups: list) -> list:
+    """Drop this installer's hooks and keep everything else.
+
+    A matcher group can hold hooks of several tools. Only the hooks that run the
+    adapter are removed; a group goes away only when nothing foreign is left in it.
+    """
+    kept = []
+    for group in groups:
+        hooks = group.get("hooks") if isinstance(group, dict) else None
+        if not isinstance(hooks, list) or not any(is_managed_hook(hook) for hook in hooks):
+            kept.append(group)
+            continue
+        foreign = [hook for hook in hooks if not is_managed_hook(hook)]
+        if foreign:
+            kept.append({**group, "hooks": foreign})
+    return kept
 
 
 def merged_settings(current: dict, fragment: dict) -> dict:
@@ -45,8 +58,7 @@ def merged_settings(current: dict, fragment: dict) -> dict:
     existing = hooks.get("PreToolUse", [])
     if not isinstance(existing, list):
         raise ValueError("settings key 'hooks.PreToolUse' must be a list")
-    kept = [group for group in existing if not is_managed(group)]
-    hooks["PreToolUse"] = kept + fragment["hooks"]["PreToolUse"]
+    hooks["PreToolUse"] = without_managed_hooks(existing) + fragment["hooks"]["PreToolUse"]
     return result
 
 

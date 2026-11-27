@@ -6167,6 +6167,26 @@ def test_claude_code_guard_adapter():
         require("secret" not in (home / ".claude" / "dhf" / "guard-receipt.json").read_text(encoding="utf-8"),
                 "the receipt must not carry file content")
 
+        linked = tmp_path / "linked-project"
+        shared = tmp_path / "shared"
+        (linked / ".claude").mkdir(parents=True)
+        (shared / "hooks").mkdir(parents=True)
+        write(shared / "settings.json", "{}")
+        os.symlink(shared / "settings.json", linked / ".claude" / "settings.json")
+        os.symlink(shared / "hooks", linked / ".claude" / "hooks")
+        linked_env = {**env, "CLAUDE_PROJECT_DIR": str(linked)}
+        for label, target in (
+            ("settings symlink", linked / ".claude" / "settings.json"),
+            ("settings symlink destination", shared / "settings.json"),
+            ("file under the hook directory symlink", linked / ".claude" / "hooks" / "new.py"),
+            ("file under the hook directory destination", shared / "hooks" / "new.py"),
+        ):
+            payload = {"hook_event_name": "PreToolUse", "tool_name": "Write", "cwd": str(linked),
+                       "tool_input": {"file_path": str(target), "content": "x"}}
+            code, out, err = run_with_input([sys.executable, str(adapter)], json.dumps(payload), env=linked_env)
+            require(code == 0 and out and json.loads(out) == denied("active_control_plane_mutation"),
+                    f"a symlinked control file must be protected under both names ({label}): {out!r} {err!r}")
+
         decision_def = "def decision(payload: dict[str, object]) -> dict[str, object]:\n"
         end_marker = "# --- END DHF GUARD CORE ---\n"
         require(source.count(decision_def) == 1 and source.count(end_marker) == 1,
@@ -6213,6 +6233,15 @@ def test_claude_code_guard_adapter():
                 "the installed adapter must equal the source adapter")
         code, out, err = run([sys.executable, str(installer), "--repo", str(target), "--check"], cwd=ROOT)
         require(code == 0, f"a fresh install must pass --check: {out} {err}")
+
+        audit = {"type": "command", "command": "echo audit"}
+        shared_group = {"matcher": "Write|Edit|MultiEdit|NotebookEdit", "hooks": [audit, groups[0]["hooks"][0]]}
+        write(target / ".claude" / "settings.json", json.dumps({"hooks": {"PreToolUse": [shared_group, groups[1]]}}))
+        code, out, err = run([sys.executable, str(installer), "--repo", str(target), "--write"], cwd=ROOT)
+        require(code == 0, f"installer --write failed on a shared matcher group: {out} {err}")
+        installed = json.loads((target / ".claude" / "settings.json").read_text(encoding="utf-8"))
+        require(installed["hooks"]["PreToolUse"] == [{"matcher": shared_group["matcher"], "hooks": [audit]}, *groups],
+                f"a foreign hook that shares a matcher group with the Guard must survive: {installed}")
 
     print("[PASS] Claude Code guard adapter: decisions, receipt, fault rule, registration, installer")
 

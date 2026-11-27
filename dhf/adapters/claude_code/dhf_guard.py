@@ -490,10 +490,25 @@ def configure_host(payload: dict[str, object]) -> None:
     configure(
         path_variables=tuple(path_variables),
         root_aliases=tuple(root_aliases),
-        credential_files=(os.path.join(_CLAUDE_HOME, ".credentials.json"),),
-        control_files=tuple(control_files),
-        control_roots=tuple(control_roots),
+        credential_files=_with_resolved([os.path.join(_CLAUDE_HOME, ".credentials.json")]),
+        control_files=_with_resolved(control_files),
+        control_roots=_with_resolved(control_roots),
     )
+
+
+def _with_resolved(paths: list[str]) -> tuple[str, ...]:
+    """Each path and, where it differs, what it resolves to.
+
+    A settings file or hook directory may be a symlink into a shared location.
+    The core compares a write against the resolved target, so the destination
+    must be protected under its own name as well.
+    """
+    result: list[str] = []
+    for path in paths:
+        for candidate in (path, os.path.realpath(path)):
+            if candidate not in result:
+                result.append(candidate)
+    return tuple(result)
 
 
 def _payload_cwd(payload: dict[str, object]) -> str | None:
