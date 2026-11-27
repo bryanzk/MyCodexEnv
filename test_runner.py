@@ -5868,9 +5868,10 @@ def test_dhf_conformance_table_and_version_rule():
     require(any(item.startswith("position ") for item in missing_after_upgrade),
             "the version rule must cover every enforced cell of the host, not only Restrict")
     require(dhf_conformance.missing_host_receipts(data, "codex-cli", "0.155.1") == [], "all host probes have receipts on 0.155.1")
+    # Fixture receipts are dated far ahead so they stay the latest whatever the real table records.
     regressed = copy.deepcopy(data)
     regressed["receipts"].append({"probe": "restrict.control-plane-update", "host": "codex-cli", "host_version": "0.155.1", "machine": "fixture",
-                                  "result": "fail", "key_output": "apply_patch reported a context mismatch", "timestamp": "2026-11-26T23:30:00-05:00"})
+                                  "result": "fail", "key_output": "apply_patch reported a context mismatch", "timestamp": "2099-01-01T00:00:00-05:00"})
     require(any("latest receipt of probe restrict.control-plane-update failed" in error for error in dhf_conformance.validate(regressed)),
             "a later failed receipt must withdraw the enforced_verified claim")
     failed_view = dhf_conformance.cell_view(regressed, "codex-cli", "restrict", "0.155.1", now)
@@ -5879,7 +5880,7 @@ def test_dhf_conformance_table_and_version_rule():
     require(dhf_conformance.missing_host_receipts(regressed, "codex-cli", "0.155.1") == ["restrict (run: restrict.control-plane-update)"],
             "the version rule must not pass on an earlier pass once the probe has failed since")
     regressed["receipts"].append({"probe": "restrict.control-plane-update", "host": "codex-cli", "host_version": "0.155.1", "machine": "fixture",
-                                  "result": "pass", "key_output": "blocked", "timestamp": "2026-11-26T23:40:00-05:00"})
+                                  "result": "pass", "key_output": "blocked", "timestamp": "2099-01-01T00:10:00-05:00"})
     require(dhf_conformance.validate(regressed) == [] and dhf_conformance.missing_host_receipts(regressed, "codex-cli", "0.155.1") == [],
             "a passing rerun after the failure must restore the evidence")
     require(dhf_conformance.cell_view(data, "claude-code-local", "position", "0.155.1", now)["evidence"] == "none",

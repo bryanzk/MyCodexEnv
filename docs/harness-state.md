@@ -14,19 +14,19 @@ Stable rules belong in `AGENTS.md`, `README.md`, `docs/repo-index.md`, or
   - `codex/skills/delivery-harness-framework/SKILL.md`
 - blocked_sources: none
 - unsafe_inputs: none
-- next_safe_task: owner refreshes identity fixtures for SHI-629 once the Codex review is clean on the latest commit, then merge and read back deliveryharness.com; owner reruns PROBE.md of bryanzk/dhf-host-probe locally (step 7 changed) and in a non-Project cloud session (SHI-627); then SHI-634 (host-external enforcement)
+- next_safe_task: owner narrows cloud connector tool permissions (SHI-634) and reruns PROBE.md of bryanzk/dhf-host-probe locally and in a non-Project cloud session (SHI-627); then SHI-633 (signal-free implementations), 631, 635, 636, 637, 641; SHI-632 last
 - required_commands:
   - `python3 test_runner.py`
   - `git diff --check`
   - `./scripts/verify_codex_env.sh --repo-root "$(pwd)" --codex-home "$HOME/.codex" --claude-home "$HOME/.claude"`
-- latest_checkpoint: 2026-11-27T14:20:07+00:00 rewrote the public site from the conformance table (SHI-629): governance, PROTECT, status, memory map, context engineering, Value & Evidence and Engineering Notes now state per host what is enforced and what has a passing probe; published the specification as docs/dhf-spec-cn.html and docs/dhf-spec-en.html; removed the re-verification notice; data-dhf-status is 2026-11-27 site-wide; parity string 2026-08-10 kept
-- latest_verification: 2026-11-27T14:20:07+00:00 command=python3 scripts/dhf_content_drift.py --repo-root . && python3 scripts/check_surfaces.py --repo-root . --check-public-nav; exit_code=0; key_output=0 open finding(s); check_surfaces ok=true manifest_count=139; sandbox test_runner on Python 3.10: only test_harness_refresh_identity_status_current_head (layer C stale, expected) plus the two known sandbox-only failures
+- latest_checkpoint: 2026-11-27T11:13:29-05:00 SHI-642 merged (PR #52, main 9b3170f) and promoted: owner approved digest 4bcd4ece and promoted the seven targets (transaction 5ba65b25276849ecb757d3832bea6083). The Guard core now protects a symlinked control-plane file, control-plane directory or credential file under the link and under its destination, and judges a write by the name it is written through as well as by what it resolves to. Restrict was probed again on the new Guard (a1afdd52) with Codex CLI 0.155.1. Earlier the same day: SHI-629 merged and published (PR #51), and the owner protected MyCodexEnv main (required check gate, no force push, no deletion, admins not enforced)
+- latest_verification: 2026-11-27T11:13:29-05:00 command=codex exec restrict.control-plane-update probe; python3 scripts/dhf_conformance.py probe-installed --codex-home ~/.codex; test_live_runtime_harness_guard_smoke; exit_code=0; key_output=Command blocked by PreToolUse hook: [harness] active_control_plane_mutation; guard-receipt blocks 13 to 14; healthy=block fault_write=guard_fault fault_read=allow matches_source=True; guard_receipt_matches_installed_guard True; live smoke PASS; owner host full suite before promotion ran=173 passed=172 skipped=1 failed=0
 - compaction_ordinal: 0
 - transition_key: p1-2-complete
 - gate_decision: continue-to-boundary
-- constraints: ["Identity layer C is stale on this branch until the owner runs harness_refresh_identity.py refresh and commits tests/fixtures","The full 24/24 runtime parity comparison has not been repeated since 2026-08-10"]
+- constraints: ["The destination of a symlinked shell startup file is not recognized under its own name","Control-plane symlinks were checked on one machine only; other machines are SHI-632","The full 24/24 runtime parity comparison has not been repeated since 2026-08-10"]
 - ownership: {}
-- next_action: {"command":"owner refreshes identity fixtures for SHI-629 once the Codex review is clean on the latest commit, then merge and read back deliveryharness.com; owner reruns PROBE.md of bryanzk/dhf-host-probe locally (step 7 changed) and in a non-Project cloud session (SHI-627); then SHI-634 (host-external enforcement)"}
+- next_action: {"command":"owner narrows cloud connector tool permissions (SHI-634) and reruns PROBE.md of bryanzk/dhf-host-probe locally and in a non-Project cloud session (SHI-627); then SHI-633 (signal-free implementations), 631, 635, 636, 637, 641; SHI-632 last"}
 
 ## State Log
 
@@ -3952,3 +3952,23 @@ Stable rules belong in `AGENTS.md`, `README.md`, `docs/repo-index.md`, or
   - none
 - next_safe_task: owner refreshes identity fixtures for SHI-629 once the Codex review is clean on the latest commit, then merge and read back deliveryharness.com; owner reruns PROBE.md of bryanzk/dhf-host-probe locally (step 7 changed) and in a non-Project cloud session (SHI-627); then SHI-634 (host-external enforcement)
 - checkpoint_data: {"constraints":["Identity layer C is stale on this branch until the owner runs harness_refresh_identity.py refresh and commits tests/fixtures","The full 24/24 runtime parity comparison has not been repeated since 2026-08-10"],"next_action":{"command":"owner refreshes identity fixtures for SHI-629 once the Codex review is clean on the latest commit, then merge and read back deliveryharness.com; owner reruns PROBE.md of bryanzk/dhf-host-probe locally (step 7 changed) and in a non-Project cloud session (SHI-627); then SHI-634 (host-external enforcement)"},"ownership":{},"phase":"ship","schema":"dhf_checkpoint_v1","verification_evidence":{"command":"python3 scripts/dhf_content_drift.py --repo-root . && python3 scripts/check_surfaces.py --repo-root . --check-public-nav","exit_code":0,"freshness":"fresh","key_output":"0 open finding(s); check_surfaces ok=true manifest_count=139; sandbox test_runner on Python 3.10: only test_harness_refresh_identity_status_current_head (layer C stale, expected) plus the two known sandbox-only failures","timestamp":"2026-11-27T14:20:07+00:00"}}
+
+### 2026-11-27T11:13:29-05:00
+- phase: ship
+- event: checkpoint
+- summary: SHI-642 merged (PR #52, main 9b3170f) and promoted: owner approved digest 4bcd4ece and promoted the seven targets (transaction 5ba65b25276849ecb757d3832bea6083). The Guard core now protects a symlinked control-plane file, control-plane directory or credential file under the link and under its destination, and judges a write by the name it is written through as well as by what it resolves to. Restrict was probed again on the new Guard (a1afdd52) with Codex CLI 0.155.1. Earlier the same day: SHI-629 merged and published (PR #51), and the owner protected MyCodexEnv main (required check gate, no force push, no deletion, admins not enforced)
+- git:
+  - branch: codex/shi-642-receipts-20261127
+  - latest_commit: 9b3170f
+  - dirty_status: dirty
+  - dirty_count: 5
+- changed_surfaces:
+  - `docs`
+- verification:
+  - command: `codex exec restrict.control-plane-update probe; python3 scripts/dhf_conformance.py probe-installed --codex-home ~/.codex; test_live_runtime_harness_guard_smoke`
+  - exit_code: 0
+  - key_output: Command blocked by PreToolUse hook: [harness] active_control_plane_mutation; guard-receipt blocks 13 to 14; healthy=block fault_write=guard_fault fault_read=allow matches_source=True; guard_receipt_matches_installed_guard True; live smoke PASS; owner host full suite before promotion ran=173 passed=172 skipped=1 failed=0
+- blockers:
+  - none
+- next_safe_task: owner narrows cloud connector tool permissions (SHI-634) and reruns PROBE.md of bryanzk/dhf-host-probe locally and in a non-Project cloud session (SHI-627); then SHI-633 (signal-free implementations), 631, 635, 636, 637, 641; SHI-632 last
+- checkpoint_data: {"constraints":["The destination of a symlinked shell startup file is not recognized under its own name","Control-plane symlinks were checked on one machine only; other machines are SHI-632","The full 24/24 runtime parity comparison has not been repeated since 2026-08-10"],"next_action":{"command":"owner narrows cloud connector tool permissions (SHI-634) and reruns PROBE.md of bryanzk/dhf-host-probe locally and in a non-Project cloud session (SHI-627); then SHI-633 (signal-free implementations), 631, 635, 636, 637, 641; SHI-632 last"},"ownership":{},"phase":"ship","schema":"dhf_checkpoint_v1","verification_evidence":{"command":"codex exec restrict.control-plane-update probe; python3 scripts/dhf_conformance.py probe-installed --codex-home ~/.codex; test_live_runtime_harness_guard_smoke","exit_code":0,"freshness":"fresh","key_output":"Command blocked by PreToolUse hook: [harness] active_control_plane_mutation; guard-receipt blocks 13 to 14; healthy=block fault_write=guard_fault fault_read=allow matches_source=True; guard_receipt_matches_installed_guard True; live smoke PASS; owner host full suite before promotion ran=173 passed=172 skipped=1 failed=0","timestamp":"2026-11-27T11:13:29-05:00"}}
