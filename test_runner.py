@@ -10201,6 +10201,20 @@ def test_session_bearing_large_evidence_store():
         require(bounded is None and complete is False and time.perf_counter() - started < 0.5,
                 "an exhausted scan budget must stop the scan and say that it is incomplete")
 
+        big_home = tmp_path / "one-big-day"
+        big_evidence = big_home / "harness" / "evidence"
+        big_evidence.mkdir(parents=True)
+        foreign = json.dumps({"event_type": "verification_result", "evidence_kind": "decision", "cwd": "/tmp/elsewhere",
+                              "timestamp": f"{today.isoformat()}T09:00:00+00:00", "exit_code": 0, "pad": padding})
+        write(big_evidence / f"{today.isoformat()}.jsonl", "\n".join([foreign] * 150000) + "\n")
+        started = time.perf_counter()
+        bounded, complete = recover_module.latest_verification_bounded(big_home, repo, 0.05)
+        spent = time.perf_counter() - started
+        require(bounded is None and complete is False and spent < 0.3,
+                f"one very large day must not overrun the scan budget: complete={complete} seconds={spent:.3f}")
+        bounded, complete = recover_module.latest_verification_bounded(big_home, repo, 30.0)
+        require(bounded is None and complete is True, "with enough budget the large day must be scanned to its end")
+
         older = (today - dt.timedelta(days=5)).isoformat()
         newer = (today - dt.timedelta(days=2)).isoformat()
         for date, command in ((older, "old gate"), (newer, "new gate")):
@@ -10244,6 +10258,22 @@ def test_session_bearing_large_evidence_store():
         require(delivered, f"session bearing must deliver inside its budget with a large evidence store: attempts={attempts}")
         receipt = json.loads((home / "harness" / "bearing-receipt.json").read_text(encoding="utf-8"))
         require(receipt["last_outcome"] == "delivered", f"the receipt must record the delivery: {receipt}")
+
+        runs_before = receipt["runs"]
+        parallel = [
+            subprocess.Popen([sys.executable, str(SESSION_BEARING)], stdin=subprocess.PIPE, stdout=subprocess.DEVNULL,
+                             stderr=subprocess.DEVNULL, text=True, env=env)
+            for _ in range(12)
+        ]
+        for process in parallel:
+            process.stdin.write(json.dumps({"cwd": str(repo)}))
+            process.stdin.close()
+        for process in parallel:
+            process.wait(timeout=30)
+        receipt = json.loads((home / "harness" / "bearing-receipt.json").read_text(encoding="utf-8"))
+        require(receipt["runs"] == runs_before + len(parallel)
+                and receipt["delivered"] + receipt["misses"] == receipt["runs"],
+                f"session starts that overlap must each be counted in the receipt: before={runs_before} {receipt}")
 
     print(f"[PASS] session bearing with a large evidence store (attempts={attempts})")
 

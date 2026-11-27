@@ -221,6 +221,7 @@ def latest_evidence(codex: Path, repo_root: Path) -> tuple[str, dict[str, Any] |
 
 BEARING_SCAN_SECONDS = 0.05
 VERIFICATION_MARKER = '"verification_result"'
+BEARING_SCAN_BLOCK_BYTES = 1 << 20
 
 
 def latest_verification_bounded(
@@ -231,9 +232,11 @@ def latest_verification_bounded(
     """Find this repository's newest verification_result without reading the whole store.
 
     Evidence files are named by local date, so the scan walks the dates from the
-    newest back and stops at the first date that holds a match. It gives up once
-    the time budget is spent. Returns the record (or None) and whether the scan
-    finished; an unfinished scan with no record is not proof that none exists.
+    newest back and stops at the first date that holds a match. Files are read
+    in blocks and the time budget is checked before every block, so one very
+    large day cannot overrun it. Returns the record (or None) and whether the
+    scan finished. An unfinished scan returns no record: a partial day could
+    hide a newer one, and no record is not proof that none exists.
     """
     evidence_dir = codex / "harness" / "evidence"
     if not evidence_dir.exists():
@@ -244,32 +247,52 @@ def latest_verification_bounded(
     by_date: dict[str, list[Path]] = {}
     for path in evidence_dir.glob("*.jsonl"):
         by_date.setdefault(path.name[:10], []).append(path)
+    marker = VERIFICATION_MARKER.encode("utf-8")
+
+    def consider(line: bytes, matches: list[dict[str, Any]]) -> None:
+        if marker not in line:
+            return
+        try:
+            event = json.loads(line.decode("utf-8"))
+        except (UnicodeDecodeError, json.JSONDecodeError):
+            return
+        if not isinstance(event, dict) or event.get("event_type") != "verification_result":
+            return
+        raw_cwd = str(event.get("cwd", ""))
+        normalized_cwd = normalized_cwds.get(raw_cwd)
+        if normalized_cwd is None:
+            normalized_cwd = normalized_cwds[raw_cwd] = normalize_path(raw_cwd)
+        if normalized_cwd == repo_cwd:
+            matches.append(event)
+
     for date in sorted(by_date, reverse=True):
-        if time.monotonic() > deadline:
-            return None, False
         matches: list[dict[str, Any]] = []
         for path in by_date[date]:
             try:
-                text = path.read_text(encoding="utf-8")
+                handle = path.open("rb")
             except OSError:
                 continue
-            if VERIFICATION_MARKER not in text:
-                continue
-            for line in text.splitlines():
-                if VERIFICATION_MARKER not in line:
-                    continue
-                try:
-                    event = json.loads(line)
-                except json.JSONDecodeError:
-                    continue
-                if not isinstance(event, dict) or event.get("event_type") != "verification_result":
-                    continue
-                raw_cwd = str(event.get("cwd", ""))
-                normalized_cwd = normalized_cwds.get(raw_cwd)
-                if normalized_cwd is None:
-                    normalized_cwd = normalized_cwds[raw_cwd] = normalize_path(raw_cwd)
-                if normalized_cwd == repo_cwd:
-                    matches.append(event)
+            with handle:
+                carry = b""
+                while True:
+                    if time.monotonic() > deadline:
+                        return None, False
+                    try:
+                        block = handle.read(BEARING_SCAN_BLOCK_BYTES)
+                    except OSError:
+                        break
+                    if not block:
+                        break
+                    data = carry + block
+                    cut = data.rfind(b"\n")
+                    if cut < 0:
+                        carry = data
+                        continue
+                    carry = data[cut + 1 :]
+                    if marker in data[:cut]:
+                        for line in data[:cut].split(b"\n"):
+                            consider(line, matches)
+                consider(carry, matches)
         if matches:
             return max(matches, key=lambda event: str(event.get("timestamp", ""))), True
     return None, True

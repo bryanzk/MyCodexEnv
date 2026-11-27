@@ -115,41 +115,54 @@ def write_receipt(outcome: str, repo_root: Path | None, elapsed: float) -> None:
         if not target_dir.is_dir():
             return
         target = target_dir / RECEIPT_NAME
-        try:
-            receipt = json.loads(target.read_text(encoding="utf-8"))
-            if not isinstance(receipt, dict):
-                receipt = {}
-        except (OSError, json.JSONDecodeError):
-            receipt = {}
-        now = datetime.now().astimezone().replace(microsecond=0).isoformat()
-        delivered = outcome == "delivered"
-        counts = receipt.get("outcomes") if isinstance(receipt.get("outcomes"), dict) else {}
-        counts[outcome] = int(counts.get(outcome, 0) or 0) + 1
-        receipt.update(
-            {
-                "schema_version": 1,
-                "budget_seconds": BUDGET_SECONDS,
-                "last_run_at": now,
-                "last_outcome": outcome,
-                "last_elapsed_seconds": round(elapsed, 4),
-                "last_repo_root": str(repo_root) if repo_root is not None else None,
-                "runs": int(receipt.get("runs", 0) or 0) + 1,
-                "delivered": int(receipt.get("delivered", 0) or 0) + (1 if delivered else 0),
-                "misses": int(receipt.get("misses", 0) or 0) + (0 if delivered else 1),
-                "outcomes": counts,
-            }
-        )
-        if delivered:
-            receipt["last_delivered_at"] = now
-        else:
-            receipt["last_miss_at"] = now
-            receipt["last_miss_outcome"] = outcome
-            receipt["last_miss_repo_root"] = str(repo_root) if repo_root is not None else None
-        temporary = target_dir / f".{RECEIPT_NAME}.{os.getpid()}.tmp"
-        temporary.write_text(json.dumps(receipt, ensure_ascii=False, sort_keys=True) + "\n", encoding="utf-8")
-        os.replace(temporary, target)
+        # Two sessions can start at once. The lock covers the whole
+        # read-modify-write so neither run, nor a miss, is lost.
+        with (target_dir / f".{RECEIPT_NAME}.lock").open("a") as lock:
+            try:
+                import fcntl
+
+                fcntl.flock(lock, fcntl.LOCK_EX)
+            except (ImportError, OSError):
+                pass
+            _update_receipt(target_dir, target, outcome, repo_root, elapsed)
     except Exception:
         return
+
+
+def _update_receipt(target_dir: Path, target: Path, outcome: str, repo_root: Path | None, elapsed: float) -> None:
+    try:
+        receipt = json.loads(target.read_text(encoding="utf-8"))
+        if not isinstance(receipt, dict):
+            receipt = {}
+    except (OSError, json.JSONDecodeError):
+        receipt = {}
+    now = datetime.now().astimezone().replace(microsecond=0).isoformat()
+    delivered = outcome == "delivered"
+    counts = receipt.get("outcomes") if isinstance(receipt.get("outcomes"), dict) else {}
+    counts[outcome] = int(counts.get(outcome, 0) or 0) + 1
+    receipt.update(
+        {
+            "schema_version": 1,
+            "budget_seconds": BUDGET_SECONDS,
+            "last_run_at": now,
+            "last_outcome": outcome,
+            "last_elapsed_seconds": round(elapsed, 4),
+            "last_repo_root": str(repo_root) if repo_root is not None else None,
+            "runs": int(receipt.get("runs", 0) or 0) + 1,
+            "delivered": int(receipt.get("delivered", 0) or 0) + (1 if delivered else 0),
+            "misses": int(receipt.get("misses", 0) or 0) + (0 if delivered else 1),
+            "outcomes": counts,
+        }
+    )
+    if delivered:
+        receipt["last_delivered_at"] = now
+    else:
+        receipt["last_miss_at"] = now
+        receipt["last_miss_outcome"] = outcome
+        receipt["last_miss_repo_root"] = str(repo_root) if repo_root is not None else None
+    temporary = target_dir / f".{RECEIPT_NAME}.{os.getpid()}.tmp"
+    temporary.write_text(json.dumps(receipt, ensure_ascii=False, sort_keys=True) + "\n", encoding="utf-8")
+    os.replace(temporary, target)
 
 
 def main() -> int:
