@@ -91,6 +91,9 @@ def guard_receipt(home: Path) -> dict[str, Any]:
             "invocations": receipt.get("invocations"),
             "blocks": receipt.get("blocks"),
             "unrecognized_mutations": receipt.get("unrecognized_mutations"),
+            "last_unrecognized": {
+                key: last_unrecognized.get(key) for key in ("at", "tool_name")
+            } if isinstance(last_unrecognized := receipt.get("last_unrecognized"), dict) else None,
             "matches_installed_guard": installed is not None and receipt.get("guard_sha256") == installed,
         }
     )
@@ -194,6 +197,9 @@ def render_markdown(payload: dict[str, Any]) -> str:
             f"- guard_last_invoked_at: `{payload['guard_receipt'].get('last_invoked_at')}`",
             f"- guard_invocations: `{payload['guard_receipt'].get('invocations')}`",
             f"- guard_blocks: `{payload['guard_receipt'].get('blocks')}`",
+            # A write-class call the Guard could not classify is recorded, not blocked.
+            f"- guard_unrecognized_mutations: `{payload['guard_receipt'].get('unrecognized_mutations')}`",
+            f"- guard_last_unrecognized: `{payload['guard_receipt'].get('last_unrecognized')}`",
             f"- guard_receipt_matches_installed_guard: `{payload['guard_receipt'].get('matches_installed_guard')}`",
             f"- policy_phases_present: `{payload['runtime']['policy_phases_present']}`",
             f"- evidence_verification_event_present: `{payload['runtime']['evidence_verification_event_present']}`",

@@ -206,6 +206,29 @@ def missing_host_receipts(data: dict[str, Any], host: str, host_version: str) ->
     return missing
 
 
+def unrecognized_calls(host: str, codex_home: Path | None) -> dict[str, Any] | None:
+    """Write-class calls the Guard could not classify on this host, read from its receipt.
+
+    They are recorded, not blocked, so the count has to be looked at. Returns
+    None when the host has no Guard receipt to read.
+    """
+    if host != "codex-cli":
+        return None
+    home = codex_home or Path(os.environ.get("CODEX_HOME", "~/.codex")).expanduser()
+    receipt_path = home / "harness" / "guard-receipt.json"
+    try:
+        receipt = json.loads(receipt_path.read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return {"receipt": str(receipt_path), "count": None, "last": None}
+    count = receipt.get("unrecognized_mutations") if isinstance(receipt, dict) else None
+    last = receipt.get("last_unrecognized") if isinstance(receipt, dict) else None
+    return {
+        "receipt": str(receipt_path),
+        "count": count if isinstance(count, int) and not isinstance(count, bool) else None,
+        "last": {key: last.get(key) for key in ("at", "tool_name")} if isinstance(last, dict) else None,
+    }
+
+
 def detect_host_version(host: str, root: Path = ROOT) -> str | None:
     if host != "codex-cli":
         return None
@@ -304,6 +327,7 @@ def main(argv: list[str] | None = None) -> int:
             sub.add_argument("--host-version")
         if name == "doctor":
             sub.add_argument("--json", action="store_true")
+            sub.add_argument("--codex-home", type=Path, help="Codex home whose Guard receipt to read (default: $CODEX_HOME or ~/.codex)")
     installed = commands.add_parser("probe-installed")
     installed.add_argument("--codex-home", type=Path, required=True)
     installed.add_argument("--interpreter", default="/usr/bin/python3")
@@ -396,6 +420,10 @@ def main(argv: list[str] | None = None) -> int:
         return 1 if missing else 0
 
     views = [cell_view(data, args.host, function, host_version, datetime.now(timezone.utc)) for function in FUNCTIONS]
+    unrecognized = unrecognized_calls(args.host, args.codex_home.expanduser() if args.codex_home else None)
+    for view in views:
+        if view["function"] == "restrict":
+            view["unrecognized_calls"] = unrecognized
     if args.json:
         print(json.dumps({"host": args.host, "host_version": host_version, "functions": views}, ensure_ascii=False, indent=2))
         return 0
@@ -412,6 +440,15 @@ def main(argv: list[str] | None = None) -> int:
         print(f"- evidence: {view['evidence']}")
         if view["probes"]:
             print(f"- probes: {', '.join(view['probes'])}")
+        calls = view.get("unrecognized_calls")
+        if calls is not None and calls["count"] is None:
+            print(f"- unrecognized calls: unknown (no readable Guard receipt at {calls['receipt']})")
+        elif calls is not None and calls["count"] > 0:
+            last = calls["last"] or {}
+            print(f"- unrecognized calls: {calls['count']} (last: {last.get('tool_name')} at {last.get('at')}). "
+                  "These write-class calls were recorded, not blocked: find out which tool it was and teach the adapter.")
+        elif calls is not None:
+            print("- unrecognized calls: 0")
         if view["note"]:
             print(f"- note: {view['note']}")
         print()
