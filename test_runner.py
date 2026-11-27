@@ -2226,6 +2226,40 @@ def test_external_gstack_documentation_contract():
     print("[PASS] external gstack documentation contract")
 
 
+def test_codex_skill_loader_system_snapshot_rule():
+    """The host owns skills/.system; its bundled set changes between host versions.
+
+    Codex CLI 0.172.0 stopped shipping plugin-creator and the loader gate, which
+    only runs on a machine with Codex, failed on the upgrade.
+    """
+    sys.path.insert(0, str(ROOT / "scripts"))
+    try:
+        import check_codex_skill_loader as gate
+    finally:
+        sys.path.pop(0)
+    base = Path("/h/skills/.system")
+    snapshot = {base / name / "SKILL.md" for name in ("imagegen", "openai-docs", "plugin-creator")}
+    listed = {base / name / "SKILL.md" for name in ("imagegen", "openai-docs", "review-agent")}
+    dropped = gate.classify_system_skills(snapshot, listed, listed)
+    require(dropped == {"missing": [], "not_shipped": [str(base / "plugin-creator" / "SKILL.md")], "disabled": []},
+            f"a snapshot skill the host no longer ships is reported, not failed: {dropped}")
+    disabled = gate.classify_system_skills(snapshot, listed, listed - {base / "imagegen" / "SKILL.md"})
+    require(disabled["disabled"] == [str(base / "imagegen" / "SKILL.md")],
+            f"a system skill the host lists but disables still fails the gate: {disabled}")
+    none_loaded = gate.classify_system_skills(snapshot, set(), set())
+    require(len(none_loaded["missing"]) == 3 and none_loaded["not_shipped"] == [],
+            f"when the host lists no system skill at all, every snapshot skill is missing: {none_loaded}")
+    require(gate.classify_system_skills(set(), listed, listed) == {"missing": [], "not_shipped": [], "disabled": []},
+            "an empty snapshot asks for nothing")
+    with tempfile.TemporaryDirectory() as tmp:
+        home = Path(tmp) / ".codex"
+        managed = gate.expected_paths(ROOT, home)
+        require(managed and not any("/.system/" in str(path) for path in managed),
+                "skills/.system is not among the skills this repository manages")
+        require(gate.system_skill_paths(ROOT, home), "the repository still records a .system snapshot")
+    print("[PASS] Codex skill loader treats skills/.system as host-owned")
+
+
 def test_codex_skill_loader_gate():
     require(CHECK_CODEX_SKILL_LOADER.exists(), f"missing Codex skill loader gate: {CHECK_CODEX_SKILL_LOADER}")
     code, codex_bin, _ = run([str(CODEX_CLI_RESOLVER)])
@@ -2271,6 +2305,9 @@ def test_codex_skill_loader_gate():
         require(payload["loader_errors"] == 0, "Codex loader should report no skill errors")
         require(payload["missing_expected_paths"] == [], "Codex loader should expose every expected skill path")
         require(payload["disabled_expected_paths"] == [], "Codex loader should enable every expected skill path")
+        if payload["system_skills_not_shipped_by_host"]:
+            print("[INFO] .system snapshot skills this host version does not ship: "
+                  + ", ".join(Path(path).parent.name for path in payload["system_skills_not_shipped_by_host"]))
 
     print("[PASS] Codex app-server skill loader gate")
 
@@ -14583,6 +14620,7 @@ TESTS = [
     test_external_gstack_runtime_transaction_lock_contract,
     test_external_gstack_runtime_apply_recover_contract,
     test_external_gstack_documentation_contract,
+    test_codex_skill_loader_system_snapshot_rule,
     test_codex_skill_loader_gate,
     test_selected_skill_sync_contract,
     test_sync_renders_template_and_copies_skills,
