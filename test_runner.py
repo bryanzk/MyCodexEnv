@@ -2565,6 +2565,7 @@ def test_sync_preserves_runtime_plugin_state():
             'notify = ["/tmp/Codex Computer Use.app/client", "turn-ended"]\n\n'
             'approval_policy = "on-request"\n'
             "owner_list = [\n  \"one\",\n  \"two\",\n]\n\n"
+            'owner_text = """\nfirst line\nmodel = "inside a string"\nlast line\n"""\n\n'
             "[features]\n"
             "codex_hooks = true\n"
             "memories = true\n"
@@ -2665,6 +2666,8 @@ def test_sync_preserves_runtime_plugin_state():
         require(merged["model"] == tomllib.loads(CONFIG_TEMPLATE.read_text(encoding="utf-8"))["model"], "the template keeps authority over the keys it sets")
         require(merged["approval_policy"] == "on-request" and merged["owner_list"] == ["one", "two"],
                 "sync must keep top-level keys the template does not set")
+        require(merged["owner_text"] == 'first line\nmodel = "inside a string"\nlast line\n',
+                "a key-looking line inside a multi-line string is part of that string")
         require(merged["tui"] == {"theme": "owner-choice", "model_availability_nux": {"seen": 3}}
                 and merged["sandbox_workspace_write"] == {"network_access": True}
                 and merged["mcp_servers"]["owner-added"] == {"command": "/opt/owner/server"}

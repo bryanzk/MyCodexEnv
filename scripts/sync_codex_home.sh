@@ -1370,16 +1370,23 @@ def top_level_statements(text):
     region = text[:first_table.start()] if first_table else text
     starts = list(re.finditer(r'(?m)^(?:[A-Za-z0-9_-]+|"[^"\n]+")(?:\.[A-Za-z0-9_"-]+)*[ \t]*=', region))
     statements = []
-    for index, match in enumerate(starts):
-        end = starts[index + 1].start() if index + 1 < len(starts) else len(region)
-        statement = region[match.start():end].rstrip()
-        try:
-            parsed = tomllib.loads(statement)
-        except tomllib.TOMLDecodeError as exc:
-            raise SystemExit(f"config merge refused: cannot read a top-level key of the existing config.toml: {exc}")
-        if len(parsed) != 1:
-            raise SystemExit("config merge refused: a top-level statement of the existing config.toml is ambiguous")
-        statements.append((next(iter(parsed)), statement))
+    bounds = [match.start() for match in starts] + [len(region)]
+    index = 0
+    while index < len(starts):
+        # A line inside a multi-line string or array can look like a new key.
+        # Extend the statement to the next candidate until it parses on its own.
+        for stop in range(index + 1, len(bounds)):
+            statement = region[bounds[index]:bounds[stop]].rstrip()
+            try:
+                parsed = tomllib.loads(statement)
+            except tomllib.TOMLDecodeError:
+                continue
+            if len(parsed) == 1:
+                statements.append((next(iter(parsed)), statement))
+                index = stop
+                break
+        else:
+            raise SystemExit("config merge refused: cannot read a top-level key of the existing config.toml")
     return statements
 
 
