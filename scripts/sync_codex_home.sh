@@ -1350,6 +1350,39 @@ def preserve_table(name):
     )
 
 
+def managed_table(name):
+    """Tables this script renders from the template or merges by its own rule.
+
+    Hook registration comes only from the template; `hooks.state` is the host's
+    record of which hooks the owner trusted or disabled and is preserved above.
+    """
+    return (
+        name == "features"
+        or name == "skills.config"
+        or name == "hooks"
+        or (name.startswith("hooks.") and not preserve_table(name))
+    )
+
+
+def top_level_statements(text):
+    """Key statements that come before the first table header, in order."""
+    first_table = re.search(r"(?m)^\[", text)
+    region = text[:first_table.start()] if first_table else text
+    starts = list(re.finditer(r'(?m)^(?:[A-Za-z0-9_-]+|"[^"\n]+")(?:\.[A-Za-z0-9_"-]+)*[ \t]*=', region))
+    statements = []
+    for index, match in enumerate(starts):
+        end = starts[index + 1].start() if index + 1 < len(starts) else len(region)
+        statement = region[match.start():end].rstrip()
+        try:
+            parsed = tomllib.loads(statement)
+        except tomllib.TOMLDecodeError as exc:
+            raise SystemExit(f"config merge refused: cannot read a top-level key of the existing config.toml: {exc}")
+        if len(parsed) != 1:
+            raise SystemExit("config merge refused: a top-level statement of the existing config.toml is ambiguous")
+        statements.append((next(iter(parsed)), statement))
+    return statements
+
+
 def table_key_lines(block):
     keys = {}
     for line in block.splitlines()[1:]:
@@ -1400,6 +1433,27 @@ if notify_match and not re.search(r"(?m)^notify\s*=", rendered):
         + rendered[insert_at:].lstrip("\n")
     )
 
+rendered_array_names = {name for name, is_array, _ in rendered_blocks if is_array}
+kept_runtime_only = []
+
+# Top-level keys the template does not set belong to the owner or to the host.
+rendered_top_keys = {key for key, _ in top_level_statements(rendered)}
+runtime_top = [
+    (key, statement) for key, statement in top_level_statements(existing)
+    if key not in rendered_top_keys
+]
+if runtime_top:
+    first_table = re.search(r"(?m)^\[", rendered)
+    insert_at = first_table.start() if first_table else len(rendered)
+    rendered = (
+        rendered[:insert_at].rstrip()
+        + "\n"
+        + "\n".join(statement for _, statement in runtime_top)
+        + "\n\n"
+        + rendered[insert_at:].lstrip("\n")
+    )
+    kept_runtime_only.extend(key for key, _ in runtime_top)
+
 for name, is_array, block in existing_blocks:
     if is_array and name == "skills.config":
         path = tomllib.loads(block)["skills"]["config"][0]["path"]
@@ -1416,6 +1470,27 @@ for name, is_array, block in existing_blocks:
         else:
             rendered = rendered.rstrip() + "\n\n" + block + "\n"
             rendered_names.add(name)
+    elif managed_table(name):
+        continue
+    elif is_array:
+        # A runtime-only array of tables. The template owns the arrays it defines.
+        if name not in rendered_array_names:
+            rendered = rendered.rstrip() + "\n\n" + block + "\n"
+            kept_runtime_only.append("[[" + name + "]]")
+    elif name not in rendered_names:
+        # A table the template does not define was put there by the owner or by
+        # the host. Dropping it silently loses their settings.
+        rendered = rendered.rstrip() + "\n\n" + block + "\n"
+        rendered_names.add(name)
+        kept_runtime_only.append("[" + name + "]")
+
+try:
+    tomllib.loads(rendered)
+except tomllib.TOMLDecodeError as exc:
+    raise SystemExit(f"config merge refused: merged config.toml is not valid TOML: {exc}")
+
+if kept_runtime_only:
+    print("Kept runtime-only config entries the template does not define: " + ", ".join(kept_runtime_only))
 
 rendered_path.write_text(rendered, encoding="utf-8")
 PY
@@ -1442,7 +1517,9 @@ fi
 mkdir -p "${CODEX_HOME}/skills"
 # Repo skills are managed overlays; preserve runtime-only/local skills that are
 # intentionally outside this repository's source-of-truth.
-rsync "${EXTERNAL_GSTACK_RSYNC_ARGS[@]}" "${REPO_ROOT}/codex/skills/" "${CODEX_HOME}/skills/"
+# skills/.system belongs to the host: each Codex version ships and rewrites its
+# own set. The repository snapshot is a record, not a source to deploy.
+rsync "${EXTERNAL_GSTACK_RSYNC_ARGS[@]}" --exclude '/.system/' "${REPO_ROOT}/codex/skills/" "${CODEX_HOME}/skills/"
 
 if [[ -d "${REPO_ROOT}/codex/workflow" ]]; then
   mkdir -p "${CODEX_HOME}/workflow"

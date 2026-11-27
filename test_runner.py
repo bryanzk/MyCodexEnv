@@ -2450,8 +2450,11 @@ def test_sync_renders_template_and_copies_skills():
         )
         require((codex_home / "workflow" / "rules" / "behaviors.md").exists(), "codex workflow rules should be copied")
 
-        expected_skills = count_top_dirs(ROOT / "codex" / "skills")
+        # skills/.system is host-owned: the repository keeps a snapshot, the sync does not deploy it.
+        expected_skills = count_top_dirs(ROOT / "codex" / "skills") - 1
         actual_skills = count_top_dirs(codex_home / "skills")
+        require(not (codex_home / "skills" / ".system").exists(),
+                "sync must leave skills/.system for the host to create")
         require(
             actual_skills == expected_skills + 1,
             f"managed skills plus runtime-only fixture count mismatch: {actual_skills} != {expected_skills + 1}",
@@ -2560,10 +2563,27 @@ def test_sync_preserves_runtime_plugin_state():
             codex_home / "config.toml",
             'model = "gpt-5.5"\n'
             'notify = ["/tmp/Codex Computer Use.app/client", "turn-ended"]\n\n'
+            'approval_policy = "on-request"\n'
+            "owner_list = [\n  \"one\",\n  \"two\",\n]\n\n"
             "[features]\n"
             "codex_hooks = true\n"
             "memories = true\n"
             "chronicle = true\n\n"
+            "[tui]\n"
+            'theme = "owner-choice"\n\n'
+            "[tui.model_availability_nux]\n"
+            "seen = 3\n\n"
+            "[sandbox_workspace_write]\n"
+            "network_access = true\n\n"
+            "[mcp_servers.owner-added]\n"
+            'command = "/opt/owner/server"\n\n'
+            "[[owner_array]]\n"
+            'name = "first"\n\n'
+            "[[hooks.PreToolUse]]\n"
+            'matcher = "stale"\n\n'
+            "[[hooks.PreToolUse.hooks]]\n"
+            'type = "command"\n'
+            'command = "/tmp/stale-hook.sh"\n\n'
             "[mcp_servers.node_repl]\n"
             'command = "/Applications/Codex.app/Contents/Resources/node_repl"\n'
             "args = []\n\n"
@@ -2595,6 +2615,10 @@ def test_sync_preserves_runtime_plugin_state():
             f'[[skills.config]]\npath = {json.dumps(local_skill)}\nenabled = false\n\n'
             f'[[skills.config]]\npath = {json.dumps(other_skill)}\nenabled = true\n',
         )
+        host_system_skill = codex_home / "skills/.system/imagegen/SKILL.md"
+        write(host_system_skill, "---\nname: imagegen\ndescription: Shipped by the host.\n---\n")
+        write(codex_home / "skills/.system/.codex-system-skills.marker", "host-marker\n")
+        system_before = snapshot_tree(codex_home / "skills/.system")
         foreign_hooks = json.dumps({"hooks": {"PreToolUse": [{"_foreign": True, "hooks": [
             {"type": "command", "command": "/Applications/Foreign.app/hook.sh processing"}]}]}})
         write(codex_home / "hooks.json", foreign_hooks)
@@ -2637,6 +2661,20 @@ def test_sync_preserves_runtime_plugin_state():
             "[memories]",
         ]:
             require(expected in rendered, f"sync should preserve runtime config: {expected}")
+        merged = tomllib.loads(rendered)
+        require(merged["model"] == tomllib.loads(CONFIG_TEMPLATE.read_text(encoding="utf-8"))["model"], "the template keeps authority over the keys it sets")
+        require(merged["approval_policy"] == "on-request" and merged["owner_list"] == ["one", "two"],
+                "sync must keep top-level keys the template does not set")
+        require(merged["tui"] == {"theme": "owner-choice", "model_availability_nux": {"seen": 3}}
+                and merged["sandbox_workspace_write"] == {"network_access": True}
+                and merged["mcp_servers"]["owner-added"] == {"command": "/opt/owner/server"}
+                and merged["owner_array"] == [{"name": "first"}],
+                "sync must keep tables the template does not define")
+        require("/tmp/stale-hook.sh" not in rendered, "hook registration still comes only from the template")
+        require("Kept runtime-only config entries" in out and "[tui]" in out and "approval_policy" in out,
+                f"sync must say which runtime-only entries it kept: {out}")
+        require(snapshot_tree(codex_home / "skills/.system") == system_before,
+                "sync must not write into the host-owned skills/.system")
         require(
             rendered.count('[plugins."browser-use@openai-bundled"]') == 1,
             "template plugin blocks should not be duplicated",

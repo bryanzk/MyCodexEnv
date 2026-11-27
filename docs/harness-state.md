@@ -14,19 +14,19 @@ Stable rules belong in `AGENTS.md`, `README.md`, `docs/repo-index.md`, or
   - `codex/skills/delivery-harness-framework/SKILL.md`
 - blocked_sources: none
 - unsafe_inputs: none
-- next_safe_task: SHI-637: rehearse the full sync against the real runtime; it is the only path that can deliver the PostCompact-based compaction counter (SHI-633 remainder) and the files of 1b637d8. Then 631, 635, 636, 641; SHI-632 last. Owner may disable compaction_probe.py in the runtime with /hooks until then
+- next_safe_task: Owner reruns the full-sync rehearsal against a copy of the runtime on this branch's merge; no full sync against the real runtime before that
 - required_commands:
   - `python3 test_runner.py`
   - `git diff --check`
   - `./scripts/verify_codex_env.sh --repo-root "$(pwd)" --codex-home "$HOME/.codex" --claude-home "$HOME/.claude"`
-- latest_checkpoint: 2026-11-27T15:55:34-05:00 SHI-633: the observer no longer records an exit status it did not see. Measured on Codex CLI 0.172.0: PostToolUse carries the output text of a shell command and no exit status, and a failed apply_patch raises no PostToolUse. Owner approved digest 8f8d7a27 and promoted the seven targets (transaction b73945b831c348cdb4ab97c9891b630d). Conversion health reads no_signal instead of stalled when the store holds tool calls only. The skill loader gate treats skills/.system as host-owned: Codex CLI 0.172.0 stopped shipping plugin-creator and the gate had failed on the upgrade. The conformance table lists what gives no signal on this host (Plan Governor, compaction probe, prompt dispatcher, observer exit status)
-- latest_verification: 2026-11-27T15:55:34-05:00 command=python3 test_runner.py on the owner's host; observe probe with a shell command that exits 3; test_live_runtime_harness_guard_smoke; exit_code=0; key_output=ran=174 passed=174 skipped=0 failed=0 on Codex CLI 0.172.0; observer record output_length=9 output_source=tool_response exit_code absent exit_code_observed=false; promotion committed targets=7; guard_receipt_matches_installed_guard True; live smoke PASS
+- latest_checkpoint: 2026-11-27T17:04:57-05:00 SHI-637: the full sync no longer drops owner and host settings from config.toml and no longer writes into the host-owned skills/.system. A rehearsal against a copy of the reference runtime showed the config merge kept only an allowlist of tables, so six runtime-only tables would have been removed, and the skills copy would have overwritten the host's bundled system skills with the repository snapshot. The merge now keeps every table and top-level key the template does not define, refuses a result that is not valid TOML, and prints what it kept. Hook registration still comes only from the template.
+- latest_verification: 2026-11-27T17:04:57-05:00 command=python3 test_runner.py (cloud clone, no Codex CLI); exit_code=0; key_output=165 pass; the 5 failures and 4 skips are the same set as on main in this environment; test_sync_preserves_runtime_plugin_state fails on main with the new assertions and passes with the change
 - compaction_ordinal: 0
 - transition_key: p1-2-complete
 - gate_decision: continue-to-boundary
-- constraints: ["The compaction probe still writes one inconclusive record per prompt in the runtime; its replacement needs a new hook registration that the seven-target promotion cannot deliver","A new host version is accepted only after both the seven function probes and the full host test suite pass on it","The full 24/24 runtime parity comparison has not been repeated since 2026-08-10"]
+- constraints: ["The full sync has still never run against the real runtime"]
 - ownership: {}
-- next_action: {"command":"SHI-637: rehearse the full sync against the real runtime; it is the only path that can deliver the PostCompact-based compaction counter (SHI-633 remainder) and the files of 1b637d8. Then 631, 635, 636, 641; SHI-632 last. Owner may disable compaction_probe.py in the runtime with /hooks until then"}
+- next_action: {"command":"Owner reruns the full-sync rehearsal against a copy of the runtime on this branch's merge; no full sync against the real runtime before that"}
 
 ## State Log
 
@@ -4033,3 +4033,24 @@ Stable rules belong in `AGENTS.md`, `README.md`, `docs/repo-index.md`, or
   - none
 - next_safe_task: SHI-637: rehearse the full sync against the real runtime; it is the only path that can deliver the PostCompact-based compaction counter (SHI-633 remainder) and the files of 1b637d8. Then 631, 635, 636, 641; SHI-632 last. Owner may disable compaction_probe.py in the runtime with /hooks until then
 - checkpoint_data: {"constraints":["The compaction probe still writes one inconclusive record per prompt in the runtime; its replacement needs a new hook registration that the seven-target promotion cannot deliver","A new host version is accepted only after both the seven function probes and the full host test suite pass on it","The full 24/24 runtime parity comparison has not been repeated since 2026-08-10"],"next_action":{"command":"SHI-637: rehearse the full sync against the real runtime; it is the only path that can deliver the PostCompact-based compaction counter (SHI-633 remainder) and the files of 1b637d8. Then 631, 635, 636, 641; SHI-632 last. Owner may disable compaction_probe.py in the runtime with /hooks until then"},"ownership":{},"phase":"ship","schema":"dhf_checkpoint_v1","verification_evidence":{"command":"python3 test_runner.py on the owner's host; observe probe with a shell command that exits 3; test_live_runtime_harness_guard_smoke","exit_code":0,"freshness":"fresh","key_output":"ran=174 passed=174 skipped=0 failed=0 on Codex CLI 0.172.0; observer record output_length=9 output_source=tool_response exit_code absent exit_code_observed=false; promotion committed targets=7; guard_receipt_matches_installed_guard True; live smoke PASS","timestamp":"2026-11-27T15:55:34-05:00"}}
+
+### 2026-11-27T17:04:57-05:00
+- phase: ship
+- event: checkpoint
+- summary: SHI-637: the full sync no longer drops owner and host settings from config.toml and no longer writes into the host-owned skills/.system. A rehearsal against a copy of the reference runtime showed the config merge kept only an allowlist of tables, so six runtime-only tables would have been removed, and the skills copy would have overwritten the host's bundled system skills with the repository snapshot. The merge now keeps every table and top-level key the template does not define, refuses a result that is not valid TOML, and prints what it kept. Hook registration still comes only from the template.
+- git:
+  - branch: codex/shi-637-sync-preserve-20261127
+  - latest_commit: d38d268
+  - dirty_status: dirty
+  - dirty_count: 2
+- changed_surfaces:
+  - `scripts/sync_codex_home.sh`
+  - `test_runner.py`
+- verification:
+  - command: `python3 test_runner.py (cloud clone, no Codex CLI)`
+  - exit_code: 0
+  - key_output: 165 pass; the 5 failures and 4 skips are the same set as on main in this environment; test_sync_preserves_runtime_plugin_state fails on main with the new assertions and passes with the change
+- blockers:
+  - none
+- next_safe_task: Owner reruns the full-sync rehearsal against a copy of the runtime on this branch's merge; no full sync against the real runtime before that
+- checkpoint_data: {"constraints":["The full sync has still never run against the real runtime"],"next_action":{"command":"Owner reruns the full-sync rehearsal against a copy of the runtime on this branch's merge; no full sync against the real runtime before that"},"ownership":{},"phase":"ship","schema":"dhf_checkpoint_v1","verification_evidence":{"command":"python3 test_runner.py (cloud clone, no Codex CLI)","exit_code":0,"freshness":"fresh","key_output":"165 pass; the 5 failures and 4 skips are the same set as on main in this environment; test_sync_preserves_runtime_plugin_state fails on main with the new assertions and passes with the change","timestamp":"2026-11-27T17:04:57-05:00"}}
