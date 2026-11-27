@@ -10454,6 +10454,29 @@ def test_session_bearing_large_evidence_store():
                 and receipt["delivered"] + receipt["misses"] == receipt["runs"],
                 f"session starts that overlap must each be counted in the receipt: before={runs_before} {receipt}")
 
+        holder = subprocess.Popen(
+            [sys.executable, "-c",
+             "import fcntl, sys, time\n"
+             "handle = open(sys.argv[1], 'a')\n"
+             "fcntl.flock(handle, fcntl.LOCK_EX)\n"
+             "print('held', flush=True)\n"
+             "time.sleep(30)\n",
+             str(home / "harness" / ".bearing-receipt.json.lock")],
+            stdout=subprocess.PIPE, text=True)
+        try:
+            require(holder.stdout.readline().strip() == "held", "the lock holder fixture did not start")
+            runs_locked = receipt["runs"]
+            started = time.perf_counter()
+            code, out, err = run_with_input([sys.executable, str(SESSION_BEARING)], json.dumps({"cwd": str(repo)}), env=env)
+            waited = time.perf_counter() - started
+            require(code == 0 and err == "" and waited < 2.0,
+                    f"a receipt lock held by another session must not keep the hook waiting: {waited:.3f}s {err!r}")
+            require(json.loads((home / "harness" / "bearing-receipt.json").read_text(encoding="utf-8"))["runs"] == runs_locked,
+                    "a hook that could not take the receipt lock must skip the receipt update")
+        finally:
+            holder.kill()
+            holder.wait()
+
     print(f"[PASS] session bearing with a large evidence store (attempts={attempts})")
 
 

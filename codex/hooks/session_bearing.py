@@ -13,6 +13,7 @@ from typing import Any
 
 BUDGET_SECONDS = 0.18
 RECEIPT_NAME = "bearing-receipt.json"
+RECEIPT_LOCK_SECONDS = 0.05
 # Tried in order. A repository whose recovery helper does not know a flag
 # answers "unrecognized arguments", and only that answer moves to the next one.
 RECOVER_FLAG_CHAIN = (("--bearing", "--json"), ("--boundary", "--json"), ("--json",))
@@ -118,15 +119,30 @@ def write_receipt(outcome: str, repo_root: Path | None, elapsed: float) -> None:
         # Two sessions can start at once. The lock covers the whole
         # read-modify-write so neither run, nor a miss, is lost.
         with (target_dir / f".{RECEIPT_NAME}.lock").open("a") as lock:
-            try:
-                import fcntl
-
-                fcntl.flock(lock, fcntl.LOCK_EX)
-            except (ImportError, OSError):
-                pass
+            if not _lock_within(lock, RECEIPT_LOCK_SECONDS):
+                # The receipt is evidence only. A lock that another session holds
+                # too long must not keep this session start waiting.
+                return
             _update_receipt(target_dir, target, outcome, repo_root, elapsed)
     except Exception:
         return
+
+
+def _lock_within(lock, seconds: float) -> bool:
+    """Take the advisory lock, waiting at most `seconds`. True on a platform without flock."""
+    try:
+        import fcntl
+    except ImportError:
+        return True
+    deadline = time.monotonic() + seconds
+    while True:
+        try:
+            fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
+            return True
+        except OSError:
+            if time.monotonic() >= deadline:
+                return False
+            time.sleep(0.002)
 
 
 def _update_receipt(target_dir: Path, target: Path, outcome: str, repo_root: Path | None, elapsed: float) -> None:
