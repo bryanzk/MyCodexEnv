@@ -1325,14 +1325,22 @@ rendered = rendered_path.read_text(encoding="utf-8")
 existing = existing_path.read_text(encoding="utf-8")
 
 
+class TextMergeFailed(Exception):
+    """The text-preserving merge could not read a spelling of the existing file."""
+
+
 def refuse(reason):
-    raise SystemExit(f"config merge refused: {reason}")
+    raise TextMergeFailed(reason)
 
 
 try:
     existing_data = tomllib.loads(existing)
 except tomllib.TOMLDecodeError as exc:
-    refuse(f"the existing config.toml is not valid TOML ({exc}); repair it or move it aside, then sync again")
+    raise SystemExit(
+        f"config merge refused: the existing config.toml is not valid TOML ({exc}); "
+        "repair it or move it aside, then sync again"
+    )
+template_data = tomllib.loads(rendered)
 
 
 def statements(text):
@@ -1517,94 +1525,160 @@ def merge_table_keys(text, path, source_block):
     return text[:end].rstrip() + "\n" + "\n".join(additions) + "\n\n" + text[end:].lstrip("\n")
 
 
-existing_top, existing_blocks = split(existing)
-rendered_top, rendered_blocks = split(rendered)
-rendered_paths = {path for path, is_array, *_ in rendered_blocks if not is_array}
-rendered_array_paths = {path for path, is_array, *_ in rendered_blocks if is_array}
-skill_paths = {
-    tomllib.loads(block)["skills"]["config"][0]["path"]
-    for path, is_array, block, *_ in rendered_blocks if is_array and path == ("skills", "config")
-}
-kept_runtime_only = []
-kept_array_paths = set()
+def text_merge(rendered):
+    existing_top, existing_blocks = split(existing)
+    rendered_top, rendered_blocks = split(rendered)
+    rendered_paths = {path for path, is_array, *_ in rendered_blocks if not is_array}
+    rendered_array_paths = {path for path, is_array, *_ in rendered_blocks if is_array}
+    skill_paths = {
+        tomllib.loads(block)["skills"]["config"][0]["path"]
+        for path, is_array, block, *_ in rendered_blocks if is_array and path == ("skills", "config")
+    }
+    kept_array_paths = set()
 
-# Top-level keys the template does not set belong to the owner or to the host.
-rendered_top_keys = {key for key, _ in rendered_top}
-# A top-level statement can also write into a table, as `features.x = true` or
-# as an inline table. Where the template or this script owns that table, the
-# statement is read as a table so the same rules apply to it.
-table_roots = {path[0] for path, *_ in rendered_blocks} | {"features", "hooks", "skills"}
-as_tables = [statement for key, statement in existing_top if key in table_roots]
-runtime_top = [
-    (key, statement) for key, statement in existing_top
-    if key not in rendered_top_keys and key not in table_roots
-]
-top_table_blocks = []
-if as_tables:
-    for key, value in tomllib.loads("\n".join(as_tables) + "\n").items():
-        if isinstance(value, dict):
-            top_table_blocks.extend(as_table_blocks((key,), value))
-if runtime_top:
-    insert_at = rendered_blocks[0][3] if rendered_blocks else len(rendered)
-    rendered = (
-        rendered[:insert_at].rstrip()
-        + "\n"
-        + "\n".join(statement for _, statement in runtime_top)
-        + "\n\n"
-        + rendered[insert_at:].lstrip("\n")
-    )
-    kept_runtime_only.extend(dict.fromkeys(key for key, _ in runtime_top if key != "notify"))
+    # Top-level keys the template does not set belong to the owner or to the host.
+    rendered_top_keys = {key for key, _ in rendered_top}
+    # A top-level statement can also write into a table, as `features.x = true` or
+    # as an inline table. Where the template or this script owns that table, the
+    # statement is read as a table so the same rules apply to it.
+    table_roots = {path[0] for path, *_ in rendered_blocks} | {"features", "hooks", "skills"}
+    as_tables = [statement for key, statement in existing_top if key in table_roots]
+    runtime_top = [
+        (key, statement) for key, statement in existing_top
+        if key not in rendered_top_keys and key not in table_roots
+    ]
+    top_table_blocks = []
+    if as_tables:
+        for key, value in tomllib.loads("\n".join(as_tables) + "\n").items():
+            if isinstance(value, dict):
+                top_table_blocks.extend(as_table_blocks((key,), value))
+    if runtime_top:
+        insert_at = rendered_blocks[0][3] if rendered_blocks else len(rendered)
+        rendered = (
+            rendered[:insert_at].rstrip()
+            + "\n"
+            + "\n".join(statement for _, statement in runtime_top)
+            + "\n\n"
+            + rendered[insert_at:].lstrip("\n")
+        )
 
-for path, is_array, block, *_ in top_table_blocks + existing_blocks:
-    if is_array and path == ("skills", "config"):
-        skill_path = tomllib.loads(block)["skills"]["config"][0]["path"]
-        if skill_path not in skill_paths:
+    for path, is_array, block, *_ in top_table_blocks + existing_blocks:
+        if is_array and path == ("skills", "config"):
+            skill_path = tomllib.loads(block)["skills"]["config"][0]["path"]
+            if skill_path not in skill_paths:
+                rendered = append_block(rendered, block)
+                skill_paths.add(skill_path)
+        elif under(path, kept_array_paths):
+            # Part of an array element that was kept. Each element has its own.
             rendered = append_block(rendered, block)
-            skill_paths.add(skill_path)
-    elif under(path, kept_array_paths):
-        # Part of an array element that was kept. Each element has its own.
-        rendered = append_block(rendered, block)
-    elif is_array and preserve_table(path):
-        rendered = append_block(rendered, block)
-        kept_array_paths.add(path)
-    elif path == ("features",):
-        rendered = merge_table_keys(rendered, path, block)
-    elif preserve_table(path):
-        if path in rendered_paths:
-            rendered = merge_table_keys(rendered, path, block)
-        else:
-            rendered = append_block(rendered, block)
-            rendered_paths.add(path)
-    elif managed_table(path) or under(path, rendered_array_paths):
-        # Rendered from the template only, or part of an element of an array
-        # the template owns; that element was not carried over.
-        continue
-    elif is_array:
-        if path not in rendered_array_paths:
+        elif is_array and preserve_table(path):
             rendered = append_block(rendered, block)
             kept_array_paths.add(path)
-            label = "[[" + ".".join(path) + "]]"
-            if label not in kept_runtime_only:
-                kept_runtime_only.append(label)
-    elif path not in rendered_paths:
-        # A table the template does not define was put there by the owner or
-        # by the host. Dropping it silently loses their settings.
-        rendered = append_block(rendered, block)
-        rendered_paths.add(path)
-        kept_runtime_only.append("[" + ".".join(path) + "]")
+        elif path == ("features",):
+            rendered = merge_table_keys(rendered, path, block)
+        elif preserve_table(path):
+            if path in rendered_paths:
+                rendered = merge_table_keys(rendered, path, block)
+            else:
+                rendered = append_block(rendered, block)
+                rendered_paths.add(path)
+        elif managed_table(path) or under(path, rendered_array_paths):
+            # Rendered from the template only, or part of an element of an array
+            # the template owns; that element was not carried over.
+            continue
+        elif is_array:
+            if path not in rendered_array_paths:
+                rendered = append_block(rendered, block)
+                kept_array_paths.add(path)
+        elif path not in rendered_paths:
+            # A table the template does not define was put there by the owner or
+            # by the host. Dropping it silently loses their settings.
+            rendered = append_block(rendered, block)
+            rendered_paths.add(path)
 
+    return rendered
+
+
+def is_table_array(value):
+    return isinstance(value, list) and bool(value) and all(isinstance(item, dict) for item in value)
+
+
+def merge_data(path, template, current, kept):
+    """What the merged config must contain, worked out on parsed data.
+
+    The template keeps the keys and arrays it sets. Hook registration comes
+    only from the template. Everything else the existing file holds is kept:
+    top-level keys, tables the template does not define, sub-tables of the
+    tables it does define, and extra keys in `features` and in the tables the
+    host or the owner writes at runtime.
+    """
+    result = dict(template)
+    # The template owns the direct keys of the tables it writes a header for.
+    open_table = not path or path == ("features",) or preserve_table(path) or path not in template_tables
+    for key, value in current.items():
+        child = path + (key,)
+        if child[0] == "hooks" and len(child) > 1 and not preserve_table(child):
+            continue
+        if child == ("features", "codex_hooks"):
+            continue
+        if child == ("skills", "config") and is_table_array(value) and is_table_array(template.get(key)):
+            known = {entry.get("path") for entry in template[key]}
+            result[key] = template[key] + [entry for entry in value if entry.get("path") not in known]
+            continue
+        if isinstance(value, dict):
+            if key not in template:
+                result[key] = value
+                if not preserve_table(child):
+                    kept.append("[" + ".".join(child) + "]")
+            elif isinstance(template[key], dict):
+                result[key] = merge_data(child, template[key], value, kept)
+        elif key not in template and (open_table or is_table_array(value)):
+            result[key] = value
+            if not path and key != "notify":
+                kept.append(key)
+            elif is_table_array(value) and not preserve_table(child):
+                kept.append("[[" + ".".join(child) + "]]")
+    return result
+
+
+def emit_table(path, table, lines):
+    for key, value in table.items():
+        if not isinstance(value, dict) and not is_table_array(value):
+            lines.append(f"{json.dumps(key, ensure_ascii=False)} = {emit_value(value)}")
+    for key, value in table.items():
+        child = path + (key,)
+        name = ".".join(json.dumps(part, ensure_ascii=False) for part in child)
+        if isinstance(value, dict):
+            if not value or any(not isinstance(item, dict) and not is_table_array(item) for item in value.values()):
+                lines.extend(["", f"[{name}]"])
+            emit_table(child, value, lines)
+        elif is_table_array(value):
+            for element in value:
+                lines.extend(["", f"[[{name}]]"])
+                emit_table(child, element, lines)
+
+
+template_tables = {path for path, is_array, *_ in split(rendered)[1] if not is_array}
+kept_runtime_only = []
+expected = merge_data((), template_data, existing_data, kept_runtime_only)
 try:
-    merged = tomllib.loads(rendered)
-except tomllib.TOMLDecodeError as exc:
-    refuse(f"the merged config.toml is not valid TOML: {exc}")
-for key, _ in runtime_top:
-    if merged.get(key) != existing_data.get(key):
-        refuse(f"the top-level key {key!r} did not survive the merge unchanged")
+    merged_text = text_merge(rendered)
+    if tomllib.loads(merged_text) != expected:
+        raise TextMergeFailed("the text merge and the parsed merge disagree")
+except (TextMergeFailed, tomllib.TOMLDecodeError, KeyError, IndexError, TypeError) as exc:
+    # The existing file uses a spelling the text merge does not read. Write the
+    # parsed result instead: the settings are exact, the comments are not kept.
+    lines = []
+    emit_table((), expected, lines)
+    merged_text = "\n".join(lines).lstrip("\n") + "\n"
+    if tomllib.loads(merged_text) != expected:
+        raise SystemExit("config merge refused: the merged config.toml does not hold the expected settings")
+    print(f"config.toml was rewritten from its parsed settings; comments in it were not kept ({exc})")
 
 if kept_runtime_only:
     print("Kept runtime-only config entries the template does not define: " + ", ".join(kept_runtime_only))
 
-rendered_path.write_text(rendered, encoding="utf-8")
+rendered_path.write_text(merged_text, encoding="utf-8")
 PY
 fi
 

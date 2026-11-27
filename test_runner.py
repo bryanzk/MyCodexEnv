@@ -2568,7 +2568,7 @@ def test_sync_preserves_runtime_plugin_state():
             'owner_text = """\nfirst line\n[example]\nmodel = "inside a string"\nlast line\n"""\n'
             "'literal-quoted key' = 7\n"
             'mcp_servers.owner-dotted.command = "/opt/owner/dotted"\n'
-            "features.owner_dotted_flag = true\n\n"
+            "\n"
             "[features]\n"
             "codex_hooks = true\n"
             "memories = true\n"
@@ -2694,11 +2694,13 @@ def test_sync_preserves_runtime_plugin_state():
         require(merged["mcp_servers"]["chrome-devtools"]["command"].endswith("/chrome-devtools-mcp"),
                 "a table the template defines under another spelling is not declared twice")
         require(merged["mcp_servers"]["owner-dotted"] == {"command": "/opt/owner/dotted"}
-                and merged["features"]["owner_dotted_flag"] is True and merged["features"]["hooks"] is True,
+                and merged["features"]["hooks"] is True,
                 "a top-level dotted key that writes into a table follows that table's rule")
         require("/tmp/stale-hook.sh" not in rendered and "/tmp/stale-quoted-hook.sh" not in rendered, "hook registration still comes only from the template")
         require("Kept runtime-only config entries" in out and "[tui]" in out and "approval_policy" in out,
                 f"sync must say which runtime-only entries it kept: {out}")
+        require("rewritten from its parsed settings" not in out,
+                f"an ordinary config.toml keeps its text and comments: {out}")
         require(snapshot_tree(codex_home / "skills/.system") == system_before,
                 "sync must not write into the host-owned skills/.system")
         require(
@@ -2718,6 +2720,24 @@ def test_sync_preserves_runtime_plugin_state():
         require(config["memories"] == {"generate_memories": True},
                 "skill arrays must not leak into the preceding config table")
         require(snapshot_tree(plugin_cache) == cache_before, "sync must preserve plugin cache")
+
+        # A spelling the text merge does not read: entries written inline in a parent table.
+        inline_home = tmp_path / "inline home"
+        write(inline_home / "config.toml",
+              "[mcp_servers]\n"
+              'chrome-devtools = { command = "/opt/owner/old" }\n'
+              'owner-inline = { command = "/opt/owner/inline" }\n\n'
+              "[features]\nfeatures_owner_flag = true\n")
+        code, out, err = run([str(SYNC), "--repo-root", str(ROOT), "--codex-home", str(inline_home),
+                              "--skip-superpowers-sync"])
+        require(code == 0, f"sync must complete on a valid config.toml in any spelling: {err or out}")
+        inline = tomllib.loads((inline_home / "config.toml").read_text(encoding="utf-8"))
+        require("rewritten from its parsed settings" in out
+                and inline["mcp_servers"]["owner-inline"] == {"command": "/opt/owner/inline"}
+                and inline["mcp_servers"]["chrome-devtools"]["command"].endswith("/chrome-devtools-mcp")
+                and inline["features"]["features_owner_flag"] is True
+                and inline["hooks"] == load_source_hooks()["hooks"],
+                f"the parsed merge keeps owner entries and template authority: {out}")
         source = phase0_root_snapshot()
         origin = make_bare_origin_from(source, tmp_path / "origin.git")
         env = os.environ.copy()
