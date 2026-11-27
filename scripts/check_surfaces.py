@@ -9,7 +9,7 @@ from pathlib import Path
 from typing import Any
 
 
-PATH_PREFIXES = ("docs/", "codex/", "scripts/")
+PATH_PREFIXES = ("docs/", "codex/", "scripts/", "dhf/")
 ROOT_SURFACES = {"CONTEXT.md"}
 
 

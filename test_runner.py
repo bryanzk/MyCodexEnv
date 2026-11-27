@@ -5755,6 +5755,97 @@ def test_harness_guard_invocation_receipt():
     print("[PASS] harness guard invocation receipt")
 
 
+def test_guard_core_is_host_neutral_and_bundled():
+    """The Guard core names no host; every adapter carries an exact copy of it."""
+    core_path = ROOT / "dhf" / "core" / "guard_core.py"
+    core = core_path.read_text(encoding="utf-8")
+    lowered = core.lower()
+    for word in ("codex", "claude", "apply_patch", "multi_edit", "tool_input", "pretooluse", "hooks.json", "config.toml"):
+        require(word not in lowered, f"dhf/core/guard_core.py must stay host-neutral; found {word!r}")
+    tree = ast.parse(core, filename=str(core_path), feature_version=(3, 9))
+    top_imports = sorted(alias.name for node in tree.body if isinstance(node, ast.Import) for alias in node.names)
+    require(top_imports == ["json", "os", "time"],
+            f"the core body is inlined into hooks and may only import json, os, time at module level: {top_imports}")
+    builder = ROOT / "scripts" / "build_guard_bundle.py"
+    code, out, err = run([sys.executable, str(builder), "--check"], cwd=ROOT)
+    require(code == 0 and "guard bundle consistent" in out,
+            f"adapters must carry the current core; run build_guard_bundle.py --write: {err or out}")
+    sys.path.insert(0, str(ROOT / "scripts"))
+    try:
+        import build_guard_bundle
+    finally:
+        sys.path.pop(0)
+    body = build_guard_bundle.core_body(core)
+    guard = HARNESS_GUARD.read_text(encoding="utf-8")
+    require(body in guard, "codex/hooks/harness_guard.py must contain the core body verbatim")
+    adapter_only = guard.replace(body, "")
+    for name in ("_is_credential_target", "_is_control_plane_target", "_is_persistence_target", "_hardlink_matches"):
+        require(f"def {name}(" not in adapter_only, f"{name} belongs to the core, not to the Codex adapter")
+    with tempfile.TemporaryDirectory() as tmp:
+        stale_root = Path(tmp)
+        for relative in (build_guard_bundle.CORE, *build_guard_bundle.ADAPTERS):
+            write(stale_root / relative, (ROOT / relative).read_text(encoding="utf-8"))
+        write(stale_root / build_guard_bundle.CORE, core + "\n# drift\n")
+        require(build_guard_bundle.stale_adapters(stale_root) == list(build_guard_bundle.ADAPTERS),
+                "a core change that is not re-inlined must be reported as stale")
+    print("[PASS] guard core is host-neutral and bundled into the Codex adapter")
+
+
+def test_harness_guard_fault_blocks_mutations():
+    """A Guard that fails must block write and delete calls instead of failing open.
+
+    From 2026-08-18 to 2026-11-26 the Guard raised at import on every call and
+    the host treated the crash as allow.
+    """
+    source = HARNESS_GUARD.read_text(encoding="utf-8")
+    decision_def = "def decision(payload: dict[str, object]) -> dict[str, str]:\n"
+    end_marker = "# --- END DHF GUARD CORE ---\n"
+    require(source.count(decision_def) == 1 and source.count(end_marker) == 1,
+            "fault fixtures need the adapter decision seam and the core end marker")
+    faults = {
+        "decision_time": source.replace(decision_def, decision_def + "    raise RuntimeError('injected decision fault')\n"),
+        "import_time": source.replace(end_marker, end_marker + "raise RuntimeError('injected import fault')\n"),
+    }
+    blocked = {"decision": "block", "reason": "[harness] guard_fault"}
+    interpreters = [sys.executable]
+    if Path("/usr/bin/python3").exists():
+        interpreters.append("/usr/bin/python3")
+    with tempfile.TemporaryDirectory() as tmp:
+        tmp_path = Path(tmp)
+        env = _harness_guard_test_env(tmp_path)
+        codex_home = Path(env["CODEX_HOME"])
+        workspace = tmp_path / "workspace"
+        workspace.mkdir()
+        payloads = {
+            "write": ({"tool_name": "write", "tool_input": {"path": str(workspace / "a.txt"), "content": "x"}}, blocked),
+            "delete": ({"tool_name": "delete_file", "tool_input": {"path": str(workspace / "a.txt")}}, blocked),
+            "patch": ({"tool_name": "apply_patch", "tool_input": {"patch": "*** Begin Patch\n*** End Patch"}}, blocked),
+            "read": ({"tool_name": "read", "tool_input": {"path": str(workspace / "a.txt")}}, {}),
+            "shell": ({"tool_name": "bash", "tool_input": {"command": "true"}}, {}),
+            "nameless": ({"tool_input": {"path": str(workspace / "a.txt")}}, {}),
+        }
+        for fault_name, fault_source in faults.items():
+            faulty = tmp_path / f"{fault_name}-harness_guard.py"
+            faulty.write_text(fault_source, encoding="utf-8")
+            for interpreter in interpreters:
+                for payload_name, (payload, expected) in payloads.items():
+                    payload = dict(payload, cwd=str(workspace))
+                    code, out, err = run_with_input([interpreter, str(faulty)], json.dumps(payload), env=env)
+                    label = f"{fault_name}/{payload_name} under {interpreter}"
+                    require(code == 0, f"a faulted Guard must still exit 0 so the host reads its decision ({label}): {err}")
+                    require(json.loads(out) == expected, f"faulted Guard returned {out!r}, expected {expected} ({label})")
+                    require("injected" in err, f"the fault must stay visible on stderr ({label}): {err!r}")
+        code, out, err = run_with_input([sys.executable, str(faulty)], "not json", env=env)
+        require(code == 0 and json.loads(out) == {},
+                f"a fault with an unreadable payload cannot be classified and must not block: {out!r} {err!r}")
+        receipt = json.loads((codex_home / "harness" / "guard-receipt.json").read_text(encoding="utf-8"))
+        require(receipt["blocks"] == 3 * len(interpreters) and receipt["invocations"] == len(payloads) * len(interpreters),
+                f"decision-time faults must reach the receipt because the receipt code still works: {receipt}")
+        evidence = "".join(path.read_text(encoding="utf-8") for path in (codex_home / "harness" / "evidence").glob("*.jsonl"))
+        require('"message": "guard_fault"' in evidence, "a fault block must leave a guardrail_decision record")
+    print("[PASS] a faulted harness guard blocks write and delete calls and lets the rest through")
+
+
 def test_harness_guard_policy_decisions():
     with tempfile.TemporaryDirectory() as tmp:
         tmp_path = Path(tmp)
@@ -13776,6 +13867,8 @@ TESTS = [
     test_merge_gstack_daily_refresh_audits_diverged_branch,
     test_sync_local_main_fast_forwards_when_clean_and_behind_only,
     test_sync_local_main_skips_dirty_worktree,
+    test_guard_core_is_host_neutral_and_bundled,
+    test_harness_guard_fault_blocks_mutations,
     test_harness_guard_policy_decisions,
     test_harness_guard_invocation_receipt,
     test_harness_guard_protects_hook_registration_file,

@@ -439,6 +439,25 @@ Guard under that interpreter. A hook that fails to import exits non-zero on
 every call and the host treats that as allow: this is how the Guard was inert
 from the 2026-08-18 promotion until 2026-11-26.
 
+The Guard is a host-neutral core plus a host adapter. The core,
+`dhf/core/guard_core.py`, decides from normalized touches (read, write, delete
+with the target's three path identities) and writes the receipt; it names no
+host, tool, or payload field. The Codex adapter in
+`codex/hooks/harness_guard.py` parses the PreToolUse payload, supplies the
+protected files and directories under `~/.codex`, and formats the response.
+The hook stays one file: `scripts/build_guard_bundle.py --write` inlines the
+core between the adapter's BEGIN/END markers, and
+`test_guard_core_is_host_neutral_and_bundled` fails when the copy is stale.
+Edit the core, never the inlined copy. The contract is `docs/dhf-spec.md`,
+sections 7 to 9.
+
+When the Guard itself raises, at import or while deciding, it blocks write and
+delete tool calls with `[harness] guard_fault`, lets every other call through,
+prints the traceback to stderr, and exits 0 so that Codex reads the decision.
+A file that does not compile cannot run this rule; the registered-interpreter
+test covers that case before promotion. A host-side hook timeout is outside
+the Guard's control.
+
 The Guard writes `~/.codex/harness/guard-receipt.json` on every invocation
 (last invocation time, digest of the Guard file that ran, last tool and
 decision, best-effort counters) and appends one `guardrail_decision` record per
