@@ -5821,11 +5821,11 @@ def test_dhf_conformance_table_and_version_rule():
                                   "result": "pass", "key_output": "blocked", "timestamp": "2026-11-26T23:40:00-05:00"})
     require(dhf_conformance.validate(regressed) == [] and dhf_conformance.missing_host_receipts(regressed, "codex-cli", "0.155.1") == [],
             "a passing rerun after the failure must restore the evidence")
-    require(dhf_conformance.cell_view(data, "codex-cli", "observe", "0.155.1", now)["evidence"] == "none",
+    require(dhf_conformance.cell_view(data, "claude-code-local", "position", "0.155.1", now)["evidence"] == "none",
             "a cell without receipts must not show evidence")
 
     code, out, err = run([sys.executable, str(HARNESS_STATUS), "status", "--conformance", "--host-version", "0.155.1"], cwd=ROOT)
-    require(code == 0 and "## restrict: enforced_verified" in out and "## observe: registered_unverified" in out,
+    require(code == 0 and "## restrict: enforced_verified" in out and "## thread: registered_unverified" in out,
             f"harness_status --conformance must print every function: {err or out}")
 
     with tempfile.TemporaryDirectory() as tmp:
