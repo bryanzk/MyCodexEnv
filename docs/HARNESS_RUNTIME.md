@@ -469,9 +469,10 @@ values state the gap plainly: `registered_unverified`, `installed_not_wired`,
 `disabled_by_owner`, `text_only`, `absent`.
 
 - `python3 scripts/harness_status.py status --conformance` prints every
-  function on the current host with its mechanism and evidence age. Evidence
-  is `stale` when the receipt was taken on another host version or is older
-  than `freshness_days`.
+  function on the current host with its mechanism and evidence age. A cell's
+  evidence is `current` only when every probe it lists is current: a host
+  probe goes stale when the host version changes, and every probe goes stale
+  after `freshness_days`.
 - `python3 scripts/dhf_conformance.py probes` prints each probe's prompt,
   expected result, criterion, and side effects. Host probes are run by the
   owner inside the host; they target a file that does not exist or a context
@@ -486,8 +487,9 @@ values state the gap plainly: `registered_unverified`, `installed_not_wired`,
   --key-output "<host output>"` stores a host probe receipt with the detected
   host version.
 - Version rule: `scripts/verify_codex_env.sh` fails
-  `codex_host_probe_receipt` when the installed Codex version has no passing
-  host probe receipt for a function the table claims as enforced. Accepting a
+  `codex_host_probe_receipt` when any host probe of a function the table
+  claims as enforced has no passing receipt on the installed Codex version.
+  Accepting a
   new version in `ACCEPTED_CODEX_VERSION_PREFIXES` is therefore not enough:
   rerun the host probes on it and record them.
 

@@ -5788,9 +5788,22 @@ def test_dhf_conformance_table_and_version_rule():
     current = dhf_conformance.cell_view(data, "codex-cli", "restrict", "0.155.1", now)
     require(current["evidence"] == "current" and current["evidence_version"] == "0.155.1", f"fresh receipt must read as current: {current}")
     upgraded = dhf_conformance.cell_view(data, "codex-cli", "restrict", "9.9.9", now)
-    require(upgraded["evidence"].startswith("stale: probed on 0.155.1"), f"a host upgrade must make the receipt stale: {upgraded}")
+    require(upgraded["evidence"].startswith("stale: ") and "probed on 0.155.1, host is 9.9.9" in upgraded["evidence"],
+            f"a host upgrade must make the receipt stale: {upgraded}")
+    require("restrict.installed-guard-fault" not in upgraded["evidence"],
+            f"an installed-artifact probe does not go stale with the host version: {upgraded}")
     aged = dhf_conformance.cell_view(data, "codex-cli", "restrict", "0.155.1", now + dt.timedelta(days=data["freshness_days"] + 1))
-    require(aged["evidence"].startswith("stale: older than"), f"an old receipt must read as stale: {aged}")
+    require(aged["evidence"].startswith("stale: ") and "older than" in aged["evidence"], f"an old receipt must read as stale: {aged}")
+    partial = copy.deepcopy(data)
+    partial["receipts"].append({"probe": "restrict.control-plane-delete", "host": "codex-cli", "host_version": "9.9.9", "machine": "fixture",
+                                "result": "pass", "key_output": "fixture", "timestamp": "2026-11-26T23:00:00-05:00"})
+    one_rerun = dhf_conformance.cell_view(partial, "codex-cli", "restrict", "9.9.9", now)
+    require(one_rerun["evidence"].startswith("stale: ") and "restrict.control-plane-update probed on 0.155.1" in one_rerun["evidence"]
+            and "restrict.control-plane-delete" not in one_rerun["evidence"],
+            f"rerunning one probe must not hide stale evidence for another: {one_rerun}")
+    require(dhf_conformance.missing_host_receipts(partial, "codex-cli", "9.9.9") == ["restrict (run: restrict.control-plane-update)"],
+            "the version rule must require every host probe of an enforced cell on the installed version")
+    require(dhf_conformance.missing_host_receipts(data, "codex-cli", "0.155.1") == [], "all host probes have receipts on 0.155.1")
     require(dhf_conformance.cell_view(data, "codex-cli", "position", "0.155.1", now)["evidence"] == "none",
             "a cell without receipts must not show evidence")
 
@@ -5806,6 +5819,13 @@ def test_dhf_conformance_table_and_version_rule():
         require(code == 0 and "healthy=block fault_write=guard_fault fault_read=allow" in out and "matches_source=True" in out,
                 f"installed-Guard probe must pass on the source Guard: {err or out}")
         require(not (home / "harness").exists(), "the installed-Guard probe must not write into the probed home")
+        inherited_evidence = tmp_path / "inherited-evidence"
+        inherited_evidence.mkdir()
+        probe_env = os.environ.copy()
+        probe_env["CODEX_HARNESS_EVIDENCE_DIR"] = str(inherited_evidence)
+        code, out, err = run([sys.executable, str(script), "probe-installed", "--codex-home", str(home), "--interpreter", sys.executable], cwd=ROOT, env=probe_env)
+        require(code == 0 and not any(inherited_evidence.iterdir()),
+                f"the installed-Guard probe must not append to an inherited evidence directory: {err or out}")
         write(home / "hooks" / "harness_guard.py", "import json, sys\njson.dump({}, sys.stdout)\n")
         code, out, err = run([sys.executable, str(script), "probe-installed", "--codex-home", str(home), "--interpreter", sys.executable], cwd=ROOT)
         require(code == 1 and "unsupported" in out, f"a Guard without the fault rule must fail the probe: {err or out}")

@@ -129,27 +129,42 @@ def validate(data: dict[str, Any], *, raw_text: str | None = None) -> list[str]:
 
 
 def cell_view(data: dict[str, Any], host: str, function: str, host_version: str | None, now: datetime) -> dict[str, Any]:
+    """One function on one host. Evidence is current only when every listed probe's evidence is current.
+
+    A receipt goes stale with age for every probe, and with a host version
+    change for host probes only: an installed-artifact or transaction probe
+    does not run inside the host.
+    """
     cell = data["cells"][host][function]
-    receipts = passing_receipts(data, host, cell.get("probes", []))
-    latest = receipts[-1] if receipts else None
+    kinds = {probe["id"]: probe.get("kind") for probe in data.get("probes", [])}
     view = {
         "function": function,
         "status": cell["status"],
         "mechanism": cell.get("mechanism", ""),
         "note": cell.get("note", ""),
         "probes": cell.get("probes", []),
-        "evidence_version": latest["host_version"] if latest else None,
-        "evidence_at": latest["timestamp"] if latest else None,
-        "evidence_machine": latest["machine"] if latest else None,
+        "evidence_version": None,
+        "evidence_at": None,
+        "evidence_machine": None,
         "evidence": "none",
     }
-    if latest is None:
+    latest = {probe_id: (passing_receipts(data, host, [probe_id]) or [None])[-1] for probe_id in view["probes"]}
+    found = [receipt for receipt in latest.values() if receipt is not None]
+    if not found:
         return view
-    age = now - (parse_time(latest["timestamp"]) or now)
-    if host_version is not None and latest["host_version"] != host_version:
-        view["evidence"] = f"stale: probed on {latest['host_version']}, host is {host_version}"
-    elif age > timedelta(days=data["freshness_days"]):
-        view["evidence"] = f"stale: older than {data['freshness_days']} days"
+    problems = []
+    for probe_id, receipt in latest.items():
+        if receipt is None:
+            problems.append(f"{probe_id} has no passing receipt")
+        elif kinds.get(probe_id) == "host" and host_version is not None and receipt["host_version"] != host_version:
+            problems.append(f"{probe_id} probed on {receipt['host_version']}, host is {host_version}")
+        elif now - (parse_time(receipt["timestamp"]) or now) > timedelta(days=data["freshness_days"]):
+            problems.append(f"{probe_id} older than {data['freshness_days']} days")
+    # Report the weakest link: the oldest of the per-probe latest receipts.
+    oldest = min(found, key=lambda receipt: parse_time(receipt["timestamp"]) or now)
+    view.update(evidence_version=oldest["host_version"], evidence_at=oldest["timestamp"], evidence_machine=oldest["machine"])
+    if problems:
+        view["evidence"] = "stale: " + "; ".join(problems)
     elif host_version is None:
         view["evidence"] = "unconfirmed: current host version unknown"
     else:
@@ -158,16 +173,21 @@ def cell_view(data: dict[str, Any], host: str, function: str, host_version: str 
 
 
 def missing_host_receipts(data: dict[str, Any], host: str, host_version: str) -> list[str]:
-    """Functions claimed enforced_verified whose host probes have no passing receipt on this version."""
+    """Host probes of enforced_verified cells that have no passing receipt on this host version."""
     kinds = {probe["id"]: probe.get("kind") for probe in data.get("probes", [])}
     missing = []
     for function in FUNCTIONS:
         cell = data["cells"][host][function]
-        host_probes = [probe_id for probe_id in cell.get("probes", []) if kinds.get(probe_id) == "host"]
-        if cell.get("status") != "enforced_verified" or not host_probes:
+        if cell.get("status") != "enforced_verified":
             continue
-        if not any(receipt.get("host_version") == host_version for receipt in passing_receipts(data, host, host_probes)):
-            missing.append(f"{function} (run: {', '.join(host_probes)})")
+        absent = [
+            probe_id
+            for probe_id in cell.get("probes", [])
+            if kinds.get(probe_id) == "host"
+            and not any(receipt.get("host_version") == host_version for receipt in passing_receipts(data, host, [probe_id]))
+        ]
+        if absent:
+            missing.append(f"{function} (run: {', '.join(absent)})")
     return missing
 
 
@@ -220,7 +240,10 @@ def probe_installed(codex_home: Path, interpreter: str) -> dict[str, Any]:
         healthy.write_text(source, encoding="utf-8")
         faulted = tmp_path / "faulted-harness_guard.py"
         faulted.write_text(source.replace(CORE_END_MARKER, CORE_END_MARKER + "raise RuntimeError('dhf conformance probe fault')\n"), encoding="utf-8")
-        env = dict(os.environ, CODEX_HOME=str(home))
+        # The Guard honors CODEX_HARNESS_EVIDENCE_DIR for block records; pin it
+        # inside the temporary directory so the probe cannot write to a real one.
+        env = dict(os.environ, CODEX_HOME=str(home), CODEX_HARNESS_EVIDENCE_DIR=str(tmp_path / "evidence"))
+        env.pop("CODEX_SESSION_ID", None)
         patch = "\n".join(["*** Begin Patch", f"*** Add File: {home / 'hooks' / 'probe.txt'}", "+probe", "*** End Patch"])
         outcome["healthy"] = run_guard(interpreter, healthy, {"tool_name": "apply_patch", "cwd": str(workspace), "tool_input": {"patch": patch}}, env)
         outcome["fault_write"] = run_guard(interpreter, faulted, {"tool_name": "write", "cwd": str(workspace), "tool_input": {"path": str(workspace / "a.txt"), "content": "x"}}, env)
@@ -359,7 +382,7 @@ def main(argv: list[str] | None = None) -> int:
         if view["mechanism"]:
             print(f"- mechanism: {view['mechanism']}")
         if view["evidence_at"]:
-            print(f"- last passing probe: {view['evidence_at']} on {view['evidence_version']} ({view['evidence_machine']})")
+            print(f"- oldest required probe receipt: {view['evidence_at']} on {view['evidence_version']} ({view['evidence_machine']})")
         print(f"- evidence: {view['evidence']}")
         if view["probes"]:
             print(f"- probes: {', '.join(view['probes'])}")
