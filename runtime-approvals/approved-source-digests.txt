@@ -42,3 +42,4 @@ sha256:ae5f14925a2f950b0d7d1f5c4de585378b5df96189502cc3d47275c7a34bb644  Approve
 sha256:944b25a44b485552909cc1aad2ec786e77ff34acd6b1a85176b536392d1e2d5b  Approve governed profile wiring (SHI-630)
 sha256:186c31e36c813f6a5d0d8491b1a807358e301e107ce194112286250e7a77c865  Approve bounded session bearing and its receipt (SHI-640)
 sha256:5ff55fefd11e580ef4b0904b88d551c9be454fd2c05e233509e30b7a43838542  Approve bounded receipt lock in the session bearing (SHI-640)
+sha256:4bcd4ece5de6796ba1d60a1ee411036f7bffa264687a5ba265e96b86cc42441e  Approve symlinked control-plane protection in the Guard core (SHI-642)
