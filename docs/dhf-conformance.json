@@ -133,6 +133,16 @@
       "key_output": "harness guard promotion committed: targets=7 transaction=aae00c0dfdb84742900c53a7c11daea2; guard_receipt_matches_installed_guard: True",
       "guard_sha256": "699ff61e",
       "timestamp": "2026-11-26T19:03:46-05:00"
+    },
+    {
+      "probe": "restrict.installed-guard-fault",
+      "host": "codex-cli",
+      "host_version": "0.155.1",
+      "machine": "Mac Studio",
+      "result": "pass",
+      "key_output": "healthy=block fault_write=guard_fault fault_read=allow; matches_source=True; interpreter=/usr/bin/python3",
+      "timestamp": "2026-11-26T20:25:00-05:00",
+      "guard_sha256": "699ff61e"
     }
   ],
   "cells": {
@@ -148,9 +158,10 @@
         "mechanism": "PreToolUse hook codex/hooks/harness_guard.py (core dhf/core/guard_core.py)",
         "probes": [
           "restrict.control-plane-delete",
-          "restrict.control-plane-update"
+          "restrict.control-plane-update",
+          "restrict.installed-guard-fault"
         ],
-        "note": "Covers structured read, write, and delete calls. Write targets inside shell commands are not parsed. The guard_fault rule has no passing receipt yet: run restrict.installed-guard-fault."
+        "note": "Covers structured read, write, and delete calls. Write targets inside shell commands are not parsed. The guard_fault rule is verified on the installed Guard file under the registered interpreter, not by a live fault inside the host."
       },
       "observe": {
         "status": "registered_unverified",
