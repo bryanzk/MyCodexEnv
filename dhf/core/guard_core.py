@@ -189,11 +189,18 @@ def _is_persistence_target(path: str, *, check_inode: bool = False) -> bool:
     return _hardlink_matches(path, exact=exact, roots=_PERSISTENCE_ROOTS)
 
 
-def decide(touches) -> str:
+def decide(touches, governance=None) -> str:
     """Return the reason code that blocks these touches, or "" to let them through.
 
     A touch is (kind, (lexical, entry, referent)) with kind "read", "write" or
     "delete" and the three identities produced by _target_identity().
+
+    `governance` is None in the default profile. In the governed profile the
+    adapter passes {"write_authorized": bool, "phase": str or None,
+    "write_roots": (real paths, ...)}: after the always-on blocks, a write or
+    delete then needs an owner-declared phase that permits writing (Position,
+    Empower) and a target inside the declared roots (Contain). Reads are never
+    affected.
     """
     for touch, (lexical, entry, referent) in touches:
         if _is_credential_target(lexical) or _is_credential_target(entry):
@@ -210,6 +217,16 @@ def decide(touches) -> str:
             return "os_persistence_mutation"
         if touch == "delete" and _is_persistence_target(entry):
             return "os_persistence_mutation"
+    if governance is None:
+        return ""
+    for touch, (_, entry, referent) in touches:
+        if touch not in {"write", "delete"}:
+            continue
+        if not governance.get("write_authorized"):
+            return "governed_phase_forbids_write" if governance.get("phase") else "governed_write_without_phase"
+        target = referent if touch == "write" else entry
+        if not any(_within(target, root) for root in governance.get("write_roots", ())):
+            return "governed_write_outside_workspace"
     return ""
 
 
@@ -265,7 +282,7 @@ def _guard_identity(previous, guard_file):
         return path, stamp, hashlib.sha256(handle.read()).hexdigest()
 
 
-def _append_block_evidence(timestamp, reason_code, raw_tool, *, directory, cwd=None, session=None):
+def _append_block_evidence(timestamp, reason_code, raw_tool, *, directory, cwd=None, session=None, phase=None):
     os.makedirs(directory, mode=RECEIPT_DIRECTORY_MODE, exist_ok=True)
     event = {
         "schema_version": 1,
@@ -273,7 +290,7 @@ def _append_block_evidence(timestamp, reason_code, raw_tool, *, directory, cwd=N
         "event_type": "guardrail_decision",
         "evidence_kind": "decision",
         "cwd": _receipt_text(cwd or os.getcwd()),
-        "phase": "unknown",
+        "phase": phase or "unknown",
         "tool_name": _receipt_text(raw_tool) or "unknown",
         "approval_state": "blocked",
         "failure_class": "boundary_breach",
@@ -305,7 +322,7 @@ def record(
     Counters are best-effort under concurrent hooks; last_invoked_at and
     guard_sha256 are the authoritative liveness fields. `extra` adds the
     adapter's own receipt fields, `diagnostic` describes an unrecognized call's
-    shape, and `evidence` (directory, cwd, session) is given for a block.
+    shape, and `evidence` (directory, cwd, session, phase) is given for a block.
     """
     timestamp = _now_iso()
     os.makedirs(receipt_dir, mode=RECEIPT_DIRECTORY_MODE, exist_ok=True)

@@ -458,6 +458,44 @@ A file that does not compile cannot run this rule; the registered-interpreter
 test covers that case before promotion. A host-side hook timeout is outside
 the Guard's control.
 
+## Governance Profiles
+
+A workspace runs in one of three profiles: `light` (the default), `standard`,
+or `governed`. Only the owner sets it, from a terminal, per workspace and with
+an expiry:
+
+```bash
+codex-task profile governed --reason <CODE> --ttl 8h
+codex-task status
+codex-task profile light --reason <CODE>
+```
+
+The declaration lives under `~/.codex/task-state/profiles/`. No declaration, or
+an expired one, means `light`; a declaration that cannot be read means
+`governed`, so a damaged record cannot lower the profile. Keywords in a prompt
+never change the profile.
+
+- `light`: the Guard's always-on blocks only (credentials, harness control
+  plane, OS persistence). This is the behavior without any declaration.
+- `standard`: the same rules as `light` for now.
+- `governed`: in addition, a structured write or delete needs a phase the owner
+  declared and that permits writing in `tool-policy.json` (Position, Empower),
+  and a target inside the workspace root, a temp directory, or
+  `extra_write_roots` of `harness-scope.json` (Contain). Write calls the adapter
+  cannot classify are blocked. Reads are never affected. The phase comes from
+  the owner's first-message marker `任务模式: development` or from
+  `codex-task declare development --reason <CODE>`.
+
+Governed block codes are `governed_write_without_phase`,
+`governed_phase_forbids_write`, `governed_write_outside_workspace`, and
+`governed_unrecognized_mutation`; the host shows a hint after the code.
+
+Limits: the Guard still does not parse shell commands, so a shell write is not
+governed. `~/.codex/task-state/` is a control-plane directory, so an agent tool
+cannot edit a declaration, but an agent shell can run `codex-task` itself. In
+this host Empower therefore leaves an audit trail in
+`~/.codex/task-state/audit.jsonl` and is not a hard boundary.
+
 ## Host Conformance
 
 `docs/dhf-conformance.json` is the single record of what each host actually
