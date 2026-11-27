@@ -2565,7 +2565,8 @@ def test_sync_preserves_runtime_plugin_state():
             'notify = ["/tmp/Codex Computer Use.app/client", "turn-ended"]\n\n'
             '  approval_policy = "on-request"\n'
             "owner_list = [\n  \"one\",\n  \"two\",\n]\n\n"
-            'owner_text = """\nfirst line\nmodel = "inside a string"\nlast line\n"""\n\n'
+            'owner_text = """\nfirst line\n[example]\nmodel = "inside a string"\nlast line\n"""\n'
+            "'literal-quoted key' = 7\n\n"
             "[features]\n"
             "codex_hooks = true\n"
             "memories = true\n"
@@ -2593,6 +2594,11 @@ def test_sync_preserves_runtime_plugin_state():
             "[[hooks.PreToolUse.hooks]]\n"
             'type = "command"\n'
             'command = "/tmp/stale-hook.sh"\n\n'
+            '[["hooks".PreCompact]]\n'
+            'matcher = "*"\n\n'
+            '[["hooks".PreCompact.hooks]]\n'
+            'type = "command"\n'
+            'command = "/tmp/stale-quoted-hook.sh"\n\n'
             "[mcp_servers.node_repl]\n"
             'command = "/Applications/Codex.app/Contents/Resources/node_repl"\n'
             "args = []\n\n"
@@ -2674,8 +2680,9 @@ def test_sync_preserves_runtime_plugin_state():
         require(merged["model"] == tomllib.loads(CONFIG_TEMPLATE.read_text(encoding="utf-8"))["model"], "the template keeps authority over the keys it sets")
         require(merged["approval_policy"] == "on-request" and merged["owner_list"] == ["one", "two"],
                 "sync must keep top-level keys the template does not set")
-        require(merged["owner_text"] == 'first line\nmodel = "inside a string"\nlast line\n',
-                "a key-looking line inside a multi-line string is part of that string")
+        require(merged["owner_text"] == 'first line\n[example]\nmodel = "inside a string"\nlast line\n'
+                and merged["literal-quoted key"] == 7 and "example" not in merged,
+                "a key-looking or header-looking line inside a multi-line string is part of that string")
         require(merged["tui"] == {"theme": "owner-choice", "model_availability_nux": {"seen": 3}}
                 and merged["sandbox_workspace_write"] == {"network_access": True}
                 and merged["mcp_servers"]["owner-added"] == {"command": "/opt/owner/server"}
@@ -2684,7 +2691,7 @@ def test_sync_preserves_runtime_plugin_state():
                 "sync must keep tables the template does not define")
         require(merged["mcp_servers"]["chrome-devtools"]["command"].endswith("/chrome-devtools-mcp"),
                 "a table the template defines under another spelling is not declared twice")
-        require("/tmp/stale-hook.sh" not in rendered, "hook registration still comes only from the template")
+        require("/tmp/stale-hook.sh" not in rendered and "/tmp/stale-quoted-hook.sh" not in rendered, "hook registration still comes only from the template")
         require("Kept runtime-only config entries" in out and "[tui]" in out and "approval_policy" in out,
                 f"sync must say which runtime-only entries it kept: {out}")
         require(snapshot_tree(codex_home / "skills/.system") == system_before,

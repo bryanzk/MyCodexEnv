@@ -1315,7 +1315,6 @@ fi
 if [[ -f "${CONFIG_TARGET}" ]]; then
   python3 - "${rendered_tmp}" "${CONFIG_TARGET}" <<'PY'
 from pathlib import Path
-import re
 import sys
 import tomllib
 
@@ -1325,152 +1324,185 @@ rendered = rendered_path.read_text(encoding="utf-8")
 existing = existing_path.read_text(encoding="utf-8")
 
 
-# A table header line. It may be indented and may carry a trailing comment.
-HEADER = r"(?m)^[ \t]*(\[\[[^\]\n]+\]\]|\[[^\]\n]+\])[ \t]*(?:#.*)?$"
+def refuse(reason):
+    raise SystemExit(f"config merge refused: {reason}")
 
 
-def table_blocks(text):
-    headers = list(re.finditer(HEADER, text))
+try:
+    existing_data = tomllib.loads(existing)
+except tomllib.TOMLDecodeError as exc:
+    refuse(f"the existing config.toml is not valid TOML ({exc}); repair it or move it aside, then sync again")
+
+
+def statements(text):
+    """Split TOML text into its statements: (start, end, is_header).
+
+    A statement is a table header or one `key = value`. The scan skips
+    comments, strings and bracketed values, so a line inside a multi-line
+    string or array is never taken for a header or a key.
+    """
+    found = []
+    index, size, start, depth, header = 0, len(text), None, 0, False
+    while index < size:
+        char = text[index]
+        if start is None:
+            if char in " \t\r\n":
+                index += 1
+                continue
+            if char == "#":
+                newline = text.find("\n", index)
+                index = size if newline < 0 else newline + 1
+                continue
+            start, depth, header = index, 0, char == "["
+        if text.startswith('"""', index) or text.startswith("'''", index):
+            quote = text[index:index + 3]
+            index += 3
+            while index < size and not text.startswith(quote, index):
+                if quote == '"""' and text[index] == "\\":
+                    index += 1
+                index += 1
+            index += 3
+            while index < size and text[index] == quote[0]:
+                index += 1
+            continue
+        if char in "\"'":
+            index += 1
+            while index < size and text[index] not in (char, "\n"):
+                if char == '"' and text[index] == "\\":
+                    index += 1
+                index += 1
+            index += 1
+            continue
+        if char == "#":
+            newline = text.find("\n", index)
+            index = size if newline < 0 else newline
+            continue
+        if char in "[{":
+            depth += 1
+        elif char in "]}":
+            depth -= 1
+        elif char == "\n" and depth <= 0:
+            found.append((start, index, header))
+            start = None
+        index += 1
+    if start is not None:
+        found.append((start, size, header))
+    return found
+
+
+def header_path(header):
+    """A header as its parsed key path, so `a."b-c"` and `a.b-c` compare equal."""
+    try:
+        node = tomllib.loads(header + "\n")
+    except tomllib.TOMLDecodeError as exc:
+        refuse(f"cannot read the table header {header.strip()!r}: {exc}")
+    path = []
+    while True:
+        if isinstance(node, list) and len(node) == 1:
+            node = node[0]
+        elif isinstance(node, dict) and len(node) == 1:
+            key, node = next(iter(node.items()))
+            path.append(key)
+        else:
+            return tuple(path)
+
+
+def statement_key(statement):
+    try:
+        parsed = tomllib.loads(statement + "\n")
+    except tomllib.TOMLDecodeError as exc:
+        refuse(f"cannot read the statement {statement.splitlines()[0]!r}: {exc}")
+    return next(iter(parsed))
+
+
+def split(text):
+    """Return (top-level statements, table blocks) of a TOML text.
+
+    A block is (path, is_array, text, start, end). Its text runs from its
+    header to the next header.
+    """
+    parts = statements(text)
+    headers = [(start, end) for start, end, is_header in parts if is_header]
+    first = headers[0][0] if headers else len(text)
+    top = [(statement_key(text[start:end]), text[start:end])
+           for start, end, is_header in parts if not is_header and start < first]
     blocks = []
-    for index, match in enumerate(headers):
-        end = headers[index + 1].start() if index + 1 < len(headers) else len(text)
-        header = match.group(1)
-        blocks.append((header.strip("[]"), header.startswith("[["), text[match.start():end].strip()))
-    return blocks
+    for position, (start, end) in enumerate(headers):
+        stop = headers[position + 1][0] if position + 1 < len(headers) else len(text)
+        header = text[start:end]
+        blocks.append((header_path(header), header.lstrip().startswith("[["), text[start:stop].strip(), start, stop))
+    return top, blocks
 
 
-def preserve_table(name):
+def block_keys(block):
+    return {statement_key(block[start:end]): block[start:end]
+            for start, end, is_header in statements(block) if not is_header}
+
+
+def preserve_table(path):
+    """Tables the host or the owner writes at runtime and the sync has always kept."""
     return (
-        name.startswith("plugins.")
-        or name.startswith("marketplaces.")
-        or name.startswith("projects.")
-        or name == "hooks.state"
-        or name.startswith("hooks.state.")
-        or name == "desktop"
-        or name.startswith("desktop.")
-        or name == "memories"
-        or name == "mcp_servers.node_repl"
-        or name == "mcp_servers.node_repl.env"
+        (path[0] in ("plugins", "marketplaces", "projects") and len(path) > 1)
+        or path[:2] == ("hooks", "state")
+        or path[0] == "desktop"
+        or path == ("memories",)
+        or path in (("mcp_servers", "node_repl"), ("mcp_servers", "node_repl", "env"))
     )
 
 
-def managed_table(name):
+def managed_table(path):
     """Tables this script renders from the template or merges by its own rule.
 
-    Hook registration comes only from the template; `hooks.state` is the host's
-    record of which hooks the owner trusted or disabled and is preserved above.
+    Hook registration comes only from the template. `hooks.state` is the
+    host's record of which hooks the owner trusted or disabled; it is kept.
     """
     return (
-        name == "features"
-        or name == "skills.config"
-        or name == "hooks"
-        or (name.startswith("hooks.") and not preserve_table(name))
+        path == ("features",)
+        or path[:2] == ("skills", "config")
+        or (path[0] == "hooks" and not preserve_table(path))
     )
 
 
-def table_path(name):
-    """A table header as its parsed key path, so `a."b-c"` and `a.b-c` compare equal."""
-    try:
-        node = tomllib.loads("[" + name + "]\n")
-    except tomllib.TOMLDecodeError:
-        return (name,)
-    path = []
-    while isinstance(node, dict) and len(node) == 1:
-        key, node = next(iter(node.items()))
-        path.append(key)
-    return tuple(path)
+def under(path, parents):
+    return any(path[:size] in parents for size in range(1, len(path)))
 
 
-def top_level_statements(text):
-    """Key statements that come before the first table header, in order."""
-    first_table = re.search(HEADER, text)
-    region = text[:first_table.start()] if first_table else text
-    starts = list(re.finditer(r'(?m)^[ \t]*(?:[A-Za-z0-9_-]+|"[^"\n]+")(?:\.[A-Za-z0-9_"-]+)*[ \t]*=', region))
-    statements = []
-    bounds = [match.start() for match in starts] + [len(region)]
-    index = 0
-    while index < len(starts):
-        # A line inside a multi-line string or array can look like a new key.
-        # Extend the statement to the next candidate until it parses on its own.
-        for stop in range(index + 1, len(bounds)):
-            statement = region[bounds[index]:bounds[stop]].rstrip()
-            try:
-                parsed = tomllib.loads(statement)
-            except tomllib.TOMLDecodeError:
-                continue
-            if len(parsed) == 1:
-                statements.append((next(iter(parsed)), statement))
-                index = stop
-                break
-        else:
-            raise SystemExit("config merge refused: cannot read a top-level key of the existing config.toml")
-    return statements
+def append_block(text, block):
+    return text.rstrip() + "\n\n" + block + "\n"
 
 
-def table_key_lines(block):
-    keys = {}
-    for line in block.splitlines()[1:]:
-        match = re.match(r"\s*([A-Za-z0-9_-]+)\s*=", line)
-        if match:
-            keys[match.group(1)] = line
-    return keys
-
-
-def merge_table_keys(text, table_name, source_block):
-    target_match = re.search(rf"(?m)^[ \t]*\[{re.escape(table_name)}\][ \t]*(?:#.*)?$", text)
-    if not target_match:
+def merge_table_keys(text, path, source_block):
+    """Add to the template's table the keys only the existing table has."""
+    target = next((block for block in split(text)[1] if block[0] == path and not block[1]), None)
+    if target is None:
         return text
-    next_match = re.search(HEADER, text[target_match.end():])
-    end = target_match.end() + next_match.start() if next_match else len(text)
-    target_block = text[target_match.start():end]
-    target_keys = table_key_lines(target_block)
-    additions = []
-    for key, line in table_key_lines(source_block).items():
-        if key in target_keys:
-            continue
-        if table_name == "features" and key == "codex_hooks":
-            continue
-        additions.append(line)
+    target_keys = block_keys(target[2])
+    additions = [
+        line for key, line in block_keys(source_block).items()
+        if key not in target_keys and not (path == ("features",) and key == "codex_hooks")
+    ]
     if not additions:
         return text
-    insertion = "\n" + "\n".join(additions)
-    return text[:end].rstrip() + insertion + "\n\n" + text[end:].lstrip("\n")
+    end = target[4]
+    return text[:end].rstrip() + "\n" + "\n".join(additions) + "\n\n" + text[end:].lstrip("\n")
 
 
-existing_blocks = table_blocks(existing)
-rendered_blocks = table_blocks(rendered)
-rendered_names = {name for name, is_array, _ in rendered_blocks if not is_array}
+existing_top, existing_blocks = split(existing)
+rendered_top, rendered_blocks = split(rendered)
+rendered_paths = {path for path, is_array, *_ in rendered_blocks if not is_array}
+rendered_array_paths = {path for path, is_array, *_ in rendered_blocks if is_array}
 skill_paths = {
     tomllib.loads(block)["skills"]["config"][0]["path"]
-    for name, is_array, block in rendered_blocks if is_array and name == "skills.config"
+    for path, is_array, block, *_ in rendered_blocks if is_array and path == ("skills", "config")
 }
-
-notify_match = re.search(r"(?m)^notify\s*=.*$", existing)
-if notify_match and not re.search(r"(?m)^notify\s*=", rendered):
-    first_table = re.search(HEADER, rendered)
-    insert_at = first_table.start() if first_table else len(rendered)
-    rendered = (
-        rendered[:insert_at].rstrip()
-        + "\n\n"
-        + notify_match.group(0)
-        + "\n\n"
-        + rendered[insert_at:].lstrip("\n")
-    )
-
-rendered_array_paths = {table_path(name) for name, is_array, _ in rendered_blocks if is_array}
-rendered_paths = {table_path(name) for name, is_array, _ in rendered_blocks if not is_array}
 kept_runtime_only = []
 kept_array_paths = set()
 
 # Top-level keys the template does not set belong to the owner or to the host.
-rendered_top_keys = {key for key, _ in top_level_statements(rendered)}
-runtime_top = [
-    (key, statement) for key, statement in top_level_statements(existing)
-    if key not in rendered_top_keys
-]
+rendered_top_keys = {key for key, _ in rendered_top}
+runtime_top = [(key, statement) for key, statement in existing_top if key not in rendered_top_keys]
 if runtime_top:
-    first_table = re.search(HEADER, rendered)
-    insert_at = first_table.start() if first_table else len(rendered)
+    insert_at = rendered_blocks[0][3] if rendered_blocks else len(rendered)
     rendered = (
         rendered[:insert_at].rstrip()
         + "\n"
@@ -1478,55 +1510,53 @@ if runtime_top:
         + "\n\n"
         + rendered[insert_at:].lstrip("\n")
     )
-    kept_runtime_only.extend(key for key, _ in runtime_top)
+    kept_runtime_only.extend(dict.fromkeys(key for key, _ in runtime_top if key != "notify"))
 
-for name, is_array, block in existing_blocks:
-    if is_array and name == "skills.config":
-        path = tomllib.loads(block)["skills"]["config"][0]["path"]
-        if path not in skill_paths:
-            rendered = rendered.rstrip() + "\n\n" + block + "\n"
-            skill_paths.add(path)
-    elif is_array and preserve_table(name):
-        rendered = rendered.rstrip() + "\n\n" + block + "\n"
-    elif name == "features":
-        rendered = merge_table_keys(rendered, "features", block)
-    elif preserve_table(name):
-        if name in rendered_names:
-            rendered = merge_table_keys(rendered, name, block)
-        elif table_path(name) in rendered_paths:
-            # The template spells the same table differently; the template wins.
-            continue
+for path, is_array, block, *_ in existing_blocks:
+    if is_array and path == ("skills", "config"):
+        skill_path = tomllib.loads(block)["skills"]["config"][0]["path"]
+        if skill_path not in skill_paths:
+            rendered = append_block(rendered, block)
+            skill_paths.add(skill_path)
+    elif under(path, kept_array_paths):
+        # Part of an array element that was kept. Each element has its own.
+        rendered = append_block(rendered, block)
+    elif is_array and preserve_table(path):
+        rendered = append_block(rendered, block)
+        kept_array_paths.add(path)
+    elif path == ("features",):
+        rendered = merge_table_keys(rendered, path, block)
+    elif preserve_table(path):
+        if path in rendered_paths:
+            rendered = merge_table_keys(rendered, path, block)
         else:
-            rendered = rendered.rstrip() + "\n\n" + block + "\n"
-            rendered_names.add(name)
-            rendered_paths.add(table_path(name))
-    elif managed_table(name):
+            rendered = append_block(rendered, block)
+            rendered_paths.add(path)
+    elif managed_table(path) or under(path, rendered_array_paths):
+        # Rendered from the template only, or part of an element of an array
+        # the template owns; that element was not carried over.
         continue
-    elif any(table_path(name)[:size] in rendered_array_paths for size in range(1, len(table_path(name)))):
-        # Part of an element of an array the template owns; that element was not carried over.
-        continue
-    elif any(table_path(name)[:size] in kept_array_paths for size in range(1, len(table_path(name)))):
-        # A sub-table of a runtime-only array element. Each element has its own.
-        rendered = rendered.rstrip() + "\n\n" + block + "\n"
     elif is_array:
-        # A runtime-only array of tables. The template owns the arrays it defines.
-        if table_path(name) not in rendered_array_paths:
-            rendered = rendered.rstrip() + "\n\n" + block + "\n"
-            kept_array_paths.add(table_path(name))
-            if "[[" + name + "]]" not in kept_runtime_only:
-                kept_runtime_only.append("[[" + name + "]]")
-    elif table_path(name) not in rendered_paths:
-        # A table the template does not define was put there by the owner or by
-        # the host. Dropping it silently loses their settings.
-        rendered = rendered.rstrip() + "\n\n" + block + "\n"
-        rendered_names.add(name)
-        rendered_paths.add(table_path(name))
-        kept_runtime_only.append("[" + name + "]")
+        if path not in rendered_array_paths:
+            rendered = append_block(rendered, block)
+            kept_array_paths.add(path)
+            label = "[[" + ".".join(path) + "]]"
+            if label not in kept_runtime_only:
+                kept_runtime_only.append(label)
+    elif path not in rendered_paths:
+        # A table the template does not define was put there by the owner or
+        # by the host. Dropping it silently loses their settings.
+        rendered = append_block(rendered, block)
+        rendered_paths.add(path)
+        kept_runtime_only.append("[" + ".".join(path) + "]")
 
 try:
-    tomllib.loads(rendered)
+    merged = tomllib.loads(rendered)
 except tomllib.TOMLDecodeError as exc:
-    raise SystemExit(f"config merge refused: merged config.toml is not valid TOML: {exc}")
+    refuse(f"the merged config.toml is not valid TOML: {exc}")
+for key, _ in runtime_top:
+    if merged.get(key) != existing_data.get(key):
+        refuse(f"the top-level key {key!r} did not survive the merge unchanged")
 
 if kept_runtime_only:
     print("Kept runtime-only config entries the template does not define: " + ", ".join(kept_runtime_only))
