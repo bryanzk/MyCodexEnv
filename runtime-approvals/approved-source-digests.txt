@@ -41,3 +41,4 @@ sha256:1bdc3024a897a1f9ce6d562220e6362693ec75ef10571271d68476fcc3ba9fe1  Approve
 sha256:ae5f14925a2f950b0d7d1f5c4de585378b5df96189502cc3d47275c7a34bb644  Approve Guard core/adapter split and guard_fault rule (SHI-626)
 sha256:944b25a44b485552909cc1aad2ec786e77ff34acd6b1a85176b536392d1e2d5b  Approve governed profile wiring (SHI-630)
 sha256:186c31e36c813f6a5d0d8491b1a807358e301e107ce194112286250e7a77c865  Approve bounded session bearing and its receipt (SHI-640)
+sha256:5ff55fefd11e580ef4b0904b88d551c9be454fd2c05e233509e30b7a43838542  Approve bounded receipt lock in the session bearing (SHI-640)
