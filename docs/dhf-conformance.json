@@ -556,6 +556,26 @@
       "key_output": "Command blocked by PreToolUse hook: [harness] governed_write_outside_workspace with phase development declared",
       "timestamp": "2026-11-27T14:13:49-05:00",
       "guard_sha256": "a1afdd52"
+    },
+    {
+      "probe": "observe.post-tool-record",
+      "host": "codex-cli",
+      "host_version": "0.172.0",
+      "machine": "Mac Studio",
+      "result": "pass",
+      "key_output": "after promotion of the corrected observer: a shell command that exits 3 leaves a tool_call record with output_length=9 output_source=tool_response key_output empty exit_code absent exit_code_observed=false",
+      "timestamp": "2026-11-27T15:47:41-05:00",
+      "guard_sha256": "a1afdd52"
+    },
+    {
+      "probe": "transact.seven-target-promotion",
+      "host": "codex-cli",
+      "host_version": "0.172.0",
+      "machine": "Mac Studio",
+      "result": "pass",
+      "key_output": "harness guard promotion committed: targets=7 transaction=b73945b831c348cdb4ab97c9891b630d; guard_receipt_matches_installed_guard: True; live runtime smoke PASS",
+      "timestamp": "2026-11-27T15:47:00-05:00",
+      "guard_sha256": "a1afdd52"
     }
   ],
   "cells": {
@@ -584,7 +604,7 @@
         "probes": [
           "observe.post-tool-record"
         ],
-        "note": "Every tool call appends one record. The record of a shell call carried output_length 0 and an empty key_output although the command printed a line (SHI-633). The host passes no exit status to PostToolUse (measured on 0.172.0), so a record shows that a call ran and the length and hash of its output, not whether it succeeded; a failed apply_patch raises no PostToolUse and leaves no record."
+        "note": "Every tool call appends one record. The host passes no exit status to PostToolUse (measured on 0.172.0), so a record shows that a call ran and the length and hash of its output, not whether it succeeded; the output text is not stored. A failed apply_patch raises no PostToolUse and leaves no record. Until 2026-11-27 the observer wrote exit_code 0 and output_length 0 for every call (SHI-633); records before that date carry those values without having observed them."
       },
       "thread": {
         "status": "enforced_verified",
