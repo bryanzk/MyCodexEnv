@@ -5804,6 +5804,20 @@ def test_dhf_conformance_table_and_version_rule():
     require(dhf_conformance.missing_host_receipts(partial, "codex-cli", "9.9.9") == ["restrict (run: restrict.control-plane-update)"],
             "the version rule must require every host probe of an enforced cell on the installed version")
     require(dhf_conformance.missing_host_receipts(data, "codex-cli", "0.155.1") == [], "all host probes have receipts on 0.155.1")
+    regressed = copy.deepcopy(data)
+    regressed["receipts"].append({"probe": "restrict.control-plane-update", "host": "codex-cli", "host_version": "0.155.1", "machine": "fixture",
+                                  "result": "fail", "key_output": "apply_patch reported a context mismatch", "timestamp": "2026-11-26T23:30:00-05:00"})
+    require(any("latest receipt of probe restrict.control-plane-update failed" in error for error in dhf_conformance.validate(regressed)),
+            "a later failed receipt must withdraw the enforced_verified claim")
+    failed_view = dhf_conformance.cell_view(regressed, "codex-cli", "restrict", "0.155.1", now)
+    require(failed_view["evidence"].startswith("failed: restrict.control-plane-update failed at"),
+            f"the doctor must show a failed latest receipt: {failed_view}")
+    require(dhf_conformance.missing_host_receipts(regressed, "codex-cli", "0.155.1") == ["restrict (run: restrict.control-plane-update)"],
+            "the version rule must not pass on an earlier pass once the probe has failed since")
+    regressed["receipts"].append({"probe": "restrict.control-plane-update", "host": "codex-cli", "host_version": "0.155.1", "machine": "fixture",
+                                  "result": "pass", "key_output": "blocked", "timestamp": "2026-11-26T23:40:00-05:00"})
+    require(dhf_conformance.validate(regressed) == [] and dhf_conformance.missing_host_receipts(regressed, "codex-cli", "0.155.1") == [],
+            "a passing rerun after the failure must restore the evidence")
     require(dhf_conformance.cell_view(data, "codex-cli", "position", "0.155.1", now)["evidence"] == "none",
             "a cell without receipts must not show evidence")
 
@@ -5844,7 +5858,6 @@ def test_dhf_conformance_table_and_version_rule():
                 f"record must append one receipt: {err or out}")
         code, out, err = run([sys.executable, str(repo / "scripts" / "dhf_conformance.py"), "check"], cwd=repo)
         require(code == 0, f"the table must stay canonical after record: {err or out}")
-
         verify_text = VERIFY.read_text(encoding="utf-8")
         skipped = {"codex_skill_compatibility", "skills_managed_present"}
         for line in verify_text.splitlines():
@@ -5870,6 +5883,16 @@ def test_dhf_conformance_table_and_version_rule():
                 f"verify must say which receipt is missing: {err!r}")
         code, out, err = run([*base, "--skip-check", "codex_host_probe_receipt"], env=env)
         require("SKIP:codex_host_probe_receipt" in out, f"the version rule must honor --skip-check: {err or out}")
+
+        code, out, err = run([sys.executable, str(repo / "scripts" / "dhf_conformance.py"), "record", "--probe", "restrict.control-plane-delete",
+                              "--result", "fail", "--key-output", "apply_patch reported a missing file", "--host-version", "0.155.1",
+                              "--machine", "fixture", "--timestamp", "2026-11-27T09:00:00-05:00"], cwd=repo)
+        demoted = json.loads((repo / "docs" / "dhf-conformance.json").read_text(encoding="utf-8"))
+        require(code == 1 and demoted["receipts"][-1]["result"] == "fail"
+                and demoted["cells"]["codex-cli"]["restrict"]["status"] == "registered_unverified",
+                f"recording a failed probe must keep the receipt and demote the cell: {err or out}")
+        code, out, err = run([sys.executable, str(repo / "scripts" / "dhf_conformance.py"), "check"], cwd=repo)
+        require(code == 0, f"the table must stay valid after a failed receipt is recorded: {err or out}")
     print("[PASS] DHF conformance table, doctor, installed-Guard probe, and Codex version rule")
 
 

@@ -54,13 +54,21 @@ def parse_time(value: object) -> datetime | None:
     return parsed if parsed.tzinfo is not None else None
 
 
-def passing_receipts(data: dict[str, Any], host: str, probe_ids: list[str]) -> list[dict[str, Any]]:
+def latest_receipt(data: dict[str, Any], host: str, probe_id: str, host_version: str | None = None) -> dict[str, Any] | None:
+    """The newest receipt for one probe, pass or fail, optionally on one host version.
+
+    Only the newest result counts: a later failure withdraws an earlier pass
+    until the probe passes again.
+    """
     found = [
         receipt
         for receipt in data.get("receipts", [])
-        if receipt.get("host") == host and receipt.get("probe") in probe_ids and receipt.get("result") == "pass"
+        if receipt.get("host") == host
+        and receipt.get("probe") == probe_id
+        and (host_version is None or receipt.get("host_version") == host_version)
     ]
-    return sorted(found, key=lambda receipt: parse_time(receipt.get("timestamp")) or datetime.min.replace(tzinfo=timezone.utc))
+    floor = datetime.min.replace(tzinfo=timezone.utc)
+    return max(found, key=lambda receipt: parse_time(receipt.get("timestamp")) or floor) if found else None
 
 
 def validate(data: dict[str, Any], *, raw_text: str | None = None) -> list[str]:
@@ -121,8 +129,11 @@ def validate(data: dict[str, Any], *, raw_text: str | None = None) -> list[str]:
                 if not listed:
                     errors.append(f"{where}: enforced_verified needs at least one probe")
                 for probe_id in listed:
-                    if not passing_receipts(data, host, [probe_id]):
+                    newest = latest_receipt(data, host, probe_id)
+                    if newest is None:
                         errors.append(f"{where}: enforced_verified but probe {probe_id} has no passing receipt")
+                    elif newest.get("result") != "pass":
+                        errors.append(f"{where}: enforced_verified but the latest receipt of probe {probe_id} failed")
     if raw_text is not None and raw_text != dump(data):
         errors.append("file is not in canonical form; rewrite it with json.dumps(indent=2, ensure_ascii=False)")
     return errors
@@ -148,14 +159,16 @@ def cell_view(data: dict[str, Any], host: str, function: str, host_version: str 
         "evidence_machine": None,
         "evidence": "none",
     }
-    latest = {probe_id: (passing_receipts(data, host, [probe_id]) or [None])[-1] for probe_id in view["probes"]}
+    latest = {probe_id: latest_receipt(data, host, probe_id) for probe_id in view["probes"]}
     found = [receipt for receipt in latest.values() if receipt is not None]
     if not found:
         return view
     problems = []
     for probe_id, receipt in latest.items():
         if receipt is None:
-            problems.append(f"{probe_id} has no passing receipt")
+            problems.append(f"{probe_id} has no receipt")
+        elif receipt.get("result") != "pass":
+            problems.append(f"{probe_id} failed at {receipt['timestamp']}")
         elif kinds.get(probe_id) == "host" and host_version is not None and receipt["host_version"] != host_version:
             problems.append(f"{probe_id} probed on {receipt['host_version']}, host is {host_version}")
         elif now - (parse_time(receipt["timestamp"]) or now) > timedelta(days=data["freshness_days"]):
@@ -163,7 +176,9 @@ def cell_view(data: dict[str, Any], host: str, function: str, host_version: str 
     # Report the weakest link: the oldest of the per-probe latest receipts.
     oldest = min(found, key=lambda receipt: parse_time(receipt["timestamp"]) or now)
     view.update(evidence_version=oldest["host_version"], evidence_at=oldest["timestamp"], evidence_machine=oldest["machine"])
-    if problems:
+    if any(" failed at " in problem for problem in problems):
+        view["evidence"] = "failed: " + "; ".join(problems)
+    elif problems:
         view["evidence"] = "stale: " + "; ".join(problems)
     elif host_version is None:
         view["evidence"] = "unconfirmed: current host version unknown"
@@ -173,7 +188,7 @@ def cell_view(data: dict[str, Any], host: str, function: str, host_version: str 
 
 
 def missing_host_receipts(data: dict[str, Any], host: str, host_version: str) -> list[str]:
-    """Host probes of enforced_verified cells that have no passing receipt on this host version."""
+    """Host probes of enforced_verified cells whose latest receipt on this host version is not a pass."""
     kinds = {probe["id"]: probe.get("kind") for probe in data.get("probes", [])}
     missing = []
     for function in FUNCTIONS:
@@ -184,7 +199,7 @@ def missing_host_receipts(data: dict[str, Any], host: str, host_version: str) ->
             probe_id
             for probe_id in cell.get("probes", [])
             if kinds.get(probe_id) == "host"
-            and not any(receipt.get("host_version") == host_version for receipt in passing_receipts(data, host, [probe_id]))
+            and (latest_receipt(data, host, probe_id, host_version) or {}).get("result") != "pass"
         ]
         if absent:
             missing.append(f"{function} (run: {', '.join(absent)})")
@@ -254,8 +269,19 @@ def probe_installed(codex_home: Path, interpreter: str) -> dict[str, Any]:
 
 
 def append_receipt(root: Path, receipt: dict[str, Any]) -> list[str]:
+    """Append one receipt. A failing receipt for an enforced_verified cell demotes that cell.
+
+    The failure is evidence and must be kept; the cell can no longer claim
+    enforcement, so its status becomes registered_unverified until the owner
+    restores it after a passing rerun.
+    """
     data = load(root)
     data.setdefault("receipts", []).append(receipt)
+    if receipt.get("result") == "fail":
+        for row in data.get("cells", {}).get(receipt.get("host"), {}).values():
+            if row.get("status") == "enforced_verified" and receipt.get("probe") in row.get("probes", []):
+                row["status"] = "registered_unverified"
+                row["note"] = (row.get("note", "") + f" Demoted on {receipt.get('timestamp')}: probe {receipt.get('probe')} failed.").strip()
     errors = validate(data)
     if not errors:
         (root / TABLE).write_text(dump(data), encoding="utf-8")
@@ -382,7 +408,7 @@ def main(argv: list[str] | None = None) -> int:
         if view["mechanism"]:
             print(f"- mechanism: {view['mechanism']}")
         if view["evidence_at"]:
-            print(f"- oldest required probe receipt: {view['evidence_at']} on {view['evidence_version']} ({view['evidence_machine']})")
+            print(f"- oldest of the latest probe receipts: {view['evidence_at']} on {view['evidence_version']} ({view['evidence_machine']})")
         print(f"- evidence: {view['evidence']}")
         if view["probes"]:
             print(f"- probes: {', '.join(view['probes'])}")
