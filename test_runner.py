@@ -5896,6 +5896,47 @@ def test_dhf_conformance_table_and_version_rule():
     print("[PASS] DHF conformance table, doctor, installed-Guard probe, and Codex version rule")
 
 
+def test_status_reports_unrecognized_guard_calls():
+    """Unrecognized write-class calls are recorded, not blocked, so both status views must show the count."""
+    with tempfile.TemporaryDirectory() as tmp:
+        tmp_path = Path(tmp)
+        env = _harness_guard_test_env(tmp_path)
+        home = Path(env["CODEX_HOME"])
+        runtime_dir = home / "runtime"
+        for name in ("evidence.schema.json", "evidence/decision-evidence.schema.json", "evidence/routine-gate-receipt.schema.json"):
+            write(runtime_dir / name, (ROOT / "codex" / "runtime" / name).read_text(encoding="utf-8"))
+        write(home / "config.toml", 'sandbox_mode = "workspace-write"\n[features]\nhooks = true\n')
+        runtime_cmd = [sys.executable, str(HARNESS_STATUS), "status", "--runtime", "--codex-home", str(home)]
+        doctor_cmd = [sys.executable, str(HARNESS_STATUS), "status", "--conformance", "--host-version", "0.155.1", "--codex-home", str(home)]
+
+        code, out, err = run(runtime_cmd)
+        require(code == 0 and "- guard_unrecognized_mutations: `None`" in out, f"runtime status must not fail without a receipt: {err or out}")
+        code, out, err = run(doctor_cmd)
+        require(code == 0 and "- unrecognized calls: unknown (no readable Guard receipt" in out,
+                f"doctor must say the count is unknown without a receipt: {err or out}")
+
+        workspace = tmp_path / "workspace"
+        workspace.mkdir()
+        _run_harness_guard({"tool_name": "write", "cwd": str(workspace), "tool_input": {"path": str(workspace / "a.txt"), "content": "x"}}, env)
+        code, out, err = run(doctor_cmd)
+        require(code == 0 and "- unrecognized calls: 0" in out, f"doctor must show zero unrecognized calls: {err or out}")
+
+        for _ in range(2):
+            # A write call whose shape the adapter cannot parse: recorded as unrecognized, allowed.
+            _run_harness_guard({"tool_name": "write", "cwd": str(workspace), "tool_input": {"target": str(workspace / "a.txt")}}, env)
+        code, out, err = run(runtime_cmd)
+        require(code == 0 and "- guard_unrecognized_mutations: `2`" in out and "'tool_name': 'write'" in out,
+                f"runtime status must show the unrecognized count and the last tool: {err or out}")
+        code, out, err = run([*runtime_cmd, "--json"])
+        require(json.loads(out)["guard_receipt"]["last_unrecognized"]["tool_name"] == "write", f"runtime JSON must carry the last unrecognized call: {out}")
+        code, out, err = run(doctor_cmd)
+        require(code == 0 and "- unrecognized calls: 2 (last: write at " in out, f"doctor must show the unrecognized count on Restrict: {err or out}")
+        code, out, err = run([*doctor_cmd, "--json"])
+        restrict = next(view for view in json.loads(out)["functions"] if view["function"] == "restrict")
+        require(restrict["unrecognized_calls"]["count"] == 2, f"doctor JSON must carry the unrecognized count: {restrict}")
+    print("[PASS] runtime status and conformance doctor report unrecognized Guard calls")
+
+
 def test_guard_core_is_host_neutral_and_bundled():
     """The Guard core names no host; every adapter carries an exact copy of it."""
     core_path = ROOT / "dhf" / "core" / "guard_core.py"
@@ -14009,6 +14050,7 @@ TESTS = [
     test_sync_local_main_fast_forwards_when_clean_and_behind_only,
     test_sync_local_main_skips_dirty_worktree,
     test_dhf_conformance_table_and_version_rule,
+    test_status_reports_unrecognized_guard_calls,
     test_guard_core_is_host_neutral_and_bundled,
     test_harness_guard_fault_blocks_mutations,
     test_harness_guard_policy_decisions,
