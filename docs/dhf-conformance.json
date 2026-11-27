@@ -386,6 +386,36 @@
       "key_output": "after the promotion of transaction 2de30db4 (bounded receipt lock) the installed hook, run directly under /usr/bin/python3, printed the bearing with this repository's next_safe_task; status --runtime: bearing_last_outcome=delivered bearing_runs=10 bearing_misses=0; the Codex-session part was run on the previous promotion (5de3978f), where the model declined to paste the block verbatim",
       "timestamp": "2026-11-27T08:41:28-05:00",
       "guard_sha256": "91c77741"
+    },
+    {
+      "probe": "restrict.installed-guard-fault",
+      "host": "codex-cli",
+      "host_version": "0.155.1",
+      "machine": "Mac Studio",
+      "result": "pass",
+      "key_output": "healthy=block fault_write=guard_fault fault_read=allow; matches_source=True; interpreter=/usr/bin/python3",
+      "timestamp": "2026-11-27T11:11:40-05:00",
+      "guard_sha256": "a1afdd52"
+    },
+    {
+      "probe": "restrict.control-plane-update",
+      "host": "codex-cli",
+      "host_version": "0.155.1",
+      "machine": "Mac Studio",
+      "result": "pass",
+      "key_output": "Command blocked by PreToolUse hook: [harness] active_control_plane_mutation on ~/.codex/config.toml; guard-receipt invocations=63 blocks=14 (before: 62, 13); codex exec, model gpt-6-astra",
+      "timestamp": "2026-11-27T11:11:47-05:00",
+      "guard_sha256": "a1afdd52"
+    },
+    {
+      "probe": "transact.seven-target-promotion",
+      "host": "codex-cli",
+      "host_version": "0.155.1",
+      "machine": "Mac Studio",
+      "result": "pass",
+      "key_output": "harness guard promotion committed: targets=7 transaction=5ba65b25276849ecb757d3832bea6083; guard_receipt_matches_installed_guard: True after the next Guard call",
+      "timestamp": "2026-11-27T11:11:47-05:00",
+      "guard_sha256": "a1afdd52"
     }
   ],
   "cells": {

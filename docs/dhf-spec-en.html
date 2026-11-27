@@ -459,7 +459,7 @@
         <li>The gap in "execute" actions: the immutable flag is not set, and the content check at session start is not connected. Today the gap is not covered.</li>
         <li>Group authority: today it rests on written rules only. There is no authority record and no mechanism that ends it with the session.</li>
         <li>The action register for this repository: it does not exist yet.</li>
-        <li>Path normalization: the core recognizes the control plane and credentials by the path as written. It does not recognize a target reached through a symbolic link. The Claude Code adapter covers this in the adapter layer.</li>
+        <li>Path normalization: when a control-plane file, a control-plane directory, or a credential file is a symbolic link, the link and its destination are both protected (since 2026-11-27). When a shell startup file is a symbolic link, a write through the link is blocked and a write straight to its destination is not.</li>
         <li>"An agent does not create an authority record" in Empower: an agent's edit tools cannot change a declaration, but an agent can run the declaration command from its shell. Today this leaves an audit trail and is not a hard boundary.</li>
         <li>"An agent does not set the profile": the same as the previous item. An agent can run the setting command from its shell.</li>
         <li>Host coverage: only one host on one machine has probe receipts for all seven functions. The cell-by-cell state is in <code>docs/dhf-conformance.json</code>.</li>
