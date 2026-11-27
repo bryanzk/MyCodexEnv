@@ -1314,6 +1314,7 @@ fi
 
 if [[ -f "${CONFIG_TARGET}" ]]; then
   python3 - "${rendered_tmp}" "${CONFIG_TARGET}" <<'PY'
+import json
 from pathlib import Path
 import sys
 import tomllib
@@ -1467,6 +1468,35 @@ def under(path, parents):
     return any(path[:size] in parents for size in range(1, len(path)))
 
 
+def emit_value(value):
+    if isinstance(value, bool):
+        return "true" if value else "false"
+    if isinstance(value, str):
+        return json.dumps(value, ensure_ascii=False)
+    if isinstance(value, float):
+        return {"inf": "inf", "-inf": "-inf", "nan": "nan"}.get(str(value), repr(value))
+    if isinstance(value, int):
+        return str(value)
+    if isinstance(value, list):
+        return "[" + ", ".join(emit_value(item) for item in value) + "]"
+    if isinstance(value, dict):
+        return "{ " + ", ".join(f"{json.dumps(key)} = {emit_value(item)}" for key, item in value.items()) + " }"
+    return value.isoformat()
+
+
+def as_table_blocks(path, table):
+    """Write a parsed table as header blocks, so table rules apply to it."""
+    blocks = []
+    own = [f"{json.dumps(key)} = {emit_value(value)}" for key, value in table.items() if not isinstance(value, dict)]
+    if own:
+        header = "[" + ".".join(json.dumps(part) for part in path) + "]"
+        blocks.append((path, False, header + "\n" + "\n".join(own)))
+    for key, value in table.items():
+        if isinstance(value, dict):
+            blocks.extend(as_table_blocks(path + (key,), value))
+    return blocks
+
+
 def append_block(text, block):
     return text.rstrip() + "\n\n" + block + "\n"
 
@@ -1500,7 +1530,20 @@ kept_array_paths = set()
 
 # Top-level keys the template does not set belong to the owner or to the host.
 rendered_top_keys = {key for key, _ in rendered_top}
-runtime_top = [(key, statement) for key, statement in existing_top if key not in rendered_top_keys]
+# A top-level statement can also write into a table, as `features.x = true` or
+# as an inline table. Where the template or this script owns that table, the
+# statement is read as a table so the same rules apply to it.
+table_roots = {path[0] for path, *_ in rendered_blocks} | {"features", "hooks", "skills"}
+as_tables = [statement for key, statement in existing_top if key in table_roots]
+runtime_top = [
+    (key, statement) for key, statement in existing_top
+    if key not in rendered_top_keys and key not in table_roots
+]
+top_table_blocks = []
+if as_tables:
+    for key, value in tomllib.loads("\n".join(as_tables) + "\n").items():
+        if isinstance(value, dict):
+            top_table_blocks.extend(as_table_blocks((key,), value))
 if runtime_top:
     insert_at = rendered_blocks[0][3] if rendered_blocks else len(rendered)
     rendered = (
@@ -1512,7 +1555,7 @@ if runtime_top:
     )
     kept_runtime_only.extend(dict.fromkeys(key for key, _ in runtime_top if key != "notify"))
 
-for path, is_array, block, *_ in existing_blocks:
+for path, is_array, block, *_ in top_table_blocks + existing_blocks:
     if is_array and path == ("skills", "config"):
         skill_path = tomllib.loads(block)["skills"]["config"][0]["path"]
         if skill_path not in skill_paths:

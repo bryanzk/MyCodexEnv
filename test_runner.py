@@ -2566,7 +2566,9 @@ def test_sync_preserves_runtime_plugin_state():
             '  approval_policy = "on-request"\n'
             "owner_list = [\n  \"one\",\n  \"two\",\n]\n\n"
             'owner_text = """\nfirst line\n[example]\nmodel = "inside a string"\nlast line\n"""\n'
-            "'literal-quoted key' = 7\n\n"
+            "'literal-quoted key' = 7\n"
+            'mcp_servers.owner-dotted.command = "/opt/owner/dotted"\n'
+            "features.owner_dotted_flag = true\n\n"
             "[features]\n"
             "codex_hooks = true\n"
             "memories = true\n"
@@ -2691,6 +2693,9 @@ def test_sync_preserves_runtime_plugin_state():
                 "sync must keep tables the template does not define")
         require(merged["mcp_servers"]["chrome-devtools"]["command"].endswith("/chrome-devtools-mcp"),
                 "a table the template defines under another spelling is not declared twice")
+        require(merged["mcp_servers"]["owner-dotted"] == {"command": "/opt/owner/dotted"}
+                and merged["features"]["owner_dotted_flag"] is True and merged["features"]["hooks"] is True,
+                "a top-level dotted key that writes into a table follows that table's rule")
         require("/tmp/stale-hook.sh" not in rendered and "/tmp/stale-quoted-hook.sh" not in rendered, "hook registration still comes only from the template")
         require("Kept runtime-only config entries" in out and "[tui]" in out and "approval_policy" in out,
                 f"sync must say which runtime-only entries it kept: {out}")
