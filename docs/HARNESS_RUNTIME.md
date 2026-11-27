@@ -458,6 +458,39 @@ A file that does not compile cannot run this rule; the registered-interpreter
 test covers that case before promotion. A host-side hook timeout is outside
 the Guard's control.
 
+## Host Conformance
+
+`docs/dhf-conformance.json` is the single record of what each host actually
+enforces: one cell per DHF function and host, the probes that test a cell, and
+the receipts of probes that were run. A cell may say `enforced_verified` only
+when each of its probes has a passing receipt; `scripts/dhf_conformance.py
+check` and `test_dhf_conformance_table_and_version_rule` enforce that. Other
+values state the gap plainly: `registered_unverified`, `installed_not_wired`,
+`disabled_by_owner`, `text_only`, `absent`.
+
+- `python3 scripts/harness_status.py status --conformance` prints every
+  function on the current host with its mechanism and evidence age. Evidence
+  is `stale` when the receipt was taken on another host version or is older
+  than `freshness_days`.
+- `python3 scripts/dhf_conformance.py probes` prints each probe's prompt,
+  expected result, criterion, and side effects. Host probes are run by the
+  owner inside the host; they target a file that does not exist or a context
+  line that does not exist, so nothing changes whether the Guard is live or
+  not.
+- `python3 scripts/dhf_conformance.py probe-installed --codex-home ~/.codex`
+  reads the installed Guard and runs copies of it under `/usr/bin/python3`
+  with a temporary home: the healthy copy must block a control-plane patch,
+  and a copy with an injected import fault must block a write with
+  `guard_fault` and let a read through. Add `--record` to store the receipt.
+- `python3 scripts/dhf_conformance.py record --probe <id> --result pass
+  --key-output "<host output>"` stores a host probe receipt with the detected
+  host version.
+- Version rule: `scripts/verify_codex_env.sh` fails
+  `codex_host_probe_receipt` when the installed Codex version has no passing
+  host probe receipt for a function the table claims as enforced. Accepting a
+  new version in `ACCEPTED_CODEX_VERSION_PREFIXES` is therefore not enough:
+  rerun the host probes on it and record them.
+
 The Guard writes `~/.codex/harness/guard-receipt.json` on every invocation
 (last invocation time, digest of the Guard file that ran, last tool and
 decision, best-effort counters) and appends one `guardrail_decision` record per

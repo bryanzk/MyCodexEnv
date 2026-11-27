@@ -5755,6 +5755,104 @@ def test_harness_guard_invocation_receipt():
     print("[PASS] harness guard invocation receipt")
 
 
+def test_dhf_conformance_table_and_version_rule():
+    """The host conformance table is consistent, and a Codex version without probe receipts fails verify."""
+    script = ROOT / "scripts" / "dhf_conformance.py"
+    table_path = ROOT / "docs" / "dhf-conformance.json"
+    code, out, err = run([sys.executable, str(script), "check"], cwd=ROOT)
+    require(code == 0 and "conformance table consistent" in out, f"conformance table must validate: {err or out}")
+    sys.path.insert(0, str(ROOT / "scripts"))
+    try:
+        import dhf_conformance
+    finally:
+        sys.path.pop(0)
+    data = json.loads(table_path.read_text(encoding="utf-8"))
+    require(data["functions"] == ["position", "restrict", "observe", "thread", "empower", "contain", "transact"],
+            "the table must carry exactly the seven PROTECT functions")
+    require(data["cells"]["codex-cli"]["restrict"]["status"] == "enforced_verified",
+            "Restrict on Codex is host-verified and must say so")
+    for probe in data["probes"]:
+        require(probe["side_effects"].strip(), f"probe {probe['id']} must state its side effects")
+
+    unverified = copy.deepcopy(data)
+    unverified["receipts"] = [r for r in unverified["receipts"] if not r["probe"].startswith("restrict.")]
+    require(any("enforced_verified but probe" in error for error in dhf_conformance.validate(unverified)),
+            "a cell may not claim enforced_verified without a passing receipt")
+    foreign = copy.deepcopy(data)
+    foreign["cells"]["claude-code-local"]["restrict"] = {"status": "enforced_verified", "mechanism": "x",
+                                                         "probes": ["restrict.control-plane-delete"], "note": ""}
+    require(any("belongs to another cell" in error for error in dhf_conformance.validate(foreign)),
+            "one host's probe receipt must not verify another host's cell")
+
+    now = dt.datetime(2026, 11, 27, tzinfo=dt.timezone.utc)
+    current = dhf_conformance.cell_view(data, "codex-cli", "restrict", "0.155.1", now)
+    require(current["evidence"] == "current" and current["evidence_version"] == "0.155.1", f"fresh receipt must read as current: {current}")
+    upgraded = dhf_conformance.cell_view(data, "codex-cli", "restrict", "9.9.9", now)
+    require(upgraded["evidence"].startswith("stale: probed on 0.155.1"), f"a host upgrade must make the receipt stale: {upgraded}")
+    aged = dhf_conformance.cell_view(data, "codex-cli", "restrict", "0.155.1", now + dt.timedelta(days=data["freshness_days"] + 1))
+    require(aged["evidence"].startswith("stale: older than"), f"an old receipt must read as stale: {aged}")
+    require(dhf_conformance.cell_view(data, "codex-cli", "position", "0.155.1", now)["evidence"] == "none",
+            "a cell without receipts must not show evidence")
+
+    code, out, err = run([sys.executable, str(HARNESS_STATUS), "status", "--conformance", "--host-version", "0.155.1"], cwd=ROOT)
+    require(code == 0 and "## restrict: enforced_verified" in out and "## position: installed_not_wired" in out,
+            f"harness_status --conformance must print every function: {err or out}")
+
+    with tempfile.TemporaryDirectory() as tmp:
+        tmp_path = Path(tmp)
+        home = tmp_path / ".codex"
+        write(home / "hooks" / "harness_guard.py", HARNESS_GUARD.read_text(encoding="utf-8"))
+        code, out, err = run([sys.executable, str(script), "probe-installed", "--codex-home", str(home), "--interpreter", sys.executable], cwd=ROOT)
+        require(code == 0 and "healthy=block fault_write=guard_fault fault_read=allow" in out and "matches_source=True" in out,
+                f"installed-Guard probe must pass on the source Guard: {err or out}")
+        require(not (home / "harness").exists(), "the installed-Guard probe must not write into the probed home")
+        write(home / "hooks" / "harness_guard.py", "import json, sys\njson.dump({}, sys.stdout)\n")
+        code, out, err = run([sys.executable, str(script), "probe-installed", "--codex-home", str(home), "--interpreter", sys.executable], cwd=ROOT)
+        require(code == 1 and "unsupported" in out, f"a Guard without the fault rule must fail the probe: {err or out}")
+
+        repo = tmp_path / "repo"
+        write(repo / "docs" / "dhf-conformance.json", table_path.read_text(encoding="utf-8"))
+        write(repo / "scripts" / "dhf_conformance.py", script.read_text(encoding="utf-8"))
+        write(repo / "locks" / "superpowers.lock", "commit=test-commit\n")
+        fake_codex = tmp_path / "bin" / "codex"
+        write_executable(fake_codex, "#!/usr/bin/env bash\n[[ \"$1\" == \"--version\" ]] || exit 64\necho \"codex-cli ${FAKE_CODEX_VERSION}\"\n")
+        write_executable(repo / "codex" / "runtime" / "resolve_codex_cli.sh", f"#!/usr/bin/env bash\necho {shlex.quote(str(fake_codex))}\n")
+        code, out, err = run([sys.executable, str(repo / "scripts" / "dhf_conformance.py"), "record", "--probe", "observe.post-tool-record",
+                              "--result", "pass", "--key-output", "fixture", "--host-version", "0.155.1", "--machine", "fixture"], cwd=repo)
+        recorded = json.loads((repo / "docs" / "dhf-conformance.json").read_text(encoding="utf-8"))
+        require(code == 0 and recorded["receipts"][-1]["probe"] == "observe.post-tool-record" and len(recorded["receipts"]) == len(data["receipts"]) + 1,
+                f"record must append one receipt: {err or out}")
+        code, out, err = run([sys.executable, str(repo / "scripts" / "dhf_conformance.py"), "check"], cwd=repo)
+        require(code == 0, f"the table must stay canonical after record: {err or out}")
+
+        verify_text = VERIFY.read_text(encoding="utf-8")
+        skipped = {"codex_skill_compatibility", "skills_managed_present"}
+        for line in verify_text.splitlines():
+            for marker in ("$(check ", "$(run_check "):
+                if marker in line:
+                    name = line.split(marker, 1)[1].split()[0].strip("\"'")
+                    if "${" not in name:
+                        skipped.add(name)
+        skipped.update(f"codex_skill_{name}" for name in ("ccwf-verification-before-completion", "ccwf-systematic-debugging", "ccwf-experience-evolution"))
+        base = [str(VERIFY), "--repo-root", str(repo), "--codex-home", str(home), "--claude-home", str(tmp_path / ".claude"),
+                *[arg for name in sorted(skipped) for arg in ("--skip-check", name)]]
+        (tmp_path / ".claude").mkdir()
+        env = os.environ.copy()
+        env["FAKE_CODEX_VERSION"] = "0.155.1"
+        code, out, err = run(base, env=env)
+        require("PASS:codex_host_probe_receipt" in out and "PASS:codex_version" in out,
+                f"verify must accept a Codex version that has host probe receipts: {err or out}")
+        env["FAKE_CODEX_VERSION"] = "0.147.0"
+        code, out, err = run(base, env=env)
+        require(code != 0 and "PASS:codex_version" in out and "FAIL:codex_host_probe_receipt" in out,
+                f"an allowlisted Codex version without probe receipts must fail verify: {err or out}")
+        require("missing host probe receipt for codex-cli 0.147.0" in err,
+                f"verify must say which receipt is missing: {err!r}")
+        code, out, err = run([*base, "--skip-check", "codex_host_probe_receipt"], env=env)
+        require("SKIP:codex_host_probe_receipt" in out, f"the version rule must honor --skip-check: {err or out}")
+    print("[PASS] DHF conformance table, doctor, installed-Guard probe, and Codex version rule")
+
+
 def test_guard_core_is_host_neutral_and_bundled():
     """The Guard core names no host; every adapter carries an exact copy of it."""
     core_path = ROOT / "dhf" / "core" / "guard_core.py"
@@ -13867,6 +13965,7 @@ TESTS = [
     test_merge_gstack_daily_refresh_audits_diverged_branch,
     test_sync_local_main_fast_forwards_when_clean_and_behind_only,
     test_sync_local_main_skips_dirty_worktree,
+    test_dhf_conformance_table_and_version_rule,
     test_guard_core_is_host_neutral_and_bundled,
     test_harness_guard_fault_blocks_mutations,
     test_harness_guard_policy_decisions,

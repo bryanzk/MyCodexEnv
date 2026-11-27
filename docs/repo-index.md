@@ -104,6 +104,8 @@ behavior live in `codex/hooks/dhf_preprompt.py`.
 - `docs/dhf-spec.md`: host-neutral DHF specification: eight invariants, normalized action, and the seven-function contract.
 - `dhf/core/guard_core.py`: host-neutral Guard core: path identity, protected-target decision, and invocation receipt.
 - `scripts/build_guard_bundle.py`: inlines the Guard core into each host adapter and checks the copies are current.
+- `docs/dhf-conformance.json`: host conformance table: seven functions by host, probes, and probe receipts.
+- `scripts/dhf_conformance.py`: conformance table checker, doctor, installed-Guard probe, receipt recorder, and Codex version rule.
 - `docs/HARNESS_RUNTIME.md`: runtime workflow, evidence, permission, checkpoint, and agent-team contract.
 - `docs/AGENT_HARNESS_STATUS.md`: Agent Harness workflow and runtime governance status map.
 - `docs/dhf-site-status.css`: shared status banner and canonical architecture-page styling.

@@ -15,6 +15,10 @@ def run_legacy(mode: str, argv: Sequence[str] | None = None) -> int:
         from harness_status_runtime import main as legacy_main
     elif mode == "evidence":
         from harness_status_evidence import main as legacy_main
+    elif mode == "conformance":
+        from dhf_conformance import main as conformance_main
+
+        return conformance_main(["doctor", *(forwarded or [])])
     else:
         raise ValueError(f"unknown status mode: {mode}")
     return legacy_main(forwarded)
@@ -26,6 +30,11 @@ def main(argv: Sequence[str] | None = None) -> int:
     modes = parser.add_mutually_exclusive_group()
     modes.add_argument("--runtime", action="store_true", help="Show observable Codex runtime configuration.")
     modes.add_argument("--evidence", action="store_true", help="Summarize local harness evidence.")
+    modes.add_argument(
+        "--conformance",
+        action="store_true",
+        help="Show each DHF function on this host: status, mechanism, and probe evidence age.",
+    )
     raw = list(sys.argv[1:] if argv is None else argv)
     if not raw or raw[0] != "status":
         # Lets argparse print help or its own error. If the arguments still
@@ -37,8 +46,12 @@ def main(argv: Sequence[str] | None = None) -> int:
     forwarded = raw[1:]
     runtime_count = forwarded.count("--runtime")
     evidence_count = forwarded.count("--evidence")
-    if runtime_count + evidence_count > 1:
-        parser.error("argument --evidence: not allowed with argument --runtime")
+    conformance_count = forwarded.count("--conformance")
+    if runtime_count + evidence_count + conformance_count > 1:
+        parser.error("--runtime, --evidence, and --conformance are mutually exclusive")
+    if conformance_count:
+        forwarded.remove("--conformance")
+        return run_legacy("conformance", forwarded)
     if runtime_count:
         forwarded.remove("--runtime")
         return run_legacy("runtime", forwarded)
