@@ -145,7 +145,7 @@
         <thead><tr><th>能力</th><th>源码状态</th><th>运行时 / 剩余边界</th></tr></thead>
         <tbody>
           <tr><td>生命周期路由与恢复</td><td>已实现 durable source order、dirty ownership、execution lanes 和显式 helper 路由。</td><td>恢复结果是证据，不是授权；runtime 配置仍是逐机状态。</td></tr>
-          <tr><td>Guard 与 evidence</td><td>不依赖宿主的核心在任何档位都拒绝凭据、控制面和系统持久化这三类目标。governed 档另加阶段声明检查和工作区检查。守卫自己出错时拦住写入。观察器事件、拆分的 schema、报告和反思辅助脚本都已实现。</td><td>shell 命令不解析，所以命令里的写入不会被判断。2026-08-18 到 2026-11-26 期间，已推广的守卫每次调用都出错，什么都没拦住；工程笔记里有记录。</td></tr>
+          <tr><td>Guard 与 evidence</td><td>不依赖宿主的核心在任何档位都拒绝凭据、控制面和系统持久化这三类目标。governed 档另加阶段声明检查和工作区检查。守卫自己出错时拦住写入。观察器事件、拆分的 schema、报告和反思辅助脚本都已实现。</td><td>shell 命令不解析，所以命令里的写入不会被判断。观察器记录的是「调用发生过」，不是「调用成功了」：宿主不把退出码传给 hook；2026-11-27 之前，观察器给每次调用都写了退出码 0，而它从来没有看到过退出码。2026-08-18 到 2026-11-26 期间，已推广的守卫每次调用都出错，什么都没拦住；工程笔记里有记录。</td></tr>
           <tr><td>压缩治理</td><td>共享计数器、增量探针、只按序数的压力信号、transition CAS、W3 checkpoint 字段、边界裁决和二级一致性评测都已实现。</td><td>在参考机器上，<code>compaction_probe.py</code> 到目前为止没有一次得出结论。<code>session_bearing.py</code> 在本仓库里一直没有送达方位，直到 2026-11-27 修复；现在未送达会计入状态输出。</td></tr>
           <tr><td>验收与行为验证</td><td>具备 requirements validator、tamper-evident ledger、tier-1/2 eval、focused tests、surfaces check 与完整 test runner。</td><td>完成声明必须同时具备本次变更的新鲜完整套件和环境 verifier 收据；只有源码或 parity 不足以验收。</td></tr>
           <tr><td>简化 profiles</td><td>有两套机制都用 <code>light</code>、<code>standard</code>、<code>governed</code> 这三个名字。提示词分发器为模型选择措辞。守卫读取的是 owner 按工作区设定的档位。</td><td>提示词分发器在参考机器上是关闭的。在守卫里，<code>standard</code> 暂时等于 <code>light</code>，<code>governed</code> 已在 Codex CLI 0.172.0 上验证。这不证明生产强制。</td></tr>
