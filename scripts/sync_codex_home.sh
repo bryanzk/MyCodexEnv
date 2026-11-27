@@ -1325,8 +1325,12 @@ rendered = rendered_path.read_text(encoding="utf-8")
 existing = existing_path.read_text(encoding="utf-8")
 
 
+# A table header line. It may be indented and may carry a trailing comment.
+HEADER = r"(?m)^[ \t]*(\[\[[^\]\n]+\]\]|\[[^\]\n]+\])[ \t]*(?:#.*)?$"
+
+
 def table_blocks(text):
-    headers = list(re.finditer(r"(?m)^(\[\[[^\]\n]+\]\]|\[[^\]\n]+\])[ \t]*$", text))
+    headers = list(re.finditer(HEADER, text))
     blocks = []
     for index, match in enumerate(headers):
         end = headers[index + 1].start() if index + 1 < len(headers) else len(text)
@@ -1379,7 +1383,7 @@ def table_path(name):
 
 def top_level_statements(text):
     """Key statements that come before the first table header, in order."""
-    first_table = re.search(r"(?m)^(\[\[[^\]\n]+\]\]|\[[^\]\n]+\])[ \t]*$", text)
+    first_table = re.search(HEADER, text)
     region = text[:first_table.start()] if first_table else text
     starts = list(re.finditer(r'(?m)^[ \t]*(?:[A-Za-z0-9_-]+|"[^"\n]+")(?:\.[A-Za-z0-9_"-]+)*[ \t]*=', region))
     statements = []
@@ -1413,10 +1417,10 @@ def table_key_lines(block):
 
 
 def merge_table_keys(text, table_name, source_block):
-    target_match = re.search(rf"(?m)^\[{re.escape(table_name)}\]\s*$", text)
+    target_match = re.search(rf"(?m)^[ \t]*\[{re.escape(table_name)}\][ \t]*(?:#.*)?$", text)
     if not target_match:
         return text
-    next_match = re.search(r"(?m)^\[\[?[^\]\n]+\]\]?[ \t]*$", text[target_match.end():])
+    next_match = re.search(HEADER, text[target_match.end():])
     end = target_match.end() + next_match.start() if next_match else len(text)
     target_block = text[target_match.start():end]
     target_keys = table_key_lines(target_block)
@@ -1443,7 +1447,7 @@ skill_paths = {
 
 notify_match = re.search(r"(?m)^notify\s*=.*$", existing)
 if notify_match and not re.search(r"(?m)^notify\s*=", rendered):
-    first_table = re.search(r"(?m)^\[[^\]\n]+\]\s*$", rendered)
+    first_table = re.search(HEADER, rendered)
     insert_at = first_table.start() if first_table else len(rendered)
     rendered = (
         rendered[:insert_at].rstrip()
@@ -1456,6 +1460,7 @@ if notify_match and not re.search(r"(?m)^notify\s*=", rendered):
 rendered_array_paths = {table_path(name) for name, is_array, _ in rendered_blocks if is_array}
 rendered_paths = {table_path(name) for name, is_array, _ in rendered_blocks if not is_array}
 kept_runtime_only = []
+kept_array_paths = set()
 
 # Top-level keys the template does not set belong to the owner or to the host.
 rendered_top_keys = {key for key, _ in top_level_statements(rendered)}
@@ -1464,7 +1469,7 @@ runtime_top = [
     if key not in rendered_top_keys
 ]
 if runtime_top:
-    first_table = re.search(r"(?m)^(\[\[[^\]\n]+\]\]|\[[^\]\n]+\])[ \t]*$", rendered)
+    first_table = re.search(HEADER, rendered)
     insert_at = first_table.start() if first_table else len(rendered)
     rendered = (
         rendered[:insert_at].rstrip()
@@ -1497,11 +1502,19 @@ for name, is_array, block in existing_blocks:
             rendered_paths.add(table_path(name))
     elif managed_table(name):
         continue
+    elif any(table_path(name)[:size] in rendered_array_paths for size in range(1, len(table_path(name)))):
+        # Part of an element of an array the template owns; that element was not carried over.
+        continue
+    elif any(table_path(name)[:size] in kept_array_paths for size in range(1, len(table_path(name)))):
+        # A sub-table of a runtime-only array element. Each element has its own.
+        rendered = rendered.rstrip() + "\n\n" + block + "\n"
     elif is_array:
         # A runtime-only array of tables. The template owns the arrays it defines.
         if table_path(name) not in rendered_array_paths:
             rendered = rendered.rstrip() + "\n\n" + block + "\n"
-            kept_runtime_only.append("[[" + name + "]]")
+            kept_array_paths.add(table_path(name))
+            if "[[" + name + "]]" not in kept_runtime_only:
+                kept_runtime_only.append("[[" + name + "]]")
     elif table_path(name) not in rendered_paths:
         # A table the template does not define was put there by the owner or by
         # the host. Dropping it silently loses their settings.

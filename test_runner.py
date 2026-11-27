@@ -2576,12 +2576,18 @@ def test_sync_preserves_runtime_plugin_state():
             'theme = "owner-choice"\n\n'
             "[tui.model_availability_nux]\n"
             "seen = 3\n\n"
-            "[sandbox_workspace_write]\n"
+            "[sandbox_workspace_write] # owner settings\n"
             "network_access = true\n\n"
             "[mcp_servers.owner-added]\n"
             'command = "/opt/owner/server"\n\n'
             "[[owner_array]]\n"
             'name = "first"\n\n'
+            "[owner_array.options]\n"
+            "level = 1\n\n"
+            "[[owner_array]]\n"
+            'name = "second"\n\n'
+            "[owner_array.options]\n"
+            "level = 2\n\n"
             "[[hooks.PreToolUse]]\n"
             'matcher = "stale"\n\n'
             "[[hooks.PreToolUse.hooks]]\n"
@@ -2673,7 +2679,8 @@ def test_sync_preserves_runtime_plugin_state():
         require(merged["tui"] == {"theme": "owner-choice", "model_availability_nux": {"seen": 3}}
                 and merged["sandbox_workspace_write"] == {"network_access": True}
                 and merged["mcp_servers"]["owner-added"] == {"command": "/opt/owner/server"}
-                and merged["owner_array"] == [{"name": "first"}],
+                and merged["owner_array"] == [{"name": "first", "options": {"level": 1}},
+                                           {"name": "second", "options": {"level": 2}}],
                 "sync must keep tables the template does not define")
         require(merged["mcp_servers"]["chrome-devtools"]["command"].endswith("/chrome-devtools-mcp"),
                 "a table the template defines under another spelling is not declared twice")
