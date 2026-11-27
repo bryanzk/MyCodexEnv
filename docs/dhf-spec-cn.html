@@ -1,0 +1,449 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-dhf-palette="warm">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DHF 规范</title>
+  <meta name="description" content="Delivery Harness Framework 规范：八条不变量、SAFE 四个条件、RECOVER 顺序、统一的动作描述、七个功能的合同。">
+  <link rel="canonical" href="https://deliveryharness.com/dhf-spec-cn.html">
+  <link rel="alternate" hreflang="en" href="https://deliveryharness.com/dhf-spec-en.html">
+  <link rel="alternate" hreflang="zh-CN" href="https://deliveryharness.com/dhf-spec-cn.html">
+  <link rel="alternate" hreflang="x-default" href="https://deliveryharness.com/dhf-spec-en.html">
+  <meta property="og:title" content="DHF 规范">
+  <meta property="og:description" content="Delivery Harness Framework 规范：八条不变量、SAFE 四个条件、RECOVER 顺序、统一的动作描述、七个功能的合同。">
+  <meta property="og:url" content="https://deliveryharness.com/dhf-spec-cn.html">
+  <meta property="og:image" content="https://deliveryharness.com/dhf-social-card.png">
+  <meta property="og:image:alt" content="Delivery Harness Framework — from ambiguous requests to verifiable delivery">
+  <meta property="og:locale" content="zh_CN">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="DHF 规范">
+  <meta name="twitter:description" content="Delivery Harness Framework 规范：八条不变量、SAFE 四个条件、RECOVER 顺序、统一的动作描述、七个功能的合同。">
+  <meta name="twitter:image" content="https://deliveryharness.com/dhf-social-card.png">
+  <link rel="stylesheet" href="./dhf-site-status.css?v=20261127a">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,650;9..144,760&family=IBM+Plex+Mono:wght@400;500;600&family=Atkinson+Hyperlegible:wght@400;700&display=swap" rel="stylesheet">
+  <style>
+    :root { --font-body:'Atkinson Hyperlegible',"PingFang SC","Microsoft YaHei",Verdana,sans-serif; --font-display:'Fraunces',Georgia,serif; --font-mono:'IBM Plex Mono',monospace; --shadow:0 18px 44px rgba(51,42,33,.10),0 2px 10px rgba(51,42,33,.06); --bg:#f4f1e8; --surface:#fffdf8; --ink:#1e2924; --muted:#637068; --line:rgba(30,41,36,.14); --green:#147a62; --amber:#a15f22; --red:#a9475b; --blue:#2f6f92; }
+    @media (prefers-color-scheme: dark) { :root { --bg:#15120f; --surface:#211c18; --ink:#f6eee3; --muted:#b8aa9a; --line:rgba(255,239,218,.13); --green:#5cd0b2; --amber:#f3b36b; --red:#f095a5; --blue:#91c8e6; --shadow:0 18px 44px rgba(0,0,0,.28),0 2px 10px rgba(0,0,0,.20); } }
+    * { box-sizing: border-box; }
+    body { margin:0; background:radial-gradient(circle at top right,rgba(47,111,146,.11),transparent 32%),var(--bg); color:var(--ink); font:16px/1.7 var(--font-body); }
+    .wrap { width:min(1120px,calc(100% - 2rem)); margin:0 auto; padding:1.25rem 0 4rem; }
+    .hero,.section { margin-bottom:1rem; padding:clamp(1.2rem,3vw,2.2rem); border:1px solid var(--line); border-radius:20px; background:var(--surface);box-shadow:var(--shadow); }
+    .eyebrow { font-family:var(--font-mono); color:var(--green); font-size:.8rem; font-weight:800; letter-spacing:.12em; text-transform:uppercase; }
+    h1,h2,h3 { line-height:1.2; font-family:var(--font-display); } h1 { margin:.5rem 0 .8rem; font-size:clamp(2rem,5vw,4rem); } h2 { margin-top:0; font-size:clamp(1.35rem,3vw,2rem); } h3 { margin:0 0 .35rem; }
+    p { color:var(--muted); } code { font-family:var(--font-mono); padding:.12rem .3rem; border-radius:5px; background:rgba(47,111,146,.09); color:var(--ink); } a { color:var(--blue); }
+    .pill { display:inline-flex; margin:.3rem .35rem .3rem 0; padding:.3rem .65rem; border-radius:999px; background:rgba(20,122,98,.11); color:var(--green); font-weight:750; }
+    .status-source,.status-runtime { border-top:4px solid var(--green); } .status-public { border-top:4px solid var(--blue); } .status-extract { border-top:4px solid var(--amber); }
+    .stack { display:grid; gap:.7rem; } .layer { padding:1rem; border:1px solid var(--line); border-left:6px solid var(--blue); border-radius:12px; background:rgba(47,111,146,.045); } .layer strong { display:block; margin-bottom:.25rem; }
+    table { width:100%; border-collapse:collapse; } th,td { padding:.75rem; border-bottom:1px solid var(--line); text-align:left; vertical-align:top; } th { color:var(--green); }
+    .warning { padding:1rem; border-radius:12px; background:rgba(169,71,91,.09); border:1px solid rgba(169,71,91,.24); }
+    @media (max-width:700px) { table { display:block; overflow-x:auto; } }
+    .section ul, .section ol { color: var(--muted); padding-left: 1.2rem; }
+    .section li { margin: .3rem 0; }
+    .section li strong { color: var(--ink); }
+    .section h3 { margin-top: 1.6rem; }
+    .section table { margin: .8rem 0; }
+  </style>
+</head>
+<body>
+  <a class="dhf-skip" href="#dhf-main">跳到正文</a>
+<nav class="dhf-nav" aria-label="站点导航">
+    <a class="dhf-nav-home" href="./index-zh.html">DHF</a>
+    <div class="dhf-nav-links">
+        <a href="./index-zh.html">首页</a>
+        <a href="./delivery-harness-beginner-guide-cn.html">新手指南</a>
+        <a href="./dhf-memory-map.html">记忆地图</a>
+        <a href="./dhf-context-engineering-cn.html">上下文工程</a>
+        <a href="./project-lifecycle-harness-flow-cn.html">生命周期</a>
+        <a href="./dhf-governance-decision-flow-cn.html">治理判定</a>
+        <a href="./dhf-value-evidence-cn.html">证据</a><a href="./dhf-architecture-status-cn.html">架构状态</a>
+    </div>
+    <a class="dhf-nav-lang" href="./dhf-spec-en.html" lang="en" hreflang="en">English</a>
+  </nav>
+    <main id="dhf-main" class="wrap dhf-has-toc">
+  <nav class="dhf-toc" aria-label="本页目录">
+    <div class="dhf-toc-title">本页目录</div>
+    <a href="#s1">1. 本页的地位</a>
+    <a href="#s2">2. 八条不变量</a>
+    <a href="#s3">3. 状态变更前的四个条件</a>
+    <a href="#s4">4. 失败后的顺序</a>
+    <a href="#s5">5. 宿主适用性</a>
+    <a href="#s6">6. 助记词的类别</a>
+    <a href="#s7">7. 统一的动作描述</a>
+    <a href="#s8">8. 七个功能的合同</a>
+    <a href="#s9">9. 核心与适配器</a>
+    <a href="#s10">10. 不属于规范的内容</a>
+    <a href="#gaps">规范与现状的差距</a>
+  </nav>
+  <div class="dhf-col">
+    <aside class="dhf-status-bar" data-dhf-status="2026-11-27" aria-label="DHF 当前状态">
+      <strong>架构状态 · 2026-11-27</strong>
+      <span>源码、运行时、公开发布与独立核心的统一事实页。</span>
+      <a href="./dhf-architecture-status-cn.html">当前中文状态</a>
+      <a href="./dhf-architecture-status-en.html" hreflang="en">English status</a>
+    </aside>
+
+    <section class="hero">
+      <div class="eyebrow">DHF_SPEC / v0.5 · 2026-11-26</div>
+      <h1>DHF 规范。</h1>
+      <p>Delivery Harness Framework 的规则。本页写的是在每个宿主上都必须成立的事，不写实现。权威文本是仓库里的 <code>docs/dhf-spec.md</code>；本页由它生成，两者不一致时以它为准。</p>
+      <a class="pill" href="./dhf-spec-en.html" hreflang="en">English</a>
+      <a class="pill" href="./dhf-architecture-status-cn.html#hosts">各宿主的状态</a>
+      <a class="pill" href="./dhf-protect-seven-components-cn.html">七个功能</a>
+      <a class="pill" href="./dhf-governance-decision-flow-cn.html">决策流程</a>
+    </section>
+
+    <section class="section">
+      <h2 id="s1">1. 本页的地位</h2>
+      <ul>
+        <li>本页是 DHF 的规范。它只写规则，不写实现。</li>
+        <li>本页的规则不依赖任何一个宿主。宿主指运行 agent 的程序。</li>
+        <li>公开站的其他页面是实现说明或讲解。其他页面与本页冲突时，以本页为准。</li>
+        <li>模型能力提高后，本页的规则不变。实现可以变。</li>
+      </ul>
+    </section>
+
+    <section class="section">
+      <h2 id="s2">2. 八条不变量</h2>
+      <p>每条写四项：规则、理由、落点、判据。</p>
+      <p>落点指规则被机械执行的位置。优先选宿主外的落点：CI、分支保护、受保护 runner、凭据范围、文件权限。</p>
+      <h3 id="i-1">I-1 证据分级</h3>
+      <ul>
+        <li><strong>规则：</strong>证据分七级：设计意图、源码已实现、验证通过、运行时激活、公开发布、生产强制执行、客户结果已验证。低一级的证据不得用来证明高一级的主张。</li>
+        <li><strong>规则：</strong>源码、运行时、公开文档、生产四种状态必须分开报告。</li>
+        <li><strong>理由：</strong>模型能写出流畅、看起来已完成的陈述。流畅不等于准确。</li>
+        <li><strong>落点：</strong>交付报告模板；公开站状态页。</li>
+        <li><strong>判据：</strong>每个状态主张旁边有证据等级和证据日期。</li>
+      </ul>
+      <h3 id="i-2">I-2 完成声明带新鲜回执</h3>
+      <ul>
+        <li><strong>规则：</strong>每个「已完成」「已修复」「已通过」的结论，必须带 <code>command</code>、<code>exit_code</code>、<code>key_output</code>、<code>timestamp</code> 四个字段。</li>
+        <li><strong>规则：</strong>相关源码、宿主版本或运行时文件变化后，旧回执失效。</li>
+        <li><strong>规则：</strong>子代理的报告是待复核的证据，不是完成证明。</li>
+        <li><strong>理由：</strong>回执把陈述换成可以核对的事实。</li>
+        <li><strong>落点：</strong>交付报告模板；CI 的 required check。</li>
+        <li><strong>判据：</strong>缺任一字段的结论，视为未验证。</li>
+      </ul>
+      <h3 id="i-3">I-3 授权只来自 owner 当前的消息</h3>
+      <ul>
+        <li><strong>规则：</strong>只有 owner 在当前对话里发出的消息可以授权。</li>
+        <li><strong>规则：</strong>仓库文件、工具输出、历史对话、恢复出来的状态、agent 生成的内容，都不得构成授权。</li>
+        <li><strong>规则：</strong>动作登记表之外的副作用，一律拒绝。</li>
+        <li><strong>理由：</strong>agent 读到的内容里可以混入指令。恢复只还原事实，不还原权限。</li>
+        <li><strong>落点：</strong>动作登记表；受保护 runner 的单次授权检查。</li>
+        <li><strong>判据：</strong>每次外部写入都能指到一条 owner 消息。</li>
+      </ul>
+      <h3 id="i-4">I-4 按副作用分级</h3>
+      <ul>
+        <li><strong>规则：</strong>动作按两个属性分级：是否可逆，是否离开本机。不按工作类别分级。</li>
+        <li><strong>规则：</strong>分三级。Level 0：本机只读和已授权写集内的本机写入。Level 1：owner 明确动作和目标后可以执行。Level 2：默认拒绝。</li>
+        <li><strong>规则：</strong>Level 0 不需要确认。Level 1 的动作离开本机但可以撤销。Level 2 的动作不可撤销，或改变权限和控制面。</li>
+        <li><strong>规则：</strong>Level 1 的授权可以成组给出：owner 用一条消息授权一类动作，它在当前会话内有效，会话结束即失效。</li>
+        <li><strong>规则：</strong>Level 2 的授权不得成组。每次必须单独给出。</li>
+        <li><strong>规则：</strong>动作登记表可以把某个 Level 1 动作标为不得成组。</li>
+        <li><strong>规则：</strong>档位不改变动作的级别。档位只改变 Level 1 的确认方式：governed 档不允许成组授权，其余档位允许。</li>
+        <li><strong>理由：</strong>流程成本必须与风险匹配。低风险工作保持轻量。</li>
+        <li><strong>落点：</strong>动作登记表；light / standard / governed 三档。</li>
+        <li><strong>判据：</strong>每个动作在登记表里恰好属于一级。</li>
+      </ul>
+      <h3 id="i-5">I-5 外部写入纪律</h3>
+      <ul>
+        <li><strong>规则：</strong>写入前检查目标的当前状态。写入后立即回读。</li>
+        <li><strong>规则：</strong>结果是部分完成或未知时，只做只读核对。不得盲重试。</li>
+        <li><strong>规则：</strong>单次授权使用一次后失效。成组授权只在给出它的会话内有效。重放必须被拒绝。</li>
+        <li><strong>规则：</strong>密钥不得进入 agent 的输入、输出或上下文。</li>
+        <li><strong>理由：</strong>外部系统的状态不可回滚，或回滚代价高。</li>
+        <li><strong>落点：</strong>受保护 runner；连接器的版本条件写入；凭据范围。</li>
+        <li><strong>判据：</strong>每次外部写入有一条写前检查记录和一条回读记录。</li>
+      </ul>
+      <h3 id="i-6">I-6 高风险在副作用之前硬阻断</h3>
+      <ul>
+        <li><strong>规则：</strong>高风险动作必须在副作用发生之前被机械拦截。不得只靠提示词。</li>
+        <li><strong>规则：</strong>落点优先选宿主外。宿主内的 hook 只作为补充。</li>
+        <li><strong>规则：</strong>每个拦截点必须留下执行记录。无法查到是否被调用的拦截点，视为未验证。</li>
+        <li><strong>理由：</strong>提示词只能建议。宿主内的 hook 会因换宿主、宿主升级、第三方改写配置而失效。</li>
+        <li><strong>落点：</strong>分支保护；CI；受保护 runner；文件权限；宿主 hook（补充）。</li>
+        <li><strong>判据：</strong>每个 Level 2 动作在「动作–落点」表里有至少一个已验证的落点，或有 owner 的接受记录。</li>
+      </ul>
+      <h3 id="i-7">I-7 连续性存在对话之外</h3>
+      <ul>
+        <li><strong>规则：</strong>一个事实只有一个权威来源。其他位置只放指针。</li>
+        <li><strong>规则：</strong>来源按以下顺序取信：稳定规则、仓库地图、术语合同、当前状态、决策依据、源码与 Git、执行证据、对话历史。对话历史只能提供线索。</li>
+        <li><strong>规则：</strong>新会话从持久文件恢复，不从旧对话恢复。恢复时只载入四项：阶段、已确认的事实、阻塞项、下一个安全动作。</li>
+        <li><strong>规则：</strong>owner 的纠正必须写进持久文件。</li>
+        <li><strong>理由：</strong>上下文窗口有限，压缩有损，模型不从纠正中学习。</li>
+        <li><strong>落点：</strong>仓库内的规则文件、policy、State Log。</li>
+        <li><strong>判据：</strong>删掉全部对话历史后，新会话仍能说出当前阶段和下一个安全动作。</li>
+      </ul>
+      <h3 id="i-8">I-8 业务裁决显式化</h3>
+      <ul>
+        <li><strong>规则：</strong>影响金额、授权级别、客户可见输出、持久化、运行时权限的情形，必须在实施前逐条裁决。</li>
+        <li><strong>规则：</strong>裁决只有四种：允许、拒绝、人工裁决、既有路径不变。每个情形恰好一种。</li>
+        <li><strong>规则：</strong>证据不足时，只能是人工裁决或阻塞。不得猜。</li>
+        <li><strong>规则：</strong>测试通过不得把业务猜测升级为合同。</li>
+        <li><strong>理由：</strong>模型不掌握小众的、只存在于客户那里的业务规则。</li>
+        <li><strong>落点：</strong>实施前裁决矩阵（PIDM）；术语合同。</li>
+        <li><strong>判据：</strong>每个实施任务在开工前有完整的裁决矩阵。</li>
+      </ul>
+    </section>
+
+    <section class="section">
+      <h2 id="s3">3. 状态变更前的四个条件（SAFE）</h2>
+      <p>每次状态变更前，四个条件必须全部成立。</p>
+      <table>
+        <thead><tr><th>条件</th><th>含义</th><th>对应的不变量</th></tr></thead>
+        <tbody>
+          <tr><td>S 规格</td><td>范围、验收条件、状态定义已写明</td><td>I-8</td></tr>
+          <tr><td>A 授权</td><td>owner 的当前授权覆盖这个动作和目标</td><td>I-3、I-4</td></tr>
+          <tr><td>F 事实</td><td>有新鲜的测试、回执或回读</td><td>I-1、I-2</td></tr>
+          <tr><td>E 错误恢复</td><td>有检查点、回滚方法或交接方法</td><td>I-5、I-7</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section class="section">
+      <h2 id="s4">4. 失败后的顺序（RECOVER）</h2>
+      <ol>
+        <li>识别：区分失败、部分完成、结果未知。</li>
+        <li>终止：停止后续副作用。</li>
+        <li>捕获：保存失败回执、目标、版本、影响范围。</li>
+        <li>获取：从 Git、检查点或版本历史取得最后可信状态。</li>
+        <li>验证：用独立回读核对。</li>
+        <li>升级：新的 HEAD、digest 或版本必须重新取得 owner 授权。</li>
+        <li>恢复：只从检查点记录的下一个安全动作继续。</li>
+      </ol>
+    </section>
+
+    <section class="section">
+      <h2 id="s5">5. 宿主适用性</h2>
+      <p>本节是全文唯一可以出现宿主名字的位置。</p>
+      <table>
+        <thead><tr><th>不变量</th><th>落点类型</th><th>Codex 本地</th><th>Claude Code 本地</th><th>Claude Code 云端</th></tr></thead>
+        <tbody>
+          <tr><td>I-1 至 I-5、I-7、I-8</td><td>仓库文件、模板、CI、runner</td><td>适用</td><td>适用</td><td>适用</td></tr>
+          <tr><td>I-6 宿主外落点</td><td>分支保护、CI、runner、凭据范围</td><td>适用</td><td>适用</td><td>适用</td></tr>
+          <tr><td>I-6 宿主内落点</td><td>hook</td><td>2026-11-27 已验证（Mac Studio，Codex CLI 0.155.1）</td><td>2026-11-27 已注册，部分探测</td><td>单仓库会话：适配器已装进探测仓库，未探测。Project 线程：不执行仓库的 hook</td></tr>
+        </tbody>
+      </table>
+      <ul>
+        <li>本表的每一格都必须有证据日期。日期超过 30 天的格子标注「已过期」。</li>
+        <li>「已验证」只对写明的机器和宿主版本成立。其他机器、其他版本必须重新探测。</li>
+        <li>七个功能在每个宿主上的逐格状态、探测方法和探测回执，记录在 <code>docs/dhf-conformance.json</code>。本节的表与它冲突时，以它为准。</li>
+      </ul>
+    </section>
+
+    <section class="section">
+      <h2 id="s6">6. 助记词的类别</h2>
+      <table>
+        <thead><tr><th>类别</th><th>助记词</th><th>含义</th></tr></thead>
+        <tbody>
+          <tr><td>规范</td><td>SAFE、AIRCRAFT、CAP、RECOVER</td><td>规则。本页是它们的权威来源。</td></tr>
+          <tr><td>实现</td><td>PROTECT、BRIDGE</td><td>七个功能在某个宿主上的实现和成熟阶段。功能不变，实现随宿主变化。</td></tr>
+          <tr><td>讲解</td><td>TRUST、BEST、CARE</td><td>面向不同读者的讲法。不增加规则。</td></tr>
+        </tbody>
+      </table>
+      <p>规范类助记词在本页的位置：</p>
+      <table>
+        <thead><tr><th>助记词</th><th>本页的位置</th></tr></thead>
+        <tbody>
+          <tr><td>SAFE</td><td>第 3 节</td></tr>
+          <tr><td>RECOVER</td><td>第 4 节</td></tr>
+          <tr><td>AIRCRAFT</td><td>I-7 的取信顺序。八类来源按 I-7 列出的顺序对应八个字母</td></tr>
+          <tr><td>CAP</td><td>Continuity 连续性对应 I-7；Accuracy 正确性对应 I-1、I-2；Permission 授权对应 I-3、I-4、I-6</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section class="section">
+      <h2 id="s7">7. 统一的动作描述</h2>
+      <p>核心指不依赖宿主的判断逻辑。适配器指把某个宿主接到核心上的那一层。</p>
+      <p>核心只接受下面这一种输入。宿主自己的数据结构不得进入核心。</p>
+      <table>
+        <thead><tr><th>字段</th><th>含义</th></tr></thead>
+        <tbody>
+          <tr><td>会话</td><td>本次会话的标识</td></tr>
+          <tr><td>工作目录</td><td>动作发生时的工作目录，绝对路径</td></tr>
+          <tr><td>动作种类</td><td>下表七种之一，或「未识别」</td></tr>
+          <tr><td>目标路径</td><td>动作涉及的路径列表，绝对路径</td></tr>
+          <tr><td>原始工具名</td><td>宿主给这次调用起的名字</td></tr>
+        </tbody>
+      </table>
+      <table>
+        <thead><tr><th>动作种类</th><th>含义</th></tr></thead>
+        <tbody>
+          <tr><td>读</td><td>读取本机的文件或目录</td></tr>
+          <tr><td>写</td><td>创建或修改本机的文件</td></tr>
+          <tr><td>删</td><td>删除本机的文件，或把它移走</td></tr>
+          <tr><td>执行</td><td>运行本机的命令或程序</td></tr>
+          <tr><td>联网</td><td>向本机之外发出请求，不改变远端的状态</td></tr>
+          <tr><td>远程</td><td>改变本机之外的状态：推送、发布、发送、调用外部的写接口</td></tr>
+          <tr><td>派子代理</td><td>把工作交给另一个 agent</td></tr>
+        </tbody>
+      </table>
+      <p>规则：</p>
+      <ul>
+        <li>一次工具调用可以产生多条动作描述。例如一个补丁改 3 个文件，产生 3 条。移动产生一条「删」和一条「写」。</li>
+        <li>目标路径在进入核心之前必须规范化：解析相对路径和符号链接。</li>
+        <li>原始工具名只用于记录。核心不得根据原始工具名做判断。</li>
+        <li>适配器无法归类的调用，动作种类填「未识别」。「未识别」的调用必须留下记录。</li>
+        <li>「未识别」的调用是否被拦截，由档位决定：governed 档拦截，其余档位只记录。</li>
+        <li>「未识别」的次数必须出现在状态报告里。宿主版本变化后，次数大于 0 时必须处理。</li>
+        <li>适配器无法取得目标路径时，目标路径留空，并在记录里写明「目标未解析」。不得猜。</li>
+      </ul>
+    </section>
+
+    <section class="section">
+      <h2 id="s8">8. 七个功能的合同</h2>
+      <p>七个功能是不变量。每个宿主上的实现可以不同。</p>
+      <p>每个功能写四项：输入、输出、判据、不得依赖。</p>
+      <p>「不得依赖」对七个功能都包含：宿主的名字、宿主的文件名、宿主的数据结构、提示词、对话历史。下面各条只写额外的部分。</p>
+      <h3 id="position">Position（定位）</h3>
+      <ul>
+        <li><strong>用途：</strong>回答任务现在处于哪个阶段。</li>
+        <li><strong>输入：</strong>持久的任务状态记录；会话；工作目录。</li>
+        <li><strong>输出：</strong>当前阶段；这个结论的来源；结论是否确定。不确定时输出「未知」。</li>
+        <li><strong>判据：</strong>持久状态相同时，两次计算的结果相同。</li>
+        <li><strong>判据：</strong>删掉全部对话历史后，结果不变。</li>
+        <li><strong>判据：</strong>不确定时，不得输出比「未知」更宽松的阶段。</li>
+        <li><strong>不得依赖：</strong>模型对自己所处阶段的陈述。</li>
+      </ul>
+      <h3 id="restrict">Restrict（门禁）</h3>
+      <ul>
+        <li><strong>用途：</strong>在副作用发生之前，决定一个动作是否放行。</li>
+        <li><strong>输入：</strong>一条统一的动作描述；Contain 给出的边界；Position 给出的阶段；Empower 给出的有效授权。后两项是否使用，由档位决定。</li>
+        <li><strong>输出：</strong>放行或拦截。拦截时带原因代码。每次调用留一条调用回执。</li>
+        <li><strong>判据：</strong>拦截发生在副作用之前。</li>
+        <li><strong>判据：</strong>输入相同时，裁决相同。</li>
+        <li><strong>判据：</strong>调用回执能回答三个问题：是否被调用过、最近一次的裁决、当前安装的版本是否就是被调用的版本。</li>
+        <li><strong>判据：</strong>读取类动作只在目标是凭据时被拦截。</li>
+        <li><strong>判据：</strong>核心自身出错时，动作种类是「写」或「删」的调用被拦截，原因代码写明是核心故障。其余种类放行，并留下记录。出错包括崩溃、超时、返回无法解析的结果。适配器必须保证这一条。</li>
+        <li><strong>判据：</strong>「执行」类动作内部的写入目标不解析。这是已知缺口。它由下面两个落点覆盖，不由 Restrict 覆盖。</li>
+        <li><strong>判据：</strong>只在发布时才变化的控制面文件，用操作系统的不可改标志保护。发布事务先解除标志，完成后重新加上。</li>
+        <li><strong>判据：</strong>宿主自己也要写入的控制面文件，不加不可改标志。会话开始时核对它的内容，发现与源码不一致必须报告。</li>
+        <li><strong>判据：</strong>governed 档可以另加一条：命令文本里出现受保护的路径即拦截。其余档位不加，因为它会误拦只读命令。</li>
+        <li><strong>不得依赖：</strong>原始工具名；宿主的配置文件位置。</li>
+      </ul>
+      <h3 id="observe">Observe（取证）</h3>
+      <ul>
+        <li><strong>用途：</strong>把实际发生的事记下来，供核对和恢复。</li>
+        <li><strong>输入：</strong>动作描述；动作的结果；Restrict 的裁决。</li>
+        <li><strong>输出：</strong>追加式的证据记录。验证类记录含 <code>command</code>、<code>exit_code</code>、<code>key_output</code>、<code>timestamp</code> 四个字段。</li>
+        <li><strong>判据：</strong>记录存在对话之外，新会话可以读到。</li>
+        <li><strong>判据：</strong>记录不构成授权。</li>
+        <li><strong>判据：</strong>密钥不进入记录。</li>
+        <li><strong>判据：</strong>写记录失败时，不得改变动作本身的结果。</li>
+        <li><strong>不得依赖：</strong>模型对执行结果的陈述。</li>
+      </ul>
+      <h3 id="thread">Thread（续接）</h3>
+      <ul>
+        <li><strong>用途：</strong>让新会话接上旧会话的工作。</li>
+        <li><strong>输入：</strong>持久的状态记录。</li>
+        <li><strong>输出：</strong>会话开始时的四项：阶段、已确认的事实、阻塞项、下一个安全动作。</li>
+        <li><strong>判据：</strong>删掉全部对话历史后，四项仍然可得。</li>
+        <li><strong>判据：</strong>续接只还原事实，不还原权限。上一个会话的授权在新会话里无效。</li>
+        <li><strong>不得依赖：</strong>宿主自带的会话恢复功能。</li>
+      </ul>
+      <h3 id="empower">Empower（授权）</h3>
+      <ul>
+        <li><strong>用途：</strong>让 owner 显式开放一项能力，并能检查和撤销。</li>
+        <li><strong>输入：</strong>owner 的显式声明，包含动作、目标、有效期。</li>
+        <li><strong>输出：</strong>一条授权记录。它可以被检查，可以被撤销，有到期时间。</li>
+        <li><strong>判据：</strong>每条授权记录能指到 owner 的一次操作。</li>
+        <li><strong>判据：</strong>到期或撤销后，授权立即无效。</li>
+        <li><strong>判据：</strong>标为单次的授权，使用一次后失效。重放被拒绝。</li>
+        <li><strong>判据：</strong>agent 不得创建、修改或延长授权记录。</li>
+        <li><strong>不得依赖：</strong>agent 能自行写入的位置。</li>
+      </ul>
+      <h3 id="contain">Contain（边界）</h3>
+      <ul>
+        <li><strong>用途：</strong>回答一个路径是否在允许的范围内。</li>
+        <li><strong>输入：</strong>owner 维护的边界声明，包含受治理的根目录、受保护的根目录、允许的写集。</li>
+        <li><strong>输出：</strong>对任一目标路径，回答三者之一：在边界内、在边界外、受保护。</li>
+        <li><strong>判据：</strong>先规范化路径，再判断。符号链接和硬链接不得绕过判断。</li>
+        <li><strong>判据：</strong>harness 自己的安装位置、凭据、操作系统的自启动位置始终受保护。边界声明缺失时，这三类仍然受保护。</li>
+        <li><strong>判据：</strong>agent 不得修改边界声明。</li>
+        <li><strong>不得依赖：</strong>工作目录恰好位于某个固定位置。</li>
+      </ul>
+      <h3 id="transact">Transact（事务发布）</h3>
+      <ul>
+        <li><strong>用途：</strong>把一组控制面文件一起发布到运行时，或一起恢复原状。</li>
+        <li><strong>输入：</strong>一份固定的发布目标清单；owner 已批准的源码 digest。</li>
+        <li><strong>输出：</strong>全部目标更新成功，或全部恢复原状。一条发布记录，含事务标识和每个目标发布前后的哈希。</li>
+        <li><strong>判据：</strong>任何一个目标失败，已更新的目标按相反顺序恢复。</li>
+        <li><strong>判据：</strong>digest 未经 owner 批准时，拒绝发布。</li>
+        <li><strong>判据：</strong>清单之外的文件不被改动。</li>
+        <li><strong>判据：</strong>发布后回读，运行时的哈希与源码一致。</li>
+        <li><strong>判据：</strong>发布由 owner 执行。agent 不得执行发布，不得批准 digest。</li>
+        <li><strong>不得依赖：</strong>运行时的安装目录结构。目标位置由适配器提供。</li>
+      </ul>
+    </section>
+
+    <section class="section">
+      <h2 id="s9">9. 核心与适配器</h2>
+      <ul>
+        <li>核心实现七个功能的判断逻辑。核心只接受第 7 节的动作描述。</li>
+        <li>每个宿主有一个适配器。适配器只做三件事：把宿主的调用翻译成动作描述；把核心的裁决翻译成宿主认的返回格式；在宿主里登记自己。</li>
+        <li>适配器不得包含规则。同一条动作描述，在任何宿主上得到同一个裁决。</li>
+        <li>每个「功能 × 宿主」的组合，必须有一条不产生副作用的探测，和一条带日期的探测回执。没有回执的组合，视为未验证。</li>
+        <li>宿主版本变化后，该宿主的全部探测回执失效。</li>
+        <li>档位由 owner 显式设定：按工作区，有到期时间。没有设定或已经到期时，档位是 light。记录损坏时按 governed 处理。</li>
+        <li>agent 不得设定档位。prompt 里的关键词不得改变档位。</li>
+        <li>三个档位启用的功能：light 只有 Restrict 的固定拦截；standard 目前与 light 相同；governed 另外启用 Position、Empower、Contain，并拦截「未识别」的写类调用。</li>
+        <li>governed 档下，没有 owner 声明的阶段时，写和删被拦截，读不受影响。拦截信息必须写明怎样声明。</li>
+        <li>owner 可以单独关闭某个宿主上的某个功能。被关闭的功能必须在状态报告里如实列出。不得把「已关闭」报告为「故障」，也不得报告为「正常」。</li>
+      </ul>
+    </section>
+
+    <section class="section">
+      <h2 id="s10">10. 不属于规范的内容</h2>
+      <p>以下内容可以随模型和宿主变化，不写进规范：</p>
+      <ul>
+        <li>用哪个 skill 完成哪个阶段。</li>
+        <li>向 prompt 注入什么内容。</li>
+        <li>上下文压力的探测方法。</li>
+        <li>宿主 hook 的文件名、注册位置、数据结构。</li>
+        <li>分档的具体关键词。</li>
+      </ul>
+    </section>
+
+    <section class="section">
+      <h2 id="gaps">规范与现状的差距</h2>
+      <p>本节记录规范已经规定、实现还没有做到的地方。每一条做到后，从本节删除。</p>
+      <ul>
+        <li>核心出错时拦截：崩溃这一种情形已实现，并已推广到运行时；在 Python 3.12 和 3.9.6 上通过测试，还没有在宿主里遇到过真实故障。超时和无法解析的返回由宿主决定，适配器无法自行保证。无法编译的文件不能执行这条规则。</li>
+        <li>「执行」类动作的缺口：不可改标志没有加；会话开始时的内容核对没有接上。现状是没有覆盖。</li>
+        <li>成组授权：现状是只靠文字，没有授权记录，也没有会话结束即失效的机制。</li>
+        <li>本仓库的动作登记表：现状是没有。</li>
+        <li>路径规范化：核心按写出来的路径识别控制面和凭据。经过符号链接到达的目标，核心认不出来。Claude Code 的适配器已在适配器层补上。</li>
+        <li>Empower 的「agent 不得创建授权记录」：agent 的编辑工具改不了声明，但 agent 能在 shell 里自己运行声明命令。现状是只留审计，不是硬边界。</li>
+        <li>「agent 不得设定档位」：与上一条相同，agent 能在 shell 里自己运行设定命令。</li>
+        <li>宿主覆盖：七个功能只在一个宿主的一台机器上全部有探测回执。逐格状态见 <code>docs/dhf-conformance.json</code>。</li>
+      </ul>
+    </section>
+
+    </div>
+</main>
+
+  <script>
+    (function () {
+      var links = Array.prototype.slice.call(document.querySelectorAll('.dhf-toc a'));
+      if (!links.length || !('IntersectionObserver' in window)) return;
+      var pairs = [];
+      links.forEach(function (link) {
+        var el = document.getElementById(link.getAttribute('href').slice(1));
+        if (el) pairs.push({ el: el, link: link });
+      });
+      var observer = new IntersectionObserver(function (entries) {
+        entries.forEach(function (entry) {
+          if (!entry.isIntersecting) return;
+          links.forEach(function (l) { l.classList.remove('is-active'); });
+          var match = pairs.filter(function (p) { return p.el === entry.target; })[0];
+          if (match) match.link.classList.add('is-active');
+        });
+      }, { rootMargin: '-14% 0px -74% 0px' });
+      pairs.forEach(function (p) { observer.observe(p.el); });
+    })();
+  </script>
+</body>
+</html>

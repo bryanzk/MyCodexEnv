@@ -63,7 +63,7 @@
     .footer a { color: var(--green); }
     @media (max-width: 860px) { body { padding: 18px; } .hero { min-height: 0; } .card-row, .card-row.four { grid-template-columns: 1fr; } .section-heading { align-items: start; flex-direction: column; } .footer { flex-direction: column; } }
   </style>
-  <link rel="stylesheet" href="./dhf-site-status.css?v=20261126a">
+  <link rel="stylesheet" href="./dhf-site-status.css?v=20261127a">
 </head>
 <body>
   <a class="dhf-skip" href="#dhf-main">Skip to content</a>
@@ -86,10 +86,11 @@
     <a href="#derive-heading">Compaction</a>
     <a href="#matrix-heading">Six verdicts</a>
     <a href="#incident-heading">Rollback incident</a>
+    <a href="#guard-heading">Guard outage</a>
     <a href="#contract-heading">Contract tests</a>
   </nav>
   <div class="dhf-col">
-    <aside class="dhf-status-bar" data-dhf-status="2026-08-22" aria-label="Current DHF status"><strong>Architecture status · 2026-08-22</strong><span>Source, runtime, publication, and independent-core status are separate.</span><a href="./dhf-architecture-status-en.html">Open current status</a><span class="dhf-status-review" data-dhf-review="2026-11-26">Under re-verification since 2026-11-26. Guard and runtime claims on this site predate the current host version.</span></aside>
+    <aside class="dhf-status-bar" data-dhf-status="2026-11-27" aria-label="Current DHF status"><strong>Architecture status · 2026-11-27</strong><span>Source, runtime, publication, and independent-core status are separate.</span><a href="./dhf-architecture-status-en.html">Open current status</a></aside>
     <section class="hero" style="--i:0"><div class="eyebrow">DHF Engineering Notes</div><h1>Governing compaction &amp; deployment.</h1><p class="lead">A first-principles account of how durable state, fail-closed transitions, version direction, and executable documentation keep long-running agentic systems recoverable.</p></section>
     <nav class="strip" aria-label="Quick links" style="--i:1"><a class="tag" href="./">English landing</a><a class="tag" href="./dhf-context-engineering-en.html">Context Engineering</a><a class="tag" href="./dhf-for-product-and-field-en.html">For PM &amp; FDE</a><a class="tag" href="./dhf-architecture-status-en.html">Current status</a><a class="tag" href="./dhf-engineering-notes-cn.html" hreflang="zh-CN">中文版</a></nav>
 
@@ -139,7 +140,18 @@
       </div>
     </section>
 
-    <section class="section-block" aria-labelledby="contract-heading" style="--i:5">
+    <section class="section-block" aria-labelledby="guard-heading" style="--i:5">
+      <div class="section-heading"><div><div class="label">Incident review</div><h2 id="guard-heading">The Guard failed on every call for 100 days</h2></div><p>From 2026-08-18 to 2026-11-26 the write Guard on the reference machine blocked nothing. Every test was green and every public page said it was enforcing.</p></div>
+      <div class="card-row">
+        <div class="card"><h3>What happened</h3><p>On 2026-08-17 the Guard was simplified from 798 lines to 348. The change dropped one line, <code>from __future__ import annotations</code>. The hook was registered to run under the system Python, version 3.9.6, which cannot read the newer type syntax without that line. From the promotion on 2026-08-18 the Guard raised an error while loading, on every call. The host treats a hook that crashes as a hook that allows.</p></div>
+        <div class="card"><h3>Why the tests missed it</h3><p>The test suite ran the hook under Python 3.12, where the file loads. No test used the interpreter the host was registered to use. The 18/18 host probes dated from 2026-08-10, before the simplification, and were not repeated. When a new host version was accepted in October, only the version allowlist changed.</p></div>
+        <div class="card"><h3>Why nobody noticed</h3><p>A Guard that allows and a Guard that never ran look the same from outside: the tool call succeeds. The Guard wrote no record of being called. The status command read a hook file that by then belonged to another application and reported the Guard as present. It was found on 2026-11-25, when an agent session created a file inside the harness installation and nothing stopped it.</p></div>
+        <div class="card"><h3>What changed</h3><p>The Guard now writes a receipt on every call, with its own file hash and counts of calls and blocks. A test runs each hook under the registered interpreter. A Guard that raises now blocks writes and deletes. Each function has a side-effect-free probe per host, recorded in a conformance table, and a new host version makes the receipts stale.</p></div>
+      </div>
+      <div class="callout">The same shape appeared a second time: the session-start hook ran for months and delivered nothing, because it took about five seconds against a budget of 0.18. A hook that is registered and runs has still proved nothing. Limits that remain: the block-on-fault rule has passed tests on two Python versions but has not met a live fault in the host; a file that does not compile, and a hook the host times out, are outside it.</div>
+    </section>
+
+    <section class="section-block" aria-labelledby="contract-heading" style="--i:6">
       <div class="section-heading"><div><div class="label">Documentation as code</div><h2 id="contract-heading">Policy text is protected by contract tests</h2></div><p>When prose governs behavior, wording, links, and cross-language alignment become interfaces. A casual edit can be a policy regression even when the page still looks correct.</p></div>
       <div class="card-row">
         <div class="card"><h3>Lock the public contract</h3><ul><li>Required status markers and truth-boundary phrases remain literal.</li><li>Canonical links stay language-specific and reachable.</li><li>Paired pages keep the same structural coverage.</li><li>A rendered specification retains the source document's heading set.</li></ul></div>

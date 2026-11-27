@@ -238,7 +238,7 @@
       .grid, .links { grid-template-columns: 1fr; }
     }
   </style>
-  <link rel="stylesheet" href="./dhf-site-status.css?v=20261126a">
+  <link rel="stylesheet" href="./dhf-site-status.css?v=20261127a">
 </head>
 <body>
   <a class="dhf-skip" href="#dhf-main">跳到正文</a>
@@ -264,11 +264,10 @@
     <a href="#next">下一步</a>
   </nav>
   <div class="dhf-col">
-    <aside class="dhf-status-bar" data-dhf-status="2026-08-22" aria-label="当前 DHF 状态">
-      <strong>架构状态 · 2026-08-22</strong>
+    <aside class="dhf-status-bar" data-dhf-status="2026-11-27" aria-label="当前 DHF 状态">
+      <strong>架构状态 · 2026-11-27</strong>
       <span>源码、运行时、发布状态与独立核心状态彼此分开。</span>
       <a href="./dhf-architecture-status-cn.html">查看当前状态</a>
-      <span class="dhf-status-review" data-dhf-review="2026-11-26">自 2026-11-26 起复核中。本站关于守卫与运行时的表述早于当前宿主版本。</span>
     </aside>
     <section class="hero">
       <div class="eyebrow">Delivery Harness Framework / DHF 治理判定流程</div>
@@ -279,61 +278,58 @@
     <section class="section">
       <div class="label">治理判定流程</div>
       <h2 id="flow">每一次工具调用都要过这道门。</h2>
-      <p>把它当成强制路径读，不是当工作流读。守卫跑在 <code>PreToolUse</code>，所以拒绝发生在副作用之前，不是之后。注意图的结构本身编码了两条性质：阶段解析不出来时退回<strong>只读</strong>而不是退回信任；<strong>自行声明</strong>的阶段依然碰不到受保护目录。</p>
+      <p>把它当成强制路径读，不是当工作流读。守卫跑在 <code>PreToolUse</code>，所以拒绝发生在副作用之前，不是之后。图里的门分两种：由 hook 强制执行的，和目前还只是<strong>文字规则</strong>的。只靠文字规则的门，图上直接标明。</p>
       <div class="mermaid-wrap">
         <pre class="mermaid">
 flowchart TD
   Req(["agent 发起一次工具调用"])
-  Lane{"执行 lane 是哪一类"}
-  HITL["高影响动作<br/>需要单独的人工授权<br/>上线 / 推送 / 部署"]
-  Phase{"工作阶段能否解析"}
-  ReadOnly["关闭式失败<br/>退回只读"]
-  Declare["agent 自行声明阶段<br/>codex-task declare"]
-  Cap{"该阶段是否允许这项能力<br/>写仓库 / 联网 / 远端 / 子 agent"}
-  Scope{"这次调用会碰到哪里"}
-  Protected["受保护目录或持久化写入<br/>shell 配置 / 开机项 / 定时任务"]
-  Tier{"工具类别的风险分层"}
-  Block["PreToolUse 返回真实阻断<br/>原因 + 风险分层"]
+  Lane{"执行 lane 是哪一类<br/>文字规则，不是 hook"}
+  HITL["客户或生产环境<br/>需要单独的人工授权"]
+  Stop(["不执行"])
+  Kind{"这是哪一种调用"}
+  Shell["shell、联网和其他调用<br/>守卫不判断"]
+  Fault{"守卫自己是否出错"}
+  Always{"目标是凭据、控制面<br/>还是系统持久化位置"}
+  Profile{"工作区档位<br/>由 owner 设定"}
+  Phase{"owner 声明的阶段<br/>是否允许写"}
+  Inside{"目标是否在<br/>工作区根目录之内"}
+  Block["PreToolUse 返回阻断<br/>带原因代码"]
   Run["工具执行"]
-  Evidence["追加 guardrail_decision<br/>经 schema 校验的 JSONL"]
-  Verify{"新鲜验证是否通过"}
-  Compact{"是否发生了上下文压缩"}
-  Successor["转移记录先到者胜<br/>后继有且只有一个"]
+  Evidence["追加阻断证据<br/>更新守卫回执"]
+  Observe["观察器记录这次调用"]
+  Verify{"新鲜验证是否通过<br/>文字规则"}
   Handoff(["checkpoint + 下一项安全任务"])
-
   Req --> Lane
-  Lane -- "本地开发" --> Phase
-  Lane -- "操作员演示" --> Phase
+  Lane -- "本地开发" --> Kind
   Lane -- "客户 / 生产" --> HITL
-  HITL -- "已批准" --> Phase
-  HITL -- "未批准" --> Block
-  Phase -- "解析不出" --> ReadOnly --> Declare
-  Declare -- "只放行低 / 中风险" --> Cap
-  Phase -- "可解析" --> Cap
-  Cap -- "不允许" --> Block
-  Cap -- "允许" --> Scope
-  Scope -- "受保护目录或持久化" --> Protected --> Block
-  Scope -- "在治理根目录内" --> Tier
-  Tier -- "高: 远端 / 密钥 / 破坏性 / 动态执行" --> Block
-  Tier -- "低 / 中" --> Run
+  HITL -- "已批准" --> Kind
+  HITL -- "未批准" --> Stop
+  Kind -- "结构化的读 / 写 / 删" --> Fault
+  Kind -- "其余调用" --> Shell --> Run
+  Fault -- "是，且这次调用是写或删" --> Block
+  Fault -- "否" --> Always
+  Always -- "是" --> Block
+  Always -- "否" --> Profile
+  Profile -- "light，默认档" --> Run
+  Profile -- "governed，且这次调用是写或删" --> Phase
+  Phase -- "否" --> Block
+  Phase -- "是" --> Inside
+  Inside -- "否" --> Block
+  Inside -- "是" --> Run
   Block --> Evidence
-  Run --> Evidence
-  Evidence --> Verify
-  Verify -- "失败: 退回 agent" --> Req
-  Verify -- "通过" --> Compact
-  Compact -- "是" --> Successor --> Handoff
-  Compact -- "否" --> Handoff
-
+  Evidence -- "agent 看到原因" --> Req
+  Run --> Observe --> Verify
+  Verify -- "失败：退回 agent" --> Req
+  Verify -- "通过" --> Handoff
   classDef decision fill:#f0eaff,stroke:#8a4fff,color:#17241f;
   classDef deny fill:#faeaf1,stroke:#d13574,color:#17241f;
   classDef runtime fill:#e9f7f5,stroke:#0f9b8e,color:#17241f;
   classDef build fill:#fbf0dc,stroke:#b26a00,color:#17241f;
   classDef verify fill:#eaf6f0,stroke:#12805c,color:#17241f;
-
-  class Lane,Phase,Cap,Scope,Tier,Verify,Compact decision;
-  class Block,Protected,ReadOnly deny;
-  class HITL,Declare build;
-  class Evidence,Successor runtime;
+  class Lane,Kind,Fault,Always,Profile,Phase,Inside,Verify decision;
+  class Block,Stop deny;
+  class HITL,Shell build;
+  class Evidence,Observe runtime;
   class Run verify;
         </pre>
       </div>
@@ -343,17 +339,17 @@ flowchart TD
       <div class="label">怎么读这张图</div>
       <h2 id="claims">这张图在主张的四件事。</h2>
       <div class="grid">
-        <div class="card"><b>1. 权限按阶段收紧</b><span>八个生命周期阶段各自声明是否允许写仓库、联网、访问远端、派发子 agent。能力检查是一道门，不是提示词里的一句建议。</span></div>
-        <div class="card"><b>2. agent 扩不了自己的影响范围</b><span>自行声明阶段能放行普通的低风险和中风险动作，但永远打不开受保护目录，持久化写入在任何阶段都被拒。</span></div>
-        <div class="card"><b>3. 被拦下的也留痕，不只留成功的</b><span>阻断边和执行边最后汇到同一次证据追加，所以审计轨迹既能看到跑了什么，也能看到拦了什么。</span></div>
-        <div class="card"><b>4. 失败有地方可去</b><span>验证失败退回 agent，而不是一路滑到交接；发生压缩时走先到者胜的转移记录，重试不会分裂出两个后继。</span></div>
+        <div class="card"><b>1. 三类目标在任何档位都被拒</b><span>存放凭据的文件；注册和实现 harness 自身的文件与目录；系统持久化位置，例如 shell 启动文件和开机项。任何阶段、任何声明都打不开它们。</span></div>
+        <div class="card"><b>2. 更严的档位由 owner 决定</b><span>owner 按工作区设定档位。默认档只有上面三类拒绝。governed 档下，写和删还需要一个由 owner 声明的阶段，并且目标必须在工作区根目录之内。</span></div>
+        <div class="card"><b>3. 守卫出错时拦住写入</b><span>守卫自己抛出错误时，写和删被拦，其余调用放行。2026-08-18 到 2026-11-26 期间，守卫每次调用都出错，宿主把崩溃当成了放行。这条规则就是为此加的。</span></div>
+        <div class="card"><b>4. 每次阻断都留记录，每条主张都有探测</b><span>阻断会追加一条带原因代码的证据，每次调用都会更新守卫回执。由 hook 强制的每个方框都有一条不产生副作用的探测，结果在状态页的一致性表里。</span></div>
       </div>
     </section>
 
     <section class="section">
       <div class="label">边界</div>
       <h2 id="scope">这张图没有主张的事。</h2>
-      <p>这是源码里实现、并且已经上线到一台机器运行时的强制路径。生产强制、客户采用和商业验证是分开判定的，目前仍未验证——以<a href="./dhf-architecture-status-cn.html">架构状态页</a>为准。图里还有一处已知限制我没有藏：宿主的 <code>ask</code> 响应会 fail open，所以高风险类别走的是硬阻断而不是审批弹窗，Plan Governor 保持 shadow，<code>production_status = no_go</code>。</p>
+      <p>这是在一台机器上实际运行的强制路径：维护者的 Mac Studio，Codex CLI 0.155.1，探测日期 2026-11-27。其他宿主以<a href="./dhf-architecture-status-cn.html">架构状态页</a>为准。有四处限制，图上没有藏。守卫只判断结构化的文件调用，藏在 shell 命令里的写入不解析。执行 lane 和验证这两步是文字规则，不是 hook。agent 可以在自己的 shell 里运行声明命令，所以声明的阶段只留审计痕迹，不是硬边界。Plan Governor 保持 shadow，<code>production_status = no_go</code>。</p>
     </section>
 
     <section class="section">

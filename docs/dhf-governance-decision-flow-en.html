@@ -238,7 +238,7 @@
       .grid, .links { grid-template-columns: 1fr; }
     }
   </style>
-  <link rel="stylesheet" href="./dhf-site-status.css?v=20261126a">
+  <link rel="stylesheet" href="./dhf-site-status.css?v=20261127a">
 </head>
 <body>
   <a class="dhf-skip" href="#dhf-main">Skip to content</a>
@@ -264,11 +264,10 @@
     <a href="#next">Continue</a>
   </nav>
   <div class="dhf-col">
-    <aside class="dhf-status-bar" data-dhf-status="2026-08-22" aria-label="Current DHF status">
-      <strong>Architecture status · 2026-08-22</strong>
+    <aside class="dhf-status-bar" data-dhf-status="2026-11-27" aria-label="Current DHF status">
+      <strong>Architecture status · 2026-11-27</strong>
       <span>Source, runtime, publication, and independent-core status are separate.</span>
       <a href="./dhf-architecture-status-en.html">Open current status</a>
-      <span class="dhf-status-review" data-dhf-review="2026-11-26">Under re-verification since 2026-11-26. Guard and runtime claims on this site predate the current host version.</span>
     </aside>
     <section class="hero">
       <div class="eyebrow">Delivery Harness Framework / DHF Governance Decision Flow</div>
@@ -279,61 +278,58 @@
     <section class="section">
       <div class="label">Governance Decision Flow</div>
       <h2 id="flow">Every tool call passes this gate.</h2>
-      <p>Read it as an enforcement path, not a workflow. The guard runs at <code>PreToolUse</code>, so a refusal happens before the side effect, not after it. Note the two properties the topology encodes: an unresolved phase falls back to <strong>read-only</strong> rather than to trust, and a <strong>self-declared</strong> phase still cannot reach a protected root.</p>
+      <p>Read it as an enforcement path, not a workflow. The Guard runs at <code>PreToolUse</code>, so a refusal happens before the side effect, not after it. The diagram separates two kinds of gate: the ones a hook enforces, and the ones that are still <strong>written rules</strong>. A gate that is only a written rule is labelled as one.</p>
       <div class="mermaid-wrap">
         <pre class="mermaid">
 flowchart TD
   Req(["Agent proposes a tool call"])
-  Lane{"Execution lane?"}
-  HITL["High impact<br/>separate human authorization<br/>promotion / push / deploy"]
-  Phase{"Work phase resolved?"}
-  ReadOnly["Fail closed<br/>read-only fallback"]
-  Declare["Agent self-declares a phase<br/>codex-task declare"]
-  Cap{"Does the phase allow this capability?<br/>repo_write / network / remote / subagent"}
-  Scope{"Where does the call reach?"}
-  Protected["Protected root or persistence write<br/>shell profile / LaunchAgent / crontab"]
-  Tier{"Category risk tier"}
-  Block["PreToolUse returns a real block<br/>reason + risk_tier"]
+  Lane{"Execution lane?<br/>written rule, not a hook"}
+  HITL["Customer or production<br/>separate human authorization"]
+  Stop(["Do not act"])
+  Kind{"What kind of call?"}
+  Shell["Shell, network, other<br/>the Guard does not judge it"]
+  Fault{"Did the Guard itself fail?"}
+  Always{"Credential, control plane,<br/>or OS persistence target?"}
+  Profile{"Workspace profile<br/>set by the owner"}
+  Phase{"Owner-declared phase<br/>permits writes?"}
+  Inside{"Target inside<br/>the workspace roots?"}
+  Block["PreToolUse returns a block<br/>with a reason code"]
   Run["Tool executes"]
-  Evidence["guardrail_decision appended<br/>schema-validated JSONL"]
-  Verify{"Fresh verification passes?"}
-  Compact{"Context compaction happened?"}
-  Successor["Transition store CAS<br/>exactly one successor"]
+  Evidence["Block evidence appended<br/>Guard receipt updated"]
+  Observe["Observer records the call"]
+  Verify{"Fresh verification passes?<br/>written rule"}
   Handoff(["Checkpoint + next safe task"])
-
   Req --> Lane
-  Lane -- "local development" --> Phase
-  Lane -- "operator live demo" --> Phase
+  Lane -- "local development" --> Kind
   Lane -- "customer / production" --> HITL
-  HITL -- "approved" --> Phase
-  HITL -- "not approved" --> Block
-  Phase -- "no" --> ReadOnly --> Declare
-  Declare -- "unblocks low / medium only" --> Cap
-  Phase -- "yes" --> Cap
-  Cap -- "no" --> Block
-  Cap -- "yes" --> Scope
-  Scope -- "protected root or persistence" --> Protected --> Block
-  Scope -- "inside governed root" --> Tier
-  Tier -- "high: remote / secret / destructive / dynamic_exec" --> Block
-  Tier -- "low / medium" --> Run
+  HITL -- "approved" --> Kind
+  HITL -- "not approved" --> Stop
+  Kind -- "structured read / write / delete" --> Fault
+  Kind -- "everything else" --> Shell --> Run
+  Fault -- "yes, and the call writes or deletes" --> Block
+  Fault -- "no" --> Always
+  Always -- "yes" --> Block
+  Always -- "no" --> Profile
+  Profile -- "light, the default" --> Run
+  Profile -- "governed, and the call writes or deletes" --> Phase
+  Phase -- "no" --> Block
+  Phase -- "yes" --> Inside
+  Inside -- "no" --> Block
+  Inside -- "yes" --> Run
   Block --> Evidence
-  Run --> Evidence
-  Evidence --> Verify
+  Evidence -- "the agent sees the reason" --> Req
+  Run --> Observe --> Verify
   Verify -- "fail: back to the agent" --> Req
-  Verify -- "pass" --> Compact
-  Compact -- "yes" --> Successor --> Handoff
-  Compact -- "no" --> Handoff
-
+  Verify -- "pass" --> Handoff
   classDef decision fill:#f0eaff,stroke:#8a4fff,color:#17241f;
   classDef deny fill:#faeaf1,stroke:#d13574,color:#17241f;
   classDef runtime fill:#e9f7f5,stroke:#0f9b8e,color:#17241f;
   classDef build fill:#fbf0dc,stroke:#b26a00,color:#17241f;
   classDef verify fill:#eaf6f0,stroke:#12805c,color:#17241f;
-
-  class Lane,Phase,Cap,Scope,Tier,Verify,Compact decision;
-  class Block,Protected,ReadOnly deny;
-  class HITL,Declare build;
-  class Evidence,Successor runtime;
+  class Lane,Kind,Fault,Always,Profile,Phase,Inside,Verify decision;
+  class Block,Stop deny;
+  class HITL,Shell build;
+  class Evidence,Observe runtime;
   class Run verify;
         </pre>
       </div>
@@ -343,17 +339,17 @@ flowchart TD
       <div class="label">How to read it</div>
       <h2 id="claims">Four properties this diagram is claiming.</h2>
       <div class="grid">
-        <div class="card"><b>1. Permissions are phase-scoped</b><span>Eight lifecycle phases each declare whether repository writes, network, remote access, and subagent dispatch are allowed. The capability check is a gate, not advice in a prompt.</span></div>
-        <div class="card"><b>2. The agent cannot widen its own reach</b><span>Self-declaring a phase unblocks ordinary low and medium actions. It never unlocks protected roots, and persistence writes stay refused in every phase.</span></div>
-        <div class="card"><b>3. Refusals are recorded, not just successes</b><span>Both the block edge and the execute edge converge on the same evidence append, so the audit trail shows what was stopped as well as what ran.</span></div>
-        <div class="card"><b>4. Failure has somewhere to go</b><span>Verification failure returns to the agent instead of falling through to handoff, and a compaction routes through a first-record-wins transition so a retry cannot fan out into two successors.</span></div>
+        <div class="card"><b>1. Three kinds of target are refused in every profile</b><span>Files that hold credentials, the files and directories that register and implement the harness itself, and operating-system persistence locations such as shell startup files and launch agents. No phase and no declaration unlocks them.</span></div>
+        <div class="card"><b>2. The stricter profile is the owner's choice</b><span>The owner sets a profile per workspace. In the default profile only the three refusals above apply. In the governed profile a write or delete also needs a phase the owner declared, and a target inside the workspace roots.</span></div>
+        <div class="card"><b>3. A failing Guard blocks writes</b><span>When the Guard itself raises an error, write and delete calls are blocked and other calls go through. From 2026-08-18 to 2026-11-26 the Guard failed on every call and the host treated the crash as permission. That is why this rule exists.</span></div>
+        <div class="card"><b>4. Every block leaves a record, and every claim has a probe</b><span>A block appends an evidence record with its reason code, and each call updates the Guard receipt. Each box a hook enforces has a side-effect-free probe; the results are in the conformance table on the status page.</span></div>
       </div>
     </section>
 
     <section class="section">
       <div class="label">Scope</div>
       <h2 id="scope">What this map does not claim.</h2>
-      <p>This is the enforcement path as implemented in source, with the guard promoted to one machine's runtime. Production enforcement, customer adoption, and commercial validation are separate and still unverified — the <a href="./dhf-architecture-status-en.html">architecture status page</a> is canonical. There is also a known limitation the diagram deliberately does not hide: the host's <code>ask</code> response fails open, so high-risk categories are hard blocks rather than approval prompts, and the Plan Governor stays in shadow with <code>production_status = no_go</code>.</p>
+      <p>This is the enforcement path as it runs on one machine: Codex CLI 0.155.1 on the maintainer's Mac Studio, probed on 2026-11-27. The <a href="./dhf-architecture-status-en.html">architecture status page</a> is canonical for every other host. Four limits the diagram does not hide. The Guard judges structured file calls only: a write hidden inside a shell command is not parsed. The execution lane and the verification step are written rules, not hooks. An agent can run the declaration command from its own shell, so the declared phase leaves an audit trail and is not a hard boundary. And the Plan Governor stays in shadow with <code>production_status = no_go</code>.</p>
     </section>
 
     <section class="section">

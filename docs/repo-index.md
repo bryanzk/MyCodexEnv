@@ -77,6 +77,8 @@ behavior live in `codex/hooks/dhf_preprompt.py`.
 - `docs/dhf-social-card.html`: reproducible source template for the public DHF social sharing card (`docs/dhf-social-card.png`).
 - `docs/dhf-governance-decision-flow-cn.html`: Chinese governance decision flow for a single tool call.
 - `docs/dhf-governance-decision-flow-en.html`: English governance decision flow for a single tool call.
+- `docs/dhf-spec-cn.html`: Chinese public rendering of the DHF specification.
+- `docs/dhf-spec-en.html`: English translation of the DHF specification.
 - `docs/project-lifecycle-harness-flow-cn.html`: Chinese vertical lifecycle flow visual guide.
 - `docs/project-lifecycle-harness-flow-en.html`: English vertical lifecycle flow visual guide.
 - `docs/project-lifecycle-harness-flow-skills.html`: Chinese skill/helper routing visual guide.
@@ -206,6 +208,8 @@ behavior live in `codex/hooks/dhf_preprompt.py`.
 - `docs/dhf-social-card.html`: reproducible source template for the public DHF social sharing card (`docs/dhf-social-card.png`).
 - `docs/dhf-governance-decision-flow-cn.html`: governance decision flow for a single tool call.
 - `docs/dhf-governance-decision-flow-en.html`: English governance decision flow for a single tool call.
+- `docs/dhf-spec-cn.html`: Chinese public rendering of the DHF specification.
+- `docs/dhf-spec-en.html`: English translation of the DHF specification.
 - `docs/project-lifecycle-harness-flow-cn.html`: visual vertical lifecycle flow.
 - `docs/project-lifecycle-harness-flow-en.html`: English visual vertical lifecycle flow.
 - `docs/project-lifecycle-harness-flow-skills.html`: visual skill/helper routing map.
@@ -268,6 +272,7 @@ behavior live in `codex/hooks/dhf_preprompt.py`.
 - `docs/dhf-memory-map.html` and `docs/dhf-memory-map-en.html`: bilingual airline-operations memory maps for the complete DHF mnemonic system.
 - `docs/dhf-governance-decision-flow-cn.html`: Chinese governance decision flow, lane gate through refusal and verification back-edge.
 - `docs/dhf-governance-decision-flow-en.html`: English governance decision flow, lane gate through refusal and verification back-edge.
+- `docs/dhf-spec-cn.html` and `docs/dhf-spec-en.html`: bilingual public pages of the DHF specification; the source is `docs/dhf-spec.md`.
 - `docs/project-lifecycle-harness-flow-cn.html`: Chinese vertical lifecycle flow.
 - `docs/project-lifecycle-harness-flow-en.html`: English vertical lifecycle flow.
 - `docs/project-lifecycle-harness-flow-skills.html`: Chinese lifecycle skill/helper routing visual guide.

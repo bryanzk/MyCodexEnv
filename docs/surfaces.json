@@ -600,6 +600,18 @@
       "audience": ["human"]
     },
     {
+      "path": "docs/dhf-spec-en.html",
+      "role": "English translation of the DHF specification (docs/dhf-spec.md): invariants, SAFE, RECOVER, action description, seven function contracts",
+      "audience": ["human"],
+      "public_nav": ["docs/index.html"]
+    },
+    {
+      "path": "docs/dhf-spec-cn.html",
+      "role": "Chinese public rendering of the DHF specification (docs/dhf-spec.md): invariants, SAFE, RECOVER, action description, seven function contracts",
+      "audience": ["human"],
+      "public_nav": ["docs/index-zh.html"]
+    },
+    {
       "path": "docs/dhf-value-evidence-en.html",
       "role": "English DHF Value and Evidence hub for customer value, evidence maturity, evolution, controls, cases, recovery, and current boundaries",
       "audience": ["human"],

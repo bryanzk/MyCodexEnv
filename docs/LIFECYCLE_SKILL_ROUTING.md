@@ -74,6 +74,7 @@ behavior live in `codex/hooks/dhf_preprompt.py`.
 - `docs/project-lifecycle-harness-flow-skills-en.html`: archived English skill/helper routing visual; the status-style map is the current path.
 - `docs/dhf-governance-decision-flow-cn.html`: 中文治理判定流程图，展示单次工具调用的 lane 门禁、阶段能力判定、拒绝边与验证失败回边。
 - `docs/dhf-governance-decision-flow-en.html`: English governance decision flow for a single tool call: lane gate, phase capability check, refusal edges, and the verification back-edge.
+- `docs/dhf-spec-cn.html` / `docs/dhf-spec-en.html`: DHF 规范的中英文公开页面；权威来源是 `docs/dhf-spec.md`，英文页是译本。
 - `docs/project-lifecycle-harness-flow-cn.html`: 中文纵向主流程图，帮助用户从入口、状态恢复、阶段分类一路看到验证、发布和交接。
 - `docs/project-lifecycle-harness-flow-en.html`: English lightweight vertical lifecycle flow; the fuller English equivalent of the Chinese main flow is the status-style skill routing map.
 - `docs/project-lifecycle-harness-flow-skills.html`: 中文 skill/helper 路由速查页，帮助用户理解每个生命周期阶段应使用哪个 skill，以及 helper 的执行职责。
