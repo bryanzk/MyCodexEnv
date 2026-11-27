@@ -3,6 +3,7 @@
   "governed_roots": ["~/Codes"],
   "protected_roots": ["~/.codex"],
   "out_of_scope_mode": "allow",
+  "extra_write_roots": [],
   "protected_command_patterns": [
     "(~|\\$HOME|/Users/[^/\\s\\\"']+|/home/[^/\\s\\\"']+)/\\.codex(/|\\b)"
   ],

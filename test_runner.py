@@ -5801,8 +5801,11 @@ def test_dhf_conformance_table_and_version_rule():
     require(one_rerun["evidence"].startswith("stale: ") and "restrict.control-plane-update probed on 0.155.1" in one_rerun["evidence"]
             and "restrict.control-plane-delete" not in one_rerun["evidence"],
             f"rerunning one probe must not hide stale evidence for another: {one_rerun}")
-    require(dhf_conformance.missing_host_receipts(partial, "codex-cli", "9.9.9") == ["restrict (run: restrict.control-plane-update)"],
+    missing_after_upgrade = dhf_conformance.missing_host_receipts(partial, "codex-cli", "9.9.9")
+    require([item for item in missing_after_upgrade if item.startswith("restrict ")] == ["restrict (run: restrict.control-plane-update)"],
             "the version rule must require every host probe of an enforced cell on the installed version")
+    require(any(item.startswith("position ") for item in missing_after_upgrade),
+            "the version rule must cover every enforced cell of the host, not only Restrict")
     require(dhf_conformance.missing_host_receipts(data, "codex-cli", "0.155.1") == [], "all host probes have receipts on 0.155.1")
     regressed = copy.deepcopy(data)
     regressed["receipts"].append({"probe": "restrict.control-plane-update", "host": "codex-cli", "host_version": "0.155.1", "machine": "fixture",
@@ -5818,11 +5821,11 @@ def test_dhf_conformance_table_and_version_rule():
                                   "result": "pass", "key_output": "blocked", "timestamp": "2026-11-26T23:40:00-05:00"})
     require(dhf_conformance.validate(regressed) == [] and dhf_conformance.missing_host_receipts(regressed, "codex-cli", "0.155.1") == [],
             "a passing rerun after the failure must restore the evidence")
-    require(dhf_conformance.cell_view(data, "codex-cli", "position", "0.155.1", now)["evidence"] == "none",
+    require(dhf_conformance.cell_view(data, "codex-cli", "observe", "0.155.1", now)["evidence"] == "none",
             "a cell without receipts must not show evidence")
 
     code, out, err = run([sys.executable, str(HARNESS_STATUS), "status", "--conformance", "--host-version", "0.155.1"], cwd=ROOT)
-    require(code == 0 and "## restrict: enforced_verified" in out and "## position: installed_not_wired" in out,
+    require(code == 0 and "## restrict: enforced_verified" in out and "## observe: registered_unverified" in out,
             f"harness_status --conformance must print every function: {err or out}")
 
     with tempfile.TemporaryDirectory() as tmp:
@@ -5935,6 +5938,97 @@ def test_status_reports_unrecognized_guard_calls():
         restrict = next(view for view in json.loads(out)["functions"] if view["function"] == "restrict")
         require(restrict["unrecognized_calls"]["count"] == 2, f"doctor JSON must carry the unrecognized count: {restrict}")
     print("[PASS] runtime status and conformance doctor report unrecognized Guard calls")
+
+
+def test_harness_guard_governed_profile():
+    """Position, Empower, and Contain act only in the governed profile, which only the owner's declaration turns on."""
+    codex_task = ROOT / "codex" / "bin" / "codex-task"
+    with tempfile.TemporaryDirectory() as tmp:
+        tmp_path = Path(tmp)
+        env = _harness_guard_test_env(tmp_path)
+        home = Path(env["CODEX_HOME"])
+        write(home / "runtime" / "harness-scope.json", (ROOT / "codex" / "runtime" / "harness-scope.json").read_text(encoding="utf-8"))
+        workspace = tmp_path / "workspace"
+        other = tmp_path / "other-workspace"
+        workspace.mkdir()
+        other.mkdir()
+        outside = "/usr/local/dhf-governed-probe-outside.txt"
+
+        def guard(payload, cwd=workspace):
+            return _run_harness_guard(dict(payload, cwd=str(cwd)), env)
+
+        def task(*args, cwd=workspace):
+            code, out, err = run([sys.executable, str(codex_task), *args], cwd=cwd, env=env)
+            require(code == 0, f"codex-task {' '.join(args)} failed: {err or out}")
+            return out
+
+        def reason(result):
+            return result.get("reason", "").removeprefix("[harness] ").split(" ", 1)[0]
+
+        write_inside = {"tool_name": "write", "tool_input": {"path": str(workspace / "a.txt"), "content": "x"}}
+        write_outside = {"tool_name": "write", "tool_input": {"path": outside, "content": "x"}}
+        delete_inside = {"tool_name": "delete_file", "tool_input": {"path": str(workspace / "a.txt")}}
+        read_inside = {"tool_name": "read", "tool_input": {"path": str(workspace / "a.txt")}}
+        unparsed_write = {"tool_name": "write", "tool_input": {"target": str(workspace / "a.txt")}}
+
+        require(guard(write_inside) == {} and guard(write_outside) == {} and guard(unparsed_write) == {},
+                "without a profile declaration the Guard must behave exactly as the light profile")
+        require("profile=light (NO_PROFILE)" in task("status"), "status must report the default profile")
+
+        require("note: standard currently enforces the same rules as light" in task("profile", "standard", "--reason", "TEST"),
+                "codex-task must say that standard is not stricter yet")
+        require(guard(write_inside) == {} and guard(write_outside) == {}, "the standard profile must not be stricter than light yet")
+
+        task("profile", "governed", "--reason", "TEST", "--ttl", "10m")
+        require("profile=governed (OWNER_DECLARED)" in task("status"), "status must report the declared profile")
+        blocked = guard(write_inside)
+        require(reason(blocked) == "governed_write_without_phase" and "codex-task declare development" in blocked["reason"],
+                f"governed without a phase must block writes and say how to declare: {blocked}")
+        require(reason(guard(delete_inside)) == "governed_write_without_phase", "governed without a phase must block deletes")
+        require(guard(read_inside) == {}, "the governed profile must never block reads")
+        require(reason(guard(unparsed_write)) == "governed_unrecognized_mutation",
+                "the governed profile must block write calls it cannot classify")
+        require(guard(write_inside, cwd=other) == {}, "a profile is bound to its workspace and must not govern another one")
+        require(reason(guard({"tool_name": "write", "tool_input": {"path": str(home / "config.toml"), "content": "x"}})) == "active_control_plane_mutation",
+                "the always-on blocks must still come first in the governed profile")
+
+        task("declare", "planning", "--reason", "TEST", "--ttl", "10m")
+        require(reason(guard(write_inside)) == "governed_phase_forbids_write", "a declared phase that forbids writes must block them")
+        task("declare", "development", "--reason", "TEST", "--ttl", "10m")
+        require(guard(write_inside) == {} and guard(delete_inside) == {}, "a declared development phase must allow workspace writes")
+        require(guard({"tool_name": "write", "tool_input": {"path": "/tmp/dhf-governed-probe/a.txt", "content": "x"}}) == {},
+                "temp directories stay writable in the governed profile")
+        require(reason(guard(write_outside)) == "governed_write_outside_workspace", "a write outside the workspace must be blocked")
+        scope = json.loads((home / "runtime" / "harness-scope.json").read_text(encoding="utf-8"))
+        scope["extra_write_roots"] = ["/usr/local"]
+        write(home / "runtime" / "harness-scope.json", json.dumps(scope))
+        require(guard(write_outside) == {}, "extra_write_roots must widen the governed boundary")
+        scope["extra_write_roots"] = []
+        write(home / "runtime" / "harness-scope.json", json.dumps(scope))
+
+        task("revoke", "--reason", "TEST")
+        require(reason(guard(write_inside)) == "governed_write_without_phase", "revoking the phase must block writes again")
+        receipt = json.loads((home / "harness" / "guard-receipt.json").read_text(encoding="utf-8"))
+        require(receipt["profile"] == "governed" and receipt["last_reason_code"] == "governed_write_without_phase",
+                f"the receipt must carry the profile and a bare reason code: {receipt}")
+
+        profile_file = next((home / "task-state" / "profiles").glob("*.json"))
+        for tool_payload in ({"tool_name": "write", "tool_input": {"path": str(profile_file), "content": "{}"}},
+                             {"tool_name": "delete_file", "tool_input": {"path": str(profile_file)}}):
+            require(reason(guard(tool_payload, cwd=other)) == "active_control_plane_mutation",
+                    "an agent tool must not edit or delete a profile or phase declaration")
+
+        record = json.loads(profile_file.read_text(encoding="utf-8"))
+        record["expires_at"] = "2020-01-01T00:00:00+00:00"
+        profile_file.write_text(json.dumps(record), encoding="utf-8")
+        require(guard(write_inside) == {}, "an expired profile declaration must fall back to light")
+        profile_file.write_text("{not json", encoding="utf-8")
+        require(reason(guard(write_inside)) == "governed_write_without_phase", "a damaged profile declaration must not lower the profile")
+        task("profile", "light", "--reason", "TEST")
+        require(not profile_file.exists() and guard(write_inside) == {}, "returning to light must remove the declaration")
+        audit = (home / "task-state" / "audit.jsonl").read_text(encoding="utf-8")
+        require(audit.count('"event": "profile"') == 3, "every profile change must be audited")
+    print("[PASS] harness guard governed profile: Position, Empower, Contain")
 
 
 def test_guard_core_is_host_neutral_and_bundled():
@@ -14051,6 +14145,7 @@ TESTS = [
     test_sync_local_main_skips_dirty_worktree,
     test_dhf_conformance_table_and_version_rule,
     test_status_reports_unrecognized_guard_calls,
+    test_harness_guard_governed_profile,
     test_guard_core_is_host_neutral_and_bundled,
     test_harness_guard_fault_blocks_mutations,
     test_harness_guard_policy_decisions,

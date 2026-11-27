@@ -222,11 +222,18 @@ def _is_persistence_target(path: str, *, check_inode: bool = False) -> bool:
     return _hardlink_matches(path, exact=exact, roots=_PERSISTENCE_ROOTS)
 
 
-def decide(touches) -> str:
+def decide(touches, governance=None) -> str:
     """Return the reason code that blocks these touches, or "" to let them through.
 
     A touch is (kind, (lexical, entry, referent)) with kind "read", "write" or
     "delete" and the three identities produced by _target_identity().
+
+    `governance` is None in the default profile. In the governed profile the
+    adapter passes {"write_authorized": bool, "phase": str or None,
+    "write_roots": (real paths, ...)}: after the always-on blocks, a write or
+    delete then needs an owner-declared phase that permits writing (Position,
+    Empower) and a target inside the declared roots (Contain). Reads are never
+    affected.
     """
     for touch, (lexical, entry, referent) in touches:
         if _is_credential_target(lexical) or _is_credential_target(entry):
@@ -243,6 +250,16 @@ def decide(touches) -> str:
             return "os_persistence_mutation"
         if touch == "delete" and _is_persistence_target(entry):
             return "os_persistence_mutation"
+    if governance is None:
+        return ""
+    for touch, (_, entry, referent) in touches:
+        if touch not in {"write", "delete"}:
+            continue
+        if not governance.get("write_authorized"):
+            return "governed_phase_forbids_write" if governance.get("phase") else "governed_write_without_phase"
+        target = referent if touch == "write" else entry
+        if not any(_within(target, root) for root in governance.get("write_roots", ())):
+            return "governed_write_outside_workspace"
     return ""
 
 
@@ -298,7 +315,7 @@ def _guard_identity(previous, guard_file):
         return path, stamp, hashlib.sha256(handle.read()).hexdigest()
 
 
-def _append_block_evidence(timestamp, reason_code, raw_tool, *, directory, cwd=None, session=None):
+def _append_block_evidence(timestamp, reason_code, raw_tool, *, directory, cwd=None, session=None, phase=None):
     os.makedirs(directory, mode=RECEIPT_DIRECTORY_MODE, exist_ok=True)
     event = {
         "schema_version": 1,
@@ -306,7 +323,7 @@ def _append_block_evidence(timestamp, reason_code, raw_tool, *, directory, cwd=N
         "event_type": "guardrail_decision",
         "evidence_kind": "decision",
         "cwd": _receipt_text(cwd or os.getcwd()),
-        "phase": "unknown",
+        "phase": phase or "unknown",
         "tool_name": _receipt_text(raw_tool) or "unknown",
         "approval_state": "blocked",
         "failure_class": "boundary_breach",
@@ -338,7 +355,7 @@ def record(
     Counters are best-effort under concurrent hooks; last_invoked_at and
     guard_sha256 are the authoritative liveness fields. `extra` adds the
     adapter's own receipt fields, `diagnostic` describes an unrecognized call's
-    shape, and `evidence` (directory, cwd, session) is given for a block.
+    shape, and `evidence` (directory, cwd, session, phase) is given for a block.
     """
     timestamp = _now_iso()
     os.makedirs(receipt_dir, mode=RECEIPT_DIRECTORY_MODE, exist_ok=True)
@@ -408,8 +425,21 @@ configure(
         os.path.join(_CODEX_HOME, "runtime", "harness-guard-targets.json"),
         os.path.join(_CODEX_HOME, "harness", "deployed-manifest.json"),
     ),
-    control_roots=(os.path.join(_CODEX_HOME, "hooks"), os.path.join(_CODEX_HOME, "rules")),
+    # task-state holds the owner's profile and phase declarations.
+    control_roots=(
+        os.path.join(_CODEX_HOME, "hooks"),
+        os.path.join(_CODEX_HOME, "rules"),
+        os.path.join(_CODEX_HOME, "task-state"),
+    ),
 )
+_PROFILE_DIR = os.path.join(_CODEX_HOME_INPUT, "task-state", "profiles")
+_GOVERNED_HINTS = {
+    "governed_write_without_phase": "declare a phase first: codex-task declare development --reason <CODE>, or open the session with the line 任务模式: development",
+    "governed_phase_forbids_write": "the declared phase does not permit writes; declare development to write",
+    "governed_write_outside_workspace": "the target is outside this workspace, the temp directories, and extra_write_roots in harness-scope.json",
+    "governed_unrecognized_mutation": "the governed profile blocks write calls it cannot classify",
+}
+_STATE = {"profile": "light", "phase": None}
 
 
 def load_payload() -> dict[str, object]:
@@ -539,21 +569,76 @@ def structured_action(payload: dict[str, object]) -> list[tuple[str, tuple[str, 
     return touches
 
 def block(reason_code: str) -> dict[str, str]:
-    return {"decision": "block", "reason": f"[harness] {reason_code}"}
+    hint = _GOVERNED_HINTS.get(reason_code)
+    return {"decision": "block", "reason": f"[harness] {reason_code}" + (f" ({hint})" if hint else "")}
+
+
+def governance(payload: dict[str, object]) -> dict[str, object] | None:
+    """Resolve the governed profile for this call, or None for the default profile.
+
+    The owner sets a profile per workspace with `codex-task profile`. While no
+    workspace has one, this costs a single directory listing and nothing else
+    is loaded. In the governed profile the phase comes from the owner's task
+    marker in the session or from `codex-task declare`; both are read by the
+    sibling task_state module.
+    """
+    try:
+        if not os.listdir(_PROFILE_DIR):
+            return None
+    except (FileNotFoundError, NotADirectoryError):
+        return None
+    import importlib.util
+
+    spec = importlib.util.spec_from_file_location(
+        "dhf_task_state", os.path.join(os.path.dirname(os.path.abspath(__file__)), "task_state.py")
+    )
+    task_state = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(task_state)
+    cwd = payload.get("cwd")
+    profile, _ = task_state.resolve_profile(cwd)
+    _STATE["profile"] = profile
+    workspace = task_state.workspace_key(cwd)
+    if profile != "governed" or workspace is None:
+        return None
+    with open(os.path.join(_CODEX_HOME_INPUT, "runtime", "tool-policy.json"), encoding="utf-8") as handle:
+        policy = json.load(handle)
+    phase, _ = task_state.resolve_declared_phase(payload, policy)
+    if phase is None:
+        phase, _ = task_state.resolve_self_declared(cwd, policy)
+    _STATE["phase"] = phase
+    rules = policy.get("phases", {}).get(phase, {}) if phase else {}
+    extra = []
+    try:
+        with open(os.path.join(_CODEX_HOME_INPUT, "runtime", "harness-scope.json"), encoding="utf-8") as handle:
+            extra = json.load(handle).get("extra_write_roots", [])
+    except FileNotFoundError:
+        pass
+    roots = [str(workspace), "/tmp", os.environ.get("TMPDIR") or "/tmp", *[_lexical_path(root) or "" for root in extra if isinstance(root, str)]]
+    return {
+        "phase": phase,
+        "write_authorized": bool(isinstance(rules, dict) and rules.get("allow_repo_write")),
+        "write_roots": tuple(os.path.realpath(root) for root in roots if root),
+    }
 
 
 def decision(payload: dict[str, object]) -> dict[str, str]:
     touches = structured_action(payload)
     if touches is None:
+        # A write call the adapter cannot parse is only recorded, except in the governed profile.
+        if tool_name(payload) in MUTATION_TOOLS and governance(payload) is not None:
+            return block("governed_unrecognized_mutation")
         return {}
-    reason_code = decide(touches)
+    # Reads are never governed, so the profile is resolved only for writes and deletes.
+    governed = governance(payload) if any(touch != "read" for touch, _ in touches) else None
+    reason_code = decide(touches, governed)
     return block(reason_code) if reason_code else {}
 
 
 def _reason_code(result):
     reason = result.get("reason", "")
     prefix = "[harness] "
-    return reason[len(prefix):] if isinstance(reason, str) and reason.startswith(prefix) else ""
+    # A governed block carries a hint after the code; the code is the first word.
+    return reason[len(prefix):].split(" ", 1)[0] if isinstance(reason, str) and reason.startswith(prefix) else ""
 
 
 def record_invocation(payload, result):
@@ -576,6 +661,7 @@ def record_invocation(payload, result):
             ),
             "cwd": _payload_cwd(payload),
             "session": payload.get("session_id") or os.environ.get("CODEX_SESSION_ID"),
+            "phase": _STATE["phase"],
         }
     record(
         receipt_dir=os.path.join(_CODEX_HOME_INPUT, "harness"),
@@ -585,7 +671,7 @@ def record_invocation(payload, result):
         reason_code=_reason_code(result) if blocked else "",
         unrecognized=unrecognized,
         diagnostic=diagnostic,
-        extra={"codex_home": _CODEX_HOME_INPUT},
+        extra={"codex_home": _CODEX_HOME_INPUT, "profile": _STATE["profile"]},
         evidence=evidence,
     )
 

@@ -303,6 +303,41 @@ def declaration_path(raw_cwd: Any) -> Path | None:
     return _codex_home() / "task-state" / f"{digest}.json"
 
 
+PROFILES = ("light", "standard", "governed")
+
+
+def profile_path(raw_cwd: Any) -> Path | None:
+    key = workspace_key(raw_cwd)
+    if key is None:
+        return None
+    digest = hashlib.sha256(str(key).encode("utf-8")).hexdigest()
+    return _codex_home() / "task-state" / "profiles" / f"{digest}.json"
+
+
+def resolve_profile(raw_cwd: Any) -> tuple[str, str]:
+    """Return the governance profile the owner declared for this workspace.
+
+    No declaration, or an expired one, is `light`. A declaration that cannot be
+    read is `governed`: a damaged record must not lower the profile.
+    """
+    path = profile_path(raw_cwd)
+    if path is None:
+        return "light", "NO_WORKSPACE"
+    if not path.is_file():
+        return "light", "NO_PROFILE"
+    try:
+        record = json.loads(path.read_text(encoding="utf-8"))
+        expires = datetime.fromisoformat(str(record["expires_at"]).replace("Z", "+00:00"))
+        profile = record["profile"]
+        if expires.tzinfo is None or profile not in PROFILES:
+            return "governed", "PROFILE_INVALID"
+        if datetime.now(timezone.utc) >= expires:
+            return "light", "PROFILE_EXPIRED"
+        return profile, "OWNER_DECLARED"
+    except (OSError, ValueError, TypeError, KeyError):
+        return "governed", "PROFILE_INVALID"
+
+
 def resolve_self_declared(raw_cwd: Any, policy: dict[str, Any]) -> tuple[str | None, str]:
     try:
         path = declaration_path(raw_cwd)
