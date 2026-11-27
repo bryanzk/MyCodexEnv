@@ -581,11 +581,16 @@ def grep_reaches_credentials(payload: dict[str, object]) -> bool:
     identity = _target_identity(raw if isinstance(raw, str) and raw else ".", cwd)
     if identity is None:
         return False
-    anchors = (
-        os.path.join(_HOME, ".ssh"),
-        os.path.join(_HOME, ".aws", "credentials"),
-        os.path.join(_HOME, ".netrc"),
-    ) + tuple(_PROFILE["credential_files"])
+    # A credential location may itself be a symlink; a search rooted at its
+    # destination reaches the same files.
+    anchors = _with_resolved(
+        [
+            os.path.join(_HOME, ".ssh"),
+            os.path.join(_HOME, ".aws", "credentials"),
+            os.path.join(_HOME, ".netrc"),
+            *_PROFILE["credential_files"],
+        ]
+    )
     return any(_within(anchor, root) for root in set(identity) for anchor in anchors)
 
 

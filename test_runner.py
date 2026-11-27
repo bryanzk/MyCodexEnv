@@ -6187,6 +6187,21 @@ def test_claude_code_guard_adapter():
             require(code == 0 and out and json.loads(out) == denied("active_control_plane_mutation"),
                     f"a symlinked control file must be protected under both names ({label}): {out!r} {err!r}")
 
+        linked_home = tmp_path / "linked-home"
+        shared_keys = tmp_path / "shared-keys"
+        (linked_home / ".claude").mkdir(parents=True)
+        shared_keys.mkdir()
+        write(shared_keys / "id_ed25519", "secret")
+        os.symlink(shared_keys, linked_home / ".ssh")
+        linked_home_env = {**env, "HOME": str(linked_home)}
+        for label, root in (("through the .ssh symlink", linked_home / ".ssh"), ("at the symlink destination", shared_keys),
+                            ("above the symlink destination", tmp_path)):
+            payload = {"hook_event_name": "PreToolUse", "tool_name": "Grep", "cwd": str(project),
+                       "tool_input": {"pattern": "x", "path": str(root)}}
+            code, out, err = run_with_input([sys.executable, str(adapter)], json.dumps(payload), env=linked_home_env)
+            require(code == 0 and out and json.loads(out) == denied("credential_target_access"),
+                    f"a content search that reaches a symlinked key directory must be denied ({label}): {out!r} {err!r}")
+
         decision_def = "def decision(payload: dict[str, object]) -> dict[str, object]:\n"
         end_marker = "# --- END DHF GUARD CORE ---\n"
         require(source.count(decision_def) == 1 and source.count(end_marker) == 1,
