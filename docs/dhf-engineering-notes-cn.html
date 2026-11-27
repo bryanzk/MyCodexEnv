@@ -57,7 +57,7 @@
     .footer { display: flex; justify-content: space-between; gap: 16px; color: var(--text-dim); border-top: 1px solid var(--border); padding-top: 18px; font-family: var(--font-mono); font-size: 12px; line-height: 1.5; } .footer a { color: var(--green); }
     @media (max-width: 860px) { body { padding: 18px; } .hero { min-height: 0; } .card-row, .card-row.four { grid-template-columns: 1fr; } .section-heading { align-items: start; flex-direction: column; } .footer { flex-direction: column; } }
   </style>
-  <link rel="stylesheet" href="./dhf-site-status.css?v=20261126a">
+  <link rel="stylesheet" href="./dhf-site-status.css?v=20261127a">
 </head>
 <body>
   <a class="dhf-skip" href="#dhf-main">跳到正文</a>
@@ -80,10 +80,11 @@
     <a href="#derive-heading">容量即控制流</a>
     <a href="#matrix-heading">六种裁定</a>
     <a href="#incident-heading">回退事故</a>
+    <a href="#guard-heading">守卫失效</a>
     <a href="#contract-heading">契约测试</a>
   </nav>
   <div class="dhf-col">
-    <aside class="dhf-status-bar" data-dhf-status="2026-08-22" aria-label="当前 DHF 状态"><strong>架构状态 · 2026-08-22</strong><span>源码、运行时、发布状态与独立核心状态彼此分开。</span><a href="./dhf-architecture-status-cn.html">查看当前状态</a><span class="dhf-status-review" data-dhf-review="2026-11-26">自 2026-11-26 起复核中。本站关于守卫与运行时的表述早于当前宿主版本。</span></aside>
+    <aside class="dhf-status-bar" data-dhf-status="2026-11-27" aria-label="当前 DHF 状态"><strong>架构状态 · 2026-11-27</strong><span>源码、运行时、发布状态与独立核心状态彼此分开。</span><a href="./dhf-architecture-status-cn.html">查看当前状态</a></aside>
     <section class="hero" style="--i:0"><div class="eyebrow">DHF 工程札记</div><h1>治理会话容量<br>与部署方向。</h1><p class="lead">从第一性原理说明持久状态、关闭式失败、版本方向与可执行文档如何让长周期智能体系统能够恢复。</p></section>
     <nav class="strip" aria-label="快速链接" style="--i:1"><a class="tag" href="./index-zh.html">中文首页</a><a class="tag" href="./dhf-context-engineering-cn.html">上下文工程</a><a class="tag" href="./dhf-for-product-and-field-cn.html">产品与现场团队</a><a class="tag" href="./dhf-architecture-status-cn.html">当前状态</a><a class="tag" href="./dhf-engineering-notes-en.html" hreflang="en">English</a></nav>
 
@@ -142,7 +143,18 @@
       </div>
     </section>
 
-    <section class="section-block" aria-labelledby="contract-heading" style="--i:5">
+    <section class="section-block" aria-labelledby="guard-heading" style="--i:5">
+      <div class="section-heading"><div><div class="label">事故复盘</div><h2 id="guard-heading">守卫连续 100 天每次调用都出错</h2></div><p>2026-08-18 到 2026-11-26，参考机器上的写入守卫什么都没有拦住。这段时间测试全绿，公开页面也都写着它在强制执行。</p></div>
+      <div class="card-row">
+        <div class="card"><h3>发生了什么</h3><p>2026-08-17，守卫从 798 行简化到 348 行，改动里丢了一行：<code>from __future__ import annotations</code>。这个 hook 注册的解释器是系统自带的 Python 3.9.6，没有这一行就读不了较新的类型写法。从 2026-08-18 推广起，守卫每次被调用都在加载时报错。宿主把崩溃的 hook 当作放行。</p></div>
+        <div class="card"><h3>测试为什么没发现</h3><p>测试用 Python 3.12 运行这个 hook，文件在 3.12 下能正常加载。没有一条测试用的是宿主实际注册的解释器。18/18 宿主探测是 2026-08-10 做的，早于这次简化，之后没有重做。10 月接受新的宿主版本时，只改了版本白名单。</p></div>
+        <div class="card"><h3>为什么没人察觉</h3><p>守卫放行，和守卫根本没运行，从外面看是一样的：工具调用都成功。守卫被调用时不留任何记录。状态命令读的那个 hook 文件当时已经属于另一个应用，于是它报告守卫存在。2026-11-25，一个 agent 会话在 harness 的安装目录里新建了文件，没有被拦，问题才被发现。</p></div>
+        <div class="card"><h3>改了什么</h3><p>守卫现在每次调用都写回执，里面有它自己的文件哈希，以及调用和阻断的次数。有一条测试用注册的解释器运行每个 hook。守卫自己报错时，拦住写入和删除。每个功能在每个宿主上都有一条不产生副作用的探测，结果记在一致性表里；宿主版本一变，回执就过期。</p></div>
+      </div>
+      <div class="callout">同样的情况后来又出现一次：会话开始时的 hook 运行了几个月，却什么都没送达，因为它要跑大约 5 秒，预算只有 0.18 秒。hook 注册了、也运行了，仍然什么都没证明。还留着的限制：出错即拦这条规则在两个 Python 版本上通过了测试，但还没有在宿主里遇到过真实故障；文件无法编译，以及宿主判定 hook 超时，这两种情况不在规则之内。</div>
+    </section>
+
+    <section class="section-block" aria-labelledby="contract-heading" style="--i:6">
       <div class="section-heading"><div><div class="label">文档即代码</div><h2 id="contract-heading">契约测试保护政策文本</h2></div><p>当文字规范约束行为时，字面、链接和双语对齐就是接口。页面看起来正常，也可能因为随意改字而产生政策回归。</p></div>
       <div class="card-row">
         <div class="card"><h3>锁定公开契约</h3><ul><li>状态标记与事实边界词条保持原样。</li><li>权威链接保持语言对应并可访问。</li><li>双语页面保持相同的结构覆盖。</li><li>渲染后的规范保留源文档的标题集合。</li></ul></div>

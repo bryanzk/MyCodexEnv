@@ -1,0 +1,493 @@
+<!DOCTYPE html>
+<html lang="en" data-dhf-palette="warm">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DHF Specification</title>
+  <meta name="description" content="The Delivery Harness Framework specification: eight invariants, the SAFE conditions, the RECOVER order, one action description, and the contracts of the seven functions.">
+  <link rel="canonical" href="https://deliveryharness.com/dhf-spec-en.html">
+  <link rel="alternate" hreflang="en" href="https://deliveryharness.com/dhf-spec-en.html">
+  <link rel="alternate" hreflang="zh-CN" href="https://deliveryharness.com/dhf-spec-cn.html">
+  <link rel="alternate" hreflang="x-default" href="https://deliveryharness.com/dhf-spec-en.html">
+  <meta property="og:title" content="DHF Specification">
+  <meta property="og:description" content="The Delivery Harness Framework specification: eight invariants, the SAFE conditions, the RECOVER order, one action description, and the contracts of the seven functions.">
+  <meta property="og:url" content="https://deliveryharness.com/dhf-spec-en.html">
+  <meta property="og:image" content="https://deliveryharness.com/dhf-social-card.png">
+  <meta property="og:image:alt" content="Delivery Harness Framework — from ambiguous requests to verifiable delivery">
+  <meta property="og:locale" content="en_CA">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="DHF Specification">
+  <meta name="twitter:description" content="The Delivery Harness Framework specification: eight invariants, the SAFE conditions, the RECOVER order, one action description, and the contracts of the seven functions.">
+  <meta name="twitter:image" content="https://deliveryharness.com/dhf-social-card.png">
+  <link rel="stylesheet" href="./dhf-site-status.css?v=20261127a">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,650;9..144,760&family=IBM+Plex+Mono:wght@400;500;600&family=Atkinson+Hyperlegible:wght@400;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --font-body: 'Atkinson Hyperlegible', Verdana, sans-serif;
+      --font-display: 'Fraunces', Georgia, serif;
+      --font-mono: 'IBM Plex Mono', monospace;
+      --shadow: 0 18px 44px rgba(51, 42, 33, 0.10), 0 2px 10px rgba(51, 42, 33, 0.06);
+      --bg: #f4f1e8;
+      --surface: #fffdf8;
+      --ink: #1e2924;
+      --muted: #637068;
+      --line: rgba(30, 41, 36, 0.14);
+      --green: #147a62;
+      --amber: #a15f22;
+      --red: #a9475b;
+      --blue: #2f6f92;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #15120f;
+        --surface: #211c18;
+        --ink: #f6eee3;
+        --muted: #b8aa9a;
+        --line: rgba(255, 239, 218, 0.13);
+        --green: #5cd0b2;
+        --amber: #f3b36b;
+        --red: #f095a5;
+        --blue: #91c8e6;
+        --shadow: 0 18px 44px rgba(0, 0, 0, 0.28), 0 2px 10px rgba(0, 0, 0, 0.20);
+      }
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      background: radial-gradient(circle at top right, rgba(47,111,146,.11), transparent 32%), var(--bg);
+      color: var(--ink);
+      font: 16px/1.65 var(--font-body);
+    }
+    .wrap { width: min(1120px, calc(100% - 2rem)); margin: 0 auto; padding: 1.25rem 0 4rem; }
+    .hero, .section { margin-bottom: 1rem; padding: clamp(1.2rem, 3vw, 2.2rem); border: 1px solid var(--line); border-radius: 20px; background: var(--surface); box-shadow: var(--shadow); }
+    .eyebrow { font-family: var(--font-mono); color: var(--green); font-size: .8rem; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; }
+    h1, h2, h3 { line-height: 1.18; font-family: var(--font-display); }
+    h1 { margin: .5rem 0 .8rem; font-size: clamp(2rem, 5vw, 4rem); }
+    h2 { margin-top: 0; font-size: clamp(1.35rem, 3vw, 2rem); }
+    h3 { margin: 0 0 .35rem; }
+    p { color: var(--muted); }
+    code { font-family: var(--font-mono); padding: .12rem .3rem; border-radius: 5px; background: rgba(47,111,146,.09); color: var(--ink); }
+    a { color: var(--blue); }
+    .pill { display: inline-flex; margin: .3rem .35rem .3rem 0; padding: .3rem .65rem; border-radius: 999px; background: rgba(20,122,98,.11); color: var(--green); font-weight: 750; }
+    .status-source { border-top: 4px solid var(--green); }
+    .status-runtime { border-top: 4px solid var(--green); }
+    .status-public { border-top: 4px solid var(--blue); }
+    .status-extract { border-top: 4px solid var(--amber); }
+    .stack { display: grid; gap: .7rem; }
+    .layer { padding: 1rem; border: 1px solid var(--line); border-left: 6px solid var(--blue); border-radius: 12px; background: rgba(47,111,146,.045); }
+    .layer strong { display: block; margin-bottom: .25rem; }
+    table { width: 100%; border-collapse: collapse; }
+    th, td { padding: .75rem; border-bottom: 1px solid var(--line); text-align: left; vertical-align: top; }
+    th { color: var(--green); }
+    .warning { padding: 1rem; border-radius: 12px; background: rgba(169,71,91,.09); border: 1px solid rgba(169,71,91,.24); }
+    @media (max-width: 700px) { table { display: block; overflow-x: auto; } }
+    .section ul, .section ol { color: var(--muted); padding-left: 1.2rem; }
+    .section li { margin: .3rem 0; }
+    .section li strong { color: var(--ink); }
+    .section h3 { margin-top: 1.6rem; }
+    .section table { margin: .8rem 0; }
+  </style>
+</head>
+<body>
+  <a class="dhf-skip" href="#dhf-main">Skip to content</a>
+<nav class="dhf-nav" aria-label="Site navigation">
+    <a class="dhf-nav-home" href="./">DHF</a>
+    <div class="dhf-nav-links">
+        <a href="./">Home</a>
+        <a href="./delivery-harness-beginner-guide-en.html">Beginner</a>
+        <a href="./dhf-memory-map-en.html">Memory Map</a>
+        <a href="./dhf-context-engineering-en.html">Context</a>
+        <a href="./project-lifecycle-harness-flow-en.html">Lifecycle</a>
+        <a href="./dhf-governance-decision-flow-en.html">Governance</a>
+        <a href="./dhf-value-evidence-en.html">Evidence</a><a href="./dhf-architecture-status-en.html">Status</a>
+    </div>
+    <a class="dhf-nav-lang" href="./dhf-spec-cn.html" lang="zh-CN" hreflang="zh-CN">中文</a>
+  </nav>
+    <main id="dhf-main" class="wrap dhf-has-toc">
+  <nav class="dhf-toc" aria-label="On this page">
+    <div class="dhf-toc-title">On this page</div>
+    <a href="#s1">1. Standing of this page</a>
+    <a href="#s2">2. Eight invariants</a>
+    <a href="#s3">3. Four conditions before a state change</a>
+    <a href="#s4">4. Order after a failure</a>
+    <a href="#s5">5. Host applicability</a>
+    <a href="#s6">6. Kinds of mnemonic</a>
+    <a href="#s7">7. One action description</a>
+    <a href="#s8">8. Contracts of the seven functions</a>
+    <a href="#s9">9. Core and adapters</a>
+    <a href="#s10">10. Outside the specification</a>
+    <a href="#gaps">Where the implementation falls short</a>
+  </nav>
+  <div class="dhf-col">
+    <aside class="dhf-status-bar" data-dhf-status="2026-11-27" aria-label="Current DHF status">
+      <strong>Architecture status · 2026-11-27</strong>
+      <span>Canonical source, runtime, publication, and independent-core status.</span>
+      <a href="./dhf-architecture-status-en.html">Current English status</a>
+      <a href="./dhf-architecture-status-cn.html" hreflang="zh-CN">中文状态页</a>
+    </aside>
+
+    <section class="hero">
+      <div class="eyebrow">DHF_SPEC / v0.5 · 2026-11-26</div>
+      <h1>DHF specification.</h1>
+      <p>The rules of the Delivery Harness Framework. This page states what must hold on every host; it does not describe an implementation. <strong>This is a translation.</strong> The authoritative text is the Chinese source, <code>docs/dhf-spec.md</code>; where the two differ, the source wins.</p>
+      <a class="pill" href="./dhf-spec-cn.html" hreflang="zh-CN">中文版</a>
+      <a class="pill" href="./dhf-architecture-status-en.html#hosts">State by host</a>
+      <a class="pill" href="./dhf-protect-seven-components-en.html">Seven functions</a>
+      <a class="pill" href="./dhf-governance-decision-flow-en.html">Decision flow</a>
+    </section>
+
+    <section class="section">
+      <h2 id="s1">1. Standing of this page</h2>
+      <ul>
+        <li>This page is the DHF specification. It states rules, not implementation.</li>
+        <li>The rules do not depend on any one host. A host is the program that runs an agent.</li>
+        <li>Other pages of the public site describe an implementation or explain the framework. Where another page conflicts with this one, this page wins.</li>
+        <li>When models become more capable, the rules stay the same. The implementation may change.</li>
+      </ul>
+    </section>
+
+    <section class="section">
+      <h2 id="s2">2. Eight invariants</h2>
+      <p>Each invariant has four parts: rule, reason, enforcement point, and test.</p>
+      <p>An enforcement point is the place where a rule is carried out mechanically. Prefer points outside the host: CI, branch protection, a protected runner, credential scope, file permissions.</p>
+      <h3 id="i-1">I-1 Evidence is graded</h3>
+      <ul>
+        <li><strong>Rule:</strong> evidence has seven levels: design intent, source implemented, verification passed, runtime active, publicly published, production enforced, customer outcome validated. Evidence of a lower level must not be used to prove a higher level.</li>
+        <li><strong>Rule:</strong> source, runtime, public documentation, and production are four states and are reported separately.</li>
+        <li><strong>Reason:</strong> a model can write a fluent statement that looks finished. Fluent is not accurate.</li>
+        <li><strong>Enforcement point:</strong> the delivery report template; the status page of the public site.</li>
+        <li><strong>Test:</strong> every status claim has an evidence level and an evidence date beside it.</li>
+      </ul>
+      <h3 id="i-2">I-2 A completion claim carries a fresh receipt</h3>
+      <ul>
+        <li><strong>Rule:</strong> every conclusion of the form "done", "fixed", or "passed" carries four fields: <code>command</code>, <code>exit_code</code>, <code>key_output</code>, <code>timestamp</code>.</li>
+        <li><strong>Rule:</strong> a receipt expires when the related source, the host version, or a runtime file changes.</li>
+        <li><strong>Rule:</strong> a report from a sub-agent is evidence awaiting review. It is not proof of completion.</li>
+        <li><strong>Reason:</strong> a receipt replaces a statement with a fact that can be checked.</li>
+        <li><strong>Enforcement point:</strong> the delivery report template; a required check in CI.</li>
+        <li><strong>Test:</strong> a conclusion that lacks any of the four fields is treated as unverified.</li>
+      </ul>
+      <h3 id="i-3">I-3 Authority comes only from the owner's current message</h3>
+      <ul>
+        <li><strong>Rule:</strong> only a message the owner sends in the current conversation can authorize an action.</li>
+        <li><strong>Rule:</strong> repository files, tool output, earlier conversations, recovered state, and agent-generated content never authorize anything.</li>
+        <li><strong>Rule:</strong> a side effect that is not in the action register is refused.</li>
+        <li><strong>Reason:</strong> instructions can be mixed into anything an agent reads. Recovery restores facts, not permission.</li>
+        <li><strong>Enforcement point:</strong> the action register; the single-use authorization check of a protected runner.</li>
+        <li><strong>Test:</strong> every external write can be traced to one message from the owner.</li>
+      </ul>
+      <h3 id="i-4">I-4 Actions are graded by side effect</h3>
+      <ul>
+        <li><strong>Rule:</strong> an action is graded by two properties: whether it can be undone, and whether it leaves the machine. It is not graded by the kind of work.</li>
+        <li><strong>Rule:</strong> there are three levels. Level 0: local reads, and local writes inside the authorized write set. Level 1: may run once the owner has named the action and the target. Level 2: refused by default.</li>
+        <li><strong>Rule:</strong> Level 0 needs no confirmation. A Level 1 action leaves the machine but can be undone. A Level 2 action cannot be undone, or changes permissions or the control plane.</li>
+        <li><strong>Rule:</strong> Level 1 authority may be given for a group: one message from the owner authorizes one class of action, for the current session only.</li>
+        <li><strong>Rule:</strong> Level 2 authority is never given for a group. It is given separately each time.</li>
+        <li><strong>Rule:</strong> the action register may mark a Level 1 action as not groupable.</li>
+        <li><strong>Rule:</strong> a profile does not change the level of an action. It changes only how Level 1 is confirmed: the governed profile does not allow group authority; the other profiles do.</li>
+        <li><strong>Reason:</strong> the cost of process must match the risk. Low-risk work stays light.</li>
+        <li><strong>Enforcement point:</strong> the action register; the three profiles light, standard, and governed.</li>
+        <li><strong>Test:</strong> every action belongs to exactly one level in the register.</li>
+      </ul>
+      <h3 id="i-5">I-5 Discipline for external writes</h3>
+      <ul>
+        <li><strong>Rule:</strong> check the current state of the target before writing. Read it back immediately after.</li>
+        <li><strong>Rule:</strong> when the result is partial or unknown, do read-only checks only. Never retry blind.</li>
+        <li><strong>Rule:</strong> single-use authority expires after one use. Group authority is valid only in the session that gave it. A replay is refused.</li>
+        <li><strong>Rule:</strong> secrets never enter an agent's input, output, or context.</li>
+        <li><strong>Reason:</strong> the state of an external system cannot be rolled back, or only at high cost.</li>
+        <li><strong>Enforcement point:</strong> a protected runner; version-conditional writes in a connector; credential scope.</li>
+        <li><strong>Test:</strong> every external write has one pre-write check record and one read-back record.</li>
+      </ul>
+      <h3 id="i-6">I-6 High risk is blocked before the side effect</h3>
+      <ul>
+        <li><strong>Rule:</strong> a high-risk action is stopped mechanically before its side effect happens. A prompt alone is not enough.</li>
+        <li><strong>Rule:</strong> prefer enforcement points outside the host. A hook inside the host is a supplement.</li>
+        <li><strong>Rule:</strong> every blocking point leaves a record that it ran. A blocking point that cannot show whether it was called is treated as unverified.</li>
+        <li><strong>Reason:</strong> a prompt can only advise. A hook inside a host stops working when the host changes, when the host is upgraded, or when a third party rewrites the configuration.</li>
+        <li><strong>Enforcement point:</strong> branch protection; CI; a protected runner; file permissions; a host hook as a supplement.</li>
+        <li><strong>Test:</strong> every Level 2 action has at least one verified enforcement point in the action-to-point table, or a recorded acceptance by the owner.</li>
+      </ul>
+      <h3 id="i-7">I-7 Continuity lives outside the conversation</h3>
+      <ul>
+        <li><strong>Rule:</strong> a fact has one authoritative source. Every other place holds a pointer.</li>
+        <li><strong>Rule:</strong> sources are trusted in this order: stable rules, the repository map, the terminology contract, current state, decision records, source and Git, execution evidence, conversation history. Conversation history gives clues only.</li>
+        <li><strong>Rule:</strong> a new session recovers from durable files, not from an old conversation. Recovery loads four items only: the phase, confirmed facts, blockers, and the next safe action.</li>
+        <li><strong>Rule:</strong> a correction from the owner is written into a durable file.</li>
+        <li><strong>Reason:</strong> the context window is finite, compaction loses detail, and a model does not learn from a correction.</li>
+        <li><strong>Enforcement point:</strong> rule files, policy, and the State Log in the repository.</li>
+        <li><strong>Test:</strong> with all conversation history deleted, a new session can still state the current phase and the next safe action.</li>
+      </ul>
+      <h3 id="i-8">I-8 Business decisions are made explicit</h3>
+      <ul>
+        <li><strong>Rule:</strong> any case that affects money, authorization level, customer-visible output, persistence, or runtime permission is decided item by item before implementation.</li>
+        <li><strong>Rule:</strong> there are four decisions only: allow, refuse, decide by a person, leave the existing path unchanged. Each case gets exactly one.</li>
+        <li><strong>Rule:</strong> when evidence is insufficient, the decision is "decide by a person" or the task is blocked. Never guess.</li>
+        <li><strong>Rule:</strong> a passing test does not turn a business guess into a contract.</li>
+        <li><strong>Reason:</strong> a model does not know niche business rules that exist only with the customer.</li>
+        <li><strong>Enforcement point:</strong> the pre-implementation decision matrix (PIDM); the terminology contract.</li>
+        <li><strong>Test:</strong> every implementation task has a complete decision matrix before work starts.</li>
+      </ul>
+    </section>
+
+    <section class="section">
+      <h2 id="s3">3. Four conditions before a state change (SAFE)</h2>
+      <p>All four conditions hold before every state change.</p>
+      <table>
+        <thead><tr><th>Condition</th><th>Meaning</th><th>Invariants</th></tr></thead>
+        <tbody>
+          <tr><td>S · Specification</td><td>Scope, acceptance conditions, and state definitions are written down</td><td>I-8</td></tr>
+          <tr><td>A · Authorization</td><td>The owner's current authority covers this action and this target</td><td>I-3, I-4</td></tr>
+          <tr><td>F · Facts</td><td>There is a fresh test, receipt, or read-back</td><td>I-1, I-2</td></tr>
+          <tr><td>E · Error recovery</td><td>There is a checkpoint, a rollback method, or a handoff method</td><td>I-5, I-7</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section class="section">
+      <h2 id="s4">4. Order after a failure (RECOVER)</h2>
+      <ol>
+        <li>Recognize: tell failure, partial completion, and unknown result apart.</li>
+        <li>End: stop further side effects.</li>
+        <li>Capture: keep the failure receipt, the target, the version, and the scope of impact.</li>
+        <li>Obtain: get the last trusted state from Git, a checkpoint, or version history.</li>
+        <li>Verify: check it with an independent read-back.</li>
+        <li>Escalate: a new HEAD, digest, or version needs the owner's authority again.</li>
+        <li>Resume: continue only from the next safe action recorded in the checkpoint.</li>
+      </ol>
+    </section>
+
+    <section class="section">
+      <h2 id="s5">5. Host applicability</h2>
+      <p>This is the only section where a host may be named.</p>
+      <table>
+        <thead><tr><th>Invariant</th><th>Kind of enforcement point</th><th>Codex, local</th><th>Claude Code, local</th><th>Claude Code, cloud</th></tr></thead>
+        <tbody>
+          <tr><td>I-1 to I-5, I-7, I-8</td><td>Repository files, templates, CI, runner</td><td>applies</td><td>applies</td><td>applies</td></tr>
+          <tr><td>I-6, points outside the host</td><td>Branch protection, CI, runner, credential scope</td><td>applies</td><td>applies</td><td>applies</td></tr>
+          <tr><td>I-6, points inside the host</td><td>hook</td><td>verified 2026-11-27 (reference machine, Codex CLI 0.155.1)</td><td>registered, partly probed 2026-11-27</td><td>single-repository session: adapter installed in a probe repository, not probed. Project thread: repository hooks do not run</td></tr>
+        </tbody>
+      </table>
+      <ul>
+        <li>Every cell of this table has an evidence date. A cell whose date is more than 30 days old is marked stale.</li>
+        <li>"Verified" holds only for the named machine and host version. Another machine or another version is probed again.</li>
+        <li>The cell-by-cell state of the seven functions on each host, with probe methods and probe receipts, is recorded in <code>docs/dhf-conformance.json</code>. Where this table conflicts with that file, the file wins.</li>
+      </ul>
+    </section>
+
+    <section class="section">
+      <h2 id="s6">6. Kinds of mnemonic</h2>
+      <table>
+        <thead><tr><th>Kind</th><th>Mnemonics</th><th>Meaning</th></tr></thead>
+        <tbody>
+          <tr><td>Rules</td><td>SAFE, AIRCRAFT, CAP, RECOVER</td><td>Rules. This page is their authoritative source.</td></tr>
+          <tr><td>Implementation</td><td>PROTECT, BRIDGE</td><td>How the seven functions are implemented on a host, and how mature that is. The functions stay the same; the implementation changes with the host.</td></tr>
+          <tr><td>Explanation</td><td>TRUST, BEST, CARE</td><td>Ways of telling the story to different readers. They add no rule.</td></tr>
+        </tbody>
+      </table>
+      <p>Where the rule mnemonics sit on this page:</p>
+      <table>
+        <thead><tr><th>Mnemonic</th><th>Place on this page</th></tr></thead>
+        <tbody>
+          <tr><td>SAFE</td><td>Section 3</td></tr>
+          <tr><td>RECOVER</td><td>Section 4</td></tr>
+          <tr><td>AIRCRAFT</td><td>The trust order in I-7. The eight sources, in the order I-7 lists them, match the eight letters</td></tr>
+          <tr><td>CAP</td><td>Continuity is I-7; Accuracy is I-1 and I-2; Permission is I-3, I-4, and I-6</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section class="section">
+      <h2 id="s7">7. One action description</h2>
+      <p>The core is the decision logic that depends on no host. An adapter is the layer that connects one host to the core.</p>
+      <p>The core accepts only the input below. A host's own data structures never enter the core.</p>
+      <table>
+        <thead><tr><th>Field</th><th>Meaning</th></tr></thead>
+        <tbody>
+          <tr><td>Session</td><td>The identifier of this session</td></tr>
+          <tr><td>Working directory</td><td>The working directory at the time of the action, as an absolute path</td></tr>
+          <tr><td>Action kind</td><td>One of the seven kinds below, or "unrecognized"</td></tr>
+          <tr><td>Target paths</td><td>The list of paths the action touches, as absolute paths</td></tr>
+          <tr><td>Original tool name</td><td>The name the host gave this call</td></tr>
+        </tbody>
+      </table>
+      <table>
+        <thead><tr><th>Action kind</th><th>Meaning</th></tr></thead>
+        <tbody>
+          <tr><td>Read</td><td>Read a local file or directory</td></tr>
+          <tr><td>Write</td><td>Create or modify a local file</td></tr>
+          <tr><td>Delete</td><td>Delete a local file, or move it away</td></tr>
+          <tr><td>Execute</td><td>Run a local command or program</td></tr>
+          <tr><td>Network</td><td>Send a request off the machine without changing remote state</td></tr>
+          <tr><td>Remote</td><td>Change state off the machine: push, publish, send, call an external write interface</td></tr>
+          <tr><td>Delegate</td><td>Hand work to another agent</td></tr>
+        </tbody>
+      </table>
+      <p>Rules:</p>
+      <ul>
+        <li>One tool call may produce several action descriptions. A patch that changes three files produces three. A move produces one delete and one write.</li>
+        <li>Target paths are normalized before they enter the core: relative paths and symbolic links are resolved.</li>
+        <li>The original tool name is for the record only. The core never decides by the original tool name.</li>
+        <li>A call the adapter cannot classify gets the action kind "unrecognized". An unrecognized call leaves a record.</li>
+        <li>Whether an unrecognized call is blocked depends on the profile: the governed profile blocks it, the other profiles record it only.</li>
+        <li>The count of unrecognized calls appears in the status report. After a host version change, a count above zero must be dealt with.</li>
+        <li>When the adapter cannot obtain the target paths, it leaves them empty and writes "target unresolved" in the record. It never guesses.</li>
+      </ul>
+    </section>
+
+    <section class="section">
+      <h2 id="s8">8. Contracts of the seven functions</h2>
+      <p>The seven functions are invariant. Their implementation may differ on each host.</p>
+      <p>Each function has four parts: input, output, tests, and what it must not depend on.</p>
+      <p>For all seven, "must not depend on" includes the host's name, the host's file names, the host's data structures, prompts, and conversation history. The entries below list only what is additional.</p>
+      <h3 id="position">Position</h3>
+      <ul>
+        <li><strong>Purpose:</strong> answer which phase the task is in now.</li>
+        <li><strong>Input:</strong> the durable task state record; the session; the working directory.</li>
+        <li><strong>Output:</strong> the current phase; the source of that conclusion; whether the conclusion is certain. When it is not certain, the output is "unknown".</li>
+        <li><strong>Test:</strong> with the same durable state, two computations give the same result.</li>
+        <li><strong>Test:</strong> with all conversation history deleted, the result does not change.</li>
+        <li><strong>Test:</strong> when uncertain, the output is never a phase more permissive than "unknown".</li>
+        <li><strong>Must not depend on:</strong> the model's own statement of its phase.</li>
+      </ul>
+      <h3 id="restrict">Restrict</h3>
+      <ul>
+        <li><strong>Purpose:</strong> decide, before the side effect, whether an action goes ahead.</li>
+        <li><strong>Input:</strong> one action description; the boundary from Contain; the phase from Position; the valid authority from Empower. The profile decides whether the last two are used.</li>
+        <li><strong>Output:</strong> allow or block. A block carries a reason code. Every call leaves an invocation receipt.</li>
+        <li><strong>Test:</strong> a block happens before the side effect.</li>
+        <li><strong>Test:</strong> the same input gives the same decision.</li>
+        <li><strong>Test:</strong> the invocation receipt answers three questions: was it called, what was the latest decision, and is the installed version the one that was called.</li>
+        <li><strong>Test:</strong> a read is blocked only when its target is a credential.</li>
+        <li><strong>Test:</strong> when the core itself fails, a call whose kind is write or delete is blocked, and the reason code says it is a core fault. Other kinds are allowed and recorded. Failure includes a crash, a timeout, and a result that cannot be parsed. The adapter must guarantee this.</li>
+        <li><strong>Test:</strong> write targets inside an "execute" action are not parsed. This is a known gap. The two points below cover it; Restrict does not.</li>
+        <li><strong>Test:</strong> a control-plane file that changes only at release is protected with the operating system's immutable flag. The release transaction clears the flag first and sets it again when done.</li>
+        <li><strong>Test:</strong> a control-plane file that the host itself also writes gets no immutable flag. Its content is checked at session start, and any difference from the source is reported.</li>
+        <li><strong>Test:</strong> the governed profile may add one rule: a command whose text contains a protected path is blocked. The other profiles do not add it, because it would block read-only commands by mistake.</li>
+        <li><strong>Must not depend on:</strong> the original tool name; the location of the host's configuration files.</li>
+      </ul>
+      <h3 id="observe">Observe</h3>
+      <ul>
+        <li><strong>Purpose:</strong> write down what actually happened, for checking and for recovery.</li>
+        <li><strong>Input:</strong> the action description; the result of the action; the decision from Restrict.</li>
+        <li><strong>Output:</strong> an append-only evidence record. A verification record carries the four fields <code>command</code>, <code>exit_code</code>, <code>key_output</code>, <code>timestamp</code>.</li>
+        <li><strong>Test:</strong> the record lives outside the conversation, and a new session can read it.</li>
+        <li><strong>Test:</strong> a record is not authority.</li>
+        <li><strong>Test:</strong> secrets do not enter the record.</li>
+        <li><strong>Test:</strong> a failure to write the record does not change the result of the action itself.</li>
+        <li><strong>Must not depend on:</strong> the model's statement of the result.</li>
+      </ul>
+      <h3 id="thread">Thread</h3>
+      <ul>
+        <li><strong>Purpose:</strong> let a new session pick up the work of an old one.</li>
+        <li><strong>Input:</strong> the durable state record.</li>
+        <li><strong>Output:</strong> four items at session start: the phase, confirmed facts, blockers, and the next safe action.</li>
+        <li><strong>Test:</strong> with all conversation history deleted, the four items are still available.</li>
+        <li><strong>Test:</strong> resumption restores facts, not permission. Authority from the previous session is not valid in the new one.</li>
+        <li><strong>Must not depend on:</strong> the host's own session-resume feature.</li>
+      </ul>
+      <h3 id="empower">Empower</h3>
+      <ul>
+        <li><strong>Purpose:</strong> let the owner open one capability explicitly, inspect it, and revoke it.</li>
+        <li><strong>Input:</strong> an explicit declaration from the owner, with the action, the target, and how long it is valid.</li>
+        <li><strong>Output:</strong> one authority record. It can be inspected, it can be revoked, and it has an expiry time.</li>
+        <li><strong>Test:</strong> every authority record can be traced to one operation by the owner.</li>
+        <li><strong>Test:</strong> after expiry or revocation, the authority is invalid at once.</li>
+        <li><strong>Test:</strong> authority marked single-use expires after one use. A replay is refused.</li>
+        <li><strong>Test:</strong> an agent does not create, modify, or extend an authority record.</li>
+        <li><strong>Must not depend on:</strong> any location an agent can write to by itself.</li>
+      </ul>
+      <h3 id="contain">Contain</h3>
+      <ul>
+        <li><strong>Purpose:</strong> answer whether a path is inside the allowed range.</li>
+        <li><strong>Input:</strong> a boundary declaration the owner maintains, with governed roots, protected roots, and the allowed write set.</li>
+        <li><strong>Output:</strong> for any target path, one of three answers: inside the boundary, outside the boundary, protected.</li>
+        <li><strong>Test:</strong> normalize the path first, then decide. Symbolic links and hard links do not get around the decision.</li>
+        <li><strong>Test:</strong> the harness's own installation, credentials, and the operating system's auto-start locations are always protected. They stay protected when the boundary declaration is missing.</li>
+        <li><strong>Test:</strong> an agent does not modify the boundary declaration.</li>
+        <li><strong>Must not depend on:</strong> the working directory happening to sit at a fixed location.</li>
+      </ul>
+      <h3 id="transact">Transact</h3>
+      <ul>
+        <li><strong>Purpose:</strong> release a set of control-plane files to the runtime together, or restore them together.</li>
+        <li><strong>Input:</strong> a fixed list of release targets; a source digest the owner has approved.</li>
+        <li><strong>Output:</strong> every target updated, or every target restored. One release record, with a transaction identifier and each target's hash before and after.</li>
+        <li><strong>Test:</strong> if any target fails, the targets already updated are restored in reverse order.</li>
+        <li><strong>Test:</strong> when the owner has not approved the digest, the release is refused.</li>
+        <li><strong>Test:</strong> files outside the list are not changed.</li>
+        <li><strong>Test:</strong> after release, a read-back shows the runtime hashes equal to the source.</li>
+        <li><strong>Test:</strong> the owner runs the release. An agent does not run a release and does not approve a digest.</li>
+        <li><strong>Must not depend on:</strong> the directory layout of the runtime installation. The adapter supplies the target locations.</li>
+      </ul>
+    </section>
+
+    <section class="section">
+      <h2 id="s9">9. Core and adapters</h2>
+      <ul>
+        <li>The core implements the decision logic of the seven functions. The core accepts only the action description of section 7.</li>
+        <li>Each host has one adapter. An adapter does three things only: translate the host's call into action descriptions; translate the core's decision into the response format the host accepts; register itself in the host.</li>
+        <li>An adapter contains no rules. The same action description gets the same decision on every host.</li>
+        <li>Every combination of function and host has one probe without side effects, and one dated probe receipt. A combination without a receipt is treated as unverified.</li>
+        <li>After a host version change, all probe receipts for that host expire.</li>
+        <li>The owner sets the profile explicitly: per workspace, with an expiry time. When none is set, or it has expired, the profile is light. A damaged record is treated as governed.</li>
+        <li>An agent does not set the profile. Keywords in a prompt do not change the profile.</li>
+        <li>What the three profiles turn on: light has only the fixed blocks of Restrict; standard is the same as light for now; governed also turns on Position, Empower, and Contain, and blocks unrecognized write calls.</li>
+        <li>In the governed profile, when the owner has declared no phase, writes and deletes are blocked and reads are unaffected. The block message says how to declare a phase.</li>
+        <li>The owner may turn off one function on one host. A function that is turned off is listed truthfully in the status report. "Turned off" is never reported as "faulty", and never as "normal".</li>
+      </ul>
+    </section>
+
+    <section class="section">
+      <h2 id="s10">10. Outside the specification</h2>
+      <p>The following may change with the model and the host, and are not written into the specification:</p>
+      <ul>
+        <li>Which skill completes which phase.</li>
+        <li>What is injected into a prompt.</li>
+        <li>How context pressure is detected.</li>
+        <li>The file name, registration location, and data structure of a host hook.</li>
+        <li>The specific keywords of each profile.</li>
+      </ul>
+    </section>
+
+    <section class="section">
+      <h2 id="gaps">Where the implementation falls short</h2>
+      <p>This section records what the specification requires and the implementation does not yet do. An item is removed when it is done.</p>
+      <ul>
+        <li>Blocking on a core fault: the crash case is implemented and released to the runtime. It passes tests on Python 3.12 and 3.9.6 and has not yet met a live fault in a host. A timeout and an unparseable result are decided by the host; an adapter cannot guarantee them alone. A file that does not compile cannot carry out this rule.</li>
+        <li>The gap in "execute" actions: the immutable flag is not set, and the content check at session start is not connected. Today the gap is not covered.</li>
+        <li>Group authority: today it rests on written rules only. There is no authority record and no mechanism that ends it with the session.</li>
+        <li>The action register for this repository: it does not exist yet.</li>
+        <li>Path normalization: the core recognizes the control plane and credentials by the path as written. It does not recognize a target reached through a symbolic link. The Claude Code adapter covers this in the adapter layer.</li>
+        <li>"An agent does not create an authority record" in Empower: an agent's edit tools cannot change a declaration, but an agent can run the declaration command from its shell. Today this leaves an audit trail and is not a hard boundary.</li>
+        <li>"An agent does not set the profile": the same as the previous item. An agent can run the setting command from its shell.</li>
+        <li>Host coverage: only one host on one machine has probe receipts for all seven functions. The cell-by-cell state is in <code>docs/dhf-conformance.json</code>.</li>
+      </ul>
+    </section>
+
+    </div>
+</main>
+
+  <script>
+    (function () {
+      var links = Array.prototype.slice.call(document.querySelectorAll('.dhf-toc a'));
+      if (!links.length || !('IntersectionObserver' in window)) return;
+      var pairs = [];
+      links.forEach(function (link) {
+        var el = document.getElementById(link.getAttribute('href').slice(1));
+        if (el) pairs.push({ el: el, link: link });
+      });
+      var observer = new IntersectionObserver(function (entries) {
+        entries.forEach(function (entry) {
+          if (!entry.isIntersecting) return;
+          links.forEach(function (l) { l.classList.remove('is-active'); });
+          var match = pairs.filter(function (p) { return p.el === entry.target; })[0];
+          if (match) match.link.classList.add('is-active');
+        });
+      }, { rootMargin: '-14% 0px -74% 0px' });
+      pairs.forEach(function (p) { observer.observe(p.el); });
+    })();
+  </script>
+</body>
+</html>

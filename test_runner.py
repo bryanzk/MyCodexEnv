@@ -13098,7 +13098,7 @@ def test_public_dhf_information_architecture():
     for path in current_public_paths:
         text = path.read_text(encoding="utf-8")
         require(
-            text.count('data-dhf-status="2026-08-22"') == 1,
+            text.count('data-dhf-status="2026-11-27"') == 1,
             f"{path.name} must preserve the canonical DHF status attribute",
         )
 
@@ -13386,10 +13386,10 @@ def test_dhf_public_truth_contract():
         text = path.read_text(encoding="utf-8")
         if 'class="dhf-nav-links"' in text:
             public_pages.append((path, text))
-    require(len(public_pages) == 48, "public truth contract requires the 48-page baseline")
+    require(len(public_pages) == 50, "public truth contract requires the 50-page baseline")
     for path, text in public_pages:
-        require(text.count('data-dhf-status="2026-08-22"') == 1,
-                f"{path.name} must carry the 2026-08-22 public status date exactly once")
+        require(text.count('data-dhf-status="2026-11-27"') == 1,
+                f"{path.name} must carry the 2026-11-27 public status date exactly once")
     internal_pattern = re.compile(r"(?:docs|scripts)/[A-Za-z0-9_./@*-]+|~/\.codex|test_runner\.py|harness_[a-z_]+\.py")
     for name in ["index.html", "index-en.html", "index-zh.html",
                  "delivery-harness-beginner-guide-en.html", "delivery-harness-beginner-guide-cn.html"]:
@@ -13407,10 +13407,10 @@ def test_dhf_public_metadata_contract():
         text = path.read_text(encoding="utf-8")
         if 'class="dhf-nav-links"' in text:
             pages.append((path, text))
-    require(len(pages) == 48, "public metadata contract requires 48 pages")
-    require(sum(re.search(r'<html\b[^>]*lang="en"', text) is not None for _, text in pages) == 25,
+    require(len(pages) == 50, "public metadata contract requires 50 pages")
+    require(sum(re.search(r'<html\b[^>]*lang="en"', text) is not None for _, text in pages) == 26,
             "English metadata baseline")
-    require(sum(re.search(r'<html\b[^>]*lang="zh-CN"', text) is not None for _, text in pages) == 23,
+    require(sum(re.search(r'<html\b[^>]*lang="zh-CN"', text) is not None for _, text in pages) == 24,
             "Chinese metadata baseline")
     required_meta = [
         ('name="description"', "description"), ('rel="canonical"', "canonical"),
@@ -13469,7 +13469,9 @@ def test_dhf_touch_target_contract():
     print("[PASS] DHF touch target contract")
 
 
-def test_public_status_bar_carries_reverification_notice():
+def test_public_status_bar_has_no_reverification_notice():
+    # The notice was shown from 2026-11-26 while the site was being rewritten
+    # from the conformance table (SHI-629). It must not linger afterwards.
     docs = ROOT / "docs"
     with_bar = []
     without_bar = []
@@ -13482,21 +13484,17 @@ def test_public_status_bar_carries_reverification_notice():
             with_bar.append((path, text, bars))
         else:
             without_bar.append((path, text))
-    require(len(with_bar) == 28 and len(without_bar) == 20,
-            "re-verification notice requires the 28 status-bar pages and 20 body-marker pages baseline")
+    require(len(with_bar) == 30 and len(without_bar) == 20,
+            "status bar baseline is 30 status-bar pages and 20 body-marker pages")
     for path, text, bars in with_bar:
         require(len(bars) == 1, f"{path.name} must carry exactly one status bar")
-        require(bars[0].count('data-dhf-review="2026-11-26"') == 1,
-                f"{path.name} status bar must carry the 2026-11-26 re-verification notice exactly once")
-        require(text.count('data-dhf-review=') == 1,
-                f"{path.name} must not carry a re-verification notice outside the status bar")
-    for path, text in without_bar:
-        require('data-dhf-review=' not in text,
-                f"{path.name} has no status bar and must not carry a hidden re-verification marker")
+    for path, text in [(p, t) for p, t, _ in with_bar] + without_bar:
+        require('data-dhf-review=' not in text and 'dhf-status-review' not in text,
+                f"{path.name} must not carry the retired re-verification notice")
     css = (docs / "dhf-site-status.css").read_text(encoding="utf-8")
-    require(".dhf-status-bar .dhf-status-review" in css,
-            "shared status styles must style the re-verification notice")
-    print("[PASS] public status bar re-verification notice")
+    require("dhf-status-review" not in css,
+            "shared status styles must not keep the retired re-verification rule")
+    print("[PASS] public status bar has no re-verification notice")
 
 
 def test_public_dhf_architecture_status_alignment():
@@ -13534,7 +13532,7 @@ def test_public_dhf_architecture_status_alignment():
         text = path.read_text(encoding="utf-8")
         require('href="./dhf-site-status.css' in text,
                 f"public DHF page missing shared status styles: {filename}")
-        require('data-dhf-status="2026-08-22"' in text,
+        require('data-dhf-status="2026-11-27"' in text,
                 f"public DHF page missing current status marker: {filename}")
         expected_status = (
             "./dhf-architecture-status-en.html"
@@ -13688,7 +13686,7 @@ def test_dhf_memory_map_bilingual_information_architecture():
                 f"{path.name} must mark Memory Map as current")
         require(f'href="{expected[language]["twin"]}"' in nav_match.group(1),
                 f"{path.name} missing language twin")
-        require(text.count('data-dhf-status="2026-08-22"') == 1,
+        require(text.count('data-dhf-status="2026-11-27"') == 1,
                 f"{path.name} must preserve the canonical DHF status attribute")
         require(text.count(f'data-dhf-memory-map-language="{language}"') == 1,
                 f"{path.name} missing language marker")
@@ -13765,7 +13763,7 @@ def test_dhf_value_evidence_information_architecture():
         for section in ["value", "ladder", "evolution", "controls", "cases", "recovery", "boundaries"]:
             require(f'data-dhf-evidence-section="{section}"' in text,
                     f"{filename} missing Evidence section: {section}")
-        require(text.count('data-dhf-status="2026-08-22"') == 1,
+        require(text.count('data-dhf-status="2026-11-27"') == 1,
                 f"{filename} must preserve the current DHF status attribute")
 
     evidence_pairs = [
@@ -13799,9 +13797,9 @@ def test_dhf_value_evidence_information_architecture():
                 f"English Evidence page missing Chinese twin: {english_name}")
         require(f'href="./{english_name}"' in chinese_text,
                 f"Chinese Evidence page missing English twin: {chinese_name}")
-        require(english_text.count('data-dhf-status="2026-08-22"') == 1,
+        require(english_text.count('data-dhf-status="2026-11-27"') == 1,
                 f"English Evidence page must preserve status: {english_name}")
-        require(chinese_text.count('data-dhf-status="2026-08-22"') == 1,
+        require(chinese_text.count('data-dhf-status="2026-11-27"') == 1,
                 f"Chinese Evidence page must preserve status: {chinese_name}")
 
     english_children = [english for english, _ in evidence_pairs]
@@ -13971,7 +13969,7 @@ def test_dhf_evidence_wave1_bilingual_information_architecture():
             (chinese_name, english_name, "dhf-value-evidence-cn.html"),
         ]:
             text = (docs / name).read_text(encoding="utf-8")
-            require(text.count('data-dhf-status="2026-08-22"') == 1,
+            require(text.count('data-dhf-status="2026-11-27"') == 1,
                     f"{name} must preserve the public status byte value")
             require(text.count('class="dhf-nav"') == 1, f"{name} global navigation count")
             require_in_order(text, [f'id="{section}"' for section in contract["sections"]],
@@ -14014,7 +14012,7 @@ def test_dhf_evidence_wave2_bilingual_information_architecture():
                 f"{name} must retain seven PROTECT components")
         require(f'href="./{twin}"' in text, f"{name} bilingual twin link")
         require(f'href="./{hub}"' in text, f"{name} Evidence hub link")
-        require(text.count('data-dhf-status="2026-08-22"') == 1,
+        require(text.count('data-dhf-status="2026-11-27"') == 1,
                 f"{name} must preserve the public status byte value")
 
     safe_sections = ["overview", "controls", "cases", "claims"]
@@ -14033,7 +14031,7 @@ def test_dhf_evidence_wave2_bilingual_information_architecture():
             require(term in text, f"{name} missing SAFE control: {term}")
         require(f'href="./{twin}"' in text, f"{name} bilingual twin link")
         require(f'href="./{hub}"' in text, f"{name} Evidence hub link")
-        require(text.count('data-dhf-status="2026-08-22"') == 1,
+        require(text.count('data-dhf-status="2026-11-27"') == 1,
                 f"{name} must preserve the public status byte value")
     english_map = (docs / "dhf-case-safe-mapping-en.html").read_text(encoding="utf-8")
     chinese_map = (docs / "dhf-case-safe-mapping.html").read_text(encoding="utf-8")
@@ -14091,7 +14089,7 @@ def test_dhf_evidence_wave3_casebook_archive_and_information_architecture():
             require(text.count(f'id="{section}"') == 1,
                     f"{name} must expose exactly one #{section} fragment")
         require(text.count('class="dhf-nav"') == 1, f"{name} global navigation count")
-        require(text.count('data-dhf-status="2026-08-22"') == 1,
+        require(text.count('data-dhf-status="2026-11-27"') == 1,
                 f"{name} must preserve the public status byte value")
         require(f'href="./{twin}"' in text, f"{name} bilingual twin link")
     for name in ["dhf-examples-three-lenses-en.html", "dhf-examples-three-lenses.html"]:
@@ -14143,7 +14141,7 @@ def test_dhf_evidence_wave4_recovery_information_architecture():
         for section in incident_sections:
             require(text.count(f'id="{section}"') == 1,
                     f"{name} must expose exactly one #{section} fragment")
-        require(text.count('data-dhf-status="2026-08-22"') == 1,
+        require(text.count('data-dhf-status="2026-11-27"') == 1,
                 f"{name} must preserve the public status byte value")
         require(f'href="./{twin}"' in text, f"{name} bilingual twin link")
         for term in ["OWNER", "AGENT", "WRITER", "SAFE", "MISMATCH", "RETRY", "RESTORED", "EXECUTE"]:
@@ -14208,7 +14206,7 @@ def test_dhf_evidence_child_navigation_and_controlled_recovery_contract():
             require(targets, f"{name} page navigation has no targets")
             for target in targets:
                 require(text.count(f'id="{target}"') == 1, f"{name} page navigation target must exist once: {target}")
-            require(text.count('data-dhf-status="2026-08-22"') == 1,
+            require(text.count('data-dhf-status="2026-11-27"') == 1,
                     f"{name} must preserve the canonical DHF status attribute")
             require('href="./dhf-site-status.css?' in text,
                     f"{name} missing shared navigation stylesheet")
@@ -14619,7 +14617,7 @@ TESTS = [
     test_dhf_public_metadata_contract,
     test_dhf_core_bilingual_parity_contract,
     test_dhf_touch_target_contract,
-    test_public_status_bar_carries_reverification_notice,
+    test_public_status_bar_has_no_reverification_notice,
     test_public_dhf_architecture_status_alignment,
     test_dhf_models_and_patterns_information_architecture,
     test_dhf_memory_map_bilingual_information_architecture,
