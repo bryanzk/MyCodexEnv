@@ -14,19 +14,19 @@ Stable rules belong in `AGENTS.md`, `README.md`, `docs/repo-index.md`, or
   - `codex/skills/delivery-harness-framework/SKILL.md`
 - blocked_sources: none
 - unsafe_inputs: none
-- next_safe_task: owner pushes codex/dhf-hook-single-source-20261126 and merges to main; then retire the compaction suite and other no-signal components (master plan E)
+- next_safe_task: merge PR #43 and close SHI-626; then SHI-627 (Claude Code adapter on the same core) and SHI-628 (conformance probes and host consistency table)
 - required_commands:
   - `python3 test_runner.py`
   - `git diff --check`
   - `./scripts/verify_codex_env.sh --repo-root "$(pwd)" --codex-home "$HOME/.codex" --claude-home "$HOME/.claude"`
-- latest_checkpoint: 2026-11-26T20:20:47+00:00 single-sourced DHF hook registration in codex/config.template.toml and retired codex/hooks.json so sync no longer overwrites another tool's ~/.codex/hooks.json; status and verify now read config.toml; Guard now treats ~/.codex/config.toml as a control-plane file; owner approved digests 9713a676 and 1bdc3024 and promoted the seven targets (transaction 2de7cee90a724f2c9805ca23f8579e49)
-- latest_verification: 2026-11-26T20:20:47+00:00 command=python3 test_runner.py; exit_code=0; key_output=ran=165 passed=164 skipped=1 failed=0 on Python 3.12 (owner host); compare=0 no_managed=0; host probe 2026-11-26T15:20:01-05:00: Command blocked by PreToolUse hook: [harness] active_control_plane_mutation on ~/.codex/config.toml; guard-receipt invocations=19 blocks=2 guard_sha256=09f2bfd9 matches installed Guard
+- latest_checkpoint: 2026-11-27T00:05:04+00:00 split the Guard into a host-neutral core (dhf/core/guard_core.py) and a Codex adapter, inlined into one hook file by scripts/build_guard_bundle.py so the promotion manifest keeps seven targets; a Guard that raises now blocks write and delete calls with guard_fault instead of failing open (owner ruling, docs/dhf-spec.md section 8); added the host-neutral DHF specification docs/dhf-spec.md v0.3; owner approved digest ae5f1492 and promoted the seven targets (transaction aae00c0dfdb84742900c53a7c11daea2)
+- latest_verification: 2026-11-27T00:05:04+00:00 command=python3 test_runner.py; exit_code=0; key_output=ran=167 passed=166 skipped=1 failed=0 on Python 3.12 (owner host); old-vs-new Guard differential over 8442 payloads: 0 decision differences, receipts and 116 block records identical; host probe 2026-11-26T19:03:46-05:00 on Codex: Command blocked by PreToolUse hook: [harness] active_control_plane_mutation on ~/.codex/hooks/_dhf_probe_absent.txt; guard-receipt invocations=29 blocks=3 matches installed Guard (guard_sha256 699ff61e); PR #43 CI gate success, Codex review no findings
 - compaction_ordinal: 0
 - transition_key: p1-2-complete
 - gate_decision: continue-to-boundary
-- constraints: ["status --runtime reports dhf_preprompt.py disabled in hooks.state: light/standard/governed prompt shaping is not active in the Codex runtime; cause unconfirmed","Full sync_codex_home.sh has not been run against the live runtime since this change; only --promote-harness-guard has","Public status pages still cite the 2026-08-10 18/18 probe on Codex 0.147.0; they are marked under re-verification, not corrected"]
+- constraints: ["The guard_fault rule covers a Guard that raises; a file that does not compile, and a host-side hook timeout, are outside it","The fault rule has been exercised by tests on Python 3.12 and 3.9.6, not by a live fault in the Codex runtime","status --runtime still reports dhf_preprompt.py disabled in hooks.state (owner's choice): light/standard/governed prompt shaping is not active","Full sync_codex_home.sh has not been run against the live runtime since 2026-11-26; only --promote-harness-guard has","Other machines (MacBook Air, Mac mini) have not been checked and may still run the Guard promoted on 2026-08-18 (SHI-632)"]
 - ownership: {}
-- next_action: {"command":"owner pushes codex/dhf-hook-single-source-20261126 and merges to main; then retire the compaction suite and other no-signal components (master plan E)"}
+- next_action: {"command":"merge PR #43 and close SHI-626; then SHI-627 (Claude Code adapter on the same core) and SHI-628 (conformance probes and host consistency table)"}
 
 ## State Log
 
@@ -3798,3 +3798,31 @@ Stable rules belong in `AGENTS.md`, `README.md`, `docs/repo-index.md`, or
   - none
 - next_safe_task: owner pushes codex/dhf-hook-single-source-20261126 and merges to main; then retire the compaction suite and other no-signal components (master plan E)
 - checkpoint_data: {"constraints":["status --runtime reports dhf_preprompt.py disabled in hooks.state: light/standard/governed prompt shaping is not active in the Codex runtime; cause unconfirmed","Full sync_codex_home.sh has not been run against the live runtime since this change; only --promote-harness-guard has","Public status pages still cite the 2026-08-10 18/18 probe on Codex 0.147.0; they are marked under re-verification, not corrected"],"next_action":{"command":"owner pushes codex/dhf-hook-single-source-20261126 and merges to main; then retire the compaction suite and other no-signal components (master plan E)"},"ownership":{},"phase":"ship","schema":"dhf_checkpoint_v1","verification_evidence":{"command":"python3 test_runner.py","exit_code":0,"freshness":"fresh","key_output":"ran=165 passed=164 skipped=1 failed=0 on Python 3.12 (owner host); compare=0 no_managed=0; host probe 2026-11-26T15:20:01-05:00: Command blocked by PreToolUse hook: [harness] active_control_plane_mutation on ~/.codex/config.toml; guard-receipt invocations=19 blocks=2 guard_sha256=09f2bfd9 matches installed Guard","timestamp":"2026-11-26T15:15:34-05:00"}}
+
+### 2026-11-27T00:05:04+00:00
+- phase: ship
+- event: checkpoint
+- summary: split the Guard into a host-neutral core (dhf/core/guard_core.py) and a Codex adapter, inlined into one hook file by scripts/build_guard_bundle.py so the promotion manifest keeps seven targets; a Guard that raises now blocks write and delete calls with guard_fault instead of failing open (owner ruling, docs/dhf-spec.md section 8); added the host-neutral DHF specification docs/dhf-spec.md v0.3; owner approved digest ae5f1492 and promoted the seven targets (transaction aae00c0dfdb84742900c53a7c11daea2)
+- git:
+  - branch: codex/shi-626-guard-core-adapter-20261126
+  - latest_commit: 7b5fd7c
+  - dirty_status: clean
+  - dirty_count: 0
+- changed_surfaces:
+  - `dhf/core/guard_core.py (new)`
+  - `codex/hooks/harness_guard.py`
+  - `scripts/build_guard_bundle.py (new)`
+  - `scripts/check_surfaces.py`
+  - `test_runner.py`
+  - `docs/dhf-spec.md (new, merged in PR #41 and #42)`
+  - `docs/HARNESS_RUNTIME.md, docs/repo-index.md, docs/surfaces.json, docs/agents/repository.md`
+  - `runtime-approvals/approved-source-digests.txt, tests/fixtures/dhf_simplification_observations.json`
+  - `docs/harness-state.md`
+- verification:
+  - command: `python3 test_runner.py`
+  - exit_code: 0
+  - key_output: ran=167 passed=166 skipped=1 failed=0 on Python 3.12 (owner host); old-vs-new Guard differential over 8442 payloads: 0 decision differences, receipts and 116 block records identical; host probe 2026-11-26T19:03:46-05:00 on Codex: Command blocked by PreToolUse hook: [harness] active_control_plane_mutation on ~/.codex/hooks/_dhf_probe_absent.txt; guard-receipt invocations=29 blocks=3 matches installed Guard (guard_sha256 699ff61e); PR #43 CI gate success, Codex review no findings
+- blockers:
+  - none
+- next_safe_task: merge PR #43 and close SHI-626; then SHI-627 (Claude Code adapter on the same core) and SHI-628 (conformance probes and host consistency table)
+- checkpoint_data: {"constraints":["The guard_fault rule covers a Guard that raises; a file that does not compile, and a host-side hook timeout, are outside it","The fault rule has been exercised by tests on Python 3.12 and 3.9.6, not by a live fault in the Codex runtime","status --runtime still reports dhf_preprompt.py disabled in hooks.state (owner's choice): light/standard/governed prompt shaping is not active","Full sync_codex_home.sh has not been run against the live runtime since 2026-11-26; only --promote-harness-guard has","Other machines (MacBook Air, Mac mini) have not been checked and may still run the Guard promoted on 2026-08-18 (SHI-632)"],"next_action":{"command":"merge PR #43 and close SHI-626; then SHI-627 (Claude Code adapter on the same core) and SHI-628 (conformance probes and host consistency table)"},"ownership":{},"phase":"ship","schema":"dhf_checkpoint_v1","verification_evidence":{"command":"python3 test_runner.py","exit_code":0,"freshness":"fresh","key_output":"ran=167 passed=166 skipped=1 failed=0 on Python 3.12 (owner host); old-vs-new Guard differential over 8442 payloads: 0 decision differences, receipts and 116 block records identical; host probe 2026-11-26T19:03:46-05:00 on Codex: Command blocked by PreToolUse hook: [harness] active_control_plane_mutation on ~/.codex/hooks/_dhf_probe_absent.txt; guard-receipt invocations=29 blocks=3 matches installed Guard (guard_sha256 699ff61e); PR #43 CI gate success, Codex review no findings","timestamp":"2026-11-26T18:51:29-05:00"}}
