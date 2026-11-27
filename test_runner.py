@@ -7626,6 +7626,19 @@ def test_harness_observer_evidence_minimization_matrix():
         {"name": "fail_safe", "payloads": ["{bad json", ""]},
     ]
 
+    host_secret = "HOST_OUTPUT_FIXTURE_DO_NOT_PERSIST"
+    cases += [
+        # Shapes measured on Codex CLI 0.172.0 (SHI-633): the shell result is the output text
+        # in tool_response, with no exit status anywhere in the payload.
+        {"name": "host_shell", "payloads": [json.dumps({"hook_event_name": "PostToolUse", "tool_name": "Bash",
+                                                         "tool_input": {"command": "sh -c 'echo x; exit 3'"},
+                                                         "tool_response": host_secret + "\n"})]},
+        {"name": "host_mcp", "payloads": [json.dumps({"hook_event_name": "PostToolUse", "tool_name": "mcp__a__b",
+                                                       "tool_input": {}, "tool_response": {"content": [{"text": host_secret}]}})]},
+        {"name": "explicit_exit", "payloads": [json.dumps({"tool_name": "exec_command", "tool_input": {"cmd": "false"},
+                                                            "exit_code": 2, "key_output": "boom"})]},
+    ]
+
     for case in cases:
         with tempfile.TemporaryDirectory() as tmp:
             evidence_dir = Path(tmp) / "evidence"
@@ -7664,6 +7677,17 @@ def test_harness_observer_evidence_minimization_matrix():
                 )
             elif case["name"] == "sensitive":
                 require(sensitive_command not in evidence_text, "sensitive command found in evidence")
+            elif case["name"] in {"host_shell", "host_mcp"}:
+                event = events[-1]
+                require(host_secret not in evidence_text, "host tool output must not be stored as text")
+                require(event.get("output_source") == "tool_response" and event.get("output_length", 0) > len(host_secret) - 1
+                        and event.get("key_output") == "", f"host output must be recorded by length and hash only: {event}")
+                require("exit_code" not in event and event.get("exit_code_observed") is False,
+                        f"an exit status the host did not pass must not be recorded as 0: {event}")
+            elif case["name"] == "explicit_exit":
+                require(events[-1].get("exit_code") == 2 and events[-1].get("exit_code_observed") is True
+                        and events[-1].get("key_output") == "boom" and events[-1].get("output_source") == "payload",
+                        f"an exit status and key output passed on purpose are kept: {events[-1]}")
             elif case["name"] == "oversized":
                 require(all(len(line.encode("utf-8")) <= 8 * 1024 for line in lines), "record exceeds cap")
                 require(events[-1].get("truncated") is True, "oversized record must be marked truncated")
@@ -8339,6 +8363,18 @@ def test_harness_feedback_conversion_health():
         compute_conversion_health(insufficient)["status"] == "insufficient_evidence",
         "small windows should be explicit",
     )
+
+    # SHI-633: the observer cannot see an exit status on the current host and
+    # verification receipts go to the State Log, so tool calls alone are not a stall.
+    tool_calls_only = [
+        {"timestamp": f"2026-06-01T00:00:0{i}", "event_type": "tool_call", "tool_name": "Bash"}
+        for i in range(6)
+    ]
+    quiet = compute_conversion_health(tool_calls_only)
+    require(quiet["status"] == "no_signal" and "no verification" in quiet["reason"],
+            f"tool calls without any productive record must read as no_signal, not stalled: {quiet}")
+    require(compute_conversion_health(stalled)["status"] == "stalled",
+            "a repeated identical command without productive feedback still reads as stalled")
 
     print("[PASS] harness feedback conversion health")
 

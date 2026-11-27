@@ -74,6 +74,13 @@ def compute_conversion_health(events: list[dict[str, Any]]) -> dict[str, Any]:
     if window_event_count < 3:
         status = "insufficient_evidence"
         reason = "fewer than three evidence events"
+    elif low_conversion_signals == ["many_tool_calls_without_productive_feedback"]:
+        # Tool calls alone say nothing about progress: on the current host the
+        # observer cannot see an exit status, and verification receipts are
+        # written to the State Log, not to this store. Absence of productive
+        # records here is therefore not evidence of a stall.
+        status = "no_signal"
+        reason = "tool calls only; this store holds no verification, checkpoint, or handoff record in the window"
     elif low_conversion_signals and productive_event_count == 0:
         status = "stalled"
         reason = "low-conversion signals without productive feedback"
