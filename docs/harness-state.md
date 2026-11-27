@@ -14,19 +14,19 @@ Stable rules belong in `AGENTS.md`, `README.md`, `docs/repo-index.md`, or
   - `codex/skills/delivery-harness-framework/SKILL.md`
 - blocked_sources: none
 - unsafe_inputs: none
-- next_safe_task: Owner reruns the full-sync rehearsal against a copy of the runtime on this branch's merge; no full sync against the real runtime before that
+- next_safe_task: Owner runs the full suite on the host and reruns the full-sync rehearsal against a copy of the runtime; no full sync against the real runtime before that
 - required_commands:
   - `python3 test_runner.py`
   - `git diff --check`
   - `./scripts/verify_codex_env.sh --repo-root "$(pwd)" --codex-home "$HOME/.codex" --claude-home "$HOME/.claude"`
-- latest_checkpoint: 2026-11-27T17:04:57-05:00 SHI-637: the full sync no longer drops owner and host settings from config.toml and no longer writes into the host-owned skills/.system. A rehearsal against a copy of the reference runtime showed the config merge kept only an allowlist of tables, so six runtime-only tables would have been removed, and the skills copy would have overwritten the host's bundled system skills with the repository snapshot. The merge now keeps every table and top-level key the template does not define, refuses a result that is not valid TOML, and prints what it kept. Hook registration still comes only from the template.
-- latest_verification: 2026-11-27T17:04:57-05:00 command=python3 test_runner.py (cloud clone, no Codex CLI); exit_code=0; key_output=165 pass; the 5 failures and 4 skips are the same set as on main in this environment; test_sync_preserves_runtime_plugin_state fails on main with the new assertions and passes with the change
+- latest_checkpoint: 2026-11-27T17:49:47-05:00 SHI-637: final shape of the config.toml merge in the full sync. Review found that matching lines could not read every valid spelling. The merge now scans statements, compares tables by parsed key path, and checks its text result against a merge worked out on parsed data. If they differ, the parsed result is written and the sync says comments were not kept. Only an existing config.toml that is not valid TOML stops the sync. This replaces the earlier entry's statement that the merge refuses on an invalid result.
+- latest_verification: 2026-11-27T17:49:47-05:00 command=python3 test_runner.py (cloud clone, no Codex CLI); CI gate on f33ebb5; exit_code=0; key_output=165 pass, same 5 failures and 4 skips as main in this environment; CI gate success; Codex review reports no findings on f33ebb5; 18 hand-run spellings of an existing config.toml merge to the expected settings, 16 by text and 2 by the parsed fallback
 - compaction_ordinal: 0
 - transition_key: p1-2-complete
 - gate_decision: continue-to-boundary
-- constraints: ["The full sync has still never run against the real runtime"]
+- constraints: ["The full sync has still never run against the real runtime","Not run on a host with the Codex CLI"]
 - ownership: {}
-- next_action: {"command":"Owner reruns the full-sync rehearsal against a copy of the runtime on this branch's merge; no full sync against the real runtime before that"}
+- next_action: {"command":"Owner runs the full suite on the host and reruns the full-sync rehearsal against a copy of the runtime; no full sync against the real runtime before that"}
 
 ## State Log
 
@@ -4054,3 +4054,24 @@ Stable rules belong in `AGENTS.md`, `README.md`, `docs/repo-index.md`, or
   - none
 - next_safe_task: Owner reruns the full-sync rehearsal against a copy of the runtime on this branch's merge; no full sync against the real runtime before that
 - checkpoint_data: {"constraints":["The full sync has still never run against the real runtime"],"next_action":{"command":"Owner reruns the full-sync rehearsal against a copy of the runtime on this branch's merge; no full sync against the real runtime before that"},"ownership":{},"phase":"ship","schema":"dhf_checkpoint_v1","verification_evidence":{"command":"python3 test_runner.py (cloud clone, no Codex CLI)","exit_code":0,"freshness":"fresh","key_output":"165 pass; the 5 failures and 4 skips are the same set as on main in this environment; test_sync_preserves_runtime_plugin_state fails on main with the new assertions and passes with the change","timestamp":"2026-11-27T17:04:57-05:00"}}
+
+### 2026-11-27T17:49:47-05:00
+- phase: ship
+- event: checkpoint
+- summary: SHI-637: final shape of the config.toml merge in the full sync. Review found that matching lines could not read every valid spelling. The merge now scans statements, compares tables by parsed key path, and checks its text result against a merge worked out on parsed data. If they differ, the parsed result is written and the sync says comments were not kept. Only an existing config.toml that is not valid TOML stops the sync. This replaces the earlier entry's statement that the merge refuses on an invalid result.
+- git:
+  - branch: codex/shi-637-sync-preserve-20261127
+  - latest_commit: f33ebb5
+  - dirty_status: clean
+  - dirty_count: 0
+- changed_surfaces:
+  - `scripts/sync_codex_home.sh`
+  - `test_runner.py`
+- verification:
+  - command: `python3 test_runner.py (cloud clone, no Codex CLI); CI gate on f33ebb5`
+  - exit_code: 0
+  - key_output: 165 pass, same 5 failures and 4 skips as main in this environment; CI gate success; Codex review reports no findings on f33ebb5; 18 hand-run spellings of an existing config.toml merge to the expected settings, 16 by text and 2 by the parsed fallback
+- blockers:
+  - none
+- next_safe_task: Owner runs the full suite on the host and reruns the full-sync rehearsal against a copy of the runtime; no full sync against the real runtime before that
+- checkpoint_data: {"constraints":["The full sync has still never run against the real runtime","Not run on a host with the Codex CLI"],"next_action":{"command":"Owner runs the full suite on the host and reruns the full-sync rehearsal against a copy of the runtime; no full sync against the real runtime before that"},"ownership":{},"phase":"ship","schema":"dhf_checkpoint_v1","verification_evidence":{"command":"python3 test_runner.py (cloud clone, no Codex CLI); CI gate on f33ebb5","exit_code":0,"freshness":"fresh","key_output":"165 pass, same 5 failures and 4 skips as main in this environment; CI gate success; Codex review reports no findings on f33ebb5; 18 hand-run spellings of an existing config.toml merge to the expected settings, 16 by text and 2 by the parsed fallback","timestamp":"2026-11-27T17:49:47-05:00"}}
