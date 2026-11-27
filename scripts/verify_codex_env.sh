@@ -378,6 +378,19 @@ else
   results+=("FAIL:codex_version")
 fi
 
+# Version rule: an accepted Codex version is not enough. Every function the
+# conformance table claims as enforced on Codex needs a passing host probe
+# receipt taken on the version that is installed now.
+if should_skip "codex_host_probe_receipt"; then
+  results+=("SKIP:codex_host_probe_receipt")
+elif [[ "${codex_version}" == "unavailable" ]]; then
+  results+=("SKIP:codex_host_probe_receipt")
+elif python3 "${REPO_ROOT}/scripts/dhf_conformance.py" --repo-root "${REPO_ROOT}" require-receipt --host codex-cli --host-version "${codex_version}" >/dev/null; then
+  results+=("PASS:codex_host_probe_receipt")
+else
+  results+=("FAIL:codex_host_probe_receipt")
+fi
+
 if [[ "${cmd_codex_result}" == PASS:* ]] && "${CODEX_BIN}" login status >/dev/null 2>&1; then
   login_status="authenticated"
 elif [[ "${cmd_codex_result}" == PASS:* ]]; then
