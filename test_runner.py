@@ -6067,6 +6067,156 @@ def test_guard_core_is_host_neutral_and_bundled():
     print("[PASS] guard core is host-neutral and bundled into the Codex adapter")
 
 
+def test_claude_code_guard_adapter():
+    """The Claude Code adapter: same core, this host's tool names, response format, and fault rule (SHI-627)."""
+    adapter = ROOT / "dhf" / "adapters" / "claude_code" / "dhf_guard.py"
+    fragment_path = ROOT / "dhf" / "adapters" / "claude_code" / "settings.fragment.json"
+    installer = ROOT / "scripts" / "install_claude_code_guard.py"
+    source = adapter.read_text(encoding="utf-8")
+    ast.parse(source, filename=str(adapter), feature_version=(3, 9))
+    sys.path.insert(0, str(ROOT / "scripts"))
+    try:
+        import build_guard_bundle
+    finally:
+        sys.path.pop(0)
+    require(Path("dhf/adapters/claude_code/dhf_guard.py") in build_guard_bundle.ADAPTERS,
+            "the Claude Code adapter must be a bundle target")
+    body = build_guard_bundle.core_body((ROOT / "dhf" / "core" / "guard_core.py").read_text(encoding="utf-8"))
+    require(body in source, "the Claude Code adapter must contain the core body verbatim")
+    adapter_only = source.replace(body, "")
+    for word in ("apply_patch", "CODEX_HOME", "codex"):
+        require(word not in adapter_only, f"the Claude Code adapter must not carry another host's vocabulary: {word!r}")
+
+    fragment = json.loads(fragment_path.read_text(encoding="utf-8"))
+    groups = fragment["hooks"]["PreToolUse"]
+    by_matcher = {group["matcher"]: group["hooks"][0] for group in groups}
+    require(set(by_matcher) == {"Write|Edit|MultiEdit|NotebookEdit", "Read|Glob|Grep"},
+            f"the registration must be one write group and one read group: {sorted(by_matcher)}")
+    require(by_matcher["Write|Edit|MultiEdit|NotebookEdit"].get("onFailure") == "block",
+            "a Guard that cannot start or times out must block write calls (owner decision 2026-11-26)")
+    require("onFailure" not in by_matcher["Read|Glob|Grep"],
+            "a Guard that cannot start must not block read calls")
+    require(all(".claude/hooks/dhf_guard.py" in hook["command"] and hook["type"] == "command" for hook in by_matcher.values()),
+            "both groups must run the installed adapter")
+
+    def denied(code):
+        return {"hookSpecificOutput": {"hookEventName": "PreToolUse", "permissionDecision": "deny",
+                                       "permissionDecisionReason": f"[harness] {code}"}}
+
+    interpreters = [sys.executable]
+    if Path("/usr/bin/python3").exists():
+        interpreters.append("/usr/bin/python3")
+    with tempfile.TemporaryDirectory() as tmp:
+        tmp_path = Path(tmp).resolve()
+        home = tmp_path / "home"
+        project = tmp_path / "project"
+        (home / ".claude").mkdir(parents=True)
+        (home / ".ssh").mkdir()
+        write(home / ".ssh" / "id_ed25519", "secret")
+        write(home / ".claude" / ".credentials.json", "{}")
+        (project / ".claude" / "hooks").mkdir(parents=True)
+        write(project / ".claude" / "settings.json", "{}")
+        write(project / "a.txt", "x")
+        env = {key: value for key, value in os.environ.items() if key not in {"CLAUDE_CONFIG_DIR", "CLAUDE_CODE_REMOTE"}}
+        env.update({"HOME": str(home), "CLAUDE_PROJECT_DIR": str(project)})
+
+        def call(tool, tool_input, script=adapter, interpreter=sys.executable, environment=env):
+            payload = {"hook_event_name": "PreToolUse", "tool_name": tool, "tool_input": tool_input,
+                       "cwd": str(project), "session_id": "probe"}
+            code, out, err = run_with_input([interpreter, str(script)], json.dumps(payload), env=environment)
+            require(code == 0, f"the adapter must exit 0 so the host reads its decision ({tool}): {err}")
+            return (json.loads(out) if out else {}), err
+
+        edit = {"old_string": "x", "new_string": "y"}
+        cases = [
+            ("ordinary edit", "Edit", {"file_path": str(project / "a.txt"), **edit}, {}),
+            ("project settings", "Edit", {"file_path": str(project / ".claude" / "settings.json"), **edit}, denied("active_control_plane_mutation")),
+            ("project local settings", "Write", {"file_path": str(project / ".claude" / "settings.local.json"), "content": "{}"}, denied("active_control_plane_mutation")),
+            ("project hook, relative path", "Write", {"file_path": ".claude/hooks/new.py", "content": "x"}, denied("active_control_plane_mutation")),
+            ("project hook, variable path", "Write", {"file_path": "$CLAUDE_PROJECT_DIR/.claude/hooks/new.py", "content": "x"}, denied("active_control_plane_mutation")),
+            ("user settings", "MultiEdit", {"file_path": "~/.claude/settings.json", "edits": [edit]}, denied("active_control_plane_mutation")),
+            ("receipt directory", "Write", {"file_path": str(home / ".claude" / "dhf" / "guard-receipt.json"), "content": "{}"}, denied("active_control_plane_mutation")),
+            ("notebook in hooks", "NotebookEdit", {"notebook_path": str(project / ".claude" / "hooks" / "n.ipynb"), "new_source": "x"}, denied("active_control_plane_mutation")),
+            ("shell startup file", "Write", {"file_path": str(home / ".zshrc"), "content": "x"}, denied("os_persistence_mutation")),
+            ("read settings", "Read", {"file_path": str(project / ".claude" / "settings.json")}, {}),
+            ("read private key", "Read", {"file_path": str(home / ".ssh" / "id_ed25519")}, denied("credential_target_access")),
+            ("read host credentials", "Read", {"file_path": str(home / ".claude" / ".credentials.json")}, denied("credential_target_access")),
+            ("content search in .ssh", "Grep", {"pattern": "x", "path": str(home / ".ssh")}, denied("credential_target_access")),
+            ("content search of home", "Grep", {"pattern": "x", "path": "~"}, denied("credential_target_access")),
+            ("content search of project", "Grep", {"pattern": "x"}, {}),
+            ("name search in .ssh", "Glob", {"pattern": "*", "path": str(home / ".ssh")}, {}),
+            ("instruction file", "Write", {"file_path": str(project / "CLAUDE.md"), "content": "x"}, {}),
+            ("skill file", "Write", {"file_path": str(project / ".claude" / "skills" / "s" / "SKILL.md"), "content": "x"}, {}),
+            ("shell call", "Bash", {"command": "rm -rf .claude"}, {}),
+            ("lowercase name is another tool", "write", {"file_path": str(project / ".claude" / "settings.json"), "content": "x"}, {}),
+            ("unparsable write", "Write", {"path": str(project / ".claude" / "settings.json")}, {}),
+        ]
+        for label, tool, tool_input, expected in cases:
+            result, err = call(tool, tool_input)
+            require(result == expected, f"Claude Code adapter, {label}: got {result}, expected {expected} ({err})")
+
+        receipt = json.loads((home / ".claude" / "dhf" / "guard-receipt.json").read_text(encoding="utf-8"))
+        blocks = sum(1 for _, _, _, expected in cases if expected)
+        require(receipt["invocations"] == len(cases) and receipt["blocks"] == blocks and receipt["host"] == "claude-code"
+                and receipt["unrecognized_mutations"] == 1 and receipt["last_unrecognized"]["tool_name"] == "Write"
+                and receipt["remote"] is False and receipt["project_dir"] == str(project),
+                f"the adapter receipt must count every call, block, and unrecognized write: {receipt}")
+        evidence_files = list((home / ".claude" / "dhf" / "evidence").glob("*.jsonl"))
+        require(len(evidence_files) == 1 and len(evidence_files[0].read_text(encoding="utf-8").splitlines()) == blocks,
+                "every block must append one evidence record")
+        require("secret" not in (home / ".claude" / "dhf" / "guard-receipt.json").read_text(encoding="utf-8"),
+                "the receipt must not carry file content")
+
+        decision_def = "def decision(payload: dict[str, object]) -> dict[str, object]:\n"
+        end_marker = "# --- END DHF GUARD CORE ---\n"
+        require(source.count(decision_def) == 1 and source.count(end_marker) == 1,
+                "fault fixtures need the adapter decision seam and the core end marker")
+        faults = {
+            "decision_time": source.replace(decision_def, decision_def + "    raise RuntimeError('injected decision fault')\n"),
+            "import_time": source.replace(end_marker, end_marker + "raise RuntimeError('injected import fault')\n"),
+        }
+        for fault_name, fault_source in faults.items():
+            faulty = tmp_path / f"{fault_name}-dhf_guard.py"
+            faulty.write_text(fault_source, encoding="utf-8")
+            for interpreter in interpreters:
+                for tool, tool_input, expected in (
+                    ("Write", {"file_path": str(project / "a.txt"), "content": "x"}, denied("guard_fault")),
+                    ("Edit", {"file_path": str(project / "a.txt"), **edit}, denied("guard_fault")),
+                    ("NotebookEdit", {"notebook_path": str(project / "n.ipynb")}, denied("guard_fault")),
+                    ("Read", {"file_path": str(project / "a.txt")}, {}),
+                    ("Bash", {"command": "true"}, {}),
+                ):
+                    result, err = call(tool, tool_input, script=faulty, interpreter=interpreter)
+                    label = f"{fault_name}/{tool} under {interpreter}"
+                    require(result == expected, f"faulted Claude Code adapter returned {result}, expected {expected} ({label})")
+                    require("injected" in err, f"the fault must stay visible on stderr ({label}): {err!r}")
+        code, out, err = run_with_input([sys.executable, str(adapter)], "not json", env=env)
+        require(code == 0 and out == "", f"an unreadable payload must leave the call to the host: {out!r} {err!r}")
+
+        target = tmp_path / "target-repo"
+        (target / ".claude").mkdir(parents=True)
+        other = {"matcher": "Bash", "hooks": [{"type": "command", "command": "echo other"}]}
+        write(target / ".claude" / "settings.json",
+              json.dumps({"permissions": {"allow": ["mcp__linear"]}, "hooks": {"PreToolUse": [other], "Stop": []}}))
+        code, out, err = run([sys.executable, str(installer), "--repo", str(target)], cwd=ROOT)
+        require(code == 1 and "GUARD:missing" in out and "SETTINGS:stale" in out,
+                f"the installer must report and change nothing by default: {out} {err}")
+        require(not (target / ".claude" / "hooks").exists(), "the installer must not write without --write")
+        for _ in range(2):
+            code, out, err = run([sys.executable, str(installer), "--repo", str(target), "--write"], cwd=ROOT)
+            require(code == 0 and "claude code guard installed and current" in out, f"installer --write failed: {out} {err}")
+        installed = json.loads((target / ".claude" / "settings.json").read_text(encoding="utf-8"))
+        require(installed["permissions"] == {"allow": ["mcp__linear"]} and installed["hooks"]["Stop"] == []
+                and installed["hooks"]["PreToolUse"] == [other, *groups],
+                f"the installer must keep foreign settings and add its two groups exactly once: {installed}")
+        require((target / ".claude" / "hooks" / "dhf_guard.py").read_text(encoding="utf-8") == source,
+                "the installed adapter must equal the source adapter")
+        code, out, err = run([sys.executable, str(installer), "--repo", str(target), "--check"], cwd=ROOT)
+        require(code == 0, f"a fresh install must pass --check: {out} {err}")
+
+    print("[PASS] Claude Code guard adapter: decisions, receipt, fault rule, registration, installer")
+
+
 def test_harness_guard_fault_blocks_mutations():
     """A Guard that fails must block write and delete calls instead of failing open.
 
@@ -14313,6 +14463,7 @@ TESTS = [
     test_status_reports_unrecognized_guard_calls,
     test_harness_guard_governed_profile,
     test_guard_core_is_host_neutral_and_bundled,
+    test_claude_code_guard_adapter,
     test_harness_guard_fault_blocks_mutations,
     test_harness_guard_policy_decisions,
     test_harness_guard_invocation_receipt,
