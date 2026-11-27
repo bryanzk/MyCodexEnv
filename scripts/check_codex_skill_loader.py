@@ -38,14 +38,41 @@ def resolve_codex(repo_root: Path, explicit: str | None) -> str:
 
 
 def expected_paths(repo_root: Path, codex_home: Path) -> set[Path]:
+    """Skills this repository manages. Each must be listed and enabled."""
     expected: set[Path] = set()
     for skill_file in (repo_root / "codex" / "skills").glob("*/SKILL.md"):
         expected.add((codex_home / "skills" / skill_file.parent.name / "SKILL.md").resolve())
-    for skill_file in (repo_root / "codex" / "skills" / ".system").glob("*/SKILL.md"):
-        expected.add((codex_home / "skills" / ".system" / skill_file.parent.name / "SKILL.md").resolve())
     for skill_file in (repo_root / ".agents" / "skills").glob("*/SKILL.md"):
         expected.add(skill_file.resolve())
     return expected
+
+
+def system_skill_paths(repo_root: Path, codex_home: Path) -> set[Path]:
+    """The repository's snapshot of the host's own `.system` skills.
+
+    The host owns that directory: it writes its bundled set there when it
+    starts, and the set changes between host versions. The snapshot is
+    therefore a record of one host version, not a requirement on the next.
+    """
+    return {
+        (codex_home / "skills" / ".system" / skill_file.parent.name / "SKILL.md").resolve()
+        for skill_file in (repo_root / "codex" / "skills" / ".system").glob("*/SKILL.md")
+    }
+
+
+def classify_system_skills(snapshot: set[Path], listed: set[Path], enabled: set[Path]) -> dict[str, list[str]]:
+    """Split the `.system` snapshot into what fails the gate and what is only reported.
+
+    A snapshot skill the host lists but has disabled fails. A snapshot skill the
+    host no longer ships is reported. If the host lists none of the snapshot,
+    its system skills did not load at all, and every one of them is missing.
+    """
+    absent = snapshot - listed
+    if snapshot and absent == snapshot:
+        return {"missing": sorted(str(path) for path in absent), "not_shipped": [],
+                "disabled": []}
+    return {"missing": [], "not_shipped": sorted(str(path) for path in absent),
+            "disabled": sorted(str(path) for path in (snapshot & listed) - enabled)}
 
 
 def app_server_command(codex_bin: str) -> list[str]:
@@ -141,15 +168,20 @@ def run_loader(repo_root: Path, codex_home: Path, codex_bin: str, timeout: float
     paths = {Path(skill["path"]).resolve() for skill in skills}
     enabled_paths = {Path(skill["path"]).resolve() for skill in skills if skill.get("enabled")}
     expected = expected_paths(repo_root, codex_home)
+    snapshot = system_skill_paths(repo_root, codex_home)
+    system = classify_system_skills(snapshot, paths, enabled_paths)
     return {
         "codex_bin": codex_bin,
         "skill_records": len(skills),
         "unique_names": len({skill.get("name") for skill in skills}),
         "loader_errors": len(errors),
         "errors": errors,
-        "expected_paths": len(expected),
-        "missing_expected_paths": sorted(str(path) for path in expected - paths),
-        "disabled_expected_paths": sorted(str(path) for path in expected - enabled_paths if path in paths),
+        "expected_paths": len(expected) + len(snapshot),
+        "missing_expected_paths": sorted([str(path) for path in expected - paths] + system["missing"]),
+        "disabled_expected_paths": sorted(
+            [str(path) for path in expected - enabled_paths if path in paths] + system["disabled"]
+        ),
+        "system_skills_not_shipped_by_host": system["not_shipped"],
     }
 
 
@@ -165,6 +197,7 @@ def render_markdown(payload: dict[str, Any]) -> str:
             f"- expected_paths: {payload['expected_paths']}",
             f"- missing_expected_paths: {len(payload['missing_expected_paths'])}",
             f"- disabled_expected_paths: {len(payload['disabled_expected_paths'])}",
+            f"- system_skills_not_shipped_by_host: {len(payload['system_skills_not_shipped_by_host'])}",
         ]
     )
 

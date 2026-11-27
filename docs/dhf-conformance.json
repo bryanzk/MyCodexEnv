@@ -584,7 +584,7 @@
         "probes": [
           "observe.post-tool-record"
         ],
-        "note": "Every tool call appends one record. The record of a shell call carried output_length 0 and an empty key_output although the command printed a line (SHI-633)."
+        "note": "Every tool call appends one record. The record of a shell call carried output_length 0 and an empty key_output although the command printed a line (SHI-633). The host passes no exit status to PostToolUse (measured on 0.172.0), so a record shows that a call ran and the length and hash of its output, not whether it succeeded; a failed apply_patch raises no PostToolUse and leaves no record."
       },
       "thread": {
         "status": "enforced_verified",
@@ -759,5 +759,39 @@
         "note": "Repository hooks do not run in this kind of session; the function is carried by written rules only."
       }
     }
-  }
+  },
+  "supporting": [
+    {
+      "id": "plan-governor",
+      "source": "scripts/plan_governor.py",
+      "state": "shadow",
+      "host": "codex-cli",
+      "note": "Runs in shadow mode only; production_status is no_go. It needs an ask that a hook can enforce, and the host does not offer one.",
+      "review_when": "The host documents a hook that can require the owner's answer before a tool call proceeds."
+    },
+    {
+      "id": "compaction-probe",
+      "source": "codex/hooks/compaction_probe.py",
+      "state": "no_signal",
+      "host": "codex-cli",
+      "note": "Every run from 2026-09-01 to 2026-11-27 ended as probe_inconclusive. It looks for the session's rollout file under ~/.codex/sessions: three of four session ids the host passes have no such file, and at a session's first prompt transcript_path can be null. On Codex CLI 0.172.0 the host reports a completed compaction through the PostCompact hook (measured 2026-11-27, trigger manual); the probe does not use it yet.",
+      "review_when": "The probe counts PostCompact events, and that hook is registered in the runtime (needs the full sync, SHI-637)."
+    },
+    {
+      "id": "prompt-dispatcher",
+      "source": "codex/hooks/dhf_preprompt.py",
+      "state": "disabled_by_owner",
+      "host": "codex-cli",
+      "note": "Advisory wording only; the owner turned it off on the reference machine.",
+      "review_when": "SHI-635 decides whether it stays."
+    },
+    {
+      "id": "observer-exit-status",
+      "source": "codex/hooks/harness_observer.py",
+      "state": "not_observable",
+      "host": "codex-cli",
+      "note": "On Codex CLI 0.172.0 the PostToolUse payload carries the output text of a shell command in tool_response and no exit status (measured 2026-11-27: a command that exited 3 arrived as its output only), and a failed apply_patch raises no PostToolUse at all. The observer therefore records that a call ran, with the length and hash of its output, and no exit code.",
+      "review_when": "A host version passes the exit status to PostToolUse."
+    }
+  ]
 }

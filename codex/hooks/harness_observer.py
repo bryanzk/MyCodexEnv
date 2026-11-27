@@ -151,11 +151,34 @@ def refresh_loaded_receipt(payload: dict[str, Any]) -> None:
             pass
 
 
+def observed_output(payload: dict[str, Any]) -> tuple[str, str, bool]:
+    """Return (text, source, text_may_be_kept).
+
+    A host puts the tool result in `tool_response`. That text is the raw output
+    of an arbitrary command and can hold secrets, so only its length and hash
+    are recorded. The older top-level keys are kept for callers that pass a
+    short key output on purpose.
+    """
+    for key in ("key_output", "result", "output"):
+        value = payload.get(key)
+        if value:
+            return str(value), "payload", True
+    response = payload.get("tool_response")
+    if response is None:
+        return "", "none", False
+    if isinstance(response, str):
+        return response, "tool_response", False
+    try:
+        return json.dumps(response, ensure_ascii=False, sort_keys=True), "tool_response", False
+    except (TypeError, ValueError):
+        return str(response), "tool_response", False
+
+
 def build_event(payload: dict[str, Any]) -> dict[str, Any]:
     timestamp = now_iso()
     cwd = cwd_text(payload)
     command = command_text(payload) or ""
-    output = str(payload.get("key_output") or payload.get("result") or payload.get("output") or "")
+    output, output_source, keep_output_text = observed_output(payload)
     raw_capture = os.environ.get("CODEX_HARNESS_EVIDENCE_RAW") == "1"
     phase = fallback_phase(payload)
     event = {
@@ -170,17 +193,24 @@ def build_event(payload: dict[str, Any]) -> dict[str, Any]:
         "command_length": len(command),
         "command_sha256_prefix": sha256_prefix(command),
         "raw_capture": raw_capture,
-        "exit_code": int(payload.get("exit_code")) if isinstance(payload.get("exit_code"), int) else 0,
-        "key_output": output[:KEY_OUTPUT_LIMIT],
+        "key_output": output[:KEY_OUTPUT_LIMIT] if keep_output_text else "",
         "output_length": len(output),
         "output_sha256_prefix": sha256_prefix(output),
+        "output_source": output_source,
         "approval_state": "unknown",
         "failure_class": "none",
         "phase_trace": {"authoritative": False, "source": "payload_or_environment"},
     }
+    # The exit status is recorded only when the payload carries one. A host
+    # that passes just the output text gives no status, and writing 0 for it
+    # would record a success nobody observed.
+    exit_code = payload.get("exit_code")
+    event["exit_code_observed"] = isinstance(exit_code, int) and not isinstance(exit_code, bool)
+    if event["exit_code_observed"]:
+        event["exit_code"] = exit_code
     if raw_capture:
         event["command_head"] = command[:COMMAND_HEAD_LIMIT]
-    if len(command.encode("utf-8")) > MAX_RECORD_BYTES or len(output) > KEY_OUTPUT_LIMIT:
+    if len(command.encode("utf-8")) > MAX_RECORD_BYTES or (keep_output_text and len(output) > KEY_OUTPUT_LIMIT):
         event["truncated"] = True
     return event
 
