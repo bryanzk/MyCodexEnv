@@ -6202,6 +6202,23 @@ def test_claude_code_guard_adapter():
             require(code == 0 and out and json.loads(out) == denied("credential_target_access"),
                     f"a content search that reaches a symlinked key directory must be denied ({label}): {out!r} {err!r}")
 
+        shared_aws = tmp_path / "shared-aws-credentials"
+        write(shared_aws, "secret")
+        (linked_home / ".aws").mkdir()
+        os.symlink(shared_aws, linked_home / ".aws" / "credentials")
+        write(shared_keys / "id_ed25519.pub", "public")
+        for label, tool, tool_input, expected in (
+            ("key through the .ssh symlink", "Read", {"file_path": str(linked_home / ".ssh" / "id_ed25519")}, denied("credential_target_access")),
+            ("key at the symlink destination", "Read", {"file_path": str(shared_keys / "id_ed25519")}, denied("credential_target_access")),
+            ("key written at the symlink destination", "Write", {"file_path": str(shared_keys / "id_ed25519"), "content": "x"}, denied("credential_target_access")),
+            ("public key at the symlink destination", "Read", {"file_path": str(shared_keys / "id_ed25519.pub")}, {}),
+            ("cloud credentials at the symlink destination", "Read", {"file_path": str(shared_aws)}, denied("credential_target_access")),
+        ):
+            payload = {"hook_event_name": "PreToolUse", "tool_name": tool, "cwd": str(project), "tool_input": tool_input}
+            code, out, err = run_with_input([sys.executable, str(adapter)], json.dumps(payload), env=linked_home_env)
+            require(code == 0 and (json.loads(out) if out else {}) == expected,
+                    f"a credential behind a symlink must be protected under both names ({label}): {out!r} {err!r}")
+
         decision_def = "def decision(payload: dict[str, object]) -> dict[str, object]:\n"
         end_marker = "# --- END DHF GUARD CORE ---\n"
         require(source.count(decision_def) == 1 and source.count(end_marker) == 1,

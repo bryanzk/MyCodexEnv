@@ -490,7 +490,15 @@ def configure_host(payload: dict[str, object]) -> None:
     configure(
         path_variables=tuple(path_variables),
         root_aliases=tuple(root_aliases),
-        credential_files=_with_resolved([os.path.join(_CLAUDE_HOME, ".credentials.json")]),
+        # The core protects the cloud and netrc credential files under their own
+        # names; listing them here adds what they resolve to when they are symlinks.
+        credential_files=_with_resolved(
+            [
+                os.path.join(_CLAUDE_HOME, ".credentials.json"),
+                os.path.join(_HOME, ".aws", "credentials"),
+                os.path.join(_HOME, ".netrc"),
+            ]
+        ),
         control_files=_with_resolved(control_files),
         control_roots=_with_resolved(control_roots),
     )
@@ -594,13 +602,36 @@ def grep_reaches_credentials(payload: dict[str, object]) -> bool:
     return any(_within(anchor, root) for root in set(identity) for anchor in anchors)
 
 
+def touches_resolved_private_key(touches: list[tuple[str, tuple[str, str, str]]]) -> bool:
+    """A private key reached through the destination of a symlinked .ssh directory.
+
+    The core recognizes private keys by their place under the user's .ssh
+    directory as written. When that directory is a symlink, the same key has a
+    second pathname under the destination, which the core does not know.
+    """
+    ssh_dir = os.path.join(_HOME, ".ssh")
+    resolved = os.path.realpath(ssh_dir)
+    if resolved == ssh_dir:
+        return False
+    for _, identity in touches:
+        for path in identity:
+            name = os.path.basename(path).casefold()
+            if (
+                _same_path(os.path.dirname(path), resolved)
+                and name.startswith("id_")
+                and os.path.splitext(name)[1] != ".pub"
+            ):
+                return True
+    return False
+
+
 def decision(payload: dict[str, object]) -> dict[str, object]:
     configure_host(payload)
     touches = structured_action(payload)
     if touches is None:
         # A write call the adapter cannot parse is recorded, not blocked (default profile).
         return {}
-    if grep_reaches_credentials(payload):
+    if grep_reaches_credentials(payload) or touches_resolved_private_key(touches):
         return deny("credential_target_access")
     # Only the default profile exists on this host: Position, Empower, and Contain are not wired.
     reason_code = decide(touches, None)
