@@ -366,6 +366,26 @@
       "key_output": "stand-in hook that exits 1: with onFailure=block the Edit was blocked (failed; blocking because onFailure is \"block\"); without onFailure the Edit went through; a deny decision from the stand-in blocked with its reason",
       "timestamp": "2026-11-27T08:15:00-05:00",
       "guard_sha256": "6b5ac292"
+    },
+    {
+      "probe": "transact.seven-target-promotion",
+      "host": "codex-cli",
+      "host_version": "0.155.1",
+      "machine": "Mac Studio",
+      "result": "pass",
+      "key_output": "harness guard promotion committed: targets=7 transaction=2de30db468cf4767b460638b34be3e03; guard_receipt_matches_installed_guard: True",
+      "timestamp": "2026-11-27T08:41:28-05:00",
+      "guard_sha256": "91c77741"
+    },
+    {
+      "probe": "thread.session-start-bearing",
+      "host": "codex-cli",
+      "host_version": "0.155.1",
+      "machine": "Mac Studio",
+      "result": "pass",
+      "key_output": "after the promotion of transaction 2de30db4 (bounded receipt lock) the installed hook, run directly under /usr/bin/python3, printed the bearing with this repository's next_safe_task; status --runtime: bearing_last_outcome=delivered bearing_runs=10 bearing_misses=0; the Codex-session part was run on the previous promotion (5de3978f), where the model declined to paste the block verbatim",
+      "timestamp": "2026-11-27T08:41:28-05:00",
+      "guard_sha256": "91c77741"
     }
   ],
   "cells": {
