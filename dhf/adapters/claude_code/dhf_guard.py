@@ -103,12 +103,27 @@ _PROFILE = {
 }
 
 
+def _resolved_too(paths) -> tuple[str, ...]:
+    """Each path and, where it differs, what it resolves to.
+
+    A protected file or directory may be a symlink into another location. A
+    write is compared against the resolved target, so the destination has to be
+    protected under its own name as well.
+    """
+    result: list[str] = []
+    for path in paths:
+        for candidate in (path, os.path.realpath(path)):
+            if candidate not in result:
+                result.append(candidate)
+    return tuple(result)
+
+
 def configure(*, path_variables=(), root_aliases=(), credential_files=(), control_files=(), control_roots=()) -> None:
     _PROFILE["path_variables"] = tuple(path_variables)
     _PROFILE["root_aliases"] = tuple(root_aliases)
-    _PROFILE["credential_files"] = tuple(credential_files)
-    _PROFILE["control_files"] = tuple(control_files)
-    _PROFILE["control_roots"] = tuple(control_roots)
+    _PROFILE["credential_files"] = _resolved_too(credential_files)
+    _PROFILE["control_files"] = _resolved_too(control_files)
+    _PROFILE["control_roots"] = _resolved_too(control_roots)
 
 
 def _lexical_path(raw: object, base: str | None = None) -> str | None:
@@ -261,15 +276,18 @@ def decide(touches, governance=None) -> str:
             return "credential_target_access"
         if touch in {"read", "write"} and _is_credential_target(referent, check_inode=True):
             return "credential_target_access"
+    # A write is judged twice: by what it resolves to, and by the name it is
+    # written through. The second check covers a protected name that is itself
+    # a symlink to somewhere unprotected.
     for touch, (_, entry, referent) in touches:
         if touch == "write" and _is_control_plane_target(referent, check_inode=True):
             return "active_control_plane_mutation"
-        if touch == "delete" and _is_control_plane_target(entry):
+        if touch in {"write", "delete"} and _is_control_plane_target(entry):
             return "active_control_plane_mutation"
     for touch, (_, entry, referent) in touches:
         if touch == "write" and _is_persistence_target(referent, check_inode=True):
             return "os_persistence_mutation"
-        if touch == "delete" and _is_persistence_target(entry):
+        if touch in {"write", "delete"} and _is_persistence_target(entry):
             return "os_persistence_mutation"
     if governance is None:
         return ""
