@@ -82,6 +82,12 @@ def copy_managed(real: Path, sandbox: Path) -> None:
                     ignore=shutil.ignore_patterns("evidence") if name == "harness" else None,
                 )
     contain_links(real, sandbox)
+    for name in PATH_REWRITE_FILES:
+        target = sandbox / name
+        if target.is_symlink() and target.resolve().is_file():
+            # A linked config gets the same home-path rewrite through its sandbox copy.
+            copy = target.resolve()
+            copy.write_text(rewrite(copy.read_text(encoding="utf-8"), real, sandbox), encoding="utf-8")
 
 
 def contain_links(real: Path, sandbox: Path) -> None:
@@ -167,7 +173,10 @@ def content(path: Path, relative: str, sandbox: Path, real: Path) -> tuple[str, 
     if path.is_symlink():
         # Bytes of the sandbox copy of the target, so a write through the link shows up.
         target = path.resolve()
-        return ("link", target.read_bytes() if target.is_file() else b"")
+        data = target.read_bytes() if target.is_file() else b""
+        if relative in PATH_REWRITE_FILES and data:
+            data = rewrite(data.decode("utf-8"), sandbox, real).encode("utf-8")
+        return ("link", data)
     data = path.read_bytes()
     if relative in PATH_REWRITE_FILES:
         data = rewrite(data.decode("utf-8"), sandbox, real).encode("utf-8")

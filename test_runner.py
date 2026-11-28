@@ -2397,6 +2397,20 @@ def test_sync_dry_run_matches_real_sync():
         # A permission-only change counts as a change in the comparison.
         sys.path.insert(0, str(ROOT / "scripts"))
         import sync_dry_run
+        # A linked config.toml gets the same home-path rewrite in both directions as a regular one.
+        fake_real = tmp_path / "fake-real"
+        fake_sandbox = tmp_path / "fake-sandbox"
+        owner_config = tmp_path / "owner-config.toml"
+        write(owner_config, f'[hooks.state."{fake_real}/config.toml:pre_tool_use:0:0"]\nenabled = false\n')
+        fake_real.mkdir()
+        (fake_real / "config.toml").symlink_to(owner_config)
+        sync_dry_run.copy_managed(fake_real, fake_sandbox)
+        sandbox_text = (fake_sandbox / "config.toml").resolve().read_text(encoding="utf-8")
+        require(str(fake_sandbox) in sandbox_text and str(fake_real) not in sandbox_text,
+                f"a linked config should carry the sandbox path in the sandbox: {sandbox_text}")
+        _, compared = sync_dry_run.content(fake_sandbox / "config.toml", "config.toml", fake_sandbox, fake_real)
+        require(compared == owner_config.read_bytes(), "a linked config should compare with the real path restored")
+        require(owner_config.read_text(encoding="utf-8").count(str(fake_real)) == 1, "the real linked config is unchanged")
         probe = tmp_path / "probe.sh"
         write(probe, "echo hi\n")
         probe.chmod(0o644)
