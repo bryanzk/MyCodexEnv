@@ -14,6 +14,8 @@ OPERATOR_CHECKPOINT=""
 PROMOTE_HARNESS_GUARD="false"
 SELECTED_SKILLS=""
 SHARED_CLAUDE_SKILLS_HOME=""
+DRY_RUN="false"
+PASSTHROUGH_ARGS=()
 
 usage() {
   cat <<USAGE
@@ -29,6 +31,8 @@ Options:
                             Allow the one-time loaded-readback bootstrap with an operator checkpoint.
   --operator-checkpoint     JSON receipt with command, exit_code, key_output, and timestamp.
   --promote-harness-guard   Promote only the committed seven-target harness manifest.
+  --dry-run                 Run the sync against a sandbox copy of the managed surfaces and print
+                            every file it would add, change or remove. Writes nothing to --codex-home.
 USAGE
 }
 
@@ -44,6 +48,11 @@ while [[ $# -gt 0 ]]; do
       ;;
     --skip-superpowers-sync)
       SKIP_SUPERPOWERS_SYNC="true"
+      PASSTHROUGH_ARGS+=("$1")
+      shift
+      ;;
+    --dry-run)
+      DRY_RUN="true"
       shift
       ;;
     --sync-skills-only)
@@ -101,6 +110,15 @@ fi
 if [[ ! -d "${REPO_ROOT}" ]]; then
   echo "Repo root does not exist: ${REPO_ROOT}" >&2
   exit 1
+fi
+
+if [[ "${DRY_RUN}" == "true" ]]; then
+  if [[ -n "${SELECTED_SKILLS}${SHARED_CLAUDE_SKILLS_HOME}${OPERATOR_CHECKPOINT}" \
+     || "${SYNC_AGENTS_ONLY}${SYNC_AGENTS_FILE_ONLY}${PROMOTE_HARNESS_GUARD}${FORCE_DOWNGRADE}${BOOTSTRAP_LOADED_READBACK}" == *true* ]]; then
+    echo "--dry-run previews the full sync only" >&2
+    exit 2
+  fi
+  exec python3 "${SCRIPT_DIR}/sync_dry_run.py" --repo-root "${REPO_ROOT}" --codex-home "${CODEX_HOME}" -- ${PASSTHROUGH_ARGS[@]+"${PASSTHROUGH_ARGS[@]}"}
 fi
 
 preflight_source_attestation() {

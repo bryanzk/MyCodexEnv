@@ -2288,6 +2288,139 @@ exit 2
     print("[PASS] sync registers and installs superpowers plugin")
 
 
+def test_sync_dry_run_matches_real_sync():
+    """--dry-run writes nothing to the Codex home and lists exactly what the real sync then changes (SHI-637)."""
+    with tempfile.TemporaryDirectory() as tmp:
+        tmp_path = Path(tmp)
+        repo, _ = seed_runtime_sync_repo(tmp_path / "repo")
+        phase0_commit_approval(repo)
+        origin = make_bare_origin_from(repo, tmp_path / "origin.git")
+        code, out, err = run(["git", "remote", "add", "origin", str(origin)], cwd=repo)
+        require(code == 0, f"origin setup should work: {err or out}")
+        codex_home = tmp_path / "home" / ".codex"
+        sync_cmd = [str(SYNC), "--repo-root", str(repo), "--codex-home", str(codex_home), "--skip-superpowers-sync"]
+        code, out, err = run(sync_cmd)
+        require(code == 0, f"bootstrap sync failed: {err or out}")
+        write(codex_home / "auth.json", "never copied\n")
+        foreign_hooks = '{"hooks": {"_foreign": true}}'
+        write(codex_home / "hooks.json", foreign_hooks)
+
+        write(repo / "codex" / "AGENTS.md", "runtime contract v2\n")
+        write(repo / "codex" / "hooks" / "new_hook.py", "# new hook\n")
+        write(repo / "codex" / "agents" / "custom.toml", "name = \"v2\"\n")
+        code, out, err = run(["git", "add", "codex"], cwd=repo)
+        require(code == 0, f"v2 add failed: {err or out}")
+        code, out, err = run(["git", "commit", "-m", "fixture v2"], cwd=repo)
+        require(code == 0, f"v2 commit failed: {err or out}")
+        phase0_commit_approval(repo)
+        code, out, err = run(["git", "push", "origin", "main"], cwd=repo)
+        require(code == 0, f"v2 push failed: {err or out}")
+        prepare_test_loaded_readback(sync_cmd)
+
+        def files() -> dict[str, bytes]:
+            return {path.relative_to(codex_home).as_posix(): path.read_bytes()
+                    for path in codex_home.rglob("*") if path.is_file()}
+
+        before = files()
+        proc = run_process([*sync_cmd, "--dry-run"])
+        out = proc.stdout
+        require(proc.returncode == 0, f"dry run failed: {proc.stderr or out}")
+        require(files() == before, "dry run must not write to the Codex home")
+        require("auth.json" not in out and "never copied" not in out, "dry run must not read credentials")
+        previewed = {line.split(": ", 1)[1] for line in out.splitlines() if line.startswith("would ")}
+        require("would change: AGENTS.md" in out and "would add: hooks/new_hook.py" in out,
+                f"dry run should name the changed and added files: {out}")
+        require("+runtime contract v2" in out, "dry run should show a text diff")
+        require("hooks.json" not in previewed, "another tool's hooks.json must not be in the preview")
+
+        code, out, err = run(sync_cmd)
+        require(code == 0, f"real sync failed: {err or out}")
+        after = files()
+        actual = {rel for rel in set(before) | set(after)
+                  if before.get(rel) != after.get(rel) and ".backup." not in rel
+                  and not rel.startswith("runtime-backups/") and not rel.endswith(".lock")}
+        require(previewed == actual, f"preview {sorted(previewed)} should match the real sync {sorted(actual)}")
+        require(after["hooks.json"] == foreign_hooks.encode(), "hooks.json must stay byte-identical")
+
+        # An absolute symlink in a managed folder must not let the sandbox sync write into the real home.
+        victim = codex_home / "victim.toml"
+        write(victim, "owner file\n")
+        (codex_home / "agents" / "custom.toml").unlink()
+        (codex_home / "agents" / "custom.toml").symlink_to(victim)
+        write(repo / "codex" / "agents" / "custom.toml", "name = \"v3\"\n")
+        for command in (["git", "add", "codex"], ["git", "commit", "-m", "fixture v3"]):
+            code, out, err = run(command, cwd=repo)
+            require(code == 0, f"v3 step failed: {err or out}")
+        phase0_commit_approval(repo)
+        code, out, err = run(["git", "push", "origin", "main"], cwd=repo)
+        require(code == 0, f"v3 push failed: {err or out}")
+        (codex_home / "harness" / "loaded-receipt.json").unlink(missing_ok=True)
+        prepare_test_loaded_readback(sync_cmd)
+        proc = run_process([*sync_cmd, "--dry-run"])
+        require(proc.returncode == 0, f"dry run with a symlink failed: {proc.stderr or proc.stdout}")
+        require(victim.read_text(encoding="utf-8") == "owner file\n", "dry run must not write through a symlink")
+        require((codex_home / "agents" / "custom.toml").is_symlink(), "dry run must leave the real symlink in place")
+        require("would change: agents/custom.toml" in proc.stdout, f"the linked file should be previewed: {proc.stdout}")
+
+        # A link to another managed file stays an alias: a write through it shows on both paths.
+        owner = codex_home / "agents" / "owner.toml"
+        write(owner, "owner\n")
+        (codex_home / "agents" / "custom.toml").unlink()
+        (codex_home / "agents" / "custom.toml").symlink_to(owner)
+        (codex_home / "harness" / "loaded-receipt.json").unlink(missing_ok=True)
+        prepare_test_loaded_readback(sync_cmd)
+        proc = run_process([*sync_cmd, "--dry-run"])
+        require(proc.returncode == 0, f"dry run with an alias failed: {proc.stderr or proc.stdout}")
+        require("would change: agents/owner.toml" in proc.stdout,
+                f"a write through an alias should show on its target: {proc.stdout}")
+        require(owner.read_text(encoding="utf-8") == "owner\n", "dry run must not write the alias target")
+        (codex_home / "agents" / "custom.toml").unlink()
+        owner.unlink()
+        write(codex_home / "agents" / "custom.toml", "name = \"v2\"\n")
+
+        # Files under a linked managed directory are previewed, and the real target is left alone.
+        external = tmp_path / "external-agents"
+        shutil.copytree(codex_home / "agents", external, symlinks=False)
+        agents_link = codex_home / "agents"
+        shutil.rmtree(agents_link)
+        agents_link.symlink_to(external, target_is_directory=True)
+        (codex_home / "harness" / "loaded-receipt.json").unlink(missing_ok=True)
+        prepare_test_loaded_readback(sync_cmd)
+        external_before = {path.name: path.read_bytes() for path in external.iterdir() if path.is_file()}
+        proc = run_process([*sync_cmd, "--dry-run"])
+        require(proc.returncode == 0, f"dry run with a linked folder failed: {proc.stderr or proc.stdout}")
+        require("would change: agents/custom.toml" in proc.stdout,
+                f"a file under a linked folder should be previewed: {proc.stdout}")
+        require({path.name: path.read_bytes() for path in external.iterdir() if path.is_file()} == external_before,
+                "dry run must not write into a linked folder's real target")
+
+        # A permission-only change counts as a change in the comparison.
+        sys.path.insert(0, str(ROOT / "scripts"))
+        import sync_dry_run
+        # A linked config.toml gets the same home-path rewrite in both directions as a regular one.
+        fake_real = tmp_path / "fake-real"
+        fake_sandbox = tmp_path / "fake-sandbox"
+        owner_config = tmp_path / "owner-config.toml"
+        write(owner_config, f'[hooks.state."{fake_real}/config.toml:pre_tool_use:0:0"]\nenabled = false\n')
+        fake_real.mkdir()
+        (fake_real / "config.toml").symlink_to(owner_config)
+        sync_dry_run.copy_managed(fake_real, fake_sandbox)
+        sandbox_text = (fake_sandbox / "config.toml").resolve().read_text(encoding="utf-8")
+        require(str(fake_sandbox) in sandbox_text and str(fake_real) not in sandbox_text,
+                f"a linked config should carry the sandbox path in the sandbox: {sandbox_text}")
+        _, compared = sync_dry_run.content(fake_sandbox / "config.toml", "config.toml", fake_sandbox, fake_real)
+        require(compared == owner_config.read_bytes(), "a linked config should compare with the real path restored")
+        require(owner_config.read_text(encoding="utf-8").count(str(fake_real)) == 1, "the real linked config is unchanged")
+        probe = tmp_path / "probe.sh"
+        write(probe, "echo hi\n")
+        probe.chmod(0o644)
+        mode_before = sync_dry_run.content(probe, "probe.sh", tmp_path, tmp_path)
+        probe.chmod(0o755)
+        require(sync_dry_run.content(probe, "probe.sh", tmp_path, tmp_path) != mode_before,
+                "a mode-only change must count as a change")
+    print("[PASS] sync dry run matches the real sync")
+
+
 def test_sync_transition_matrix_v0():
     with tempfile.TemporaryDirectory() as tmp:
         tmp_path = Path(tmp)
@@ -13673,6 +13806,7 @@ TESTS = [
     test_sync_moves_hook_state_with_its_hook,
     test_owner_disabled_hooks_are_reported_not_failed,
     test_sync_registers_and_installs_superpowers_plugin,
+    test_sync_dry_run_matches_real_sync,
     test_sync_transition_matrix_v0,
     test_sync_backup_dir_v0,
     test_sync_approved_digest_authority,
