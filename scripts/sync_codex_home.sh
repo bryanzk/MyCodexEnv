@@ -1285,8 +1285,9 @@ if rg -n '\$\{[A-Z0-9_]+\}' "${rendered_tmp}" >/dev/null 2>&1; then
 fi
 
 if [[ -f "${CONFIG_TARGET}" ]]; then
-  python3 - "${rendered_tmp}" "${CONFIG_TARGET}" <<'PY'
+  python3 - "${rendered_tmp}" "${CONFIG_TARGET}" "${SCRIPT_DIR}" <<'PY'
 import json
+import re
 from pathlib import Path
 import sys
 import tomllib
@@ -1295,6 +1296,9 @@ rendered_path = Path(sys.argv[1])
 existing_path = Path(sys.argv[2])
 rendered = rendered_path.read_text(encoding="utf-8")
 existing = existing_path.read_text(encoding="utf-8")
+sys.path.insert(0, sys.argv[3])
+from hook_registration import STATE_EVENT_NAMES
+
 
 
 class TextMergeFailed(Exception):
@@ -1413,6 +1417,95 @@ def split(text):
         header = text[start:end]
         blocks.append((header_path(header), header.lstrip().startswith("[["), text[start:stop].strip(), start, stop))
     return top, blocks
+
+
+def remap_hook_state(existing_text, existing_parsed, template_parsed):
+    """Make each [hooks.state] entry follow its hook's command, not its position.
+
+    The host keys hook state by event, group index, and hook index. When the
+    template inserts or removes a hook, those positions move and an owner's
+    on/off choice would land on another hook; an entry for a hook the template
+    no longer registers is dropped for the same reason.
+
+    The plan is computed on parsed TOML. The text is edited only through the
+    statement scanner, which skips strings and comments, and the result must
+    parse to the planned settings. Otherwise the text is left as it was and the
+    returned settings make the merge write config.toml from parsed settings.
+    """
+    old_hooks = existing_parsed.get("hooks", {}) if isinstance(existing_parsed.get("hooks"), dict) else {}
+    new_hooks = template_parsed.get("hooks", {}) if isinstance(template_parsed.get("hooks"), dict) else {}
+    state = old_hooks.get("state")
+    if not isinstance(state, dict) or not state:
+        return existing_text, existing_parsed
+
+    def positions(hooks, event):
+        groups = hooks.get(event, [])
+        found = []
+        for g, group in enumerate(groups if isinstance(groups, list) else []):
+            entries = group.get("hooks", []) if isinstance(group, dict) else []
+            for i, hook in enumerate(entries if isinstance(entries, list) else []):
+                found.append((g, i, hook.get("command") if isinstance(hook, dict) else None))
+        return found
+
+    position_key = re.compile(r"^(.*config\.toml):([a-z_]+):(\d+):(\d+)$")
+    plan = {}
+    for key in state:
+        parts = position_key.match(key)
+        event = STATE_EVENT_NAMES.get(parts.group(2)) if parts else None
+        if event is None:
+            continue
+        old = positions(old_hooks, event)
+        found = [n for n, (g, i, _) in enumerate(old) if (g, i) == (int(parts.group(3)), int(parts.group(4)))]
+        command = old[found[0]][2] if found else None
+        new = []
+        if command is not None:
+            nth = sum(1 for _, _, c in old[:found[0]] if c == command)
+            matches = [(g, i) for g, i, c in positions(new_hooks, event) if c == command]
+            new = matches[nth:nth + 1]
+        if not new:
+            plan[key] = None
+            continue
+        target = f"{parts.group(1)}:{parts.group(2)}:{new[0][0]}:{new[0][1]}"
+        if target != key:
+            plan[key] = target
+    if not plan:
+        return existing_text, existing_parsed
+
+    new_state = {key: value for key, value in state.items() if key not in plan}
+    for key, target in plan.items():
+        if target is not None:
+            new_state[target] = state[key]
+    planned = {**existing_parsed, "hooks": {**old_hooks, "state": new_state}}
+    moved = [f"{key} -> {target}" for key, target in plan.items() if target is not None]
+    dropped = [key for key, target in plan.items() if target is None]
+    if moved:
+        print("Moved hooks.state entries to follow their hooks: " + "; ".join(moved))
+    if dropped:
+        print("Dropped hooks.state entries for hooks the template no longer registers: " + "; ".join(dropped))
+
+    edits = []
+    headers = {start: end for start, end, is_header in statements(existing_text) if is_header}
+    for path, is_array, _block, start, stop in split(existing_text)[1]:
+        if is_array or len(path) != 3 or path[:2] != ("hooks", "state") or path[2] not in plan:
+            continue
+        target = plan[path[2]]
+        if target is None:
+            edits.append((start, stop, ""))
+        else:
+            edits.append((start, headers[start], "[hooks.state." + json.dumps(target, ensure_ascii=False) + "]"))
+    edited = existing_text
+    for start, stop, replacement in sorted(edits, reverse=True):
+        edited = edited[:start] + replacement + edited[stop:]
+    try:
+        if tomllib.loads(edited) == planned:
+            return edited, planned
+    except tomllib.TOMLDecodeError:
+        pass
+    print("hooks.state could not be edited in place; config.toml is written from its parsed settings")
+    return existing_text, planned
+
+
+existing, existing_data = remap_hook_state(existing, existing_data, template_data)
 
 
 def block_keys(block):

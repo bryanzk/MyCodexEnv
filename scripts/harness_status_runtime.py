@@ -184,6 +184,9 @@ def build_probe(home: Path) -> tuple[int, dict[str, Any] | None, list[str]]:
             "post_tool_use": "PostToolUse" in hooks_config,
             "registered": hooks_config,
             "disabled": disabled_managed_commands(config_text),
+            # Hook on/off belongs to the owner (SHI-631). A disabled Guard means
+            # structured writes are not mechanically blocked, so say it loudly.
+            "guard_disabled": any("/harness_guard.py" in command for command in disabled_managed_commands(config_text)),
             "hooks_json_path": str(hooks_path),
             "hooks_json_managed_commands": hooks_json_managed_commands(hooks_json_text),
         },
@@ -209,6 +212,8 @@ def render_markdown(payload: dict[str, Any]) -> str:
         [
             "# Harness Environment Probe",
             "",
+            *(["- WARNING guard_disabled: `True`. The owner turned the Guard hook off; structured writes are not "
+               "mechanically blocked. Turn it back on in Codex with /hooks.", ""] if payload["hooks"].get("guard_disabled") else []),
             f"- codex_home: `{payload['codex_home']}`",
             f"- config_observable: `{payload['config']['observable']}`",
             f"- observable_reason: {payload['config']['observable_reason']}",
