@@ -7,10 +7,11 @@ unified diff for text files. Nothing is written to the real Codex home.
 
 Only the managed surfaces are copied: the top-level docs, config.toml,
 hooks.json, and the agents, skills, hooks, runtime, zsh, harness (without
-harness/evidence) and bin folders. Symlinks are copied as the files they point
-to, so the sandbox sync cannot write through a link into the real home; after
-the run the real managed files are compared with their state before, and any
-difference fails the preview. Credentials, sessions and databases are never
+harness/evidence) and bin folders. A symlink stays a symlink, so the sync's own
+target checks behave as in a real run, but it is repointed at a sandbox copy of
+its target, so nothing written through it reaches the real home. After the run
+the real managed files are compared with their state before, and any
+difference fails the preview. Permission changes count as changes. Credentials, sessions and databases are never
 read. The superpowers checkout is not previewed: the sandbox run always uses
 --skip-superpowers-sync.
 """
@@ -52,29 +53,67 @@ def rewrite(text: str, old: Path, new: Path) -> str:
     return text
 
 
+LINK_TARGETS = ".dry-run-link-targets"
+
+
 def copy_managed(real: Path, sandbox: Path) -> None:
     sandbox.mkdir(parents=True, exist_ok=True)
     for name in TOP_FILES:
         source = real / name
-        if source.is_file():
-            target = sandbox / name
+        target = sandbox / name
+        if source.is_symlink():
+            os.symlink(os.readlink(source), target)
+        elif source.is_file():
             if name in PATH_REWRITE_FILES:
                 target.write_text(rewrite(source.read_text(encoding="utf-8"), real, sandbox), encoding="utf-8")
                 shutil.copymode(source, target)
             else:
-                shutil.copyfile(source, target)
-                shutil.copymode(source, target)
+                shutil.copy2(source, target)
     for name in TOP_DIRS:
         source = real / name
-        if source.is_dir():
-            # symlinks=False copies link targets, so nothing in the sandbox points out of it.
-            shutil.copytree(
-                source,
-                sandbox / name,
-                symlinks=False,
-                ignore_dangling_symlinks=True,
-                ignore=shutil.ignore_patterns("evidence") if name == "harness" else None,
-            )
+        if source.is_symlink() or source.is_dir():
+            if source.is_symlink():
+                os.symlink(os.readlink(source), sandbox / name)
+            else:
+                shutil.copytree(
+                    source,
+                    sandbox / name,
+                    symlinks=True,
+                    ignore=shutil.ignore_patterns("evidence") if name == "harness" else None,
+                )
+    contain_links(real, sandbox)
+
+
+def contain_links(real: Path, sandbox: Path) -> None:
+    """Repoint every copied symlink at a sandbox copy of what it points to."""
+    store = sandbox / LINK_TARGETS
+    links = [path for top in (*TOP_FILES, *TOP_DIRS) for path in walk(sandbox / top) if path.is_symlink()]
+    for index, link in enumerate(links):
+        original = real / link.relative_to(sandbox)
+        try:
+            resolved = original.resolve(strict=True)
+        except (OSError, RuntimeError):
+            resolved = None
+        replacement = store / str(index) / (resolved.name if resolved else "missing")
+        replacement.parent.mkdir(parents=True, exist_ok=True)
+        if resolved is not None and resolved.is_dir():
+            shutil.copytree(resolved, replacement, symlinks=False, ignore_dangling_symlinks=True)
+        elif resolved is not None:
+            shutil.copy2(resolved, replacement)
+        link.unlink()
+        os.symlink(replacement, link)
+
+
+def walk(path: Path) -> list[Path]:
+    if path.is_symlink() or path.is_file():
+        return [path]
+    if not path.is_dir():
+        return []
+    found: list[Path] = []
+    for root, dirs, files in os.walk(path):
+        for name in [*dirs, *files]:
+            found.append(Path(root) / name)
+    return found
 
 
 def ignored(relative: str) -> bool:
@@ -86,41 +125,40 @@ def ignored(relative: str) -> bool:
 def snapshot(root: Path) -> dict[str, Path]:
     files: dict[str, Path] = {}
     for top in (*TOP_FILES, *TOP_DIRS):
-        path = root / top
-        if path.is_symlink() or path.is_file():
-            files[top] = path
-        elif path.is_dir():
-            for item in path.rglob("*"):
-                if item.is_file() or item.is_symlink():
-                    relative = item.relative_to(root).as_posix()
-                    if not ignored(relative):
-                        files[relative] = item
+        for item in walk(root / top):
+            if item.is_symlink() or item.is_file():
+                relative = item.relative_to(root).as_posix()
+                if not ignored(relative):
+                    files[relative] = item
     return files
 
 
-def content(path: Path, relative: str, sandbox: Path, real: Path) -> bytes:
+def content(path: Path, relative: str, sandbox: Path, real: Path) -> tuple[str, bytes]:
+    """Kind, permission bits and bytes of one path; a link is compared by being a link."""
     if path.is_symlink():
-        return b"symlink -> " + os.readlink(path).encode()
+        # Bytes of the sandbox copy of the target, so a write through the link shows up.
+        target = path.resolve()
+        return ("link", target.read_bytes() if target.is_file() else b"")
     data = path.read_bytes()
-    if relative in PATH_REWRITE_FILES and sandbox in path.parents:
+    if relative in PATH_REWRITE_FILES:
         data = rewrite(data.decode("utf-8"), sandbox, real).encode("utf-8")
-    return data
+    return (oct(path.stat().st_mode & 0o7777), data)
 
 
 def real_fingerprint(real: Path) -> dict[str, tuple[str, bytes]]:
-    """Kind and content of every real managed path, to prove the preview wrote nothing."""
+    """Kind, mode and content of every real managed path and link target, to prove the preview wrote nothing."""
     result: dict[str, tuple[str, bytes]] = {}
     for top in (*TOP_FILES, *TOP_DIRS):
-        path = real / top
-        items = [path] if (path.is_file() or path.is_symlink()) else (list(path.rglob("*")) if path.is_dir() else [])
-        for item in items:
+        for item in walk(real / top):
             relative = item.relative_to(real).as_posix()
             if relative.startswith("harness/evidence/"):
                 continue
             if item.is_symlink():
-                result[relative] = ("link", os.readlink(item).encode())
+                target = item.resolve()
+                data = target.read_bytes() if target.is_file() else b""
+                result[relative] = ("link:" + os.readlink(item), data)
             elif item.is_file():
-                result[relative] = ("file", item.read_bytes())
+                result[relative] = (oct(item.stat().st_mode & 0o7777), item.read_bytes())
     return result
 
 
@@ -173,9 +211,14 @@ def main(argv: list[str] | None = None) -> int:
                 print(f"would {label}: {rel}")
         shown = 0
         for rel in changed:
-            old, new = text_lines(before[rel]), text_lines(after[rel])
+            (old_kind, old_data), (new_kind, new_data) = before[rel], after[rel]
+            if old_kind != new_kind:
+                print(f"--- {rel}: {old_kind} -> {new_kind}")
+            if old_data == new_data:
+                continue
+            old, new = text_lines(old_data), text_lines(new_data)
             if old is None or new is None:
-                print(f"--- {rel}: binary, {len(before[rel])} -> {len(after[rel])} bytes")
+                print(f"--- {rel}: binary, {len(old_data)} -> {len(new_data)} bytes")
                 continue
             for line in difflib.unified_diff(old, new, f"current/{rel}", f"after-sync/{rel}"):
                 if shown >= MAX_DIFF_LINES:

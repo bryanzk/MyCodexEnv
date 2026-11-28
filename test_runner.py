@@ -2361,6 +2361,17 @@ def test_sync_dry_run_matches_real_sync():
         require(victim.read_text(encoding="utf-8") == "owner file\n", "dry run must not write through a symlink")
         require((codex_home / "agents" / "custom.toml").is_symlink(), "dry run must leave the real symlink in place")
         require("would change: agents/custom.toml" in proc.stdout, f"the linked file should be previewed: {proc.stdout}")
+
+        # A permission-only change counts as a change in the comparison.
+        sys.path.insert(0, str(ROOT / "scripts"))
+        import sync_dry_run
+        probe = tmp_path / "probe.sh"
+        write(probe, "echo hi\n")
+        probe.chmod(0o644)
+        mode_before = sync_dry_run.content(probe, "probe.sh", tmp_path, tmp_path)
+        probe.chmod(0o755)
+        require(sync_dry_run.content(probe, "probe.sh", tmp_path, tmp_path) != mode_before,
+                "a mode-only change must count as a change")
     print("[PASS] sync dry run matches the real sync")
 
 
