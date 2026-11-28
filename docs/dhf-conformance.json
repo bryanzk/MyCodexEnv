@@ -794,8 +794,8 @@
       "source": "codex/hooks/compaction_probe.py",
       "state": "no_signal",
       "host": "codex-cli",
-      "note": "Every run from 2026-09-01 to 2026-11-27 ended as probe_inconclusive. It looks for the session's rollout file under ~/.codex/sessions: three of four session ids the host passes have no such file, and at a session's first prompt transcript_path can be null. On Codex CLI 0.172.0 the host reports a completed compaction through the PostCompact hook (measured 2026-11-27, trigger manual); the probe does not use it yet.",
-      "review_when": "The probe counts PostCompact events, and that hook is registered in the runtime (needs the full sync, SHI-637)."
+      "note": "Every run from 2026-09-01 to 2026-11-27 ended inconclusive because it looked for rollout files the host often does not have. Since SHI-633 the probe reads per-session ordinals that compaction_recorder.py records on PostCompact and SessionStart; it injects only for complete records and writes no evidence on a miss. Not yet observed in a host session.",
+      "review_when": "A host session after the full sync shows a recorded PostCompact ordinal injected at the next prompt (manual and automatic compaction)."
     },
     {
       "id": "prompt-dispatcher",

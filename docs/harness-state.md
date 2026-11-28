@@ -14,19 +14,19 @@ Stable rules belong in `AGENTS.md`, `README.md`, `docs/repo-index.md`, or
   - `codex/skills/delivery-harness-framework/SKILL.md`
 - blocked_sources: none
 - unsafe_inputs: none
-- next_safe_task: Merge PR #61 once CI and review pass; owner decides on the full sync, after which the two runtime-boundary tests should pass on the owner host
+- next_safe_task: After CI and a clean Codex review: owner approves the digest, runs the full sync, then a manual /compact in a new session should show compaction_ordinal=1 at the next prompt
 - required_commands:
   - `python3 test_runner.py`
   - `git diff --check`
   - `./scripts/verify_codex_env.sh --repo-root "$(pwd)" --codex-home "$HOME/.codex" --claude-home "$HOME/.claude"`
-- latest_checkpoint: 2026-11-27T21:39:38-05:00 SHI-637: owner approved digest 5a6baf4e for retiring Sepia, ccwf and gstack. Owner host after approval: 158 of 160 passed; the two failures are the runtime-boundary checks (golden corpus slice 4 and paired gate focused CLI) reporting runtime_state=drifted because the live runtime differs from source in exactly the two files this change edits (delivery-harness-framework SKILL.md and evals.json). Before this change the runtime was exactly promoted. A full sync restores it. Retired skills disabled in the runtime config (45 entries added, 26 already listed); the gstack daily refresh automation is already PAUSED. .gitignore keeps leftover codex/workflow data out of git
-- latest_verification: 2026-11-27T21:39:38-05:00 command=PYTHONDONTWRITEBYTECODE=1 python3 test_runner.py (owner host, after refresh --approve); exit_code=1; key_output=ran=160 passed=158 skipped=0 failed=2; promotion_difference_paths=['codex/skills/delivery-harness-framework/SKILL.md', 'codex/skills/delivery-harness-framework/evals/evals.json']
+- latest_checkpoint: 2026-11-27T22:00:39-05:00 SHI-633: the compaction probe uses host PostCompact events instead of transcript scans. New codex/hooks/compaction_recorder.py, registered on PostCompact and in a second SessionStart group (matcher *, after the existing group so [hooks.state] indexes do not move), keeps per-session ordinals in ~/.codex/harness/compaction_ordinals.json under a file lock. compaction_probe.py injects the ordinal only for a complete record, writes no evidence on a miss, and counts outcomes in compaction_probe_receipt.json. harness_eval tier2 replays fixtures as host events. hook_registration maps post_compact for [hooks.state]
+- latest_verification: 2026-11-27T22:00:39-05:00 command=PYTHONDONTWRITEBYTECODE=1 python3 test_runner.py (cloud clone, Python 3.13, no Codex CLI); dhf_content_drift.py; check_surfaces.py --check-public-nav; exit_code=1; key_output=ran=160 passed=151 skipped=4 failed=5, the same environment failures as main; the two new compaction tests, both registration tests and harness eval tier2 pass; drift 0 open findings; surfaces ok
 - compaction_ordinal: 0
 - transition_key: p1-2-complete
 - gate_decision: continue-to-boundary
-- constraints: ["The two runtime-boundary tests stay red on the owner host until the runtime receives the new delivery-harness-framework files","The owner's Mac worktree is left on the feature branch with the approval files modified; it needs git checkout -- . and git checkout main"]
+- constraints: ["An automatic compaction has not been measured; the recorder handles it with the same fields","Matcher * on SessionStart and the post_compact [hooks.state] key name are not measured on the host","claude/codex-hooks/ is a stale mirror (harness_guard.py and four other hooks differ from source) and was not updated"]
 - ownership: {}
-- next_action: {"command":"Merge PR #61 once CI and review pass; owner decides on the full sync, after which the two runtime-boundary tests should pass on the owner host"}
+- next_action: {"command":"After CI and a clean Codex review: owner approves the digest, runs the full sync, then a manual /compact in a new session should show compaction_ordinal=1 at the next prompt"}
 
 ## State Log
 
@@ -4175,3 +4175,32 @@ Stable rules belong in `AGENTS.md`, `README.md`, `docs/repo-index.md`, or
   - none
 - next_safe_task: Merge PR #61 once CI and review pass; owner decides on the full sync, after which the two runtime-boundary tests should pass on the owner host
 - checkpoint_data: {"constraints":["The two runtime-boundary tests stay red on the owner host until the runtime receives the new delivery-harness-framework files","The owner's Mac worktree is left on the feature branch with the approval files modified; it needs git checkout -- . and git checkout main"],"next_action":{"command":"Merge PR #61 once CI and review pass; owner decides on the full sync, after which the two runtime-boundary tests should pass on the owner host"},"ownership":{},"phase":"ship","schema":"dhf_checkpoint_v1","verification_evidence":{"command":"PYTHONDONTWRITEBYTECODE=1 python3 test_runner.py (owner host, after refresh --approve)","exit_code":1,"freshness":"fresh","key_output":"ran=160 passed=158 skipped=0 failed=2; promotion_difference_paths=['codex/skills/delivery-harness-framework/SKILL.md', 'codex/skills/delivery-harness-framework/evals/evals.json']","timestamp":"2026-11-27T21:39:38-05:00"}}
+
+### 2026-11-27T22:00:39-05:00
+- phase: ship
+- event: checkpoint
+- summary: SHI-633: the compaction probe uses host PostCompact events instead of transcript scans. New codex/hooks/compaction_recorder.py, registered on PostCompact and in a second SessionStart group (matcher *, after the existing group so [hooks.state] indexes do not move), keeps per-session ordinals in ~/.codex/harness/compaction_ordinals.json under a file lock. compaction_probe.py injects the ordinal only for a complete record, writes no evidence on a miss, and counts outcomes in compaction_probe_receipt.json. harness_eval tier2 replays fixtures as host events. hook_registration maps post_compact for [hooks.state]
+- git:
+  - branch: codex/shi-633-postcompact-recorder-20261127
+  - latest_commit: 59a44d4
+  - dirty_status: dirty
+  - dirty_count: 10
+- changed_surfaces:
+  - `codex/hooks/compaction_recorder.py`
+  - `codex/hooks/compaction_probe.py`
+  - `codex/config.template.toml`
+  - `scripts/hook_registration.py`
+  - `scripts/harness_eval.py`
+  - `docs/HARNESS_RUNTIME.md`
+  - `docs/surfaces.json`
+  - `docs/repo-index.md`
+  - `docs/dhf-conformance.json`
+  - `test_runner.py`
+- verification:
+  - command: `PYTHONDONTWRITEBYTECODE=1 python3 test_runner.py (cloud clone, Python 3.13, no Codex CLI); dhf_content_drift.py; check_surfaces.py --check-public-nav`
+  - exit_code: 1
+  - key_output: ran=160 passed=151 skipped=4 failed=5, the same environment failures as main; the two new compaction tests, both registration tests and harness eval tier2 pass; drift 0 open findings; surfaces ok
+- blockers:
+  - none
+- next_safe_task: After CI and a clean Codex review: owner approves the digest, runs the full sync, then a manual /compact in a new session should show compaction_ordinal=1 at the next prompt
+- checkpoint_data: {"constraints":["An automatic compaction has not been measured; the recorder handles it with the same fields","Matcher * on SessionStart and the post_compact [hooks.state] key name are not measured on the host","claude/codex-hooks/ is a stale mirror (harness_guard.py and four other hooks differ from source) and was not updated"],"next_action":{"command":"After CI and a clean Codex review: owner approves the digest, runs the full sync, then a manual /compact in a new session should show compaction_ordinal=1 at the next prompt"},"ownership":{},"phase":"ship","schema":"dhf_checkpoint_v1","verification_evidence":{"command":"PYTHONDONTWRITEBYTECODE=1 python3 test_runner.py (cloud clone, Python 3.13, no Codex CLI); dhf_content_drift.py; check_surfaces.py --check-public-nav","exit_code":1,"freshness":"fresh","key_output":"ran=160 passed=151 skipped=4 failed=5, the same environment failures as main; the two new compaction tests, both registration tests and harness eval tier2 pass; drift 0 open findings; surfaces ok","timestamp":"2026-11-27T22:00:39-05:00"}}
