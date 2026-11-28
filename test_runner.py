@@ -2128,7 +2128,7 @@ def test_sync_moves_hook_state_with_its_hook():
             'matcher = "*"\n'
             "[[hooks.PreToolUse.hooks]]\n"
             'type = "command"\n'
-            'command = "/usr/bin/python3 ~/.codex/hooks/harness_guard.py"\n\n'
+            "command = '/usr/bin/python3 ~/.codex/hooks/harness_guard.py'\n\n"
             f'[hooks.state."{state}:user_prompt_submit:0:0"]\n'
             "enabled = false\n"
             'trusted_hash = "sha256:dispatcher"\n\n'
@@ -2137,6 +2137,7 @@ def test_sync_moves_hook_state_with_its_hook():
             f'[hooks.state."{state}:user_prompt_submit:0:5"]\n'
             "enabled = false\n\n"
             f'[hooks.state."{state}:pre_tool_use:0:0"]\n'
+            "enabled = false\n"
             'trusted_hash = "sha256:guard"\n',
         )
         code, out, err = run([str(SYNC), "--repo-root", str(ROOT), "--codex-home", str(codex_home),
@@ -2150,8 +2151,10 @@ def test_sync_moves_hook_state_with_its_hook():
         moved_key = f"{state}:user_prompt_submit:0:{prompt.index(dispatcher)}"
         require(moved_key in keys and data["hooks"]["state"][moved_key] == {"enabled": False, "trusted_hash": "sha256:dispatcher"},
                 f"the dispatcher's state must follow it to its new position: {sorted(keys)}")
-        require(hook_registration.disabled_managed_commands(text) == [dispatcher],
-                f"only the dispatcher may be disabled after sync: {hook_registration.disabled_managed_commands(text)}")
+        guard = "/usr/bin/python3 ~/.codex/hooks/harness_guard.py"
+        require(sorted(hook_registration.disabled_managed_commands(text)) == sorted([dispatcher, guard]),
+                f"the dispatcher and the Guard (registered with a literal string) stay disabled: "
+                f"{hook_registration.disabled_managed_commands(text)}")
         require(f"{state}:user_prompt_submit:0:5" not in keys,
                 "a state entry that points at no hook must be dropped")
         require(f"{state}:pre_tool_use:0:0" in keys, "an entry whose hook did not move stays as it was")

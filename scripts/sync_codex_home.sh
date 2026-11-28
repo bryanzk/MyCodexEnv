@@ -1297,7 +1297,7 @@ existing_path = Path(sys.argv[2])
 rendered = rendered_path.read_text(encoding="utf-8")
 existing = existing_path.read_text(encoding="utf-8")
 sys.path.insert(0, sys.argv[3])
-from hook_registration import STATE_EVENT_NAMES, hook_commands
+from hook_registration import STATE_EVENT_NAMES
 
 
 def remap_hook_state(existing_text, rendered_text):
@@ -1308,11 +1308,23 @@ def remap_hook_state(existing_text, rendered_text):
     on/off choice would land on another hook. Entries for a hook the template
     no longer registers are dropped for the same reason.
     """
-    old_events = hook_commands(existing_text)
-    new_events = hook_commands(rendered_text)
+    # Read registrations from parsed TOML: any valid spelling counts. If either
+    # file does not parse, move and drop nothing.
+    try:
+        old_hooks = tomllib.loads(existing_text).get("hooks", {})
+        new_hooks = tomllib.loads(rendered_text).get("hooks", {})
+    except tomllib.TOMLDecodeError:
+        return existing_text
 
-    def positions(events, event):
-        return [(g, i, command) for g, group in enumerate(events.get(event, [])) for i, command in enumerate(group)]
+    def positions(hooks, event):
+        groups = hooks.get(event, []) if isinstance(hooks, dict) else []
+        found = []
+        for g, group in enumerate(groups if isinstance(groups, list) else []):
+            entries = group.get("hooks", []) if isinstance(group, dict) else []
+            for i, hook in enumerate(entries if isinstance(entries, list) else []):
+                command = hook.get("command") if isinstance(hook, dict) else None
+                found.append((g, i, command))
+        return found
 
     header = re.compile(r'^\[hooks\.state\."((?:[^"\\]|\\.)*)"\]\s*$')
     position_key = re.compile(r"^(.*config\.toml):([a-z_]+):(\d+):(\d+)$")
@@ -1333,7 +1345,7 @@ def remap_hook_state(existing_text, rendered_text):
             out.append(line)
             continue
         group, index = int(parts.group(3)), int(parts.group(4))
-        old = positions(old_events, event)
+        old = positions(old_hooks, event)
         found = [n for n, (g, i, _) in enumerate(old) if (g, i) == (group, index)]
         if not found:
             dropped.append(key)
@@ -1341,7 +1353,7 @@ def remap_hook_state(existing_text, rendered_text):
             continue
         command = old[found[0]][2]
         nth = sum(1 for g, i, c in old[:found[0]] if c == command)
-        new = [(g, i) for g, i, c in positions(new_events, event) if c == command]
+        new = [(g, i) for g, i, c in positions(new_hooks, event) if command is not None and c == command]
         if nth >= len(new):
             dropped.append(key)
             skipping = True
