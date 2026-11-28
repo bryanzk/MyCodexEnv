@@ -8510,6 +8510,38 @@ def test_archive_harness_state_moves_verbatim():
 
         code, out, err = run([sys.executable, str(script), "--repo-root", str(repo), "--apply", "--keep-latest", "10"])
         require(code == 0 and "entries_to_move=0" in out, f"second apply should move nothing: {err or out}")
+
+        # A failed state write rolls the archive writes back, so a retry can finish the move.
+        sys.path.insert(0, str(ROOT / "scripts"))
+        import archive_harness_state as archiver
+        write(repo / "docs" / "harness-state.md", state.rstrip("\n") + "\n\n" + "\n".join(
+            f"### 2026-07-{day:02d}T10:00:00-04:00\n- summary: late {day}\n" for day in range(1, 4)))
+        before = sorted((path.name, path.read_text(encoding="utf-8"))
+                        for path in (repo / "docs" / "harness-state-archive").glob("*.md"))
+        state_before = (repo / "docs" / "harness-state.md").read_text(encoding="utf-8")
+        real_write = archiver._atomic_write
+
+        def failing_write(path, text, *, mode):
+            if path.name == "harness-state.md":
+                raise OSError("simulated state write failure")
+            real_write(path, text, mode=mode)
+
+        archiver._atomic_write = failing_write
+        try:
+            archiver.apply_archive_plan(repo, Path("docs/harness-state.md"),
+                                        archive_dir=Path("docs/harness-state-archive"), keep_latest=10)
+            require(False, "the simulated failure should propagate")
+        except OSError:
+            pass
+        finally:
+            archiver._atomic_write = real_write
+        after = sorted((path.name, path.read_text(encoding="utf-8"))
+                       for path in (repo / "docs" / "harness-state-archive").glob("*.md"))
+        require(after == before, "archive files must be rolled back after a failed state write")
+        require((repo / "docs" / "harness-state.md").read_text(encoding="utf-8") == state_before,
+                "the active State Log must be unchanged after a failed move")
+        code, out, err = run([sys.executable, str(script), "--repo-root", str(repo), "--apply", "--keep-latest", "10"])
+        require(code == 0 and "entries_to_move=3" in out, f"retry after a failed move should succeed: {err or out}")
     print("[PASS] archive harness state moves verbatim")
 
 

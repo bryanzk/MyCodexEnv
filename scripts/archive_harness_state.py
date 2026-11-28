@@ -318,9 +318,25 @@ def apply_archive_plan(
     state_mode = stat.S_IMODE(state_path.stat().st_mode)
     archive_root = _archive_path(repo_root, archive_dir, "x").parent
     archive_root.mkdir(parents=True, exist_ok=True)
-    for path, new_text, mode, _ in pending:
-        _atomic_write(path, new_text, mode=mode)
-    _atomic_write(state_path, new_state_text, mode=state_mode)
+    # Roll back on any failure, so a retry starts from the original files instead
+    # of meeting archive copies of entries that are still in the active log.
+    originals: list[tuple[Path, str | None, int | None]] = [
+        (path, path.read_text(encoding="utf-8") if path.exists() else None, mode)
+        for path, _, mode, _ in pending
+    ]
+    written: list[tuple[Path, str | None, int | None]] = []
+    try:
+        for (path, new_text, mode, _), original in zip(pending, originals):
+            _atomic_write(path, new_text, mode=mode)
+            written.append(original)
+        _atomic_write(state_path, new_state_text, mode=state_mode)
+    except Exception:
+        for path, original_text, mode in reversed(written):
+            if original_text is None:
+                path.unlink(missing_ok=True)
+            else:
+                _atomic_write(path, original_text, mode=mode)
+        raise
 
     plan.update(
         {
