@@ -2107,7 +2107,8 @@ def test_sync_moves_hook_state_with_its_hook():
     hook_registration = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(hook_registration)
     with tempfile.TemporaryDirectory() as tmp:
-        codex_home = Path(tmp) / ".codex"
+        # A non-ASCII path checks that moved headers are not re-escaped.
+        codex_home = Path(tmp) / "测试" / ".codex"
         state = str(codex_home / "config.toml")
         dispatcher = "/usr/bin/python3 ~/.codex/hooks/dhf_preprompt.py"
         retired = "/usr/bin/python3 ~/.codex/hooks/model_router.py"

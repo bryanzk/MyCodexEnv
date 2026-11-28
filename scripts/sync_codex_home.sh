@@ -1361,7 +1361,11 @@ def remap_hook_state(existing_text, rendered_text):
         target = f"{parts.group(1)}:{parts.group(2)}:{new[nth][0]}:{new[nth][1]}"
         if target != key:
             moved.append(f"{key} -> {target}")
-            line = line.replace(json.dumps(key)[1:-1], json.dumps(target)[1:-1], 1)
+            # Rebuild the header from the raw key text; re-escaping would turn
+            # non-ASCII path characters into \\u escapes that no longer match.
+            indent = line[: len(line) - len(line.lstrip())]
+            newline = "\n" if line.endswith("\n") else ""
+            line = f'{indent}[hooks.state."{target}"]{newline}'
         out.append(line)
     if moved:
         print("Moved hooks.state entries to follow their hooks: " + "; ".join(moved))
