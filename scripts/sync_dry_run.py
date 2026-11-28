@@ -104,13 +104,22 @@ def contain_links(real: Path, sandbox: Path) -> None:
         os.symlink(replacement, link)
 
 
-def walk(path: Path) -> list[Path]:
-    if path.is_symlink() or path.is_file():
+def walk(path: Path, *, follow: bool = False) -> list[Path]:
+    """Every path under ``path``. With ``follow``, directory links are entered (each target once)."""
+    if path.is_symlink() and not (follow and path.is_dir()):
+        return [path]
+    if path.is_file():
         return [path]
     if not path.is_dir():
         return []
-    found: list[Path] = []
-    for root, dirs, files in os.walk(path):
+    found: list[Path] = [path] if path.is_symlink() else []
+    seen: set[str] = set()
+    for root, dirs, files in os.walk(path, followlinks=follow):
+        real_root = os.path.realpath(root)
+        if real_root in seen:
+            dirs[:] = []
+            continue
+        seen.add(real_root)
         for name in [*dirs, *files]:
             found.append(Path(root) / name)
     return found
@@ -125,7 +134,9 @@ def ignored(relative: str) -> bool:
 def snapshot(root: Path) -> dict[str, Path]:
     files: dict[str, Path] = {}
     for top in (*TOP_FILES, *TOP_DIRS):
-        for item in walk(root / top):
+        for item in walk(root / top, follow=True):
+            if item.is_symlink() and item.is_dir():
+                continue
             if item.is_symlink() or item.is_file():
                 relative = item.relative_to(root).as_posix()
                 if not ignored(relative):
@@ -149,7 +160,7 @@ def real_fingerprint(real: Path) -> dict[str, tuple[str, bytes]]:
     """Kind, mode and content of every real managed path and link target, to prove the preview wrote nothing."""
     result: dict[str, tuple[str, bytes]] = {}
     for top in (*TOP_FILES, *TOP_DIRS):
-        for item in walk(real / top):
+        for item in walk(real / top, follow=True):
             relative = item.relative_to(real).as_posix()
             if relative.startswith("harness/evidence/"):
                 continue

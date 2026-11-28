@@ -2362,6 +2362,22 @@ def test_sync_dry_run_matches_real_sync():
         require((codex_home / "agents" / "custom.toml").is_symlink(), "dry run must leave the real symlink in place")
         require("would change: agents/custom.toml" in proc.stdout, f"the linked file should be previewed: {proc.stdout}")
 
+        # Files under a linked managed directory are previewed, and the real target is left alone.
+        external = tmp_path / "external-agents"
+        shutil.copytree(codex_home / "agents", external, symlinks=False)
+        agents_link = codex_home / "agents"
+        shutil.rmtree(agents_link)
+        agents_link.symlink_to(external, target_is_directory=True)
+        (codex_home / "harness" / "loaded-receipt.json").unlink(missing_ok=True)
+        prepare_test_loaded_readback(sync_cmd)
+        external_before = {path.name: path.read_bytes() for path in external.iterdir() if path.is_file()}
+        proc = run_process([*sync_cmd, "--dry-run"])
+        require(proc.returncode == 0, f"dry run with a linked folder failed: {proc.stderr or proc.stdout}")
+        require("would change: agents/custom.toml" in proc.stdout,
+                f"a file under a linked folder should be previewed: {proc.stdout}")
+        require({path.name: path.read_bytes() for path in external.iterdir() if path.is_file()} == external_before,
+                "dry run must not write into a linked folder's real target")
+
         # A permission-only change counts as a change in the comparison.
         sys.path.insert(0, str(ROOT / "scripts"))
         import sync_dry_run
