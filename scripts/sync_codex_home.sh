@@ -160,15 +160,7 @@ missing = [path.relative_to(repo_root).as_posix() for path in required if not pa
 if missing:
     blocked("source_required_file_missing", missing_paths=missing)
 
-execution_clone = Path(
-    os.environ.get(
-        "PHASE0_AUTHORIZED_CLONE_ROOT",
-        str(Path.home() / ".codex" / "automations" / "gstack-dhf-daily-refresh" / "repo"),
-    )
-).resolve()
-if source_role not in {"git_head", "caller_worktree", "automation_execution_clone"}:
-    blocked("source_role_path_mismatch")
-if source_role == "automation_execution_clone" and repo_root != execution_clone:
+if source_role not in {"git_head", "caller_worktree"}:
     blocked("source_role_path_mismatch")
 
 if approved_present:
@@ -253,8 +245,6 @@ if manifest_path.is_file():
         if runtime_commit != source_commit and newer.returncode == 0:
             blocked("runtime_newer_than_source")
 
-if source_role == "automation_execution_clone" and producer_path is None:
-    blocked("attestation_producer_dirty_or_unapproved")
 if producer_path is not None:
     try:
         producer = json.loads(producer_path.read_text(encoding="utf-8"))

@@ -14,19 +14,19 @@ Stable rules belong in `AGENTS.md`, `README.md`, `docs/repo-index.md`, or
   - `codex/skills/delivery-harness-framework/SKILL.md`
 - blocked_sources: none
 - unsafe_inputs: none
-- next_safe_task: Merge PR #62 after CI and review; owner runs the full sync from main; then /compact in a new session should show compaction_ordinal=1
+- next_safe_task: Merge after CI and a clean Codex review; next SHI-637 items: State Log field caps and archiving, parallel rules in the spec
 - required_commands:
   - `python3 test_runner.py`
   - `git diff --check`
   - `./scripts/verify_codex_env.sh --repo-root "$(pwd)" --codex-home "$HOME/.codex" --claude-home "$HOME/.claude"`
-- latest_checkpoint: 2026-11-27T22:45:44-05:00 SHI-633 (re-appended after merging main, which added the SHI-631 entry): the compaction probe uses host PostCompact events instead of transcript scans. compaction_recorder.py on PostCompact and a second SessionStart group keeps per-session ordinals; compaction_probe.py injects only for complete records and counts misses without evidence. Owner approved digest caca9a75 (owner host 160/160 before and after). The batch sync from the unmerged branch was refused (source transition rejected: forward source is not the fresh remote tip), so the runtime is unchanged until a sync from main after merge
-- latest_verification: 2026-11-27T22:45:44-05:00 command=PYTHONDONTWRITEBYTECODE=1 python3 test_runner.py (owner host, after refresh --approve); exit_code=0; key_output=ran=160 passed=160 skipped=0 failed=0; sync_exit=1 source transition rejected: unknown (forward source is not the fresh remote tip); ~/.codex/hooks/compaction_recorder.py absent
+- latest_checkpoint: 2026-11-27T22:51:34-05:00 SHI-637: removed the automation_execution_clone source role from the sync source guard; the gstack daily refresh automation it served was retired on 2026-11-27. Allowed roles are git_head and caller_worktree; any other role, including the retired one, is refused with source_role_path_mismatch. The optional producer manifest check stays. No codex/ change, so the approved digest is unchanged
+- latest_verification: 2026-11-27T22:51:34-05:00 command=python3 -c 'import test_runner as t; t.test_sync_phase0_pre_preflight_matrix()' (cloud clone, Python 3.13); exit_code=0; key_output=[PASS] phase0-pre source attestation preflight matrix; bash -n ok
 - compaction_ordinal: 0
 - transition_key: p1-2-complete
 - gate_decision: continue-to-boundary
-- constraints: ["Full sync only accepts the fresh remote tip as its source: run it after merge, from main"]
+- constraints: []
 - ownership: {}
-- next_action: {"command":"Merge PR #62 after CI and review; owner runs the full sync from main; then /compact in a new session should show compaction_ordinal=1"}
+- next_action: {"command":"Merge after CI and a clean Codex review; next SHI-637 items: State Log field caps and archiving, parallel rules in the spec"}
 
 ## State Log
 
@@ -4224,3 +4224,25 @@ Stable rules belong in `AGENTS.md`, `README.md`, `docs/repo-index.md`, or
   - none
 - next_safe_task: Merge PR #62 after CI and review; owner runs the full sync from main; then /compact in a new session should show compaction_ordinal=1
 - checkpoint_data: {"constraints":["Full sync only accepts the fresh remote tip as its source: run it after merge, from main"],"next_action":{"command":"Merge PR #62 after CI and review; owner runs the full sync from main; then /compact in a new session should show compaction_ordinal=1"},"ownership":{},"phase":"ship","schema":"dhf_checkpoint_v1","verification_evidence":{"command":"PYTHONDONTWRITEBYTECODE=1 python3 test_runner.py (owner host, after refresh --approve)","exit_code":0,"freshness":"fresh","key_output":"ran=160 passed=160 skipped=0 failed=0; sync_exit=1 source transition rejected: unknown (forward source is not the fresh remote tip); ~/.codex/hooks/compaction_recorder.py absent","timestamp":"2026-11-27T22:45:44-05:00"}}
+
+### 2026-11-27T22:51:34-05:00
+- phase: ship
+- event: checkpoint
+- summary: SHI-637: removed the automation_execution_clone source role from the sync source guard; the gstack daily refresh automation it served was retired on 2026-11-27. Allowed roles are git_head and caller_worktree; any other role, including the retired one, is refused with source_role_path_mismatch. The optional producer manifest check stays. No codex/ change, so the approved digest is unchanged
+- git:
+  - branch: codex/shi-637-drop-automation-source-role-20261128
+  - latest_commit: 1da3dd1
+  - dirty_status: dirty
+  - dirty_count: 3
+- changed_surfaces:
+  - `scripts/sync_codex_home.sh`
+  - `docs/HARNESS_RUNTIME.md`
+  - `test_runner.py`
+- verification:
+  - command: `python3 -c 'import test_runner as t; t.test_sync_phase0_pre_preflight_matrix()' (cloud clone, Python 3.13)`
+  - exit_code: 0
+  - key_output: [PASS] phase0-pre source attestation preflight matrix; bash -n ok
+- blockers:
+  - none
+- next_safe_task: Merge after CI and a clean Codex review; next SHI-637 items: State Log field caps and archiving, parallel rules in the spec
+- checkpoint_data: {"constraints":[],"next_action":{"command":"Merge after CI and a clean Codex review; next SHI-637 items: State Log field caps and archiving, parallel rules in the spec"},"ownership":{},"phase":"ship","schema":"dhf_checkpoint_v1","verification_evidence":{"command":"python3 -c 'import test_runner as t; t.test_sync_phase0_pre_preflight_matrix()' (cloud clone, Python 3.13)","exit_code":0,"freshness":"fresh","key_output":"[PASS] phase0-pre source attestation preflight matrix; bash -n ok","timestamp":"2026-11-27T22:51:34-05:00"}}

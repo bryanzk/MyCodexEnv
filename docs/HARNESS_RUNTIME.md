@@ -107,16 +107,15 @@ reason codes:
 - `runtime_newer_than_source`
 - `attestation_producer_dirty_or_unapproved`
 
-The source roles are `git_head` (committed source of truth), `caller_worktree`
-(manual source), `automation_controller` (producer only), and
-`automation_execution_clone` (automation sync source). `runtime_disk` is only a
-disk target observation; it is not loaded-state evidence. The automation producer
-set is exactly the launcher `run-network-enabled.sh`, `automation.toml`, and the
-controller copy of the actually executed prepare script.
+The source roles are `git_head` (committed source of truth) and
+`caller_worktree` (manual source); any other role is refused with
+`source_role_path_mismatch`. `runtime_disk` is only a disk target observation;
+it is not loaded-state evidence. The gstack daily refresh automation and its
+prepare script were retired on 2026-11-27, and its `automation_execution_clone`
+source role was removed from the source guard on 2026-11-28 (SHI-637). An
+optional producer manifest passed in `PHASE0_PRODUCER_MANIFEST` is still checked
+and refused when it is not approved.
 The prepare-to-sync edge is prompt-mediated, not a protected function call.
-The gstack daily refresh automation and its prepare script were retired on
-2026-11-27 (SHI-637); the automation source roles stay in the source guard
-until they are removed.
 
 Approved source digests are read only from the tracked, clean repository file
 `runtime-approvals/approved-source-digests.txt`; the caller cannot select a
