@@ -400,6 +400,19 @@ for line in "${results[@]}"; do
   fi
 done
 
+# Hook on/off belongs to the owner (SHI-631): a disabled hook is reported, never a failure.
+owner_disabled_hooks="$(python3 - "${REPO_ROOT}/scripts" "${CODEX_HOME}/config.toml" <<'PY' 2>/dev/null || true
+import sys
+from pathlib import Path
+sys.path.insert(0, sys.argv[1])
+from hook_registration import disabled_managed_commands
+config = Path(sys.argv[2])
+disabled = disabled_managed_commands(config.read_text(encoding="utf-8")) if config.is_file() else []
+print(", ".join(disabled) if disabled else "none")
+PY
+)"
+echo "Owner-disabled hooks (reported, not a failure): ${owner_disabled_hooks:-unknown}"
+
 report_file="${REPO_ROOT}/TEST_VERIFICATION.md"
 {
   echo ""
@@ -413,6 +426,7 @@ report_file="${REPO_ROOT}/TEST_VERIFICATION.md"
   echo "- missing_managed_skills: ${missing_managed_skills}"
   echo "- expected_superpowers_commit: ${expected_commit}"
   echo "- auth_status: ${login_status}"
+  echo "- owner_disabled_hooks: ${owner_disabled_hooks:-unknown}"
   echo ""
   echo "### Checks"
   for line in "${results[@]}"; do

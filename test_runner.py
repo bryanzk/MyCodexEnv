@@ -2099,6 +2099,121 @@ def test_sync_preserves_runtime_plugin_state():
     print("[PASS] sync preserves runtime plugin state")
 
 
+def test_sync_moves_hook_state_with_its_hook():
+    """Owner hook on/off choices follow the hook's command when template positions move (SHI-631)."""
+    import tomllib
+
+    spec = importlib.util.spec_from_file_location("hook_registration_state_test", HOOK_REGISTRATION)
+    hook_registration = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(hook_registration)
+    with tempfile.TemporaryDirectory() as tmp:
+        codex_home = Path(tmp) / ".codex"
+        state = str(codex_home / "config.toml")
+        dispatcher = "/usr/bin/python3 ~/.codex/hooks/dhf_preprompt.py"
+        retired = "/usr/bin/python3 ~/.codex/hooks/model_router.py"
+        # An older registration: the dispatcher was the first prompt hook and a
+        # since-retired hook came second. The owner disabled the dispatcher.
+        write(
+            codex_home / "config.toml",
+            'model = "gpt-6.2-sol"\n\n'
+            "[[hooks.UserPromptSubmit]]\n"
+            'matcher = "*"\n'
+            "[[hooks.UserPromptSubmit.hooks]]\n"
+            'type = "command"\n'
+            f'command = "{dispatcher}"\n'
+            "[[hooks.UserPromptSubmit.hooks]]\n"
+            'type = "command"\n'
+            f'command = "{retired}"\n\n'
+            "[[hooks.PreToolUse]]\n"
+            'matcher = "*"\n'
+            "[[hooks.PreToolUse.hooks]]\n"
+            'type = "command"\n'
+            'command = "/usr/bin/python3 ~/.codex/hooks/harness_guard.py"\n\n'
+            f'[hooks.state."{state}:user_prompt_submit:0:0"]\n'
+            "enabled = false\n"
+            'trusted_hash = "sha256:dispatcher"\n\n'
+            f'[hooks.state."{state}:user_prompt_submit:0:1"]\n'
+            "enabled = false\n\n"
+            f'[hooks.state."{state}:user_prompt_submit:0:5"]\n'
+            "enabled = false\n\n"
+            f'[hooks.state."{state}:pre_tool_use:0:0"]\n'
+            'trusted_hash = "sha256:guard"\n',
+        )
+        code, out, err = run([str(SYNC), "--repo-root", str(ROOT), "--codex-home", str(codex_home),
+                              "--skip-superpowers-sync"])
+        require(code == 0, f"sync failed: {err or out}")
+        text = (codex_home / "config.toml").read_text(encoding="utf-8")
+        data = tomllib.loads(text)
+        keys = set(data["hooks"]["state"])
+        template = load_source_hooks()["hooks"]
+        prompt = [h["command"] for g in template["UserPromptSubmit"] for h in g["hooks"]]
+        moved_key = f"{state}:user_prompt_submit:0:{prompt.index(dispatcher)}"
+        require(moved_key in keys and data["hooks"]["state"][moved_key] == {"enabled": False, "trusted_hash": "sha256:dispatcher"},
+                f"the dispatcher's state must follow it to its new position: {sorted(keys)}")
+        require(hook_registration.disabled_managed_commands(text) == [dispatcher],
+                f"only the dispatcher may be disabled after sync: {hook_registration.disabled_managed_commands(text)}")
+        require(f"{state}:user_prompt_submit:0:5" not in keys,
+                "a state entry that points at no hook must be dropped")
+        require(f"{state}:pre_tool_use:0:0" in keys, "an entry whose hook did not move stays as it was")
+        require("Moved hooks.state entries" in out and "Dropped hooks.state entries" in out,
+                f"sync should report moved and dropped entries: {out}")
+    print("[PASS] sync moves hook state with its hook")
+
+
+def test_owner_disabled_hooks_are_reported_not_failed():
+    """A hook the owner turned off is reported loudly and never counted as a failure (SHI-631)."""
+    guard = "/usr/bin/python3 ~/.codex/hooks/harness_guard.py"
+    with tempfile.TemporaryDirectory() as tmp:
+        tmp_path = Path(tmp)
+        codex_home = tmp_path / ".codex"
+        config = codex_home / "config.toml"
+        write(
+            config,
+            "[[hooks.PreToolUse]]\n"
+            'matcher = "*"\n'
+            "[[hooks.PreToolUse.hooks]]\n"
+            'type = "command"\n'
+            f'command = "{guard}"\n\n'
+            f'[hooks.state."{config}:pre_tool_use:0:0"]\n'
+            "enabled = false\n",
+        )
+        shutil.copytree(ROOT / "codex" / "runtime", codex_home / "runtime")
+        code, out, err = run([sys.executable, str(HARNESS_STATUS), "status", "--runtime", "--codex-home", str(codex_home)])
+        require("WARNING guard_disabled: `True`" in out and guard in out,
+                f"status --runtime must flag a disabled Guard: {code} {err or out}")
+        code, out, err = run([sys.executable, str(HARNESS_STATUS), "status", "--conformance", "--codex-home", str(codex_home),
+                              "--host-version", "0.172.0"])
+        require(code == 0 and "WARNING: the owner turned the Guard hook off" in out,
+                f"conformance doctor must flag a disabled Guard: {code} {err or out}")
+        write(config, config.read_text(encoding="utf-8").replace("enabled = false", "enabled = true"))
+        code, out, err = run([sys.executable, str(HARNESS_STATUS), "status", "--conformance", "--codex-home", str(codex_home),
+                              "--host-version", "0.172.0"])
+        require("WARNING: the owner turned the Guard hook off" not in out, "an enabled Guard must not be flagged")
+        write(config, config.read_text(encoding="utf-8").replace("enabled = true", "enabled = false"))
+
+        repo = tmp_path / "repo"
+        claude_home = tmp_path / ".claude"
+        claude_home.mkdir()
+        (codex_home / "skills").mkdir(parents=True)
+        (repo / "codex" / "skills").mkdir(parents=True)
+        write(repo / "locks" / "superpowers.lock", "commit=test-commit\n")
+        write(repo / "scripts" / "hook_registration.py", HOOK_REGISTRATION.read_text(encoding="utf-8"))
+        checks = {"cmd_codex", "codex_version", "codex_skill_compatibility", "skills_managed_present"}
+        for line in VERIFY.read_text(encoding="utf-8").splitlines():
+            for marker in ("$(check ", "$(run_check "):
+                if marker in line:
+                    name = line.split(marker, 1)[1].split()[0].strip("\"'")
+                    if "${" not in name:
+                        checks.add(name)
+        args = [str(VERIFY), "--repo-root", str(repo), "--codex-home", str(codex_home), "--claude-home", str(claude_home),
+                *[arg for name in sorted(checks) for arg in ("--skip-check", name)]]
+        code, out, err = run(args)
+        require(code == 0 and "Verification passed." in out, f"a disabled hook must not fail verify: {err or out}")
+        require(f"Owner-disabled hooks (reported, not a failure): {guard}" in out,
+                f"verify must list the owner-disabled hook: {out}")
+    print("[PASS] owner-disabled hooks are reported, not failed")
+
+
 def test_sync_registers_and_installs_superpowers_plugin():
     with tempfile.TemporaryDirectory() as tmp:
         tmp_path = Path(tmp)
@@ -13476,6 +13591,8 @@ TESTS = [
     test_sync_renders_template_and_copies_skills,
     test_sync_rejects_retired_hook_nonregular_before_runtime_writes,
     test_sync_preserves_runtime_plugin_state,
+    test_sync_moves_hook_state_with_its_hook,
+    test_owner_disabled_hooks_are_reported_not_failed,
     test_sync_registers_and_installs_superpowers_plugin,
     test_sync_transition_matrix_v0,
     test_sync_backup_dir_v0,

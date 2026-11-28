@@ -1285,8 +1285,9 @@ if rg -n '\$\{[A-Z0-9_]+\}' "${rendered_tmp}" >/dev/null 2>&1; then
 fi
 
 if [[ -f "${CONFIG_TARGET}" ]]; then
-  python3 - "${rendered_tmp}" "${CONFIG_TARGET}" <<'PY'
+  python3 - "${rendered_tmp}" "${CONFIG_TARGET}" "${SCRIPT_DIR}" <<'PY'
 import json
+import re
 from pathlib import Path
 import sys
 import tomllib
@@ -1295,6 +1296,69 @@ rendered_path = Path(sys.argv[1])
 existing_path = Path(sys.argv[2])
 rendered = rendered_path.read_text(encoding="utf-8")
 existing = existing_path.read_text(encoding="utf-8")
+sys.path.insert(0, sys.argv[3])
+from hook_registration import STATE_EVENT_NAMES, hook_commands
+
+
+def remap_hook_state(existing_text, rendered_text):
+    """Make each [hooks.state] entry follow its hook's command, not its position.
+
+    The host keys hook state by event, group index, and hook index. When the
+    template inserts or removes a hook, those positions move and an owner's
+    on/off choice would land on another hook. Entries for a hook the template
+    no longer registers are dropped for the same reason.
+    """
+    old_events = hook_commands(existing_text)
+    new_events = hook_commands(rendered_text)
+
+    def positions(events, event):
+        return [(g, i, command) for g, group in enumerate(events.get(event, [])) for i, command in enumerate(group)]
+
+    header = re.compile(r'^\[hooks\.state\."((?:[^"\\]|\\.)*)"\]\s*$')
+    position_key = re.compile(r"^(.*config\.toml):([a-z_]+):(\d+):(\d+)$")
+    moved, dropped, out, skipping = [], [], [], False
+    for line in existing_text.splitlines(keepends=True):
+        match = header.match(line.strip())
+        if match is None:
+            if line.lstrip().startswith("["):
+                skipping = False
+            if not skipping:
+                out.append(line)
+            continue
+        skipping = False
+        key = match.group(1)
+        parts = position_key.match(key)
+        event = STATE_EVENT_NAMES.get(parts.group(2)) if parts else None
+        if event is None:
+            out.append(line)
+            continue
+        group, index = int(parts.group(3)), int(parts.group(4))
+        old = positions(old_events, event)
+        found = [n for n, (g, i, _) in enumerate(old) if (g, i) == (group, index)]
+        if not found:
+            dropped.append(key)
+            skipping = True
+            continue
+        command = old[found[0]][2]
+        nth = sum(1 for g, i, c in old[:found[0]] if c == command)
+        new = [(g, i) for g, i, c in positions(new_events, event) if c == command]
+        if nth >= len(new):
+            dropped.append(key)
+            skipping = True
+            continue
+        target = f"{parts.group(1)}:{parts.group(2)}:{new[nth][0]}:{new[nth][1]}"
+        if target != key:
+            moved.append(f"{key} -> {target}")
+            line = line.replace(json.dumps(key)[1:-1], json.dumps(target)[1:-1], 1)
+        out.append(line)
+    if moved:
+        print("Moved hooks.state entries to follow their hooks: " + "; ".join(moved))
+    if dropped:
+        print("Dropped hooks.state entries for hooks the template no longer registers: " + "; ".join(dropped))
+    return "".join(out)
+
+
+existing = remap_hook_state(existing, rendered)
 
 
 class TextMergeFailed(Exception):

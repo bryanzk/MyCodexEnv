@@ -14,19 +14,19 @@ Stable rules belong in `AGENTS.md`, `README.md`, `docs/repo-index.md`, or
   - `codex/skills/delivery-harness-framework/SKILL.md`
 - blocked_sources: none
 - unsafe_inputs: none
-- next_safe_task: Merge PR #61 once CI and review pass; owner decides on the full sync, after which the two runtime-boundary tests should pass on the owner host
+- next_safe_task: Merge after CI and a clean Codex review; the next full sync on the owner host drops the stale user_prompt_submit:0:2 state entry; owner toggles dhf_preprompt.py with /hooks to close the acceptance
 - required_commands:
   - `python3 test_runner.py`
   - `git diff --check`
   - `./scripts/verify_codex_env.sh --repo-root "$(pwd)" --codex-home "$HOME/.codex" --claude-home "$HOME/.claude"`
-- latest_checkpoint: 2026-11-27T21:39:38-05:00 SHI-637: owner approved digest 5a6baf4e for retiring Sepia, ccwf and gstack. Owner host after approval: 158 of 160 passed; the two failures are the runtime-boundary checks (golden corpus slice 4 and paired gate focused CLI) reporting runtime_state=drifted because the live runtime differs from source in exactly the two files this change edits (delivery-harness-framework SKILL.md and evals.json). Before this change the runtime was exactly promoted. A full sync restores it. Retired skills disabled in the runtime config (45 entries added, 26 already listed); the gstack daily refresh automation is already PAUSED. .gitignore keeps leftover codex/workflow data out of git
-- latest_verification: 2026-11-27T21:39:38-05:00 command=PYTHONDONTWRITEBYTECODE=1 python3 test_runner.py (owner host, after refresh --approve); exit_code=1; key_output=ran=160 passed=158 skipped=0 failed=2; promotion_difference_paths=['codex/skills/delivery-harness-framework/SKILL.md', 'codex/skills/delivery-harness-framework/evals/evals.json']
+- latest_checkpoint: 2026-11-27T22:15:34-05:00 SHI-631: hook on/off belongs to the owner. Full sync moves [hooks.state] entries to follow their hook's command when template positions change and drops entries that point at no registered hook; status --runtime and the conformance doctor flag a disabled Guard; verify lists owner-disabled hooks and still passes; the spec says so. No switch command an agent can run (direction decision: codex-task is not a hard owner boundary)
+- latest_verification: 2026-11-27T22:15:34-05:00 command=PYTHONDONTWRITEBYTECODE=1 python3 test_runner.py (cloud clone, Python 3.13, no Codex CLI); exit_code=1; key_output=ran=162 passed=153 skipped=4 failed=5, the same environment failures as main; test_sync_moves_hook_state_with_its_hook fails on main's sync script and passes here; test_owner_disabled_hooks_are_reported_not_failed passes; drift 0; surfaces ok
 - compaction_ordinal: 0
 - transition_key: p1-2-complete
 - gate_decision: continue-to-boundary
-- constraints: ["The two runtime-boundary tests stay red on the owner host until the runtime receives the new delivery-harness-framework files","The owner's Mac worktree is left on the feature branch with the approval files modified; it needs git checkout -- . and git checkout main"]
+- constraints: ["trusted_hash is carried unchanged when an entry moves; whether Codex asks to re-trust a moved hook is not measured","Only [hooks.state.\"...\"] header-form entries are moved; other spellings stay as they are"]
 - ownership: {}
-- next_action: {"command":"Merge PR #61 once CI and review pass; owner decides on the full sync, after which the two runtime-boundary tests should pass on the owner host"}
+- next_action: {"command":"Merge after CI and a clean Codex review; the next full sync on the owner host drops the stale user_prompt_submit:0:2 state entry; owner toggles dhf_preprompt.py with /hooks to close the acceptance"}
 
 ## State Log
 
@@ -4175,3 +4175,28 @@ Stable rules belong in `AGENTS.md`, `README.md`, `docs/repo-index.md`, or
   - none
 - next_safe_task: Merge PR #61 once CI and review pass; owner decides on the full sync, after which the two runtime-boundary tests should pass on the owner host
 - checkpoint_data: {"constraints":["The two runtime-boundary tests stay red on the owner host until the runtime receives the new delivery-harness-framework files","The owner's Mac worktree is left on the feature branch with the approval files modified; it needs git checkout -- . and git checkout main"],"next_action":{"command":"Merge PR #61 once CI and review pass; owner decides on the full sync, after which the two runtime-boundary tests should pass on the owner host"},"ownership":{},"phase":"ship","schema":"dhf_checkpoint_v1","verification_evidence":{"command":"PYTHONDONTWRITEBYTECODE=1 python3 test_runner.py (owner host, after refresh --approve)","exit_code":1,"freshness":"fresh","key_output":"ran=160 passed=158 skipped=0 failed=2; promotion_difference_paths=['codex/skills/delivery-harness-framework/SKILL.md', 'codex/skills/delivery-harness-framework/evals/evals.json']","timestamp":"2026-11-27T21:39:38-05:00"}}
+
+### 2026-11-27T22:15:34-05:00
+- phase: ship
+- event: checkpoint
+- summary: SHI-631: hook on/off belongs to the owner. Full sync moves [hooks.state] entries to follow their hook's command when template positions change and drops entries that point at no registered hook; status --runtime and the conformance doctor flag a disabled Guard; verify lists owner-disabled hooks and still passes; the spec says so. No switch command an agent can run (direction decision: codex-task is not a hard owner boundary)
+- git:
+  - branch: codex/shi-631-hook-state-by-command-20261127
+  - latest_commit: 59a44d4
+  - dirty_status: dirty
+  - dirty_count: 8
+- changed_surfaces:
+  - `scripts/sync_codex_home.sh`
+  - `scripts/harness_status_runtime.py`
+  - `scripts/dhf_conformance.py`
+  - `scripts/verify_codex_env.sh`
+  - `docs/dhf-spec.md`
+  - `test_runner.py`
+- verification:
+  - command: `PYTHONDONTWRITEBYTECODE=1 python3 test_runner.py (cloud clone, Python 3.13, no Codex CLI)`
+  - exit_code: 1
+  - key_output: ran=162 passed=153 skipped=4 failed=5, the same environment failures as main; test_sync_moves_hook_state_with_its_hook fails on main's sync script and passes here; test_owner_disabled_hooks_are_reported_not_failed passes; drift 0; surfaces ok
+- blockers:
+  - none
+- next_safe_task: Merge after CI and a clean Codex review; the next full sync on the owner host drops the stale user_prompt_submit:0:2 state entry; owner toggles dhf_preprompt.py with /hooks to close the acceptance
+- checkpoint_data: {"constraints":["trusted_hash is carried unchanged when an entry moves; whether Codex asks to re-trust a moved hook is not measured","Only [hooks.state.\"...\"] header-form entries are moved; other spellings stay as they are"],"next_action":{"command":"Merge after CI and a clean Codex review; the next full sync on the owner host drops the stale user_prompt_submit:0:2 state entry; owner toggles dhf_preprompt.py with /hooks to close the acceptance"},"ownership":{},"phase":"ship","schema":"dhf_checkpoint_v1","verification_evidence":{"command":"PYTHONDONTWRITEBYTECODE=1 python3 test_runner.py (cloud clone, Python 3.13, no Codex CLI)","exit_code":1,"freshness":"fresh","key_output":"ran=162 passed=153 skipped=4 failed=5, the same environment failures as main; test_sync_moves_hook_state_with_its_hook fails on main's sync script and passes here; test_owner_disabled_hooks_are_reported_not_failed passes; drift 0; surfaces ok","timestamp":"2026-11-27T22:15:34-05:00"}}

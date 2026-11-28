@@ -436,6 +436,7 @@
         <li>What the three profiles turn on: light has only the fixed blocks of Restrict; standard is the same as light for now; governed also turns on Position, Empower, and Contain, and blocks unrecognized write calls.</li>
         <li>In the governed profile, when the owner has declared no phase, writes and deletes are blocked and reads are unaffected. The block message says how to declare a phase.</li>
         <li>The owner may turn off one function on one host. A function that is turned off is listed truthfully in the status report. "Turned off" is never reported as "faulty", and never as "normal".</li>
+        <li>Turning each hook on or off belongs to the owner, in the host's own interface (<code>/hooks</code> in Codex). DHF offers no switch command an agent can run, and never turns a disabled hook back on. When a sync moves a hook's registration, its on/off state follows the hook's command, not its position. A disabled Guard is flagged prominently in the status report.</li>
       </ul>
     </section>
 
