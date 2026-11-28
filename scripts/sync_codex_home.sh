@@ -1012,36 +1012,8 @@ then
   exit 75
 fi
 
-# External gstack ownership is classified under the shared sync lock and
-# before any managed runtime write. Equivalent CLI: external_gstack_runtime.py status ... --json
-GSTACK_STATUS_COMMAND=(
-  python3 "${SCRIPT_DIR}/external_gstack_runtime.py" status
-  --repo-root "${REPO_ROOT}"
-  --codex-home "${CODEX_HOME}"
-  --json
-)
-if [[ -n "${GSTACK_ROOT:-}" ]]; then
-  GSTACK_STATUS_COMMAND+=(--gstack-root "${GSTACK_ROOT}")
-fi
-if ! EXTERNAL_GSTACK_STATUS_JSON="$("${GSTACK_STATUS_COMMAND[@]}")"; then
-  echo "${EXTERNAL_GSTACK_STATUS_JSON}" >&2
-  exit 79
-fi
-EXTERNAL_GSTACK_EXCLUDES_TEXT="$(
-  printf '%s' "${EXTERNAL_GSTACK_STATUS_JSON}" | python3 -c '
-import json, sys
-payload = json.load(sys.stdin)
-for value in payload.get("exact_excludes", []):
-    if not isinstance(value, str) or not value.startswith("/") or not value.endswith("/"):
-        raise SystemExit("invalid external gstack exclusion")
-    print(value)
-'
-)"
-EXTERNAL_GSTACK_RSYNC_ARGS=(-a)
-while IFS= read -r exclusion; do
-  [[ -n "${exclusion}" ]] || continue
-  EXTERNAL_GSTACK_RSYNC_ARGS+=(--exclude "${exclusion}")
-done <<<"${EXTERNAL_GSTACK_EXCLUDES_TEXT}"
+# gstack was retired on 2026-11-27 (SHI-637). Sync no longer classifies an
+# external gstack or manages links to it; runtime gstack copies are left in place.
 RUNTIME_BACKUP_DIR="${CODEX_HOME}/runtime-backups/$(date -u +%Y%m%dT%H%M%SZ)/"
 RETIRED_HOOK_TARGET="${CODEX_HOME}/hooks/model_router.py"
 RETIRED_HOOK_BACKUP="${RUNTIME_BACKUP_DIR}/retired/hooks/model_router.py"
@@ -1705,13 +1677,10 @@ mkdir -p "${CODEX_HOME}/skills"
 # intentionally outside this repository's source-of-truth.
 # skills/.system belongs to the host: each Codex version ships and rewrites its
 # own set. The repository snapshot is a record, not a source to deploy.
-rsync "${EXTERNAL_GSTACK_RSYNC_ARGS[@]}" --exclude '/.system/' "${REPO_ROOT}/codex/skills/" "${CODEX_HOME}/skills/"
+rsync -a --exclude '/.system/' "${REPO_ROOT}/codex/skills/" "${CODEX_HOME}/skills/"
 
-if [[ -d "${REPO_ROOT}/codex/workflow" ]]; then
-  mkdir -p "${CODEX_HOME}/workflow"
-  # workflow/memory 属于运行态热数据，不从仓库模板回灌。
-  rsync_runtime_dir "${REPO_ROOT}/codex/workflow" "${CODEX_HOME}/workflow" --exclude 'memory/'
-fi
+# codex/workflow (claude-code-workflow) was retired on 2026-11-27 (SHI-637).
+# An existing ~/.codex/workflow is left in place; sync no longer writes it.
 
 if [[ -f "${REPO_ROOT}/codex/AGENTS.md" ]]; then
   if [[ -f "${CODEX_HOME}/AGENTS.md" ]]; then

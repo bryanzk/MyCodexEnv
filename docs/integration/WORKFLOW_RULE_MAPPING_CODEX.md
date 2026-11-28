@@ -1,5 +1,7 @@
 # Codex 规则映射（上游 -> 本地）
 
+> 已退役（2026-11-27，SHI-637）：`codex/workflow/` 和 `ccwf-*` skill 已从仓库删除，同步不再部署。本文件只作历史记录。
+
 ## 基线
 - 上游仓库：`runesleo/claude-code-workflow`
 - 锁定提交：`7bcf8d2b60b7c8cd6f06803d87441bf0c2c9f5ed`

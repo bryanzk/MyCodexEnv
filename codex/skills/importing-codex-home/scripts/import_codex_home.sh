@@ -6,12 +6,11 @@ CODEX_HOME="${HOME}/.codex"
 DRY_RUN="false"
 SKIP_AGENTS="false"
 SKIP_SKILLS="false"
-SKIP_WORKFLOW="false"
 SKIP_CONFIG="false"
 
 usage() {
   cat <<'USAGE'
-Usage: import_codex_home.sh --repo-root <path> [--codex-home <path>] [--dry-run] [--skip-agents] [--skip-skills] [--skip-workflow] [--skip-config]
+Usage: import_codex_home.sh --repo-root <path> [--codex-home <path>] [--dry-run] [--skip-agents] [--skip-skills] [--skip-config]
 USAGE
 }
 
@@ -120,10 +119,6 @@ while [[ $# -gt 0 ]]; do
       SKIP_SKILLS="true"
       shift
       ;;
-    --skip-workflow)
-      SKIP_WORKFLOW="true"
-      shift
-      ;;
     --skip-config)
       SKIP_CONFIG="true"
       shift
@@ -171,17 +166,21 @@ if [[ "$SKIP_SKILLS" != "true" ]]; then
     ".backup-skills/" \
     "__pycache__/" \
     "*.pyc" \
-    ".DS_Store"
-fi
-
-if [[ "$SKIP_WORKFLOW" != "true" ]]; then
-  sync_tree \
-    "${CODEX_HOME}/workflow" \
-    "${REPO_ROOT}/codex/workflow" \
-    "memory/" \
-    "__pycache__/" \
-    "*.pyc" \
-    ".DS_Store"
+    ".DS_Store" \
+    "/sepia/" \
+    "/sepia-*/" \
+    "/ccwf-*/" \
+    "/gstack/" \
+    "/gstack-*/" \
+    "/browse/" \
+    "/qa/" \
+    "/review/" \
+    "/ship/" \
+    "/retro/" \
+    "/office-hours/" \
+    "/plan-ceo-review/" \
+    "/plan-eng-review/" \
+    "/setup-browser-cookies/"
 fi
 
 if [[ "$SKIP_CONFIG" != "true" ]]; then

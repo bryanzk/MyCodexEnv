@@ -647,7 +647,7 @@
           <article class="card build">
             <div class="label">Layer 03</div>
             <h3>Specialist layer</h3>
-            <p>包括 repo-specific harness、gstack skills、planner、TDD、QA、安全、发布和 doc-updater。它回答：具体由哪个专家流程完成任务。</p>
+            <p>包括 repo-specific harness、planner、TDD、QA、安全、发布和 doc-updater 等专项 skill。它回答：具体由哪个专家流程完成任务。</p>
             <div class="badges"><span class="badge">planner</span><span class="badge">TDD</span><span class="badge">QA</span><span class="badge">ship</span></div>
           </article>
         </div>
@@ -728,7 +728,7 @@
               <tr><td>Harness</td><td>把 agent 工作固定在安全流程里的“安全带”和“交付轨道”。</td><td><code>delivery-harness-framework</code>、runtime docs、helpers</td></tr>
               <tr><td>Runtime</td><td>围绕模型运行的规则、权限、证据、状态和 hooks。</td><td><code>docs/HARNESS_RUNTIME.md</code>、<code>codex/runtime/*</code></td></tr>
               <tr><td>Router</td><td>决定当前任务处于哪个阶段、该交给哪个技能或脚本。</td><td><code>delivery-harness-framework</code></td></tr>
-              <tr><td>Skill</td><td>认知工作流：规划、TDD、QA、安全、发布、文档等。</td><td><code>codex/skills/*</code>、<code>gstack-*</code></td></tr>
+              <tr><td>Skill</td><td>认知工作流：规划、TDD、QA、安全、发布、文档等。</td><td><code>codex/skills/*</code></td></tr>
               <tr><td>Helper</td><td>确定性脚本：恢复、探测、验证、报告、checkpoint。</td><td><code>scripts/harness_*.py</code></td></tr>
               <tr><td>Vertical slice</td><td>一个能单独验证的端到端小切片，而不是只改某一层。</td><td><code>AFK</code> / <code>HITL</code> planning</td></tr>
               <tr><td>Durable brief</td><td>给 worker agent 的任务说明书，包含任务类型、现状与目标、必须保持或改变的接口、可验证的验收标准、验证命令、任务强度和明确不做的事项。这些内容刚好回答“要改什么、不能影响什么、怎样证明完成”；文件位置只用于导航，具体实现方法由 worker 决定，避免任务说明过长或过早锁死方案。</td><td><code>docs/templates/harness-agent-brief.md</code></td></tr>

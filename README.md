@@ -94,7 +94,6 @@ MyCodexEnv turns those questions into a repeatable loop:
 | Hooks | `codex/config.template.toml` (`[[hooks.*]]`), `codex/hooks/` | Session, prompt, policy, and evidence hooks |
 | Runtime policy | `codex/runtime/` | Tool policy, schemas, and CLI resolver |
 | Skills | `codex/skills/` | Local Codex skills |
-| Codex workflow | `codex/workflow/` | Local Codex workflow |
 | Shell integration | `codex/zsh/` | Session-title and shell helpers |
 | Claude workflow | `claude/workflow/` | Local Claude workflow |
 | Claude integration | `claude/CLAUDE_INTEGRATION_BLOCK.md` | Local Claude instructions block |
@@ -102,15 +101,12 @@ MyCodexEnv turns those questions into a repeatable loop:
 
 ### Skills
 
-`codex/skills/*` is the repository source of truth for persistently managed skills except active external gstack. When `~/.gstack/repos/gstack` is valid, `scripts/external_gstack_runtime.py` owns its 53 flat skill links and minimal sidecar; ordinary sync consumes `status` and never runs `apply` or `recover`. The vendored gstack snapshot remains the legacy/bootstrap fallback.
+`codex/skills/*` is the repository source of truth for persistently managed skills. gstack, Sepia, and the Codex side of claude-code-workflow were retired on 2026-11-27; sync no longer deploys them and leaves existing runtime copies in place.
 
 The repository maintains:
 
 - project-owned workflow skills for planning, verification, delivery harnesses, skill evaluation, and session continuity;
-- the vendored `garrytan/gstack` skill collection and its shared support files;
 - controlled copies of third-party skills, licenses, and runtime synchronization metadata.
-
-Active external gstack does not run `setup`; its runtime cutover is an explicitly approved `apply` transaction with `recover` rollback.
 
 ### Harness Runtime
 
@@ -137,8 +133,6 @@ Key entry points:
 
 - **Thread discipline** — every task freezes repository, mode, and compaction anchors. A confirmed anchor mismatch or second compaction can create at most one bounded successor when the project, tools, counters, and idempotency state are all safely known. A transition chain is limited to three automatic moves and never automatically archives or deletes tasks.
 - **Codex Fluent** — a report-only scanner ranks active tasks by size and audits handoff readiness. Maintenance operations still require separate authorization, backups, and a recoverable handoff.
-- **gbrain-aware planning** — when configured, gstack planning skills can use cached product, goal, developer-persona, brand, competitor, and user-profile context. The generic Harness remains responsible only for repository state, execution lane, and verification boundaries.
-- **iOS QA bridge** — vendored gstack includes real-device and SwiftUI QA, synchronization, repair, and cleanup workflows. They remain specialist skills and do not broaden the permissions of ordinary prompts.
 
 ## Project map
 
@@ -200,19 +194,6 @@ python3 scripts/check_codex_skill_loader.py \
 ```
 
 The compatibility check validates manifests, helper syntax, relative links, and complete parity for persistently managed skills. The loader gate invokes the Codex app server without network access and checks loaded/enabled state and loader errors.
-
-### Refresh vendored gstack
-
-```bash
-python3 scripts/prepare_gstack_dhf_daily_refresh.py --json
-python3 scripts/sync_gstack_vendor.py \
-  --repo-root "$(pwd)" \
-  --source https://github.com/garrytan/gstack.git \
-  --dry-run \
-  --json
-```
-
-Run the actual synchronization only when the dry run returns `needs_update=true`. After synchronization, rerun the repository tests, runtime synchronization, gstack setup, and environment verification.
 
 ### Manage multi-repository AGENTS files
 

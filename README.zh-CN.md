@@ -76,7 +76,6 @@ MyCodexEnv 把这三个问题变成一条可重复的闭环：
 | Hooks | `codex/config.template.toml`（`[[hooks.*]]`）、`codex/hooks/` | session、prompt、policy 与 evidence hooks |
 | Runtime policy | `codex/runtime/` | tool policy、schemas、CLI resolver |
 | Skills | `codex/skills/` | `~/.codex/skills/` |
-| Codex workflow | `codex/workflow/` | `~/.codex/workflow/` |
 | Shell integration | `codex/zsh/` | session title 与 shell 辅助 |
 | Claude workflow | `claude/workflow/` | `~/.claude/workflow/` |
 | Claude integration | `claude/CLAUDE_INTEGRATION_BLOCK.md` | 注入 `~/.claude/CLAUDE.md` |
@@ -91,14 +90,9 @@ MyCodexEnv 把这三个问题变成一条可重复的闭环：
 仓库同时维护：
 
 - 本项目的通用 workflow skills，例如 planning、verification、delivery harness、skill evaluation 与 session continuity；
-- vendored `garrytan/gstack` skill 集合及其共享支持文件；
 - 第三方 skill 的受控副本、许可证和运行时同步。
 
-首次同步 gstack 后，构建它的本地支持组件：
-
-```bash
-~/.codex/skills/gstack/setup
-```
+gstack、Sepia 和 claude-code-workflow 的 Codex 部分已于 2026-11-27 退役。同步不再部署它们，运行时里已有的副本保持不动。
 
 ### Harness Runtime
 
@@ -124,8 +118,6 @@ Harness Runtime 把 agent 工作从“prompt + 工具”扩展为一套可恢复
 
 - **Thread discipline**：每个任务冻结 repo、mode 与 compaction anchors；确认发生 anchor mismatch 或第二次 compaction 时，在项目、工具、计数与幂等状态均可安全确认的前提下，只创建一个边界明确的继任任务。跨任务链合计最多自动迁移三次，且绝不自动归档或删除任务。
 - **Codex Fluent**：以 report-only scanner 对活跃任务做大小排序与 handoff 审计；任何维护操作仍需要独立授权、备份和可恢复 handoff。
-- **gbrain-aware planning**：配置后，gstack planning skills 可以使用缓存的产品、目标、developer persona、品牌、竞品与用户画像；generic Harness 仍只负责 repo state、lane 与验证边界。
-- **iOS QA bridge**：vendored gstack 包含面向真实设备与 SwiftUI 的 QA、同步、修复和清理工作流；它们保留在 specialist skill 范围内，不扩大普通 prompt 的默认权限。
 
 ## 项目地图
 
@@ -178,19 +170,6 @@ python3 scripts/check_codex_skill_loader.py \
 ```
 
 兼容性检查验证 manifest、helper 语法、相对链接与持久托管 skill 的完整 parity；loader gate 在禁网环境中调用 Codex app-server，检查 loaded/enabled 状态和 loader errors。
-
-### 刷新 vendored gstack
-
-```bash
-python3 scripts/prepare_gstack_dhf_daily_refresh.py --json
-python3 scripts/sync_gstack_vendor.py \
-  --repo-root "$(pwd)" \
-  --source https://github.com/garrytan/gstack.git \
-  --dry-run \
-  --json
-```
-
-只有 dry-run 返回 `needs_update=true` 时才执行实际同步。同步后重新运行仓库测试、runtime sync、gstack setup 与环境验证。
 
 ### 管理多仓库 AGENTS
 

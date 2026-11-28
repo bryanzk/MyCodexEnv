@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import argparse
+import fnmatch
 import ast
 import hashlib
 import json
@@ -14,21 +15,20 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
-import external_gstack_runtime
 
 
 SKIP_PARTS = {".git", "node_modules", "__pycache__"}
-GENERATED_GSTACK_DIRS = {
-    ".agents",
-    ".cursor",
-    ".factory",
-    ".gbrain",
-    ".hermes",
-    ".kiro",
-    ".openclaw",
-    ".opencode",
-    ".slate",
-}
+# Skills retired on 2026-11-27 (SHI-637). Their runtime copies stay on disk,
+# disabled in config.toml; they are not checked or reported as runtime-only.
+RETIRED_TOP_LEVEL_PATTERNS = (
+    "gstack", "gstack-*", "sepia", "sepia-*", "ccwf-*",
+    "browse", "qa", "review", "ship", "retro", "office-hours",
+    "plan-ceo-review", "plan-eng-review", "setup-browser-cookies",
+)
+
+
+def is_retired(top_level: str) -> bool:
+    return any(fnmatch.fnmatchcase(top_level, pattern) for pattern in RETIRED_TOP_LEVEL_PATTERNS)
 FRONTMATTER_RE = re.compile(r"\A---\s*\n(?P<body>.*?)\n---\s*(?:\n|\Z)", re.DOTALL)
 FIELD_RE = re.compile(r"^(?P<key>[A-Za-z][A-Za-z0-9_-]*):(?P<value>.*)$")
 MARKDOWN_LINK_RE = re.compile(r"(?<!!)\[[^\]]*\]\(([^)]+)\)")
@@ -64,7 +64,6 @@ def parse_args() -> argparse.Namespace:
         help="Accepted for source-stage verification command compatibility; Claude skill checks are not part of this gate.",
     )
     parser.add_argument("--plugin-root", action="append", default=[], help="Additional plugin/cache root to scan recursively.")
-    parser.add_argument("--gstack-root", help="Explicit external gstack git root; missing or invalid explicit roots fail closed.")
     parser.add_argument(
         "--source-only",
         action="store_true",
@@ -95,7 +94,7 @@ def skill_files(root: Path) -> list[Path]:
         relative = path.relative_to(root)
         if set(path.parts) & SKIP_PARTS:
             continue
-        if len(relative.parts) >= 2 and relative.parts[0] == "gstack" and relative.parts[1] in GENERATED_GSTACK_DIRS:
+        if is_retired(relative.parts[0]):
             continue
         files.append(path)
     return sorted(files)
@@ -268,7 +267,7 @@ def managed_files(root: Path) -> dict[str, Path]:
         if not path.is_file() or set(path.parts) & SKIP_PARTS or path.name == ".DS_Store":
             continue
         relative = path.relative_to(root)
-        if len(relative.parts) >= 2 and relative.parts[0] == "gstack" and relative.parts[1] in GENERATED_GSTACK_DIRS:
+        if is_retired(relative.parts[0]):
             continue
         files[str(relative)] = path
     return files
@@ -350,13 +349,6 @@ def main() -> int:
     args = parse_args()
     repo_root = Path(args.repo_root).expanduser().resolve()
     codex_home = Path(args.codex_home).expanduser().resolve()
-    external = external_gstack_runtime.inspect_status(repo_root, codex_home, args.gstack_root)
-    external_status = external["external_gstack"]["status"]
-    excluded_top_level = {
-        value.strip("/")
-        for value in external.get("exact_excludes", [])
-        if value.startswith("/") and value.endswith("/") and value.strip("/")
-    } if external_status == "active" else set()
     roots: list[tuple[str, Path]] = [
         ("repo", repo_root / "codex" / "skills"),
         ("agents", repo_root / ".agents" / "skills"),
@@ -366,10 +358,7 @@ def main() -> int:
     roots.extend(("plugin", Path(raw).expanduser().resolve()) for raw in args.plugin_root)
 
     seen_skill_files: set[Path] = set()
-    findings: list[Finding] = [
-        Finding(item["severity"], item["code"], item["path"], item["detail"])
-        for item in external.get("findings", [])
-    ]
+    findings: list[Finding] = []
     helper_count = 0
     root_counts: dict[str, int] = {}
     for label, root in roots:
@@ -394,7 +383,7 @@ def main() -> int:
     managed = (
         {"checked": 0, "missing": [], "missing_files": [], "drifted": [], "runtime_only": []}
         if args.source_only
-        else managed_runtime_status(repo_root / "codex" / "skills", codex_home / "skills", excluded_top_level)
+        else managed_runtime_status(repo_root / "codex" / "skills", codex_home / "skills")
     )
     for name in managed["missing"]:
         findings.append(Finding("error", "managed_skill_missing", str(codex_home / "skills" / name), name))
@@ -429,7 +418,6 @@ def main() -> int:
             "warnings": warnings,
         },
         "managed_runtime": managed,
-        "external_gstack": external["external_gstack"],
         "findings": [item.as_json() for item in findings],
     }
     if args.json_output:

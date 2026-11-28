@@ -4,20 +4,20 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>MyCodexEnv Delivery Harness Framework (DHF) 技能路由 - 运行时状态风格</title>
-  <meta name="description" content="MyCodexEnv 使用 delivery-harness-framework 作为 Delivery Harness Framework (DHF) 的入口。DHF 先选择治理 profile，再把任务路由到仓库专用 harness、gstack 专家技能、本地开发与验证技能，或确定性的运行时辅助脚本；只有 governed escalation 才恢复完整运行时事实或探测 Codex…">
+  <meta name="description" content="MyCodexEnv 使用 delivery-harness-framework 作为 Delivery Harness Framework (DHF) 的入口。DHF 先选择治理 profile，再把任务路由到仓库专用 harness、专项 skill、本地开发与验证技能，或确定性的运行时辅助脚本；只有 governed escalation 才恢复完整运行时事实或探测 Codex…">
   <link rel="canonical" href="https://deliveryharness.com/project-lifecycle-harness-flow-skills-zh-status-style.html">
   <link rel="alternate" hreflang="en" href="https://deliveryharness.com/project-lifecycle-harness-flow-skills-en-status-style.html">
   <link rel="alternate" hreflang="zh-CN" href="https://deliveryharness.com/project-lifecycle-harness-flow-skills-zh-status-style.html">
   <link rel="alternate" hreflang="x-default" href="https://deliveryharness.com/project-lifecycle-harness-flow-skills-en-status-style.html">
   <meta property="og:title" content="MyCodexEnv Delivery Harness Framework (DHF) 技能路由 - 运行时状态风格">
-  <meta property="og:description" content="MyCodexEnv 使用 delivery-harness-framework 作为 Delivery Harness Framework (DHF) 的入口。DHF 先选择治理 profile，再把任务路由到仓库专用 harness、gstack 专家技能、本地开发与验证技能，或确定性的运行时辅助脚本；只有 governed escalation 才恢复完整运行时事实或探测 Codex…">
+  <meta property="og:description" content="MyCodexEnv 使用 delivery-harness-framework 作为 Delivery Harness Framework (DHF) 的入口。DHF 先选择治理 profile，再把任务路由到仓库专用 harness、专项 skill、本地开发与验证技能，或确定性的运行时辅助脚本；只有 governed escalation 才恢复完整运行时事实或探测 Codex…">
   <meta property="og:url" content="https://deliveryharness.com/project-lifecycle-harness-flow-skills-zh-status-style.html">
   <meta property="og:image" content="https://deliveryharness.com/dhf-social-card.png">
   <meta property="og:image:alt" content="Delivery Harness Framework — from ambiguous requests to verifiable delivery">
   <meta property="og:locale" content="zh_CN">
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:title" content="MyCodexEnv Delivery Harness Framework (DHF) 技能路由 - 运行时状态风格">
-  <meta name="twitter:description" content="MyCodexEnv 使用 delivery-harness-framework 作为 Delivery Harness Framework (DHF) 的入口。DHF 先选择治理 profile，再把任务路由到仓库专用 harness、gstack 专家技能、本地开发与验证技能，或确定性的运行时辅助脚本；只有 governed escalation 才恢复完整运行时事实或探测 Codex…">
+  <meta name="twitter:description" content="MyCodexEnv 使用 delivery-harness-framework 作为 Delivery Harness Framework (DHF) 的入口。DHF 先选择治理 profile，再把任务路由到仓库专用 harness、专项 skill、本地开发与验证技能，或确定性的运行时辅助脚本；只有 governed escalation 才恢复完整运行时事实或探测 Codex…">
   <meta name="twitter:image" content="https://deliveryharness.com/dhf-social-card.png">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -497,12 +497,12 @@
         <div class="eyebrow">Delivery Harness Framework / 当前 Skill Routing Map</div>
         <h1>DHF 当前 Skill Routing Map。</h1>
         <p class="lead">
-          MyCodexEnv 使用 <code>delivery-harness-framework</code> 作为 Delivery Harness Framework (DHF) 的入口。DHF 先选择治理 profile，再把任务路由到仓库专用 harness、gstack 专家技能、本地开发与验证技能，或确定性的运行时辅助脚本；只有 governed escalation 才恢复完整运行时事实或探测 Codex 环境。最新路由还覆盖 domain docs / ADR、vertical slices、feedback loop、throwaway prototype 和 durable agent brief。
+          MyCodexEnv 使用 <code>delivery-harness-framework</code> 作为 Delivery Harness Framework (DHF) 的入口。DHF 先选择治理 profile，再把任务路由到仓库专用 harness、专项 skill、本地开发与验证技能，或确定性的运行时辅助脚本；只有 governed escalation 才恢复完整运行时事实或探测 Codex 环境。最新路由还覆盖 domain docs / ADR、vertical slices、feedback loop、throwaway prototype 和 durable agent brief。
         </p>
         <div class="kpis">
           <div class="kpi"><strong>8</strong><span>标准生命周期阶段</span></div>
           <div class="kpi"><strong>9+</strong><span>辅助 / 验证 / brief 入口</span></div>
-          <div class="kpi"><strong>3</strong><span>通用、仓库专用、gstack 角色</span></div>
+          <div class="kpi"><strong>3</strong><span>通用、仓库专用、专项 skill 角色</span></div>
           <div class="kpi"><strong>4</strong><span>完成证据字段</span></div>
         </div>
       </section>
@@ -530,16 +530,16 @@ flowchart TD
   Classify{"分类生命周期阶段<br/>和风险边界"}
   Repo{"是否存在仓库专用 harness？"}
   RepoSkill["交给项目适配器<br/>业务路径、命令、冒烟矩阵"]
-  Product["产品 / 范围判断<br/>gstack-plan-ceo-review / gstack-office-hours"]
+  Product["产品 / 范围判断<br/>grilling"]
   Plan["工程 / 设计规划<br/>vertical slices / AFK / HITL"]
   Proto["原型学习 / 深模块<br/>throwaway prototype / deep module"]
   Dev["实现<br/>tdd-guide / atdd-guide / scoped workers"]
   Team{"是否使用并行 agents？"}
   TeamVal["harness_agent_team.py validate PLAN.json<br/>optional durable brief"]
   Val["验证与证据<br/>feedback loop / verification-loop / harness_report.py"]
-  QA["QA / 安全 / Review<br/>gstack-qa / gstack-cso / gstack-review / code-reviewer"]
-  Ship["发布 / 部署<br/>gstack-ship / gstack-land-and-deploy / gstack-canary"]
-  Docs["文档发布<br/>gstack-document-release / doc-updater"]
+  QA["QA / 安全 / Review<br/>chrome-devtools-browser / security-reviewer / code-review"]
+  Ship["发布 / 部署<br/>pr"]
+  Docs["文档发布<br/>doc-updater"]
   Handoff["governed matching signal 才交接<br/>harness_checkpoint.py append"]
   Done(["DHF 输出<br/>技能路由、验证证据、下一个安全任务"])
 
@@ -605,13 +605,13 @@ flowchart TD
               </tr>
               <tr>
                 <td class="phase">产品 / 业务判断</td>
-                <td><span class="badge decision">gstack-plan-ceo-review</span><span class="badge decision">gstack-office-hours</span></td>
-                <td>存在需求产物时运行 <code>scripts/harness_requirements.py validate PATH</code><br>gbrain 已配置时由 gstack planning skill 自行 preflight</td>
-                <td>需要澄清用户价值、范围、演示边界、优先级或业务取舍时；gbrain 不能替代 repo state。</td>
+                <td><span class="badge decision">grilling</span></td>
+                <td>存在需求产物时运行 <code>scripts/harness_requirements.py validate PATH</code></td>
+                <td>需要澄清用户价值、范围、演示边界、优先级或业务取舍时。</td>
               </tr>
               <tr>
                 <td class="phase">工程 / 设计规划</td>
-                <td><span class="badge decision">gstack-plan-eng-review</span><span class="badge decision">gstack-plan-design-review</span><span class="badge decision">gstack-plan-tune</span><span class="badge decision">planner</span></td>
+                <td><span class="badge decision">planner</span><span class="badge decision">critique</span></td>
                 <td>提出并行工作时运行 <code>scripts/harness_agent_team.py validate PLAN.json</code><br>需要 worker 合同时使用 <code>docs/templates/harness-agent-brief.md</code></td>
                 <td>需要决定架构、API、数据流、迁移、视觉结构、vertical slice、<code>AFK</code>/<code>HITL</code> 或多 agent 写入归属时；重复提问偏好才进入 plan-tune。</td>
               </tr>
@@ -629,19 +629,19 @@ flowchart TD
               </tr>
               <tr>
                 <td class="phase">QA / Review / 安全</td>
-                <td><span class="badge verify">gstack-qa</span><span class="badge verify">gstack-qa-only</span><span class="badge verify">gstack-review</span><span class="badge verify">code-reviewer</span><span class="badge verify">gstack-cso</span><span class="badge verify">security-reviewer</span></td>
+                <td><span class="badge verify">chrome-devtools-browser</span><span class="badge verify">playwright</span><span class="badge verify">code-review</span><span class="badge verify">security-reviewer</span></td>
                 <td>对运行时敏感任务使用 <code>git diff</code>、<code>scripts/harness_env_probe.py --json</code></td>
                 <td>存在 diff、行为对用户可见、涉及安全 / 隐私边界，或任务接近交接 / 发布时。</td>
               </tr>
               <tr>
                 <td class="phase">发布 / 部署 / 金丝雀</td>
-                <td><span class="badge ship">gstack-ship</span><span class="badge ship">gstack-land-and-deploy</span><span class="badge ship">gstack-canary</span></td>
+                <td><span class="badge ship">pr</span></td>
                 <td><code>scripts/verify_codex_env.sh ...</code><br><code>scripts/harness_checkpoint.py append</code></td>
                 <td>用户明确要求 commit、PR、merge、release、deploy 或生产验证时。</td>
               </tr>
               <tr>
                 <td class="phase">文档 / 交接</td>
-                <td><span class="badge ship">gstack-document-release</span><span class="badge ship">doc-updater</span><span class="badge ship">delivery-harness-framework</span></td>
+                <td><span class="badge ship">doc-updater</span><span class="badge ship">delivery-harness-framework</span></td>
                 <td><code>scripts/harness_checkpoint.py append</code><br><code>scripts/harness_report.py --json</code></td>
                 <td>文档需要反映已交付行为，或会话必须持久化下一个安全任务状态时。</td>
               </tr>

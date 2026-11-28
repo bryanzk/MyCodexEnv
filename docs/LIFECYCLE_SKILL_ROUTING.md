@@ -11,8 +11,8 @@
 ## Purpose
 
 This document explains which workflows MyCodexEnv covers, how the Harness
-Runtime maps work to lifecycle stages, and which Codex/gstack skills should be
-used at each stage.
+Runtime maps work to lifecycle stages, and which Codex skills should be used at
+each stage.
 
 MyCodexEnv has three layers:
 
@@ -20,7 +20,7 @@ MyCodexEnv has three layers:
   scripts, and checkpoint helpers.
 - Router layer: `delivery-harness-framework`, which reads durable state,
   classifies the lifecycle stage, and selects the next workflow.
-- Specialist layer: repo-specific lifecycle adapters, gstack skills, local
+- Specialist layer: repo-specific lifecycle adapters, local
   planning/testing/review skills, and deterministic helper scripts.
 
 The generic lifecycle skill should stay generic. Project-only paths, fixtures,
@@ -121,17 +121,17 @@ Evidence 记忆合同：Hub 使用 `CAP → BRIDGE × SAFE → TRUST` 作为主�
 | --- | --- | --- |
 | Environment reproduction | Clone, bootstrap, sync Codex/Claude homes, install pinned prerequisites, verify local setup. | `README.md`, `bootstrap.sh`, `scripts/verify_codex_env.sh` |
 | Global rules and repo routing | Keep cross-repo Codex rules in one source and route repo-local constraints through `AGENTS.md`. | `codex/AGENTS.md`, root `AGENTS.md`, `scripts/manage_agents.py` |
-| Skill synchronization | Copy ordinary repo-managed skills. Active external gstack at `~/.gstack/repos/gstack` uses `scripts/external_gstack_runtime.py status|apply|recover`; ordinary sync never performs cutover or runs `setup`, and the repo vendor remains the legacy/bootstrap fallback. | `scripts/sync_codex_home.sh`, `scripts/external_gstack_runtime.py` |
-| Harness lifecycle routing | Recover state, classify phase, choose generic/repo-specific/gstack workflow, define gates. | `delivery-harness-framework` |
+| Skill synchronization | Copy ordinary repo-managed skills into `~/.codex/skills/`. Skill families retired on 2026-11-27 (SHI-637) are no longer deployed; their runtime copies are left in place and disabled in `config.toml`. | `scripts/sync_codex_home.sh` |
+| Harness lifecycle routing | Recover state, classify phase, choose generic or repo-specific workflow, define gates. | `delivery-harness-framework` |
 | Requirements and planning | Capture success criteria, scope, constraints, domain docs, ADR conflicts, vertical slices, risks, and validation gates before implementation. | `planner`, `req-to-dev`, `task-flow-orchestrator`, `scripts/harness_requirements.py` |
-| Backlog-ready issue/spec authoring | Turn vague implementation intent into a bounded issue or executable spec before coding starts. | vendored gstack `spec`, `delivery-harness-framework` |
+| Backlog-ready issue/spec authoring | Turn vague implementation intent into a bounded issue or executable spec before coding starts. | `to-spec`, `to-tickets`, `delivery-harness-framework` |
 | Development execution | Make scoped repo changes, use tests first when behavior changes, preserve unrelated user work. | `tdd-guide`, `atdd-guide`, repo-local workflow |
 | Validation and evidence | Run fresh tests/checks and record `command`, `exit_code`, `key_output`, `timestamp`. | `verification-loop`, `scripts/harness_evidence.py`, `scripts/harness_report.py` |
-| Review and QA | Inspect diffs, browser behavior, security/privacy boundaries, and user-visible regressions. | `gstack-review`, `code-reviewer`, `gstack-qa`, `security-reviewer` |
+| Review and QA | Inspect diffs, browser behavior, security/privacy boundaries, and user-visible regressions. | `code-review`, `review-swarm`, `chrome-devtools-browser`, `playwright`, `security-reviewer` |
 | Committee review loop | Run an explicit expert-committee scoring loop with a separate revision worker until a target rating is met. | `committee-review-loop` |
-| Ship and deployment | Commit/PR/release/deploy/canary only when explicitly requested and verified. | `gstack-ship`, `gstack-land-and-deploy`, `gstack-canary` |
-| Handoff and recovery | Append state, preserve next safe task, recover without chat history, and optionally save/restore user-facing gstack context. | `scripts/harness_checkpoint.py`, `scripts/harness_recover.py`, vendored gstack `context-save` / `context-restore` |
-| Documentation release | Keep README/docs aligned with shipped behavior and skill/runtime changes; generate missing docs, polished artifacts, or source-backed diagrams when requested. | `gstack-document-release`, vendored gstack `document-generate`, vendored gstack `make-pdf`, vendored gstack `diagram`, `doc-updater` |
+| Ship and deployment | Commit/PR/release/deploy only when explicitly requested and verified. | repo release workflow, `pr` |
+| Handoff and recovery | Append state, preserve next safe task, recover without chat history, and hand off user-facing context. | `scripts/harness_checkpoint.py`, `scripts/harness_recover.py`, `handoff` |
+| Documentation release | Keep README/docs aligned with shipped behavior and skill/runtime changes; generate missing docs when requested. | `doc-updater` |
 
 ## Lifecycle Stage Map
 
@@ -139,14 +139,14 @@ Evidence 记忆合同：Hub 使用 `CAP → BRIDGE × SAFE → TRUST` 作为主�
 | --- | --- | --- | --- | --- |
 | `research` | Unknown repo, stale handoff, unclear source ownership, missing context. | Read-only. | `delivery-harness-framework`, `scripts/harness_recover.py`, `scripts/harness_env_probe.py` | Read durable sources and recover the next safe task before acting. |
 | `requirements` | Goal, audience, acceptance criteria, scope, constraints, or domain language are unclear. | Read-only. | `planner`, `req-to-dev`, `scripts/harness_requirements.py` | Turn ambiguity into success criteria, read `CONTEXT.md` / `CONTEXT-MAP.md` and relevant ADRs when present, then validate requirements artifacts before treating them as source of truth. |
-| `planning` | The user wants a backlog-ready GitHub issue, ticket, or executable spec before implementation begins. | Read-only by default. | vendored gstack `spec`, `delivery-harness-framework` | Preserve runtime state, lane boundaries, and validation gates while turning vague intent into a bounded spec or issue. |
-| `planning` | Architecture, API shape, migration, runtime, data flow, cross-module decisions, or multi-step work breakdown. | Read-only by default. | `gstack-plan-eng-review`, `planner`, `task-flow-orchestrator` | Produce an implementation plan, vertical slice breakdown, risk list, and validation gate before edits. |
+| `planning` | The user wants a backlog-ready GitHub issue, ticket, or executable spec before implementation begins. | Read-only by default. | `to-spec`, `to-tickets`, `delivery-harness-framework` | Preserve runtime state, lane boundaries, and validation gates while turning vague intent into a bounded spec or issue. |
+| `planning` | Architecture, API shape, migration, runtime, data flow, cross-module decisions, or multi-step work breakdown. | Read-only by default. | `planner`, `codebase-design`, `task-flow-orchestrator` | Produce an implementation plan, vertical slice breakdown, risk list, and validation gate before edits. |
 | `development` | Acceptance criteria are clear and touched files/modules are bounded. | Scoped writes. | `tdd-guide`, `atdd-guide`, repo workflow, scoped worker agents | Implement the change with tests appropriate to the risk. |
 | `validation` | Work is implemented or docs/config changed and needs fresh evidence. | Tests/checks by default. | `verification-loop`, `scripts/harness_report.py`, `scripts/verify_codex_env.sh` | Prove the result with fresh command output and required evidence fields. |
-| `review` | Diff exists, work is near handoff/PR/landing, or user asks for review. | Read-only by default. | `gstack-review`, `code-reviewer`, `review-swarm`, `security-reviewer` | Find bugs, regressions, security risks, and missing tests before shipping. |
+| `review` | Diff exists, work is near handoff/PR/landing, or user asks for review. | Read-only by default. | `code-review`, `review-swarm`, `security-reviewer` | Find bugs, regressions, security risks, and missing tests before shipping. |
 | `review` | User explicitly asks for a committee, expert panel, subagent reviewer/worker split, rating loop, or improvement until a score such as `9.5/10`. | Committee read-only; revision worker scoped writes. | `committee-review-loop`, `scripts/harness_agent_team.py` | Keep ordinary review routes separate while iterating committee findings into bounded, verified revisions. |
-| `ship` | User requests commit, push, PR, merge, release, deploy, production verification, or version-slot queue visibility. | Requested release actions only. | `gstack-ship`, `gstack-land-and-deploy`, `gstack-canary`, vendored gstack `landing-report` | Complete release steps, verify deployment, and preserve rollback or version-queue context. |
-| `handoff` | Session is ending, task crosses phases, work spans sessions, next safe task must survive, or the user asks to save/restore working context. | Docs/state only unless a gstack context skill is explicitly invoked. | `scripts/harness_checkpoint.py`, vendored gstack `context-save` / `context-restore`, `gstack-retro`, `gstack-learn` | Append harness checkpoint state, capture blockers, preserve resumable user context, and leave a recoverable next step. |
+| `ship` | User requests commit, push, PR, merge, release, deploy, or production verification. | Requested release actions only. | repo release workflow, `pr` | Complete release steps, verify deployment, and preserve rollback context. |
+| `handoff` | Session is ending, task crosses phases, work spans sessions, next safe task must survive, or the user asks to save/restore working context. | Docs/state only. | `scripts/harness_checkpoint.py`, `handoff`, `codex-retrospective` | Append harness checkpoint state, capture blockers, preserve resumable user context, and leave a recoverable next step. |
 
 ## Specialist Skill Map
 
@@ -154,35 +154,18 @@ Evidence 记忆合同：Hub 使用 `CAP → BRIDGE × SAFE → TRUST` 作为主�
 | --- | --- | --- |
 | `delivery-harness-framework` | Generic startup/resume routing, durable state reads, phase classification, helper selection, evidence expectations. | For generic activation only; it directly delegates at the project boundary before generic recovery, shared-state reads, or phase selection. |
 | repo-specific lifecycle harnesses | Project paths, local commands, business fixtures, deployment topology, smoke matrices. | The dispatcher directly lazy-delegates at the recognized project boundary; the adapter owns all project phase and state classification. |
-| `gstack-plan-ceo-review` | Product framing, user value, scope, demo boundaries, strategic tradeoffs. | Use when product judgment is the work. |
-| vendored gstack `spec` | Backlog-ready GitHub issues, tickets, and executable specs with explicit acceptance criteria before implementation begins. | Use when the work needs a durable spec artifact rather than immediate coding. |
-| `gstack-office-hours` | Founder-style pressure testing, market/user/business clarity. | Useful before committing to a product direction. In gstack `1.52.x`, it can use configured gbrain context during planning preflight. |
-| `gstack-plan-eng-review` | Architecture, data model, API contract, migration, performance, test strategy, and distribution/publish readiness for new artifacts. | Use before implementation on complex engineering plans; the current upstream workflow is explicitly search-aware, completeness-biased, and brain-aware when gbrain is configured. |
-| `gstack-plan-design-review` | UX structure, visual direction, responsive behavior, design acceptance, and mockup-first plan refinement. | Use before UI implementation or major design changes. When a design binary/mockup path exists, prefer visual review over prose-only critique; when gbrain is configured, let the planning skill consume it as specialist context. |
-| `gstack-qa` | Browser QA, screenshots, console/network checks, responsiveness, accessibility smoke, then iterative bug fixing with regression evidence. | Use for user-facing web behavior when fixes are allowed. |
-| `gstack-qa-only` | Report-only QA when fixes should not be applied automatically. | Keeps QA read-only. |
-| `gstack-ios-qa` | Real-device iOS QA on a live app via the embedded StateServer and agent loop. | Use for "test my iPhone app", device-only bug hunts, or live iOS smoke runs. |
-| `gstack-ios-design-review` | Real-device iOS visual audit against Apple HIG and app design intent. | Use for shipped iOS UI review, not pre-implementation design planning. |
-| `gstack-ios-fix` | Closed-loop iOS bug fixing after a real-device repro exists. | Use when an iOS defect should be fixed, redeployed, and reverified autonomously. |
-| vendored gstack `ios-sync` / `ios-clean` | Maintain or remove the gstack iOS debug bridge and debug-only instrumentation. | Use only for explicit iOS bridge regeneration or release-cleanup requests. |
-| `gstack-cso` | Infrastructure-first security and privacy review. | Use for auth, tokens, secrets, PII, or public/private boundaries. |
+| `grilling` | Product framing, user value, scope, and requirement interrogation. | Use when product judgment is the work and the problem statement is still fluid. |
+| `to-spec` / `to-tickets` | Backlog-ready specs and tracer-bullet tickets with explicit acceptance criteria before implementation begins. | Use when the work needs a durable spec artifact rather than immediate coding. |
+| `codebase-design` | Deep-module interface design and seams. | Use with `planner` on engineering plans. |
+| `critique` / `frontend-design` | UX structure, visual direction, and design acceptance. | Use before UI implementation or major design changes. |
+| `chrome-devtools-browser` / `playwright` | Browser QA, screenshots, console/network checks, and multi-step page flows. | Use for user-facing web behavior. |
+| `code-review` | Review of the changes since a fixed point along standards and spec axes. | Use near PR, handoff, or ship. |
+| `pr` | PR body writing. | Release actions themselves follow the repo's own workflow. |
+| `handoff` | Compact the session into a handoff document. | Use alongside, not instead of, `scripts/harness_checkpoint.py`. |
+| `codex-retrospective` | Evidence-backed review of recent Codex history. | Use for time-windowed retrospectives. |
 | `security-reviewer` | Code-level security review for validation, auth, injection, secret leakage, error disclosure. | Good for narrower security audits. |
-| `gstack-review` | Pre-landing diff review, specialist checks, and fix-first handling of mechanical findings. | Use near PR, handoff, or ship; current upstream review is explicitly geared toward auto-fixing low-risk findings before asking. |
-| `code-reviewer` | Local code review of staged or unstaged changes. | Use for focused findings with file/line references. |
 | `review-swarm` | Parallel read-only review across behavioral/security/performance/test risks. | Use when the user asks for multi-agent review. |
 | `committee-review-loop` | Explicit expert-committee/subagent loops with scoring, revision briefs, and a target rating such as `9.5/10`. | Do not use for one-off design/code/QA review; preserve read-only committee roles and bounded revision-worker write sets. |
-| `gstack-ship` | Opinionated release workflow before PR/landing, including coverage audit, plan-completion audit, pre-landing review, PR title/version hygiene, and documentation sync. | Only use when user asks to ship. |
-| `gstack-land-and-deploy` | Merge and deploy workflow with post-deploy checks. | Requires explicit release/deploy intent. |
-| `gstack-canary` | Post-deploy canary monitoring. | Use after deploy when live behavior must be watched. |
-| `gstack-document-release` | Post-ship documentation update across README/docs/CHANGELOG/TODOS/VERSION, with coverage-map and documentation-debt checks. | Use when docs must reflect shipped behavior. |
-| vendored gstack `document-generate` | Missing tutorials, how-to docs, reference pages, or explanatory docs for a feature/module/project. | Use when documentation must be created from scratch rather than just updated after release. |
-| vendored gstack `make-pdf` | Convert Markdown into a polished PDF artifact. | Use for publication-quality exports, not routine repo docs. |
-| vendored gstack `diagram` | Turn an English description or mermaid source into a diagram triplet (`.mmd`, editable `.excalidraw`, rendered SVG/PNG). | Use for offline source-backed diagrams that may later be embedded into docs or exported through `make-pdf`. |
-| vendored gstack `landing-report` | Read-only version queue and PR landing visibility before ship. | Use when asking what version slot or landing order comes next. |
-| vendored gstack `context-save` / `context-restore` | User-facing save/resume of working context across sessions or Conductor workspaces. | Use alongside, not instead of, `scripts/harness_checkpoint.py`; the harness checkpoint remains the repo-local append-only state source. |
-| vendored gstack `scrape` / `skillify` | Read-only browser data extraction and codifying repeated scrape flows into browser-skills. | Use for extraction workflows; use `gstack-qa` for behavior testing and bug fixing. |
-| vendored gstack `setup-gbrain` / `sync-gbrain` | Configure or refresh optional gbrain-backed repo memory/search. | Use only when the user explicitly wants gbrain setup, refresh, or repo re-indexing. |
-| `gstack-plan-tune` | Tune repeated planning questions, developer profile preferences, and question-memory behavior. | Use only when the user asks to tune how gstack asks questions or to inspect/update developer profile signals; this is operator preference state, not repo lifecycle state. |
 | `doc-updater` | Targeted docs/codemap/README updates for feature, API, or structure changes. | Use for repo-local documentation maintenance. |
 | `verification-loop` | Build/static/test/coverage/security verification before completion. | Use when a full validation loop is required. |
 | `tdd-guide` | Test-first implementation for behavior changes and bug fixes. | Use before writing production code. |
@@ -210,18 +193,17 @@ User-invoked writing routes use the explicit `$skill-name` form. Automatic route
 
 | User intent | Primary route | Composition or boundary |
 | --- | --- | --- |
-| New technical article, blog post, professional announcement, ticket, postmortem, or ordinary professional prose | `sepia` with `write`, or explicit `sepia-write` | Sepia selects venue rules before drafting. |
-| Diagnose AI-writing patterns without editing | `sepia-review` | Report only; no edits. |
-| Minimally revise an existing draft | `sepia` with `refactor`, or explicit `sepia-refactor` | Preserve facts, structure, voice, and intent. |
-| Rebuild a short draft from supplied facts and intent | `sepia` with `recreate`, or explicit `sepia-recreate` | Extract facts first; do not invent specifics. |
+| New technical article, blog post, professional announcement, ticket, postmortem, or ordinary professional prose | No writing skill | Write directly from the supplied facts; do not invent specifics. |
+| Diagnose AI-writing patterns without editing | No writing skill | Report only; no edits. |
+| Minimally revise an existing draft | No writing skill; `humanizer` only when explicitly requested | Preserve facts, structure, voice, and intent. |
 | Explicit `humanizer` request | `humanizer` | User-invoked legacy fallback for minimal surface editing; never an automatic prose route. |
-| Explore raw material | `writing-fragments` | User-invoked workshop stage; Sepia does not interrupt it. |
-| Shape a fixed fragment pile into an argument | `writing-shape` | User-invoked workshop stage; use Sepia only after a complete draft and when requested. |
+| Explore raw material | `writing-fragments` | User-invoked workshop stage; do not interrupt it. |
+| Shape a fixed fragment pile into an argument | `writing-shape` | User-invoked workshop stage. |
 | Build an article beat by beat | `writing-beats` | Preserve its interactive sequence. |
-| Explicit Guanshiyin four-dimension Chinese writing | `guanshiyin-writing` | This explicit method wins; stack Sepia only when explicitly requested. |
+| Explicit Guanshiyin four-dimension Chinese writing | `guanshiyin-writing` | This explicit method wins. |
 | Job posting plus application package | `job-application-packager` | It owns intake, evidence, artifacts, and PDF workflow. |
-| Customer-facing agent reliability case study | Evidence/domain skill first, then Sepia final prose pass when available | Evidence boundaries stay authoritative; Sepia cannot enlarge claims. |
-| Code, debugging, review, data analysis, or another non-writing task using “write” | Existing non-writing skill | Do not load Sepia merely because the prompt says “write”. |
+| Customer-facing agent reliability case study | Evidence/domain skill | Evidence boundaries stay authoritative; prose cannot enlarge claims. |
+| Code, debugging, review, data analysis, or another non-writing task using “write” | Existing non-writing skill | Do not load a writing skill merely because the prompt says “write”. |
 
 ## Runtime Helper Map
 
@@ -243,25 +225,11 @@ User-invoked writing routes use the explicit `$skill-name` form. Automatic route
   activation boundary or a matching repo adapter; ordinary prompts continue.
 - Prefer repo-specific lifecycle harnesses when a known project adapter owns the
   business domain.
-- Prefer gstack skills when the task is product review, engineering review,
-  backlog/spec authoring, design review, browser QA, real-device iOS QA,
-  security review, ship, deploy, canary, release documentation, retro, or
-  learning capture.
-- Prefer the richer upstream gstack posture when available:
-  `gstack-office-hours` for problem discovery, mockup-first `gstack-plan-design-review`
-  for UI planning, fix-first `gstack-review` for near-landing diffs,
-  coverage-aware `gstack-ship` for release readiness, and
-  debt-aware `gstack-document-release` for post-ship docs. With gstack
-  `1.52.x`, planning skills may use configured gbrain digests as specialist
-  context, but DHF still owns repo state, lane, checkpoint, and validation
-  boundaries; use `gstack-plan-tune` only for explicit question/developer-profile
-  tuning. Also prefer `gstack-ios-qa` / `gstack-ios-design-review` /
-  `gstack-ios-fix` for live-device iOS workflows, vendored `ios-sync` /
-  `ios-clean` only for explicit iOS debug-bridge maintenance, vendored
-  `context-save` / `context-restore` for user-facing session continuity,
-  `landing-report` for version queue visibility, `document-generate` /
-  `make-pdf` / `diagram` for generated docs and artifacts, and `setup-gbrain` /
-  `sync-gbrain` only for explicit persistent memory setup.
+- Prefer the specialist skills in the map above for product review, spec
+  authoring, engineering and design planning, browser QA, security review,
+  diff review, documentation, handoff, and retrospectives. DHF still owns repo
+  state, lane, checkpoint, and validation boundaries. gstack was retired on
+  2026-11-27 (SHI-637); do not route to it.
 - Prefer deterministic helper scripts when the runtime already provides one;
   do not reimplement their parsing or validation manually.
 - Use `verification-loop` or repo-native commands before any completion claim.

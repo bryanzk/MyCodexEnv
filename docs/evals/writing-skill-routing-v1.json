@@ -10,8 +10,8 @@
   "cases": [
     {
       "name": "new-linkedin-technical-case-study",
-      "invocation": "explicit",
-      "prompt": "$sepia-write Write a LinkedIn post for backend engineers explaining how a conventional web API reduced latency from 800 ms to 220 ms by reusing database connections. Do not discuss AI agents.",
+      "invocation": "automatic",
+      "prompt": "Write a LinkedIn post for backend engineers explaining how a conventional web API reduced latency from 800 ms to 220 ms by reusing database connections. Do not discuss AI agents.",
       "fixture_files": {},
       "verification_method": "manual_transcript_review",
       "pass_conditions": [
@@ -85,7 +85,7 @@
       "fixture_files": {},
       "verification_method": "manual_transcript_review",
       "pass_conditions": [{"condition_id": "pass-1", "text": "输出按观、世、音、菩萨四维完成短文。"}],
-      "fail_conditions": [{"condition_id": "fail-1", "text": "输出加入未请求的 Sepia 流程说明，或偏离四维方法。"}]
+      "fail_conditions": [{"condition_id": "fail-1", "text": "输出加入未请求的写作流程说明，或偏离四维方法。"}]
     },
     {
       "name": "job-application-package",
@@ -99,7 +99,7 @@
     {
       "name": "customer-reliability-case",
       "invocation": "explicit",
-      "prompt": "$customer-facing-agent-reliability-writing $sepia-write Turn verified AI-agent incident evidence into a customer-facing reliability case study.",
+      "prompt": "$customer-facing-agent-reliability-writing Turn verified AI-agent incident evidence into a customer-facing reliability case study.",
       "fixture_files": {},
       "verification_method": "manual_transcript_review",
       "pass_conditions": [{"condition_id": "pass-1", "text": "The response requests the missing verified incident evidence before drafting and preserves the claim boundary."}],

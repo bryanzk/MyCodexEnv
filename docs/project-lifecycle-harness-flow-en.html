@@ -304,8 +304,8 @@ flowchart TD
   Visible{"User-visible or<br/>browser-related?"}
   Browser["Browser QA<br/>QA or QA-only"]
   Ready{"Ready to deliver?"}
-  Review["QA / security / review<br/>gstack-qa / gstack-cso / gstack-review"]
-  Ship["Ship / deploy / canary<br/>gstack-ship / land-and-deploy"]
+  Review["QA / security / review<br/>chrome-devtools-browser / security-reviewer / code-review"]
+  Ship["Ship / deploy / canary<br/>pr"]
   Docs["Docs release<br/>document-release / doc-updater"]
   Handoff["Governed matching signal only<br/>harness_checkpoint.py append"]
   Done(["DHF output<br/>route, evidence, next safe task"])

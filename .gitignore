@@ -19,7 +19,6 @@ tmp/
 text_records/
 
 # Local workflow runtime state
-codex/workflow/memory/
 claude/workflow/memory/
 
 # Local planning / verification artifacts
@@ -42,3 +41,5 @@ committee-review/评审记录_committee-review-loop.md
 
 # Local deletion staging
 /_to_delete/
+# Leftover local data from the retired codex/workflow (SHI-637).
+codex/workflow/

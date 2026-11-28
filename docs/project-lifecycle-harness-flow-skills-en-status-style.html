@@ -4,20 +4,20 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>DHF Skill Routing Diagram</title>
-  <meta name="description" content="MyCodexEnv uses delivery-harness-framework as the Delivery Harness Framework (DHF) entry point. DHF selects a governance profile and routes work to a repo-specific harness, gstack specialist,…">
+  <meta name="description" content="MyCodexEnv uses delivery-harness-framework as the Delivery Harness Framework (DHF) entry point. DHF selects a governance profile and routes work to a repo-specific harness, specialist skill,…">
   <link rel="canonical" href="https://deliveryharness.com/project-lifecycle-harness-flow-skills-en-status-style.html">
   <link rel="alternate" hreflang="en" href="https://deliveryharness.com/project-lifecycle-harness-flow-skills-en-status-style.html">
   <link rel="alternate" hreflang="zh-CN" href="https://deliveryharness.com/project-lifecycle-harness-flow-skills-zh-status-style.html">
   <link rel="alternate" hreflang="x-default" href="https://deliveryharness.com/project-lifecycle-harness-flow-skills-en-status-style.html">
   <meta property="og:title" content="DHF Skill Routing Diagram">
-  <meta property="og:description" content="MyCodexEnv uses delivery-harness-framework as the Delivery Harness Framework (DHF) entry point. DHF selects a governance profile and routes work to a repo-specific harness, gstack specialist,…">
+  <meta property="og:description" content="MyCodexEnv uses delivery-harness-framework as the Delivery Harness Framework (DHF) entry point. DHF selects a governance profile and routes work to a repo-specific harness, specialist skill,…">
   <meta property="og:url" content="https://deliveryharness.com/project-lifecycle-harness-flow-skills-en-status-style.html">
   <meta property="og:image" content="https://deliveryharness.com/dhf-social-card.png">
   <meta property="og:image:alt" content="Delivery Harness Framework — from ambiguous requests to verifiable delivery">
   <meta property="og:locale" content="en_CA">
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:title" content="DHF Skill Routing Diagram">
-  <meta name="twitter:description" content="MyCodexEnv uses delivery-harness-framework as the Delivery Harness Framework (DHF) entry point. DHF selects a governance profile and routes work to a repo-specific harness, gstack specialist,…">
+  <meta name="twitter:description" content="MyCodexEnv uses delivery-harness-framework as the Delivery Harness Framework (DHF) entry point. DHF selects a governance profile and routes work to a repo-specific harness, specialist skill,…">
   <meta name="twitter:image" content="https://deliveryharness.com/dhf-social-card.png">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -502,7 +502,7 @@
         <div class="kpis">
           <div class="kpi"><strong>8</strong><span>standard lifecycle stages</span></div>
           <div class="kpi"><strong>9+</strong><span>helper / verification / brief entry points</span></div>
-          <div class="kpi"><strong>3</strong><span>generic, repo-specific, gstack roles</span></div>
+          <div class="kpi"><strong>3</strong><span>generic, repo-specific, specialist roles</span></div>
           <div class="kpi"><strong>4</strong><span>completion evidence fields</span></div>
         </div>
       </section>
@@ -530,16 +530,16 @@ flowchart TD
   Classify{"Classify lifecycle stage<br/>and risk boundary"}
   Repo{"Repo-specific harness available?"}
   RepoSkill["Hand off to project adapter<br/>business paths, commands, smoke matrix"]
-  Product["Product / scope judgment<br/>gstack-plan-ceo-review / gstack-office-hours"]
+  Product["Product / scope judgment<br/>grilling"]
   Plan["Engineering / design planning<br/>vertical slices / AFK / HITL"]
   Proto["Prototype learning / deep modules<br/>throwaway prototype / deep module"]
   Dev["Implementation<br/>tdd-guide / atdd-guide / scoped workers"]
   Team{"Parallel agents?"}
   TeamVal["harness_agent_team.py validate PLAN.json<br/>optional durable brief"]
   Val["Verification and evidence<br/>feedback loop / verification-loop / harness_report.py"]
-  QA["QA / security / review<br/>gstack-qa / gstack-cso / gstack-review / code-reviewer"]
-  Ship["Ship / deploy<br/>gstack-ship / gstack-land-and-deploy / gstack-canary"]
-  Docs["Documentation release<br/>gstack-document-release / doc-updater"]
+  QA["QA / security / review<br/>chrome-devtools-browser / security-reviewer / code-review"]
+  Ship["Ship / deploy<br/>pr"]
+  Docs["Documentation release<br/>doc-updater"]
   Handoff["Governed matching signal only<br/>harness_checkpoint.py append"]
   Done(["DHF output<br/>skill routing, verification evidence, next safe task"])
 
@@ -605,13 +605,13 @@ flowchart TD
               </tr>
               <tr>
                 <td class="phase">Product / business judgment</td>
-                <td><span class="badge decision">gstack-plan-ceo-review</span><span class="badge decision">gstack-office-hours</span></td>
-                <td><code>scripts/harness_requirements.py validate PATH</code> when a requirement artifact exists<br>gstack planning skills run gbrain preflight when already configured</td>
-                <td>User value, scope, demo boundary, priority, or business tradeoffs need to be clarified; gbrain does not replace repo state.</td>
+                <td><span class="badge decision">grilling</span></td>
+                <td><code>scripts/harness_requirements.py validate PATH</code> when a requirement artifact exists</td>
+                <td>User value, scope, demo boundary, priority, or business tradeoffs need to be clarified.</td>
               </tr>
               <tr>
                 <td class="phase">Engineering / design planning</td>
-                <td><span class="badge decision">gstack-plan-eng-review</span><span class="badge decision">gstack-plan-design-review</span><span class="badge decision">gstack-plan-tune</span><span class="badge decision">planner</span></td>
+                <td><span class="badge decision">planner</span><span class="badge decision">critique</span></td>
                 <td><code>scripts/harness_agent_team.py validate PLAN.json</code> when parallel work is proposed<br><code>docs/templates/harness-agent-brief.md</code> when a worker needs a durable contract</td>
                 <td>Architecture, API, data flow, migration, visual structure, vertical slices, <code>AFK</code>/<code>HITL</code>, or multi-agent ownership must be decided; repeated question preferences route to plan-tune.</td>
               </tr>
@@ -629,19 +629,19 @@ flowchart TD
               </tr>
               <tr>
                 <td class="phase">QA / review / security</td>
-                <td><span class="badge verify">gstack-qa</span><span class="badge verify">gstack-qa-only</span><span class="badge verify">gstack-review</span><span class="badge verify">code-reviewer</span><span class="badge verify">gstack-cso</span><span class="badge verify">security-reviewer</span></td>
+                <td><span class="badge verify">chrome-devtools-browser</span><span class="badge verify">playwright</span><span class="badge verify">code-review</span><span class="badge verify">security-reviewer</span></td>
                 <td><code>git diff</code>, <code>scripts/harness_env_probe.py --json</code> for runtime-sensitive work</td>
                 <td>A diff exists, behavior is user-visible, a safety/privacy boundary is involved, or the work is close to handoff or release.</td>
               </tr>
               <tr>
                 <td class="phase">Ship / deploy / canary</td>
-                <td><span class="badge ship">gstack-ship</span><span class="badge ship">gstack-land-and-deploy</span><span class="badge ship">gstack-canary</span></td>
+                <td><span class="badge ship">pr</span></td>
                 <td><code>scripts/verify_codex_env.sh ...</code><br><code>scripts/harness_checkpoint.py append</code></td>
                 <td>The user explicitly asks for commit, PR, merge, release, deploy, or production validation.</td>
               </tr>
               <tr>
                 <td class="phase">Docs / handoff</td>
-                <td><span class="badge ship">gstack-document-release</span><span class="badge ship">doc-updater</span><span class="badge ship">delivery-harness-framework</span></td>
+                <td><span class="badge ship">doc-updater</span><span class="badge ship">delivery-harness-framework</span></td>
                 <td><code>scripts/harness_checkpoint.py append</code><br><code>scripts/harness_report.py --json</code></td>
                 <td>Docs need to reflect delivered behavior, or the session must persist next-safe-task state.</td>
               </tr>

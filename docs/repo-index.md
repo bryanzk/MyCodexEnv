@@ -174,17 +174,12 @@ behavior live in `codex/hooks/dhf_preprompt.py`.
 - `docs/plans/2026-06-15-dhf-independent-core-requirements.md`: reviewed copy/adapt/exclude, installer, doctor, packet, pin-bump, CI, privacy, and rollback contract for independent extraction.
 - `scripts/headroom_filter.py`: optional stdin filter for compressing large command outputs with Headroom before sending them into agent context.
 - `scripts/audit_skills.py`: report-only skill governance audit for repo/global/.agents skill sources and local usage traces.
-- `scripts/external_gstack_runtime.py`: single `status` / `apply` / `recover` authority for active gstack at `~/.gstack/repos/gstack`; the repo vendor is the legacy/bootstrap fallback and ordinary sync never performs cutover.
-- `scripts/check_skill_compatibility.py`: offline compatibility gate for local skill manifests, helper syntax, relative links, ordinary managed parity, and active external gstack status; ephemeral `.system` projections are loader-gated separately.
+- `scripts/check_skill_compatibility.py`: offline compatibility gate for local skill manifests, helper syntax, relative links, and ordinary managed parity; retired gstack, Sepia, and ccwf runtime copies are skipped; ephemeral `.system` projections are loader-gated separately.
 - `scripts/check_codex_skill_loader.py`: network-denied `app-server skills/list` gate that verifies every expected repo/runtime skill path is loaded and enabled with no loader errors.
 - `docs/skill-governance-20260608.md`: skill governance baseline and cleanup policy notes.
-- `scripts/prepare_gstack_dhf_daily_refresh.py`: preflight the daily refresh automation, retry DNS probes for about two minutes, require a standalone clone, check out the dedicated `automation/gstack-dhf-daily-refresh` branch rebased on `origin/main`, and return dry-run evidence before repo mutation.
-- `scripts/merge_gstack_refresh_if_safe.py`: unattended merge gate for gstack daily refresh; only `--verified` ahead-only automation branches can fast-forward `main`.
 - `scripts/sync_local_main_if_safe.py`: optional post-merge local sync gate; only clean local worktrees already on `main` and behind-only relative to `origin/main` are fast-forwarded.
-- `scripts/sync_gstack_vendor.py`: bulk-sync `codex/skills/gstack` from an upstream `garrytan/gstack` git snapshot.
 - `locks/superpowers.lock` + `scripts/sync_codex_home.sh`: pin `~/.codex/superpowers`, register local marketplace `superpowers-dev`, and install `superpowers@superpowers-dev` for new-session `superpowers:*` skills.
-- `codex/skills/delivery-harness-framework/evals/evals.json`: routing and boundary evals for the generic lifecycle skill, including gstack brain-aware planning and question-tuning boundaries.
-- The Sepia writing skill family, its lock, and its focused routing eval define pinned writing operations and route boundaries; repository source does not prove runtime promotion.
+- `codex/skills/delivery-harness-framework/evals/evals.json`: routing and boundary evals for the generic lifecycle skill, including spec authoring, planning delegation, and browser QA boundaries.
 - `scripts/verify_codex_env.sh`: runtime sync and environment verification.
 - `docs/LIFECYCLE_SKILL_ROUTING.md`: stage, workflow, skill, and helper usage guide.
 - `docs/lifecycle-skill-routing-en.html`: English browser-ready rendering of the routing specification.
@@ -289,7 +284,6 @@ behavior live in `codex/hooks/dhf_preprompt.py`.
 - Skill loader: `python3 scripts/check_codex_skill_loader.py --repo-root "$(pwd)" --codex-home "$HOME/.codex"`.
 - Automation-safe runtime sync: `./scripts/verify_codex_env.sh --repo-root "$(pwd)" --codex-home "$HOME/.codex" --claude-home "$HOME/.claude" --skip-check app_google_chrome`.
 - Formatting: `git diff --check`.
-- Gstack vendor refresh: `python3 scripts/prepare_gstack_dhf_daily_refresh.py --json`, then in the returned standalone clone and automation branch run `python3 scripts/sync_gstack_vendor.py --repo-root "$(pwd)" --dry-run --json`; only rerun without `--dry-run` when `needs_update=true`. Scheduled automation pushes `automation/gstack-dhf-daily-refresh` first, then may run `python3 scripts/merge_gstack_refresh_if_safe.py --apply --verified --json` to fast-forward `main` only when the branch is ahead-only and verification has passed. If `main` is updated, it may then run `python3 scripts/sync_local_main_if_safe.py --repo-root /Users/kezheng/Codes/CursorDeveloper/MyCodexEnv --apply --json` to fast-forward the local checkout only when it is clean, on `main`, and behind-only.
 - Repo-local docs/config changes must keep README, docs, tests, and sync behavior consistent.
 
 ## High-Risk Areas
@@ -309,7 +303,7 @@ behavior live in `codex/hooks/dhf_preprompt.py`.
 ## Harness Infra Map
 - Sandbox: Codex sandbox and approval rules, repo high-risk path guidance, and env probe output.
 - Memory: `docs/harness-state.md`, recovery smoke output, local subconscious briefs as hints, and decision-preserving routine/derived reflection.
-- Skills: ordinary `codex/skills/*` are copied into `~/.codex/skills/*`; active external gstack uses `~/.gstack/repos/gstack` plus the exact links managed by `scripts/external_gstack_runtime.py`, with repo vendor as legacy/bootstrap fallback.
+- Skills: ordinary `codex/skills/*` are copied into `~/.codex/skills/*`; gstack, Sepia, and the Codex side of claude-code-workflow were retired on 2026-11-27 and are no longer deployed.
 - Session State: `docs/harness-state.md` plus local evidence JSONL.
 - Permissions: `codex/runtime/tool-policy.json` and guard hooks.
 - Hooks: `[[hooks.*]]` in `codex/config.template.toml` and `codex/hooks/*`.
