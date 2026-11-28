@@ -1386,14 +1386,6 @@ def test_verify_skips_managed_skill_presence_behavior():
                 name = line.split(marker, 1)[1].split()[0].strip("\"'")
                 if "${" not in name:
                     other_checks.add(name)
-        other_checks.update(
-            f"codex_skill_{name}"
-            for name in [
-                "ccwf-verification-before-completion",
-                "ccwf-systematic-debugging",
-                "ccwf-experience-evolution",
-            ]
-        )
         other_checks.discard("skills_managed_present")
         skip_other_args = [arg for name in sorted(other_checks) for arg in ("--skip-check", name)]
 
@@ -2458,7 +2450,7 @@ def test_sync_renders_template_and_copies_skills():
             == (ROOT / "codex" / "runtime" / "evidence.schema.json").read_text(encoding="utf-8"),
             "runtime harness evidence schema should match source",
         )
-        require((codex_home / "workflow" / "rules" / "behaviors.md").exists(), "codex workflow rules should be copied")
+        require(not (codex_home / "workflow").exists(), "retired codex workflow must not be deployed")
 
         # skills/.system is host-owned: the repository keeps a snapshot, the sync does not deploy it.
         expected_skills = count_top_dirs(ROOT / "codex" / "skills") - 1
@@ -4731,80 +4723,15 @@ def test_lifecycle_skill_routing_doc_is_discoverable():
     print("[PASS] lifecycle skill routing doc discoverable")
 
 
-def test_sepia_writing_skill_routing_contract():
+def test_writing_skill_routing_contract():
     errors = []
     skill_root = ROOT / "codex" / "skills"
-    expected_files = {
-        "sepia/LICENSE", "sepia/SKILL.md", "sepia/agents/openai.yaml",
-        "sepia/references/discourse-pass.md", "sepia/references/model-fingerprints.md",
-        "sepia/references/narrative-pass.md", "sepia/references/professional-pass.md",
-        "sepia/references/rubric.md", "sepia/references/style-pass.md",
-        "sepia/references/voice-skills.md", "sepia/references/domains/dev-replies.md",
-        "sepia/references/domains/postmortems.md", "sepia/references/domains/release-notes.md",
-        "sepia/references/domains/tech-articles.md", "sepia/references/domains/tickets.md",
-        "sepia-write/SKILL.md", "sepia-review/SKILL.md", "sepia-refactor/SKILL.md",
-        "sepia-recreate/SKILL.md",
-    }
-    skill_dirs = ("sepia", "sepia-write", "sepia-review", "sepia-refactor", "sepia-recreate")
-    actual_files = {
-        path.relative_to(skill_root).as_posix()
-        for dirname in skill_dirs
-        for path in (skill_root / dirname).rglob("*")
-        if path.is_file() or path.is_symlink()
-    }
-    if actual_files != expected_files:
-        errors.append(f"allowlist mismatch: missing={sorted(expected_files - actual_files)} extra={sorted(actual_files - expected_files)}")
-    for relative in sorted(actual_files):
-        path = skill_root / relative
-        if path.is_symlink() or not path.is_file() or path.stat().st_mode & 0o111 or b"\0" in path.read_bytes():
-            errors.append(f"vendored path must be non-executable text: {relative}")
-
-    names = []
-    canonical = skill_root / "sepia" / "SKILL.md"
-    for dirname in skill_dirs:
-        entrypoint = skill_root / dirname / "SKILL.md"
-        if not entrypoint.is_file():
-            errors.append(f"missing entrypoint: codex/skills/{dirname}/SKILL.md")
-            continue
-        text = entrypoint.read_text(encoding="utf-8")
-        match = re.search(r"(?m)^name:\s*([^\n]+)$", text)
-        names.append(match.group(1).strip() if match else "")
-        if dirname != "sepia" and ("../sepia/SKILL.md" not in text or not canonical.is_file()):
-            errors.append(f"wrapper sibling contract unavailable: {dirname}")
-    if "" in names or len(names) != len(set(names)):
-        errors.append(f"skill names must be present and unique: {names}")
-    if canonical.is_file():
-        canonical_text = canonical.read_text(encoding="utf-8")
-        for term in (
-            "closed fact set",
-            "transparently calculable",
-            "Do not infer a mechanism or causal chain",
-            "Trace every factual clause",
-        ):
-            if term not in canonical_text:
-                errors.append(f"Sepia write fact boundary missing: {term}")
-    license_path = skill_root / "sepia" / "LICENSE"
-    if not license_path.is_file() or not license_path.read_text(encoding="utf-8").startswith("MIT License"):
-        errors.append("MIT license missing")
-
-    lock_path = ROOT / "locks" / "sepia.lock"
-    lock = dict(line.split("=", 1) for line in lock_path.read_text(encoding="utf-8").splitlines() if "=" in line) if lock_path.is_file() else {}
-    for key, value in {
-        "repo": "https://github.com/Nanako0129/sepia.git",
-        "commit": "2f054e2b0f3d09db8866ce27f57164f88dcfc10a",
-        "version": "0.4.1", "license": "MIT",
-        "local_patch": "sepia-write-closed-fact-set-v1",
-    }.items():
-        if lock.get(key) != value:
-            errors.append(f"lock {key} must be {value}")
-    if actual_files == expected_files:
-        digest_input = b"".join(
-            f"{relative}\0".encode() + hashlib.sha256((skill_root / relative).read_bytes()).hexdigest().encode() + b"\n"
-            for relative in sorted(actual_files)
-        )
-        digest = hashlib.sha256(digest_input).hexdigest()
-        if lock.get("tree_digest") != f"sha256:{digest}":
-            errors.append(f"lock tree_digest must be sha256:{digest}")
+    # Sepia was retired on 2026-11-27 (SHI-637); it must not come back.
+    for retired in ("sepia", "sepia-write", "sepia-review", "sepia-refactor", "sepia-recreate"):
+        if (skill_root / retired).exists():
+            errors.append(f"retired skill is back: codex/skills/{retired}")
+    if (ROOT / "locks" / "sepia.lock").exists():
+        errors.append("retired lock is back: locks/sepia.lock")
 
     frontmatter = (skill_root / "humanizer" / "SKILL.md").read_text(encoding="utf-8").split("---", 2)[1]
     description = re.search(r"(?m)^description:\s*(.+)$", frontmatter)
@@ -4814,7 +4741,9 @@ def test_sepia_writing_skill_routing_contract():
         errors.append("humanizer needs a short human-facing fallback description")
 
     routing_text = LIFECYCLE_SKILL_ROUTING_DOC.read_text(encoding="utf-8")
-    for term in ("**Writing Skill Routing**", "`sepia-review`", "`sepia-refactor`", "`sepia-recreate`", "`humanizer`", "`writing-fragments`", "`writing-shape`", "`writing-beats`", "`guanshiyin-writing`", "`job-application-packager`"):
+    if "sepia" in routing_text.lower():
+        errors.append("routing matrix still names the retired Sepia skill")
+    for term in ("**Writing Skill Routing**", "`humanizer`", "`writing-fragments`", "`writing-shape`", "`writing-beats`", "`guanshiyin-writing`", "`job-application-packager`"):
         if term not in routing_text:
             errors.append(f"routing matrix missing: {term}")
 
@@ -4884,8 +4813,10 @@ def test_sepia_writing_skill_routing_contract():
         if "outside a transaction block" not in migration or "BEGIN/COMMIT" not in migration:
             errors.append("database migration case must reject CONCURRENTLY inside a transaction block")
         linkedin = by_name.get("new-linkedin-technical-case-study", {})
-        if linkedin.get("invocation") != "explicit" or not linkedin.get("prompt", "").startswith("$sepia-write "):
-            errors.append("LinkedIn case must explicitly invoke $sepia-write")
+        if linkedin.get("invocation") != "automatic" or "$" in linkedin.get("prompt", ""):
+            errors.append("LinkedIn case must be an automatic prompt with no skill invocation")
+        if "sepia" in serialized.lower():
+            errors.append("eval still invokes the retired Sepia skill")
         linkedin_contract = " ".join(
             item.get("text", "")
             for group in ("pass_conditions", "fail_conditions")
@@ -4940,8 +4871,8 @@ def test_sepia_writing_skill_routing_contract():
             if code == 0 or "config SHA-256 mismatch" not in (out + err):
                 errors.append("runner must reject config identity drift before starting sessions")
 
-    require(not errors, "Sepia writing routing contract:\n- " + "\n- ".join(errors))
-    print("[PASS] Sepia writing skill routing contract")
+    require(not errors, "writing routing contract:\n- " + "\n- ".join(errors))
+    print("[PASS] writing skill routing contract")
 
 
 def test_sync_gstack_vendor_replaces_snapshot_from_git_source():
@@ -6062,7 +5993,6 @@ def test_dhf_conformance_table_and_version_rule():
                     name = line.split(marker, 1)[1].split()[0].strip("\"'")
                     if "${" not in name:
                         skipped.add(name)
-        skipped.update(f"codex_skill_{name}" for name in ("ccwf-verification-before-completion", "ccwf-systematic-debugging", "ccwf-experience-evolution"))
         base = [str(VERIFY), "--repo-root", str(repo), "--codex-home", str(home), "--claude-home", str(tmp_path / ".claude"),
                 *[arg for name in sorted(skipped) for arg in ("--skip-check", name)]]
         (tmp_path / ".claude").mkdir()
@@ -14760,7 +14690,7 @@ TESTS = [
     test_shipq_dhf_prompt_hook_routes_on_demand,
     test_harness_agent_brief_template,
     test_lifecycle_skill_routing_doc_is_discoverable,
-    test_sepia_writing_skill_routing_contract,
+    test_writing_skill_routing_contract,
     test_sync_gstack_vendor_replaces_snapshot_from_git_source,
     test_sync_gstack_vendor_dry_run_leaves_vendor_unchanged,
     test_sync_gstack_vendor_dry_run_reports_no_update_when_snapshot_matches,

@@ -210,18 +210,17 @@ User-invoked writing routes use the explicit `$skill-name` form. Automatic route
 
 | User intent | Primary route | Composition or boundary |
 | --- | --- | --- |
-| New technical article, blog post, professional announcement, ticket, postmortem, or ordinary professional prose | `sepia` with `write`, or explicit `sepia-write` | Sepia selects venue rules before drafting. |
-| Diagnose AI-writing patterns without editing | `sepia-review` | Report only; no edits. |
-| Minimally revise an existing draft | `sepia` with `refactor`, or explicit `sepia-refactor` | Preserve facts, structure, voice, and intent. |
-| Rebuild a short draft from supplied facts and intent | `sepia` with `recreate`, or explicit `sepia-recreate` | Extract facts first; do not invent specifics. |
+| New technical article, blog post, professional announcement, ticket, postmortem, or ordinary professional prose | No writing skill | Write directly from the supplied facts; do not invent specifics. |
+| Diagnose AI-writing patterns without editing | No writing skill | Report only; no edits. |
+| Minimally revise an existing draft | No writing skill; `humanizer` only when explicitly requested | Preserve facts, structure, voice, and intent. |
 | Explicit `humanizer` request | `humanizer` | User-invoked legacy fallback for minimal surface editing; never an automatic prose route. |
-| Explore raw material | `writing-fragments` | User-invoked workshop stage; Sepia does not interrupt it. |
-| Shape a fixed fragment pile into an argument | `writing-shape` | User-invoked workshop stage; use Sepia only after a complete draft and when requested. |
+| Explore raw material | `writing-fragments` | User-invoked workshop stage; do not interrupt it. |
+| Shape a fixed fragment pile into an argument | `writing-shape` | User-invoked workshop stage. |
 | Build an article beat by beat | `writing-beats` | Preserve its interactive sequence. |
-| Explicit Guanshiyin four-dimension Chinese writing | `guanshiyin-writing` | This explicit method wins; stack Sepia only when explicitly requested. |
+| Explicit Guanshiyin four-dimension Chinese writing | `guanshiyin-writing` | This explicit method wins. |
 | Job posting plus application package | `job-application-packager` | It owns intake, evidence, artifacts, and PDF workflow. |
-| Customer-facing agent reliability case study | Evidence/domain skill first, then Sepia final prose pass when available | Evidence boundaries stay authoritative; Sepia cannot enlarge claims. |
-| Code, debugging, review, data analysis, or another non-writing task using “write” | Existing non-writing skill | Do not load Sepia merely because the prompt says “write”. |
+| Customer-facing agent reliability case study | Evidence/domain skill | Evidence boundaries stay authoritative; prose cannot enlarge claims. |
+| Code, debugging, review, data analysis, or another non-writing task using “write” | Existing non-writing skill | Do not load a writing skill merely because the prompt says “write”. |
 
 ## Runtime Helper Map
 

@@ -1707,11 +1707,8 @@ mkdir -p "${CODEX_HOME}/skills"
 # own set. The repository snapshot is a record, not a source to deploy.
 rsync "${EXTERNAL_GSTACK_RSYNC_ARGS[@]}" --exclude '/.system/' "${REPO_ROOT}/codex/skills/" "${CODEX_HOME}/skills/"
 
-if [[ -d "${REPO_ROOT}/codex/workflow" ]]; then
-  mkdir -p "${CODEX_HOME}/workflow"
-  # workflow/memory 属于运行态热数据，不从仓库模板回灌。
-  rsync_runtime_dir "${REPO_ROOT}/codex/workflow" "${CODEX_HOME}/workflow" --exclude 'memory/'
-fi
+# codex/workflow (claude-code-workflow) was retired on 2026-11-27 (SHI-637).
+# An existing ~/.codex/workflow is left in place; sync no longer writes it.
 
 if [[ -f "${REPO_ROOT}/codex/AGENTS.md" ]]; then
   if [[ -f "${CODEX_HOME}/AGENTS.md" ]]; then

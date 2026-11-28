@@ -19,7 +19,6 @@ tmp/
 text_records/
 
 # Local workflow runtime state
-codex/workflow/memory/
 claude/workflow/memory/
 
 # Local planning / verification artifacts

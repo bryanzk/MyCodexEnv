@@ -76,7 +76,6 @@ MyCodexEnv 把这三个问题变成一条可重复的闭环：
 | Hooks | `codex/config.template.toml`（`[[hooks.*]]`）、`codex/hooks/` | session、prompt、policy 与 evidence hooks |
 | Runtime policy | `codex/runtime/` | tool policy、schemas、CLI resolver |
 | Skills | `codex/skills/` | `~/.codex/skills/` |
-| Codex workflow | `codex/workflow/` | `~/.codex/workflow/` |
 | Shell integration | `codex/zsh/` | session title 与 shell 辅助 |
 | Claude workflow | `claude/workflow/` | `~/.claude/workflow/` |
 | Claude integration | `claude/CLAUDE_INTEGRATION_BLOCK.md` | 注入 `~/.claude/CLAUDE.md` |

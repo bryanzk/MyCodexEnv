@@ -14,19 +14,19 @@ Stable rules belong in `AGENTS.md`, `README.md`, `docs/repo-index.md`, or
   - `codex/skills/delivery-harness-framework/SKILL.md`
 - blocked_sources: none
 - unsafe_inputs: none
-- next_safe_task: After CI and a clean Codex review: owner approves the codex/ digest, regenerates identity fixtures, moves his machine-local host entry from ~/.codex/remote-hosts.md into ~/.codex/remote-hosts.local.md, then decides on the full sync
+- next_safe_task: After CI and a clean Codex review: owner approves the codex/ digest; then the gstack retirement PR, then the public pages
 - required_commands:
   - `python3 test_runner.py`
   - `git diff --check`
   - `./scripts/verify_codex_env.sh --repo-root "$(pwd)" --codex-home "$HOME/.codex" --claude-home "$HOME/.claude"`
-- latest_checkpoint: 2026-11-27T20:03:01-05:00 SHI-637: full sync keeps the owner's runtime choices. Template model gpt-6.2-sol and reasoning effort low (owner 2026-11-27 19:59). Machine-local remote hosts move to ~/.codex/remote-hosts.local.md, which sync never reads or writes; AGENTS.md, remote-access.md and remote-hosts.md point to it
-- latest_verification: 2026-11-27T20:03:01-05:00 command=PYTHONDONTWRITEBYTECODE=1 python3 test_runner.py (cloud clone, Python 3.13, no Codex CLI); exit_code=1; key_output=ran=174 passed=165 skipped=4 failed=5; the same five failures and four skips as main in this environment; test_sync_renders_template_and_copies_skills passes with the new remote-hosts.local.md assertions; third rehearsal at 1b1283b: owner host 174/174, sync_exit=0, no config entry lost, skills.config merged by path
+- latest_checkpoint: 2026-11-27T20:41:48-05:00 SHI-637: retire Sepia and the Codex side of claude-code-workflow (owner 2026-11-27 20:35). Removed codex/skills/sepia*, codex/skills/ccwf-*, codex/workflow/ and locks/sepia.lock; sync no longer deploys ~/.codex/workflow; verify drops the Codex workflow and ccwf checks; import never brings them back; writing routing names no writing skill except an explicit humanizer
+- latest_verification: 2026-11-27T20:41:48-05:00 command=PYTHONDONTWRITEBYTECODE=1 python3 test_runner.py (cloud clone, Python 3.13, no Codex CLI); dhf_content_drift.py; check_surfaces.py --check-public-nav; exit_code=1; key_output=ran=174 passed=165 skipped=4 failed=5, the same five failures and four skips as main in this environment; drift 0 open findings; surfaces pass
 - compaction_ordinal: 0
 - transition_key: p1-2-complete
 - gate_decision: continue-to-boundary
-- constraints: ["codex/ changed: identity layer A is stale until the owner runs harness_refresh_identity.py refresh --approve","The owner's machine-local host entry stays only in the live ~/.codex/remote-hosts.md until he moves it; a full sync before that removes it (a backup is written)","codex exec with gpt-6.2-sol was rejected on this account earlier on 2026-11-27 (model_not_in_accessible_catalog); not re-tested","MyCodexEnv is public: host metadata for the owner's machines stays out of the repository"]
+- constraints: ["Runtime copies under ~/.codex/skills and ~/.codex/workflow stay until the owner disables them; sync never deletes","The Claude side of claude-code-workflow (claude/workflow, the CLAUDE.md integration block, vendor/claude-code-workflow) is unchanged","The public lifecycle-skill-routing page still lists Sepia until the public-pages PR"]
 - ownership: {}
-- next_action: {"command":"After CI and a clean Codex review: owner approves the codex/ digest, regenerates identity fixtures, moves his machine-local host entry from ~/.codex/remote-hosts.md into ~/.codex/remote-hosts.local.md, then decides on the full sync"}
+- next_action: {"command":"After CI and a clean Codex review: owner approves the codex/ digest; then the gstack retirement PR, then the public pages"}
 
 ## State Log
 
@@ -4099,3 +4099,29 @@ Stable rules belong in `AGENTS.md`, `README.md`, `docs/repo-index.md`, or
   - none
 - next_safe_task: After CI and a clean Codex review: owner approves the codex/ digest, regenerates identity fixtures, moves his machine-local host entry from ~/.codex/remote-hosts.md into ~/.codex/remote-hosts.local.md, then decides on the full sync
 - checkpoint_data: {"constraints":["codex/ changed: identity layer A is stale until the owner runs harness_refresh_identity.py refresh --approve","The owner's machine-local host entry stays only in the live ~/.codex/remote-hosts.md until he moves it; a full sync before that removes it (a backup is written)","codex exec with gpt-6.2-sol was rejected on this account earlier on 2026-11-27 (model_not_in_accessible_catalog); not re-tested","MyCodexEnv is public: host metadata for the owner's machines stays out of the repository"],"next_action":{"command":"After CI and a clean Codex review: owner approves the codex/ digest, regenerates identity fixtures, moves his machine-local host entry from ~/.codex/remote-hosts.md into ~/.codex/remote-hosts.local.md, then decides on the full sync"},"ownership":{},"phase":"ship","schema":"dhf_checkpoint_v1","verification_evidence":{"command":"PYTHONDONTWRITEBYTECODE=1 python3 test_runner.py (cloud clone, Python 3.13, no Codex CLI)","exit_code":1,"freshness":"fresh","key_output":"ran=174 passed=165 skipped=4 failed=5; the same five failures and four skips as main in this environment; test_sync_renders_template_and_copies_skills passes with the new remote-hosts.local.md assertions; third rehearsal at 1b1283b: owner host 174/174, sync_exit=0, no config entry lost, skills.config merged by path","timestamp":"2026-11-27T20:03:01-05:00"}}
+
+### 2026-11-27T20:41:48-05:00
+- phase: ship
+- event: checkpoint
+- summary: SHI-637: retire Sepia and the Codex side of claude-code-workflow (owner 2026-11-27 20:35). Removed codex/skills/sepia*, codex/skills/ccwf-*, codex/workflow/ and locks/sepia.lock; sync no longer deploys ~/.codex/workflow; verify drops the Codex workflow and ccwf checks; import never brings them back; writing routing names no writing skill except an explicit humanizer
+- git:
+  - branch: codex/shi-637-retire-sepia-ccwf-20261127
+  - latest_commit: bb5b039
+  - dirty_status: dirty
+  - dirty_count: 58
+- changed_surfaces:
+  - `codex/skills`
+  - `codex/workflow`
+  - `scripts/sync_codex_home.sh`
+  - `scripts/verify_codex_env.sh`
+  - `docs/LIFECYCLE_SKILL_ROUTING.md`
+  - `docs/evals/writing-skill-routing-v1.json`
+  - `test_runner.py`
+- verification:
+  - command: `PYTHONDONTWRITEBYTECODE=1 python3 test_runner.py (cloud clone, Python 3.13, no Codex CLI); dhf_content_drift.py; check_surfaces.py --check-public-nav`
+  - exit_code: 1
+  - key_output: ran=174 passed=165 skipped=4 failed=5, the same five failures and four skips as main in this environment; drift 0 open findings; surfaces pass
+- blockers:
+  - none
+- next_safe_task: After CI and a clean Codex review: owner approves the codex/ digest; then the gstack retirement PR, then the public pages
+- checkpoint_data: {"constraints":["Runtime copies under ~/.codex/skills and ~/.codex/workflow stay until the owner disables them; sync never deletes","The Claude side of claude-code-workflow (claude/workflow, the CLAUDE.md integration block, vendor/claude-code-workflow) is unchanged","The public lifecycle-skill-routing page still lists Sepia until the public-pages PR"],"next_action":{"command":"After CI and a clean Codex review: owner approves the codex/ digest; then the gstack retirement PR, then the public pages"},"ownership":{},"phase":"ship","schema":"dhf_checkpoint_v1","verification_evidence":{"command":"PYTHONDONTWRITEBYTECODE=1 python3 test_runner.py (cloud clone, Python 3.13, no Codex CLI); dhf_content_drift.py; check_surfaces.py --check-public-nav","exit_code":1,"freshness":"fresh","key_output":"ran=174 passed=165 skipped=4 failed=5, the same five failures and four skips as main in this environment; drift 0 open findings; surfaces pass","timestamp":"2026-11-27T20:41:48-05:00"}}

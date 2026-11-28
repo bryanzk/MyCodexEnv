@@ -252,8 +252,6 @@ results+=("$(check codex_superpowers_commit '[[ "$(git -C "'"${CODEX_HOME}"'"/su
 results+=("$(run_check codex_superpowers_plugin_manifest_version superpowers_plugin_manifest_version_ok)")
 results+=("$(run_check codex_superpowers_marketplace_registered superpowers_marketplace_registered_ok)")
 results+=("$(run_check codex_superpowers_plugin_installed superpowers_plugin_installed_ok)")
-results+=("$(check codex_workflow_exists '[[ -d "'"${CODEX_HOME}"'"/workflow ]]')")
-results+=("$(check codex_workflow_rules '[[ -f "'"${CODEX_HOME}"'"/workflow/rules/behaviors.md ]]')")
 results+=("$(check codex_agents_has_gate 'rg -n "P0 强制验证门禁|Verification Gate" "'"${CODEX_HOME}"'"/AGENTS.md')")
 results+=("$(check codex_agents_has_layering 'rg -n "^## Layering$" "'"${CODEX_HOME}"'"/AGENTS.md')")
 results+=("$(check codex_agents_has_remote_operations 'rg -n "^## Remote Operations$" "'"${CODEX_HOME}"'"/AGENTS.md')")
@@ -276,11 +274,6 @@ results+=("$(check codex_runtime_evidence_schema_matches_source 'cmp -s "'"${REP
 results+=("$(check codex_runtime_decision_evidence_schema_matches_source 'cmp -s "'"${REPO_ROOT}"'"/codex/runtime/evidence/decision-evidence.schema.json "'"${CODEX_HOME}"'"/runtime/evidence/decision-evidence.schema.json' )")
 results+=("$(check codex_runtime_routine_gate_receipt_schema_matches_source 'cmp -s "'"${REPO_ROOT}"'"/codex/runtime/evidence/routine-gate-receipt.schema.json "'"${CODEX_HOME}"'"/runtime/evidence/routine-gate-receipt.schema.json' )")
 results+=("$(check codex_zsh_title_runtime_matches_source 'cmp -s "'"${REPO_ROOT}"'"/codex/zsh/codex-session-title.zsh "'"${CODEX_HOME}"'"/zsh/codex-session-title.zsh' )")
-results+=("$(check codex_security_scan_script '[[ -x "'"${CODEX_HOME}"'"/workflow/scripts/scan_skill_security.sh ]]')")
-
-for skill in ccwf-verification-before-completion ccwf-systematic-debugging ccwf-experience-evolution; do
-  results+=("$(check "codex_skill_${skill}" '[[ -f "'"${CODEX_HOME}"'"/skills/'"${skill}"'/SKILL.md ]]')")
-done
 
 results+=("$(check claude_home_exists '[[ -d "'"${CLAUDE_HOME}"'" ]]')")
 results+=("$(check claude_main_exists '[[ -f "'"${CLAUDE_HOME}"'"/CLAUDE.md ]]')")

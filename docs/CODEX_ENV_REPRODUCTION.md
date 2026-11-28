@@ -23,7 +23,6 @@
 - `codex/skills/*` -> `~/.codex/skills/*`, except active external gstack from `~/.gstack/repos/gstack`, whose exact links are owned by `scripts/external_gstack_runtime.py`
 - `codex/hooks/*` -> `~/.codex/hooks/*`; hook registration is rendered from `codex/config.template.toml` into `~/.codex/config.toml`. `~/.codex/hooks.json` belongs to other tools and sync never writes it
 - `codex/runtime/*` -> `~/.codex/runtime/*`
-- `codex/workflow/*` -> `~/.codex/workflow/*`（排除 `workflow/memory/`）
 - `claude/workflow/*` -> `~/.claude/workflow/*`（排除 `workflow/memory/`）
 - `claude/CLAUDE_INTEGRATION_BLOCK.md` -> 注入 `~/.claude/CLAUDE.md`（不覆盖既有内容）
 - `codex/skills/<name>/` listed in `claude/shared-skills.txt` -> `~/.claude/skills/<name>/`（逐个镜像；清单外的 Claude skills 保留，软链接只替换链接本身）

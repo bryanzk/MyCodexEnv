@@ -1,5 +1,7 @@
 # Claude-Code-Workflow × Codex Implementation Contract
 
+> Codex 侧已于 2026-11-27 退役（SHI-637）：`codex/workflow/` 和 `ccwf-*` skill 已从仓库删除，同步不再部署。下面的 Codex 条目只作历史记录；Claude 侧不变。
+
 ## 1. Trigger Contract
 
 统一事件映射：`event -> skill -> required evidence -> writeback target`

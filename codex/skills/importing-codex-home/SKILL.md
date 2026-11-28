@@ -1,6 +1,6 @@
 ---
 name: importing-codex-home
-description: Use when syncing current ~/.codex changes back into a repository that treats codex/AGENTS.md, codex/skills/*, codex/workflow/*, and codex/config.template.toml as source-of-truth files, especially when the user asks to copy or merge their global Codex environment into the project without importing secrets or runtime state.
+description: Use when syncing current ~/.codex changes back into a repository that treats codex/AGENTS.md, codex/skills/*, and codex/config.template.toml as source-of-truth files, especially when the user asks to copy or merge their global Codex environment into the project without importing secrets or runtime state.
 ---
 
 # Importing Codex Home
@@ -10,7 +10,7 @@ description: Use when syncing current ~/.codex changes back into a repository th
 用于把当前运行时 `~/.codex` 的可复现配置回灌到仓库里的 `codex/` 源码目录。
 
 固定原则：
-- 只回灌可复现源码：`AGENTS.md`、`skills/`、`workflow/`、`config.template.toml`。
+- 只回灌可复现源码：`AGENTS.md`、`skills/`、`config.template.toml`。
 - 不导入运行态、缓存、数据库、认证信息或会话数据。
 - 默认做“合并不删除”，避免误删仓库已有内容。
 
@@ -36,7 +36,7 @@ description: Use when syncing current ~/.codex changes back into a repository th
 允许导入：
 - `~/.codex/AGENTS.md` -> `codex/AGENTS.md`
 - `~/.codex/skills/*` -> `codex/skills/*`
-- `~/.codex/workflow/*` -> `codex/workflow/*`，但排除 `memory/`
+- `~/.codex/workflow/` 不再回灌：`codex/workflow/` 已于 2026-11-27 退役（SHI-637）
 - `~/.codex/config.toml` -> `codex/config.template.toml`
 
 必须排除：
@@ -72,7 +72,7 @@ codex/skills/importing-codex-home/scripts/import_codex_home.sh \
 
 ### 1. 先确认仓库边界
 
-检查仓库是否把 `codex/AGENTS.md`、`codex/skills/*`、`codex/workflow/*`、`codex/config.template.toml` 作为源码。
+检查仓库是否把 `codex/AGENTS.md`、`codex/skills/*`、`codex/config.template.toml` 作为源码。
 
 ### 2. 先 dry-run，再实际导入
 
@@ -85,7 +85,6 @@ codex/skills/importing-codex-home/scripts/import_codex_home.sh \
 ```bash
 python3 test_runner.py
 diff -rq ~/.codex/skills codex/skills --exclude='.backup-skills' --exclude='__pycache__'
-diff -rq ~/.codex/workflow codex/workflow --exclude='memory'
 ```
 
 ### 4. 汇报时说明排除项
@@ -103,7 +102,7 @@ codex/skills/importing-codex-home/scripts/import_codex_home.sh --help
 脚本行为：
 - 默认合并，不删除仓库已有内容
 - `skills/` 自动排除 `.backup-skills`、`__pycache__`、`.DS_Store`
-- `workflow/` 自动排除 `memory/`
+- `skills/` 不回灌已退役的 `sepia*`、`ccwf-*`
 - `config.toml` 按当前内容导入，不重写项目专用绝对路径
 
 ## Common Mistakes

@@ -94,7 +94,6 @@ MyCodexEnv turns those questions into a repeatable loop:
 | Hooks | `codex/config.template.toml` (`[[hooks.*]]`), `codex/hooks/` | Session, prompt, policy, and evidence hooks |
 | Runtime policy | `codex/runtime/` | Tool policy, schemas, and CLI resolver |
 | Skills | `codex/skills/` | Local Codex skills |
-| Codex workflow | `codex/workflow/` | Local Codex workflow |
 | Shell integration | `codex/zsh/` | Session-title and shell helpers |
 | Claude workflow | `claude/workflow/` | Local Claude workflow |
 | Claude integration | `claude/CLAUDE_INTEGRATION_BLOCK.md` | Local Claude instructions block |
