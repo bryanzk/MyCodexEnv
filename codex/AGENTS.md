@@ -53,7 +53,7 @@
 
 ## Remote Operations
 - 任何 SSH、远程主机、远程服务或 tunnel 操作前，先读取 `~/.codex/remote-access.md`。
-- 需要具体主机元数据时，再读取 `~/.codex/remote-hosts.md`。
+- 需要具体主机元数据时，再读取 `~/.codex/remote-hosts.md`，以及本机的 `~/.codex/remote-hosts.local.md`（若存在）。
 - Repo 或子目录 `AGENTS.md` 可以补充本地远程入口；不可覆盖的远程安全边界应由 managed policy、sandbox、rules 或 hooks 强制。
 
 ## Layering

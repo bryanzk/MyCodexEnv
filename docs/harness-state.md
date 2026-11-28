@@ -14,19 +14,19 @@ Stable rules belong in `AGENTS.md`, `README.md`, `docs/repo-index.md`, or
   - `codex/skills/delivery-harness-framework/SKILL.md`
 - blocked_sources: none
 - unsafe_inputs: none
-- next_safe_task: Owner runs the full suite on the host and reruns the full-sync rehearsal against a copy of the runtime; no full sync against the real runtime before that
+- next_safe_task: After CI and a clean Codex review: owner approves the codex/ digest, regenerates identity fixtures, moves his machine-local host entry from ~/.codex/remote-hosts.md into ~/.codex/remote-hosts.local.md, then decides on the full sync
 - required_commands:
   - `python3 test_runner.py`
   - `git diff --check`
   - `./scripts/verify_codex_env.sh --repo-root "$(pwd)" --codex-home "$HOME/.codex" --claude-home "$HOME/.claude"`
-- latest_checkpoint: 2026-11-27T17:49:47-05:00 SHI-637: final shape of the config.toml merge in the full sync. Review found that matching lines could not read every valid spelling. The merge now scans statements, compares tables by parsed key path, and checks its text result against a merge worked out on parsed data. If they differ, the parsed result is written and the sync says comments were not kept. Only an existing config.toml that is not valid TOML stops the sync. This replaces the earlier entry's statement that the merge refuses on an invalid result.
-- latest_verification: 2026-11-27T17:49:47-05:00 command=python3 test_runner.py (cloud clone, no Codex CLI); CI gate on f33ebb5; exit_code=0; key_output=165 pass, same 5 failures and 4 skips as main in this environment; CI gate success; Codex review reports no findings on f33ebb5; 18 hand-run spellings of an existing config.toml merge to the expected settings, 16 by text and 2 by the parsed fallback
+- latest_checkpoint: 2026-11-27T20:03:01-05:00 SHI-637: full sync keeps the owner's runtime choices. Template model gpt-6.2-sol and reasoning effort low (owner 2026-11-27 19:59). Machine-local remote hosts move to ~/.codex/remote-hosts.local.md, which sync never reads or writes; AGENTS.md, remote-access.md and remote-hosts.md point to it
+- latest_verification: 2026-11-27T20:03:01-05:00 command=PYTHONDONTWRITEBYTECODE=1 python3 test_runner.py (cloud clone, Python 3.13, no Codex CLI); exit_code=1; key_output=ran=174 passed=165 skipped=4 failed=5; the same five failures and four skips as main in this environment; test_sync_renders_template_and_copies_skills passes with the new remote-hosts.local.md assertions; third rehearsal at 1b1283b: owner host 174/174, sync_exit=0, no config entry lost, skills.config merged by path
 - compaction_ordinal: 0
 - transition_key: p1-2-complete
 - gate_decision: continue-to-boundary
-- constraints: ["The full sync has still never run against the real runtime","Not run on a host with the Codex CLI"]
+- constraints: ["codex/ changed: identity layer A is stale until the owner runs harness_refresh_identity.py refresh --approve","The owner's machine-local host entry stays only in the live ~/.codex/remote-hosts.md until he moves it; a full sync before that removes it (a backup is written)","codex exec with gpt-6.2-sol was rejected on this account earlier on 2026-11-27 (model_not_in_accessible_catalog); not re-tested","MyCodexEnv is public: host metadata for the owner's machines stays out of the repository"]
 - ownership: {}
-- next_action: {"command":"Owner runs the full suite on the host and reruns the full-sync rehearsal against a copy of the runtime; no full sync against the real runtime before that"}
+- next_action: {"command":"After CI and a clean Codex review: owner approves the codex/ digest, regenerates identity fixtures, moves his machine-local host entry from ~/.codex/remote-hosts.md into ~/.codex/remote-hosts.local.md, then decides on the full sync"}
 
 ## State Log
 
@@ -4075,3 +4075,27 @@ Stable rules belong in `AGENTS.md`, `README.md`, `docs/repo-index.md`, or
   - none
 - next_safe_task: Owner runs the full suite on the host and reruns the full-sync rehearsal against a copy of the runtime; no full sync against the real runtime before that
 - checkpoint_data: {"constraints":["The full sync has still never run against the real runtime","Not run on a host with the Codex CLI"],"next_action":{"command":"Owner runs the full suite on the host and reruns the full-sync rehearsal against a copy of the runtime; no full sync against the real runtime before that"},"ownership":{},"phase":"ship","schema":"dhf_checkpoint_v1","verification_evidence":{"command":"python3 test_runner.py (cloud clone, no Codex CLI); CI gate on f33ebb5","exit_code":0,"freshness":"fresh","key_output":"165 pass, same 5 failures and 4 skips as main in this environment; CI gate success; Codex review reports no findings on f33ebb5; 18 hand-run spellings of an existing config.toml merge to the expected settings, 16 by text and 2 by the parsed fallback","timestamp":"2026-11-27T17:49:47-05:00"}}
+
+### 2026-11-27T20:03:01-05:00
+- phase: ship
+- event: checkpoint
+- summary: SHI-637: full sync keeps the owner's runtime choices. Template model gpt-6.2-sol and reasoning effort low (owner 2026-11-27 19:59). Machine-local remote hosts move to ~/.codex/remote-hosts.local.md, which sync never reads or writes; AGENTS.md, remote-access.md and remote-hosts.md point to it
+- git:
+  - branch: codex/shi-637-runtime-keep-20261127
+  - latest_commit: 1b1283b
+  - dirty_status: dirty
+  - dirty_count: 5
+- changed_surfaces:
+  - `codex/config.template.toml`
+  - `codex/AGENTS.md`
+  - `codex/remote-access.md`
+  - `codex/remote-hosts.md`
+  - `test_runner.py`
+- verification:
+  - command: `PYTHONDONTWRITEBYTECODE=1 python3 test_runner.py (cloud clone, Python 3.13, no Codex CLI)`
+  - exit_code: 1
+  - key_output: ran=174 passed=165 skipped=4 failed=5; the same five failures and four skips as main in this environment; test_sync_renders_template_and_copies_skills passes with the new remote-hosts.local.md assertions; third rehearsal at 1b1283b: owner host 174/174, sync_exit=0, no config entry lost, skills.config merged by path
+- blockers:
+  - none
+- next_safe_task: After CI and a clean Codex review: owner approves the codex/ digest, regenerates identity fixtures, moves his machine-local host entry from ~/.codex/remote-hosts.md into ~/.codex/remote-hosts.local.md, then decides on the full sync
+- checkpoint_data: {"constraints":["codex/ changed: identity layer A is stale until the owner runs harness_refresh_identity.py refresh --approve","The owner's machine-local host entry stays only in the live ~/.codex/remote-hosts.md until he moves it; a full sync before that removes it (a backup is written)","codex exec with gpt-6.2-sol was rejected on this account earlier on 2026-11-27 (model_not_in_accessible_catalog); not re-tested","MyCodexEnv is public: host metadata for the owner's machines stays out of the repository"],"next_action":{"command":"After CI and a clean Codex review: owner approves the codex/ digest, regenerates identity fixtures, moves his machine-local host entry from ~/.codex/remote-hosts.md into ~/.codex/remote-hosts.local.md, then decides on the full sync"},"ownership":{},"phase":"ship","schema":"dhf_checkpoint_v1","verification_evidence":{"command":"PYTHONDONTWRITEBYTECODE=1 python3 test_runner.py (cloud clone, Python 3.13, no Codex CLI)","exit_code":1,"freshness":"fresh","key_output":"ran=174 passed=165 skipped=4 failed=5; the same five failures and four skips as main in this environment; test_sync_renders_template_and_copies_skills passes with the new remote-hosts.local.md assertions; third rehearsal at 1b1283b: owner host 174/174, sync_exit=0, no config entry lost, skills.config merged by path","timestamp":"2026-11-27T20:03:01-05:00"}}
