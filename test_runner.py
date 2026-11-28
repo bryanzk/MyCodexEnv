@@ -2288,6 +2288,61 @@ exit 2
     print("[PASS] sync registers and installs superpowers plugin")
 
 
+def test_sync_dry_run_matches_real_sync():
+    """--dry-run writes nothing to the Codex home and lists exactly what the real sync then changes (SHI-637)."""
+    with tempfile.TemporaryDirectory() as tmp:
+        tmp_path = Path(tmp)
+        repo, _ = seed_runtime_sync_repo(tmp_path / "repo")
+        phase0_commit_approval(repo)
+        origin = make_bare_origin_from(repo, tmp_path / "origin.git")
+        code, out, err = run(["git", "remote", "add", "origin", str(origin)], cwd=repo)
+        require(code == 0, f"origin setup should work: {err or out}")
+        codex_home = tmp_path / "home" / ".codex"
+        sync_cmd = [str(SYNC), "--repo-root", str(repo), "--codex-home", str(codex_home), "--skip-superpowers-sync"]
+        code, out, err = run(sync_cmd)
+        require(code == 0, f"bootstrap sync failed: {err or out}")
+        write(codex_home / "auth.json", "never copied\n")
+        foreign_hooks = '{"hooks": {"_foreign": true}}'
+        write(codex_home / "hooks.json", foreign_hooks)
+
+        write(repo / "codex" / "AGENTS.md", "runtime contract v2\n")
+        write(repo / "codex" / "hooks" / "new_hook.py", "# new hook\n")
+        code, out, err = run(["git", "add", "codex"], cwd=repo)
+        require(code == 0, f"v2 add failed: {err or out}")
+        code, out, err = run(["git", "commit", "-m", "fixture v2"], cwd=repo)
+        require(code == 0, f"v2 commit failed: {err or out}")
+        phase0_commit_approval(repo)
+        code, out, err = run(["git", "push", "origin", "main"], cwd=repo)
+        require(code == 0, f"v2 push failed: {err or out}")
+        prepare_test_loaded_readback(sync_cmd)
+
+        def files() -> dict[str, bytes]:
+            return {path.relative_to(codex_home).as_posix(): path.read_bytes()
+                    for path in codex_home.rglob("*") if path.is_file()}
+
+        before = files()
+        proc = run_process([*sync_cmd, "--dry-run"])
+        out = proc.stdout
+        require(proc.returncode == 0, f"dry run failed: {proc.stderr or out}")
+        require(files() == before, "dry run must not write to the Codex home")
+        require("auth.json" not in out and "never copied" not in out, "dry run must not read credentials")
+        previewed = {line.split(": ", 1)[1] for line in out.splitlines() if line.startswith("would ")}
+        require("would change: AGENTS.md" in out and "would add: hooks/new_hook.py" in out,
+                f"dry run should name the changed and added files: {out}")
+        require("+runtime contract v2" in out, "dry run should show a text diff")
+        require("hooks.json" not in previewed, "another tool's hooks.json must not be in the preview")
+
+        code, out, err = run(sync_cmd)
+        require(code == 0, f"real sync failed: {err or out}")
+        after = files()
+        actual = {rel for rel in set(before) | set(after)
+                  if before.get(rel) != after.get(rel) and ".backup." not in rel
+                  and not rel.startswith("runtime-backups/") and not rel.endswith(".lock")}
+        require(previewed == actual, f"preview {sorted(previewed)} should match the real sync {sorted(actual)}")
+        require(after["hooks.json"] == foreign_hooks.encode(), "hooks.json must stay byte-identical")
+    print("[PASS] sync dry run matches the real sync")
+
+
 def test_sync_transition_matrix_v0():
     with tempfile.TemporaryDirectory() as tmp:
         tmp_path = Path(tmp)
@@ -13673,6 +13728,7 @@ TESTS = [
     test_sync_moves_hook_state_with_its_hook,
     test_owner_disabled_hooks_are_reported_not_failed,
     test_sync_registers_and_installs_superpowers_plugin,
+    test_sync_dry_run_matches_real_sync,
     test_sync_transition_matrix_v0,
     test_sync_backup_dir_v0,
     test_sync_approved_digest_authority,

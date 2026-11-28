@@ -26,19 +26,19 @@ State Log rules (same as ShipQ, SHI-637):
   - `codex/skills/delivery-harness-framework/SKILL.md`
 - blocked_sources: none
 - unsafe_inputs: none
-- next_safe_task: Merge after CI and review; next SHI-637 items: merge-time State Log append, sync dry-run mode
+- next_safe_task: Merge after CI and review; owner runs sync --dry-run on Mac Studio (SHI-637 item 5)
 - required_commands:
   - `python3 test_runner.py`
   - `git diff --check`
   - `./scripts/verify_codex_env.sh --repo-root "$(pwd)" --codex-home "$HOME/.codex" --claude-home "$HOME/.claude"`
-- latest_checkpoint: 2026-11-28T10:16:49-05:00 SHI-637: State Log field caps and archive (ShipQ rules); 179 old entries moved verbatim, 10 kept
-- latest_verification: 2026-11-28T10:16:49-05:00 command=archive --apply --keep-latest 10; parity check; 4 checkpoint/archive/bearing tests; exit_code=0; key_output=entries=189 moved=179 kept=10; verbatim: True; field limits, archive, checkpoint helper, session bearing PASS
+- latest_checkpoint: 2026-11-28T10:32:56-05:00 SHI-637: sync --dry-run previews a full sync in a sandbox copy; writes nothing to the Codex home
+- latest_verification: 2026-11-28T10:32:56-05:00 command=python3 -c 'import test_runner as t; t.test_sync_*()' (all sync tests, cloud clone); exit_code=0; key_output=test_sync_dry_run_matches_real_sync PASS: preview set == real sync change set; home unchanged; all sync tests PASS
 - compaction_ordinal: 0
 - transition_key: p1-2-complete
 - gate_decision: continue-to-boundary
 - constraints: []
 - ownership: {}
-- next_action: {"command":"Merge after CI and review; next SHI-637 items: merge-time State Log append, sync dry-run mode"}
+- next_action: {"command":"Merge after CI and review; owner runs sync --dry-run on Mac Studio (SHI-637 item 5)"}
 
 ## Archived State Log Entries
 
@@ -313,3 +313,26 @@ Older entries were moved verbatim by `scripts/archive_harness_state.py`.
   - none
 - next_safe_task: Merge after CI and review; next SHI-637 items: merge-time State Log append, sync dry-run mode
 - checkpoint_data: {"constraints":[],"next_action":{"command":"Merge after CI and review; next SHI-637 items: merge-time State Log append, sync dry-run mode"},"ownership":{},"phase":"ship","schema":"dhf_checkpoint_v1","verification_evidence":{"command":"archive --apply --keep-latest 10; parity check; 4 checkpoint/archive/bearing tests","exit_code":0,"freshness":"fresh","key_output":"entries=189 moved=179 kept=10; verbatim: True; field limits, archive, checkpoint helper, session bearing PASS","timestamp":"2026-11-28T10:16:49-05:00"}}
+
+### 2026-11-28T10:32:56-05:00
+- phase: ship
+- event: checkpoint
+- summary: SHI-637: sync --dry-run previews a full sync in a sandbox copy; writes nothing to the Codex home
+- git:
+  - branch: codex/shi-637-sync-dry-run-20261128
+  - latest_commit: e4096b9
+  - dirty_status: dirty
+  - dirty_count: 4
+- changed_surfaces:
+  - `scripts/sync_dry_run.py`
+  - `scripts/sync_codex_home.sh`
+  - `README.md`
+  - `test_runner.py`
+- verification:
+  - command: `python3 -c 'import test_runner as t; t.test_sync_*()' (all sync tests, cloud clone)`
+  - exit_code: 0
+  - key_output: test_sync_dry_run_matches_real_sync PASS: preview set == real sync change set; home unchanged; all sync tests PASS
+- blockers:
+  - none
+- next_safe_task: Merge after CI and review; owner runs sync --dry-run on Mac Studio (SHI-637 item 5)
+- checkpoint_data: {"constraints":[],"next_action":{"command":"Merge after CI and review; owner runs sync --dry-run on Mac Studio (SHI-637 item 5)"},"ownership":{},"phase":"ship","schema":"dhf_checkpoint_v1","verification_evidence":{"command":"python3 -c 'import test_runner as t; t.test_sync_*()' (all sync tests, cloud clone)","exit_code":0,"freshness":"fresh","key_output":"test_sync_dry_run_matches_real_sync PASS: preview set == real sync change set; home unchanged; all sync tests PASS","timestamp":"2026-11-28T10:32:56-05:00"}}
