@@ -870,7 +870,7 @@ def test_sync_approved_digest_authority():
 def test_sync_phase0_pre_preflight_matrix():
     fixtures = [
         ("source-missing", "source_required_file_missing"),
-        ("controller/execution-clone swapped", "source_role_path_mismatch"),
+        ("retired automation source role", "source_role_path_mismatch"),
         ("dirty", "source_dirty"),
         ("unapproved digest", "source_digest_unapproved"),
         ("runtime-newer", "runtime_newer_than_source"),
@@ -896,7 +896,7 @@ def test_sync_phase0_pre_preflight_matrix():
 
             if fixture_name == "source-missing":
                 (repo / "codex" / "hooks" / "task_state.py").unlink()
-            elif fixture_name == "controller/execution-clone swapped":
+            elif fixture_name == "retired automation source role":
                 env_updates["PHASE0_SOURCE_ROLE"] = "automation_execution_clone"
             elif fixture_name == "dirty":
                 write(repo / "codex" / "AGENTS.md", "dirty fixture\n")

@@ -14,19 +14,19 @@ Stable rules belong in `AGENTS.md`, `README.md`, `docs/repo-index.md`, or
   - `codex/skills/delivery-harness-framework/SKILL.md`
 - blocked_sources: none
 - unsafe_inputs: none
-- next_safe_task: Merge after CI and a clean Codex review; next SHI-637 item: State Log field caps and archiving following ShipQ
+- next_safe_task: Owner runs _to_delete/batch-1128a.sh (Layer C refresh on this branch); then CI and review, merge
 - required_commands:
   - `python3 test_runner.py`
   - `git diff --check`
   - `./scripts/verify_codex_env.sh --repo-root "$(pwd)" --codex-home "$HOME/.codex" --claude-home "$HOME/.claude"`
-- latest_checkpoint: 2026-11-27T23:06:42-05:00 SHI-637: wrote the parallel-work rules into the DHF spec (dhf-spec.md and the CN/EN pages, section 9): non-overlapping write sets, the lead agent integrates and verifies, a shared repository is not shared write rights, no agent changes a workspace while the owner runs commands there, worktree receipts go in the delivery report and the main session appends one State Log entry at merge. Added a gap entry: no tool enforces these rules and each PR still appends its own State Log entry
-- latest_verification: 2026-11-27T23:06:42-05:00 command=python3 scripts/dhf_content_drift.py --repo-root . ; python3 scripts/check_surfaces.py --repo-root . --check-public-nav --json; exit_code=0; key_output=no drift, 0 open findings; check_surfaces ok true
+- latest_checkpoint: 2026-11-27T23:12:00-05:00 SHI-637 (re-appended after merging main): removed the automation_execution_clone source role from the sync source guard. Allowed roles are git_head and caller_worktree; any other role is refused with source_role_path_mismatch. The edit to docs/HARNESS_RUNTIME.md makes Layer C stale; the owner refreshes Layer C on this branch before merge
+- latest_verification: 2026-11-27T23:12:00-05:00 command=python3 -c 'import test_runner as t; t.test_sync_phase0_pre_preflight_matrix()'; CI gate on a71ec64; exit_code=1; key_output=preflight matrix PASS; CI ran=162 passed=156 failed=1: test_harness_refresh_identity_status_current_head (Layer C stale)
 - compaction_ordinal: 0
 - transition_key: p1-2-complete
 - gate_decision: continue-to-boundary
 - constraints: []
 - ownership: {}
-- next_action: {"command":"Merge after CI and a clean Codex review; next SHI-637 item: State Log field caps and archiving following ShipQ"}
+- next_action: {"command":"Owner runs _to_delete/batch-1128a.sh (Layer C refresh on this branch); then CI and review, merge"}
 
 ## State Log
 
@@ -4246,3 +4246,25 @@ Stable rules belong in `AGENTS.md`, `README.md`, `docs/repo-index.md`, or
   - none
 - next_safe_task: Merge after CI and a clean Codex review; next SHI-637 item: State Log field caps and archiving following ShipQ
 - checkpoint_data: {"constraints":[],"next_action":{"command":"Merge after CI and a clean Codex review; next SHI-637 item: State Log field caps and archiving following ShipQ"},"ownership":{},"phase":"ship","schema":"dhf_checkpoint_v1","verification_evidence":{"command":"python3 scripts/dhf_content_drift.py --repo-root . ; python3 scripts/check_surfaces.py --repo-root . --check-public-nav --json","exit_code":0,"freshness":"fresh","key_output":"no drift, 0 open findings; check_surfaces ok true","timestamp":"2026-11-27T23:06:42-05:00"}}
+
+### 2026-11-27T23:12:00-05:00
+- phase: ship
+- event: checkpoint
+- summary: SHI-637 (re-appended after merging main): removed the automation_execution_clone source role from the sync source guard. Allowed roles are git_head and caller_worktree; any other role is refused with source_role_path_mismatch. The edit to docs/HARNESS_RUNTIME.md makes Layer C stale; the owner refreshes Layer C on this branch before merge
+- git:
+  - branch: codex/shi-637-drop-automation-source-role-20261128
+  - latest_commit: a71ec64
+  - dirty_status: dirty
+  - dirty_count: 4
+- changed_surfaces:
+  - `scripts/sync_codex_home.sh`
+  - `docs/HARNESS_RUNTIME.md`
+  - `test_runner.py`
+- verification:
+  - command: `python3 -c 'import test_runner as t; t.test_sync_phase0_pre_preflight_matrix()'; CI gate on a71ec64`
+  - exit_code: 1
+  - key_output: preflight matrix PASS; CI ran=162 passed=156 failed=1: test_harness_refresh_identity_status_current_head (Layer C stale)
+- blockers:
+  - none
+- next_safe_task: Owner runs _to_delete/batch-1128a.sh (Layer C refresh on this branch); then CI and review, merge
+- checkpoint_data: {"constraints":[],"next_action":{"command":"Owner runs _to_delete/batch-1128a.sh (Layer C refresh on this branch); then CI and review, merge"},"ownership":{},"phase":"ship","schema":"dhf_checkpoint_v1","verification_evidence":{"command":"python3 -c 'import test_runner as t; t.test_sync_phase0_pre_preflight_matrix()'; CI gate on a71ec64","exit_code":1,"freshness":"fresh","key_output":"preflight matrix PASS; CI ran=162 passed=156 failed=1: test_harness_refresh_identity_status_current_head (Layer C stale)","timestamp":"2026-11-27T23:12:00-05:00"}}
