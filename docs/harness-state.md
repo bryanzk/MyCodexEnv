@@ -26,19 +26,19 @@ State Log rules (same as ShipQ, SHI-637):
   - `codex/skills/delivery-harness-framework/SKILL.md`
 - blocked_sources: none
 - unsafe_inputs: none
-- next_safe_task: Merge after CI and review; owner runs sync --dry-run on Mac Studio (SHI-637 item 5)
+- next_safe_task: Merge after CI and review; then a two-worktree trial for the SHI-637 no-conflict acceptance
 - required_commands:
   - `python3 test_runner.py`
   - `git diff --check`
   - `./scripts/verify_codex_env.sh --repo-root "$(pwd)" --codex-home "$HOME/.codex" --claude-home "$HOME/.claude"`
-- latest_checkpoint: 2026-11-28T10:32:56-05:00 SHI-637: sync --dry-run previews a full sync in a sandbox copy; writes nothing to the Codex home
-- latest_verification: 2026-11-28T10:32:56-05:00 command=python3 -c 'import test_runner as t; t.test_sync_*()' (all sync tests, cloud clone); exit_code=0; key_output=test_sync_dry_run_matches_real_sync PASS: preview set == real sync change set; home unchanged; all sync tests PASS
+- latest_checkpoint: 2026-11-28T11:19:06-05:00 SHI-637: spec says worktrees skip the State Log; the integration PR appends one entry
+- latest_verification: 2026-11-28T11:19:06-05:00 command=dhf_content_drift.py; check_surfaces.py --check-public-nav; harness_refresh_identity.py status; exit_code=0; key_output=no drift; surfaces ok; identity A-D fresh
 - compaction_ordinal: 0
 - transition_key: p1-2-complete
 - gate_decision: continue-to-boundary
 - constraints: []
 - ownership: {}
-- next_action: {"command":"Merge after CI and review; owner runs sync --dry-run on Mac Studio (SHI-637 item 5)"}
+- next_action: {"command":"Merge after CI and review; then a two-worktree trial for the SHI-637 no-conflict acceptance"}
 
 ## Archived State Log Entries
 
@@ -336,3 +336,25 @@ Older entries were moved verbatim by `scripts/archive_harness_state.py`.
   - none
 - next_safe_task: Merge after CI and review; owner runs sync --dry-run on Mac Studio (SHI-637 item 5)
 - checkpoint_data: {"constraints":[],"next_action":{"command":"Merge after CI and review; owner runs sync --dry-run on Mac Studio (SHI-637 item 5)"},"ownership":{},"phase":"ship","schema":"dhf_checkpoint_v1","verification_evidence":{"command":"python3 -c 'import test_runner as t; t.test_sync_*()' (all sync tests, cloud clone)","exit_code":0,"freshness":"fresh","key_output":"test_sync_dry_run_matches_real_sync PASS: preview set == real sync change set; home unchanged; all sync tests PASS","timestamp":"2026-11-28T10:32:56-05:00"}}
+
+### 2026-11-28T11:19:06-05:00
+- phase: ship
+- event: checkpoint
+- summary: SHI-637: spec says worktrees skip the State Log; the integration PR appends one entry
+- git:
+  - branch: codex/shi-637-state-log-integration-rule-20261128
+  - latest_commit: 5bcf9f3
+  - dirty_status: dirty
+  - dirty_count: 3
+- changed_surfaces:
+  - `docs/dhf-spec.md`
+  - `docs/dhf-spec-cn.html`
+  - `docs/dhf-spec-en.html`
+- verification:
+  - command: `dhf_content_drift.py; check_surfaces.py --check-public-nav; harness_refresh_identity.py status`
+  - exit_code: 0
+  - key_output: no drift; surfaces ok; identity A-D fresh
+- blockers:
+  - none
+- next_safe_task: Merge after CI and review; then a two-worktree trial for the SHI-637 no-conflict acceptance
+- checkpoint_data: {"constraints":[],"next_action":{"command":"Merge after CI and review; then a two-worktree trial for the SHI-637 no-conflict acceptance"},"ownership":{},"phase":"ship","schema":"dhf_checkpoint_v1","verification_evidence":{"command":"dhf_content_drift.py; check_surfaces.py --check-public-nav; harness_refresh_identity.py status","exit_code":0,"freshness":"fresh","key_output":"no drift; surfaces ok; identity A-D fresh","timestamp":"2026-11-28T11:19:06-05:00"}}

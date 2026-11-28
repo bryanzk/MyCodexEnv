@@ -395,7 +395,7 @@
         <li>每个 hook 的启停属于 owner，在宿主自己的界面里操作（Codex 是 <code>/hooks</code>）。DHF 不提供 agent 能运行的开关命令，不自动重新启用被关闭的 hook。同步改动 hook 的登记位置时，启停状态跟着 hook 的命令走，不跟着序号走。守卫被关闭时，状态报告必须醒目标出。</li>
         <li>并行工作时，各个 agent 和 worktree 的写集互不重叠。主代理负责集成和最终验证。共享同一个仓库，不等于共享写权限。</li>
         <li>owner 在一个工作区里运行命令期间，agent 不改动同一个工作区。</li>
-        <li>每个 worktree 把自己的验证回执写进交付报告。合并到 main 时，由主会话追加一条 State Log 记录。</li>
+        <li>每个 worktree 把自己的验证回执写进交付报告，不写 State Log。主会话在集成分支上追加一条 State Log 记录，随集成 PR 合并到 main。只有一个会话串行工作时，它自己的 PR 就是集成 PR。</li>
       </ul>
     </section>
 
@@ -423,7 +423,7 @@
         <li>Empower 的「agent 不得创建授权记录」：agent 的编辑工具改不了声明，但 agent 能在 shell 里自己运行声明命令。现状是只留审计，不是硬边界。</li>
         <li>「agent 不得设定档位」：与上一条相同，agent 能在 shell 里自己运行设定命令。</li>
         <li>宿主覆盖：七个功能只在一个宿主的一台机器上全部有探测回执。逐格状态见 <code>docs/dhf-conformance.json</code>。</li>
-        <li>并行规则：现状是只写在规范里，没有工具强制。State Log 仍由每个 PR 自己追加，不是合并时由主会话追加。</li>
+        <li>并行规则：现状是只写在规范里，没有工具强制。「worktree 分支不写 State Log」靠约定，没有检查。两个 worktree 并行合并、State Log 无冲突，这一点还没有实测。</li>
       </ul>
     </section>
 
