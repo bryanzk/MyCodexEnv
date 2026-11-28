@@ -2186,7 +2186,7 @@ def test_owner_disabled_hooks_are_reported_not_failed():
             "[[hooks.PreToolUse.hooks]]\n"
             'type = "command"\n'
             f'command = "{guard}"\n\n'
-            f'[hooks.state."{config}:pre_tool_use:0:0"]\n'
+            f'[hooks.state."{config}:pre_tool_use:0:0"] # turned off by the owner\n'
             "enabled = false\n",
         )
         shutil.copytree(ROOT / "codex" / "runtime", codex_home / "runtime")
