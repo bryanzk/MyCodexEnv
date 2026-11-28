@@ -73,7 +73,39 @@ def managed_commands(events: dict[str, list[list[str]]]) -> dict[str, list[str]]
 
 
 def disabled_managed_commands(config_text: str) -> list[str]:
-    """Managed commands whose `[hooks.state."...config.toml:<event>:<g>:<i>"]` says enabled = false."""
+    """Managed commands whose `[hooks.state."...config.toml:<event>:<g>:<i>"]` says enabled = false.
+
+    With tomllib (Python 3.11+) the state and registrations are read from parsed
+    TOML, so any valid spelling counts. Older interpreters use the line scan.
+    """
+    try:
+        import tomllib
+    except ImportError:
+        return _disabled_managed_commands_by_line(config_text)
+    try:
+        hooks = tomllib.loads(config_text).get("hooks", {})
+    except tomllib.TOMLDecodeError:
+        return _disabled_managed_commands_by_line(config_text)
+    state = hooks.get("state", {}) if isinstance(hooks, dict) else {}
+    disabled: list[str] = []
+    for key, value in (state.items() if isinstance(state, dict) else []):
+        if not isinstance(value, dict) or value.get("enabled") is not False:
+            continue
+        match = _STATE_KEY.search(key)
+        if not match:
+            continue
+        groups = hooks.get(STATE_EVENT_NAMES.get(match.group(1), ""), [])
+        group_index, hook_index = int(match.group(2)), int(match.group(3))
+        try:
+            command = groups[group_index]["hooks"][hook_index]["command"]
+        except (IndexError, KeyError, TypeError):
+            continue
+        if isinstance(command, str) and is_managed(command) and command not in disabled:
+            disabled.append(command)
+    return disabled
+
+
+def _disabled_managed_commands_by_line(config_text: str) -> list[str]:
     events = hook_commands(config_text)
     disabled: list[str] = []
     key: str | None = None

@@ -206,6 +206,26 @@ def missing_host_receipts(data: dict[str, Any], host: str, host_version: str) ->
     return missing
 
 
+def guard_owner_disabled(host: str, codex_home: Path | None) -> bool | None:
+    """Whether the owner turned the Guard hook off in this host's config.toml.
+
+    Hook on/off belongs to the owner (SHI-631); DHF reports it and never turns a
+    hook back on. Returns None when the config cannot be read.
+    """
+    if host != "codex-cli":
+        return None
+    if str(Path(__file__).resolve().parent) not in sys.path:
+        sys.path.insert(0, str(Path(__file__).resolve().parent))
+    from hook_registration import disabled_managed_commands
+
+    home = codex_home or Path(os.environ.get("CODEX_HOME", "~/.codex")).expanduser()
+    try:
+        text = (home / "config.toml").read_text(encoding="utf-8")
+    except OSError:
+        return None
+    return any("/harness_guard.py" in command for command in disabled_managed_commands(text))
+
+
 def unrecognized_calls(host: str, codex_home: Path | None) -> dict[str, Any] | None:
     """Write-class calls the Guard could not classify on this host, read from its receipt.
 
@@ -421,9 +441,11 @@ def main(argv: list[str] | None = None) -> int:
 
     views = [cell_view(data, args.host, function, host_version, datetime.now(timezone.utc)) for function in FUNCTIONS]
     unrecognized = unrecognized_calls(args.host, args.codex_home.expanduser() if args.codex_home else None)
+    guard_disabled = guard_owner_disabled(args.host, args.codex_home.expanduser() if args.codex_home else None)
     for view in views:
         if view["function"] == "restrict":
             view["unrecognized_calls"] = unrecognized
+            view["guard_disabled_by_owner"] = guard_disabled
     if args.json:
         print(json.dumps({"host": args.host, "host_version": host_version, "functions": views}, ensure_ascii=False, indent=2))
         return 0
@@ -440,6 +462,9 @@ def main(argv: list[str] | None = None) -> int:
         print(f"- evidence: {view['evidence']}")
         if view["probes"]:
             print(f"- probes: {', '.join(view['probes'])}")
+        if view.get("guard_disabled_by_owner"):
+            print("- WARNING: the owner turned the Guard hook off in config.toml; structured writes are not "
+                  "mechanically blocked on this host. Turn it back on in Codex with /hooks.")
         calls = view.get("unrecognized_calls")
         if calls is not None and calls["count"] is None:
             print(f"- unrecognized calls: unknown (no readable Guard receipt at {calls['receipt']})")
