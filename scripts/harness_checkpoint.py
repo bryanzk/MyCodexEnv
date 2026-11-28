@@ -11,6 +11,15 @@ from pathlib import Path
 from harness_checkpoint_contract import PHASES, validate_checkpoint_artifact
 
 GATE_DECISIONS = {"continue-to-boundary", "immediate-successor", "none"}
+# Field size caps keep each State Log entry near one screen (same caps as ShipQ).
+# Detail beyond the caps belongs in the delivery report, not in the state file.
+FIELD_LIMITS: dict[str, int] = {
+    "summary": 120,
+    "verification_command": 240,
+    "verification_key_output": 320,
+    "next_safe_task": 240,
+}
+MAX_CHANGED_SURFACES = 12
 
 
 def now_iso() -> str:
@@ -56,6 +65,17 @@ def validate_args(args: argparse.Namespace) -> list[str]:
         errors.append("--compaction-ordinal must be non-negative")
     if args.transition_key is not None and not args.transition_key.strip():
         errors.append("--transition-key must be non-empty")
+    for name, limit in FIELD_LIMITS.items():
+        value = getattr(args, name) or ""
+        if "\n" in value:
+            errors.append(f"--{name.replace('_', '-')} must be a single line")
+        elif len(value) > limit:
+            errors.append(
+                f"--{name.replace('_', '-')} exceeds {limit} characters ({len(value)}); "
+                "move detail to the delivery report"
+            )
+    if len(args.changed_surface) > MAX_CHANGED_SURFACES:
+        errors.append(f"--changed-surface exceeds {MAX_CHANGED_SURFACES} entries ({len(args.changed_surface)})")
 
     verification_values = [
         args.verification_command,

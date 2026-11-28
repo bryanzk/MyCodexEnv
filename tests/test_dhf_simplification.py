@@ -25,6 +25,13 @@ VALIDATOR = ROOT / "scripts" / "validate_dhf_simplification_corpus.py"
 EVIDENCE = ROOT / "scripts" / "dhf_simplification_evidence.py"
 CONTRACT = ROOT / "docs" / "plans" / "2026-07-12-dhf-simplification-implementation-contract.md"
 HARNESS_STATE = ROOT / "docs" / "harness-state.md"
+HARNESS_STATE_ARCHIVE = ROOT / "docs" / "harness-state-archive"
+
+
+def harness_state_log_text() -> str:
+    """The active State Log plus its monthly archives; old entries move there verbatim (SHI-637)."""
+    archives = sorted(HARNESS_STATE_ARCHIVE.glob("*.md")) if HARNESS_STATE_ARCHIVE.is_dir() else []
+    return "".join(path.read_text(encoding="utf-8") for path in archives) + HARNESS_STATE.read_text(encoding="utf-8")
 PRODUCT_GUIDE = ROOT / "docs" / "DHF_SIMPLIFICATION_PRODUCT_GUIDE.md"
 DISPATCHER = ROOT / "codex" / "hooks" / "dhf_preprompt.py"
 SKILL = ROOT / "codex" / "skills" / "delivery-harness-framework" / "SKILL.md"
@@ -1444,7 +1451,7 @@ class DhfGovernanceProfileTests(unittest.TestCase):
         self.assertNotIn("不需要再次运行全量同步", normalized)
 
     def test_harness_state_keeps_checkpoint_metadata_with_its_owner_entry(self):
-        state = HARNESS_STATE.read_text(encoding="utf-8")
+        state = harness_state_log_text()
         july_checkpoint = state.split("### 2026-07-26T20:57:35-04:00", 1)[1].split("\n### ", 1)[0]
         for field in ("constraints", "ownership", "next_action"):
             self.assertNotIn(f"- {field}:", july_checkpoint)
@@ -1459,7 +1466,7 @@ class DhfGovernanceProfileTests(unittest.TestCase):
         self.assertEqual(checkpoint_data["next_action"]["command"], "git diff --stat")
 
     def test_harness_state_reconciliation_receipt_uses_a_reproducible_command(self):
-        state = HARNESS_STATE.read_text(encoding="utf-8")
+        state = harness_state_log_text()
         august_checkpoint = state.split("### 2026-08-02T18:03:07-04:00", 1)[1].split("\n### ", 1)[0]
         self.assertIn(f"- command: `{RECONCILIATION_VERIFICATION_COMMAND}`", august_checkpoint)
         self.assertIn(f"- key_output: {RECONCILIATION_VERIFICATION_OUTPUT}", august_checkpoint)
