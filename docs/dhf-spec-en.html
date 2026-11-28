@@ -437,6 +437,9 @@
         <li>In the governed profile, when the owner has declared no phase, writes and deletes are blocked and reads are unaffected. The block message says how to declare a phase.</li>
         <li>The owner may turn off one function on one host. A function that is turned off is listed truthfully in the status report. "Turned off" is never reported as "faulty", and never as "normal".</li>
         <li>Turning each hook on or off belongs to the owner, in the host's own interface (<code>/hooks</code> in Codex). DHF offers no switch command an agent can run, and never turns a disabled hook back on. When a sync moves a hook's registration, its on/off state follows the hook's command, not its position. A disabled Guard is flagged prominently in the status report.</li>
+        <li>In parallel work, the write sets of the agents and worktrees do not overlap. The lead agent integrates and does the final verification. Sharing a repository does not mean sharing write rights.</li>
+        <li>While the owner runs commands in a workspace, an agent does not change the same workspace.</li>
+        <li>Each worktree puts its verification receipt in its delivery report. When work merges to main, the main session appends one State Log entry.</li>
       </ul>
     </section>
 
@@ -464,6 +467,7 @@
         <li>"An agent does not create an authority record" in Empower: an agent's edit tools cannot change a declaration, but an agent can run the declaration command from its shell. Today this leaves an audit trail and is not a hard boundary.</li>
         <li>"An agent does not set the profile": the same as the previous item. An agent can run the setting command from its shell.</li>
         <li>Host coverage: only one host on one machine has probe receipts for all seven functions. The cell-by-cell state is in <code>docs/dhf-conformance.json</code>.</li>
+        <li>Parallel work: the rules are written here only, and no tool enforces them. Each PR still appends its own State Log entry; the main session does not yet append one at merge.</li>
       </ul>
     </section>
 
