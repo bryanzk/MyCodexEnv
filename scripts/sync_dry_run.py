@@ -88,18 +88,36 @@ def contain_links(real: Path, sandbox: Path) -> None:
     """Repoint every copied symlink at a sandbox copy of what it points to."""
     store = sandbox / LINK_TARGETS
     links = [path for top in (*TOP_FILES, *TOP_DIRS) for path in walk(sandbox / top) if path.is_symlink()]
+    shared: dict[Path, Path] = {}
     for index, link in enumerate(links):
         original = real / link.relative_to(sandbox)
         try:
             resolved = original.resolve(strict=True)
         except (OSError, RuntimeError):
             resolved = None
+        if resolved is not None:
+            try:
+                inside = resolved.relative_to(real.resolve())
+            except ValueError:
+                inside = None
+            if inside is not None and (sandbox / inside).exists() and not (sandbox / inside).is_symlink():
+                # A link to another managed path stays an alias of that path's sandbox copy.
+                link.unlink()
+                os.symlink(sandbox / inside, link)
+                continue
+        if resolved is not None and resolved in shared:
+            # Links to the same outside target share one sandbox copy.
+            link.unlink()
+            os.symlink(shared[resolved], link)
+            continue
         replacement = store / str(index) / (resolved.name if resolved else "missing")
         replacement.parent.mkdir(parents=True, exist_ok=True)
         if resolved is not None and resolved.is_dir():
             shutil.copytree(resolved, replacement, symlinks=False, ignore_dangling_symlinks=True)
         elif resolved is not None:
             shutil.copy2(resolved, replacement)
+        if resolved is not None:
+            shared[resolved] = replacement
         link.unlink()
         os.symlink(replacement, link)
 

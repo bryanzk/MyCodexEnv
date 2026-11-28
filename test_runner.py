@@ -2362,6 +2362,22 @@ def test_sync_dry_run_matches_real_sync():
         require((codex_home / "agents" / "custom.toml").is_symlink(), "dry run must leave the real symlink in place")
         require("would change: agents/custom.toml" in proc.stdout, f"the linked file should be previewed: {proc.stdout}")
 
+        # A link to another managed file stays an alias: a write through it shows on both paths.
+        owner = codex_home / "agents" / "owner.toml"
+        write(owner, "owner\n")
+        (codex_home / "agents" / "custom.toml").unlink()
+        (codex_home / "agents" / "custom.toml").symlink_to(owner)
+        (codex_home / "harness" / "loaded-receipt.json").unlink(missing_ok=True)
+        prepare_test_loaded_readback(sync_cmd)
+        proc = run_process([*sync_cmd, "--dry-run"])
+        require(proc.returncode == 0, f"dry run with an alias failed: {proc.stderr or proc.stdout}")
+        require("would change: agents/owner.toml" in proc.stdout,
+                f"a write through an alias should show on its target: {proc.stdout}")
+        require(owner.read_text(encoding="utf-8") == "owner\n", "dry run must not write the alias target")
+        (codex_home / "agents" / "custom.toml").unlink()
+        owner.unlink()
+        write(codex_home / "agents" / "custom.toml", "name = \"v2\"\n")
+
         # Files under a linked managed directory are previewed, and the real target is left alone.
         external = tmp_path / "external-agents"
         shutil.copytree(codex_home / "agents", external, symlinks=False)
