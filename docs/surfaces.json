@@ -203,7 +203,12 @@
     },
     {
       "path": "codex/hooks/compaction_probe.py",
-      "role": "incremental UserPromptSubmit host-observed compaction ordinal probe",
+      "role": "UserPromptSubmit probe that injects the recorded host compaction ordinal and counts misses",
+      "audience": ["runtime", "codex"]
+    },
+    {
+      "path": "codex/hooks/compaction_recorder.py",
+      "role": "PostCompact and SessionStart recorder of per-session host compaction ordinals",
       "audience": ["runtime", "codex"]
     },
     {

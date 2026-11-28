@@ -586,9 +586,8 @@ evidence.
 ## Compaction Observation
 
 `codex/hooks/compaction_counter.py` is the single decoded-event classifier for
-top-level `type=compacted` events. The codex-fluent active-session scanner uses
-it without changing report output; the prompt-time probe will consume the same
-function after W2b lands.
+top-level `type=compacted` events in session transcripts. The codex-fluent
+active-session scanner uses it. The prompt-time probe no longer does (SHI-633).
 
 W2 Phase-0 captured one real Codex CLI 0.144.1 `UserPromptSubmit` payload shape
 in an isolated Codex home before any probe implementation existed. The logger
@@ -610,23 +609,27 @@ not describe rollout telemetry. Rollout token accounting is read separately by
 unknown values in its returned data contract without injecting those values
 into model-visible context.
 
-W2b implements that source-stage probe in `codex/hooks/compaction_probe.py` and
-registers it in the source `UserPromptSubmit` chain. The 2026-08-10 tracked
-runtime comparison matches source, but this task did not produce a fresh,
-attributable `UserPromptSubmit` compaction receipt, so execution remains
-unverified. Resolution
-prefers an exact session id. Without an id it injects only when the payload cwd
-matches session metadata, the file mtime is inside the configured window, and
-exactly one candidate remains; otherwise it returns continue-only and records
-routine `probe_inconclusive` evidence.
+SHI-633 (2026-11-27) replaced the transcript scan. From 2026-09-01 to
+2026-11-27 every probe run ended inconclusive: three of four session ids the host
+passed had no rollout file under `~/.codex/sessions`, and at a session's first
+prompt `transcript_path` can be null. Codex CLI 0.172.0 reports a completed
+compaction itself through the `PostCompact` hook (measured 2026-11-27 with a
+manual `/compact`; an automatic compaction has not been measured).
 
-The per-session cache is `~/.codex/harness/probe_state.json`, keyed by canonical
-session-file path. Missing/corrupt state, a missing entry, file replacement, or
-file shrink permits one full scan and rebuild. Stable rounds seek to the cached
-complete-line offset and read only appended bytes. Partial trailing lines remain
-unconsumed until completed. Every successful match injects only
-`compaction_ordinal=N (host-observed); context_pressure_signal=ordinal-only`;
-exceptions and budget overruns are silent. `codex/hooks/context_meter.py` consumes the frozen
+`codex/hooks/compaction_recorder.py` is registered on `PostCompact` and in a
+second `SessionStart` group with matcher `*`. It keeps
+`~/.codex/harness/compaction_ordinals.json`, keyed by session id, under a file
+lock: `PostCompact` adds one; `SessionStart` with source `startup` creates a
+complete record at ordinal 0; other sources only make sure a record exists, and a
+record first created that way is incomplete because earlier compactions were not
+observed. Records unused for 30 days are dropped. The recorder prints nothing.
+
+`codex/hooks/compaction_probe.py` reads that record at `UserPromptSubmit`. For a
+complete record it injects only
+`compaction_ordinal=N (host-observed); context_pressure_signal=ordinal-only`.
+Without a complete record it injects nothing, writes no evidence, and counts the
+outcome in `~/.codex/harness/compaction_probe_receipt.json`. Exceptions are
+silent. `codex/hooks/context_meter.py` consumes the frozen
 W2a capability conclusion. With the source conclusion set to false it never
 persists `~/.codex/harness/meter.json`. Its separately tested usage-capable path
 persists only observed integer fields and derives remaining capacity only when

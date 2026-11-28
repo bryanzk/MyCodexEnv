@@ -44,6 +44,16 @@ type = "command"
 command = "/usr/bin/python3 ~/.codex/hooks/session_bearing.py"
 statusMessage = "Recovering session bearing"
 
+# Second SessionStart group, after the first so the [hooks.state] indexes of the
+# existing hooks do not move. It records every session start for the compaction
+# ordinal, whatever the source.
+[[hooks.SessionStart]]
+matcher = "*"
+[[hooks.SessionStart.hooks]]
+type = "command"
+command = "/usr/bin/python3 ~/.codex/hooks/compaction_recorder.py"
+statusMessage = "Recording session start for compaction ordinal"
+
 [[hooks.UserPromptSubmit]]
 matcher = "*"
 [[hooks.UserPromptSubmit.hooks]]
@@ -54,6 +64,13 @@ statusMessage = "Reading host-observed compaction ordinal"
 type = "command"
 command = "/usr/bin/python3 ~/.codex/hooks/dhf_preprompt.py"
 statusMessage = "Applying DHF prompt policy"
+
+[[hooks.PostCompact]]
+matcher = "*"
+[[hooks.PostCompact.hooks]]
+type = "command"
+command = "/usr/bin/python3 ~/.codex/hooks/compaction_recorder.py"
+statusMessage = "Recording host compaction"
 
 [[hooks.PreToolUse]]
 matcher = "*"

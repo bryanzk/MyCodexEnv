@@ -335,6 +335,28 @@ def probe_agreement_eval(
 
             environment = os.environ.copy()
             environment["CODEX_HOME"] = str(codex_home)
+            # The probe reads ordinals that the recorder keeps from host events.
+            # Replay the fixture as those events: one session start, then one
+            # PostCompact per compacted transcript event.
+            recorder_script = probe_script.parent / "compaction_recorder.py"
+            host_events = [{"hook_event_name": "SessionStart", "source": "startup", "session_id": session_id}]
+            host_events += [
+                {"hook_event_name": "PostCompact", "trigger": "auto", "session_id": session_id}
+                for event in events
+                if event.get("type") == "compacted"
+            ]
+            for host_event in host_events:
+                recorded = subprocess.run(
+                    [sys.executable, str(recorder_script)],
+                    input=json.dumps(host_event),
+                    capture_output=True,
+                    text=True,
+                    check=False,
+                    env=environment,
+                )
+                if recorded.returncode != 0:
+                    return receipt("probe_agreement", "FAIL", eval_command, recorded.returncode,
+                                   recorded.stderr.strip() or recorded.stdout.strip())
             probe = subprocess.run(
                 [sys.executable, str(probe_script)],
                 input=json.dumps({"session_id": session_id, "cwd": str(repo_root)}),

@@ -138,8 +138,9 @@ behavior live in `codex/hooks/dhf_preprompt.py`.
 - `codex/hooks/harness_guard.py`: PreToolUse guard with legacy block wire shape, governed/out-of-scope decisions, per-tool structured targets, protected/persistence screening, and integrity-watch freeze. Env/payload phase is accepted only in governed Git workspaces; precedence then continues through transcript, TTL self-declaration, snapshot, and `unknown`.
 - `codex/hooks/task_state.py`: same-Git-root or same canonical non-Git workspace phase resolution, including transcript and TTL state reads.
 - `codex/bin/codex-task`: audited TTL-bound `declare`/`revoke`; declarations do not downgrade high-risk categories or unlock protected roots.
-- `codex/hooks/compaction_counter.py`: shared decoded top-level `compacted` event counter for scanner and prompt probe.
-- `codex/hooks/compaction_probe.py`: incremental UserPromptSubmit host-observed compaction ordinal probe.
+- `codex/hooks/compaction_counter.py`: shared decoded top-level `compacted` event counter for the codex-fluent session scanner.
+- `codex/hooks/compaction_recorder.py`: `PostCompact` and `SessionStart` recorder of per-session host compaction ordinals in `~/.codex/harness/compaction_ordinals.json`.
+- `codex/hooks/compaction_probe.py`: UserPromptSubmit probe that injects the recorded ordinal for complete records and counts misses without writing evidence.
 - `codex/hooks/context_meter.py`: W2a-capability-gated context pressure helper with ordinal-only no-persistence degradation.
 - `codex/hooks/session_bearing.py`: bounded silent-failure SessionStart recovery and boundary-context injector.
 - `codex/hooks/harness_observer.py`: PostToolUse evidence observer hook.

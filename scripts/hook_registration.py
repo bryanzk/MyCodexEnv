@@ -21,6 +21,7 @@ STATE_EVENT_NAMES = {
     "user_prompt_submit": "UserPromptSubmit",
     "pre_tool_use": "PreToolUse",
     "post_tool_use": "PostToolUse",
+    "post_compact": "PostCompact",
 }
 _EVENT_HEADER = re.compile(r"^\[\[hooks\.([A-Za-z]+)\]\]\s*(?:#.*)?$")
 _HOOK_HEADER = re.compile(r"^\[\[hooks\.([A-Za-z]+)\.hooks\]\]\s*(?:#.*)?$")

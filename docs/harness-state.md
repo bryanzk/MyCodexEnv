@@ -14,19 +14,19 @@ Stable rules belong in `AGENTS.md`, `README.md`, `docs/repo-index.md`, or
   - `codex/skills/delivery-harness-framework/SKILL.md`
 - blocked_sources: none
 - unsafe_inputs: none
-- next_safe_task: Merge after CI and a clean Codex review; the next full sync on the owner host drops the stale user_prompt_submit:0:2 state entry; owner toggles dhf_preprompt.py with /hooks to close the acceptance
+- next_safe_task: Merge PR #62 after CI and review; owner runs the full sync from main; then /compact in a new session should show compaction_ordinal=1
 - required_commands:
   - `python3 test_runner.py`
   - `git diff --check`
   - `./scripts/verify_codex_env.sh --repo-root "$(pwd)" --codex-home "$HOME/.codex" --claude-home "$HOME/.claude"`
-- latest_checkpoint: 2026-11-27T22:15:34-05:00 SHI-631: hook on/off belongs to the owner. Full sync moves [hooks.state] entries to follow their hook's command when template positions change and drops entries that point at no registered hook; status --runtime and the conformance doctor flag a disabled Guard; verify lists owner-disabled hooks and still passes; the spec says so. No switch command an agent can run (direction decision: codex-task is not a hard owner boundary)
-- latest_verification: 2026-11-27T22:15:34-05:00 command=PYTHONDONTWRITEBYTECODE=1 python3 test_runner.py (cloud clone, Python 3.13, no Codex CLI); exit_code=1; key_output=ran=162 passed=153 skipped=4 failed=5, the same environment failures as main; test_sync_moves_hook_state_with_its_hook fails on main's sync script and passes here; test_owner_disabled_hooks_are_reported_not_failed passes; drift 0; surfaces ok
+- latest_checkpoint: 2026-11-27T22:45:44-05:00 SHI-633 (re-appended after merging main, which added the SHI-631 entry): the compaction probe uses host PostCompact events instead of transcript scans. compaction_recorder.py on PostCompact and a second SessionStart group keeps per-session ordinals; compaction_probe.py injects only for complete records and counts misses without evidence. Owner approved digest caca9a75 (owner host 160/160 before and after). The batch sync from the unmerged branch was refused (source transition rejected: forward source is not the fresh remote tip), so the runtime is unchanged until a sync from main after merge
+- latest_verification: 2026-11-27T22:45:44-05:00 command=PYTHONDONTWRITEBYTECODE=1 python3 test_runner.py (owner host, after refresh --approve); exit_code=0; key_output=ran=160 passed=160 skipped=0 failed=0; sync_exit=1 source transition rejected: unknown (forward source is not the fresh remote tip); ~/.codex/hooks/compaction_recorder.py absent
 - compaction_ordinal: 0
 - transition_key: p1-2-complete
 - gate_decision: continue-to-boundary
-- constraints: ["trusted_hash is carried unchanged when an entry moves; whether Codex asks to re-trust a moved hook is not measured","Only [hooks.state.\"...\"] header-form entries are moved; other spellings stay as they are"]
+- constraints: ["Full sync only accepts the fresh remote tip as its source: run it after merge, from main"]
 - ownership: {}
-- next_action: {"command":"Merge after CI and a clean Codex review; the next full sync on the owner host drops the stale user_prompt_submit:0:2 state entry; owner toggles dhf_preprompt.py with /hooks to close the acceptance"}
+- next_action: {"command":"Merge PR #62 after CI and review; owner runs the full sync from main; then /compact in a new session should show compaction_ordinal=1"}
 
 ## State Log
 
@@ -4200,3 +4200,27 @@ Stable rules belong in `AGENTS.md`, `README.md`, `docs/repo-index.md`, or
   - none
 - next_safe_task: Merge after CI and a clean Codex review; the next full sync on the owner host drops the stale user_prompt_submit:0:2 state entry; owner toggles dhf_preprompt.py with /hooks to close the acceptance
 - checkpoint_data: {"constraints":["trusted_hash is carried unchanged when an entry moves; whether Codex asks to re-trust a moved hook is not measured","Only [hooks.state.\"...\"] header-form entries are moved; other spellings stay as they are"],"next_action":{"command":"Merge after CI and a clean Codex review; the next full sync on the owner host drops the stale user_prompt_submit:0:2 state entry; owner toggles dhf_preprompt.py with /hooks to close the acceptance"},"ownership":{},"phase":"ship","schema":"dhf_checkpoint_v1","verification_evidence":{"command":"PYTHONDONTWRITEBYTECODE=1 python3 test_runner.py (cloud clone, Python 3.13, no Codex CLI)","exit_code":1,"freshness":"fresh","key_output":"ran=162 passed=153 skipped=4 failed=5, the same environment failures as main; test_sync_moves_hook_state_with_its_hook fails on main's sync script and passes here; test_owner_disabled_hooks_are_reported_not_failed passes; drift 0; surfaces ok","timestamp":"2026-11-27T22:15:34-05:00"}}
+
+### 2026-11-27T22:45:44-05:00
+- phase: ship
+- event: checkpoint
+- summary: SHI-633 (re-appended after merging main, which added the SHI-631 entry): the compaction probe uses host PostCompact events instead of transcript scans. compaction_recorder.py on PostCompact and a second SessionStart group keeps per-session ordinals; compaction_probe.py injects only for complete records and counts misses without evidence. Owner approved digest caca9a75 (owner host 160/160 before and after). The batch sync from the unmerged branch was refused (source transition rejected: forward source is not the fresh remote tip), so the runtime is unchanged until a sync from main after merge
+- git:
+  - branch: codex/shi-633-postcompact-recorder-20261127
+  - latest_commit: 0940f48
+  - dirty_status: dirty
+  - dirty_count: 10
+- changed_surfaces:
+  - `codex/hooks/compaction_recorder.py`
+  - `codex/hooks/compaction_probe.py`
+  - `codex/config.template.toml`
+  - `scripts/harness_eval.py`
+  - `runtime-approvals/approved-source-digests.txt`
+- verification:
+  - command: `PYTHONDONTWRITEBYTECODE=1 python3 test_runner.py (owner host, after refresh --approve)`
+  - exit_code: 0
+  - key_output: ran=160 passed=160 skipped=0 failed=0; sync_exit=1 source transition rejected: unknown (forward source is not the fresh remote tip); ~/.codex/hooks/compaction_recorder.py absent
+- blockers:
+  - none
+- next_safe_task: Merge PR #62 after CI and review; owner runs the full sync from main; then /compact in a new session should show compaction_ordinal=1
+- checkpoint_data: {"constraints":["Full sync only accepts the fresh remote tip as its source: run it after merge, from main"],"next_action":{"command":"Merge PR #62 after CI and review; owner runs the full sync from main; then /compact in a new session should show compaction_ordinal=1"},"ownership":{},"phase":"ship","schema":"dhf_checkpoint_v1","verification_evidence":{"command":"PYTHONDONTWRITEBYTECODE=1 python3 test_runner.py (owner host, after refresh --approve)","exit_code":0,"freshness":"fresh","key_output":"ran=160 passed=160 skipped=0 failed=0; sync_exit=1 source transition rejected: unknown (forward source is not the fresh remote tip); ~/.codex/hooks/compaction_recorder.py absent","timestamp":"2026-11-27T22:45:44-05:00"}}
