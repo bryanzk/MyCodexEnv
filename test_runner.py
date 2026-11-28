@@ -2116,7 +2116,11 @@ def test_sync_moves_hook_state_with_its_hook():
         # since-retired hook came second. The owner disabled the dispatcher.
         write(
             codex_home / "config.toml",
-            'model = "gpt-6.2-sol"\n\n'
+            'model = "gpt-6.2-sol"\n'
+            'owner_note = """\n'
+            f'[hooks.state."{state}:user_prompt_submit:0:5"]\n'
+            'enabled = false\n'
+            '"""\n\n'
             "[[hooks.UserPromptSubmit]]\n"
             'matcher = "*"\n'
             "[[hooks.UserPromptSubmit.hooks]]\n"
@@ -2133,7 +2137,7 @@ def test_sync_moves_hook_state_with_its_hook():
             f'[hooks.state."{state}:user_prompt_submit:0:0"]\n'
             "enabled = false\n"
             'trusted_hash = "sha256:dispatcher"\n\n'
-            f'[hooks.state."{state}:user_prompt_submit:0:1"]\n'
+            f'[hooks.state."{state}:user_prompt_submit:0:1"] # the retired hook\n'
             "enabled = false\n\n"
             f'[hooks.state."{state}:user_prompt_submit:0:5"]\n'
             "enabled = false\n\n"
@@ -2159,6 +2163,10 @@ def test_sync_moves_hook_state_with_its_hook():
         require(f"{state}:user_prompt_submit:0:5" not in keys,
                 "a state entry that points at no hook must be dropped")
         require(f"{state}:pre_tool_use:0:0" in keys, "an entry whose hook did not move stays as it was")
+        require(data["owner_note"] == f'[hooks.state."{state}:user_prompt_submit:0:5"]\nenabled = false\n',
+                "a header-like line inside a string must not be moved or dropped")
+        require(f"{state}:user_prompt_submit:0:1" not in keys or moved_key.endswith(":0:1"),
+                "the retired hook's commented header must be dropped, not left beside a moved entry")
         require("Moved hooks.state entries" in out and "Dropped hooks.state entries" in out,
                 f"sync should report moved and dropped entries: {out}")
     print("[PASS] sync moves hook state with its hook")
