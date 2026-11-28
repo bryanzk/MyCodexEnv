@@ -4,6 +4,7 @@
 - 本文件记录长期使用的远程主机稳定元数据，避免把 `user/port/key/path` 散落在聊天历史里。
 - 每条记录都应与 `~/.ssh/config` 中的 SSH alias 一一对应。
 - 本文件不保存密码、passphrase、token 或私钥内容。
+- 本文件由 `scripts/sync_codex_home.sh` 从仓库覆盖写入，而仓库是公开的。只属于本机的主机写在 `~/.codex/remote-hosts.local.md`，格式与本文件相同；同步脚本不读也不写那个文件。
 - 使用本文件前，必须先遵循 `~/.codex/remote-access.md` 的远程访问流程规则。
 
 ## Required Fields

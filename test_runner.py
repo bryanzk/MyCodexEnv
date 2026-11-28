@@ -2357,6 +2357,8 @@ def test_sync_renders_template_and_copies_skills():
         write(existing_agent, "pre-sync explorer\n")
         retired_hook = codex_home / "hooks" / ("model" + "_router.py")
         write(retired_hook, "retired advisory hook\n")
+        local_hosts = codex_home / "remote-hosts.local.md"
+        write(local_hosts, "# local hosts\n- alias: `fixture-host`\n")
         runtime_only_skill = codex_home / "skills" / "runtime-only-fixture" / "SKILL.md"
         write(
             runtime_only_skill,
@@ -2377,10 +2379,10 @@ def test_sync_renders_template_and_copies_skills():
 
         rendered = (codex_home / "config.toml").read_text(encoding="utf-8")
         for setting in [
-            'model = "gpt-6-astra"',
+            'model = "gpt-6.2-sol"',
             "model_context_window = 1000000",
             "model_auto_compact_token_limit = 900000",
-            'model_reasoning_effort = "medium"',
+            'model_reasoning_effort = "low"',
             'personality = "pragmatic"',
         ]:
             require(setting in active_toml_lines(rendered), f"rendered config missing owner D1 setting: {setting}")
@@ -2394,6 +2396,14 @@ def test_sync_renders_template_and_copies_skills():
         require((codex_home / "AGENTS.md").exists(), "AGENTS.md should be copied")
         require((codex_home / "remote-access.md").exists(), "remote access policy should be copied")
         require((codex_home / "remote-hosts.md").exists(), "remote hosts registry should be copied")
+        require(
+            local_hosts.read_text(encoding="utf-8") == "# local hosts\n- alias: `fixture-host`\n",
+            "sync must leave the machine-local remote-hosts.local.md unchanged",
+        )
+        require(
+            not list(codex_home.glob("remote-hosts.local.md.backup.*")),
+            "sync must not back up or touch remote-hosts.local.md",
+        )
         require((codex_home / "runtime" / "tool-policy.json").exists(), "harness tool policy should be copied")
         require((codex_home / "runtime" / "resolve_codex_cli.sh").exists(), "Codex CLI resolver should be copied")
         require((codex_home / "runtime" / "evidence.schema.json").exists(), "harness evidence schema should be copied")
