@@ -6,8 +6,11 @@ preview then lists every file the sync would add, change or remove, with a
 unified diff for text files. Nothing is written to the real Codex home.
 
 Only the managed surfaces are copied: the top-level docs, config.toml,
-hooks.json, and the agents, skills, hooks, runtime, zsh and harness folders
-(without harness/evidence). Credentials, sessions and databases are never
+hooks.json, and the agents, skills, hooks, runtime, zsh, harness (without
+harness/evidence) and bin folders. Symlinks are copied as the files they point
+to, so the sandbox sync cannot write through a link into the real home; after
+the run the real managed files are compared with their state before, and any
+difference fails the preview. Credentials, sessions and databases are never
 read. The superpowers checkout is not previewed: the sandbox run always uses
 --skip-superpowers-sync.
 """
@@ -30,7 +33,7 @@ TOP_FILES = (
     "config.toml",
     "hooks.json",
 )
-TOP_DIRS = ("agents", "skills", "hooks", "runtime", "zsh", "harness")
+TOP_DIRS = ("agents", "skills", "hooks", "runtime", "zsh", "harness", "bin")
 # Paths the sync writes for its own bookkeeping; they are not runtime changes.
 IGNORED_PREFIXES = ("runtime-backups/", "harness/evidence/")
 IGNORED_NAMES = (".phase0-sync.lock", ".harness-guard-sync.lock")
@@ -53,20 +56,23 @@ def copy_managed(real: Path, sandbox: Path) -> None:
     sandbox.mkdir(parents=True, exist_ok=True)
     for name in TOP_FILES:
         source = real / name
-        if source.is_file() and not source.is_symlink():
+        if source.is_file():
             target = sandbox / name
             if name in PATH_REWRITE_FILES:
                 target.write_text(rewrite(source.read_text(encoding="utf-8"), real, sandbox), encoding="utf-8")
                 shutil.copymode(source, target)
             else:
-                shutil.copy2(source, target)
+                shutil.copyfile(source, target)
+                shutil.copymode(source, target)
     for name in TOP_DIRS:
         source = real / name
-        if source.is_dir() and not source.is_symlink():
+        if source.is_dir():
+            # symlinks=False copies link targets, so nothing in the sandbox points out of it.
             shutil.copytree(
                 source,
                 sandbox / name,
-                symlinks=True,
+                symlinks=False,
+                ignore_dangling_symlinks=True,
                 ignore=shutil.ignore_patterns("evidence") if name == "harness" else None,
             )
 
@@ -101,6 +107,23 @@ def content(path: Path, relative: str, sandbox: Path, real: Path) -> bytes:
     return data
 
 
+def real_fingerprint(real: Path) -> dict[str, tuple[str, bytes]]:
+    """Kind and content of every real managed path, to prove the preview wrote nothing."""
+    result: dict[str, tuple[str, bytes]] = {}
+    for top in (*TOP_FILES, *TOP_DIRS):
+        path = real / top
+        items = [path] if (path.is_file() or path.is_symlink()) else (list(path.rglob("*")) if path.is_dir() else [])
+        for item in items:
+            relative = item.relative_to(real).as_posix()
+            if relative.startswith("harness/evidence/"):
+                continue
+            if item.is_symlink():
+                result[relative] = ("link", os.readlink(item).encode())
+            elif item.is_file():
+                result[relative] = ("file", item.read_bytes())
+    return result
+
+
 def text_lines(data: bytes) -> list[str] | None:
     try:
         return data.decode("utf-8").splitlines(keepends=True)
@@ -125,6 +148,7 @@ def main(argv: list[str] | None = None) -> int:
     sync = Path(__file__).resolve().parent / "sync_codex_home.sh"
     workdir = Path(tempfile.mkdtemp(prefix="codex-sync-dry-run-"))
     sandbox = workdir / "codex-home"
+    real_before = real_fingerprint(real)
     try:
         copy_managed(real, sandbox)
         before = {rel: content(path, rel, sandbox, real) for rel, path in snapshot(sandbox).items()}
@@ -133,6 +157,9 @@ def main(argv: list[str] | None = None) -> int:
             command.append("--skip-superpowers-sync")
         proc = subprocess.run(command, capture_output=True, text=True, check=False)
         after = {rel: content(path, rel, sandbox, real) for rel, path in snapshot(sandbox).items()}
+        if real_fingerprint(real) != real_before:
+            print(f"dry-run: ERROR: files under {real} changed during the preview; inspect them", file=sys.stderr)
+            return 3
 
         print(f"dry-run: nothing was written to {real}")
         print(f"dry-run: sync_exit={proc.returncode}")

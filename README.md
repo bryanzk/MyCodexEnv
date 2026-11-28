@@ -160,8 +160,6 @@ For a compact, machine-friendly index, see [`docs/repo-index.md`](docs/repo-inde
   --codex-home "<codex-home>"
 ```
 
-To preview first, add `--dry-run`: the sync runs against a sandbox copy of the managed surfaces and prints every file it would add, change or remove, with text diffs. Nothing is written to the Codex home, and credentials, sessions and databases are not read.
-
 This entry point synchronizes repository-managed Codex surfaces. For high-risk directories or a single skill, prefer an explicit targeted synchronization followed by source/runtime parity verification to avoid unrelated runtime drift.
 
 ### Verify the complete environment

@@ -2307,6 +2307,7 @@ def test_sync_dry_run_matches_real_sync():
 
         write(repo / "codex" / "AGENTS.md", "runtime contract v2\n")
         write(repo / "codex" / "hooks" / "new_hook.py", "# new hook\n")
+        write(repo / "codex" / "agents" / "custom.toml", "name = \"v2\"\n")
         code, out, err = run(["git", "add", "codex"], cwd=repo)
         require(code == 0, f"v2 add failed: {err or out}")
         code, out, err = run(["git", "commit", "-m", "fixture v2"], cwd=repo)
@@ -2340,6 +2341,26 @@ def test_sync_dry_run_matches_real_sync():
                   and not rel.startswith("runtime-backups/") and not rel.endswith(".lock")}
         require(previewed == actual, f"preview {sorted(previewed)} should match the real sync {sorted(actual)}")
         require(after["hooks.json"] == foreign_hooks.encode(), "hooks.json must stay byte-identical")
+
+        # An absolute symlink in a managed folder must not let the sandbox sync write into the real home.
+        victim = codex_home / "victim.toml"
+        write(victim, "owner file\n")
+        (codex_home / "agents" / "custom.toml").unlink()
+        (codex_home / "agents" / "custom.toml").symlink_to(victim)
+        write(repo / "codex" / "agents" / "custom.toml", "name = \"v3\"\n")
+        for command in (["git", "add", "codex"], ["git", "commit", "-m", "fixture v3"]):
+            code, out, err = run(command, cwd=repo)
+            require(code == 0, f"v3 step failed: {err or out}")
+        phase0_commit_approval(repo)
+        code, out, err = run(["git", "push", "origin", "main"], cwd=repo)
+        require(code == 0, f"v3 push failed: {err or out}")
+        (codex_home / "harness" / "loaded-receipt.json").unlink(missing_ok=True)
+        prepare_test_loaded_readback(sync_cmd)
+        proc = run_process([*sync_cmd, "--dry-run"])
+        require(proc.returncode == 0, f"dry run with a symlink failed: {proc.stderr or proc.stdout}")
+        require(victim.read_text(encoding="utf-8") == "owner file\n", "dry run must not write through a symlink")
+        require((codex_home / "agents" / "custom.toml").is_symlink(), "dry run must leave the real symlink in place")
+        require("would change: agents/custom.toml" in proc.stdout, f"the linked file should be previewed: {proc.stdout}")
     print("[PASS] sync dry run matches the real sync")
 
 
