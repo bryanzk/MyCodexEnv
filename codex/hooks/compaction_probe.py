@@ -21,7 +21,7 @@ HOOKS_DIR = Path(__file__).resolve().parent
 if str(HOOKS_DIR) not in sys.path:
     sys.path.insert(0, str(HOOKS_DIR))
 
-from compaction_recorder import atomic_write, lookup, state_path
+from compaction_recorder import atomic_write, locked, lookup, state_path
 from context_meter import USAGE_FIELDS_PRESENT, build_context
 
 
@@ -56,6 +56,11 @@ def session_ordinal(payload: dict[str, Any], home: Path) -> tuple[int | None, st
 
 def count_outcome(home: Path, outcome: str) -> None:
     path = home / "harness" / RECEIPT_NAME
+    with locked(path):
+        _count_outcome_unlocked(path, outcome)
+
+
+def _count_outcome_unlocked(path: Path, outcome: str) -> None:
     try:
         receipt = json.loads(path.read_text(encoding="utf-8"))
         if not isinstance(receipt, dict) or receipt.get("schema_version") != RECEIPT_VERSION:

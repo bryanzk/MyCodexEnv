@@ -9128,6 +9128,13 @@ def test_compaction_probe_reads_recorded_ordinal():
         require(receipt["outcomes"] == {"hit": 1, "incomplete_record": 1, "no_record": 1, "no_session_id": 2},
                 f"each outcome should be counted once per prompt: {receipt}")
         require(not (codex_home / "harness" / "evidence").exists(), "a miss must not write evidence")
+        procs = [subprocess.Popen([sys.executable, str(COMPACTION_PROBE)], stdin=subprocess.PIPE,
+                                  stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, env=env)
+                 for _ in range(8)]
+        for proc in procs:
+            proc.communicate(json.dumps({"session_id": "complete"}).encode())
+        receipt = json.loads((codex_home / "harness" / "compaction_probe_receipt.json").read_text(encoding="utf-8"))
+        require(receipt["outcomes"]["hit"] == 9, f"concurrent prompts must not lose counts: {receipt}")
         source = COMPACTION_PROBE.read_text(encoding="utf-8")
         require('"sessions"' not in source and "rglob" not in source and "transcript_path" not in source,
                 "the probe must not read session transcripts")

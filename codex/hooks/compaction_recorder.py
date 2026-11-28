@@ -21,8 +21,9 @@ import os
 import sys
 import time
 import uuid
+from contextlib import contextmanager
 from pathlib import Path
-from typing import Any
+from typing import Any, Iterator
 
 
 STATE_VERSION = 1
@@ -123,11 +124,17 @@ def apply_event(state: dict[str, Any], payload: dict[str, Any], now: float) -> b
     return True
 
 
-def record(payload: dict[str, Any], path: Path, now: float | None = None) -> bool:
+@contextmanager
+def locked(path: Path) -> Iterator[None]:
+    """Hold an exclusive lock for a read-modify-write of ``path``."""
     path.parent.mkdir(parents=True, exist_ok=True, mode=0o700)
-    lock_path = path.with_name(f"{path.name}.lock")
-    with open(lock_path, "a", encoding="utf-8") as lock:
+    with open(path.with_name(f"{path.name}.lock"), "a", encoding="utf-8") as lock:
         fcntl.flock(lock.fileno(), fcntl.LOCK_EX)
+        yield
+
+
+def record(payload: dict[str, Any], path: Path, now: float | None = None) -> bool:
+    with locked(path):
         state = load_state(path)
         changed = apply_event(state, payload, time.time() if now is None else now)
         if changed:
