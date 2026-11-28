@@ -102,7 +102,7 @@ codex/skills/importing-codex-home/scripts/import_codex_home.sh --help
 脚本行为：
 - 默认合并，不删除仓库已有内容
 - `skills/` 自动排除 `.backup-skills`、`__pycache__`、`.DS_Store`
-- `skills/` 不回灌已退役的 `sepia*`、`ccwf-*`
+- `skills/` 不回灌已退役的 `sepia*`、`ccwf-*`、`gstack*` 和 gstack 的 9 个短名 skill
 - `config.toml` 按当前内容导入，不重写项目专用绝对路径
 
 ## Common Mistakes

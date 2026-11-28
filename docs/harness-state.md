@@ -14,19 +14,19 @@ Stable rules belong in `AGENTS.md`, `README.md`, `docs/repo-index.md`, or
   - `codex/skills/delivery-harness-framework/SKILL.md`
 - blocked_sources: none
 - unsafe_inputs: none
-- next_safe_task: After CI and a clean Codex review: owner approves the codex/ digest; then the gstack retirement PR, then the public pages
+- next_safe_task: After CI and a clean Codex review: owner approves the codex/ digest, then disables the retired runtime copies through skills.config, stops the gstack-dhf-daily-refresh automation, and decides on the full sync
 - required_commands:
   - `python3 test_runner.py`
   - `git diff --check`
   - `./scripts/verify_codex_env.sh --repo-root "$(pwd)" --codex-home "$HOME/.codex" --claude-home "$HOME/.claude"`
-- latest_checkpoint: 2026-11-27T20:41:48-05:00 SHI-637: retire Sepia and the Codex side of claude-code-workflow (owner 2026-11-27 20:35). Removed codex/skills/sepia*, codex/skills/ccwf-*, codex/workflow/ and locks/sepia.lock; sync no longer deploys ~/.codex/workflow; verify drops the Codex workflow and ccwf checks; import never brings them back; writing routing names no writing skill except an explicit humanizer
-- latest_verification: 2026-11-27T20:41:48-05:00 command=PYTHONDONTWRITEBYTECODE=1 python3 test_runner.py (cloud clone, Python 3.13, no Codex CLI); dhf_content_drift.py; check_surfaces.py --check-public-nav; exit_code=1; key_output=ran=174 passed=165 skipped=4 failed=5, the same five failures and four skips as main in this environment; drift 0 open findings; surfaces pass
+- latest_checkpoint: 2026-11-27T20:51:56-05:00 SHI-637: retire gstack (owner 2026-11-27 20:35). Removed codex/skills/gstack, 35 gstack-* wrappers, the nine short-name imports, external_gstack_runtime.py, the vendor sync, daily refresh prepare and merge scripts, and the daily refresh denylist. Sync no longer classifies external gstack (exit 79 gone). check_skill_compatibility skips retired runtime copies. DHF routes product, planning, design, QA, security, review, PR, docs, handoff and retro stages to existing non-gstack skills (owner choice). Public pages, routing doc, README and C-layer registries updated
+- latest_verification: 2026-11-27T20:51:56-05:00 command=PYTHONDONTWRITEBYTECODE=1 python3 test_runner.py (cloud clone, Python 3.13, no Codex CLI); dhf_content_drift.py --json; check_surfaces.py --check-public-nav --json; exit_code=1; key_output=ran=160 passed=151 skipped=4 failed=5 (14 gstack tests removed); the same five environment failures and four skips as main; drift ok count 0; surfaces ok
 - compaction_ordinal: 0
 - transition_key: p1-2-complete
 - gate_decision: continue-to-boundary
-- constraints: ["Runtime copies under ~/.codex/skills and ~/.codex/workflow stay until the owner disables them; sync never deletes","The Claude side of claude-code-workflow (claude/workflow, the CLAUDE.md integration block, vendor/claude-code-workflow) is unchanged","The public lifecycle-skill-routing page still lists Sepia until the public-pages PR"]
+- constraints: ["Runtime copies of retired skills and ~/.gstack stay on disk; sync never deletes them","The gstack-dhf-daily-refresh Codex automation in the owner's runtime calls scripts this change deletes; the owner must stop it","The automation_execution_clone source role remains in the Phase-0 source guard; removing it is a separate change","Historical records under tasks/, docs/plans, docs/goals, docs/decisions and docs/skill-governance-20260608.md keep their gstack references (owner choice)"]
 - ownership: {}
-- next_action: {"command":"After CI and a clean Codex review: owner approves the codex/ digest; then the gstack retirement PR, then the public pages"}
+- next_action: {"command":"After CI and a clean Codex review: owner approves the codex/ digest, then disables the retired runtime copies through skills.config, stops the gstack-dhf-daily-refresh automation, and decides on the full sync"}
 
 ## State Log
 
@@ -4125,3 +4125,31 @@ Stable rules belong in `AGENTS.md`, `README.md`, `docs/repo-index.md`, or
   - none
 - next_safe_task: After CI and a clean Codex review: owner approves the codex/ digest; then the gstack retirement PR, then the public pages
 - checkpoint_data: {"constraints":["Runtime copies under ~/.codex/skills and ~/.codex/workflow stay until the owner disables them; sync never deletes","The Claude side of claude-code-workflow (claude/workflow, the CLAUDE.md integration block, vendor/claude-code-workflow) is unchanged","The public lifecycle-skill-routing page still lists Sepia until the public-pages PR"],"next_action":{"command":"After CI and a clean Codex review: owner approves the codex/ digest; then the gstack retirement PR, then the public pages"},"ownership":{},"phase":"ship","schema":"dhf_checkpoint_v1","verification_evidence":{"command":"PYTHONDONTWRITEBYTECODE=1 python3 test_runner.py (cloud clone, Python 3.13, no Codex CLI); dhf_content_drift.py; check_surfaces.py --check-public-nav","exit_code":1,"freshness":"fresh","key_output":"ran=174 passed=165 skipped=4 failed=5, the same five failures and four skips as main in this environment; drift 0 open findings; surfaces pass","timestamp":"2026-11-27T20:41:48-05:00"}}
+
+### 2026-11-27T20:51:56-05:00
+- phase: ship
+- event: checkpoint
+- summary: SHI-637: retire gstack (owner 2026-11-27 20:35). Removed codex/skills/gstack, 35 gstack-* wrappers, the nine short-name imports, external_gstack_runtime.py, the vendor sync, daily refresh prepare and merge scripts, and the daily refresh denylist. Sync no longer classifies external gstack (exit 79 gone). check_skill_compatibility skips retired runtime copies. DHF routes product, planning, design, QA, security, review, PR, docs, handoff and retro stages to existing non-gstack skills (owner choice). Public pages, routing doc, README and C-layer registries updated
+- git:
+  - branch: codex/shi-637-retire-gstack-20261127
+  - latest_commit: 6265c03
+  - dirty_status: dirty
+  - dirty_count: 1327
+- changed_surfaces:
+  - `codex/skills`
+  - `scripts/sync_codex_home.sh`
+  - `scripts/check_skill_compatibility.py`
+  - `codex/skills/delivery-harness-framework`
+  - `docs/LIFECYCLE_SKILL_ROUTING.md`
+  - `docs/surfaces.json`
+  - `docs/repo-index.md`
+  - `docs/HARNESS_RUNTIME.md`
+  - `test_runner.py`
+- verification:
+  - command: `PYTHONDONTWRITEBYTECODE=1 python3 test_runner.py (cloud clone, Python 3.13, no Codex CLI); dhf_content_drift.py --json; check_surfaces.py --check-public-nav --json`
+  - exit_code: 1
+  - key_output: ran=160 passed=151 skipped=4 failed=5 (14 gstack tests removed); the same five environment failures and four skips as main; drift ok count 0; surfaces ok
+- blockers:
+  - none
+- next_safe_task: After CI and a clean Codex review: owner approves the codex/ digest, then disables the retired runtime copies through skills.config, stops the gstack-dhf-daily-refresh automation, and decides on the full sync
+- checkpoint_data: {"constraints":["Runtime copies of retired skills and ~/.gstack stay on disk; sync never deletes them","The gstack-dhf-daily-refresh Codex automation in the owner's runtime calls scripts this change deletes; the owner must stop it","The automation_execution_clone source role remains in the Phase-0 source guard; removing it is a separate change","Historical records under tasks/, docs/plans, docs/goals, docs/decisions and docs/skill-governance-20260608.md keep their gstack references (owner choice)"],"next_action":{"command":"After CI and a clean Codex review: owner approves the codex/ digest, then disables the retired runtime copies through skills.config, stops the gstack-dhf-daily-refresh automation, and decides on the full sync"},"ownership":{},"phase":"ship","schema":"dhf_checkpoint_v1","verification_evidence":{"command":"PYTHONDONTWRITEBYTECODE=1 python3 test_runner.py (cloud clone, Python 3.13, no Codex CLI); dhf_content_drift.py --json; check_surfaces.py --check-public-nav --json","exit_code":1,"freshness":"fresh","key_output":"ran=160 passed=151 skipped=4 failed=5 (14 gstack tests removed); the same five environment failures and four skips as main; drift ok count 0; surfaces ok","timestamp":"2026-11-27T20:51:56-05:00"}}

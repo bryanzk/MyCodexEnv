@@ -11,7 +11,7 @@
 
 ## Skills
 
-- `codex/skills/*` is the repository source for persistently managed skills except active external gstack. A valid `~/.gstack/repos/gstack` is managed by `scripts/external_gstack_runtime.py status|apply|recover`; ordinary sync preserves its exact targets and never performs cutover. The repo vendor remains the legacy/bootstrap fallback, and active mode does not run `setup`.
+- `codex/skills/*` is the repository source for persistently managed skills. gstack, Sepia, and the Codex side of claude-code-workflow were retired on 2026-11-27 (SHI-637); do not add them back. Sync leaves their existing runtime copies in place.
 - Skills that Claude also uses stay in `codex/skills/<name>/`; list them in `claude/shared-skills.txt` so `scripts/sync_claude_home.sh` mirrors them into `~/.claude/skills/<name>/`.
 - After adding or installing a skill, validate its `SKILL.md` frontmatter and run the repository gate.
 - When revising a skill, keep its description short and specific to the actual workflow. Put substantial conditional guidance behind relevant reference links; a short single-workflow skill needs no extra files. Preserve safety invariants and support the Sol/Terra/Luna consumers as well as Astra.

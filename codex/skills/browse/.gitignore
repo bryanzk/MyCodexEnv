@@ -1,7 +1,0 @@
-node_modules/
-dist/
-.codex/
-tmp/
-*.log
-bun.lock
-*.bun-build

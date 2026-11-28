@@ -357,33 +357,13 @@
       "audience": ["codex", "human"]
     },
     {
-      "path": "scripts/external_gstack_runtime.py",
-      "role": "single external gstack status, apply, recover, journal, and rollback authority",
-      "audience": ["codex", "human"]
-    },
-    {
       "path": "scripts/check_codex_skill_loader.py",
       "role": "network-denied Codex app-server skills/list loader gate",
       "audience": ["codex", "human"]
     },
     {
-      "path": "scripts/prepare_gstack_dhf_daily_refresh.py",
-      "role": "daily refresh automation preflight and dry-run helper",
-      "audience": ["codex", "human"]
-    },
-    {
-      "path": "scripts/merge_gstack_refresh_if_safe.py",
-      "role": "unattended merge gate for verified gstack refresh branches",
-      "audience": ["codex", "human"]
-    },
-    {
       "path": "scripts/sync_local_main_if_safe.py",
       "role": "optional post-merge local main fast-forward gate",
-      "audience": ["codex", "human"]
-    },
-    {
-      "path": "scripts/sync_gstack_vendor.py",
-      "role": "gstack vendor skill snapshot sync helper",
       "audience": ["codex", "human"]
     },
     {

@@ -589,7 +589,7 @@
       <div class="kpis animate" style="--i:1">
         <div class="kpi"><strong>8</strong><span>标准 runtime 阶段，从 research 到 handoff。</span></div>
         <div class="kpi"><strong>9+</strong><span>核心入口：requirements、recover、env probe、report、agent team、agent brief、checkpoint、evidence、verify、tests。</span></div>
-        <div class="kpi"><strong>10+</strong><span>gstack 专项路由覆盖产品、工程、设计、QA、安全、发布。</span></div>
+        <div class="kpi"><strong>10+</strong><span>专项 skill 路由覆盖产品、工程、设计、QA、安全、发布。</span></div>
         <div class="kpi"><strong>4 字段</strong><span>验证证据必须包含 command、exit_code、key_output、timestamp。</span></div>
       </div>
 
@@ -615,21 +615,21 @@ flowchart TD
   F["Requirements<br/>捕获 DoD、范围、约束<br/>读取 CONTEXT / ADR"]:::stage
   G["验证需求 artifact<br/>harness_requirements.py validate PATH"]:::helper
   H{"是否需要专门判断"}:::decision
-  I["产品判断<br/>gstack-plan-ceo-review<br/>gstack-office-hours"]:::gstack
-  J["工程/设计计划<br/>vertical slices<br/>AFK / HITL"]:::gstack
-  J2["原型学习 / 深模块判断<br/>throwaway prototype<br/>deep module review"]:::gstack
-  K["安全或隐私边界<br/>gstack-cso<br/>security-reviewer"]:::gstack
+  I["产品判断<br/>grilling"]:::specialist
+  J["工程/设计计划<br/>vertical slices<br/>AFK / HITL"]:::specialist
+  J2["原型学习 / 深模块判断<br/>throwaway prototype<br/>deep module review"]:::specialist
+  K["安全或隐私边界<br/>security-reviewer"]:::specialist
   L{"是否多 agent 并行"}:::decision
   M["校验 agent team<br/>harness_agent_team.py validate PLAN.json<br/>可选 durable brief"]:::helper
   N["Development<br/>repo workflow / TDD / scoped workers"]:::stage
   O["Validation<br/>测试、smoke、fresh evidence<br/>debug 先建 feedback loop"]:::stage
   P["证据报告<br/>harness_report.py"]:::helper
   Q{"是否用户可见或浏览器相关"}:::decision
-  R["浏览器 QA<br/>gstack-qa 或 gstack-qa-only"]:::gstack
+  R["浏览器 QA<br/>chrome-devtools-browser 或 playwright"]:::specialist
   S{"是否准备交付"}:::decision
-  T["Review<br/>gstack-review / code-reviewer"]:::gstack
-  U["Ship / Deploy<br/>gstack-ship<br/>gstack-land-and-deploy<br/>gstack-canary"]:::gstack
-  V["Release docs<br/>gstack-document-release / doc-updater"]:::gstack
+  T["Review<br/>code-review"]:::specialist
+  U["Ship / Deploy<br/>pr"]:::specialist
+  V["Release docs<br/>doc-updater"]:::specialist
   W["governed matching signal 才执行<br/>harness_checkpoint.py append"]:::helper
   X["最终输出<br/>阶段、已读来源、skill 路由、验证证据、阻塞项"]:::router
   Y["阻断<br/>缺少凭据、远程授权、破坏性操作、安全泄漏"]:::danger
@@ -660,7 +660,7 @@ flowchart TD
   classDef router fill:#e4eef0,stroke:#2f7f9f,color:#1f2a2e;
   classDef helper fill:#e9f4ee,stroke:#3b8b6a,color:#1f2a2e;
   classDef stage fill:#fff3d8,stroke:#b87916,color:#1f2a2e;
-  classDef gstack fill:#f1eadb,stroke:#8a6f3f,color:#1f2a2e;
+  classDef specialist fill:#f1eadb,stroke:#8a6f3f,color:#1f2a2e;
   classDef decision fill:#fffaf0,stroke:#29363a,color:#1f2a2e;
   classDef danger fill:#f8e4df,stroke:#b65448,color:#1f2a2e;
           </div>
@@ -684,22 +684,22 @@ flowchart TD
           <article class="stage-card" style="--card-accent: var(--amber)">
             <h3>产品判断</h3>
             <p>用于定位、用户价值、demo 边界、优先级和取舍。</p>
-            <div class="badges"><span class="badge">gstack-plan-ceo-review</span><span class="badge">gstack-office-hours</span><span class="badge">office-hours</span></div>
+            <div class="badges"><span class="badge">grilling</span></div>
           </article>
           <article class="stage-card" style="--card-accent: var(--amber)">
             <h3>工程计划</h3>
             <p>用于架构、API、迁移、运行时、跨模块工作流和 vertical slice 拆分；每个切片标记 <code>AFK</code> 或 <code>HITL</code>。</p>
-            <div class="badges"><span class="badge">gstack-plan-eng-review</span><span class="badge">planner</span><span class="badge">task-flow-orchestrator</span><span class="badge">harness-agent-brief.md</span></div>
+            <div class="badges"><span class="badge">planner</span><span class="badge">task-flow-orchestrator</span><span class="badge">harness-agent-brief.md</span></div>
           </article>
           <article class="stage-card" style="--card-accent: var(--amber)">
             <h3>设计与浏览器体验</h3>
             <p>用于 UI、响应式、视觉验收、浏览器 smoke 和截图检查。</p>
-            <div class="badges"><span class="badge">gstack-plan-design-review</span><span class="badge">frontend-design</span><span class="badge">gstack-qa</span></div>
+            <div class="badges"><span class="badge">critique</span><span class="badge">frontend-design</span><span class="badge">chrome-devtools-browser</span></div>
           </article>
           <article class="stage-card" style="--card-accent: var(--red)">
             <h3>安全与隐私</h3>
             <p>用于 auth、token、PII、公私边界、审批和审计。</p>
-            <div class="badges"><span class="badge">gstack-cso</span><span class="badge">security-reviewer</span><span class="badge">guard</span></div>
+            <div class="badges"><span class="badge">security-reviewer</span><span class="badge">guard</span></div>
           </article>
           <article class="stage-card" style="--card-accent: var(--green)">
             <h3>开发实现</h3>
@@ -709,12 +709,12 @@ flowchart TD
           <article class="stage-card" style="--card-accent: var(--blue)">
             <h3>验证与评审</h3>
             <p>用于 fresh evidence、diff review、缺陷风险和测试缺口；debug 任务必须先建立 runnable feedback loop。</p>
-            <div class="badges"><span class="badge">verification-loop</span><span class="badge">gstack-review</span><span class="badge">code-reviewer</span></div>
+            <div class="badges"><span class="badge">verification-loop</span><span class="badge">code-review</span></div>
           </article>
           <article class="stage-card" style="--card-accent: var(--amber)">
             <h3>发布与交接</h3>
             <p>用于 commit、PR、deploy、canary、release docs、下一步状态。</p>
-            <div class="badges"><span class="badge">gstack-ship</span><span class="badge">gstack-land-and-deploy</span><span class="badge">harness_checkpoint.py</span></div>
+            <div class="badges"><span class="badge">pr</span><span class="badge">harness_checkpoint.py</span></div>
           </article>
         </div>
       </section>

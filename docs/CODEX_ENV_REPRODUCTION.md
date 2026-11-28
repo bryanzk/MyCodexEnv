@@ -20,7 +20,7 @@
 - `codex/agents/*.toml` -> `~/.codex/agents/*.toml`
 - `codex/remote-access.md` -> `~/.codex/remote-access.md`
 - `codex/remote-hosts.md` -> `~/.codex/remote-hosts.md`
-- `codex/skills/*` -> `~/.codex/skills/*`, except active external gstack from `~/.gstack/repos/gstack`, whose exact links are owned by `scripts/external_gstack_runtime.py`
+- `codex/skills/*` -> `~/.codex/skills/*`
 - `codex/hooks/*` -> `~/.codex/hooks/*`; hook registration is rendered from `codex/config.template.toml` into `~/.codex/config.toml`. `~/.codex/hooks.json` belongs to other tools and sync never writes it
 - `codex/runtime/*` -> `~/.codex/runtime/*`
 - `claude/workflow/*` -> `~/.claude/workflow/*`（排除 `workflow/memory/`）
@@ -52,29 +52,13 @@
 - **Forward-fix deployment boundary:** `codex/runtime/harness-guard-targets.json` is the exact seven-target manifest shared by `sync_codex_home.sh --promote-harness-guard` and `verify_codex_env.sh --harness-only`. Promotion uses a recoverable fsync-backed WAL and must preserve the runtime `tool-policy.json` SHA. Ordinary sync atomically refreshes `~/.codex/harness/deployed-manifest.json`, which drives the next-call integrity freeze. This repository implementation does not authorize or prove a real runtime promotion.
 
 ## Skills Source of Truth
-- Repository source of truth is `codex/skills/*` for ordinary skills. When `~/.gstack/repos/gstack` is valid, external gstack is the active authority and `scripts/external_gstack_runtime.py status|apply|recover` owns its exact runtime links.
-- Ordinary bootstrap/sync copies repo-managed skills, consumes external gstack `status`, and never invokes `apply` or `recover`. The vendored gstack snapshot remains the legacy/bootstrap fallback.
+- Repository source of truth is `codex/skills/*`. Bootstrap/sync copies repo-managed skills into `~/.codex/skills/*` and never deletes runtime-only skills.
+- gstack (including the short-name imports and the vendored snapshot), Sepia, and the Codex side of claude-code-workflow were retired on 2026-11-27 (SHI-637). Sync no longer deploys them; existing runtime copies stay on disk and are disabled through `skills.config` entries in `~/.codex/config.toml`.
 - Superpowers uses the plugin-first startup path on current pins: `scripts/sync_codex_home.sh` checks out the locked `~/.codex/superpowers`, registers the local `superpowers-dev` marketplace, installs `superpowers@superpowers-dev`, and new Codex sessions should use exposed `superpowers:*` skills. The legacy `~/.codex/superpowers/.codex/superpowers-codex` binary is only a conditional fallback when an older checkout still contains it.
 - Claude workflow source of truth is `claude/workflow/*`. Skills shared with Claude keep `codex/skills/<name>/` as their single source; `claude/shared-skills.txt` selects them and `verify_codex_env.sh` checks each `~/.claude/skills/<name>/` for exact parity.
 - `delivery-harness-framework` is a generic lifecycle router; repo-specific lifecycle skills should stay as adapters that add project paths, commands, safety boundaries, and smoke matrices.
-- The repository includes Codex-adapted short-name imports of selected `gstack` skills: `plan-ceo-review`, `plan-eng-review`, `review`, `ship`, `retro`, `browse`, `qa`, and `setup-browser-cookies`.
-- The repository vendors a gstack fallback under `codex/skills/gstack` and `codex/skills/gstack-*`; vendor refresh updates that fallback snapshot but does not promote an active external runtime.
-- Active external gstack does not run `setup`; runtime changes require an exact approved `apply` transaction and use `recover` for rollback.
-- `scripts/prepare_gstack_dhf_daily_refresh.py` is the daily refresh automation preflight entry; it requires a standalone clone, retries GitHub DNS probes for about two minutes before deferring, checks out the dedicated `automation/gstack-dhf-daily-refresh` branch rebased on `origin/main`, and returns fresh dry-run evidence before any repo mutation. Automation commits first push that branch.
-- `scripts/merge_gstack_refresh_if_safe.py` is the only supported unattended path from the automation branch into `main`; it requires a clean standalone clone, `--verified`, and an ahead-only branch state before it fast-forwards `main`.
 - `scripts/sync_local_main_if_safe.py` is the optional post-merge local sync helper; it fast-forwards a local `main` worktree only when the worktree is already on `main`, clean, and behind-only relative to `origin/main`.
-- `scripts/sync_gstack_vendor.py` is the repeatable bulk snapshot sync entry for `codex/skills/gstack`; it clones upstream, validates `VERSION` / `package.json` / `setup`, reports `needs_update` / `diff_files`, replaces the vendor tree, deletes stale files, and strips upstream `.git` metadata.
-- `browse` includes supporting code under `codex/skills/browse/*`; first use requires `./setup` in that directory after sync so Bun can build the local binary and install Playwright Chromium.
-- The lifecycle-to-skill routing guide is `docs/LIFECYCLE_SKILL_ROUTING.md`; it maps current project workflows and runtime stages to the relevant generic, repo-specific, gstack, validation, review, QA, ship, and documentation skills.
-
-Bulk refresh command:
-
-```bash
-python3 scripts/prepare_gstack_dhf_daily_refresh.py --json
-python3 scripts/sync_gstack_vendor.py --repo-root "$(pwd)" --source https://github.com/garrytan/gstack.git --dry-run --json
-python3 scripts/sync_gstack_vendor.py --repo-root "$(pwd)" --source https://github.com/garrytan/gstack.git
-python3 test_runner.py
-```
+- The lifecycle-to-skill routing guide is `docs/LIFECYCLE_SKILL_ROUTING.md`; it maps current project workflows and runtime stages to the relevant generic, repo-specific, validation, review, QA, ship, and documentation skills.
 
 If the repository gate explicitly skips the Codex loader or full-sync test
 because the sandbox cannot provide nested sandboxing or GitHub DNS, keep that

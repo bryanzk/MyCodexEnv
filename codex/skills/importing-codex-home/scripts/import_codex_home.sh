@@ -169,7 +169,18 @@ if [[ "$SKIP_SKILLS" != "true" ]]; then
     ".DS_Store" \
     "/sepia/" \
     "/sepia-*/" \
-    "/ccwf-*/"
+    "/ccwf-*/" \
+    "/gstack/" \
+    "/gstack-*/" \
+    "/browse/" \
+    "/qa/" \
+    "/review/" \
+    "/ship/" \
+    "/retro/" \
+    "/office-hours/" \
+    "/plan-ceo-review/" \
+    "/plan-eng-review/" \
+    "/setup-browser-cookies/"
 fi
 
 if [[ "$SKIP_CONFIG" != "true" ]]; then

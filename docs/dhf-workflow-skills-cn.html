@@ -261,7 +261,7 @@
         <div class="skills">
           <div class="skill"><strong>planner</strong><p>分析复杂需求、架构上下文、任务拆解与风险，在改代码前把问题边界理清。</p><a class="source-link" href="https://github.com/bryanzk/MyCodexEnv/blob/main/codex/skills/planner/SKILL.md">GitHub 源码</a></div>
           <div class="skill"><strong>req-to-dev</strong><p>把需求或原则文档转成可执行开发包，包括计划、安全网、契约、验收测试和 owner 分工。</p><a class="source-link" href="https://github.com/bryanzk/MyCodexEnv/blob/main/codex/skills/req-to-dev/SKILL.md">GitHub 源码</a></div>
-          <div class="skill"><strong>vendored gstack spec</strong><p>把模糊实现意图转成 backlog-ready issue、ticket 或 executable spec，同时保留 DHF 的 source-of-truth、lane 和验证边界。</p><a class="source-link" href="https://github.com/bryanzk/MyCodexEnv/tree/main/codex/skills/gstack">GitHub 源码</a></div>
+          <div class="skill"><strong>to-spec</strong><p>把当前对话整理成 spec 并发布到 issue tracker，同时保留 DHF 的 source-of-truth、lane 和验证边界。</p><a class="source-link" href="https://github.com/bryanzk/MyCodexEnv/blob/main/codex/skills/to-spec/SKILL.md">GitHub 源码</a></div>
         </div>
       </article>
 
@@ -273,10 +273,9 @@
         </div>
         <div class="skills">
           <div class="skill"><strong>delivery-harness-framework</strong><p>当 durable sources 冲突时，DHF 拥有 architecture alignment checkpoint：先比较产品、流程、组件、数据归属、lane、安全、切片和 handoff state，再进入编辑。</p><a class="source-link" href="https://github.com/bryanzk/MyCodexEnv/blob/main/codex/skills/delivery-harness-framework/SKILL.md">GitHub 源码</a></div>
-          <div class="skill"><strong>gstack-plan-eng-review</strong><p>审查架构、数据流、边界情况、测试覆盖、性能和运维风险；gbrain 已配置时可读取结构化规划上下文。</p><a class="source-link" href="https://github.com/bryanzk/MyCodexEnv/blob/main/codex/skills/gstack-plan-eng-review/SKILL.md">GitHub 源码</a></div>
-          <div class="skill"><strong>gstack-plan-ceo-review</strong><p>从产品与创始人视角压力测试定位、范围、用户价值和战略取舍。</p><a class="source-link" href="https://github.com/bryanzk/MyCodexEnv/blob/main/codex/skills/gstack-plan-ceo-review/SKILL.md">GitHub 源码</a></div>
-          <div class="skill"><strong>gstack-office-hours</strong><p>以 founder 或 builder office hours 方式暴露需求真实性、最窄切入点和产品想法是否值得继续；可使用 gbrain preflight。</p><a class="source-link" href="https://github.com/bryanzk/MyCodexEnv/blob/main/codex/skills/gstack-office-hours/SKILL.md">GitHub 源码</a></div>
-          <div class="skill"><strong>gstack-plan-design-review</strong><p>在 UI 实现前审查 UX 结构、视觉方向、响应式行为和设计验收标准；gbrain 只作为专用规划上下文，不替代 repo state。</p><a class="source-link" href="https://github.com/bryanzk/MyCodexEnv/blob/main/codex/skills/gstack-plan-design-review/SKILL.md">GitHub 源码</a></div>
+          <div class="skill"><strong>codebase-design</strong><p>给深模块设计一套共同用语：接口要小，边界要清楚，行为放在该放的地方。</p><a class="source-link" href="https://github.com/bryanzk/MyCodexEnv/blob/main/codex/skills/codebase-design/SKILL.md">GitHub 源码</a></div>
+          <div class="skill"><strong>grilling</strong><p>追问一个计划、决定或产品想法，直到范围、用户价值和每个未决分支都说清楚。</p><a class="source-link" href="https://github.com/bryanzk/MyCodexEnv/blob/main/codex/skills/grilling/SKILL.md">GitHub 源码</a></div>
+          <div class="skill"><strong>critique</strong><p>从 UX 角度评估设计：视觉层级、信息架构和设计验收标准。</p><a class="source-link" href="https://github.com/bryanzk/MyCodexEnv/blob/main/codex/skills/critique/SKILL.md">GitHub 源码</a></div>
           <div class="skill"><strong>task-flow-orchestrator</strong><p>为复杂任务安排执行顺序，把 Karpathy 思考、规划、TDD 和验证组合成可执行流程。</p><a class="source-link" href="https://github.com/bryanzk/MyCodexEnv/blob/main/codex/skills/task-flow-orchestrator/SKILL.md">GitHub 源码</a></div>
           <div class="skill"><strong>planner / prototype route</strong><p>throwaway prototype 只用于回答一个明确的数据模型、状态机、模块接口或 UI 问题；结束后删除原型或把结论写入 durable decision。</p><a class="source-link" href="https://github.com/bryanzk/MyCodexEnv/blob/main/codex/skills/planner/SKILL.md">GitHub 源码</a></div>
         </div>
@@ -291,7 +290,7 @@
         <div class="skills">
           <div class="skill"><strong>tdd-guide</strong><p>对功能、bug 修复、重构和核心业务逻辑执行 RED -> GREEN -> REFACTOR。</p><a class="source-link" href="https://github.com/bryanzk/MyCodexEnv/blob/main/codex/skills/tdd-guide/SKILL.md">GitHub 源码</a></div>
           <div class="skill"><strong>atdd-guide</strong><p>从业务可读的验收场景开始，用可执行规格驱动实现和生产级验证。</p><a class="source-link" href="https://github.com/bryanzk/MyCodexEnv/blob/main/codex/skills/atdd-guide/SKILL.md">GitHub 源码</a></div>
-          <div class="skill"><strong>gstack-investigate</strong><p>遇到 bug、错误输出、断裂 UI flow 或 root cause 不明时，先建立可运行 feedback loop，再基于证据修复。</p><a class="source-link" href="https://github.com/bryanzk/MyCodexEnv/blob/main/codex/skills/gstack-investigate/SKILL.md">GitHub 源码</a></div>
+          <div class="skill"><strong>diagnosing-bugs</strong><p>遇到 bug、错误输出、断裂的 UI flow 或原因不明时，先建立可运行的 feedback loop，再动手修。</p><a class="source-link" href="https://github.com/bryanzk/MyCodexEnv/blob/main/codex/skills/diagnosing-bugs/SKILL.md">GitHub 源码</a></div>
         </div>
       </article>
 
@@ -314,13 +313,11 @@
           <p>在发布前发现回归、可见故障、安全风险和缺失测试。</p>
         </div>
         <div class="skills">
-          <div class="skill"><strong>gstack-review</strong><p>做 pre-landing diff review，检查结构性风险、信任边界、副作用分支和合并准备度。</p><a class="source-link" href="https://github.com/bryanzk/MyCodexEnv/blob/main/codex/skills/gstack-review/SKILL.md">GitHub 源码</a></div>
-          <div class="skill"><strong>code-reviewer</strong><p>审查 staged、unstaged 或 PR 变更，聚焦正确性、安全性、可维护性和项目规范。</p><a class="source-link" href="https://github.com/bryanzk/MyCodexEnv/blob/main/codex/skills/code-reviewer/SKILL.md">GitHub 源码</a></div>
+          <div class="skill"><strong>code-review</strong><p>按仓库规范和 spec 审查某个固定点之后的全部改动。</p><a class="source-link" href="https://github.com/bryanzk/MyCodexEnv/blob/main/codex/skills/code-review/SKILL.md">GitHub 源码</a></div>
           <div class="skill"><strong>review-swarm</strong><p>并行运行只读 review agents，覆盖行为、安全、性能、可靠性和测试覆盖风险。</p><a class="source-link" href="https://github.com/bryanzk/MyCodexEnv/blob/main/codex/skills/review-swarm/SKILL.md">GitHub 源码</a></div>
-          <div class="skill"><strong>gstack-cso</strong><p>做 infrastructure-first 安全与隐私审查，覆盖 auth、tokens、secrets、PII、审批、审计和公私边界。</p><a class="source-link" href="https://github.com/bryanzk/MyCodexEnv/blob/main/codex/skills/gstack-cso/SKILL.md">GitHub 源码</a></div>
           <div class="skill"><strong>security-reviewer</strong><p>检查输入校验、认证授权、密钥泄漏、注入和错误信息泄露风险。</p><a class="source-link" href="https://github.com/bryanzk/MyCodexEnv/blob/main/codex/skills/security-reviewer/SKILL.md">GitHub 源码</a></div>
-          <div class="skill"><strong>gstack-qa</strong><p>系统化浏览器 QA，包含截图、console/network 检查、响应式检查和 bug 回归验证。</p><a class="source-link" href="https://github.com/bryanzk/MyCodexEnv/blob/main/codex/skills/gstack-qa/SKILL.md">GitHub 源码</a></div>
-          <div class="skill"><strong>gstack-qa-only</strong><p>当用户只要报告而不要自动修复时，执行只读浏览器 QA、截图、风险记录和 findings 汇总。</p><a class="source-link" href="https://github.com/bryanzk/MyCodexEnv/blob/main/codex/skills/gstack-qa-only/SKILL.md">GitHub 源码</a></div>
+          <div class="skill"><strong>chrome-devtools-browser</strong><p>在真实 Chrome 里做页面验收、布局测量、console 和 network 排查，以及多步点击流程。</p><a class="source-link" href="https://github.com/bryanzk/MyCodexEnv/blob/main/codex/skills/chrome-devtools-browser/SKILL.md">GitHub 源码</a></div>
+          <div class="skill"><strong>playwright</strong><p>从终端驱动真实浏览器：导航、填表、快照和截图。</p><a class="source-link" href="https://github.com/bryanzk/MyCodexEnv/blob/main/codex/skills/playwright/SKILL.md">GitHub 源码</a></div>
           <div class="skill"><strong>committee-review-loop</strong><p>只有明确要求 committee、expert panel、reviewer/worker、rating loop 或目标评分时才路由到这里；普通 review 保持专用 route。</p><a class="source-link" href="https://github.com/bryanzk/MyCodexEnv/blob/main/codex/skills/committee-review-loop/SKILL.md">GitHub 源码</a></div>
         </div>
       </article>
@@ -343,9 +340,7 @@
           <p>用户明确要求发布时，才进入 commit、PR、merge、deploy 和生产监控。</p>
         </div>
         <div class="skills">
-          <div class="skill"><strong>gstack-ship</strong><p>执行 opinionated ship workflow：识别 base branch、测试、review diff、更新 release metadata、commit、push、准备 PR。</p><a class="source-link" href="https://github.com/bryanzk/MyCodexEnv/blob/main/codex/skills/gstack-ship/SKILL.md">GitHub 源码</a></div>
-          <div class="skill"><strong>gstack-land-and-deploy</strong><p>在 ship 后合并与部署，等待 CI/deploy 完成，并验证生产健康状态。</p><a class="source-link" href="https://github.com/bryanzk/MyCodexEnv/blob/main/codex/skills/gstack-land-and-deploy/SKILL.md">GitHub 源码</a></div>
-          <div class="skill"><strong>gstack-canary</strong><p>部署后监控 console errors、性能回退、页面失败和截图差异。</p><a class="source-link" href="https://github.com/bryanzk/MyCodexEnv/blob/main/codex/skills/gstack-canary/SKILL.md">GitHub 源码</a></div>
+          <div class="skill"><strong>pr</strong><p>写 PR 正文。发布动作走仓库自己的流程，只在明确要求时执行。</p><a class="source-link" href="https://github.com/bryanzk/MyCodexEnv/blob/main/codex/skills/pr/SKILL.md">GitHub 源码</a></div>
         </div>
       </article>
 
@@ -356,9 +351,8 @@
           <p>跨 session 工作需要留下可恢复状态，并沉淀可复用经验。</p>
         </div>
         <div class="skills">
-          <div class="skill"><strong>gstack-retro</strong><p>基于提交历史、工作模式和质量指标生成工程 retrospective。</p><a class="source-link" href="https://github.com/bryanzk/MyCodexEnv/blob/main/codex/skills/gstack-retro/SKILL.md">GitHub 源码</a></div>
-          <div class="skill"><strong>gstack-learn</strong><p>检索、整理、修剪和导出项目 learnings，让后续 session 复用已有经验。</p><a class="source-link" href="https://github.com/bryanzk/MyCodexEnv/blob/main/codex/skills/gstack-learn/SKILL.md">GitHub 源码</a></div>
-          <div class="skill"><strong>gstack-plan-tune</strong><p>调整重复规划问题、developer profile 和提问偏好；这是操作者偏好状态，不是 repo lifecycle state。</p><a class="source-link" href="https://github.com/bryanzk/MyCodexEnv/blob/main/codex/skills/gstack-plan-tune/SKILL.md">GitHub 源码</a></div>
+          <div class="skill"><strong>codex-retrospective</strong><p>回看最近的 Codex 历史，提出最小、有证据支持的改进。</p><a class="source-link" href="https://github.com/bryanzk/MyCodexEnv/blob/main/codex/skills/codex-retrospective/SKILL.md">GitHub 源码</a></div>
+          <div class="skill"><strong>handoff</strong><p>把当前会话压缩成一份交接文档，让下一个 agent 接着做。</p><a class="source-link" href="https://github.com/bryanzk/MyCodexEnv/blob/main/codex/skills/handoff/SKILL.md">GitHub 源码</a></div>
         </div>
       </article>
 
@@ -369,7 +363,6 @@
           <p>让 public docs、README、路由规范和 release notes 与已交付行为一致。</p>
         </div>
         <div class="skills">
-          <div class="skill"><strong>gstack-document-release</strong><p>发布后同步 README、架构文档、CHANGELOG、TODOS 和 VERSION 等文档表面。</p><a class="source-link" href="https://github.com/bryanzk/MyCodexEnv/blob/main/codex/skills/gstack-document-release/SKILL.md">GitHub 源码</a></div>
           <div class="skill"><strong>doc-updater</strong><p>在功能、API 或架构变更后更新 docs、codemaps、README、指南、路径和示例。</p><a class="source-link" href="https://github.com/bryanzk/MyCodexEnv/blob/main/codex/skills/doc-updater/SKILL.md">GitHub 源码</a></div>
           <div class="skill"><strong>skill-evaluator</strong><p>评估一个 skill 是否应该存在、如何路由、需要哪些 eval，以及是否相对 baseline 有真实提升。</p><a class="source-link" href="https://github.com/bryanzk/MyCodexEnv/blob/main/codex/skills/skill-evaluator/SKILL.md">GitHub 源码</a></div>
           <div class="skill"><strong>visual-explainer</strong><p>生成自包含 HTML 图、流程图、架构视图和技术概念可视化说明。</p><a class="source-link" href="https://github.com/bryanzk/MyCodexEnv/blob/main/codex/skills/visual-explainer/SKILL.md">GitHub 源码</a></div>

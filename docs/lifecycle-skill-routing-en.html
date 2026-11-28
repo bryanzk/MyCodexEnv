@@ -78,7 +78,7 @@ light/standard/governed profiles are implemented in source and the local managed
 </blockquote>
 <h2 id="purpose">Purpose</h2>
 <p>This document explains which workflows MyCodexEnv covers, how the Harness
-Runtime maps work to lifecycle stages, and which Codex/gstack skills should be
+Runtime maps work to lifecycle stages, and which Codex skills should be
 used at each stage.</p>
 <p>MyCodexEnv has three layers:</p>
 <ul>
@@ -86,7 +86,7 @@ used at each stage.</p>
 scripts, and checkpoint helpers.</li>
 <li>Router layer: <code>delivery-harness-framework</code>, which reads durable state,
 classifies the lifecycle stage, and selects the next workflow.</li>
-<li>Specialist layer: repo-specific lifecycle adapters, gstack skills, local
+<li>Specialist layer: repo-specific lifecycle adapters, local
 planning/testing/review skills, and deterministic helper scripts.</li>
 </ul>
 <p>The generic lifecycle skill should stay generic. Project-only paths, fixtures,
@@ -153,12 +153,12 @@ behavior live in <code>codex/hooks/dhf_preprompt.py</code>.</p>
 </tr>
 <tr>
 <td>Skill synchronization</td>
-<td>Keep <code>codex/skills/*</code> as source of truth and copy managed skills into <code>~/.codex/skills/*</code>.</td>
+<td>Keep <code>codex/skills/*</code> as source of truth and copy managed skills into <code>~/.codex/skills/*</code>. Skill families retired on 2026-11-27 are no longer deployed; their runtime copies are left in place and disabled.</td>
 <td><code>scripts/sync_codex_home.sh</code></td>
 </tr>
 <tr>
 <td>Harness lifecycle routing</td>
-<td>Recover state, classify phase, choose generic/repo-specific/gstack workflow, define gates.</td>
+<td>Recover state, classify phase, choose generic or repo-specific workflow, define gates.</td>
 <td><code>delivery-harness-framework</code></td>
 </tr>
 <tr>
@@ -169,7 +169,7 @@ behavior live in <code>codex/hooks/dhf_preprompt.py</code>.</p>
 <tr>
 <td>Backlog-ready issue/spec authoring</td>
 <td>Turn vague implementation intent into a bounded issue or executable spec before coding starts.</td>
-<td>vendored gstack <code>spec</code>, <code>delivery-harness-framework</code></td>
+<td><code>to-spec</code>, <code>to-tickets</code>, <code>delivery-harness-framework</code></td>
 </tr>
 <tr>
 <td>Development execution</td>
@@ -184,7 +184,7 @@ behavior live in <code>codex/hooks/dhf_preprompt.py</code>.</p>
 <tr>
 <td>Review and QA</td>
 <td>Inspect diffs, browser behavior, security/privacy boundaries, and user-visible regressions.</td>
-<td><code>gstack-review</code>, <code>code-reviewer</code>, <code>gstack-qa</code>, <code>security-reviewer</code></td>
+<td><code>code-review</code>, <code>review-swarm</code>, <code>chrome-devtools-browser</code>, <code>playwright</code>, <code>security-reviewer</code></td>
 </tr>
 <tr>
 <td>Committee review loop</td>
@@ -193,18 +193,18 @@ behavior live in <code>codex/hooks/dhf_preprompt.py</code>.</p>
 </tr>
 <tr>
 <td>Ship and deployment</td>
-<td>Commit/PR/release/deploy/canary only when explicitly requested and verified.</td>
-<td><code>gstack-ship</code>, <code>gstack-land-and-deploy</code>, <code>gstack-canary</code></td>
+<td>Commit/PR/release/deploy only when explicitly requested and verified.</td>
+<td>repo release workflow, <code>pr</code></td>
 </tr>
 <tr>
 <td>Handoff and recovery</td>
-<td>Append state, preserve next safe task, recover without chat history, and optionally save/restore user-facing gstack context.</td>
-<td><code>scripts/harness_checkpoint.py</code>, <code>scripts/harness_recover.py</code>, vendored gstack <code>context-save</code> / <code>context-restore</code></td>
+<td>Append state, preserve next safe task, recover without chat history, and hand off user-facing context.</td>
+<td><code>scripts/harness_checkpoint.py</code>, <code>scripts/harness_recover.py</code>, <code>handoff</code></td>
 </tr>
 <tr>
 <td>Documentation release</td>
-<td>Keep README/docs aligned with shipped behavior and skill/runtime changes; generate missing docs, polished artifacts, or source-backed diagrams when requested.</td>
-<td><code>gstack-document-release</code>, vendored gstack <code>document-generate</code>, vendored gstack <code>make-pdf</code>, vendored gstack <code>diagram</code>, <code>doc-updater</code></td>
+<td>Keep README/docs aligned with shipped behavior and skill/runtime changes; generate missing docs when requested.</td>
+<td><code>doc-updater</code></td>
 </tr>
 </tbody></table></div>
 <h2 id="stage-map">Lifecycle Stage Map</h2>
@@ -236,14 +236,14 @@ behavior live in <code>codex/hooks/dhf_preprompt.py</code>.</p>
 <td><code>planning</code></td>
 <td>The user wants a backlog-ready GitHub issue, ticket, or executable spec before implementation begins.</td>
 <td>Read-only by default.</td>
-<td>vendored gstack <code>spec</code>, <code>delivery-harness-framework</code></td>
+<td><code>to-spec</code>, <code>to-tickets</code>, <code>delivery-harness-framework</code></td>
 <td>Preserve runtime state, lane boundaries, and validation gates while turning vague intent into a bounded spec or issue.</td>
 </tr>
 <tr>
 <td><code>planning</code></td>
 <td>Architecture, API shape, migration, runtime, data flow, cross-module decisions, or multi-step work breakdown.</td>
 <td>Read-only by default.</td>
-<td><code>gstack-plan-eng-review</code>, <code>planner</code>, <code>task-flow-orchestrator</code></td>
+<td><code>planner</code>, <code>codebase-design</code>, <code>task-flow-orchestrator</code></td>
 <td>Produce an implementation plan, vertical slice breakdown, risk list, and validation gate before edits.</td>
 </tr>
 <tr>
@@ -264,7 +264,7 @@ behavior live in <code>codex/hooks/dhf_preprompt.py</code>.</p>
 <td><code>review</code></td>
 <td>Diff exists, work is near handoff/PR/landing, or user asks for review.</td>
 <td>Read-only by default.</td>
-<td><code>gstack-review</code>, <code>code-reviewer</code>, <code>review-swarm</code>, <code>security-reviewer</code></td>
+<td><code>code-review</code>, <code>review-swarm</code>, <code>security-reviewer</code></td>
 <td>Find bugs, regressions, security risks, and missing tests before shipping.</td>
 </tr>
 <tr>
@@ -278,14 +278,14 @@ behavior live in <code>codex/hooks/dhf_preprompt.py</code>.</p>
 <td><code>ship</code></td>
 <td>User requests commit, push, PR, merge, release, deploy, production verification, or version-slot queue visibility.</td>
 <td>Requested release actions only.</td>
-<td><code>gstack-ship</code>, <code>gstack-land-and-deploy</code>, <code>gstack-canary</code>, vendored gstack <code>landing-report</code></td>
+<td>repo release workflow, <code>pr</code></td>
 <td>Complete release steps, verify deployment, and preserve rollback or version-queue context.</td>
 </tr>
 <tr>
 <td><code>handoff</code></td>
 <td>Session is ending, task crosses phases, work spans sessions, next safe task must survive, or the user asks to save/restore working context.</td>
-<td>Docs/state only unless a gstack context skill is explicitly invoked.</td>
-<td><code>scripts/harness_checkpoint.py</code>, vendored gstack <code>context-save</code> / <code>context-restore</code>, <code>gstack-retro</code>, <code>gstack-learn</code></td>
+<td>Docs/state only.</td>
+<td><code>scripts/harness_checkpoint.py</code>, <code>handoff</code>, <code>codex-retrospective</code></td>
 <td>Append harness checkpoint state, capture blockers, preserve resumable user context, and leave a recoverable next step.</td>
 </tr>
 </tbody></table></div>
@@ -309,79 +309,54 @@ behavior live in <code>codex/hooks/dhf_preprompt.py</code>.</p>
 <td>These adapters take over after the generic router identifies a repo-specific boundary.</td>
 </tr>
 <tr>
-<td><code>gstack-plan-ceo-review</code></td>
-<td>Product framing, user value, scope, demo boundaries, strategic tradeoffs.</td>
-<td>Use when product judgment is the work.</td>
+<td><code>grilling</code></td>
+<td>Product framing, user value, scope, and requirement interrogation.</td>
+<td>Use when product judgment is the work and the problem statement is still fluid.</td>
 </tr>
 <tr>
-<td>vendored gstack <code>spec</code></td>
-<td>Backlog-ready GitHub issues, tickets, and executable specs with explicit acceptance criteria before implementation begins.</td>
+<td><code>to-spec</code> / <code>to-tickets</code></td>
+<td>Backlog-ready specs and tracer-bullet tickets with explicit acceptance criteria before implementation begins.</td>
 <td>Use when the work needs a durable spec artifact rather than immediate coding.</td>
 </tr>
 <tr>
-<td><code>gstack-office-hours</code></td>
-<td>Founder-style pressure testing, market/user/business clarity.</td>
-<td>Useful before committing to a product direction. In gstack <code>1.52.x</code>, it can use configured gbrain context during planning preflight.</td>
+<td><code>codebase-design</code></td>
+<td>Deep-module interface design and seams.</td>
+<td>Use with <code>planner</code> on engineering plans.</td>
 </tr>
 <tr>
-<td><code>gstack-plan-eng-review</code></td>
-<td>Architecture, data model, API contract, migration, performance, test strategy, and distribution/publish readiness for new artifacts.</td>
-<td>Use before implementation on complex engineering plans; the current upstream workflow is explicitly search-aware, completeness-biased, and brain-aware when gbrain is configured.</td>
+<td><code>critique</code> / <code>frontend-design</code></td>
+<td>UX structure, visual direction, and design acceptance.</td>
+<td>Use before UI implementation or major design changes.</td>
 </tr>
 <tr>
-<td><code>gstack-plan-design-review</code></td>
-<td>UX structure, visual direction, responsive behavior, design acceptance, and mockup-first plan refinement.</td>
-<td>Use before UI implementation or major design changes. When a design binary/mockup path exists, prefer visual review over prose-only critique; when gbrain is configured, let the planning skill consume it as specialist context.</td>
+<td><code>chrome-devtools-browser</code> / <code>playwright</code></td>
+<td>Browser QA, screenshots, console/network checks, and multi-step page flows.</td>
+<td>Use for user-facing web behavior.</td>
 </tr>
 <tr>
-<td><code>gstack-qa</code></td>
-<td>Browser QA, screenshots, console/network checks, responsiveness, accessibility smoke, then iterative bug fixing with regression evidence.</td>
-<td>Use for user-facing web behavior when fixes are allowed.</td>
+<td><code>code-review</code></td>
+<td>Review of the changes since a fixed point along standards and spec axes.</td>
+<td>Use near PR, handoff, or ship.</td>
 </tr>
 <tr>
-<td><code>gstack-qa-only</code></td>
-<td>Report-only QA when fixes should not be applied automatically.</td>
-<td>Keeps QA read-only.</td>
+<td><code>pr</code></td>
+<td>PR body writing.</td>
+<td>Release actions themselves follow the repo's own workflow.</td>
 </tr>
 <tr>
-<td><code>gstack-ios-qa</code></td>
-<td>Real-device iOS QA on a live app via the embedded StateServer and agent loop.</td>
-<td>Use for &quot;test my iPhone app&quot;, device-only bug hunts, or live iOS smoke runs.</td>
+<td><code>handoff</code></td>
+<td>Compact the session into a handoff document.</td>
+<td>Use alongside, not instead of, <code>scripts/harness_checkpoint.py</code>.</td>
 </tr>
 <tr>
-<td><code>gstack-ios-design-review</code></td>
-<td>Real-device iOS visual audit against Apple HIG and app design intent.</td>
-<td>Use for shipped iOS UI review, not pre-implementation design planning.</td>
-</tr>
-<tr>
-<td><code>gstack-ios-fix</code></td>
-<td>Closed-loop iOS bug fixing after a real-device repro exists.</td>
-<td>Use when an iOS defect should be fixed, redeployed, and reverified autonomously.</td>
-</tr>
-<tr>
-<td>vendored gstack <code>ios-sync</code> / <code>ios-clean</code></td>
-<td>Maintain or remove the gstack iOS debug bridge and debug-only instrumentation.</td>
-<td>Use only for explicit iOS bridge regeneration or release-cleanup requests.</td>
-</tr>
-<tr>
-<td><code>gstack-cso</code></td>
-<td>Infrastructure-first security and privacy review.</td>
-<td>Use for auth, tokens, secrets, PII, or public/private boundaries.</td>
+<td><code>codex-retrospective</code></td>
+<td>Evidence-backed review of recent Codex history.</td>
+<td>Use for time-windowed retrospectives.</td>
 </tr>
 <tr>
 <td><code>security-reviewer</code></td>
 <td>Code-level security review for validation, auth, injection, secret leakage, error disclosure.</td>
 <td>Good for narrower security audits.</td>
-</tr>
-<tr>
-<td><code>gstack-review</code></td>
-<td>Pre-landing diff review, specialist checks, and fix-first handling of mechanical findings.</td>
-<td>Use near PR, handoff, or ship; current upstream review is explicitly geared toward auto-fixing low-risk findings before asking.</td>
-</tr>
-<tr>
-<td><code>code-reviewer</code></td>
-<td>Local code review of staged or unstaged changes.</td>
-<td>Use for focused findings with file/line references.</td>
 </tr>
 <tr>
 <td><code>review-swarm</code></td>
@@ -392,66 +367,6 @@ behavior live in <code>codex/hooks/dhf_preprompt.py</code>.</p>
 <td><code>committee-review-loop</code></td>
 <td>Explicit expert-committee/subagent loops with scoring, revision briefs, and a target rating such as <code>9.5/10</code>.</td>
 <td>Do not use for one-off design/code/QA review; preserve read-only committee roles and bounded revision-worker write sets.</td>
-</tr>
-<tr>
-<td><code>gstack-ship</code></td>
-<td>Opinionated release workflow before PR/landing, including coverage audit, plan-completion audit, pre-landing review, PR title/version hygiene, and documentation sync.</td>
-<td>Only use when user asks to ship.</td>
-</tr>
-<tr>
-<td><code>gstack-land-and-deploy</code></td>
-<td>Merge and deploy workflow with post-deploy checks.</td>
-<td>Requires explicit release/deploy intent.</td>
-</tr>
-<tr>
-<td><code>gstack-canary</code></td>
-<td>Post-deploy canary monitoring.</td>
-<td>Use after deploy when live behavior must be watched.</td>
-</tr>
-<tr>
-<td><code>gstack-document-release</code></td>
-<td>Post-ship documentation update across README/docs/CHANGELOG/TODOS/VERSION, with coverage-map and documentation-debt checks.</td>
-<td>Use when docs must reflect shipped behavior.</td>
-</tr>
-<tr>
-<td>vendored gstack <code>document-generate</code></td>
-<td>Missing tutorials, how-to docs, reference pages, or explanatory docs for a feature/module/project.</td>
-<td>Use when documentation must be created from scratch rather than just updated after release.</td>
-</tr>
-<tr>
-<td>vendored gstack <code>make-pdf</code></td>
-<td>Convert Markdown into a polished PDF artifact.</td>
-<td>Use for publication-quality exports, not routine repo docs.</td>
-</tr>
-<tr>
-<td>vendored gstack <code>diagram</code></td>
-<td>Turn an English description or mermaid source into a diagram triplet (<code>.mmd</code>, editable <code>.excalidraw</code>, rendered SVG/PNG).</td>
-<td>Use for offline source-backed diagrams that may later be embedded into docs or exported through <code>make-pdf</code>.</td>
-</tr>
-<tr>
-<td>vendored gstack <code>landing-report</code></td>
-<td>Read-only version queue and PR landing visibility before ship.</td>
-<td>Use when asking what version slot or landing order comes next.</td>
-</tr>
-<tr>
-<td>vendored gstack <code>context-save</code> / <code>context-restore</code></td>
-<td>User-facing save/resume of working context across sessions or Conductor workspaces.</td>
-<td>Use alongside, not instead of, <code>scripts/harness_checkpoint.py</code>; the harness checkpoint remains the repo-local append-only state source.</td>
-</tr>
-<tr>
-<td>vendored gstack <code>scrape</code> / <code>skillify</code></td>
-<td>Read-only browser data extraction and codifying repeated scrape flows into browser-skills.</td>
-<td>Use for extraction workflows; use <code>gstack-qa</code> for behavior testing and bug fixing.</td>
-</tr>
-<tr>
-<td>vendored gstack <code>setup-gbrain</code> / <code>sync-gbrain</code></td>
-<td>Configure or refresh optional gbrain-backed repo memory/search.</td>
-<td>Use only when the user explicitly wants gbrain setup, refresh, or repo re-indexing.</td>
-</tr>
-<tr>
-<td><code>gstack-plan-tune</code></td>
-<td>Tune repeated planning questions, developer profile preferences, and question-memory behavior.</td>
-<td>Use only when the user asks to tune how gstack asks questions or to inspect/update developer profile signals; this is operator preference state, not repo lifecycle state.</td>
 </tr>
 <tr>
 <td><code>doc-updater</code></td>
@@ -600,25 +515,11 @@ behavior live in <code>codex/hooks/dhf_preprompt.py</code>.</p>
 cross-session, security-sensitive, release-facing, or ambiguous.</li>
 <li>Prefer repo-specific lifecycle harnesses when a known project adapter owns the
 business domain.</li>
-<li>Prefer gstack skills when the task is product review, engineering review,
-backlog/spec authoring, design review, browser QA, real-device iOS QA,
-security review, ship, deploy, canary, release documentation, retro, or
-learning capture.</li>
-<li>Prefer the richer upstream gstack posture when available:
-<code>gstack-office-hours</code> for problem discovery, mockup-first <code>gstack-plan-design-review</code>
-for UI planning, fix-first <code>gstack-review</code> for near-landing diffs,
-coverage-aware <code>gstack-ship</code> for release readiness, and
-debt-aware <code>gstack-document-release</code> for post-ship docs. With gstack
-<code>1.52.x</code>, planning skills may use configured gbrain digests as specialist
-context, but DHF still owns repo state, lane, checkpoint, and validation
-boundaries; use <code>gstack-plan-tune</code> only for explicit question/developer-profile
-tuning. Also prefer <code>gstack-ios-qa</code> / <code>gstack-ios-design-review</code> /
-<code>gstack-ios-fix</code> for live-device iOS workflows, vendored <code>ios-sync</code> /
-<code>ios-clean</code> only for explicit iOS debug-bridge maintenance, vendored
-<code>context-save</code> / <code>context-restore</code> for user-facing session continuity,
-<code>landing-report</code> for version queue visibility, <code>document-generate</code> /
-<code>make-pdf</code> / <code>diagram</code> for generated docs and artifacts, and <code>setup-gbrain</code> /
-<code>sync-gbrain</code> only for explicit persistent memory setup.</li>
+<li>Prefer the specialist skills in the map above for product review, spec
+authoring, engineering and design planning, browser QA, security review,
+diff review, documentation, handoff, and retrospectives. DHF still owns repo
+state, lane, checkpoint, and validation boundaries. gstack was retired on
+2026-11-27; do not route to it.</li>
 <li>Prefer deterministic helper scripts when the runtime already provides one;
 do not reimplement their parsing or validation manually.</li>
 <li>Use <code>verification-loop</code> or repo-native checks before any completion claim.</li>

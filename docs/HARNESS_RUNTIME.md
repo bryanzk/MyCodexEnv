@@ -112,8 +112,11 @@ The source roles are `git_head` (committed source of truth), `caller_worktree`
 `automation_execution_clone` (automation sync source). `runtime_disk` is only a
 disk target observation; it is not loaded-state evidence. The automation producer
 set is exactly the launcher `run-network-enabled.sh`, `automation.toml`, and the
-controller copy of the actually executed `prepare_gstack_dhf_daily_refresh.py`.
+controller copy of the actually executed prepare script.
 The prepare-to-sync edge is prompt-mediated, not a protected function call.
+The gstack daily refresh automation and its prepare script were retired on
+2026-11-27 (SHI-637); the automation source roles stay in the source guard
+until they are removed.
 
 Approved source digests are read only from the tracked, clean repository file
 `runtime-approvals/approved-source-digests.txt`; the caller cannot select a
@@ -258,7 +261,7 @@ For the current project workflow and skill routing map, read
 - `Sandbox`: Codex sandboxing and approval rules remain the primary technical boundary; `scripts/harness_env_probe.py` reports the observable runtime configuration.
 - `Memory`: `docs/harness-state.md` is the repo-visible memory surface; `scripts/harness_recover.py` proves recovery from state, git, and local evidence.
 - `Memory Reflection`: `scripts/codex_subconscious.py reflect` merges duplicate routine/derived JSONL records and prunes only expired routine/derived records; decision and unknown records remain unchanged.
-- `Skills`: ordinary `codex/skills/*` are copied into runtime. Active external gstack at `~/.gstack/repos/gstack` is owned by `scripts/external_gstack_runtime.py status|apply|recover`; ordinary sync never cuts it over, active mode does not run `setup`, and the repo vendor remains the legacy/bootstrap fallback.
+- `Skills`: ordinary `codex/skills/*` are copied into runtime. gstack, Sepia, and the Codex side of claude-code-workflow were retired on 2026-11-27; sync no longer deploys them and leaves existing runtime copies in place.
 - `Runtime Publication`: any commit that touches a `codex/` runtime surface is complete only after an operator-present push to `origin/main`; automation must not perform that push, and an unpushed source commit is not evidence of live runtime activation.
 - `Session State`: `docs/harness-state.md` records durable phase and handoff facts.
 - `Task Ledger`: `scripts/harness_ledger.py` creates and verifies tamper-evident acceptance ledgers from validated requirements.

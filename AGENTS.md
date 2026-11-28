@@ -14,4 +14,3 @@
 - 修改 runtime、配置或 skills 时：[Runtime and skill changes](docs/agents/runtime-and-skills.md)
 - 选择验证入口或判断证据是否仍有效时：[Verification and change safety](docs/agents/verification-and-change-safety.md)
 - Changes under `codex/`: [Codex global rules source](codex/AGENTS.md)
-- Changes under vendored gstack: [gstack local rules](codex/skills/gstack/AGENTS.md)

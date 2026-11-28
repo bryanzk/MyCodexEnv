@@ -190,9 +190,9 @@ Specialist layer 包括：
 - `planner`：需求、架构、任务拆解、风险。
 - `tdd-guide` / `atdd-guide`：行为变化和验收测试。
 - `verification-loop`：交付前验证。
-- `gstack-qa` / `gstack-qa-only`：浏览器和用户体验验证。
-- `security-reviewer` / `gstack-cso`：安全、权限、隐私。
-- `gstack-ship` / `gstack-land-and-deploy`：发布、PR、部署。
+- `chrome-devtools-browser` / `playwright`：浏览器和用户体验验证。
+- `security-reviewer`：安全、权限、隐私。
+- `pr` 和仓库自己的发布流程：发布、PR、部署。
 - `doc-updater` / `visual-explainer`：文档和可视化。
 - repo-specific harness：项目自己的路径、命令、fixtures、部署拓扑和业务边界。
 
@@ -523,10 +523,10 @@ Skill routing 的目标是让 agent 用正确的工作流，而不是把所有�
 | 事实不清、状态不明 | `delivery-harness-framework` recovery | 当前 phase、dirty state、next safe task | `harness_recover.py`、`git status` |
 | 需求不清 | `grilling` → `planner` / `req-to-dev` → requirements gate | 目标、验收、out of scope、open_questions_resolved、任务切片 | requirements validator 或计划 review |
 | 行为改动 | `tdd-guide`、`atdd-guide` | failing test、implementation、green test | focused test + full gate |
-| UI/浏览器体验 | `gstack-qa` / browser QA | smoke result、截图/console/network 证据 | browser smoke + key interactions |
-| 安全/隐私/secret | `security-reviewer` / `gstack-cso` | 风险发现、边界、缓解方案 | security checklist / targeted tests |
-| PR 或 diff review | `gstack-review` / code review workflow | findings 或 no-issue statement | file/line grounded review |
-| 发布、merge、deploy | `gstack-ship` / `gstack-land-and-deploy` | commit、PR、merge、deploy evidence | release gate + rollback/smoke |
+| UI/浏览器体验 | `chrome-devtools-browser` / `playwright` | smoke result、截图/console/network 证据 | browser smoke + key interactions |
+| 安全/隐私/secret | `security-reviewer` | 风险发现、边界、缓解方案 | security checklist / targeted tests |
+| PR 或 diff review | `code-review` / `review-swarm` | findings 或 no-issue statement | file/line grounded review |
+| 发布、merge、deploy | 仓库发布流程 / `pr` | commit、PR、merge、deploy evidence | release gate + rollback/smoke |
 | 文档和可视化 | `doc-updater` / `visual-explainer` | docs、diagram、public explanation | link/path consistency + diff check |
 | 多 agent 并行 | `harness_agent_team.py` + subagent workflow | worker scopes、write sets、reports | agent team validator + integrator gate |
 | 显式委员会评分 | `committee-review-loop` | review score、revision loop、final artifact | target score + verification gate |

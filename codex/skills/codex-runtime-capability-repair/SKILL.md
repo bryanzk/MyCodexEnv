@@ -33,7 +33,6 @@ If the failure involves SSH, remote hosts, tunnels, or remote services, read `~/
 
 ```bash
 rg -n "preserve_table|plugins\.|marketplaces\.|mcp_servers.node_repl|desktop|memories" scripts/sync_codex_home.sh test_runner.py
-test -d ~/.codex/automation-workspaces/gstack-dhf-daily-refresh && rg -n "preserve_table|plugins\.|marketplaces\.|mcp_servers.node_repl" ~/.codex/automation-workspaces/gstack-dhf-daily-refresh -g 'sync_codex_home.sh'
 ```
 
 3. Preserve runtime-owned tables and keys when rendering config from template:
