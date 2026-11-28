@@ -8448,6 +8448,71 @@ def test_agent_dispatch_gate():
     print("[PASS] agent-team validation evidence and Guard deferral")
 
 
+def test_harness_checkpoint_field_limits():
+    """State Log entries are capped like ShipQ's; an oversized field is refused and nothing is written (SHI-637)."""
+    with tempfile.TemporaryDirectory() as tmp:
+        repo = Path(tmp) / "repo"
+        repo.mkdir(parents=True)
+        code, out, err = run(["git", "init", str(repo)])
+        require(code == 0, f"temp git init failed: {err or out}")
+        state_file = repo / "docs" / "harness-state.md"
+        original = "# Harness State\n\n## Current Snapshot\n- phase: development\n\n## State Log\n"
+        write(state_file, original)
+
+        def append(summary: str, surfaces: list[str], key_output: str = "[PASS] ok") -> tuple[int, str, str]:
+            command = [sys.executable, str(HARNESS_CHECKPOINT), "append", "--repo-root", str(repo),
+                       "--state-file", str(state_file), "--phase", "validation", "--summary", summary,
+                       "--verification-command", "python3 test_runner.py", "--verification-exit-code", "0",
+                       "--verification-key-output", key_output, "--next-safe-task", "continue"]
+            for surface in surfaces:
+                command += ["--changed-surface", surface]
+            return run(command)
+
+        code, _, err = append("s" * 121, ["a"])
+        require(code != 0 and "--summary exceeds 120" in err, f"long summary should be refused: {err}")
+        code, _, err = append("ok", [f"s{i}" for i in range(13)])
+        require(code != 0 and "--changed-surface exceeds 12" in err, f"13 surfaces should be refused: {err}")
+        code, _, err = append("ok", ["a"], key_output="line1\nline2")
+        require(code != 0 and "single line" in err, f"multiline key output should be refused: {err}")
+        require(state_file.read_text(encoding="utf-8") == original, "a refused checkpoint must not write")
+        code, out, err = append("s" * 120, [f"s{i}" for i in range(12)], key_output="k" * 320)
+        require(code == 0, f"fields at the caps should be accepted: {err or out}")
+    print("[PASS] harness checkpoint field limits")
+
+
+def test_archive_harness_state_moves_verbatim():
+    """The ported ShipQ archive script moves the oldest entries verbatim and keeps the latest (SHI-637)."""
+    script = ROOT / "scripts" / "archive_harness_state.py"
+    with tempfile.TemporaryDirectory() as tmp:
+        repo = Path(tmp)
+        entries = [f"### 2026-0{5 if i < 6 else 6}-{i + 1:02d}T10:00:00-04:00\n- phase: ship\n- summary: entry {i}\n"
+                   for i in range(12)]
+        head = "# Harness State\n\n## Current Snapshot\n- phase: ship\n"
+        write(repo / "docs" / "harness-state.md", head + "\n## State Log\n\n" + "\n".join(entries))
+
+        code, out, err = run([sys.executable, str(script), "--repo-root", str(repo), "--dry-run", "--verify-only",
+                              "--keep-latest", "10"])
+        require(code == 0 and "entries_to_move=2" in out, f"dry run should plan two moves: {err or out}")
+        require(not (repo / "docs" / "harness-state-archive").exists(), "dry run must not write")
+
+        code, out, err = run([sys.executable, str(script), "--repo-root", str(repo), "--apply", "--keep-latest", "10"])
+        require(code == 0, f"apply failed: {err or out}")
+        state = (repo / "docs" / "harness-state.md").read_text(encoding="utf-8")
+        archive = (repo / "docs" / "harness-state-archive" / "2026-05.md").read_text(encoding="utf-8")
+        require(archive == entries[0] + entries[1], "archived entries must be verbatim")
+        require(state.index("## Archived State Log Entries") < state.index("## State Log"),
+                "pointer table must sit before the State Log")
+        require("| 2026-05 | [harness-state-archive/2026-05.md](harness-state-archive/2026-05.md) | 2 |" in state,
+                "pointer row should link the month file with its count")
+        log = state.split("## State Log", 1)[1]
+        require(log.count("### 2026-") == 10 and all(entry in log for entry in entries[2:]),
+                "the latest ten entries must stay unchanged")
+
+        code, out, err = run([sys.executable, str(script), "--repo-root", str(repo), "--apply", "--keep-latest", "10"])
+        require(code == 0 and "entries_to_move=0" in out, f"second apply should move nothing: {err or out}")
+    print("[PASS] archive harness state moves verbatim")
+
+
 def test_harness_checkpoint_helper():
     with tempfile.TemporaryDirectory() as tmp:
         repo = Path(tmp) / "repo"
@@ -13656,6 +13721,8 @@ TESTS = [
     test_sync_unapproved_digest_points_to_identity_status,
     test_harness_agent_team_validator,
     test_agent_dispatch_gate,
+    test_harness_checkpoint_field_limits,
+    test_archive_harness_state_moves_verbatim,
     test_harness_checkpoint_helper,
     test_harness_requirements_validator,
     test_harness_ledger_contract,
